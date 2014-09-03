@@ -30,8 +30,16 @@ _SELECTION_TYPE = [
     ('make_to_order', 'on order'), ]
 
 
+
+
 class multiple_sourcing_wizard(osv.osv_memory):
     _name = 'multiple.sourcing.wizard'
+    
+    def _get_real_stock(self, cr, uid, ids, context=None):
+        
+        x = ids
+        print x
+        return 28
 
     _columns = {
         'line_ids': fields.many2many(
@@ -50,6 +58,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
             _SELECTION_PO_CFT,
             string='PO/CFT',
         ),
+        'location_id': fields.many2one(
+            'stock.location',
+            string='Location',
+        ),
         'supplier': fields.many2one(
             'res.partner',
             string='Supplier',
@@ -63,7 +75,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
             string='Error',
             help="If there is line without need sourcing on selected lines",
         ),
+        'dynamic_real_stock': fields.function(
+            _get_real_stock, method=True, type='char', size=256, string="Real Stock2", readonly=True, store=False
+        ),
     }
+    
+
+    
 
     def default_get(self, cr, uid, fields_list, context=None):
         """
@@ -123,7 +141,9 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     try:
                         line_obj.write(cr, uid, [line.id], {'type': wiz.type,
                                                             'po_cft': wiz.po_cft,
-                                                            'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
+                                                            'supplier': wiz.supplier and wiz.supplier.id or False,
+                                                            'location_id': wiz.location_id.id and wiz.location_id.id or False}, 
+                                                             context=context)
                     except osv.except_osv, e:
                         errors.setdefault(e.value, [])
                         errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.order_id.name)))
@@ -217,6 +237,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     'message': _('The chosen partner has no address. Please define an address before continuing.'),
                 }
         return result
+    
+    
+    def change_location(self, cr, uid, ids, location_id, context=None):
+     
+
+        return {'value': {'real_stock': 250}}
+      
 
 multiple_sourcing_wizard()
 
