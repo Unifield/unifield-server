@@ -480,7 +480,7 @@ class stock_picking(osv.osv):
         Verify if the given instance is Remote Warehouse instance, if no, just return False, if yes, return the type (RW or CP) 
         '''
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
-        if not hasattr(entity, 'usb_instance_type'):
+        if not entity.__hasattr__('usb_instance_type'):
             return False
         
         return entity.usb_instance_type
