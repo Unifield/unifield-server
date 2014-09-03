@@ -24,8 +24,8 @@ from osv import osv, fields, orm
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-# For the the time logger function------
 import time
+
 from msf_doc_import import check_line
 from msf_doc_import.wizard import STOCK_WAREHOUSE_ORDERPOINT_LINE_COLUMNS_FOR_IMPORT as columns_for_stock_warehouse_orderpoint
 
@@ -56,6 +56,20 @@ class wizard_import_stock_warehouse_orderpoint_line(osv.osv_memory):
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
                                   string="State", required=True, readonly=True),
     }
+    
+    def check_line_quantity_value_wrapper(self, **kwargs):
+        """use of a custom product qty field name instead of 'product_qty'"""
+        field_name = kwargs.get('field_name', False)
+        if field_name:
+            if 'to_write' in kwargs:
+                kwargs['to_write']['product_qty'] = kwargs['to_write'][field_name]
+        res = check_line.quantity_value(**kwargs)
+        if field_name:
+            res[field_name] = res['product_qty']
+            del res['product_qty']
+            if 'to_write' in kwargs:
+                del kwargs['to_write']['product_qty']
+        return res
 
     def _import(self, dbname, uid, ids, context=None):
         '''
@@ -65,10 +79,12 @@ class wizard_import_stock_warehouse_orderpoint_line(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
         if not context.get('yml_test', False):
             cr = pooler.get_db(dbname).cursor()
         else:
             cr = dbname
+            
         context.update({'import_in_progress': True})
         start_time = time.time()
         wiz_common_import = self.pool.get('wiz.common.import')
@@ -83,7 +99,10 @@ class wizard_import_stock_warehouse_orderpoint_line(osv.osv_memory):
         cell_index = {'product_code': 0,
                       'product_desc': 1,
                       'uom_id': 2,
-                      'qty': 3}
+                      'product_min_qty': 3,
+                      'product_max_qty': 4,
+                      'qty_multiple': 5,
+        }
         
         for wiz_browse in self.browse(cr, uid, ids, context):
             rule_browse = wiz_browse.rule_id
@@ -110,14 +129,16 @@ class wizard_import_stock_warehouse_orderpoint_line(osv.osv_memory):
                     'warning_list': [],
                     'to_correct_ok': False,
                     'default_code': False,
-                    'product_qty': 1,
+                    'product_min_qty': 1.,
+                    'product_max_qty': 1.,
+                    'qty_multiple': 1,
                     'supply_id': rule_id,
                 }
                 line_num += 1
                 col_count = len(row)
                 template_col_count = len(header_index.items())
                 if col_count != template_col_count:
-                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join([_(f) for f in columns_for_auto_supply_line_import]))
+                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join([_(f) for f in columns_for_stock_warehouse_orderpoint]))
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
@@ -139,17 +160,8 @@ class wizard_import_stock_warehouse_orderpoint_line(osv.osv_memory):
 
                     if not to_write.get('product_id'):
                         raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
-    
-                    # Cell 2: Quantity
-                    qty_value = {}
-                    qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, cell_nb=cell_index['qty'], context=context)
-                    to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
-
-                    if not to_write.get('product_qty') or to_write.get('product_qty') == 0.00:
-                        error_log += _("Line %s in the Excel file : The product qty has been set to 1.00 because the quantity in Excel file was 0.00") % line_num
-                        to_write.update({'product_qty': 1.00})
-    
-                    # Cell 3: UoM
+ 
+                     # Cell 2: UoM
                     uom_value = {}
                     uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, cell_nb=cell_index['uom_id'], context=context)
                     to_write.update({'product_uom_id': uom_value['uom_id'], 'error_list': uom_value['error_list']})
@@ -167,28 +179,60 @@ class wizard_import_stock_warehouse_orderpoint_line(osv.osv_memory):
                             line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                             cr.rollback()
                             continue
-
-                    # Check rounding of qty according to UoM
-                    if qty_value['product_qty'] and uom_value['uom_id']:
-                        round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
-                        if round_qty.get('warning', {}).get('message'):
-                            to_write.update({'product_qty': round_qty['value']['product_qty']})
-                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
     
-                    if to_write.get('product_qty', 0.00) <= 0.00:
-                        message += _("Line %s in the Excel file: Details: %s\n") % (line_num, _('Product Qty should be greater than 0.00'))
-                        ignore_lines += 1
-                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                        cr.rollback()
-                        continue
+                    # Cell 3,4: Min Quantity, Max Quantity
+                    qty_fields = ['product_min_qty', 'product_max_qty', ]
+                    min_qty = False
+                    for qty_field in qty_fields:
+                        qty_value = {}
+                        qty_value = self.check_line_quantity_value_wrapper(
+                            field_name=qty_field, product_obj=product_obj,
+                            row=row, to_write=to_write,
+                            cell_nb=cell_index[qty_field], context=context)
+                        to_write[qty_field] = qty_value[qty_field]
+                        to_write.update({'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
 
+                        if not to_write.get(qty_field) or to_write.get(qty_field) == 0.00:
+                            error_log += _("Line %s in the Excel file : The product qty has been set to 1.00 because the quantity in Excel file was 0.00") % line_num
+                            to_write[qty_field] = 1.00
+        
+                        # Check rounding of qty according to UoM
+                        if qty_value[qty_field] and uom_value['uom_id']:
+                            round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value[qty_field], qty_field)
+                            if round_qty.get('warning', {}).get('message'):
+                                to_write[qty_field] = round_qty['value'][qty_field]
+                                message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
+                        if to_write.get(qty_field, 0.00) <= 0.00:
+                            message += _("Line %s in the Excel file: Details: %s\n") % (line_num, _('Product Qty should be greater than 0.00'))
+                            ignore_lines += 1
+                            line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                            cr.rollback()
+                            continue
+                        if qty_field == 'product_min_qty':
+                            min_qty = qty_value.get('product_min_qty', False)
+                        if qty_field == 'product_max_qty' and min_qty:
+                            max_qty = qty_value.get('product_max_qty', False)
+                            if max_qty and max_qty > 0. and min_qty > max_qty:
+                                error_log += _("Line %s in the Excel file : The product min qty has been set to 1.00 because it was greater than the max qty") % line_num
+                                to_write['product_min_qty'] = 1.00
+                            
+                    # Cell 5: Quantity Multiple
+                    qty_multiple_value = {}
+                    qty_multiple_value = check_line.number_value(
+                        product_obj=product_obj, row=row, to_write=to_write,
+                        cell_nb=cell_index['qty_multiple'],
+                        field_name='qty_multiple', field_desc='Qty Multiple',
+                        default=1, context=context)
+                    to_write.update({'qty_multiple': qty_multiple_value['qty_multiple'], 'error_list': qty_multiple_value['error_list'], 'warning_list': qty_multiple_value['warning_list']})
+                    if not to_write.get('qty_multiple') or to_write.get('qty_multiple') == 0:
+                        error_log += _("Line %s in the Excel file : The product qty multiple has been set to 1 because the value in Excel file was 0.00") % line_num
+                        to_write['qty_multiple'] = 1
 
                     rule_line_obj.create(cr, uid, to_write, context)
                     if 'error_list' in to_write and to_write['error_list']:
                         lines_to_correct += 1
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     complete_lines += 1
-                        
                 except IndexError, e:
                     error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
@@ -251,6 +295,7 @@ Importation completed in %s!
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
         rule_obj = self.pool.get('stock.warehouse.orderpoint')
+        
         for wiz_read in self.read(cr, uid, ids, ['rule_id', 'file']):
             rule_id = wiz_read['rule_id']
             if not wiz_read['file']:
@@ -264,7 +309,7 @@ Importation completed in %s!
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'rule_id': rule_id, 'header_index': header_index, 'object': rule_obj})
-                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_auto_supply_line_import)
+                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_stock_warehouse_orderpoint)
                 if not res:
                     return self.write(cr, uid, ids, res1)
             except osv.except_osv as osv_error:
@@ -292,7 +337,8 @@ Otherwise, you can continue to use Unifield.""")
             rule_id = wiz_read['rule_id']
             po_name = rule_obj.read(cr, uid, rule_id, ['name'])['name']
             if wiz_read['state'] != 'done':
-                self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (po_name, )})
+                msg = _(' Import in progress... \n Please wait that the import is finished before editing %s.')
+                self.write(cr, uid, ids, {'message': msg % (po_name, )})
         return False
 
     def cancel(self, cr, uid, ids, context=None):
@@ -304,14 +350,15 @@ Otherwise, you can continue to use Unifield.""")
             ids=[ids]
         for wiz_obj in self.read(cr, uid, ids, ['rule_id']):
             rule_id = wiz_obj['rule_id']
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.warehouse.orderpoint',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'target': 'crush',
-                'res_id': rule_id,
-                'context': context,
-                }
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.warehouse.orderpoint',
+            'view_type': 'form',
+            'view_mode': 'form, tree',
+            'target': 'crush',
+            'res_id': rule_id,
+            'context': context,
+        }
 
     def close_import(self, cr, uid, ids, context=None):
         '''
@@ -321,13 +368,14 @@ Otherwise, you can continue to use Unifield.""")
             ids=[ids]
         for wiz_obj in self.read(cr, uid, ids, ['rule_id']):
             rule_id = wiz_obj['rule_id']
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.warehouse.orderpoint',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'target': 'crush',
-                'res_id': rule_id,
-                'context': context,
-                }
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.warehouse.orderpoint',
+            'view_type': 'form',
+            'view_mode': 'form, tree',
+            'target': 'crush',
+            'res_id': rule_id,
+            'context': context,
+        }
 
 wizard_import_stock_warehouse_orderpoint_line()

@@ -317,7 +317,7 @@ class stock_warehouse_orderpoint_line(osv.osv):
                     return False
                 if line_br.product_min_qty > line_br.product_max_qty:
                     raise osv.except_osv(_('Error'),
-                        _('%s: Line can not have min superior to max') % (
+                        _('%s: Line can not have a min quantity greater to max quantity') % (
                         line_br.product_id.name, ))
                     return False
 
