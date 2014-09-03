@@ -52,6 +52,7 @@ DOCUMENT_DATA = {
     'sale.order': ('sale.order.line', 'order_id', 'order_line', 'product_uom_qty', ''),
     'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids', 'min_qty', ''),
     'stock.picking': ('stock.move', 'picking_id', 'move_lines', 'product_qty', '(\'state\', \'=\', \'draft\')'),
+    'stock.warehouse.orderpoint': ('stock.warehouse.orderpoint.line', 'supply_id', 'line_ids', '', ''),
     'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids', 'product_qty', ''),
     'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_ids', 'safety_stock', ''),
     'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids', '', ''),
@@ -103,6 +104,7 @@ Documents which inherit from document.remove.line:
     * Supplier catalogue
     * Stock Picking (IN / INT / OUT / PICK)
     * Order Cycle Replenishment Rule
+    * Minimun Stock Rule Line
     * Automatic Supply Replenishment Rule
     * Threshold value Replenishment Rule
     * Physical Inventory
@@ -182,7 +184,15 @@ class stock_picking(osv.osv):
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
+        
+        
+class stock_warehouse_orderpoint(osv.osv):
+    _name = 'stock.warehouse.orderpoint'
+    _inherit = 'stock.warehouse.orderpoint'
 
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
+        
 
 class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
@@ -256,6 +266,7 @@ tender()
 sale_order()
 supplier_catalogue()
 stock_picking()
+stock_warehouse_orderpoint()
 stock_warehouse_automatic_supply()
 stock_warehouse_order_cycle()
 threshold_value()
@@ -281,6 +292,7 @@ Documents:
     * Supplier catalogue lines
     * Stock Moves (IN / INT / OUT / PICK)
     * Order Cycle Replenishment Rule lines
+    * Minimun Stock Rule Line
     * Automatic Supply Replenishment Rule lines
     * Threshold value Replenishment Rule lines
     * Physical Inventory lines
