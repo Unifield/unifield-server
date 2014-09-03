@@ -201,30 +201,13 @@ class stock_warehouse_orderpoint(osv.osv):
     _columns = {
         'name': fields.char('Reference', size=128, required=True, select=True),
         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
-                                        domain="[('is_replenishment', '=', warehouse_id)]"),  # UTP-1186 in line_ids now so not required any more
+                                        domain="[('is_replenishment', '=', warehouse_id)]"),  
         'product_id': fields.many2one('product.product', 'Product', required=False, ondelete='cascade', domain=[('type','=','product')]),  # UTP-1186 in line_ids now so not required any more
-        'product_uom': fields.many2one('product.uom', 'Product UOM', required=False),
+        'product_uom': fields.many2one('product.uom', 'Product UOM', required=False),  # UTP-1186 in line_ids now so not required any more
         'line_ids': fields.one2many('stock.warehouse.orderpoint.line', 'supply_id',
                                     string="Products",
                                     help='Define the min/max quantity to order for each products'),
     }
-    
-    def _check_product_uom(self, cr, uid, ids, context=None):
-        '''
-        Check if the UoM has the same category as the product standard UoM
-        '''
-        if not context:
-            context = {}
-            
-        for rule in self.browse(cr, uid, ids, context=context):
-            if rule.product_id.uom_id.category_id.id != rule.product_uom.category_id.id:
-                return False
-            
-        return True
-    
-    _constraints = [
-        (_check_product_uom, 'You have to select a product UOM in the same category than the purchase UOM of the product', ['product_id', 'product_uom']),
-    ]
     
     def default_get(self, cr, uid, fields, context=None):
         '''
@@ -281,76 +264,6 @@ class stock_warehouse_orderpoint(osv.osv):
         
         return result
         
-        
-    def onchange_uom_qty(self, cr, uid, ids, product_id=False, product_uom=False, product_min_qty=False, product_max_qty=False, res=None, context=None):
-        '''
-        Check the round of the quantity values according to the UoM
-        '''
-        if not res:
-            res = {}
-
-        if product_min_qty:
-            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_min_qty, 'product_min_qty', result=res)
-
-        if product_max_qty:
-            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_max_qty, 'product_max_qty', result=res)
-
-        uom_id = product_uom
-        if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-        
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
-        
-            if product.uom_id.category_id.id != uom.category_id.id:
-                raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
-
-        return res
-    
-    def onchange_product_id(self, cr, uid, ids, product_id, product_uom=False, product_min_qty=False, product_max_qty=False, context=None):
-        '''
-        Add domain on UoM to have only UoM on the same category of the
-        product standard UoM
-        '''
-        product_obj = self.pool.get('product.product')
-        
-        res = super(stock_warehouse_orderpoint, self).onchange_product_id(cr, uid, ids, product_id, context=context)
-        domain = {}
-
-        # Get the product UoM category
-        if product_id:        
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
-        else:
-            domain = {'product_uom': []}
-            if 'value' in res:
-                res['value'].update({'product_uom': False})
-            else:
-                res.update({'value': {'product_uom': False}})
-                
-        # Apply the domain in res
-        if 'domain' in res:
-            res['domain'].update(domain)
-        else:
-            res.update({'domain': domain})
-            
-        product_uom = res.get('value', {}).get('product_uom', product_uom)
-        res = self.onchange_uom_qty(cr, uid, ids, product_id, product_uom, product_min_qty, product_max_qty, res=res)
-            
-        return res
-    
-    def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
-        '''
-        Check if the UoM is convertible to product standard UoM
-        '''
-        if uom_id and product_id:
-            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
-                raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
-        
-        return {}
-        
-        
 stock_warehouse_orderpoint()
 
 
@@ -393,11 +306,19 @@ class stock_warehouse_orderpoint_line(osv.osv):
             ids = [ids]
 
         if not context.get('noraise'):
-            for line in self.read(cr, uid, ids, ['product_qty'],
-                context=context):
-                if line['product_qty'] <= 0.00:
+            for line_br in self.browse(cr, uid, ids, context=context):
+                if not line_br.product_min_qty or \
+                    line_br.product_min_qty <= 0.00 or \
+                    not line_br.product_max_qty or \
+                    line_br.product_max_qty <= 0.00:
                     raise osv.except_osv(_('Error'),
-                        _('Lines must have a quantity larger than 0.00'))
+                        _('%s: Line must have a quantity larger than 0.00') % (
+                        line_br.product_id.name, ))
+                    return False
+                if line_br.product_min_qty > line_br.product_max_qty:
+                    raise osv.except_osv(_('Error'),
+                        _('%s: Line can not have min superior to max') % (
+                        line_br.product_id.name, ))
                     return False
 
         return True
@@ -419,11 +340,11 @@ class stock_warehouse_orderpoint_line(osv.osv):
         """
         check if the product is not already in the current rule
         """
-        for line in self.browse(cr, uid, ids, context=context):
+        for line_br in self.browse(cr, uid, ids, context=context):
             domain = [
-                ('id', '!=', line.id), 
-                ('product_id', '=', line.product_id.id),
-                ('supply_id', '=', line.supply_id.id),
+                ('id', '!=', line_br.id), 
+                ('product_id', '=', line_br.product_id.id),
+                ('supply_id', '=', line_br.supply_id.id),
             ]
             lines = self.search(cr, uid, domain, context=context)
             if lines:
@@ -448,37 +369,44 @@ class stock_warehouse_orderpoint_line(osv.osv):
         res = {}
 
         if product_id:
-            prod = self.pool.get('product.product').browse(cr, uid, product_id,
-                context=context)
-            v = {'product_uom_id': prod.uom_id.id}
+            product_br = self.pool.get('product.product').browse(cr, uid,
+                product_id, context=context)
+            v = {'product_uom_id': product_br.uom_id.id}
             res.update({'value': v})
-
-        uom_id = False
-        if product_min_qty:
-            uom_id = res.get('value', {}).get('product_uom_id', uom_id)
-            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
-                uom_id, product_qty, 'product_min_qty', result=res)
-        if product_max_qty:
-            if not uom_id:
-                uom_id = res.get('value', {}).get('product_uom_id', uom_id)
-            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
-                uom_id, product_qty, 'product_max_qty', result=res)
+            sub_domain = [('category_id', '=', product_br.uom_id.category_id.id), ]
+            domain = {'product_uom': sub_domain}
+        else:
+            domain = {'product_uom': []}
+            if not 'value' in res:
+                res['value'] = {}
+            res['value'].update({'product_uom': False})
+                
+         # Apply the domain in res
+        if 'domain' in res:
+            res['domain'].update(domain)
+        else:
+            res.update({'domain': domain})
+            
+        uom_id = res.get('value', {}).get('product_uom', uom_id)
+        res = self.onchange_uom_qty(cr, uid, ids, uom_id, product_min_qty,
+            product_max_qty, context=context, res=res)
 
         return res
 
     def onchange_uom_qty(self, cr, uid, ids,
-        uom_id, product_min_qty, product_max_qty, context=None):
+        uom_id, product_min_qty, product_max_qty, context=None, res=None):
         """
         check the round of qty according to uom
         """
-        res = {}
+        if res is None:
+            res = {}
 
         if product_min_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
-                uom_id, product_qty, 'product_min_qty', result=res)
+                uom_id, product_min_qty, 'product_min_qty', result=res)
         if product_max_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
-                uom_id, product_qty, 'product_max_qty', result=res)
+                uom_id, product_max_qty, 'product_max_qty', result=res)
 
         return res
 
