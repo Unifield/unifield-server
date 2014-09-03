@@ -66,7 +66,12 @@ class TinySocket(object):
 
     def send(self, msg, exception=False, traceback=None):
         msg = cPickle.dumps([msg,traceback])
-        self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
+        if len(msg) <= 10**8-1:
+            self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
+        else:
+            n8size = len(msg)%10**8
+            n16size = len(msg)/10**8
+            self.sock.sendall('%8d%s%16d%s%s' % (n8size, "3", n16size, exception and "1" or "0", msg))
 
     def receive(self):
 
@@ -81,6 +86,10 @@ class TinySocket(object):
 
         size = int(read(self.sock, 8))
         buf = read(self.sock, 1)
+        if buf == '3':
+            newsize = int(read(self.sock, 16))
+            size = newsize*10**8+size
+            buf = read(self.sock, 1)
         exception = buf != '0' and buf or False
         res = cPickle.loads(read(self.sock, size))
 
