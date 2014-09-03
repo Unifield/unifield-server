@@ -201,7 +201,9 @@ class stock_warehouse_orderpoint(osv.osv):
     _columns = {
         'name': fields.char('Reference', size=128, required=True, select=True),
         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
-                                        domain="[('is_replenishment', '=', warehouse_id)]"),
+                                        domain="[('is_replenishment', '=', warehouse_id)]"),  # UTP-1186 in line_ids now so not required any more
+        'product_id': fields.many2one('product.product', 'Product', required=False, ondelete='cascade', domain=[('type','=','product')]),  # UTP-1186 in line_ids now so not required any more
+        'product_uom': fields.many2one('product.uom', 'Product UOM', required=False),
         'line_ids': fields.one2many('stock.warehouse.orderpoint.line', 'supply_id',
                                     string="Products",
                                     help='Define the min/max quantity to order for each products'),
@@ -358,7 +360,7 @@ class stock_warehouse_orderpoint_line(osv.osv):
     _rec_name = 'product_id'
 
     _columns = {
-        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'product_id': fields.many2one('product.product', string='Product', required=True, domain=[('type','=','product'), ]),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
         'product_min_qty': fields.float('Min Quantity', required=True),
         'product_max_qty': fields.float('Max Quantity', required=True),
