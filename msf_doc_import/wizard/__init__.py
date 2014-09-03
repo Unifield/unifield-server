@@ -116,6 +116,7 @@ import wizard_delete_lines
 import wizard_import_auto_supply_line
 import wizard_import_order_cycle_line
 import wizard_import_threshold_value_line
+import wizard_import_stock_warehouse_order_point_line
 import wizard_import_product_list
 import wizard_po_simulation_screen
 import wizard_in_simulation_screen
