@@ -22,6 +22,7 @@
 from osv import fields
 from osv import osv
 from tools.translate import _
+import time
 
 from sourcing.sale_order_line import _SELECTION_PO_CFT
 
@@ -29,18 +30,9 @@ _SELECTION_TYPE = [
     ('make_to_stock', 'from stock'),
     ('make_to_order', 'on order'), ]
 
-
-
-
 class multiple_sourcing_wizard(osv.osv_memory):
     _name = 'multiple.sourcing.wizard'
     
-    def _get_real_stock(self, cr, uid, ids, context=None):
-        
-        x = ids
-        print x
-        return 28
-
     _columns = {
         'line_ids': fields.many2many(
             'sale.order.line',
@@ -75,13 +67,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
             string='Error',
             help="If there is line without need sourcing on selected lines",
         ),
-        'dynamic_real_stock': fields.function(
-            _get_real_stock, method=True, type='char', size=256, string="Real Stock2", readonly=True, store=False
-        ),
     }
-    
-
-    
 
     def default_get(self, cr, uid, fields_list, context=None):
         """
@@ -90,24 +76,32 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if not context.get('active_ids') or len(context.get('active_ids')) < 2:
+        active_ids = context.get('active_ids')
+        if not active_ids or len(active_ids) < 2:
             raise osv.except_osv(_('Error'), _('You should select at least two lines to process.'))
 
         res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields_list, context=context)
 
         res['line_ids'] = []
         res['error_on_lines'] = False
-        res['type'] = 'make_to_order'
-        res['po_cft'] = 'po'
+        
+        # Check if all lines are with the same type, then set that type, otherwise set make_to_order
 
         # Ignore all lines which have already been sourced, if there are some alredy sourced lines, a message
         # will be displayed at the top of the wizard
-        for line in self.pool.get('sale.order.line').browse(cr, uid, context.get('active_ids'), context=context):
+        res['type'] = 'make_to_stock'
+        res['po_cft'] = False
+        
+        for line in self.pool.get('sale.order.line').browse(cr, uid, active_ids, context=context):
             if line.state == 'draft' and line.sale_order_state == 'validated':
                 res['line_ids'].append(line.id)
             else:
                 res['error_on_lines'] = True
-
+                
+            if line.type == 'make_to_order':
+                res['type'] = 'make_to_order'
+                res['po_cft'] = 'po'
+                
         if not res['line_ids']:
             raise osv.except_osv(_('Error'), _('No non-sourced lines are selected. Please select non-sourced lines'))
 
@@ -238,11 +232,41 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 }
         return result
     
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        result = super(multiple_sourcing_wizard, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        
+        return result
     
     def change_location(self, cr, uid, ids, location_id, context=None):
-     
+        res = {'value': {}}
+        if not location_id:
+            return res
 
-        return {'value': {'real_stock': 250}}
+        if context and context[0] and context[0][2]:
+            active_ids = context[0][2]
+
+            line_obj = self.pool.get('sale.order.line')
+            context = {}
+            for line in self.pool.get('sale.order.line').browse(cr, uid, active_ids, context=context):
+                line_obj.write(cr, uid, [line.id], {'type': 'make_to_stock',
+                                                            'po_cft': False,
+                                                            'supplier': False,
+                                                            'location_id': location_id}, # UTP-1021: Update loc and ask the view to refresh 
+                                                             context=context)                
+                
+# dict: {'line_ids': [1, 2], 'error_on_lines': False, 'company_id': 1, 'po_cft': False, 'type': 'make_to_stock'}
+# context = dict: {'lang': u'en_MF', 'tz': False, 'search_view': 1352, 'active_model': 'sale.order.line', 
+# '_terp_view_name': u'Source lines', 'active_id': 1, 'client': 'web', 'active_ids': [1, 2], 'department_id': False}
+
+        # THIS IS JUST TESTING!!!!!
+
+        if location_id == 25:
+            res = {'value':
+                   {'po_cft':'dpo',}}
+        else:
+            res = {'value':
+                   {'line_ids': [1, 2], 'error_on_lines': False, 'po_cft':False,}}
+        return res
       
 
 multiple_sourcing_wizard()

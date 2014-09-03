@@ -23,8 +23,6 @@
                                 <field name="product_uom_qty" />
                                 <field name="product_uom" />
                                 <field name="real_stock" />
-                                <field name="dynamic_real_stock" />
-                              
                             </tree>
                         </field>
                         <separator colspan="4" string="Procurement method" />
@@ -44,7 +42,7 @@
                                                       ('scrap_location', '=', False), ('destruction_location', '=', False), 
                                                       ('output_ok', '=', False), ('input_ok', '=', False)]" 
                               attrs="{'readonly': [('type', '!=', 'make_to_stock')]}" 
-                              on_change="change_location(location_id)" />
+                              on_change="change_location(location_id, line_ids)" />
                         
                     </group>
                     <separator colspan="4" string="Actions" />
