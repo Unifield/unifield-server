@@ -27,7 +27,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 # For the the time logger function------
 import time
 from msf_doc_import import check_line
-from msf_doc_import.wizard import AUTO_SUPPLY_LINE_COLUMNS_FOR_IMPORT as columns_for_auto_supply_line_import
+from msf_doc_import.wizard import STOCK_WAREHOUSE_ORDERPOINT_LINE_COLUMNS_FOR_IMPORT as columns_for_stock_warehouse_orderpoint
 
 
 class wizard_import_stock_warehouse_orderpoint_line(osv.osv_memory):
