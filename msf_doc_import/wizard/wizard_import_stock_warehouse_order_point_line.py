@@ -243,7 +243,6 @@ Importation completed in %s!
             cr.commit()
             cr.close()
 
-
     def import_file(self, cr, uid, ids, context=None):
         """
         Launch a thread for importing lines.

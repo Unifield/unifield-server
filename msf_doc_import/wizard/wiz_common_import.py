@@ -580,6 +580,63 @@ class stock_picking(osv.osv):
 stock_picking()
 
 
+class stock_warehouse_orderpoint_line(osv.osv):
+    _inherit = 'stock.warehouse.orderpoint.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids,
+        context=None):
+        # TODO line content from import file
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'],
+            context=context):
+            values = {'product_id': p_data['id'],
+                      'product_uom_id': p_data['uom_id'][0],
+                      'supply_id': parent_id}
+
+            values.update(self.onchange_product_id(cr, uid, False,
+                p_data['id'], p_data['uom_id'][0], 1.00,
+                context=context).get('value', {}))
+            # Set the quantity to 0.00
+            values.update({'product_qty': 0.00})
+
+            domain = [
+                ('product_id', '=', p_data['id']),
+                ('supply_id', '=', parent_id),
+            ]
+            if not self.search(cr, uid, domain, context=context):
+                self.create(cr, uid, values,
+                    context=dict(context, noraise=True))
+
+        return True
+
+stock_warehouse_orderpoint_line()
+
+
+class stock_warehouse_orderpoint(osv.osv):
+    _inherit = 'stock.warehouse.orderpoint'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        if context is None:
+            context = {}
+        context.update({
+            'product_ids_domain': [('type','=','product')],
+            'add_multiple_line': True,
+        })
+
+        return self.pool.get('wizard.common.import.line').open_wizard(cr, uid,
+            ids[0], 'stock.warehouse.orderpoint',
+            'stock.warehouse.orderpoint.line', context=context)
+
+stock_warehouse_orderpoint()
+
+
 class stock_warehouse_auto_supply_line(osv.osv):
     _inherit = 'stock.warehouse.automatic.supply.line'
 
