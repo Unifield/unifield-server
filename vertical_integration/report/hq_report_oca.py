@@ -149,9 +149,9 @@ class hq_report_oca(report_sxw.report_sxw):
         
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
+                                                                       ('account_id.is_analytic_addicted', '=', False),
                                                                        ('analytic_distribution_id', '=', False),
                                                                        ('journal_id.type', 'not in', ['hq', 'migration'])], context=context)
-        print 'move_line_ids: ', move_line_ids
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             journal = move_line.journal_id
             account = move_line.account_id
@@ -223,7 +223,6 @@ class hq_report_oca(report_sxw.report_sxw):
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['hq', 'engagement', 'migration'])], context=context)
-        print 'analytic_line_ids: ', analytic_line_ids
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
