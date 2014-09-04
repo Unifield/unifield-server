@@ -624,7 +624,7 @@
                             context="{'product_min_qty': product_min_qty, 'product_max_qty': product_max_qty, 'qty_multiple': qty_multiple}">
                             <tree string="Products" editable="top"
                                 colors="red: product_qty &lt;= 0.00">
-                                <field name="product_id" on_change="onchange_product_id(product_id, product_uom_id, product_min_qty, product_max_qty)" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['consu', 'service', 'service_recep'])]"/>
+                                <field name="product_id" on_change="onchange_product_id(product_id, product_uom_id, product_min_qty, product_max_qty)" />
                                 <field name="product_uom_id" domain="[('uom_by_product', '=', product_id)]" 
                                     on_change="onchange_uom_qty(product_uom_id, product_min_qty, product_max_qty)"/>
                                 <field name="product_min_qty" 
