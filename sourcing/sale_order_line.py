@@ -1050,7 +1050,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 # We create 20 threads (so if there are 15 order to process,
                 # we will create 15 threads (1 per order), but if there are 50 
                 # order to process, we will create 20 threads (1 per 2/3 orders)
-                while i < len(order_to_check)/20 and queue:
+                while i < (len(order_to_check)/20 or 1) and queue:
                     i +=1
                     order_id = queue.popleft()
                     order_ids.append(order_id)
