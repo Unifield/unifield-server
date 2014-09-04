@@ -592,6 +592,23 @@ class stock_picking(osv.osv):
 
         return values
 
+    def do_incoming_shipment_new_cr(self, cr, uid, wizard_ids, context=None):
+        """
+        Call the do_incoming_shipment() method with a new cursor.
+        """
+        # Create new cursor
+        import pooler
+        new_cr = pooler.get_db(cr.dbname).cursor()
+    
+        # Call do_incoming_shipment()
+        res = self.do_incoming_shipment(new_cr, uid, wizard_ids, context=context)
+
+        # Close the cursor
+        new_cr.commit()
+        new_cr.close()
+
+        return res
+
     def do_incoming_shipment(self, cr, uid, wizard_ids, context=None):
         """
         Take the data in wizard_ids and lines of stock.incoming.processor and
