@@ -55,33 +55,51 @@ class sale_order_sourcing_progress(osv.osv):
         for sp in self.browse(cr, uid, ids, context=context):
             nb_lines = sp.order_id and len(sp.order_id.order_line) or 0
             res[sp.id] = {
-                'percent_completed': 0.00,
-                'line_completed': '0/0',
+                'line_completed': '/',
+                'split_order': '/',
+                'check_data': '/',
+                'prepare_picking': '/',
             }
             if sp.order_id and sp.order_id.sourcing_trace_ok:
                 mem_id = mem_obj.search(cr, uid, [
                     ('order_id', '=', sp.order_id.id),
                 ], context=context)
                 if mem_id:
-                    mem_res = mem_obj.read(cr, uid, mem_id, ['percent_completed', 'line_completed'], context=context)[0]
+                    f_to_read = [
+                        'line_completed',
+                        'split_order',
+                        'check_data',
+                        'prepare_picking',
+                    ]
+                    mem_res = mem_obj.read(cr, uid, mem_id, f_to_read, context=context)[0]
                     res[sp.id] = {
-                        'percent_completed': mem_res['percent_completed'],
-                        'line_completed': mem_res['line_completed'] or '0/%s' % nb_lines,
+                        'line_completed': mem_res['line_completed'] or 'Not started (0/%s)' % nb_lines,
+                        'split_order': mem_res['split_order'],
+                        'check_data': mem_res['check_data'],
+                        'prepare_picking': mem_res['prepare_picking'],
+                    }
+                elif sp.order_id.sourcing_trace and sp.order_id.sourcing_trace != _('Sourcing in progress'):
+                    res[sp.id] = {
+                        'line_completed': _('Error'),
+                        'split_order': _('Error'),
+                        'check_data': _('Error'),
+                        'prepare_picking': _('Error − Please try again to confirm the %s by clicking on \'Confirmed\' button on form view') % (sp.order_id.procurement_request and _('IR') or _('FO')),
                     }
                 else:
                     res[sp.id] = {
-                        'percent_completed': 0.00,
-                        'line_completed': '0/%s' % nb_lines,
+                        'line_completed': _('Not started (0/%s)') % nb_lines,
+                        'split_order': _('Not started'),
+                        'check_data': _('Not started'),
+                        'prepare_picking': _('Not started'),
                     }
-            elif sp.order_id and sp.order_id.state == 'split_so':
+            elif sp.order_id and \
+                 (sp.order_id.state_hidden_sale_order in 'split_so' or \
+                 (sp.order_id.procurement_request and sp.order_id.state in ('manual', 'progress'))):
                 res[sp.id] = {
-                    'percent_completed': 100.00,
-                    'line_completed': '%s/%s' % (nb_lines, nb_lines),
-                }
-            else:
-                res[sp.id] = {
-                    'percent_completed': 0.00,
-                    'line_completed': '0/0',
+                    'line_completed': _('Done (%s/%s)') % (nb_lines, nb_lines),
+                    'split_order': _('Done (%s/%s)') % (nb_lines, nb_lines),
+                    'check_data': _('Done'),
+                    'prepare_picking': _('Done'),
                 }
 
         return res
@@ -92,25 +110,64 @@ class sale_order_sourcing_progress(osv.osv):
             string='Order',
             required=True,
         ),
-        'percent_completed': fields.function(
-            _get_percent,
-            method=True,
-            digits=(16, 2),
-            string='% completed',
-            readonly=True,
-            store=False,
-            multi='memory',
-        ),
         'line_completed': fields.function(
             _get_percent,
             method=True,
             type='char',
             size=64,
-            string='# Lines',
+            string='Source lines',
             readonly=True,
             store=False,
             multi='memory',
         ),
+        'split_order': fields.function(
+            _get_percent,
+            method=True,
+            type='char',
+            size=64,
+            string='Split order',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'check_data': fields.function(
+            _get_percent,
+            method=True,
+            type='char',
+            size=64,
+            string='Check data',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'prepare_picking': fields.function(
+            _get_percent,
+            method=True,
+            type='char',
+            size=64,
+            string='Prepare picking',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'start_date': fields.datetime(
+            string='Start date',
+            readonly=True,
+        ),
+        'end_date': fields.datetime(
+            string='End date',
+            readonly=True,
+        ),
+        'error': fields.text(
+            string='Error',
+        ),
+    }
+
+    _defaults = {
+        'line_completed': '/',
+        'split_order': '/',
+        'check_data': '/',
+        'prepare_picking': '/',
     }
 
 sale_order_sourcing_progress()
@@ -126,16 +183,33 @@ class sale_order_sourcing_progress_mem(osv.osv_memory):
             string='Order',
             required=True,
         ),
-        'percent_completed': fields.float(
-            digits=(16, 2),
-            string='% completed',
-            readonly=True,
-        ),
         'line_completed': fields.char(
-            string='# Lines',
+            string='Source lines',
             size=64,
             readonly=True,
         ),
+        'split_order': fields.char(
+            string='Split order',
+            size=64,
+            readonly=True,
+        ),
+        'check_data': fields.char(
+            string='Check order data',
+            size=64,
+            readonly=True,
+        ),
+        'prepare_picking': fields.char(
+            string='Prepare pickings',
+            size=64,
+            readonly=True,
+        ),
+    }
+
+    _defaults = {
+        'line_completed': '/',
+        'split_order': '/',
+        'check_data': '/',
+        'prepare_picking': '/',
     }
 
 sale_order_sourcing_progress_mem()
@@ -610,6 +684,44 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def update_sourcing_progress(self, cr, uid, order, prog_id=False, values=None, context=None):
+        '''
+        Update the osv_memory sourcing process object linked to order ID.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that calls the method
+        :param order: browse_record of a sale.order or the ID of a sale.order
+        :param prog_id: ID of a sale.order.sourcing.progress.mem to update
+        :param values: Dictionary that contains the value to put on sourcing
+                       process object
+        :param context: Context of the call
+
+        :return: True
+        '''
+        prog_obj = self.pool.get('sale.order.sourcing.progress.mem')
+
+        if not prog_id:
+            if not isinstance(order, browse_record) and isinstance(order, (int, long)):
+                order = self.browse(cr, uid, order, context=context)
+
+            order_id = order.original_so_id_sale_order and order.original_so_id_sale_order.id or order.id
+
+            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order_id)], context=context)
+            if prog_ids:
+                prog_id = prog_ids[0]
+            else:
+                prog_id = prog_obj.create(cr, uid, {
+                    'order_id': order_id,
+                }, context=context)
+
+        if not values:
+            return prog_id
+
+        prog_obj.write(cr, uid, [prog_id], values, context=context)
+
+        return prog_id
+
+
     def ask_resource_lines(self, cr, uid, ids, context=None):
         '''
         Launch the wizard to re-source lines
@@ -753,6 +865,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         # must be original-sale-order to reach this method
         for so in self.browse(cr, uid, ids, context=context):
+            line_total = len(so.order_line)
+            line_done = 0
+
+            prog_id = self.update_sourcing_progress(cr, uid, so, False, {
+                'split_order': _('In Progress (%s/%s)') % (line_done, line_total),
+            }, context=context)
+
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', so.partner_id.partner_type)], context=context)
             if so.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
@@ -766,6 +885,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # loop through lines
             created_line = []
             for line in so.order_line:
+                line_done += 1
+                prog_id = self.update_sourcing_progress(cr, uid, so, prog_id, {
+                    'split_order': _('In Progress (%s/%s)') % (line_done, line_total),
+                }, context=context)
                 # check that each line must have a supplier specified
                 if  line.type == 'make_to_order':
                     if not line.product_id:
@@ -821,6 +944,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
             # the sale order is treated, we process the workflow of the new so
+            prog_id = self.update_sourcing_progress(cr, uid, so, prog_id, {
+               'split_order': _('Done'),
+               'check_data': _('In Progress'),
+            }, context=context)
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
@@ -1316,7 +1443,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         config_obj = self.pool.get('unifield.setup.configuration')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
-        prog_obj = self.pool.get('sale.order.sourcing.progress.mem')
 
         if context is None:
             context = {}
@@ -1328,11 +1454,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
 
         for order in self.browse(cr, uid, ids, context=context):
-            # Create a sourcing progress object
-            prog_id = prog_obj.create(cr, uid, {
-                'order_id': order.original_so_id_sale_order and order.original_so_id_sale_order.id or order.id,
-                'percent_completed': 0.00,
-            }, context=context)
 
             proc_ids = []
             move_ids = []
@@ -1342,6 +1463,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             line_total = len(order.order_line)
             line_done = 0
+            prog_id = self.update_sourcing_progress(cr, uid, order, False, {
+               'check_data': _('Done'),
+                'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
+            }, context=context)
             for line in order.order_line:
                 proc_id = False
 
@@ -1448,11 +1573,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 
                 line_done += 1
-                if prog_id:
-                    prog_obj.write(cr, uid, [prog_id], {
-                        'percent_completed': (float(line_done)/float(line_total))*100,
-                        'line_completed': '%s/%s' % (line_done, line_total),
-                    }, context=context)
+                prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
+                   'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
+                }, context=context)
+
+            prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
+               'line_completed': _('Done (%s/%s)') % (line_done, line_total),
+               'prepare_picking': _('In Progress'),
+            }, context=context)
 
             # compute overall_qty
             if move_ids:
@@ -1512,6 +1640,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 })
 
             self.write(cr, uid, [order.id], val)
+
+            prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
+               'prepare_picking': _('Done'),
+            }, context=context)
 
         return True
     # @@@END override sale>sale.py>sale_order>action_ship_create()
@@ -1675,9 +1807,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.analytic_distribution_checks(cr, uid, order_brw_list)
 
         for order in order_brw_list:
-            prog_id = prog_obj.create(cr, uid, {
-                'order_id': order.original_so_id_sale_order and order.original_so_id_sale_order.id or order.id,
-                'percent_completed': 0.00,
+            prog_id = self.update_sourcing_progress(cr, uid, order, False, {
+               'check_data': _('In Progress'),
             }, context=context)
 
             o_write_vals = {}
@@ -1726,11 +1857,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 o_write_vals['order_policy'] = 'manual'
                 lines = sol_obj.search(cr, uid, [('order_id', '=', order.id)], context=context)
 
+
             # flag to prevent the display of the sale order log message
             # if the method is called after po update, we do not display log message
             display_log = True
             line_total = len(order.order_line)
             line_done = 0
+            prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
+               'check_data': _('Done'),
+               'line_completed': _('In Progress (%s/%s)') % (line_done, line_total),
+            }, context=context)
             for line in order.order_line:
                 # these lines are valid for all types (stock and order)
                 # when the line is sourced, we already get a procurement for the line
@@ -1768,11 +1904,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
 
                 line_done += 1
-                if prog_id:
-                    prog_obj.write(cr, uid, [prog_id], {
-                        'percent_completed': (float(line_done)/float(line_total))*100,
-                        'line_completed': '%s/%s' % (line_done, line_total),
-                    }, context=context)
+                prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
+                    'line_completed': _('In Progress (%s/%s)') % (line_done, line_total),
+                }, context=context)
+
+            prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
+                'line_completed': _('In Progress (%s/%s)') % (line_done, line_total),
+                'prepare_picking': _('Done'),
+            }, context=context)
 
             # the Fo is sourced we set the state
             o_write_vals['state'] = 'sourced'
