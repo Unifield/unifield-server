@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -35,6 +35,24 @@ def login(db, login, password):
 
 def check_super(passwd):
     if passwd == tools.config['admin_passwd']:
+        return True
+    else:
+        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+
+def check_super_dropdb(passwd):
+    if passwd == tools.config['admin_dropdb_passwd']:
+        return True
+    else:
+        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+
+def check_super_bkpdb(passwd):
+    if passwd == tools.config['admin_bkpdb_passwd']:
+        return True
+    else:
+        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+
+def check_super_restoredb(passwd):
+    if passwd == tools.config['admin_restoredb_passwd']:
         return True
     else:
         raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
