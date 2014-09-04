@@ -843,7 +843,7 @@ class Connection(osv.osv):
         'active': fields.boolean('Active'),
         'host': fields.char('Host', help='Synchronization server host name', size=256, required=True),
         'port': fields.integer('Port', help='Synchronization server connection port'),
-        'protocol': fields.selection([('xmlrpc', 'XMLRPC'), ('gzipxmlrpc', 'compressed XMLRPC'), ('xmlrpcs', 'secured XMLRPC'), ('netrpc', 'NetRPC'), ('netrpc_gzip', 'compressed NetRPC')], 'Protocol', help='Changing protocol may imply changing the port number'),
+        'protocol': fields.selection([('xmlrpc', 'XMLRPC'), ('gzipxmlrpc', 'compressed XMLRPC'), ('xmlrpcs', 'secured XMLRPC'), ('gzipxmlrpcs', 'secured compressed XMLRPC'), ('netrpc', 'NetRPC'), ('netrpc_gzip', 'compressed NetRPC')], 'Protocol', help='Changing protocol may imply changing the port number'),
         'database' : fields.char('Database Name', size=64),
         'login':fields.char('Login on synchro server', size=64),
         'uid': fields.function(_get_uid, string='Uid on synchro server', readonly=True, type='char', method=True),
@@ -873,6 +873,8 @@ class Connection(osv.osv):
             connector = rpc.XmlRPCConnector(con.host, con.port)
         elif con.protocol == 'gzipxmlrpc':
             connector = rpc.GzipXmlRPCConnector(con.host, con.port)
+        elif con.protocol == 'gzipxmlrpcs':
+            connector = rpc.GzipXmlRPCSConnector(con.host, con.port)
         elif con.protocol == 'xmlrpcs':
             connector = rpc.SecuredXmlRPCConnector(con.host, con.port)
         elif con.protocol == 'netrpc':

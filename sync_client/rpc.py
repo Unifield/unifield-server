@@ -10,7 +10,7 @@ import socket
 import zlib
 import xmlrpclib
 from timeout_transport import TimeoutTransport
-from gzip_xmlrpclib import GzipTransport
+from gzip_xmlrpclib import GzipTransport, GzipSafeTransport
 from osv import osv
 from tools.translate import _
 import tools
@@ -150,6 +150,19 @@ class GzipXmlRPCConnector(XmlRPCConnector):
         url = '%s/%s' % (self.url, service_name)
         gzip_transport = GzipTransport(timeout=TIMEOUT)
         service = xmlrpclib.ServerProxy(url, allow_none=1, transport=gzip_transport)
+        return getattr(service, method)(*args)
+
+class GzipXmlRPCSConnector(GzipXmlRPCConnector):
+    PROTOCOL = 'gzipxmlrpcs'
+
+    def __init__(self, hostname, port=8069):
+        GzipXmlRPCConnector.__init__(self, hostname, port)
+        self.url = 'https://%s:%s/xmlrpc' % (self.hostname, self.port)
+
+    def send(self, service_name, method, *args):
+        url = '%s/%s' % (self.url, service_name)
+        gzip_safe_transport = GzipSafeTransport(timeout=TIMEOUT)
+        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=gzip_safe_transport)
         return getattr(service, method)(*args)
 
 class NetRPC_Exception(Exception):
