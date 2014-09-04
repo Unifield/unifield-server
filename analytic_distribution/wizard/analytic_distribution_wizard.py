@@ -982,6 +982,18 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         if not context:
             context = {}
+        
+        wiz2 = self.browse(cr, uid, ids, context=context)[0]
+        line_totals = 0.0
+        for line in wiz2.fp_line_ids:
+            line_totals += line.amount
+        
+        if wiz2.amount != line_totals:
+            raise osv.except_osv(_('Error'), _('Line amounts do not equal the total.'))
+
+
+        
+            
         if isinstance(ids, (int, long)):
             ids = [ids]
         o2m_toreload = {}
