@@ -602,7 +602,7 @@ class stock_warehouse_orderpoint_line(osv.osv):
                 context=context)
             if parent_r:
                 for f in parent_vals.keys():
-                    parent_vals[f] = parent_r[f]
+                    parent_vals[f] = parent_r[f] or 0.
 
         # set line vals
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'],
