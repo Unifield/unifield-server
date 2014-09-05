@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-    
+
     	<record model="ir.ui.view" id="base.view_model_fields_tree">
             <field name="priority">2</field>
         </record>
-        
+
         <record model="ir.ui.view" id="ir_model_fields_tree_sync_rule">
             <field name="name">ir_model_fields.tree.sync</field>
             <field name="model">ir.model.fields</field>
@@ -16,7 +16,7 @@
                 <field name="ttype" position="after">
                 	<field name="relation" />
                 	<field name="required" />
-                	
+
                 </field>
             </field>
         </record>
@@ -36,7 +36,7 @@
                 </search>
             </field>
         </record>
-        
+
         <record model="ir.ui.view" id="sync_rule_tree_view">
             <field name="name">sync_rule.tree</field>
             <field name="model">sync_server.sync_rule</field>
@@ -130,7 +130,7 @@
                 </form>
             </field>
         </record>
-        
+
         <record model="ir.ui.view" id="message_rule_search_view">
             <field name="name">message.rule.search</field>
             <field name="model">sync_server.message_rule</field>
@@ -143,8 +143,8 @@
                 </search>
             </field>
         </record>
-        
-        
+
+
         <record model="ir.ui.view" id="message_rule_tree_view">
             <field name="name">message_rule.tree</field>
             <field name="model">sync_server.message_rule</field>
@@ -161,8 +161,8 @@
                 </tree>
             </field>
         </record>
-        
-        
+
+
         <record model="ir.ui.view" id="message_rule_form_view">
             <field name="name">message_rule.form</field>
             <field name="model">sync_server.message_rule</field>
@@ -176,7 +176,7 @@
                         <field name="sequence_number"/>
                         <field name="destination_name" on_change="invalidate(model_ref)"/>
                         <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
-                        
+
                         <field name="applies_to_type" invisible="1"/>
                         <group colspan="2" col="4">
                             <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)], 'required':[('applies_to_type','=',False)]}"/>
@@ -195,13 +195,13 @@
                     </group>
                     <group colspan="4" col="6">
                         <label string="" colspan="3"/>
-                        <field name="status"/>
+                        <field name="status" readonly="1"/>
                         <button type="object" string="Validate" name="validate"/>
                     </group>
                 </form>
             </field>
         </record>
-        
+
        <!-- ============================= ACTIONS =================== -->
         <record model="ir.actions.act_window" id="sync_rule_action">
             <field name="name">Synchronization Rules</field>
@@ -210,24 +210,24 @@
             <field name="view_mode">tree,form</field>
             <field name="context">{'search_default_all' : 1}</field>
         </record>
-        
+
         <record model="ir.actions.act_window" id="message_rule_action">
             <field name="name">Messages Rules</field>
             <field name="res_model">sync_server.message_rule</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="context">{'search_default_all' : 1}</field>
-        </record>             
-        
+        </record>
+
         <menuitem id="rules_menu" name="Rules" parent="sync_menu" sequence="20"/>
 
         <menuitem id="sync_rule_menu" name="Data Synchronization Rules" parent="rules_menu"
-                action="sync_rule_action" />   
-                
+                action="sync_rule_action" />
+
         <menuitem id="message_rule_menu" name="Messages Rules" parent="rules_menu"
-                action="message_rule_action" /> 
-                
-                
+                action="message_rule_action" />
+
+
        <record model="ir.ui.view" id="rule_validation_view">
        		<field name="name">sync_server.rule.validation.message.form</field>
             <field name="model">sync_server.rule.validation.message</field>
@@ -241,11 +241,10 @@
        			</form>
        		</field>
        </record>
-        
+
     </data>
 </openerp>
 
 <!--
     vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 -->
-
