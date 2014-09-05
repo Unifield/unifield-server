@@ -263,7 +263,7 @@ class so_po_common(osv.osv_memory):
         return False
 
     def create_sync_order_label(self, cr, uid, data_dict, context=None):
-        sourced_references = data_dict.get('sourced_references').split(',')
+        sourced_references = data_dict.get('sourced_references') and data_dict['sourced_references'].split(',') or []
         label_ids = []
         for sourced_order in sourced_references:
             label_ids.append((0,0,{'name': sourced_order}))
