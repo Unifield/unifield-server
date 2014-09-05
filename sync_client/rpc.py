@@ -30,7 +30,6 @@ import logging
 
 #logging.config.fileConfig('logging.cfg')
 
-TIMEOUT = 3600
 GZIP_MAGIC = '\x78\xda' # magic when max compression used
 NB_RETRY = 10
 
@@ -70,13 +69,14 @@ class Connector(object):
 
     _logger = logging.getLogger('connector')
 
-    def __init__(self, hostname, port):
+    def __init__(self, hostname, port, timeout):
         """
         :param hostname: Host name of the server
         :param port: Port for the connection to the server
         """
         self.hostname = hostname
         self.port = port
+        self.timeout = timeout
 
 class XmlRPCConnector(Connector):
     """
@@ -84,15 +84,15 @@ class XmlRPCConnector(Connector):
     """
     PROTOCOL = 'xmlrpc'
 
-    def __init__(self, hostname, port=8069):
-        Connector.__init__(self, hostname, port)
+    def __init__(self, hostname, port=8069, timeout=10.0):
+        Connector.__init__(self, hostname, port, timeout=timeout)
         self._logger = logging.getLogger('connector.xmlrpc')
         self.url = 'http://%s:%s/xmlrpc' % (self.hostname, self.port)
 
     def send(self, service_name, method, *args):
         url = '%s/%s' % (self.url, service_name)
-        timeout_transport = TimeoutTransport(timeout=TIMEOUT)
-        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=timeout_transport)
+        transport = TimeoutTransport(timeout=self.timeout)
+        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=transport)
         return getattr(service, method)(*args)
 
 """Modified version of xmlrcpclib.Transport.request (same in Python 2.4, 2.5, 2.6)
@@ -131,8 +131,8 @@ class SecuredXmlRPCConnector(XmlRPCConnector):
     """
     PROTOCOL = 'xmlrpcs'
 
-    def __init__(self, hostname, port=8070):
-        XmlRPCConnector.__init__(self, hostname, port)
+    def __init__(self, hostname, port=8070, timeout=10.0):
+        XmlRPCConnector.__init__(self, hostname, port, timeout=timeout)
         self.url = 'https://%s:%s/xmlrpc' % (self.hostname, self.port)
 
     def send(self, service_name, method, *args):
@@ -148,7 +148,7 @@ class GzipXmlRPCConnector(XmlRPCConnector):
 
     def send(self, service_name, method, *args):
         url = '%s/%s' % (self.url, service_name)
-        gzip_transport = GzipTransport(timeout=TIMEOUT)
+        gzip_transport = GzipTransport(timeout=self.timeout)
         service = xmlrpclib.ServerProxy(url, allow_none=1, transport=gzip_transport)
         return getattr(service, method)(*args)
 
@@ -165,7 +165,7 @@ class NetRPC:
             socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = sock
-        self.sock.settimeout(TIMEOUT)
+        self.sock.settimeout(self.timeout)
         self.is_gzip = is_gzip
         self._logger = logging.getLogger('netrpc')
 
@@ -189,7 +189,7 @@ class NetRPC:
             raw_size = len(msg)
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
             gzipped_size = len(msg)
-            saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
+            #saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
             #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         size = len(msg)
         self.sock.send('%8d' % size)
@@ -224,7 +224,7 @@ class NetRPC:
             gzipped_size = len(msg)
             msg = zlib.decompress(msg)
             raw_size = len(msg)
-            saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
+            #saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
             #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         res = SafeUnpickler.loads(msg)
 
@@ -238,16 +238,18 @@ class NetRPC:
 class NetRPCConnector(Connector):
     PROTOCOL = 'netrpc'
 
-    def __init__(self, hostname, port=8070, is_gzip=False):
-        Connector.__init__(self, hostname, port)
+    def __init__(self, hostname, port=8070, is_gzip=False, timeout=10.0, retry=10):
+        Connector.__init__(self, hostname, port, timeout=timeout)
         self._logger = logging.getLogger('connector.netrpc')
         self.is_gzip = is_gzip
+        self.retry = retry
 
     def send(self, service_name, method, *args):
         i = 0
         retry = True
         result = False
         error = False
+        print "number of retry", self.retry
         while retry:
             try:
                 retry = False
@@ -257,7 +259,7 @@ class NetRPCConnector(Connector):
                 result = socket.myreceive()
             except Exception, e:
                 error = e
-                if i < NB_RETRY:
+                if i < self.retry:
                     retry = True
                     self._logger.debug("retry to connect %s, error : %s" ,i, e)
                 i += 1

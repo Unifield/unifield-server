@@ -793,6 +793,15 @@ class Entity(osv.osv):
                 % (_(monitor.status_dict[last_log[0]]), last_log[1])
 
         return "Connected"
+    
+    def interrupt_sync(self, cr, uid, context=None):
+        if self.is_syncing():
+            try:
+                self._renew_sync_lock()
+            except StandardError:
+                return False
+            self.sync_cursor.close()
+        return True
 
 Entity()
 
@@ -850,6 +859,8 @@ class Connection(osv.osv):
         'password': fields.function(_get_password, fnct_inv=_set_password, string='Password', type='char', method=True, store=False),
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True, store=False),
         'max_size' : fields.integer("Max Packet Size"),
+        'timeout' : fields.float("Timeout"),
+        'netrpc_retry' : fields.integer("NetRPC retry"),
     }
 
     _defaults = {
@@ -860,6 +871,8 @@ class Connection(osv.osv):
         'login' : 'admin',
         'max_size' : 500,
         'database' : 'SYNC_SERVER',
+        'timeout' : 10.0,
+        'netrpc_retry' : 1,
     }
 
     def _get_connection_manager(self, cr, uid, context=None):
@@ -870,15 +883,15 @@ class Connection(osv.osv):
 
     def connector_factory(self, con):
         if con.protocol == 'xmlrpc':
-            connector = rpc.XmlRPCConnector(con.host, con.port)
+            connector = rpc.XmlRPCConnector(con.host, con.port, timeout=con.timeout)
         elif con.protocol == 'gzipxmlrpc':
-            connector = rpc.GzipXmlRPCConnector(con.host, con.port)
+            connector = rpc.GzipXmlRPCConnector(con.host, con.port, timeout=con.timeout)
         elif con.protocol == 'xmlrpcs':
-            connector = rpc.SecuredXmlRPCConnector(con.host, con.port)
+            connector = rpc.SecuredXmlRPCConnector(con.host, con.port, timeout=con.timeout)
         elif con.protocol == 'netrpc':
-            connector = rpc.NetRPCConnector(con.host, con.port)
+            connector = rpc.NetRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.netrpc_retry)
         elif con.protocol == 'netrpc_gzip':
-            connector = rpc.GzipNetRPCConnector(con.host, con.port)
+            connector = rpc.GzipNetRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.netrpc_retry)
         else:
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
@@ -920,13 +933,8 @@ class Connection(osv.osv):
         return rpc.Object(cnx, model)
 
     def disconnect(self, cr, uid, context=None):
-        entity = self.pool.get('sync.client.entity')
-        if entity.is_syncing():
-            try:
-                entity._renew_sync_lock()
-            except StandardError:
-                return False
-            entity.sync_cursor.close()
+        if not self.pool.get('sync.client.entity').interrupt_sync(cr, uid, context=context):
+            return False
         self._uid = False
         return True
 

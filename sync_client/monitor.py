@@ -135,6 +135,9 @@ class sync_monitor(osv.osv):
         return [
             (rec.id, "(%d) %s" % (rec.sequence_number, rec.start))
             for rec in self.browse(cr, user, ids, context=context) ]
+        
+    def interrupt(self, cr, uid, ids, context=None):
+        return self.pool.get('sync.client.entity').interrupt_sync(cr, uid, context=context)
 
     _rec_name = 'start'
 
