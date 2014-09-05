@@ -69,7 +69,8 @@ function openRecord(id, src, target, readonly){
 
     if (kind == 'many2many') {
         args['source'] = src;
-        jQuery.frame_dialog({src:openobject.http.getURL(get_form_action('/openerp/openm2m/edit', args))});
+        action = readonly ? '/openerp/openm2m/view' : '/openerp/openm2m/edit';
+        jQuery.frame_dialog({src:openobject.http.getURL(get_form_action(action, args))});
         return;
     }
 
@@ -969,6 +970,9 @@ function set_to_default(field_id, model){
         'model': model,
         'field': field_id
     }).addCallback(function(obj){
+        if (!obj.value) {
+            obj.value = null;
+        }
         jQuery('[id="' + field_id + '"]')
                 .val(obj.value);
         // jQuery().change doesn't trigger Mochikit's handler?

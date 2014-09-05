@@ -57,6 +57,9 @@
     <script type="text/javascript">
         jQuery('form').submit(function () {
             jQuery('.save_close:eq(0) button').attr('disabled', true);
+            setTimeout(function(){
+                jQuery('.save_close:eq(0) button').removeAttr('disabled');
+            }, 3000);
         })
         jQuery.o2m('init');
     </script>

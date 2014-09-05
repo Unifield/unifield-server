@@ -16,6 +16,7 @@ import preferences
 import selection
 import shortcuts
 import requests
+import unifield_version
 import openm2o
 import openo2m
 import openm2m

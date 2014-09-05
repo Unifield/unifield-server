@@ -119,7 +119,7 @@ import itertools
                          % endfor
                         % if editable:
                             <td class="grid-cell">
-                                % if not ch.get('id') or ch.get('id') not in noteditable:
+                                % if (not ch.get('id') or ch.get('id') not in noteditable) and not hide_edit_button:
                                 <img src="/openerp/static/images/iconset-b-edit.gif" class="listImage" border="0"
                                      title="${_('Edit')}" onclick="editRecord(${ch.get('id')}, '${source}')"/>
                                 % endif
