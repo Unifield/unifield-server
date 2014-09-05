@@ -52,7 +52,8 @@
                     <field name="data_push"/>
                     <field name="msg_push"/>
                     <field name="status"/>
-                    <button name="interrupt" string="Interrupt"  icon="gtk-cancel" attrs="{ 'invisible' : [('status', '!=', 'in-progress')]}" />
+                    <button name="interrupt" string="Interrupt"  icon="gtk-cancel" states="in-progress" />
+                    <field name="state" />
                     <field name="error"/>
                 </tree>
             </field>

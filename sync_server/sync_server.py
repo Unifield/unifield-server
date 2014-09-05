@@ -326,7 +326,7 @@ class entity(osv.osv):
         return (True, {
             'name': entity.name,
             'identifier': entity.identifier,
-            'parent': entity.parent_id.name,
+            'parent': entity.parent_id.name or '',
             'email': entity.email,
             'entity_status': entity.state,
             'group': ', '.join([group.name for group in entity.group_ids]),

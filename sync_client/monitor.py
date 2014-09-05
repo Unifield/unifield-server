@@ -151,6 +151,7 @@ class sync_monitor(osv.osv):
         'msg_push' : fields.selection(status_dict.items(), string="Msg Push", readonly=True),
         'status' : fields.selection(status_dict.items(), string="Status", readonly=True),
         'error' : fields.text("Messages", readonly=True),
+        'state' : fields.related('status', type='selection', selection=status_dict.items(), store=True),
     }
 
     _defaults = {
