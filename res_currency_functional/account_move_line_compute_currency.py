@@ -65,6 +65,8 @@ class account_move_line_compute_currency(osv.osv):
         Create an addendum line.
         posting_date and document_date should be the oldiest date from all lines!
         """
+        if context is None:
+            context = {}
         current_date = time.strftime('%Y-%m-%d')
         j_obj = self.pool.get('account.journal')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
@@ -187,6 +189,8 @@ class account_move_line_compute_currency(osv.osv):
                 vals.update({'currency_id': functional_currency_id})
             # Create partner line
             vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
+            # UTP-1022: Allow account.move.line creation when we come from "create_addendum_line" because of currencies rate redefinition
+            context.update({'addendum_line_creation': True})
             partner_line_id = self.create(cr, uid, vals, context=context)
             # Create addendum_line
             if distrib_id:

@@ -94,6 +94,7 @@ class account_move_line_reconcile(osv.osv_memory):
         journals = defaultdict(list)
         transfers = []
         transfer_with_change = False
+        disregard_third_party = False
         transfer = False
         debits = 0
         credits = 0
@@ -105,6 +106,8 @@ class account_move_line_reconcile(osv.osv_memory):
                 journals[(line.journal_id.id, line.transfer_journal_id and line.transfer_journal_id.id or None)].append(line.id)
                 if line.is_transfer_with_change:
                     transfers.append(line.id)
+                if line.account_id.type_for_register == 'disregard_rec':
+                    disregard_third_party = True
                 debits += line.debit
                 credits += line.credit
                 statements.append(line.statement_id)
@@ -160,7 +163,8 @@ class account_move_line_reconcile(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('An account is different from others: %s') % (line.account_id.code,))
             # verification that there's only one 3rd party
             # The 3rd party verification is desactivated in case of transfer with change
-            if not transfer:
+            # UTP-1040: 3RD party is also desactivated in case of account that is "Disregard Third Party" as "type_for_register"
+            if not transfer and not disregard_third_party:
                 third_party = {
                         'partner_id': line.partner_id and line.partner_id.id or False, 
                         'employee_id': line.employee_id and line.employee_id.id or False, 

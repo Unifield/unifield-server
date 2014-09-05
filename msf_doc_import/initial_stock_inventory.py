@@ -193,6 +193,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             # Batch
             batch = row.cells[3].data
             if batch:
+                if isinstance(batch, int):
+                    batch = str(batch)
                 try:
                     batch = batch.strip()
                     batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
@@ -205,6 +207,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     else:
                         batch = batch_ids[0]
                 except Exception:
+                    batch = False
                     error_list.append(_('The Batch has to be a string.'))
 
             # Expiry date

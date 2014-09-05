@@ -259,7 +259,9 @@
 </Borders>
 <NumberFormat ss:Format="0.0%"/>
 <Font  ss:Bold="1"/>
+<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="0"/>
 </Style>
+
 <Style ss:ID="s47">
 <Borders>
 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
@@ -270,6 +272,7 @@
 <NumberFormat ss:Format="Standard"/>
 <Font  ss:Bold="1"/>
 </Style>
+
 <Style ss:ID="s48">
 <Borders>
 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
@@ -279,7 +282,9 @@
 </Borders>
 <NumberFormat ss:Format="0.0%"/>
 <Font  ss:Bold="1"/>
+<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="0"/>
 </Style>
+
 <Style ss:ID="s49">
 <NumberFormat ss:Format="Short Date"/>
 </Style>
@@ -291,12 +296,12 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+<Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="Short Date"/>
 </Style>
 
 <Style ss:ID="short_date3">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+<Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="Short Date"/>
 </Style>
 
@@ -311,12 +316,6 @@
 </Style>
 
 <Style ss:ID="s21b">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
 <Font  ss:Bold="1"/>
 </Style>
 
@@ -336,9 +335,8 @@
 <Column ss:Width="100.5"/>
 <Row>
 <Cell ss:StyleID="s21b">
-<Data ss:Type="String">${_('FINANCIAL REPORT for financing contract')}</Data>
+<Data ss:Type="String">${_('Financing contract - Budget vs. Actuals')}</Data>
 </Cell>
-<Cell ss:StyleID="s21"/>
 </Row>
 <Row>
 <Cell ss:StyleID="s21">
@@ -474,8 +472,9 @@
 </Row>
 
 
-
-% for line in getLines(o):
+<% line = False %>
+<% lines = getLines(o) %>
+% for line in lines:
 <Row>
 <Cell ss:StyleID="s29">
 <Data ss:Type="String">${( line[0] or '')|x}</Data>
@@ -533,7 +532,7 @@
 <Cell ss:StyleID="s45" ss:Formula="=+RC[-2]-RC[-1]">
 <Data ss:Type="Number"></Data>
 </Cell>
-% if checkType(o,line):
+% if lines and checkType(o,line):
 	<Cell ss:StyleID="s46">
 % else:
 	<Cell ss:StyleID="s48">
@@ -541,7 +540,7 @@
 <Data ss:Type="String">${( getTot(2) or '')|x}</Data>
 </Cell>
 
-% if checkType(o,line):
+% if lines and checkType(o,line):
 	<Cell ss:StyleID="s44">
 	<Data ss:Type="Number">${( getTot(3) or '')|x}</Data>
 	</Cell>

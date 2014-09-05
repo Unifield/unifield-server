@@ -51,7 +51,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
         model = 'split.memory.move'
         # we need to get the memory move id to know which line to split
         # and class name, to know which type of moves
-        return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, type='create', context=dict(context, memory_move_ids=ids, class_name=self._name))
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, w_type='create', context=dict(context, memory_move_ids=ids, class_name=self._name))
     
     def change_product(self, cr, uid, ids, context=None):
         '''
@@ -460,6 +460,6 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
             new_memory_move = self.create(cr, uid, values, context=context)
         
         # udpate the original wizard
-        return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='update', context=context)
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], w_type='update', context=context)
     
 stock_partial_move_memory_shipment_returnpacksfromshipment()

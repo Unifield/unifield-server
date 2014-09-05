@@ -259,6 +259,7 @@
                         <newline/>
                         <field name="reporting_type"/>
                         <field name="active" colspan="2"/>
+                        <field name="reporting_currency"/>
                         <newline/>
                         <field name="overhead_type"/>
                         <field name="overhead_percentage" colspan="2"/>

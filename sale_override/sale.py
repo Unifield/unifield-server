@@ -38,6 +38,31 @@ from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
 
 
+class sync_order_label(osv.osv):
+    '''
+    Class used to know the name of the document of another instance 
+    sourced by a FO.
+    '''
+    _name = 'sync.order.label'
+    _description = 'Original order'
+
+    _columns = {
+        'name': fields.char(
+            string='Name',
+            size=256,
+            required=True,
+        ),
+        'order_id': fields.many2one(
+            'sale.order',
+            string='Linked FO',
+            required=True,
+            ondelete='cascade',
+        ),
+    }
+
+sync_order_label()
+
+
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -260,6 +285,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
     _columns = {
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
@@ -311,6 +347,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
         'fo_to_resource': fields.boolean(string='FO created to resource FO in exception', readonly=True),
         'parent_order_name': fields.char(size=64, string='Parent order name', help='In case of this FO is created to re-source a need, this field contains the name of the initial FO (before split).'),
+        'sourced_references': fields.one2many(
+            'sync.order.label',
+            'order_id',
+            string='FO/IR sourced',
+        ),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     _defaults = {
@@ -325,6 +367,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'split_type_sale_order': 'original_sale_order',
         'active': True,
         'no_line': lambda *a: True,
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     def _check_empty_line(self, cr, uid, ids, context=None):
@@ -1641,12 +1684,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
                         proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
 
-            # the Fo is sourced we set the state
-            o_write_vals['state'] = 'sourced'
-            self.write(cr, uid, [order.id], o_write_vals, context=context)
-            # display message for sourced
-            if display_log:
-                self.log(cr, uid, order.id, _('The split \'%s\' is sourced.') % (order.name))
+            # the Fo is sourced we set the state (keep the IR in confirmed state)
+            if not order.procurement_request:
+                o_write_vals['state'] = 'sourced'
+                self.write(cr, uid, [order.id], o_write_vals, context=context)
+                # display message for sourced
+                if display_log:
+                    self.log(cr, uid, order.id, _('The split \'%s\' is sourced.') % (order.name))
 
         if lines:
             sol_obj.write(cr, uid, lines, {'invoiced': 1}, context=context)
@@ -1698,6 +1742,17 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
     _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Sale Price Computation'), readonly=True, states={'draft': [('readonly', False)]}),
                 'is_line_split': fields.boolean(string='This line is a split line?'),  # UTP-972: Use boolean to indicate if the line is a split line
                 'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
@@ -1719,10 +1774,17 @@ class sale_order_line(osv.osv):
                 'created_by_po': fields.many2one('purchase.order', string='Created by PO'),
                 'created_by_po_line': fields.many2one('purchase.order.line', string='Created by PO line'),
                 'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
+                'sync_sourced_origin': fields.char(string='Sync. Origin', size=256),
+                'cancel_split_ok': fields.boolean(
+                    string='Cancel split',
+                    help='If the line has been canceled/removed on the splitted FO',
+                ),
+                'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
                 }
 
     _defaults = {
         'is_line_split': False,  # UTP-972: By default set False, not split
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     def ask_unlink(self, cr, uid, ids, context=None):
@@ -1783,6 +1845,8 @@ class sale_order_line(osv.osv):
         '''
         # Documents
         proc_obj = self.pool.get('procurement.order')
+        move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
 
         wf_service = netsvc.LocalService("workflow")
 
@@ -1798,6 +1862,23 @@ class sale_order_line(osv.osv):
             proc = line.procurement_id and line.procurement_id.id
             # Delete the line and the procurement
             self.write(cr, uid, [line.id], {'state': 'cancel'}, context=context)
+
+            # UF-2401: Remove OUT line when IR line has been canceled
+            picking_ids = set()
+            if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
+                move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel'])], context=context)
+                for move in move_obj.read(cr, uid, move_ids, ['picking_id'], context=context):
+                    picking_ids.add(move['picking_id'][0])
+                move_obj.write(cr, uid, move_ids, {'state': 'draft'}, context=context)
+                move_obj.unlink(cr, uid, move_ids, context=context)
+
+            for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
+                if not len(pick.move_lines):
+                    pick_obj.action_cancel(cr, uid, [pick.id])
+
+            if line.original_line_id:
+                self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': True}, context=context)
+
             # UFTP-82:
             # do not delete cancelled IR line from PO cancelled
             # see purchase_override/purchase.py 
@@ -2191,6 +2272,7 @@ class sale_config_picking_policy(osv.osv_memory):
     }
 
 sale_config_picking_policy()
+
 
 class sale_order_unlink_wizard(osv.osv_memory):
     _name = 'sale.order.unlink.wizard'

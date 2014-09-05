@@ -41,8 +41,8 @@ class account_analytic_line(osv.osv):
             ids = [ids]
         # Return nothing if no 'output_currency_id' in context
         if not context or not context.get('output_currency_id', False):
-            for id in ids:
-                res[id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
+            for o_id in ids:
+                res[o_id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             return res
         # Retrieve currency
         currency_id = context.get('output_currency_id')
@@ -50,8 +50,8 @@ class account_analytic_line(osv.osv):
         rate = currency_obj.read(cr, uid, currency_id, ['rate'], context=context).get('rate', False)
         # Do calculation
         if not rate:
-            for id in ids:
-                res[id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
+            for out_id in ids:
+                res[out_id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             return res
         for ml in self.browse(cr, uid, ids, context=context):
             res[ml.id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
@@ -74,7 +74,7 @@ class account_analytic_line(osv.osv):
         'output_amount': fields.function(_get_output, string="Output amount", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_amount_debit': fields.function(_get_output, string="Output debit", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_amount_credit': fields.function(_get_output, string="Output credit", type='float', method=True, store=False, multi="analytic_output_currency"),
-        'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False, 
+        'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False,
             multi="analytic_output_currency"),
     }
 

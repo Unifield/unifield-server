@@ -50,7 +50,7 @@
                     <xpath expr="//field[@name='user_type']" position="replace">
                         <field name="user_type_code" invisible="1"/>
                         <field name="is_analytic_addicted" invisible="1"/>
-                        <field name="user_type" on_change="onchange_user_type(user_type)"/>
+                        <field name="user_type" on_change="onchange_user_type(user_type, code)"/>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='General Information']" position="after">
                         <page string="Analytical Destination">

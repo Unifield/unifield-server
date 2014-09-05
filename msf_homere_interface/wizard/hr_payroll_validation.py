@@ -242,14 +242,7 @@ class hr_payroll_validation(osv.osv_memory):
                     if f2_id:
                         common_vals.update({'analytic_id': f2_id})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
-            elif account and account.type_for_register and account.type_for_register == 'payroll':
-                partner_id = line.get('partner_id', False) and line.get('partner_id')[0] or False
-                if not partner_id:
-                    raise osv.except_osv(_('Warning'), _('No partner filled in for this line: %s') % (line.get('name', ''),))
-                partner_data = self.pool.get('res.partner').read(cr, uid, partner_id, ['property_account_payable', 'property_account_receivable'])
-                account_id = partner_data.get('property_account_payable', account_id) and partner_data.get('property_account_payable')[0] or account_id
-#                if amount > 0.0:
-#                    account_id = partner_data.get('property_account_receivable', account_id) and partner_data.get('property_account_receivable')[0] or account_id
+            # UTP-1042: Specific partner's accounts are not needed.
             # create move line values
             line_vals = {
                 'move_id': move_id,

@@ -291,7 +291,7 @@ class stock_picking(osv.osv):
             ids = [ids]
         res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
         wizard_obj = self.pool.get('wizard')
-        res = wizard_obj.open_wizard(cr, uid, ids, type='update', context=dict(context,
+        res = wizard_obj.open_wizard(cr, uid, ids, w_type='update', context=dict(context,
                                                                                wizard_ids=[res['res_id']],
                                                                                wizard_name=res['name'],
                                                                                model=res['res_model'],
@@ -743,6 +743,21 @@ class stock_picking(osv.osv):
                                 'product_uom': line.uom_id.id,
                                 'in_out_updated': in_out_updated,
                             })
+                            remaining_out_qty = 0.00
+                            move_obj.write(cr, uid, [out_move.id], out_values, context=context)
+                            processed_out_moves.append(out_move.id)
+                        elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1]:
+                            # Just update the out move with the value of the out move with UoM of IN
+                            out_qty = out_move.product_qty
+                            if line.uom_id.id != out_move.product_uom.id:
+                                out_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, out_move.product_qty, line.uom_id.id)
+
+                            out_values.update({
+                                'product_qty': out_qty,
+                                'product_uom': line.uom_id.id,
+                                'in_out_updated': in_out_updated,
+                            })
+                            remaining_out_qty -= out_qty
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
                             remaining_out_qty = 0.00

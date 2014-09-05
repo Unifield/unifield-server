@@ -130,6 +130,8 @@
                         <field name="date" string="Posting Date"/>
                         <field name="period_id"/>
                         <field name="journal_id"/>
+                        <field name="employee_id" invisible="1"/>
+                        <field name="transfer_journal_id" invisible="1"/>
                         <field name="partner_id" invisible="1"/>
                         <field name="partner_type"/>
                         <field name="book_amount" sum="Booking Amount"/>
@@ -143,77 +145,7 @@
             </field>
         </record>
 
-    <!-- Journal Entries Search (filter) -->
-        <record model="ir.ui.view" id="inherit_view_account_move_filter">
-            <field name="name">inherit.view.account.move.filter</field>
-            <field name="model">account.move</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_move_filter" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//filter[@string='To Review']" position="replace"/>
-                    <xpath expr="//field[@name='journal_id']" position="replace">
-                        <field name="journal_id"/>
-                        <field name="journal_type"/>
-                    </xpath>
-                    <xpath expr="//field[@name='date']" position="replace">
-                        <newline/>
-                        <field name="document_date" select="1"/>
-                        <field name="date" select="1"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-    <!-- Journal Entries Search (filter) -->
-        <record model="ir.ui.view" id="inherit_view_account_move_line_filter">
-            <field name="name">inherit.view.account.move.line.filter</field>
-            <field name="model">account.move.line</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_move_line_filter" />
-            <field name="priority" eval="10"/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//field[@name='balance']" position="replace" /><!-- UTP-31: del balance: moving from extended filter to filter -->
-                    <xpath expr="//filter[@string='Unbalanced']" position="replace">
-                        <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
-                      </xpath>
-                    <xpath expr="//field[@name='ref']" position="replace">
-                    </xpath>
-                    <xpath expr="//field[@name='name']" position="replace">
-                    </xpath>
-                    <xpath expr="//field[@name='move_id']" position="replace">
-                        <newline/>
-                    </xpath>
-                    <xpath expr="//field[@name='date']" position="replace">
-                        <newline/>
-                        <field name="document_date" select="1"/>
-                        <field name="date" select="1"/>
-                        <newline/>
-                    </xpath>
-                    <xpath expr="//field[@name='partner_id']" position="replace">
-                        <field name="name" select="1"/>
-                    </xpath>
-                    <xpath expr="//field[@name='account_id']" position="before">
-                        <field name="move_id" select="1"/>
-                        <field name="ref" select="1"/>
-                    </xpath>
-                    <xpath expr="//field[@name='journal_id']" position="replace">
-                        <field name="journal_id" context="{'journal_id':self, 'visible_id': self, 'normal_view':False}"/>
-                        <field name="journal_type"/>
-                    </xpath>
-                    <xpath expr="//field[@name='period_id']" position="replace">
-                        <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
-                        <newline />
-                        <!-- UTP-31: balance: moving from extended filter to filter (after period_id) -->
-                        <field name="balance" string="Debit/Credit Functional" select='1'/>
-                        <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-    <!-- Redefine journal entries action -->
+    <!-- Redefine journal entries action (especially with from_web_menu in context to know we come from the web interface) -->
         <record id="account.action_move_journal_line" model="ir.actions.act_window">
             <field name="name">Journal Entries</field>
             <field name="res_model">account.move</field>
@@ -243,7 +175,7 @@
 
     <!-- UF-1715 -->
     <report id="account_partner_balance_tree_xls"
-        auto="False" 
+        auto="False"
         menu="False"
         header="False"
         model="account.partner.balance.tree"

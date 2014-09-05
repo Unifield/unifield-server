@@ -61,14 +61,15 @@
                                 <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                             </group>
                                 <field name="currency_id" readonly="1"/>
-                                <field name="amount_untaxed" sum="Untaxed amount"/>
-                                <field name="amount_tax"/>
+                                <field name="vat_ok" invisible="1" />
+                                <field name="amount_untaxed" sum="Untaxed amount" attrs="{'invisible': [('vat_ok', '=', False)]}" />
+                                <field name="amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}" />
                                 <field name="amount_total" sum="Total amount"/>
                                 <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
                                 <newline/>
                                 <field name="functional_currency_id" readonly="1"/>
-                                <field name="functional_amount_untaxed"/>
-                                <field name="functional_amount_tax"/>
+                                <field name="functional_amount_untaxed" attrs="{'invisible': [('vat_ok', '=', False)]}" />
+                                <field name="functional_amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}" />
                                 <field name="functional_amount_total"/>
                                 <newline/>
                                 <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>

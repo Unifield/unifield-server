@@ -174,6 +174,17 @@ class account_invoice(osv.osv):
             'virtual_partner_id': inv.partner_id.id or False}
         return res
 
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
@@ -205,6 +216,7 @@ class account_invoice(osv.osv):
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False,
             states={'draft':[('readonly',False)]}),
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     _defaults = {
@@ -215,6 +227,7 @@ class account_invoice(osv.osv):
         'is_inkind_donation': lambda obj, cr, uid, c: c.get('is_inkind_donation', False),
         'is_intermission': lambda obj, cr, uid, c: c.get('is_intermission', False),
         'is_direct_invoice': lambda *a: False,
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id):
@@ -240,7 +253,7 @@ class account_invoice(osv.osv):
             # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
             res['domain']['journal_id'] = [('id', 'in', journal_ids)]
         return res
-
+        
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
         date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False):
         """
@@ -302,8 +315,10 @@ class account_invoice(osv.osv):
         Remove useless fields
         """
         for line in lines:
-            del line['move_lines']
-            del line['import_invoice_id']
+            if line.get('move_lines',False):
+                del line['move_lines']
+            if line.get('import_invoice_id',False):
+                del line['import_invoice_id']
         res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines)
         return res
 
@@ -315,10 +330,17 @@ class account_invoice(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note']):
+        purchase_obj = self.pool.get('purchase.order')
+        commitment_obj = self.pool.get('account.commitment')
+        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'state']):
             if inv.get('type', '') == 'in_invoice' and not inv.get('is_inkind_donation', False) and not inv.get('is_debit_note', False):
                 if inv.get('purchase_ids', False):
-                    raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
+                    # UTP-808: Allow draft invoice deletion. If commitment exists, set them as done.
+                    if inv.get('state', '') != 'draft':
+                        raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
+                    else:
+                        for purchase in purchase_obj.browse(cr, uid, inv.get('purchase_ids', []), context=context):
+                            commitment_obj.action_commitment_done(cr, uid, [x.id for x in purchase.commitment_ids])
         return True
 
     def _hook_period_id(self, cr, uid, inv, context=None):
@@ -893,6 +915,17 @@ class account_invoice_line(osv.osv):
             res[inv_line.id] = ''
             if inv_line.product_id:
                 res[inv_line.id] = inv_line.product_id.default_code
+
+        return res
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
         return res
 
     _columns = {
@@ -906,12 +939,14 @@ class account_invoice_line(osv.osv):
             store=False),
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
         'reference': fields.char(string="Reference", size=64),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     _defaults = {
         'price_unit': lambda *a: 0.00,
         'from_yml_test': lambda *a: False,
         'is_corrected': lambda *a: False,
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     _order = 'line_number'

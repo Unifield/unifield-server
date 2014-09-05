@@ -18,11 +18,11 @@
         model="msf.budget"
         name="xls.budget.monthly"
         target_filename="Monthly_Budget_${code}_${decision_moment_id}_${version}"
-        file="msf_budget/report/budget_monthly_xls.mako"
+        file="msf_budget/report/monthly_budget.mako"
         report_type="webkit"
         header="False"
         auto="False"
-        menu="True"/>
+        menu="False"/>
 
         <report id="pdf_budget_monthly"
         string="Monthly Budget (PDF)"
@@ -31,7 +31,7 @@
         target_filename="Monthly_Budget_${code}_${decision_moment_id}_${version}"
         rml="msf_budget/report/monthly_budget.rml"
         auto="False"
-        menu="True"/>
+        menu="False"/>
 
         <!-- see 'report/report_pdf_budget_summary.py' for real filename -->
         <report id="pdf_budget_summary"
