@@ -38,7 +38,7 @@
       <field name="type">tree</field>
       <field name="arch" type="xml">
         <tree string="Synchronization Monitor"
-              colors="red:sequence==0">
+              colors="red:sequence==0" resequencable="0">
           <field name="source"/>
           <field name="create_date"/>
           <field name="sequence" invisible="1"/>
