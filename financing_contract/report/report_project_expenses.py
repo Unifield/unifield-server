@@ -4,7 +4,7 @@ import pooler
 import locale
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
-
+from osv import osv
 
 class report_project_expenses(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -25,6 +25,23 @@ class report_project_expenses(report_sxw.report_sxw):
 
 report_project_expenses('report.financing.project.expenses', 'financing.contract.contract', False, parser=False)
 
+class allocated_expense_report_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(allocated_expense_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        """
+        Check that each financing contract have a FP selected.
+        This is to avoid UTP-1063 bug.
+        """
+        if context is None:
+            context = {}
+        table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        for contract in table_obj.browse(cr, uid, ids):
+            if contract.format_id:
+                if not contract.format_id.funding_pool_ids:
+                    raise osv.except_osv(_('Warning'), _('No FP selected in the financing contract: %s') % (contract.name))
+        return super(allocated_expense_report_xls, self).create(cr, uid, ids, data, context=context)
 
 class report_project_expenses2(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -175,5 +192,5 @@ class report_project_expenses3(report_project_expenses2):
 
 SpreadsheetReport('report.financing.project.expenses.2','financing.contract.contract','addons/financing_contract/report/project_expenses_xls.mako', parser=report_project_expenses2)
 
-SpreadsheetReport('report.financing.allocated.expenses.2','financing.contract.contract','addons/financing_contract/report/project_expenses_xls.mako', parser=report_project_expenses3)
+allocated_expense_report_xls('report.financing.allocated.expenses.2','financing.contract.contract','addons/financing_contract/report/project_expenses_xls.mako', parser=report_project_expenses3)
 
