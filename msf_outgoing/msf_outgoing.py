@@ -1228,6 +1228,8 @@ class shipment(osv.osv):
                         sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
                         if sol_ana_dist_id:
                             distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
+                            # create default funding pool lines (if no one)
+                            self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id])
 
                     # set UoS if it's a sale and the picking doesn't have one
                     uos_id = move.product_uos and move.product_uos.id or False
