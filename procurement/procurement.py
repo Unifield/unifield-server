@@ -560,6 +560,9 @@ class stock_warehouse_orderpoint(osv.osv):
         'company_id': fields.many2one('res.company','Company',required=True),
         'procurement_draft_ids': fields.function(_get_draft_procurements, method=True, type='many2many', relation="procurement.order", \
                                 string="Related Procurement Orders",help="Draft procurement of the product and location of that orderpoint"),
+        'line_ids': fields.one2many('stock.warehouse.orderpoint.line',
+            'supply_id', string="Products",
+            help='Define the min/max quantity to order for each products'),    
     }
     _defaults = {
         'active': lambda *a: 1,
@@ -604,4 +607,22 @@ class stock_warehouse_orderpoint(osv.osv):
         return super(stock_warehouse_orderpoint, self).copy(cr, uid, id, default, context=context)
     
 stock_warehouse_orderpoint()
+
+
+class stock_warehouse_orderpoint_line(osv.osv):
+    _name = 'stock.warehouse.orderpoint.line'
+    _description = 'Minimum Stock Rule Line'
+    _rec_name = 'product_id'
+
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True, domain=[('type','=','product'), ]),
+        'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
+        'product_min_qty': fields.float('Min Quantity', required=True),
+        'product_max_qty': fields.float('Max Quantity', required=True),
+        'qty_multiple': fields.integer('Qty Multiple', required=True),
+        'procurement_id': fields.many2one('procurement.order', 'Procurement', ondelete="set null"),
+        'supply_id': fields.many2one('stock.warehouse.orderpoint', string='Supply', ondelete='cascade', required=True)
+    }
+    
+stock_warehouse_orderpoint_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
