@@ -204,9 +204,6 @@ class stock_warehouse_orderpoint(osv.osv):
                                         domain="[('is_replenishment', '=', warehouse_id)]"),  
         'product_id': fields.many2one('product.product', 'Product', required=False, ondelete='cascade', domain=[('type','=','product')]),  # UTP-1186 in line_ids now so not required any more
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=False),  # UTP-1186 in line_ids now so not required any more
-        'line_ids': fields.one2many('stock.warehouse.orderpoint.line', 'supply_id',
-                                    string="Products",
-                                    help='Define the min/max quantity to order for each products'),
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -269,18 +266,9 @@ stock_warehouse_orderpoint()
 
 class stock_warehouse_orderpoint_line(osv.osv):
     _name = 'stock.warehouse.orderpoint.line'
+    _inherit = 'stock.warehouse.orderpoint.line'
     _description = 'Minimum Stock Rule Line'
-    _rec_name = 'product_id'
 
-    _columns = {
-        'product_id': fields.many2one('product.product', string='Product', required=True, domain=[('type','=','product'), ]),
-        'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
-        'product_min_qty': fields.float('Min Quantity', required=True),
-        'product_max_qty': fields.float('Max Quantity', required=True),
-        'qty_multiple': fields.integer('Qty Multiple', required=True),
-        'supply_id': fields.many2one('stock.warehouse.orderpoint', string='Supply', ondelete='cascade', required=True)
-    }
-    
     def default_get(self, cr, uid, fields, context=None):
         if context is None:
             context = {}
