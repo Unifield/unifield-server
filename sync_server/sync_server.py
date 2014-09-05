@@ -146,6 +146,8 @@ class entity(osv.osv):
 
         'parent_left' : fields.integer("Left Parent", select=1),
         'parent_right' : fields.integer("Right Parent", select=1),
+        
+        'msg_ids_tmp':fields.text('List of temporary ids of message to be pulled'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -662,6 +664,28 @@ class sync_manager(osv.osv):
                      b : string : is an informative message
         """
         return self.pool.get('sync.server.message').unfold_package(cr, 1, entity, packet, context=context)
+
+
+    @check_validated
+    def get_message_ids(self, cr, uid, entity, context=None):
+        # UTP-1179: store temporarily this ids of messages to be sent to this entity at the moment of getting the update
+        # to avoid having messages that are not belonging to the same "sequence" of the update  
+        msg_ids_tmp = self.pool.get("sync.server.message").search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], context=context)
+        
+        len_ids = 0
+        if msg_ids_tmp:
+            len_ids = len(msg_ids_tmp)
+            self.pool.get('sync.server.entity').write(cr, 1, entity.id, {'msg_ids_tmp': msg_ids_tmp}, context=context)
+            
+        self._logger.info("::::::::The instance " + entity.name + " pulled " + str(len_ids) + " messages.")        
+        return (True, len_ids)
+
+    @check_validated
+    def reset_message_ids(self, cr, uid, entity, context=None):
+        # UTP-1179: store temporarily this ids of messages to be sent to this entity at the moment of getting the update
+        # to avoid having messages that are not belonging to the same "sequence" of the update  
+        self.pool.get('sync.server.entity').write(cr, 1, entity.id, {'msg_ids_tmp': False}, context=context)
+        return (True, 0)
 
     @check_validated
     def get_message(self, cr, uid, entity, max_packet_size, context=None):

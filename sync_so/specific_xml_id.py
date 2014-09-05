@@ -356,12 +356,19 @@ class account_analytic_line(osv.osv):
             else:
                 new_cost_center_id = old_cost_center_id
 
+            ''' UTP-1128: If the correction is made with the following usecase, do not generate anything:
+                If the correction is to replace the cost center of the current instance, say P1 to the cc of P2, the deletion
+                must not be generated for P1, because if it got generated, this deletion will be spread up to Coordo, then resync 
+                back to P1 making that P1 deletes also the line with cost center of P2 <--- this is wrong as stated in the ticket
+            '''
             # UF-2342: only generate delete message if the instance is at Project level
             old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
             if old_destination_level == 'project':
                 old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
                 new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-                if not old_destination_name == new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
+
+                # UTP-1128: if the old cost center belong to the current instance, do not generate the delete message
+                if instance_name != old_destination_name and old_destination_name != new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
                     now = fields.datetime.now()
                     message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
                         'sent':False,
