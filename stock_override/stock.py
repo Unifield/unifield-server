@@ -950,7 +950,13 @@ class stock_picking(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
+                prog_id = self.update_processing_info(cr, uid, sp.id, False, {
+                   'close_in': _('Invoice creation in progress'), 
+                }, context=context)  
                 self._create_invoice(cr, uid, sp)
+                prog_id = self.update_processing_info(cr, uid, sp.id, prog_id, {
+                   'close_in': _('Done'), 
+                }, context=context)  
 
         return res
 

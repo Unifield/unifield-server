@@ -214,14 +214,15 @@ class stock_incoming_processor(osv.osv):
         new_thread.join(1.0)
 
         if new_thread.isAlive():
-            # TODO: To fix because the code is copy/paste from historical consumption report
-            view_id = data_obj.get_object_reference(cr, uid, 'consumption_calculation', 'history_consumption_waiting_view')[1]
+            view_id = data_obj.get_object_reference(cr, uid, 'delivery_mechanism', 'stock_picking_processing_info_form_view')[1]
+            prog_id = picking_obj.update_processing_info(cr, uid, picking_id, prog_id=False, values={}, context=context)
+
             return {
                 'type': 'ir.actions.act_window',
-                'res_model': 'product.history.consumption',
+                'res_model': 'stock.picking.processing.info',
                 'view_type': 'form',
                 'view_mode': 'form',
-                'res_id': ids[0],
+                'res_id': prog_id,
                 'view_id': [view_id],
                 'context': context,
                 'target': 'same',
