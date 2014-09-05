@@ -71,7 +71,7 @@ background = '#F5F5F5'
 
             % if editable:
                 <td class="grid-cell">
-                    % if not ch.get('id') or ch.get('id') not in noteditable:
+                    % if (not ch.get('id') or ch.get('id') not in noteditable) and not hide_edit_button:
                     <img src="/openerp/static/images/listgrid/edit_inline.gif" class="listImage" border="0"
                          title="${_('Edit')}" onclick="editRecord(${ch.get('id')}, '${source}')"/>
                     % endif
