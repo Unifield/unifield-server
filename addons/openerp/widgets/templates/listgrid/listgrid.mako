@@ -333,7 +333,7 @@
                             </tfoot>
                         % endif
                     </table>
-                    % if data and 'sequence' in map(lambda x: x[0], itertools.chain(headers,hiddens)):
+                    % if data and 'sequence' in map(lambda x: x[0], itertools.chain(headers,hiddens)) and resequencable:
                         <script type="text/javascript">
                             // flag is used to check sorting is active or not //
                             var is_column_sorted = "${'_terp_sort_key' in cherrypy.request.params.keys()}";

@@ -39,7 +39,7 @@ from pager import Pager
 class List(TinyWidget):
 
     template = "/openerp/widgets/templates/listgrid/listgrid.mako"
-    params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 
+    params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 'resequencable',
               'pageable', 'selector', 'source', 'offset', 'limit', 'show_links', 'editors', 'view_mode',
               'hiddens', 'edit_inline', 'field_total', 'field_real_total', 'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m', 'dashboard', 'impex', 'hide_new_button', 'hide_delete_button', 'notselectable']
 
@@ -260,6 +260,9 @@ class List(TinyWidget):
                         self.notselectable.append(x['id'])
                 except:
                     pass 
+
+        self.resequencable = expr_eval(attrs.get('resequencable') or '1')
+        # self.resequencable = True  # uncomment this if you want to disable this globally
 
         # make editors
         if self.editable and attrs.get('noteditable'):
