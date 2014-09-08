@@ -33,7 +33,7 @@ import traceback
 from psycopg2 import OperationalError
 
 import logging
-from sync_common import sync_log
+from sync_common import sync_log, get_md5, check_md5
 
 from threading import Thread, RLock, Lock
 import pooler
@@ -362,6 +362,8 @@ class Entity(osv.osv):
             res = proxy.get_model_to_sync(identifier)
             if not res[0]:
                 raise Exception, res[1]
+            check_md5(res[2], res[1], _('method create_update'))
+
             self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
 
         def prepare_update(session):
@@ -393,7 +395,9 @@ class Entity(osv.osv):
             return updates.create_package(cr, uid, entity.session_id, max_packet_size)
 
         def send_package(ids, packet):
-            res = proxy.receive_package(entity.identifier, packet)
+            context={'md5': get_md5(packet)}
+
+            res = proxy.receive_package(entity.identifier, packet, context)
             if not res[0]:
                 raise Exception, res[1]
             updates.write(cr, uid, ids, {'sent' : True}, context=context)
@@ -432,7 +436,7 @@ class Entity(osv.osv):
         session_id = entity.session_id
         update_ids = updates.search(cr, uid, [('session_id', '=', session_id)], context=context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        res = proxy.confirm_update(entity.identifier, session_id)
+        res = proxy.confirm_update(entity.identifier, session_id, {'md5': get_md5(session_id)})
         if not res[0]:
             raise Exception, res[1]
         updates.sync_finished(cr, uid, update_ids, context=context)
@@ -475,6 +479,7 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_max_sequence(entity.identifier)
         if res and res[0]:
+            check_md5(res[2], res[1], _('method get_max_sequence'))
             return self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
             raise Exception, res[1]
@@ -505,6 +510,7 @@ class Entity(osv.osv):
                     logger.write()
                 last = res[2]
                 if res[1]:
+                    check_md5(res[3], res[1], _('method get_update'))
                     offset = res[1]['offset']
                     self.write(cr, uid, entity.id, {'update_offset' : offset}, context=context)
             elif res and not res[0]:
@@ -617,6 +623,7 @@ class Entity(osv.osv):
 
         res = proxy.get_message_rule(uuid)
         if res and not res[0]: raise Exception, res[1]
+        check_md5(res[2], res[1], _('method get_message_rule'))
         self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
 
         rule_obj = self.pool.get("sync.client.message_rule")
@@ -644,7 +651,7 @@ class Entity(osv.osv):
             if not packet:
                 break
             messages_count += len(packet)
-            res = proxy.send_message(uuid, packet)
+            res = proxy.send_message(uuid, packet, {'md5': get_md5(packet)})
             if not res[0]:
                 raise Exception, res[1]
             messages.packet_sent(cr, uid, packet, context=context)
@@ -699,9 +706,12 @@ class Entity(osv.osv):
 
             packet = res[1]
             if not packet: break
+            check_md5(res[2], packet, _('method get_message'))
+
             messages_count += len(packet)
             messages.unfold_package(cr, uid, packet, context=context)
-            res = proxy.message_received(instance_uuid, [data['id'] for data in packet])
+            data_ids = [data['id'] for data in packet]
+            res = proxy.message_received(instance_uuid, data_ids, {'md5': get_md5(data_ids)})
             if not res[0]: raise Exception, res[1]
             cr.commit()
 

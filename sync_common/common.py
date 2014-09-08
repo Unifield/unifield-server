@@ -2,9 +2,12 @@ import re
 import sys
 import traceback
 import pprint
+import hashlib
+import json
+
 
 import tools
-
+from tools.translate import _
 
 MODELS_TO_IGNORE = [
                     'ir.actions.wizard',
@@ -178,3 +181,10 @@ def normalize_xmlid(string):
     Try to normalize xmlid given by removing any comma.
     """
     return string.replace(',', '_')
+
+def get_md5(obj):
+    return hashlib.md5(json.dumps(obj, sort_keys=True)).hexdigest()
+
+def check_md5(md5, data, add_info=""):
+    if md5 != get_md5(data):
+        raise Exception(_('Error during data transmission, checksum does not match %s') % add_info)

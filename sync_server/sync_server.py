@@ -28,6 +28,7 @@ from tools.translate import _
 import pprint
 import logging
 from datetime import datetime, timedelta
+from sync_common import get_md5, check_md5
 
 pp = pprint.PrettyPrinter(indent=4)
 MAX_ACTIVITY_DELAY = timedelta(minutes=5)
@@ -529,7 +530,7 @@ class sync_manager(osv.osv):
                     
         """
         res = self.pool.get('sync_server.sync_rule')._get_rule(cr, uid, entity, context=context)
-        return (True, res[1])
+        return (True, res[1], get_md5(res[1]))
         
     @check_validated
     def receive_package(self, cr, uid, entity, packet, context=None):
@@ -555,6 +556,10 @@ class sync_manager(osv.osv):
                      a : boolean : is True is if the call is succesfull, False otherwise
                      b : string : is an error message if a is False
         """
+        if context is None:
+            context = {}
+        if context.get('md5'):
+            check_md5(context['md5'], packet, _('server method receive_package'))
         res = self.pool.get("sync.server.update").unfold_package(cr, 1, entity, packet, context=context)
         return (True, res)
             
@@ -568,6 +573,11 @@ class sync_manager(osv.osv):
                 a : boolean : is True is if the call is succesfull, False otherwise
                 b : int : sequence number given
         """
+        if context is None:
+            context = {}
+        if context.get('md5'):
+            check_md5(context['md5'], session_id, _('server method confirm_update'))
+
         return self.pool.get("sync.server.update").confirm_updates(cr, 1, entity, session_id, context=context)
 
     
@@ -581,7 +591,8 @@ class sync_manager(osv.osv):
                 b : integer : is the sequence number of the last successfull push session by any entity
         
         """
-        return (True, self.pool.get('sync.server.update').get_last_sequence(cr, uid, context=context))
+        last_seq = self.pool.get('sync.server.update').get_last_sequence(cr, uid, context=context)
+        return (True, last_seq, get_md5(last_seq))
     
     @check_validated
     def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
@@ -616,7 +627,7 @@ class sync_manager(osv.osv):
                               
         """
         package = self.pool.get("sync.server.update").get_package(cr, uid, entity, last_seq, offset, max_size, max_seq, recover=recover, context=context)
-        return (True, package or False, not package)
+        return (True, package or False, not package, get_md5(package))
     
     """
         Message synchronization
@@ -645,7 +656,7 @@ class sync_manager(osv.osv):
                         
         """
         res = self.pool.get('sync_server.message_rule')._get_message_rule(cr, uid, entity, context=context)
-        return (True, res)
+        return (True, res, get_md5(res))
     
     @check_validated
     def send_message(self, cr, uid, entity, packet, context=None):
@@ -663,6 +674,11 @@ class sync_manager(osv.osv):
                      a : boolean : is True is if the call is succesfull, False otherwise
                      b : string : is an informative message
         """
+        if context is None:
+            context = {}
+        if context.get('md5'):
+            check_md5(context['md5'], packet, _('server method send_message'))
+
         return self.pool.get('sync.server.message').unfold_package(cr, 1, entity, packet, context=context)
 
 
@@ -705,7 +721,7 @@ class sync_manager(osv.osv):
         """
         
         res = self.pool.get('sync.server.message').get_message_packet(cr, uid, entity, max_packet_size, context=context)
-        return (True, res)
+        return (True, res, get_md5(res))
         
     @check_validated
     def message_received(self, cr, uid, entity, message_ids, context=None):
@@ -717,6 +733,10 @@ class sync_manager(osv.osv):
                      b : message : is an error message if a is False
               
         """
+        if context is None:
+            context = {}
+        if context.get('md5'):
+            check_md5(context['md5'], message_ids, _('server method message_received'))
         return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_ids, context=context))
 
     @check_validated
