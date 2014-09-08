@@ -249,7 +249,6 @@ class NetRPCConnector(Connector):
         retry = True
         result = False
         error = False
-        print "number of retry", self.retry
         while retry:
             try:
                 retry = False

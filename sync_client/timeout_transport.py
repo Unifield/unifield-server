@@ -6,7 +6,6 @@ class TimeoutHTTPConnection(httplib.HTTPConnection):
 
     def connect(self):
         httplib.HTTPConnection.connect(self)
-        print 'timout', self.timeout
         if self.timeout is not None:
             self.sock.settimeout(self.timeout)
             

@@ -330,7 +330,7 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid, context)
 
         if entity.state not in ('init', 'update_send', 'update_validate'):
-           raise SkipStep
+            raise SkipStep
 
         cont = False
         if cont or entity.state == 'init':

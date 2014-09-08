@@ -51,9 +51,9 @@
                     <field name="msg_pull"/>
                     <field name="data_push"/>
                     <field name="msg_push"/>
-                    <field name="status" invisible="1" />
+                    <field name="status" />
                     <field name="state"  />
-                    <button name="interrupt" type="object" string="Interrupt"  icon="gtk-cancel"  states="in-progress" />
+                    <button name="interrupt" type="object" string="Interrupt"  icon="gtk-cancel"  states="syncing" />
                     <field name="error"/>
                 </tree>
             </field>

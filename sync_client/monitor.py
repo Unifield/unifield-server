@@ -138,6 +138,15 @@ class sync_monitor(osv.osv):
         
     def interrupt(self, cr, uid, ids, context=None):
         return self.pool.get('sync.client.entity').interrupt_sync(cr, uid, context=context)
+    
+    def _is_syncing(self, cr, uid, ids, name, arg, context=None):
+        res = dict.fromkeys(ids, "not_syncing")
+        is_syncing = self.pool.get('sync.client.entity').is_syncing()
+        for monitor in self.browse(cr, uid, ids, context=context):
+            if monitor.status == 'in-progress' and is_syncing:
+                res[monitor.id] = "syncing"
+        
+        return res
 
     _rec_name = 'start'
 
@@ -151,8 +160,8 @@ class sync_monitor(osv.osv):
         'msg_push' : fields.selection(status_dict.items(), string="Msg Push", readonly=True),
         'status' : fields.selection(status_dict.items(), string="Status", readonly=True),
         'error' : fields.text("Messages", readonly=True),
-        'state' : fields.related('status', type='selection', selection=status_dict.items(), store=True, string="Status"),
-
+        'state' : fields.function(_is_syncing, method=True, type='selection', string="Is Syncing", selection=[('syncing', 'Syncing'), ('not_syncing', 'Not Syncing')]),
+      
     }
 
     _defaults = {
