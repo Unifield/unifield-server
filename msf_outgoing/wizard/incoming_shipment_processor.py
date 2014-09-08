@@ -225,7 +225,7 @@ class stock_incoming_processor(osv.osv):
                 'res_id': prog_id,
                 'view_id': [view_id],
                 'context': context,
-                'target': 'same',
+                'target': 'new',
             }
         
         if context.get('from_simu_screen'):

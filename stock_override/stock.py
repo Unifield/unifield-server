@@ -954,9 +954,6 @@ class stock_picking(osv.osv):
                    'close_in': _('Invoice creation in progress'), 
                 }, context=context)  
                 self._create_invoice(cr, uid, sp)
-                prog_id = self.update_processing_info(cr, uid, sp.id, prog_id, {
-                   'close_in': _('Done'), 
-                }, context=context)  
 
         return res
 
@@ -1218,6 +1215,8 @@ class stock_move(osv.osv):
         '''
         Call the wizard to ask user if he wants to re-source the need
         '''
+        mem_obj = self.pool.get('stock.picking.processing.info')
+
         if context is None:
             context = {}
 
@@ -1227,6 +1226,15 @@ class stock_move(osv.osv):
         backmove_ids = self.search(cr, uid, [('backmove_id', 'in', ids), ('state', 'not in', ('done', 'cancel'))], context=context)
 
         for move in self.browse(cr, uid, ids, context=context):
+            mem_ids = mem_obj.search(cr, uid, [
+                ('picking_id', '=', move.picking_id.id),
+                ('end_date', '=', False),
+            ], context=context)
+            if mem_ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The processing of the picking is in progress - You can\'t cancel this move.'),
+                )
             if backmove_ids or move.product_qty == 0.00:
                 raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
             if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and (move.purchase_line_id.order_id.po_from_ir or move.purchase_line_id.order_id.po_from_fo)):

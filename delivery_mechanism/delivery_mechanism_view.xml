@@ -40,6 +40,8 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Picking processing info">
+                    <field name="picking_id" />
+                    <newline />
                     <field name="start_date" />
                     <field name="end_date" />
                     <field name="progress_line" />
@@ -50,8 +52,8 @@
                     <newline />
                     <field name="prepare_pick" />
                     <separator colspan="4" string="Actions" />
-                    <button name="refresh" string="Refresh" icon="gtk-refresh" colspan="2" />
-                    <button special="cancel" string="Close" icon="gtk-close" colspan="2" />
+                    <button name="refresh" type="object" string="Refresh" icon="gtk-refresh" colspan="2" />
+                    <button name="close" type="object" string="Close" icon="gtk-close" colspan="2" />
                 </form>
             </field>
         </record>

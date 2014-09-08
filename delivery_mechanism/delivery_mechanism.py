@@ -77,6 +77,7 @@ class stock_picking_processing_info(osv.osv_memory):
         'create_bo': _('Not started'),
         'close_in': _('Not started'),
         'prepare_pick': _('Not started'),
+        'end_date': False,
     }
 
     def refresh(self, cr, uid, ids, context=None):
@@ -89,6 +90,7 @@ class stock_picking_processing_info(osv.osv_memory):
             'res_id': ids[0],
             'view_type': 'form',
             'view_mode': 'form',
+            'target': 'new',
             'context': context,
         }
 
@@ -96,7 +98,24 @@ class stock_picking_processing_info(osv.osv_memory):
         '''
         Just close the page
         '''
-        return {'type': 'ir.actions.act_window_close'}
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        mem_brw = self.browse(cr, uid, ids[0], context=context)
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'res_id': mem_brw.picking_id.id,
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'view_id': [view_id],
+            'target': 'same',
+            'context': context,
+        }
 
 stock_picking_processing_info()
 
@@ -356,7 +375,7 @@ class stock_picking(osv.osv):
 
         res = {}
         for pick_id in ids:
-            res[pick_id] = None
+            res[pick_id] = -1
             mem_ids = mem_obj.search(cr, uid, [
                 ('picking_id', '=', pick_id),
             ], order='start_date desc', context=context)
@@ -364,6 +383,7 @@ class stock_picking(osv.osv):
                 res[pick_id] = mem_ids[0]
 
         return res
+
 
     _columns = {
         'move_sequence_id': fields.many2one(
@@ -387,6 +407,34 @@ class stock_picking(osv.osv):
             readonly=True,
         ),
     }
+
+    def go_to_processing_wizard(self, cr, uid, ids, context=None):
+        '''
+        If the stock.picking has a stock.picking.processing.info linked to it,
+        open this wizard.
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for picking in self.browse(cr, uid, ids, context=context):
+            if picking.progress_memory > 0:
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'stock.picking.processing.info',
+                    'res_id': int(picking.progress_memory),
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': context,
+                }
+        
+        raise osv.except_osv(
+            _('Error'),
+            _('The picking has no processing in progress or is already processed'),
+        )
 
     def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -794,9 +842,11 @@ class stock_picking(osv.osv):
         context['location'] = internal_loc
 
         product_availability = {}
+        picking_ids = []
 
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
             picking = wizard.picking_id
+            picking_ids.append(picking)
             backordered_moves = []  # Moves that need to be put in a backorder
             done_moves = []  # Moves that are completed
             out_picks = set()
@@ -1083,10 +1133,11 @@ class stock_picking(osv.osv):
                 'prepare_pick': _('Done'),
             }, context=context)
 
-        prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
-            'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
-        }, context=context)
-
+        for picking in picking_ids:
+            prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
+            }, context=context)
+        
         if context.get('rw_sync', False):
             if backorder_id:
                 return backorder_id
@@ -1190,6 +1241,32 @@ class stock_picking(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)
 
         return True
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Return True in case of context contains "go_to_processing_wizard" because
+        without that, the displaying of the wizard waits that the background 
+        process (SQL LOCK on row)
+        '''
+        if context is None:
+            context = {}
+
+        if context.get('button', False) == 'go_to_processing_wizard':
+            return True
+        elif context.get('button', False) == 'enter_reason':
+            mem_obj = self.pool.get('stock.picking.processing.info')
+            mem_ids = mem_obj.search(cr, uid, [
+                ('end_date', '=', False),
+                ('picking_id', 'in', ids),
+            ], context=context)
+            if mem_ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The processing of this picking is in progress - You can\'t cancel it.'),
+                )
+
+        return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
+
 
 stock_picking()
 
