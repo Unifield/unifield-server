@@ -11,7 +11,7 @@
         report_type="webkit"
         header="False"
         auto="False"
-        menu="True"/>
+        menu="False"/>
         
         <report id="project_expenses_2"
         string="Project Expenses"

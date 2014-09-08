@@ -480,6 +480,27 @@ class financing_contract_contract(osv.osv):
                 'context': context,
         }
 
+    def allocated_expenses_report(self, cr, uid, ids, context=None):
+        """
+        Check if contract gives some FP. If not raise an error.
+        Otherwise launch the report.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for contract in self.browse(cr, uid, ids, context=context):
+            if not contract.format_id.funding_pool_ids:
+                raise osv.except_osv(_('Error'), _('No FP selected in the financing contract: %s') % (contract.name or ''))
+        # We launch the report
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'financing.allocated.expenses.2',
+            'datas': {'ids': ids},
+            'context': context,
+        }
+
     def create(self, cr, uid, vals, context=None):
         # Do not copy lines from the Donor on create if coming from the sync server
         if context is None:
