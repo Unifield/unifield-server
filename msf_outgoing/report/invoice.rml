@@ -128,10 +128,14 @@
                 <para style="HeaderInfosValue">[[ 'fo date' ]]</para>
             </td>
             <td>
-                <para style="HeaderInfosValue">[[ 'shipper' ]]</para>
+                <para style="HeaderInfosValue">
+                    <font color="white"> </font>
+                </para>
             </td>
             <td>
-                <para style="HeaderInfosValue">[[ 'final dest' ]]</para>
+                <para style="HeaderInfosValue">
+                    <font color="white"> </font>
+                </para>
             </td>
         </tr>
         <tr>
@@ -193,7 +197,7 @@
                 <para style="HeaderInfosTitle">Transport mode:</para>
             </td>
             <td>
-                <para style="HeaderInfosValue">[[ 'transport type' ]]</para>
+                <para style="HeaderInfosValue">[[ shipment.transport_type or '' ]]</para>
             </td>
             <td>
                 <para style="HeaderInfosValue">
