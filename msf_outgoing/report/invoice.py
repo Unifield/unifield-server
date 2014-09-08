@@ -29,6 +29,7 @@ class invoice(report_sxw.rml_parse):
         super(invoice, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getCompanyInfo': self._get_company_info,
         })
         
     def set_context(self, objects, data, ids, report_type=None):
@@ -37,8 +38,41 @@ class invoice(report_sxw.rml_parse):
         '''
         for obj in objects:
             if not obj.backshipment_id:
-                raise osv.except_osv(_('Warning !'), _('Invoice is only available for Shipment Objects (not draft)!'))
+                raise osv.except_osv(_('Warning !'),
+                _('Invoice is only available for Shipment Objects (not draft)!'))
         
         return super(invoice, self).set_context(objects, data, ids, report_type=report_type)
 
-report_sxw.report_sxw('report.invoice', 'shipment', 'addons/msf_outgoing/report/invoice.rml', parser=invoice, header="external")
+    def _get_company_info(self, field):
+        """
+        Return info from instance's company.
+        :param field: Field to read
+        :return: Information of the company
+        :rtype: str
+        """
+        company = self.pool.get('res.users').browse(self.cr, self.uid,
+            self.uid).company_id.partner_id
+            
+        res = ''
+        if field == 'name':
+            res = company.name
+        else:
+            if company.address:
+                addr = company.address[0]
+                if field == 'addr_name':
+                    res = addr.name
+                elif field == 'street':
+                    res = addr.street
+                elif field == 'street2':
+                    res = addr.street2
+                elif field == 'city':
+                    res = '%s %s' % (addr.zip, addr.city)
+                elif field == 'country':
+                    res = addr.country_id and addr.country_id.name or ''
+                elif field == 'phone':
+                    res = addr.phone or addr.mobile or ''
+        return res
+
+report_sxw.report_sxw('report.invoice', 'shipment',
+    'addons/msf_outgoing/report/invoice.rml', parser=invoice,
+    header="external")

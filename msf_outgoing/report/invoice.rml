@@ -109,6 +109,12 @@
             </td>
             <td>
                 <para style="HeaderInfosTitle">Shipper:</para>
+                <para style="HeaderInfosValue">[[ getCompanyInfo('addr_name') ]]</para>
+                <para style="HeaderInfosValue">[[ getCompanyInfo('street') ]]</para>
+                <para style="HeaderInfosValue">[[ getCompanyInfo('street2') ]]</para>
+                <para style="HeaderInfosValue">[[ getCompanyInfo('city') ]]</para>
+                <para style="HeaderInfosValue">[[ getCompanyInfo('country') ]]</para>
+                <para style="HeaderInfosValue">[[ getCompanyInfo('phone') ]]</para>
             </td>
             <td>
                 <para style="HeaderInfosTitle">Final destination of goods:</para>
