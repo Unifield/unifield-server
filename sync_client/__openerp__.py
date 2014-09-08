@@ -33,6 +33,7 @@ Synchronization Engine - Client Module
     'init_xml': [],
     'data': [
         'sync_client_view.xml',
+        'backup_view.xml',
         'update_view.xml',
         'message_view.xml',
         'log_sale_purchase_view.xml',

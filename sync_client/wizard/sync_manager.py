@@ -43,7 +43,17 @@ class sync_manager(osv.osv_memory):
     }
 
     def sync(self, cr, uid, ids, context=None):
+        #Check for a backup before manual sync
+        bkp_model = self.pool.get('backup.config')
+        bkp_ids = bkp_model.search(cr, uid, [('beforemanualsync', '=', True)], context=context)
+        if bkp_ids:
+            bkp_model.exp_dump(cr, uid, bkp_ids, context)
         self.pool.get('sync.client.entity').sync(cr, uid, context=context)
+        #Check for a backup after manual sync
+        bkp_model = self.pool.get('backup.config')
+        bkp_ids = bkp_model.search(cr, uid, [('aftermanualsync', '=', True)], context=context)
+        if bkp_ids:
+            bkp_model.exp_dump(cr, uid, bkp_ids, context)
         return {'type': 'ir.actions.act_window_close'}
 
     def sync_threaded(self, cr, uid, ids, context=None):

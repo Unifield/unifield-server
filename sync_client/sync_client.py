@@ -742,7 +742,7 @@ class Entity(osv.osv):
     """
     def sync_threaded(self, cr, uid, recover=False, context=None):
         BackgroundProcess(cr, uid,
-            ('sync_recover' if recover else 'sync'),
+            ('sync_recover_withbackup' if recover else 'sync_withbackup'),
             context).start()
         return True
 
@@ -759,11 +759,49 @@ class Entity(osv.osv):
         return True
 
     @sync_process()
+    def sync_recover_withbackup(self, cr, uid, context=None):
+        """
+        Call both pull_all_data and recover_message functions - used in manual sync wizard
+        """
+        #Check for a backup before automatic sync
+        bkp_model = self.pool.get('backup.config')
+        bkp_ids = bkp_model.search(cr, uid, [('beforeautomaticsync', '=', True)], context=context)
+        if bkp_ids:
+            bkp_model.exp_dump(cr, uid, bkp_ids, context)
+        self.sync_recover(cr, uid, context=context)
+        #Check for a backup after automatic sync
+        bkp_model = self.pool.get('backup.config')
+        bkp_ids = bkp_model.search(cr, uid, [('afterautomaticsync', '=', True)], context=context)
+        if bkp_ids:
+            bkp_model.exp_dump(cr, uid, bkp_ids, context)
+        return {'type': 'ir.actions.act_window_close'}
+        return True
+
+    @sync_process()
     def sync(self, cr, uid, context=None):
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
+        return True
+
+    @sync_process()
+    def sync_withbackup(self, cr, uid, context=None):
+        """
+        Call both pull_all_data and recover_message functions - used in manual sync wizard
+        """
+        #Check for a backup before automatic sync
+        bkp_model = self.pool.get('backup.config')
+        bkp_ids = bkp_model.search(cr, uid, [('beforeautomaticsync', '=', True)], context=context)
+        if bkp_ids:
+            bkp_model.exp_dump(cr, uid, bkp_ids, context)
+        self.sync(cr, uid, context=context)
+        #Check for a backup after automatic sync
+        bkp_model = self.pool.get('backup.config')
+        bkp_ids = bkp_model.search(cr, uid, [('afterautomaticsync', '=', True)], context=context)
+        if bkp_ids:
+            bkp_model.exp_dump(cr, uid, bkp_ids, context)
+        return {'type': 'ir.actions.act_window_close'}
         return True
 
     def get_upgrade_status(self, cr, uid, context=None):

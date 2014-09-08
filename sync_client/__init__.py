@@ -1,4 +1,5 @@
 from sync_client import MAX_EXECUTED_UPDATES, MAX_EXECUTED_MESSAGES, SkipStep, BackgroundProcess, sync_process
+import backup
 import wizard
 import ir_model_data
 import monitor
