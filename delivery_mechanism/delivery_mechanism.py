@@ -375,12 +375,21 @@ class stock_picking(osv.osv):
 
         res = {}
         for pick_id in ids:
-            res[pick_id] = -1
+            res[pick_id] = {
+                'progress_memory': -1,
+                'progress_memory_not_done': 0,
+            }
             mem_ids = mem_obj.search(cr, uid, [
                 ('picking_id', '=', pick_id),
             ], order='start_date desc', context=context)
             if mem_ids:
-                res[pick_id] = mem_ids[0]
+                res[pick_id]['progress_memory'] = mem_ids[0]
+                nd_ids = mem_obj.search(cr, uid, [
+                    ('end_date', '=', False),
+                    ('id', 'in', mem_ids),
+                ], context=context)
+                if nd_ids:
+                    res[pick_id]['progress_memory_not_done'] = 1
 
         return res
 
@@ -401,10 +410,20 @@ class stock_picking(osv.osv):
         'progress_memory': fields.function(
             _get_progress_memory,
             method=True,
-            string='Is in progress',
+            string='Has processing info',
             type='integer',
             store=False,
             readonly=True,
+            multi='process',
+        ),
+        'progress_memory_not_done': fields.function(
+            _get_progress_memory,
+            method=True,
+            string='Is in progress',
+            type='boolean',
+            store=False,
+            readonly=True,
+            multi='process',
         ),
     }
 
