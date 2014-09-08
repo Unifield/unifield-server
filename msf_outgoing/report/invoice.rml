@@ -118,6 +118,9 @@
             </td>
             <td>
                 <para style="HeaderInfosTitle">Final destination of goods:</para>
+                <para style="HeaderInfosValue">[[ shipment.consignee_name or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ shipment.consignee_address or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ shipment.consignee_phone or removeParentNode('para') ]]</para>
             </td>
         </tr>
         <tr>
