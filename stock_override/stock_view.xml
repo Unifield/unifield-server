@@ -685,7 +685,7 @@
                                 <field name="state" readonly="1"/>
                                 <button name="enter_reason"
                                     states="assigned,confirmed,draft,shipped"
-                                    attrs="{'invisible': [('progress_memory_not_done', '!=', False)]}"
+                                    attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped']), ('progress_memory_not_done', '!=', False)]}"
                                     string="Cancel"
                                     type="object"
                                     icon="gtk-cancel"
@@ -695,7 +695,7 @@
                                 <field name="from_wkf_sourcing" invisible="1" />
                                 <button name="enter_reason"
                                     states="assigned,confirmed,draft,shipped"
-                                    attrs="{'invisible': ['|', ('progress_memory_not_done', '!=', False), ('from_wkf_sourcing', '=', False)]}"
+                                    attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped']), ('progress_memory_not_done', '!=', False), ('from_wkf_sourcing', '=', False)]}"
                                     string="Cancel &amp; Resource"
                                     type="object"
                                     icon="gtk-cancel"
