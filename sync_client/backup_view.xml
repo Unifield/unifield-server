@@ -51,5 +51,41 @@
     <menuitem id="syncback_config_menu" name="Backup config"
               parent="syncback_menu" action="syncback_config_action"/>
 
+
+
+        <record id="ir_actions_server_opensyncbackup" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'ir_cron_automaticsyncbackup')
+action = {
+'res_model' : 'ir.cron',
+'view_type' : 'form',
+'view_mode' : 'form',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="base.model_ir_cron"/>
+            <field name="condition">True</field>
+            <field name="name">Open Backup cron</field>
+        </record>
+
+
+        <record id="ir_ui_menu_cron_synchrobackup" model="ir.ui.menu">
+            <field name="name">Automatic</field>
+            <field name="parent_id" ref="syncback_menu"/>
+            <field name="sequence">30</field>
+        </record>
+
+        <record id="ir_values_menuitem_cronbackup" model="ir.values">
+            <field name="name">Menuitem IR CRON</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('ir_actions_server_opensyncbackup')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('ir_ui_menu_cron_synchrobackup')" name="res_id"/>
+        </record>
     </data>
 </openerp>
