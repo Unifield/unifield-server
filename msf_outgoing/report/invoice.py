@@ -85,11 +85,9 @@ class invoice(report_sxw.rml_parse):
         }
         
         res = []
-        total = 0.
         for pf in shipment.pack_family_memory_ids:
             for move in pf.move_lines:
                 res.append(move)
-                total += move.total_amount
                 if not self.vars[shipment.id]['currency_id']:
                     self.vars[shipment.id]['currency_id'] = move.currency_id.id
         self.vars[shipment.id]['total'] = total
