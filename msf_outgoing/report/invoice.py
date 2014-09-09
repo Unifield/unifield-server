@@ -31,7 +31,7 @@ class invoice(report_sxw.rml_parse):
             'time': time,
             'getInvoiceRef': self._get_invoice_ref,
             'getCompanyInfo': self._get_company_info,
-            'getMoveIndex': self._get_move_index,
+            'getMoves': self._get_moves,
             'getTotal': self._get_total,
             'getCurrency': self._get_ccy_name,
         })
@@ -91,14 +91,19 @@ class invoice(report_sxw.rml_parse):
                 res = addr.phone or addr.mobile or ''
         return res
         
-    def _get_move_index(self, pl, move):
+    def _get_moves(self, pl):
         """
-        get packing list stock move line index
+        get packing list moves
         :param pl: packing list
-        :param move: stock move
-        :rtype int
+        :return (index, browse_object)
+        :rtype tuple
         """
-        return pf.move_lines.index(move) or 0
+        res = []
+        index = 1
+        for m in pl.move_lines:
+            res.append((index, m))
+            index += 1
+        return res
         
     def _get_total(self, shipment):
         """

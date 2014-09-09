@@ -198,30 +198,30 @@
           </td>
         </tr>
         <tr>
-            [[ repeatIn(pl.move_lines,'move') ]]
+            [[ repeatIn(getMoves(pl),'move') ]]
             <td>
-              <para style="ItemsLineValueRight">[[ getMoveIndex(pl, move) ]]</para>
+              <para style="ItemsLineValueRight">[[ move[0] ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValue">[[ move.product_id.code or '' ]]</para>
+              <para style="ItemsLineValue">[[ move[1].product_id.code or '' ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValue">[[ move.product_id.name or '' ]]</para>
+              <para style="ItemsLineValue">[[ move[1].product_id.name or '' ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValue">[[ move.comment or '' ]]</para>
+              <para style="ItemsLineValue">[[ move[1].comment or '' ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValueRight">[[ formatLang(move.product_qty or 0.) ]]</para>
+              <para style="ItemsLineValueRight">[[ formatLang(move[1].product_qty or 0.) ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValue">[[ move.product_uom and move.product_uom.name or '' ]]</para>
+              <para style="ItemsLineValue">[[ move[1].product_uom and move[1].product_uom.name or '' ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValueRight">[[ formatLang((move.sale_line_id and move.sale_line_id.price_unit) or 0.) ]]</para>
+              <para style="ItemsLineValueRight">[[ formatLang((move[1].sale_line_id and move[1].sale_line_id.price_unit) or 0.) ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValueRight">[[ formatLang(move.total_amount or 0.) ]]</para>
+              <para style="ItemsLineValueRight">[[ formatLang(move[1].total_amount or 0.) ]]</para>
             </td>
         </tr>
     </blockTable>
@@ -229,9 +229,6 @@
     </pto>
 
     <!-- total -->
-    <para style="HeaderInfosTitle">
-      <font color="white"> </font>
-    </para>
     <para style="HeaderInfosTitle">
       <font color="white"> </font>
     </para>
