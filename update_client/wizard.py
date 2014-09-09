@@ -62,7 +62,7 @@ class upgrade(osv.osv_memory):
             text += (" - [%(importance)s] %(name)s (%(date)s)\n   " % rev) + \
                     (_("Comment: %(comment)s (sum is %(sum)s)") % rev) + "\n\n"
             if not rev.patch:
-                patch = proxy.get_zip( uuid, rev.sum )
+                patch = proxy.get_zip( uuid,  self.pool.get("sync.client.entity")._hardware_id, rev.sum )
                 if not patch[0]:
                     raise osv.except_osv(_("Error!"), _("Can't retrieve the patch %(name)s (%(sum)s)!" % rev))
                 revisions.write(cr, uid, rev.id, {'patch':patch[1]})

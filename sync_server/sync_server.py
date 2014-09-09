@@ -33,12 +33,14 @@ pp = pprint.PrettyPrinter(indent=4)
 MAX_ACTIVITY_DELAY = timedelta(minutes=5)
 
 def check_validated(f):
-    def check(self, cr, uid, uuid, *args, **kargs):
+    def check(self, cr, uid, uuid, hw_id, *args, **kargs):
         entity_pool = self.pool.get("sync.server.entity")
         id = entity_pool.get(cr, uid, uuid=uuid)
         if not id:
             return (False, "Error: Instance does not exist in the server database")
         entity = entity_pool.browse(cr, uid, id)[0]
+        if not entity.hardware_id or entity.hardware_id != hw_id:
+            return (False, 'Error 17: Authentification Failed, please contact the support')
         if entity.state == 'updated':
             return (False, 'This Instance has been updated and the update procedure has to be launched at your side')
         if not entity.state == 'validated':
@@ -131,6 +133,7 @@ class entity(osv.osv):
     _columns = {
         'name':fields.char('Instance Name', size=64, required=True, select=True),
         'identifier':fields.char('Identifier', size=64, readonly=True, select=True),
+        'hardware_id' : fields.char('Hardware Identifier', size=128, select=True),
         'parent_id':fields.many2one('sync.server.entity', 'Parent Instance', ondelete='cascade'),
         'group_ids':fields.many2many('sync.server.entity_group', 'sync_entity_group_rel', 'entity_id', 'group_id', string="Groups"),
         'state' : fields.selection([('pending', 'Pending'), ('validated', 'Validated'), ('invalidated', 'Invalidated'), ('updated', 'Updated')], 'State'),
@@ -200,12 +203,15 @@ class entity(osv.osv):
     """
         Public interface
     """
-    def activate_entity(self, cr, uid, name, identifier, context=None):
+    def activate_entity(self, cr, uid, name, identifier, hardware_id, context=None):
         """
             Allow to change uuid,
             and reactivate the link between an local instance and his data on the server
         """
-        ids = self.search(cr, uid, [('user_id', '=', uid), ('name', '=', name), ('state', '=', 'updated')], context=context)
+        ids = self.search(cr, uid, [('user_id', '=', uid), 
+                                    ('hardware_id', "=", hardware_id),
+                                    ('name', '=', name), 
+                                    ('state', '=', 'updated')], context=context)
         if not ids:
             return (False, 'No entity matches with this name')
         
@@ -222,8 +228,11 @@ class entity(osv.osv):
         }
         return (True, data)
     
-    def update(self, cr, uid, identifier, context=None):
-        ids = self.search(cr, uid, [('identifier', '=' , identifier), ('user_id', '=', uid), ('state', '=', 'updated')], context=context)
+    def update(self, cr, uid, identifier, hardware_id, context=None):
+        ids = self.search(cr, uid, [('identifier', '=' , identifier),
+                                    ('hardware_id', '=', hardware_id), 
+                                    ('user_id', '=', uid), 
+                                    ('state', '=', 'updated')], context=context)
         if not ids:
             return (False, 'No update is ready for your entity. If you cannot synchronize data, check that your parent has validated your registration')
         
@@ -240,8 +249,12 @@ class entity(osv.osv):
         }
         return (True, data)
     
-    def ack_update(self, cr, uid, uuid, token, context=None):
-        ids = self.search(cr, uid, [('identifier', '=' , uuid), ('user_id', '=', uid), ('state', '=', 'updated'), ('update_token', '=', token)], context=context)
+    def ack_update(self, cr, uid, uuid, hardware_id, token, context=None):
+        ids = self.search(cr, uid, [('identifier', '=' , uuid), 
+                                    ('hardware_id', '=', hardware_id),
+                                    ('user_id', '=', uid), 
+                                    ('state', '=', 'updated'), 
+                                    ('update_token', '=', token)], context=context)
         if not ids:
             return (False, 'Ack not valid')
         self.write(cr, 1, ids, {'state' : 'validated'}, context=context)
@@ -273,6 +286,7 @@ class entity(osv.osv):
                 'parent_name' : 'name'
                 'group_names' : ['group1', 'group2']
                 'identifier' : 'uuid', 
+                'hardware_id' : 'hardware_id'
                 'name' : 'name',
                 'email' : 'cur.email',
                 'max_size' : '5',
@@ -309,6 +323,9 @@ class entity(osv.osv):
         entity_id = self._get_entity_id(cr, uid, data['name'], data['identifier'], context=context)
         data.update({'group_ids' : group_ids, 'parent_id' : parent_id, 'user_id': uid, 'state' : 'pending'})
         if entity_id:
+            entity = self.browse(cr, uid, entity_id, context=context)
+            if not entity.hardware_id or entity.hardware_id != data['hardware_id']:
+                return (False, 'Error 17: Authentification Failed, please contact the support')
             res = self.write(cr, 1, [entity_id], data, context=context)
             if res:
                 #self._send_registration_email(cr, uid, data, groups_names, context=context)
@@ -481,7 +498,7 @@ class entity(osv.osv):
 
         visited_branch.remove(id)
         return True
-
+    
     def get_entities_priorities(self, cr, uid, context=None):
         return dict([
             (rec.name, rec.parent_left)

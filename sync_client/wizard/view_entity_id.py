@@ -20,33 +20,19 @@
 ##############################################################################
 
 
-{
-    'name': 'Synchronization Utility',
-    'version': '0.1',
-    'category': 'Tools',
-    'description': """\
-Synchronization Engine - Client Module
-""",
-    'author': 'OpenERP SA',
-    'website': 'http://openerp.com',
-    'depends': ['sync_common', 'account', 'analytic_distribution'],
-    'init_xml': [],
-    'data': [
-        'sync_client_view.xml',
-        'update_view.xml',
-        'message_view.xml',
-        'log_sale_purchase_view.xml',
-        'wizard/sync_wiz_view.xml',
-        'wizard/monitoring_view.xml',
-        'wizard/view_entity_id.xml',
-        'monitor_view.xml',
-        'data/cron.xml',
-        'security/ir.model.access.csv'
-    ],
-    'demo_xml': [
-    ],
-    'test':[
-    ],
-    'installable': True,
-}
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+from osv import osv
+from osv import fields
+from tools.translate import _
+
+class view_entity_id(osv.osv_memory):
+    _name = "sync.client.view_entity_id"
+    
+    _columns = {
+        'name':fields.char('Entity Id', size=256, required=True, readonly=True),
+    }
+    
+    _defaults = {
+        'name' : lambda self, *a : self.pool.get("sync.client.entity")._hardware_id,
+    }
+    
+view_entity_id()
