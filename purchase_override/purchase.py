@@ -2601,6 +2601,9 @@ class purchase_order_line(osv.osv):
         '''
         # Objects
         wiz_obj = self.pool.get('purchase.order.line.unlink.wizard')
+        proc_obj = self.pool.get('procurement.order')
+        data_obj = self.pool.get('ir.model.data')
+        wkf_act_obj = self.pool.get('workflow.activity')
 
         # Variables initialization
         if context is None:
@@ -2609,10 +2612,10 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for line_id in ids:
-            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line_id], context=context)
+        for line in self.browse(cr, uid, ids, context=context):
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
             if sol_ids:
-                wiz_id = wiz_obj.create(cr, uid, {'line_id': line_id}, context=context)
+                wiz_id = wiz_obj.create(cr, uid, {'line_id': line.id}, context=context)
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'purchase.order.line.unlink.wizard',
                         'view_type': 'form',
@@ -2620,6 +2623,19 @@ class purchase_order_line(osv.osv):
                         'res_id': wiz_id,
                         'target': 'new',
                         'context': context}
+
+            # In case of a PO line is not created to source a FO/IR but from a
+            # replenishment rule, cancel the stock move and the procurement order
+            if line.move_dest_id:
+                self.pool.get('stock.move').action_cancel(cr, uid, [line.move_dest_id.id], context=context)
+                proc_ids = proc_obj.search(cr, uid, [('move_id', '=', line.move_dest_id.id)], context=context)
+                if proc_ids:
+                    wf_service = netsvc.LocalService("workflow")
+                    for proc_id in proc_ids:
+                        wf_service.trg_delete(uid, 'procurement.order', proc_id, cr)
+                        wkf_id = data_obj.get_object_reference(cr, uid, 'procurement', 'act_cancel')[1]
+                        activity = wkf_act_obj.browse(cr, uid, wkf_id, context=context)
+                        _eval_expr(cr, [uid, 'procurement.order', proc_id], False, activity.action)
 
         return self.unlink(cr, uid, ids, context=context)
 
