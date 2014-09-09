@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
     
-  <template pageSize="(842.0,595.0)" title="Shipment Proforma Invoice" author="Medecins Sans Frontieres" allowSplitting="20">
-         <pageTemplate id="first">
+    <template pageSize="(842.0,595.0)" title="Shipment Proforma Invoice" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
             <frame id="first" x1="0.0" y1="0.0" width="842" height="560" />
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
-                <drawString x="7" y="555.0">PROFORMA INVOICE</drawString>
+                <drawString x="28.0" y="555.0">PROFORMA INVOICE</drawString>
                 <fill color="blue"/>
                 <image x="720.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8" />
                 <fill color="black" />
-                <drawString x="7.0" y="540.0">Page : <pageNumber /> / </drawString>
-                <drawString x="50.0" y="540.0"><pageCount /></drawString>
+                <drawString x="12.0" y="523.0">Page : <pageNumber /> / </drawString>
+                <drawString x="54.0" y="523.0"><pageCount /></drawString>
             </pageGraphics>
         </pageTemplate>
     </template>
@@ -70,42 +70,30 @@
     <para style="HeaderInfosTitle">[[ repeatIn(objects[0].pack_family_memory_ids, 'pl') ]]</para>
     <pto>
     <!-- header: title -->
-    <blockTable colWidths="300.0, 542.0" style="HeaderInfos">
-       <tr>
-            <td>
-                <para style="Title">
-                    <font color="white"> </font>
-                </para>
-            </td>
-            <td>
-                <para style="Title">
-                    <font color="white"> </font>
-                </para>
-            </td>
-        </tr>
+    <pto_header>
+        <blockTable colWidths="150.0,660.0" style="HeaderInfos">
+            <tr>
+                <td>
+                    <para style="Title">[[ 'PINV/' + getInvoiceRef(pl) ]]</para>
+                </td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <para style="HeaderInfosTitle">
+            <font color="white"> </font>
+        </para>
+    </pto_header>
+    <blockTable colWidths="150.0,660.0" style="HeaderInfos">
         <tr>
             <td>
-                <para style="Title">[[ 'PINV/' ]]</para>
+                <para style="Title">[[ 'PINV/' + getInvoiceRef(pl) ]]</para>
             </td>
-            <td>
-                <para style="Title">
-                    <font color="white"> </font>
-                </para>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <para style="Title">
-                    <font color="white"> </font>
-                </para>
-            </td>
-            <td>
-                <para style="Title">
-                    <font color="white"> </font>
-                </para>
-            </td>
+            <td></td>
         </tr>
     </blockTable>
+    <para style="HeaderInfosTitle">
+        <font color="white"> </font>
+    </para>
     
     <!-- header: ref fields -->
     <blockTable colWidths="120.0,120.0,150,150,302" style="HeaderInfos">

@@ -29,6 +29,7 @@ class invoice(report_sxw.rml_parse):
         super(invoice, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getInvoiceRef': self._get_invoice_ref,
             'getCompanyInfo': self._get_company_info,
             'getMoveIndex': self._get_move_index,
             'getTotal': self._get_total,
@@ -46,6 +47,21 @@ class invoice(report_sxw.rml_parse):
         
         return super(invoice, self).set_context(objects, data, ids, report_type=report_type)
 
+    def _get_invoice_ref(self, pl):
+        """
+        get reference number from packling reference
+        :param pl: packing list
+        :rtype: str
+        """
+        res = ''
+        name = pl.ppl_id.name
+        if name:
+            index = name.find('/')
+            if index > 0:
+                end = name.find('-')
+                res = name[index + 1:end]
+        return res
+    
     def _get_company_info(self, field):
         """
         Return info from instance's company.
