@@ -285,9 +285,11 @@ class procurement_order(osv.osv):
         ids = [1]
         if automatic:
             self.create_automatic_op(cr, uid, context=context)
-            
+     
         while ids:
             ids = orderpoint_obj.search(cr, uid, [], offset=offset, limit=100)
+            # Put a lock on stock.warehouse.orderpoint
+            orderpoint_obj.write(cr, uid, ids, {}, context=context)
             for op in orderpoint_obj.browse(cr, uid, ids, context=context):
                 for opl in op.line_ids:
                     if opl.procurement_id.state != 'exception':
