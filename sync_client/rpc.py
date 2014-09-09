@@ -159,13 +159,13 @@ class NetRPC_Exception(Exception):
         self.args = (faultCode, faultString)
 
 class NetRPC:
-    def __init__(self, sock=None, is_gzip=False):
+    def __init__(self, sock=None, is_gzip=False, timeout=10.0):
         if sock is None:
             self.sock = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = sock
-        self.sock.settimeout(self.timeout)
+        self.sock.settimeout(timeout)
         self.is_gzip = is_gzip
         self._logger = logging.getLogger('netrpc')
 
@@ -252,7 +252,7 @@ class NetRPCConnector(Connector):
         while retry:
             try:
                 retry = False
-                socket = NetRPC(is_gzip=self.is_gzip)
+                socket = NetRPC(is_gzip=self.is_gzip, timeout=self.timeout)
                 socket.connect(self.hostname, self.port)
                 socket.mysend((service_name, method, )+args)
                 result = socket.myreceive()
