@@ -257,6 +257,7 @@ class Database(BaseController):
         except openobject.errors.AccessDenied, e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
+            return self.backup()
         except Exception:
             self.msg = {'message' : _("Could not create backup.")}
             return self.backup()
