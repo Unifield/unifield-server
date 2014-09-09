@@ -259,7 +259,7 @@
         <blockTable colWidths="42.0,100.0,250.0,150.0,70.0,60.0,70.0,100.0"  keepWithNext="1" style="ItemsInfos">
           <tr>
             <td>
-              <para style="ItemsLineValueRight">[[ 1 ]]</para>
+              <para style="ItemsLineValueRight">[[ getMoveIndex(shipment) ]]</para>
             </td>
             <td>
               <para style="ItemsLineValue">[[ move.product_id.code or '' ]]</para>

@@ -31,7 +31,9 @@ class invoice(report_sxw.rml_parse):
             'time': time,
             'getCompanyInfo': self._get_company_info,
             'getMoves': self._get_moves,
+            'getMoveIndex': self._get_move_index,
         })
+        self.vars = {}  # key is shipment id
         
     def set_context(self, objects, data, ids, report_type=None):
         '''
@@ -75,11 +77,23 @@ class invoice(report_sxw.rml_parse):
         return res
         
     def _get_moves(self, shipment):
+        self.vars[shipment.id] = {
+            'move_index': 1,
+            'total': 0.,
+        }
+        
         res = []
         for pf in shipment.pack_family_memory_ids:
             for move in pf.move_lines:
                 res.append(move)
         return res
+        
+    def _get_move_index(self, shipment):
+        if shipment.id in self.vars:
+            res = self.vars[shipment.id].get('move_index', 1)
+            self.vars[shipment.id]['move_index'] = res + 1
+            return res
+        return 0.
 
 report_sxw.report_sxw('report.invoice', 'shipment',
     'addons/msf_outgoing/report/invoice.rml', parser=invoice,
