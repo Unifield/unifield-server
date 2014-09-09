@@ -90,7 +90,6 @@ class invoice(report_sxw.rml_parse):
                 res.append(move)
                 if not self.vars[shipment.id]['currency_id']:
                     self.vars[shipment.id]['currency_id'] = move.currency_id.id
-        self.vars[shipment.id]['total'] = total
         return res
         
     def _get_move_index(self, shipment):
