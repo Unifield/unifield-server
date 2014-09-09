@@ -49,7 +49,7 @@ class invoice(report_sxw.rml_parse):
 
     def _get_invoice_ref(self, pl):
         """
-        get reference number from packling reference
+        get reference number from packing reference
         :param pl: packing list
         :rtype: str
         """
@@ -75,21 +75,20 @@ class invoice(report_sxw.rml_parse):
         res = ''
         if field == 'name':
             res = company.name
-        else:
-            if company.address:
-                addr = company.address[0]
-                if field == 'addr_name':
-                    res = addr.name
-                elif field == 'street':
-                    res = addr.street
-                elif field == 'street2':
-                    res = addr.street2
-                elif field == 'city':
-                    res = '%s %s' % (addr.zip, addr.city)
-                elif field == 'country':
-                    res = addr.country_id and addr.country_id.name or ''
-                elif field == 'phone':
-                    res = addr.phone or addr.mobile or ''
+        elif company.address:
+            addr = company.address[0]
+            if field == 'addr_name':
+                res = addr.name
+            elif field == 'street':
+                res = addr.street
+            elif field == 'street2':
+                res = addr.street2
+            elif field == 'city':
+                res = '%s %s' % (addr.zip, addr.city)
+            elif field == 'country':
+                res = addr.country_id and addr.country_id.name or ''
+            elif field == 'phone':
+                res = addr.phone or addr.mobile or ''
         return res
         
     def _get_move_index(self, pl, move):

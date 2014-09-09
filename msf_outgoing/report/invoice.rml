@@ -107,15 +107,16 @@
                 <para style="HeaderInfosTitle">Transport mode:</para>
             </td>
             <td>
-                <para style="HeaderInfosValue">[[ 'our ref' ]]</para>
-                <para style="HeaderInfosValue">[[ 'fo date' ]]</para>
-                <para style="HeaderInfosValue">[[ 'po ref' ]]</para>
-                <para style="HeaderInfosValue">[[ 'packing ref' ]]</para>
-                <para style="HeaderInfosValue">[[ 'invoice date' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.shipment_id.transport_type or '' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.name or '-' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and formatLang(pl.ppl_id.sale_id.date_order, date=True) or '-' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.client_order_ref or '-' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.name or '-' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.invoice_id and formatLang(pl.shipment_id.invoice_id.date_invoice, date=True) or '-' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.transport_type or '-' ]]</para>
             </td>
             <td>
                 <para style="HeaderInfosTitle">Shipper:</para>
+                <para style="HeaderInfosValue">[[ getCompanyInfo('name') ]]</para>
                 <para style="HeaderInfosValue">[[ getCompanyInfo('addr_name') ]]</para>
                 <para style="HeaderInfosValue">[[ getCompanyInfo('street') ]]</para>
                 <para style="HeaderInfosValue">[[ getCompanyInfo('street2') ]]</para>
@@ -125,9 +126,10 @@
             </td>
             <td>
                 <para style="HeaderInfosTitle">Final destination of goods:</para>
-                <para style="HeaderInfosValue">[[ pl.shipment_id.consignee_name or removeParentNode('para') ]]</para>
-                <para style="HeaderInfosValue">[[ pl.shipment_id.consignee_address or removeParentNode('para') ]]</para>
-                <para style="HeaderInfosValue">[[ pl.shipment_id.consignee_phone or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.consignee_name or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.consignee_address or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.consignee_phone or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.consignee_other or removeParentNode('para') ]]</para>
             </td>
             <td>
                 <para style="ItemsInfos"><font color="white"> </font></para>
