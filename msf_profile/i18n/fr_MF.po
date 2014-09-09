@@ -10265,14 +10265,19 @@ msgstr "Transferts"
 #: code:addons/account_override/account.py:175
 #: code:addons/account_override/account_analytic_line.py:105
 #: code:addons/account_override/account_analytic_line.py:120
-#: code:addons/account_override/account_move_line.py:243
-#: code:addons/account_override/account_move_line.py:264
 #: code:addons/account_override/invoice.py:146
 #: code:addons/analytic_distribution_invoice/account_invoice_refund.py:105
 #: code:addons/analytic_distribution_invoice/account_invoice_refund.py:116
 #, python-format
 msgid "Posting date should be later than Document Date."
 msgstr "Date de comptabilisation devrait être postérieure à celle du document."
+
+#. module: account_override
+#: code:addons/account_override/account_move_line.py:243
+#: code:addons/account_override/account_move_line.py:264
+#, python-format
+msgid "Posting date (%s) should be later than Document Date (%s)."
+msgstr "Date de comptabilisation (%s) devrait être postérieure à celle du document (%s)."
 
 #. module: base
 #: selection:res.config.users,context_tz:0

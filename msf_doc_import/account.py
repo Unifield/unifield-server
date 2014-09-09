@@ -242,11 +242,16 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_account = False
                     r_destination = False
                     r_cc = False
-                    # UTP-766: Do not use Document date column, but wizard's one as document date for each line
-                    #r_document_date = False
+                    # UTP-1047: Use Document date column (contrary of UTP-766)
+                    r_document_date = False
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+                    # Check document date
+                    if not line[cols['Document Date']]:
+                        errors.append(_('Line %s. No document date specified!') % (current_line_num,))
+                        continue
+                    r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
                     # Bypass this line if NO debit AND NO credit
                     try:
                         bd = line[cols['Booking Debit']]
@@ -294,8 +299,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     else:
                         # check for a valid journal code
-                        aj_id = aj_obj.search(cr, uid, [('type','in',['intermission','migration','correction']),('code','=',line[cols['Journal Code']])])[0]
-                        if aj_id:
+                        aj_ids = aj_obj.search(cr, uid, [('type','in',['intermission','migration','correction']),('code','=',line[cols['Journal Code']])])
+                        if aj_ids:
+                            aj_id = aj_ids[0]
                             if num == 0:   # Assume 1st line is the journal code for the entire spreadsheet
                                 file_journal_id = aj_id
                             else:
@@ -364,7 +370,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'credit': r_credit or 0.0,
                         'cost_center_id': r_cc or False,
                         'destination_id': r_destination or False,
-                        'document_date': date or False, #r_document_date or False,
+                        'document_date': r_document_date or False,
                         'date': date or False,
                         'currency_id': r_currency or False,
                         'wizard_id': wiz.id,
