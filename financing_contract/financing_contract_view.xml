@@ -483,6 +483,7 @@
                 <field name="name">Allocated Expenses</field>
                 <field eval="'ir.actions.server,%d'%act_allocated_expenses_report" name="value"/>
                 <field eval="True" name="object"/>
+                <field name="sequence" eval="1"/>
             </record>
 
             <record id="action_open_analytic_lines_button" model="ir.actions.act_window">
