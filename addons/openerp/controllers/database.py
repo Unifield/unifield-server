@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -225,7 +225,7 @@ class Database(BaseController):
         try:
             rpc.session.execute_db('drop', password, dbname)
         except openobject.errors.AccessDenied, e:
-            self.msg = {'message': _('Bad super admin password'),
+            self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
         except Exception:
             self.msg = {'message' : _("Could not drop database")}
@@ -254,6 +254,9 @@ class Database(BaseController):
                 cherrypy.response.headers['Content-Type'] = "application/data"
                 cherrypy.response.headers['Content-Disposition'] = 'filename="%s.dump"' % '-'.join(filename)
                 return base64.decodestring(res)
+        except openobject.errors.AccessDenied, e:
+            self.msg = {'message': _('Wrong password'),
+                        'title' : e.title}
         except Exception:
             self.msg = {'message' : _("Could not create backup.")}
             return self.backup()
@@ -292,7 +295,7 @@ class Database(BaseController):
             data = base64.encodestring(filename.file.read())
             rpc.session.execute_db('restore', password, dbname, data)
         except openobject.errors.AccessDenied, e:
-            self.msg = {'message': _('Bad super admin password'),
+            self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
             return self.restore()
         except Exception:
@@ -331,4 +334,3 @@ class Database(BaseController):
         raise redirect('/openerp/login')
 
 # vim: ts=4 sts=4 sw=4 si et
-
