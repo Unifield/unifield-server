@@ -52,6 +52,7 @@
         <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="13" textColor="blue" />
 
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="HeaderInfosTitleRight" fontName="Helvetica" fontSize="8.0"  alignment="right" />
         <paraStyle name="HeaderInfosValue" fontName="Helvetica" fontSize="8.0" textColor="blue" />
 
         <paraStyle name="ItemsInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
@@ -281,6 +282,42 @@
             </td>
             <td>
               <para style="ItemsLineValueRight">[[ formatLang(move.total_amount or 0.) ]]</para>
+            </td>
+          </tr>
+        </blockTable>
+        <para style="HeaderInfosTitle">
+          <font color="white"> </font>
+        </para>
+        <para style="HeaderInfosTitle">
+          <font color="white"> </font>
+        </para>
+    </section>
+    <section>
+        <blockTable colWidths="42.0,100.0,250.0,150.0,70.0,60.0,70.0,100.0"  keepWithNext="1" style="ItemsInfos">
+          <tr>
+            <td>
+              <para style="ItemsLineValueRight"><font color="white"> </font></para>
+            </td>
+            <td>
+              <para style="ItemsLineValue"><font color="white"> </font></para>
+            </td>
+            <td>
+              <para style="ItemsLineValue"><font color="white"> </font></para>
+            </td>
+            <td>
+              <para style="ItemsLineValue"><font color="white"> </font></para>
+            </td>
+            <td>
+              <para style="ItemsLineValue"><font color="white"> </font></para>
+            </td>
+            <td>
+              <para style="HeaderInfosTitleRight">TOTAL:</para>
+            </td>
+            <td>
+              <para style="HeaderInfosTitleRight">[[ getCurrency(shipment, True) ]]</para>
+            </td>
+            <td>
+              <para style="HeaderInfosTitleRight">[[ formatLang(getTotal(shipment)) ]]</para>
             </td>
           </tr>
         </blockTable>

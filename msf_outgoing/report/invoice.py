@@ -32,6 +32,8 @@ class invoice(report_sxw.rml_parse):
             'getCompanyInfo': self._get_company_info,
             'getMoves': self._get_moves,
             'getMoveIndex': self._get_move_index,
+            'getTotal': self._get_total,
+            'getCurrency': self._get_ccy_name,
         })
         self.vars = {}  # key is shipment id
         
@@ -79,21 +81,56 @@ class invoice(report_sxw.rml_parse):
     def _get_moves(self, shipment):
         self.vars[shipment.id] = {
             'move_index': 1,
-            'total': 0.,
+            'currency_id': False,
         }
         
         res = []
+        total = 0.
         for pf in shipment.pack_family_memory_ids:
             for move in pf.move_lines:
                 res.append(move)
+                total += move.total_amount
+                if not self.vars[shipment.id]['currency_id']:
+                    self.vars[shipment.id]['currency_id'] = move.currency_id.id
+        self.vars[shipment.id]['total'] = total
         return res
         
     def _get_move_index(self, shipment):
+        """
+        get stock move line index (report line)
+        :rtype int
+        """
         if shipment.id in self.vars:
             res = self.vars[shipment.id].get('move_index', 1)
             self.vars[shipment.id]['move_index'] = res + 1
             return res
         return 0.
+        
+    def _get_total(self, shipment):
+        """
+        get total amount
+        :rtype float
+        """
+        res = 0.
+        for pf in shipment.pack_family_memory_ids:
+            for move in pf.move_lines:
+                if move.total_amount:
+                    res += move.total_amount
+        return res
+
+    def _get_ccy_name(self, shipment, in_parenthesis):
+        """
+        get currency name
+        :rtype str
+        """
+        res = ''
+        currency_id = self.vars.get(shipment.id, {}).get('currency_id', False)
+        if currency_id:
+            res = self.pool.get('res.currency').browse(self.cr, self.uid,
+                currency_id).name
+        if res and in_parenthesis:
+            res = '(' + res + ')'
+        return res
 
 report_sxw.report_sxw('report.invoice', 'shipment',
     'addons/msf_outgoing/report/invoice.rml', parser=invoice,
