@@ -33,6 +33,7 @@ import tools
 from tools.translate import _
 
 import decimal_precision as dp
+from mx.DateTime import *
 
 
 # warning messages
@@ -1363,6 +1364,9 @@ class stock_inventory_line(osv.osv):
             if uom_obj.category_id.id == product_obj.uom_id.category_id.id:
                 product_uom = uom
         #uom = uom or product_obj.uom_id.id
+        # UF-2427: Add one little minute to make sure that all inventories created in the same minute will be included
+        if to_date:
+            to_date = (DateTimeFrom( to_date ) + RelativeDateTime(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')        
         stock_context = {'uom': product_uom, 'to_date': to_date,
                          'prodlot_id':prod_lot_id,}
         if location_id:
