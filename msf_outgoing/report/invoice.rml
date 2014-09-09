@@ -23,15 +23,20 @@
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
         </blockTableStyle>
-
-        <blockTableStyle id="ParcelHeaderGrey">
+        
+        <blockTableStyle id="ItemsInfos">
+            <blockAlignment value="LEFT" />
+            <blockValign value="TOP" />
+        </blockTableStyle>
+        
+        <blockTableStyle id="ItemsHeaderGrey">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
             <blockBackground colorName="#c0c0c0" />
             <lineStyle kind="LINEABOVE" colorName="black" />
         </blockTableStyle>
-
-        <blockTableStyle id="ParcelLineHeader">
+        
+        <blockTableStyle id="ItemsLineHeader">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
             <lineStyle kind="LINEBELOW" colorName="black" start="0,0" stop="-1,0" />
@@ -49,11 +54,11 @@
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
         <paraStyle name="HeaderInfosValue" fontName="Helvetica" fontSize="8.0" textColor="blue" />
 
-        <paraStyle name="ParcelInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
-        <paraStyle name="ParcelInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" alignment="right" />
-
-        <paraStyle name="ParcelLineTitle" fontName="Helvetica-Oblique" fontSize="6.0" leading="5.0" />
-        <paraStyle name="ParcelLineValue" fontName="Helvetica" fontSize="6.0" leading="5.0" textColor="blue" />
+        <paraStyle name="ItemsInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
+        <paraStyle name="ItemsInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" alignment="right" />
+        <paraStyle name="ItemsLineTitle" fontName="Helvetica-Oblique" fontSize="6.0" leading="5.0" />
+        <paraStyle name="ItemsLineValue" fontName="Helvetica" fontSize="6.0" leading="5.0" textColor="blue" />
+        <paraStyle name="ItemsLineValueRight" fontName="Helvetica" fontSize="6.0" leading="5.0" textColor="blue" alignment="right" />
 
         <paraStyle name="TotalInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
         <paraStyle name="TotalInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" />
@@ -214,6 +219,78 @@
             </td>
         </tr>
     </blockTable>
+    
+    <para style="HeaderInfosTitle">
+        <font color="white"> </font>
+    </para>
+    <para style="HeaderInfosTitle">Items</para>
+    <section>
+      <blockTable colWidths="42.0,150.0,250.0,100.0,70.0,60.0,70.0,100.0"  keepWithNext="1" style="ItemsInfos">
+        <tr>
+          <td>
+            <para style="ItemsInfosRight">Item</para>
+          </td>
+          <td>
+            <para style="ItemsInfos">Code</para>
+          </td>
+          <td>
+            <para style="ItemsInfos">Description</para>
+          </td>
+          <td>
+            <para style="ItemsInfos">Comment</para>
+          </td>
+          <td>
+            <para style="ItemsInfosRight">Quantity</para>
+          </td>
+          <td>
+            <para style="ItemsInfos">Unit of Measure</para>
+          </td>
+          <td>
+            <para style="ItemsInfosRight">Unit Price</para>
+          </td>
+          <td>
+            <para style="ItemsInfosRight">Total Price</para>
+          </td>
+        </tr>
+      </blockTable>
+      </section>
+      <section>
+        <para style="ItemsInfos">[[repeatIn(getMoves(shipment),'move')]]</para>
+        <blockTable colWidths="42.0,100.0,250.0,150.0,70.0,60.0,70.0,100.0"  keepWithNext="1" style="ItemsInfos">
+          <tr>
+            <td>
+              <para style="ItemsLineValueRight">[[ 1 ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValue">[[ move.product_id.code or '' ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValue">[[ move.product_id.name or '' ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValue">[[ move.comment or '' ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValueRight">[[ formatLang(move.product_qty or 0.) ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValue">[[ move.product_uom and move.product_uom.name or '' ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValueRight">[[ formatLang((move.sale_line_id and move.sale_line_id.price_unit) or 0.) ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValueRight">[[ formatLang(move.total_amount or 0.) ]]</para>
+            </td>
+          </tr>
+        </blockTable>
+        <para style="HeaderInfosTitle">
+          <font color="white"> </font>
+        </para>
+        <para style="HeaderInfosTitle">
+          <font color="white"> </font>
+        </para>
+    </section>
  
   </story>
 </document>

@@ -30,6 +30,7 @@ class invoice(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getCompanyInfo': self._get_company_info,
+            'getMoves': self._get_moves,
         })
         
     def set_context(self, objects, data, ids, report_type=None):
@@ -71,6 +72,13 @@ class invoice(report_sxw.rml_parse):
                     res = addr.country_id and addr.country_id.name or ''
                 elif field == 'phone':
                     res = addr.phone or addr.mobile or ''
+        return res
+        
+    def _get_moves(self, shipment):
+        res = []
+        for pf in shipment.pack_family_memory_ids:
+            for move in pf.move_lines:
+                res.append(move)
         return res
 
 report_sxw.report_sxw('report.invoice', 'shipment',
