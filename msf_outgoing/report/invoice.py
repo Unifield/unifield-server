@@ -30,12 +30,10 @@ class invoice(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getCompanyInfo': self._get_company_info,
-            'getMoves': self._get_moves,
             'getMoveIndex': self._get_move_index,
             'getTotal': self._get_total,
             'getCurrency': self._get_ccy_name,
         })
-        self.vars = {}  # key is shipment id
         
     def set_context(self, objects, data, ids, report_type=None):
         '''
@@ -78,30 +76,14 @@ class invoice(report_sxw.rml_parse):
                     res = addr.phone or addr.mobile or ''
         return res
         
-    def _get_moves(self, shipment):
-        self.vars[shipment.id] = {
-            'move_index': 1,
-            'currency_id': False,
-        }
-        
-        res = []
-        for pf in shipment.pack_family_memory_ids:
-            for move in pf.move_lines:
-                res.append(move)
-                if not self.vars[shipment.id]['currency_id']:
-                    self.vars[shipment.id]['currency_id'] = move.currency_id.id
-        return res
-        
-    def _get_move_index(self, shipment):
+    def _get_move_index(self, pl, move):
         """
-        get stock move line index (report line)
+        get packing list stock move line index
+        :param pl: packing list
+        :param move: stock move
         :rtype int
         """
-        if shipment.id in self.vars:
-            res = self.vars[shipment.id].get('move_index', 1)
-            self.vars[shipment.id]['move_index'] = res + 1
-            return res
-        return 0.
+        return pf.move_lines.index(move) or 0
         
     def _get_total(self, shipment):
         """
@@ -121,10 +103,10 @@ class invoice(report_sxw.rml_parse):
         :rtype str
         """
         res = ''
-        currency_id = self.vars.get(shipment.id, {}).get('currency_id', False)
-        if currency_id:
-            res = self.pool.get('res.currency').browse(self.cr, self.uid,
-                currency_id).name
+        if shipment.pack_family_memory_ids:
+            currency_id = shipment.pack_family_memory_ids[0].currency_id
+            if currency_id:
+                res = currency_id.name
         if res and in_parenthesis:
             res = '(' + res + ')'
         return res

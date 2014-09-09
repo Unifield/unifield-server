@@ -67,8 +67,8 @@
     </stylesheet>
   
   <story>
-    <para style="HeaderInfosTitle">[[repeatIn(objects,'shipment')]]</para>
-    
+    <para style="HeaderInfosTitle">[[ repeatIn(objects[0].pack_family_memory_ids, 'pl') ]]</para>
+    <pto>
     <!-- header: title -->
     <blockTable colWidths="300.0, 542.0" style="HeaderInfos">
        <tr>
@@ -124,7 +124,7 @@
                 <para style="HeaderInfosValue">[[ 'po ref' ]]</para>
                 <para style="HeaderInfosValue">[[ 'packing ref' ]]</para>
                 <para style="HeaderInfosValue">[[ 'invoice date' ]]</para>
-                <para style="HeaderInfosValue">[[ shipment.transport_type or '' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id.transport_type or '' ]]</para>
             </td>
             <td>
                 <para style="HeaderInfosTitle">Shipper:</para>
@@ -137,9 +137,9 @@
             </td>
             <td>
                 <para style="HeaderInfosTitle">Final destination of goods:</para>
-                <para style="HeaderInfosValue">[[ shipment.consignee_name or removeParentNode('para') ]]</para>
-                <para style="HeaderInfosValue">[[ shipment.consignee_address or removeParentNode('para') ]]</para>
-                <para style="HeaderInfosValue">[[ shipment.consignee_phone or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id.consignee_name or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id.consignee_address or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id.consignee_phone or removeParentNode('para') ]]</para>
             </td>
             <td>
                 <para style="ItemsInfos"><font color="white"> </font></para>
@@ -208,9 +208,9 @@
           </td>
         </tr>
         <tr>
-            [[repeatIn(getMoves(shipment),'move')]]
+            [[ repeatIn(pl.move_lines,'move') ]]
             <td>
-              <para style="ItemsLineValueRight">[[ getMoveIndex(shipment) ]]</para>
+              <para style="ItemsLineValueRight">[[ getMoveIndex(pl) ]]</para>
             </td>
             <td>
               <para style="ItemsLineValue">[[ move.product_id.code or '' ]]</para>
@@ -236,6 +236,7 @@
         </tr>
     </blockTable>
     </section>
+    </pto>
 
     <!-- total -->
     <para style="HeaderInfosTitle">
@@ -265,10 +266,10 @@
           <para style="HeaderInfosTitleRight">TOTAL:</para>
         </td>
         <td>
-          <para style="HeaderInfosTitleRight">[[ getCurrency(shipment, True) ]]</para>
+          <para style="HeaderInfosTitleRight">[[ getCurrency(objects[0], True) ]]</para>
         </td>
         <td>
-          <para style="HeaderInfosTitleRight">[[ formatLang(getTotal(shipment)) ]]</para>
+          <para style="HeaderInfosTitleRight">[[ formatLang(getTotal(objects[0])) ]]</para>
         </td>
       </tr>
     </blockTable>
