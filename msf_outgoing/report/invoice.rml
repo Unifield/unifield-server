@@ -108,13 +108,23 @@
     </blockTable>
     
     <!-- header: ref fields -->
-    <blockTable colWidths="121.0,121.0,300,300" style="HeaderInfos">
+    <blockTable colWidths="120.0,120.0,150,150,302" style="HeaderInfos">
         <tr>
             <td>
                 <para style="HeaderInfosTitle">Our ref:</para>
+                <para style="HeaderInfosTitle">FO Date:</para>
+                <para style="HeaderInfosTitle">Your Ref:</para>
+                <para style="HeaderInfosTitle">Packing ref:</para>
+                <para style="HeaderInfosTitle">Invoice date:</para>
+                <para style="HeaderInfosTitle">Transport mode:</para>
             </td>
             <td>
                 <para style="HeaderInfosValue">[[ 'our ref' ]]</para>
+                <para style="HeaderInfosValue">[[ 'fo date' ]]</para>
+                <para style="HeaderInfosValue">[[ 'po ref' ]]</para>
+                <para style="HeaderInfosValue">[[ 'packing ref' ]]</para>
+                <para style="HeaderInfosValue">[[ 'invoice date' ]]</para>
+                <para style="HeaderInfosValue">[[ shipment.transport_type or '' ]]</para>
             </td>
             <td>
                 <para style="HeaderInfosTitle">Shipper:</para>
@@ -131,95 +141,8 @@
                 <para style="HeaderInfosValue">[[ shipment.consignee_address or removeParentNode('para') ]]</para>
                 <para style="HeaderInfosValue">[[ shipment.consignee_phone or removeParentNode('para') ]]</para>
             </td>
-        </tr>
-        <tr>
             <td>
-                <para style="HeaderInfosTitle">FO Date:</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">[[ 'fo date' ]]</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <para style="HeaderInfosTitle">Your Ref:</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">[[ 'po ref' ]]</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <para style="HeaderInfosTitle">Packing ref:</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">[[ 'packing ref' ]]</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
-            </td>
-        </tr>
-       <tr>
-            <td>
-                <para style="HeaderInfosTitle">Invoice date:</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">[[ 'invoice date' ]]</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
-            </td>
-        </tr>
-       <tr>
-            <td>
-                <para style="HeaderInfosTitle">Transport mode:</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">[[ shipment.transport_type or '' ]]</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">
-                    <font color="white"> </font>
-                </para>
+                <para style="ItemsInfos"><font color="white"> </font></para>
             </td>
         </tr>
     </blockTable>
