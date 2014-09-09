@@ -190,17 +190,31 @@ class hr_payroll_employee_import(osv.osv_memory):
             return False
         # Check staffcode
         staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
+        what_changed = None
+        def changed(mission1, mission2, staff1, staff2, unique1, unique2):
+            res = None
+            if mission1 != mission2:
+                res = 'mission'
+            elif staff1 != staff2:
+                res = 'staff'
+            elif unique1 != unique2:
+                res = 'unique'
+            return res
         if staffcode_ids:
             message = "Several employee have the same ID code: "
             employee_error_list = []
+            # UTP-1098: Do not make an error if the employee have the same code staff and the same name
             for employee in self.pool.get('hr.employee').browse(cr, uid, staffcode_ids):
-                if employee.homere_codeterrain != missioncode or str(employee.homere_id_staff) != staff_id or employee.homere_id_unique != uniq_id:
+                what_changed = changed(employee.homere_codeterrain, missioncode, str(employee.homere_id_staff), staff_id, employee.homere_id_unique, uniq_id)
+                if employee.name == employee_name:
+                    continue
+                if what_changed != None:
                     employee_error_list.append(employee.name)
             if employee_error_list:
                 message += ' ; '.join([employee_name] + employee_error_list)
                 self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
-                return False
-        return True
+                return False, what_changed
+        return True, what_changed
 
     def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None, line_number=None):
         """
@@ -246,11 +260,14 @@ class hr_payroll_employee_import(osv.osv_memory):
             # Employee name
             employee_name = (nom and prenom and ustr(nom) + ', ' + ustr(prenom)) or (nom and ustr(nom)) or (prenom and ustr(prenom)) or False
             # Do some check
-            employee_check = self.update_employee_check(cr, uid, ustr(code_staff), ustr(codeterrain), id_staff, ustr(uniq_id), wizard_id, employee_name)
-            if not employee_check:
+            employee_check, what_changed = self.update_employee_check(cr, uid, ustr(code_staff), ustr(codeterrain), id_staff, ustr(uniq_id), wizard_id, employee_name)
+            if not employee_check and not what_changed:
                 return False, created, updated
             # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
+            # UTP-1098: If what_changed is not None, we should search the employee only on code_staff
+            if what_changed:
+                e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', ustr(code_staff)), ('name', '=', employee_name)])
             # Prepare vals
             res = False
             vals = {
