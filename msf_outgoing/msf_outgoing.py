@@ -2340,7 +2340,8 @@ class stock_picking(osv.osv):
         new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
 
         # For Remote Warehouse: If the instance is CP, and if the type=out, subtype=PICK and name does not contain "-", then set the flag to ask syncing this PICK
-        if not context.get('sync_message_execution', False) and self._get_usb_entity_type(cr, uid, context) == self.CENTRAL_PLATFORM:
+        usb_type = self._get_usb_entity_type(cr, uid, context)
+        if not context.get('sync_message_execution', False) and usb_type == self.CENTRAL_PLATFORM:
             # read the new object
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
             if new_packing and ((new_packing.type == 'out' and new_packing.subtype == 'picking' and new_packing.name.find('-') == -1) or
@@ -2446,8 +2447,25 @@ class stock_picking(osv.osv):
                 # creation of packing after ppl validation
                 # find an existing shipment or create one - depends on new pick state
                 shipment_ids = shipment_obj.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', vals['address_id'])], context=context)
+
+                # UF-2427: If the shipment came from USB sync, and if it is shipped in different ship name, then do not merge them!                
+                if shipment_ids and shipment_ids[0]:   
+                    if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False) and usb_type == self.CENTRAL_PLATFORM:
+                        new_name = context.get('rw_shipment_name')
+                        names = shipment_obj.read(cr, uid, shipment_ids, ['name'], context=context)
+                        found = False
+                        for n in names:
+                            if new_name == n['name']:
+                                # this shipment becomes the one for processing
+                                shipment_ids = [n['id']]
+                                found = True
+                                break
+                        if not found: # If the name is new, then create a new Shipment
+                            shipment_ids = []
+                            
                 # only one 'draft' shipment should be available
                 assert len(shipment_ids) in (0, 1), 'Only one draft shipment should be available for a given address at a time - %s' % len(shipment_ids)
+                
                 # get rts of corresponding sale order
                 sale_id = self.read(cr, uid, [new_packing_id], ['sale_id'], context=context)
                 sale_id = sale_id[0]['sale_id']
