@@ -195,6 +195,21 @@ class msf_budget(osv.osv):
         if context.get('sync_update_execution', False) and vals.get('state', False) and vals.get('state') != 'draft':
             # Update parent budget
             self.update_parent_budgets(cr, uid, ids, context=context)
+            
+        budget = self.browse(cr, uid, ids, context=context)[0]
+        if budget.type == 'normal' and vals.get('state') == 'done':  # do not process for view accounts
+            peer_budget_ids = self.search(cr, uid, [('cost_center_id','=',budget.cost_center_id.id),('decision_moment_id','=',budget.decision_moment_id.id),'!',('id','=',budget.id)],context=context)
+            peer_budgets = self.browse(cr, uid, peer_budget_ids, context=context)
+            all_done = True
+            for peer in peer_budgets:
+                if peer.state != 'done':
+                    all_done = False
+            if all_done == True:  
+                 cc_parent_ids = self.pool.get('account.analytic.account')._get_parent_of(cr, uid, budget.cost_center_id.id, context=context)
+                 parent_cc_ids = [x for x in cc_parent_ids if x != budget.cost_center_id.id]
+                 parent_ids = self.search(cr, uid, [('cost_center_id', 'in', parent_cc_ids),('decision_moment_id','=',budget.decision_moment_id.id)],context=context) 
+                 self.write(cr, uid, parent_ids, {'state': 'done'},context=context)
+                 
         return res
 
     def update(self, cr, uid, ids, context=None):
