@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
   <data>
-
-    <menuitem id="message_menu" name="Message" parent="mon_menu" sequence="60"/>
-
     <record model="ir.ui.view" id="syncback_config_tree_view">
       <field name="name">sync.backup.config.tree</field>
       <field name="model">backup.config</field>
@@ -41,15 +38,40 @@
       </field>
     </record>
 
-    <record model="ir.actions.act_window" id="syncback_config_action">
-      <field name="name">Backup config</field>
-      <field name="res_model">backup.config</field>
-      <field name="view_type">form</field>
-      <field name="view_mode">tree,form</field>
-    </record>
+        <record id="ir_actions_server_openbackupconfig" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'backup_config_default')
+action = {
+'res_model' : 'backup.config',
+'view_type' : 'form',
+'view_mode' : 'form,tree',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_backup_config"/>
+            <field name="condition">True</field>
+            <field name="name">Open Backup config</field>
+        </record>
 
-    <menuitem id="syncback_config_menu" name="Backup config"
-              parent="syncback_menu" action="syncback_config_action"/>
+
+        <record id="ir_ui_menu_backupconfig" model="ir.ui.menu">
+            <field name="name">Backup config</field>
+            <field name="parent_id" ref="syncback_menu"/>
+            <field name="sequence">25</field>
+        </record>
+
+        <record id="ir_values_menuitem_backupconfig" model="ir.values">
+            <field name="name">Menuitem backup config</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('sync_client.ir_actions_server_openbackupconfig')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('ir_ui_menu_backupconfig')" name="res_id"/>
+        </record>
 
 
 

@@ -57,6 +57,11 @@ class BackupConfig(osv.osv):
         if os.name == 'nt' and self._pg_psw_env_var_is_set:
             os.environ['PGPASSWORD'] = ''
 
+    def exp_dump_for_state(self, cr, uid, state, context=None):
+        bkp_ids = self.search(cr, uid, [(state, '=', True)], context=context)
+        if bkp_ids:
+            self.exp_dump(cr, uid, bkp_ids, context)
+
     def exp_dump(self, cr, uid, ids, context=None):
         bkp = self.browse(cr, uid, ids, context)
         if bkp and bkp[0]:
@@ -79,10 +84,7 @@ class BackupConfig(osv.osv):
             if res:
                 raise Exception, "Couldn't dump database"
             self._unset_pg_psw_env_var()
-            if os.name == "nt":
-                outfile = "%s\\%s-%s.dump" % (bck.name.rstrip('\\'), cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"))
-            else:
-                outfile = "%s/%s-%s.dump" % (bck.name.rstrip('/'), cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"))
+            outfile = os.path.join(bck.name, "%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S")))
             bkpfile = open(outfile,"wb")
             bkpfile.write(data)
             bkpfile.close()

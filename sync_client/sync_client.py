@@ -764,18 +764,11 @@ class Entity(osv.osv):
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
         #Check for a backup before automatic sync
-        bkp_model = self.pool.get('backup.config')
-        bkp_ids = bkp_model.search(cr, uid, [('beforeautomaticsync', '=', True)], context=context)
-        if bkp_ids:
-            bkp_model.exp_dump(cr, uid, bkp_ids, context)
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync')
         self.sync_recover(cr, uid, context=context)
         #Check for a backup after automatic sync
-        bkp_model = self.pool.get('backup.config')
-        bkp_ids = bkp_model.search(cr, uid, [('afterautomaticsync', '=', True)], context=context)
-        if bkp_ids:
-            bkp_model.exp_dump(cr, uid, bkp_ids, context)
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'afterautomaticsync')
         return {'type': 'ir.actions.act_window_close'}
-        return True
 
     @sync_process()
     def sync(self, cr, uid, context=None):
@@ -791,18 +784,11 @@ class Entity(osv.osv):
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
         #Check for a backup before automatic sync
-        bkp_model = self.pool.get('backup.config')
-        bkp_ids = bkp_model.search(cr, uid, [('beforeautomaticsync', '=', True)], context=context)
-        if bkp_ids:
-            bkp_model.exp_dump(cr, uid, bkp_ids, context)
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync')
         self.sync(cr, uid, context=context)
         #Check for a backup after automatic sync
-        bkp_model = self.pool.get('backup.config')
-        bkp_ids = bkp_model.search(cr, uid, [('afterautomaticsync', '=', True)], context=context)
-        if bkp_ids:
-            bkp_model.exp_dump(cr, uid, bkp_ids, context)
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'afterautomaticsync')
         return {'type': 'ir.actions.act_window_close'}
-        return True
 
     def get_upgrade_status(self, cr, uid, context=None):
         return ""

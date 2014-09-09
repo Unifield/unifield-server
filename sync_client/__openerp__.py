@@ -41,6 +41,7 @@ Synchronization Engine - Client Module
         'wizard/monitoring_view.xml',
         'monitor_view.xml',
         'data/cron.xml',
+        'data/backupconfig.xml',
         'security/ir.model.access.csv'
     ],
     'demo_xml': [
