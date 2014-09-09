@@ -71,7 +71,7 @@
     <pto>
     <!-- header: title -->
     <pto_header>
-        <blockTable colWidths="150.0,660.0" style="HeaderInfos">
+        <blockTable colWidths="150.0,650.0" style="HeaderInfos">
             <tr>
                 <td>
                     <para style="Title">[[ 'PINV/' + getInvoiceRef(pl) ]]</para>
@@ -83,7 +83,7 @@
             <font color="white"> </font>
         </para>
     </pto_header>
-    <blockTable colWidths="150.0,660.0" style="HeaderInfos">
+    <blockTable colWidths="150.0,650.0" style="HeaderInfos">
         <tr>
             <td>
                 <para style="Title">[[ 'PINV/' + getInvoiceRef(pl) ]]</para>
@@ -96,7 +96,7 @@
     </para>
     
     <!-- header: ref fields -->
-    <blockTable colWidths="120.0,120.0,150,150,302" style="HeaderInfos">
+    <blockTable colWidths="120.0,120.0,150,150,292" style="HeaderInfos">
         <tr>
             <td>
                 <para style="HeaderInfosTitle">Our ref:</para>
@@ -142,7 +142,7 @@
         <font color="white"> </font>
     </para>
     <section>
-    <blockTable colWidths="42.0,150.0,250.0,100.0,70.0,40.0,70.0,100.0"  keepWithNext="1" style="ItemsHeaderGrey">
+    <blockTable colWidths="42.0,140.0,240.0,100.0,70.0,60.0,70.0,100.0"  keepWithNext="1" style="ItemsHeaderGrey">
         <tr>
           <td>
             <para style="ItemsInfos">Items</para>
@@ -170,7 +170,7 @@
           </td>
         </tr>
     </blockTable>
-    <blockTable colWidths="42.0,150.0,250.0,100.0,70.0,40.0,70.0,100.0" repeatRows="1" style="ItemsLineHeader">
+    <blockTable colWidths="42.0,140.0,240.0,100.0,70.0,60.0,70.0,100.0" repeatRows="1" style="ItemsLineHeader">
         <tr>
           <td>
             <para style="ItemsLineTitleRight">Item</para>
@@ -200,7 +200,7 @@
         <tr>
             [[ repeatIn(pl.move_lines,'move') ]]
             <td>
-              <para style="ItemsLineValueRight">[[ getMoveIndex(pl) ]]</para>
+              <para style="ItemsLineValueRight">[[ getMoveIndex(pl, move) ]]</para>
             </td>
             <td>
               <para style="ItemsLineValue">[[ move.product_id.code or '' ]]</para>
@@ -235,7 +235,7 @@
     <para style="HeaderInfosTitle">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="42.0,100.0,250.0,150.0,70.0,40.0,70.0,100.0" style="ItemsInfos">
+    <blockTable colWidths="42.0,140.0,240.0,100.0,70.0,60.0,70.0,100.0" style="ItemsInfos">
       <tr>
         <td>
           <para style="ItemsLineValueRight"><font color="white"> </font></para>
