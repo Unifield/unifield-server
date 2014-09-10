@@ -143,9 +143,10 @@ class stock_picking(osv.osv):
                 
                 if pick_id: # If successfully created, then get the sdref of the CP IN and store into this replicated IN in RW
                     sdref, temp = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
-                    bo_of_other = self.search(cr, uid, [('rw_sdref_counterpart', '=', sdref)], context=context)
-                    if bo_of_other:# The original IN of this backorder IN exists, update that original IN
-                        self.write(cr, uid, bo_of_other, {'backorder_id': pick_id}, context=context)
+                    if sdref:
+                        bo_of_other = self.search(cr, uid, [('rw_sdref_counterpart', '=', sdref)], context=context)
+                        if bo_of_other:# The original IN of this backorder IN exists, update that original IN
+                            self.write(cr, uid, bo_of_other, {'backorder_id': pick_id}, context=context)
 
                 todo_moves = []
                 for move in self.browse(cr, uid, pick_id, context=context).move_lines:
