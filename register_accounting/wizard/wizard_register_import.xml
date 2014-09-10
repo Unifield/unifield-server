@@ -57,6 +57,7 @@
                               <tr style='background-color: #ccc;'>
                                 <th class='document_date' style="border: thin solid black;">Document date</th>
                                 <th class='posting_date' style='border: thin solid black; border-left: none;'>Posting date</th>
+                                <th class='cheque_number' style='border: thin solid black; border-left: none;'>Cheque number</th>
                                 <th class='description' style='border: thin solid black; border-left: none;'>Description</th>
                                 <th class='reference' style='border: thin solid black; border-left: none;'>Reference</th>
                                 <th class='account' style='border: thin solid black; border-left: none;'>Account</th>
@@ -69,6 +70,7 @@
                               </tr>
                               <tr>
                                 <th style="border: thin solid black; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
                                 <th style="border: thin solid black; border-left: none; border-top: none;"></th>
                                 <th style="border: thin solid black; border-left: none; border-top: none;"></th>
                                 <th style="border: thin solid black; border-left: none; border-top: none;"></th>

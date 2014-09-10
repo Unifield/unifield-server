@@ -262,7 +262,7 @@ class wizard_register_import(osv.osv_memory):
                 # cols variable describe each column and its expected number
                 cols = {
                     'document_date': 0,
-                    'posting_date':  1,
+                    'posting_date':  1, 
                     'cheque_number': 2,   
                     'description':   3,
                     'reference':     4,
@@ -385,7 +385,7 @@ class wizard_register_import(osv.osv_memory):
                     if not line[cols['posting_date']]:
                         errors.append(_('Line %s: Posting date is missing.') % (current_line_num,))
                         continue
-                    if not line[cols['description']]:
+                    if line[cols['document_date']] and not line[cols['description']]:
                         errors.append(_('Line %s: Description is missing.') % (current_line_num,))
                         continue
                     if not line[cols['account']]:
