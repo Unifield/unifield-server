@@ -108,10 +108,10 @@
             </td>
             <td>
                 <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.name or '-' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and formatLang(pl.ppl_id.sale_id.date_order, date=True) or '-' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.date_order and formatLang(pl.ppl_id.sale_id.date_order, date=True) or '-' ]]</para>
                 <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.client_order_ref or '-' ]]</para>
                 <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.name or '-' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.invoice_id and formatLang(pl.shipment_id.invoice_id.date_invoice, date=True) or '-' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.invoice_id and pl.shipment_id.invoice_id.document_date and formatLang(pl.shipment_id.invoice_id.document_date, date=True) or '-' ]]</para>
                 <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.transport_type or '-' ]]</para>
             </td>
             <td>
