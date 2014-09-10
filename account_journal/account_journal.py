@@ -82,7 +82,7 @@ class account_journal(osv.osv):
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
-        'bank_journal_id': fields.many2one('account.journal', _("Linked bank"), domain="[('type', '=', 'bank'), ('currency', '=', currency)]"),
+        'bank_journal_id': fields.many2one('account.journal', _("Corresponding bank journal"), domain="[('type', '=', 'bank'), ('currency', '=', currency)]"),
         'cheque_journal_id': fields.one2many('account.journal', 'bank_journal_id', 'Linked cheque'),
     }
 
@@ -200,7 +200,7 @@ class account_journal(osv.osv):
             raise osv.except_osv(_('Error'), _('Programming error.'))
         res = self.search(cr, uid, [('bank_journal_id', '=', journal_id)], count=1)
         if res and res > 1:
-            raise osv.except_osv(_('Error'), _('Linked bank already used. Choose another one.'))
+            raise osv.except_osv(_('Error'), _('Corresponding bank journal already used. Choose another one.'))
         return True
 
     def create(self, cr, uid, vals, context=None):
