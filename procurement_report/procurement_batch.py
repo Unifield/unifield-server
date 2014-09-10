@@ -38,7 +38,10 @@ class procurement_batch_cron(osv.osv):
     
     _constraints = [
     ]
-    
+
+    def _poolJobs(self, db_name, check=False):
+        return False
+
     def open_request_view(self, cr, uid, ids, context=None):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_report', 'batch_requests_view')[1]
         return {'type': 'ir.actions.act_window',
