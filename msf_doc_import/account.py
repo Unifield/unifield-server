@@ -134,6 +134,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'analytic_distribution_id': distrib_id,
                         'partner_id': l.partner_id and l.partner_id.id or False,
                         'employee_id': l.employee_id and l.employee_id.id or False,
+                        'transfer_journal_id': l.transfer_journal_id and l.transfer_journal_id.id or False,
                     }
                     self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
                 # Validate the Journal Entry for lines to be valid (if possible)
@@ -211,7 +212,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
                 # Use the first row to find which column to use
                 cols = {}
-                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Partner', 'Employee', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit', 'Booking Credit', 'Booking Currency']
+                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Partner', 'Employee', 'Journal', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit', 'Booking Credit', 'Booking Currency']
                 for num, r in enumerate(rows):
                     header = [x and x.data for x in r.iter_cells()]
                     for el in col_names:
@@ -244,6 +245,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_currency = False
                     r_partner = False
                     r_employee = False
+                    r_journal = False
                     r_account = False
                     r_destination = False
                     r_fp = False
@@ -339,11 +341,25 @@ class msf_doc_import_accounting(osv.osv_memory):
                             tp_content = line[cols['Employee']]
                         else:
                             r_employee = tp_ids[0]
+                    if line[cols['Journal']]:
+                        tp_ids = self.pool.get('account.journal').search(cr, uid, ['|', ('name', '=', line[cols['Journal']]), ('code', '=', line[cols['Journal']])])
+                        if not tp_ids:
+                            tp_label = _('Journal')
+                            tp_content = line[cols['Journal']]
+                        else:
+                            r_journal = tp_ids[0]
                     if tp_label and tp_content:
                         errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, tp_content,))
                         continue
-                    if r_employee and r_partner:
-                        errors.append(_('Line %s. You cannot add a partner AND an employee.') % (current_line_num,))
+                    list_third_party = []
+                    if r_employee:
+                        list_third_party.append(r_employee)
+                    if r_partner:
+                        list_third_party.append(r_partner)
+                    if r_journal:
+                        list_third_party.append(r_journal)
+                    if len(list_third_party) > 1:
+                        errors.append(_('Line %s. You cannot only add partner or employee or journal.') % (current_line_num,))
                         continue
                     # Check analytic axis only if G/L account is analytic-a-holic
                     if account.is_analytic_addicted:
@@ -397,6 +413,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'period_id': period and period.id or False,
                         'employee_id': r_employee or False,
                         'partner_id': r_partner or False,
+                        'transfer_journal_id': r_journal or False,
                     }
                     # UTP-1056: Add employee possibility. So we need to check if employee and/or partner is authorized
                     partner_needs = self.pool.get('account.bank.statement.line').onchange_account(cr, uid, False, account_id=account.id, context=context)
@@ -411,6 +428,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if r_employee and ('hr.employee', 'Employee') not in partner_options:
                         errors.append(_('Line %s. You cannot use an employee for the given account: %s.') % (current_line_num, account.code))
                         continue
+                    if r_journal and ('account.journal', 'Journal') not in partner_options:
+                        errors.append(_('Line %s. You cannot use a journal for the given account: %s.') % (current_line_num, account.code))
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
                         errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
@@ -506,6 +525,7 @@ class msf_doc_import_accounting_lines(osv.osv):
         'currency_id': fields.many2one('res.currency', "Currency", required=True, readonly=True),
         'partner_id': fields.many2one('res.partner', "Partner", required=False, readonly=True),
         'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
+        'transfer_journal_id': fields.many2one('account.journal', 'Journal', required=False, readonly=True),
         'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
         'wizard_id': fields.integer("Wizard", required=True, readonly=True),
     }
