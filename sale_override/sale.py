@@ -192,6 +192,7 @@ class sale_order_sourcing_progress(osv.osv):
         'split_order': '/',
         'check_data': '/',
         'prepare_picking': '/',
+        'end_date': False,
     }
 
 sale_order_sourcing_progress()
@@ -737,7 +738,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                        process object
         :param context: Context of the call
 
-        :return: True
+        :return: The ID of the sale.order.sourcing.progress.mem that have been
+                 updated
         '''
         prog_obj = self.pool.get('sale.order.sourcing.progress.mem')
 
@@ -1685,6 +1687,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
                'prepare_picking': _('Done'),
             }, context=context)
+            prog_obj = self.pool.get('sale.order.sourcing.progress')
+            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order.id)], context=context)
+            prog_obj.write(cr, uid, prog_ids, {
+                'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+            }, context=context)
 
         return True
     # @@@END override sale>sale.py>sale_order>action_ship_create()
@@ -1831,7 +1838,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         date_tools = self.pool.get('date.tools')
         proc_obj = self.pool.get('procurement.order')
         pol_obj = self.pool.get('purchase.order.line')
-        prog_obj = self.pool.get('sale.order.sourcing.progress.mem')
 
         if context is None:
             context = {}
@@ -1960,6 +1966,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
                 'line_completed': _('In Progress (%s/%s)') % (line_done, line_total),
                 'prepare_picking': _('Done'),
+            }, context=context)
+            prog_obj = self.pool.get('sale.order.sourcing.progress')
+            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order.id)], context=context)
+            prog_obj.write(cr, uid, prog_ids, {
+                'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
             }, context=context)
 
         if lines:
