@@ -2604,6 +2604,7 @@ class purchase_order_line(osv.osv):
         proc_obj = self.pool.get('procurement.order')
         data_obj = self.pool.get('ir.model.data')
         wkf_act_obj = self.pool.get('workflow.activity')
+        opl_obj = self.pool.get('stock.warehouse.orderpoint.line')
 
         # Variables initialization
         if context is None:
@@ -2630,6 +2631,9 @@ class purchase_order_line(osv.osv):
                 self.pool.get('stock.move').action_cancel(cr, uid, [line.move_dest_id.id], context=context)
                 proc_ids = proc_obj.search(cr, uid, [('move_id', '=', line.move_dest_id.id)], context=context)
                 if proc_ids:
+                    # Delete link between proc. order and min/max rule lines
+                    opl_ids = opl_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+                    opl_obj.write(cr, uid, opl_ids, {'procurement_id': False}, context=context)
                     wf_service = netsvc.LocalService("workflow")
                     for proc_id in proc_ids:
                         wf_service.trg_delete(uid, 'procurement.order', proc_id, cr)
