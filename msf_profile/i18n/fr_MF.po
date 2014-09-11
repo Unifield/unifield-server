@@ -9569,8 +9569,8 @@ msgstr "Montant initial en type de devise donnée"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:182
 #, python-format
-msgid "Given date is inferior to those from the maximum posting date. You cannot post lines before the youngest one. Please change it to be superior or equal to %s"
-msgstr "Given date is inferior to those from the maximum posting date. You cannot post lines before the youngest one. Please change it to be superior or equal to %s"
+msgid "Posting date should be later than all Document Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s"
+msgstr "La date de comptabilisation doit être postérieure à toutes les dates du document. Vous ne pouvez pas comptabiliser des lignes avant la plus récente. Veuillez la modifier pour être supérieure ou égale à %s"
 
 #. module: analytic_distribution
 #: view:analytic.distribution.wizard:0
@@ -56973,8 +56973,8 @@ msgstr "Nom Fournisseur"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:180
 #, python-format
-msgid "Given date is inferior to those from the maximum document date. Please change it to be superior or equal to %s"
-msgstr "La date indiquée est inférieure à la date du document. Veuillez mettre une date supérieure ou égale à %s"
+msgid "Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s"
+msgstr "La date de comptabilisation doit être postérieure à toutes les dates du document. Veuillez mettre une date supérieure ou égale à %s"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
