@@ -1431,6 +1431,7 @@ class account_bank_statement_line(osv.osv):
         """
         if not values:
             return False
+        ref = values.get('ref', False)
 
         if context is None:
             context = {}
@@ -1505,8 +1506,18 @@ class account_bank_statement_line(osv.osv):
                 for el in ['is_transfer_with_change', 'transfer_amount', 'imported_invoice_line_ids']:
                     if el in move_line_values:
                         del(move_line_values[el])
-                move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit,
-                    'amount_currency': register_amount_currency, 'currency_id': currency_id,})
+                move_line_values.update({
+                    'account_id': register_account_id,
+                    'debit': register_debit,
+                    'credit': register_credit,
+                    'amount_currency': register_amount_currency, 'currency_id': currency_id,
+                })
+                if ref:
+                    # UTP-1097 update reference field
+                    # note:
+                    # - 'ref' field is a field function,
+                    # - 'reference' is the writable one
+                    move_line_values['reference'] = ref
                 # Write move line object for register line
                 #+ Optimization: Do not check line because of account_move.write() method at the end of this method
                 acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context, check=False, update_check=False)
@@ -1538,7 +1549,10 @@ class account_bank_statement_line(osv.osv):
                 if st_line.third_parties:
                     partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
                 # finally write move object
-                move_vals = {'partner_type': partner_type}
+                move_vals = { 'partner_type': partner_type, }
+                if ref:
+                    # UTP 1097 update reference field
+                    move_vals['ref'] = ref
                 if 'document_date' in move_line_values:
                     move_vals.update({'document_date': move_line_values.get('document_date')})
                 if 'cheque_number' in move_line_values:
