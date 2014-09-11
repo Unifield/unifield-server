@@ -191,7 +191,12 @@ class financing_contract_contract(osv.osv):
                 else:
                     # first time
                     analytic_domain = temp
-
+        # UTP-1063: Don't use MSF Private Funds anymore
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except Exception as e:
+            fp_id = 0
+        analytic_domain = [('account_id', '!=', fp_id)] + analytic_domain
         return analytic_domain
 
     def _get_overhead_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -477,6 +482,27 @@ class financing_contract_contract(osv.osv):
                 'target': 'new',
                 'res_id': [wiz_id],
                 'context': context,
+        }
+
+    def allocated_expenses_report(self, cr, uid, ids, context=None):
+        """
+        Check if contract gives some FP. If not raise an error.
+        Otherwise launch the report.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for contract in self.browse(cr, uid, ids, context=context):
+            if not contract.format_id.funding_pool_ids:
+                raise osv.except_osv(_('Error'), _('No FP selected in the financing contract: %s') % (contract.name or ''))
+        # We launch the report
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'financing.allocated.expenses.2',
+            'datas': {'ids': ids},
+            'context': context,
         }
 
     def create(self, cr, uid, vals, context=None):
