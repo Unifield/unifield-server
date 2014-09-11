@@ -31,6 +31,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from csv import DictReader
 import threading
 import pooler
+from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -294,21 +295,23 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     else:
                         # check for a valid journal code
-                        try:
-                            aj_id = aj_obj.search(cr, uid, [('type','in',['intermission','migration','correction']),('code','=',line[cols['Journal Code']])])[0]
-                        except IndexError as e:
+                        aj_ids = aj_obj.search(cr, uid, [('code', '=', line[cols['Journal Code']])])
+                        if not aj_ids:
                             errors.append(_('Line %s. Journal Code not found: %s.') % (current_line_num, line[cols['Journal Code']]))
                             continue
-                        if aj_id:
-                            if num == 0:   # Assume 1st line is the journal code for the entire spreadsheet
-                                file_journal_id = aj_id
-                            else:
-                                if file_journal_id != aj_id:
-                                    errors.append(_('Line %s. Only a single Journal Code can be specified per file') % (current_line_num,))
-                                    continue
                         else:
-                            errors.append(_('Line %s. Journal Code is not of type OD, INT or MIG') % (current_line_num,))
-                            continue
+                            aj_data = aj_obj.read(cr, uid, aj_ids, ['type'])[0]
+                            if aj_data.get('type', False) is False or aj_data.get('type', False) not in ACCOUNTING_IMPORT_JOURNALS:
+                                journal_list = ', '.join([x[1] for x in aj_obj.get_journal_type(cr, uid) if x[0] in ACCOUNTING_IMPORT_JOURNALS])
+                                errors.append(_('Line %s. Import of entries only allowed on the following journal(s): %s') % (current_line_num, journal_list))
+                                continue
+                        aj_id = aj_ids[0]
+                        if num == 0:
+                            file_journal_id = aj_id
+                        else:
+                            if file_journal_id != aj_id:
+                                errors.append(_('Line %s. Only a single Journal Code can be specified per file') % (current_line_num,))
+                                continue
 
                     # Check G/L account
                     if not line[cols['G/L Account']]:
