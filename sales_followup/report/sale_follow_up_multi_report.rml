@@ -134,7 +134,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">Date of the request: <font color="blue">[[ formatLang(r.report_date, datetime=True) ]]</font></para>
+                    <para style="TextInformation">Date of the request: <font color="blue">[[ formatLang(r.report_date, date_time=True) ]]</font></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
