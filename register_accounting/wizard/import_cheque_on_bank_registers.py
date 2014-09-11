@@ -70,6 +70,7 @@ class wizard_import_cheque(osv.osv_memory):
         'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
         'date': fields.date('Posting Date', required=False),
         'document_date': fields.date('Document Date', required=False),
+        'journal_id': fields.many2one('account.journal', string="Cheque journal to use", required=True, help="The journal the wizard will use to display lines to import"),
     }
 
     _defaults = {

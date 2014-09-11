@@ -36,6 +36,19 @@
          />
 
         <report
+        id="pending_cheque"
+        string="Pending Cheque"
+        target_filename="Pending Cheque_${name}_%(year)s%(month)s%(day)s"
+        model="account.bank.statement"
+        name="pending.cheque"
+        file="register_accounting/report/pending_cheque_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"
+         />
+
+        <report
         id="open_advances_2"
         string="Open Advances"
         target_filename="Open Advances_${instance_id.code}_%(year)s%(month)s%(day)s"

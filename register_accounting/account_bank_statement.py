@@ -391,8 +391,9 @@ class account_bank_statement(osv.osv):
         # currency_id is useful to filter cheques in the same currency
         # period_id is useful to filter cheques drawn in the same period
         st = self.browse(cr, uid, ids[0], context=context)
+        cheque_journal_id = st.journal_id.cheque_journal_id and st.journal_id.cheque_journal_id[0] and st.journal_id.cheque_journal_id[0].id or None
         i = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None,
-            'period_id': st.period_id.id}, context=context)
+            'period_id': st.period_id.id, 'journal_id': cheque_journal_id}, context=context)
         return {
             'name': "Import Cheque",
             'type': 'ir.actions.act_window',
@@ -2518,6 +2519,7 @@ class ir_values(osv.osv):
                 or v[1] == 'Cash Inventory' and context['journal_type'] == 'cash' \
                 or v[1] == 'Open Advances' and context['journal_type'] == 'cash' \
                 or v[1] == 'Cheque Inventory' and context['journal_type'] == 'cheque' \
+                or v[1] == 'Pending Cheque' and context['journal_type'] == 'cheque' \
                 or v[1] == 'Liquidity Position' and context['journal_type'] != 'cheque' \
                 or v[1] == 'Full Report' and context['journal_type'] in ['bank', 'cash', 'cheque']:
                     new_act.append(v)
