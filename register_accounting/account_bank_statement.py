@@ -953,11 +953,9 @@ class account_bank_statement_line(osv.osv):
                 # Default ones (direct link to register lines)
                 for m in absl.move_ids:
                     res.add(m.id)
-                    # Those from cash advance return (we should use the reconciliation to find the return and its expenses)
+                    # Fetch reversal and correction moves
+                    # UTP-1055: delete lines that fetch reconciled lines so that cash advance return don't give all lines in the Full Report
                     for ml in m.line_id:
-                        if ml.reconcile_id and ml.reconcile_id.line_id:
-                            for line in ml.reconcile_id.line_id:
-                                res.add(line.move_id.id)
                         other_ml_ids = self.pool.get('account.move.line').search(cr, uid, ['|', ('reversal_line_id', '=', ml.id), ('corrected_line_id', '=', ml.id)], context=context)
                         if other_ml_ids:
                             for el in self.pool.get('account.move.line').read(cr, uid, other_ml_ids, ['move_id'], context=context):
@@ -968,8 +966,6 @@ class account_bank_statement_line(osv.osv):
                 for ml in absl.imported_invoice_line_ids:
                     res.add(ml.move_id.id)
         return list(res)
-
-
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
         """
@@ -982,32 +978,11 @@ class account_bank_statement_line(osv.osv):
         aal_obj = self.pool.get('account.analytic.line')
         aml_obj = self.pool.get('account.move.line')
         for absl in self.browse(cr, uid, ids, context=context):
-            possible_aal_ids = []
-
-            # get ids of all possible analytic lines for this register lines via moves for the statement line
-            cr.execute('''select distinct id
-                from account_analytic_line
-                where move_id in (select id from account_move_line
-                                  where move_id in (select distinct statement_id as "move_id"
-                                        from account_bank_statement_line_move_rel
-                                        where move_id in (select id from account_bank_statement_line
-                                                          where id = %s)))''' % (absl.id))
-            possible_aal_ids += [x[0] for x in cr.fetchall()]
-
-            # filter the lines 
-            # - keep only if the account and abs(amount) of the parent account_move_line match and statement line
-            not_matched = []
-            for aal in aal_obj.browse(cr, uid, possible_aal_ids, context=context):
-                aml = aml_obj.browse(cr, uid, aal.move_id.id, context=context)
-                if not(absl.account_id.id == aml.account_id.id and abs(absl.amount) == abs(aml.amount_currency)):
-                    not_matched.append(aal.id)
-            aal_ids = [x for x in possible_aal_ids if x not in not_matched]
-
+            # UTP-1055: In case of Cash Advance register line, we don't need to see all other advance lines allocation (analytic lines). So we keep only analytic lines with the same "name" than register line
+            aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING'), ('name', 'ilike', '%%%s' % absl.name)])
             # Then retrieve all corrections/reversals from them
             res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
         return res
-
-
 
     _columns = {
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
@@ -1085,6 +1060,17 @@ class account_bank_statement_line(osv.osv):
         move_ids = self._get_move_ids(cr, uid, ids, context=context)
         # Search valid ids
         domain = [('account_id.category', '=', 'FUNDING'), ('move_id.move_id', 'in', move_ids)]
+        # For cash advance register lines, filtering on names (as amount can be splitted, account changed, etc.). The name remains.
+        advance_names = []
+        for absl in self.browse(cr, uid, ids, context=context):
+            if absl.from_cash_return:
+                advance_names.append(absl.name)
+        if advance_names:
+            name_len = len(advance_names)
+            if name_len > 1:
+                domain += ['|' for x in range(0,name_len - 1)]
+            for name in advance_names:
+                domain.append(('name', 'ilike', '%%%s' % name))
         context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
         return {
             'name': _('Analytic Journal Items'),
