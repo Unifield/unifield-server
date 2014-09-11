@@ -86,13 +86,13 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Name: <font color="blue">[[ r.company_id.instance_id.instance or '-' ]]</font></para>
+                    <para style="TextInformation">Name: <font color="blue">[[ r.company_id.instance_id.instance or 'N/A' ]]</font></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">Partner: <font color="blue">[[ r.partner_id and r.partner_id.name or '-' ]]</font></para>
+                    <para style="TextInformation">Partner: <font color="blue">[[ r.partner_id and r.partner_id.name or 'N/A' ]]</font></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -106,7 +106,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">Date start: <font color="blue">[[ r.start_date and formatLang(r.start_date, date=True) or '-' ]]</font></para>
+                    <para style="TextInformation">Date start: <font color="blue">[[ r.start_date and formatLang(r.start_date, date=True) or 'N/A' ]]</font></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -120,7 +120,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">Date end: <font color="blue">[[ r.end_date and formatLang(r.end_date, date=True) or '-' ]]</font></para>
+                    <para style="TextInformation">Date end: <font color="blue">[[ r.end_date and formatLang(r.end_date, date=True) or 'N/A' ]]</font></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -255,7 +255,7 @@
 	    			<para style="LinesBlue">[[ line.get('product_name', '-') ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="LinesBlue">[[ line.get('ordered_qty') and formatLang(line['ordered_qty']) or '-' ]]</para>
+	    			<para style="LinesBlue">[[ line.get('ordered_qty') and formatLang(line['ordered_qty']) or 'N/A' ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('uom_id', '-') ]]</para>
@@ -280,10 +280,10 @@
 	    			<para style="LinesBlue">[[ line.get('shipment', '') ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="LinesBlue">[[ line.get('eta', '') and formatLang(line['eta'], date=True) or '-' ]]</para>
+	    			<para style="LinesBlue">[[ line.get('eta', '') and formatLang(line['eta'], date=True) or 'N/A' ]]</para>
 	    		</td>
                 <td>
-	    			<para style="LinesBlue">[[ line.get('rts', '') and formatLang(line['rts'], date=True) or '-' ]]</para>
+	    			<para style="LinesBlue">[[ line.get('rts', '') and formatLang(line['rts'], date=True) or 'N/A' ]]</para>
 	    		</td>
 	    	</tr>
         </blockTable>
