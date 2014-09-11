@@ -57,16 +57,18 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
         return orders
 
-    def _get_lines(self, order):
+    def _get_lines(self, order, grouped=False):
         '''
         Get all lines with OUT/PICK for an order
         '''
         res = []
+        keys = []
         for line in order.order_line:
+            if not grouped:
+                keys = []
             lines = []
             first_line = True
             bo_qty = line.product_uom_qty
-            keys = []
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and move.location_dest_id.usage == 'customer'
@@ -89,7 +91,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     if ppl:
                         packing = move.picking_id.previous_step_id.name
                         shipment = move.picking_id.shipment_id.name
-                        key = (packing, shipment, move.product_uom.name)
+                        if not grouped:
+                            key = (packing, shipment, move.product_uom.name)
+                        else:
+                            key = (packing, shipment, move.product_uom.name, line.line_number)
                         data.update({
                             'packing': packing,
                             'shipment': shipment,
@@ -101,7 +106,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         })
                     else:
                         packing = move.picking_id.name
-                        key = (packing, False, move.product_uom.name)
+                        if not grouped:
+                            key = (packing, False, move.product_uom.name)
+                        else:
+                            key = (packing, False, move.product_uom.name, line.line_number)
                         data.update({
                             'packing': packing,
                             'delivery_qty': move.product_qty,
@@ -120,9 +128,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     if key in keys:
                         for rline in lines:
                             if rline['packing'] == key[0] and rline['shipment'] == key[1] and rline['delivered_uom'] == key[2]:
-                                rline.update({
-                                    'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
-                                })
+                                if not grouped or (grouped and line.line_number == key[3]):
+                                    rline.update({
+                                        'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
+                                    })
                     else:
                         keys.append(key)
                         lines.append(data)
