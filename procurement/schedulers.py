@@ -283,6 +283,9 @@ class procurement_order(osv.osv):
         report = []
         offset = 0
         ids = [1]
+        created_proc = []
+        report_except = 0
+        start_date = time.strftime('%Y-%m-%d %H:%M:%S')
         if automatic:
             self.create_automatic_op(cr, uid, context=context)
      
@@ -344,6 +347,7 @@ class procurement_order(osv.osv):
                                 newdate=newdate)
                             proc_id = procurement_obj.create(cr, uid, values,
                                 context=context)
+                            created_proc.append(proc_id)
                             wf_service.trg_validate(uid, 'procurement.order',
                                 proc_id, 'button_confirm', cr)
                             wf_service.trg_validate(uid, 'procurement.order',
@@ -357,12 +361,41 @@ class procurement_order(osv.osv):
             offset += len(ids)
             if use_new_cursor:
                 cr.commit()
-        if user_id and report:
+
+        ###
+        # Add created document and exception in a request
+        ###
+        created_doc = '''################################
+ Created documents : \n'''
+
+        for proc in procurement_obj.browse(cr, uid, created_proc):
+            if proc.state == 'exception':
+                report.append('PROC %d: from stock - %3.2f %-5s - %s' % \
+                    (proc.id, proc.product_qty, proc.product_uom.name,
+                     proc.product_id.name,))
+                report_except += 1
+            elif proc.purchase_id:
+                created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)
+
+        end_date = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        summary = '''Here is the procurement scheduling report for Automatic Supplies
+
+ Start Time: %s
+ End Time: %s
+ Total Procurements processed: %d
+ Procurements with exceptions: %d
+ 
+ \n %s \n  Exceptions: \n'''% (start_date, end_date, len(created_proc), report_except, len(created_proc) > 0 and created_doc or '')
+
+        summary += '\n'.join(report)
+
+        if uid and summary:
             request_vals = {
-                'name': 'Orderpoint report.',
-                'act_from': user_id,
-                'act_to': user_id,
-                'body': '\n'.join(report)
+                'name': "Procurement Processing Report (Min/Max rules).",
+                'act_from': uid,
+                'act_to': uid,
+                'body': summary,
             }
             request_vals = self._hook_request_vals(cr, uid, request_vals=request_vals, context=context)
             request_obj.create(cr, uid, request_vals)
