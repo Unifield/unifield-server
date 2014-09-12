@@ -254,7 +254,7 @@
         <para style="P10">PO reference: [[ (o.name and o.name) or '' ]]</para>
         <para style="P10">Fiscal year: [[ (get_fiscal_year(o) and get_fiscal_year(o)) or ' ' ]]</para>
         <para style="P10">Functional currency: [[ o.functional_currency_id and o.functional_currency_id.name or ' ' ]]</para>
-        <para style="P10">Report date: [[ time.strftime('%d/%m/%Y') ]]</para>
+        <para style="P10">Report date: [[ time.strftime('%d/%b/%Y') ]]</para>
         <para style="P27">
             <font color="white"/>
         </para>

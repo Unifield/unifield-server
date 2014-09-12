@@ -186,7 +186,7 @@ class account_bank_statement(osv.osv):
         'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id', 'Responsible'),
     }
 
-    _order = 'state asc, period_number desc'
+    _order = 'state asc, period_number asc'
 
     _defaults = {
         'balance_start': lambda *a: 0.0,
@@ -350,6 +350,7 @@ class account_bank_statement(osv.osv):
                 'type': 'in_invoice',
                 'journal_type': 'purchase',
                 'active_ids': ids,
+                'from_wizard_di': 1,
             }
         }
 
@@ -661,7 +662,7 @@ class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
 
-    _order = 'sequence_for_reference desc'
+    _order = 'sequence_for_reference desc, document_date asc'
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -1048,6 +1049,7 @@ class account_bank_statement_line(osv.osv):
             ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
             ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
+        'journal_id': fields.related('statement_id','journal_id', string="Journal", type='many2one', relation='account.journal', readonly=True),
     }
 
     _defaults = {
@@ -1559,9 +1561,13 @@ class account_bank_statement_line(osv.osv):
             move_obj = self.pool.get('account.move')
             move_line_obj = self.pool.get('account.move.line')
             curr_date = time.strftime('%Y-%m-%d')
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
+            if not journal_ids:
+                raise osv.except_osv(_('Error'), _('No purchase journal found!'))
+            journal_id = journal_ids[0]
             # Create a move
             move_vals= {
-                'journal_id': st_line.statement_id.journal_id.id,
+                'journal_id': journal_id,
                 'period_id': st_line.statement_id.period_id.id,
                 'date': st_line.date or curr_date,
                 'document_date': st_line.document_date or curr_date,
@@ -1591,7 +1597,7 @@ class account_bank_statement_line(osv.osv):
                 'credit': 0.0,
                 'debit': 0.0,
                 'statement_id': st_line.statement_id.id,
-                'journal_id': st_line.statement_id.journal_id.id,
+                'journal_id': journal_id,
                 'period_id': st_line.statement_id.period_id.id,
                 'currency_id': st_line.statement_id.currency.id,
                 'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
@@ -1770,6 +1776,10 @@ class account_bank_statement_line(osv.osv):
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
             values = self._update_employee_analytic_distribution(cr, uid, values=values)
+        if 'cheque_number' in values and values.get('cheque_number', False):
+            cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (values['cheque_number'], ))
+            for row in cr.dictfetchall():
+                raise osv.except_osv(_('Info'),_('This cheque number has already been used'))
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
         return absl
@@ -1914,6 +1924,9 @@ class account_bank_statement_line(osv.osv):
         acc_move_obj = self.pool.get("account.move")
         # browse all statement lines for creating move lines
         for absl in self.browse(cr, uid, ids, context=context):
+            if not context.get('from_wizard_di'):
+                if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
+                    raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
             previous_state = ''.join(absl.state)
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
@@ -1986,7 +1999,6 @@ class account_bank_statement_line(osv.osv):
 
                 # update the invoice 'name' (ref)  TODO - does this need to be set to "/" ?
                 self.pool.get('account.invoice').read(cr, uid, absl.invoice_id.id, ['number'])['number']
-                # self.write(cr, uid, [absl.id], {'name': "/"})
 
                 # Optimization: Do check=True and update_check=True because it was out from previous lines.
                 account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
@@ -2037,6 +2049,8 @@ class account_bank_statement_line(osv.osv):
                     acc_move_obj.write(cr, uid, [absl.invoice_id.move_id.id], {'state':'posted'}, context=context)
                 else:
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
+                    # WARNING: if we don't do a browse before the "do_direct_expense", the system doesn't know that the absl state is hard post. And so the direct expense functionnality doesn't work!
+                    absl = self.browse(cr, uid, absl.id, context=context)
                     # do a move that enable a complete supplier follow-up
                     self.do_direct_expense(cr, uid, absl, context=context)
                 if previous_state == 'draft':
@@ -2335,6 +2349,7 @@ class account_bank_statement_line(osv.osv):
 
             default_vals = ({
                 'name': '(copy) ' + line.name,
+                'cheque_number': None,
             })
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True

@@ -721,6 +721,7 @@ threshold_value()
 
 class stock_inventory_line(osv.osv):
     _inherit = 'stock.inventory.line'
+    _description = "Physical Stock Inventory Line"
 
     def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
         '''
@@ -751,6 +752,7 @@ stock_inventory_line()
 
 class stock_inventory(osv.osv):
     _inherit = 'stock.inventory'
+    _description = "Physical Stock Inventory"
 
     def add_multiple_lines(self, cr, uid, ids, context=None):
         '''

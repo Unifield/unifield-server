@@ -21,7 +21,7 @@
 
 import report_budget_criteria
 import report_budget_actual
-import report_pdf_budget_monthly
+import monthly_budget
 import report_pdf_budget_summary
 import report_pdf_engagement
 import msf_budget_summary

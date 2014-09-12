@@ -140,7 +140,7 @@ class assign_to_kit(osv.osv_memory):
                 integrity_check = self.validate_assign_to_kit_line(cr, uid, ids, context=context)
                 if not integrity_check:
                     # the windows must be updated to trigger tree colors
-                    return self.pool.get('wizard').open_wizard(cr, uid, stock_move_ids, type='update', context=context)
+                    return self.pool.get('wizard').open_wizard(cr, uid, stock_move_ids, w_type='update', context=context)
                 # we pop the kit id from the list of all ids
                 kit_list.remove(mem.kit_id_assign_to_kit_line.id)
                 # does this stock move exist in the kit

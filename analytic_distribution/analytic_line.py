@@ -279,6 +279,8 @@ class analytic_line(osv.osv):
             else:
                 # Update account
                 self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
+            # Set line as corrected upstream if we are in COORDO/HQ instance
+            self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [aline.move_id.id], context=context)
         return True
 
     def check_analytic_account(self, cr, uid, ids, account_id, context=None):

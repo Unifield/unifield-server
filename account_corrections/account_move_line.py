@@ -42,13 +42,18 @@ class account_move_line(osv.osv):
          - The account is not the default credit/debit account of the attached statement (register)
          - All items attached to the entry have no reconcile_id on reconciliable account
          - The line doesn't come from a write-off
+         - The line is "corrected_upstream" that implies the line have been already corrected from a coordo or a hq to a level that is superior or equal to these instance.
         """
+        # Some checks
         if context is None:
             context = {}
+        # Prepare some values
         res = {}
         # Search all accounts that are used in bank, cheque and cash registers
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', 'in', ['bank', 'cheque', 'cash'])])
         account_ids = []
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        level = company and company.instance_id and company.instance_id.level or ''
         for j in self.pool.get('account.journal').read(cr, uid, journal_ids, ['default_debit_account_id', 'default_credit_account_id']):
             if j.get('default_debit_account_id', False) and j.get('default_debit_account_id')[0] not in account_ids:
                 account_ids.append(j.get('default_debit_account_id')[0])
@@ -107,9 +112,14 @@ class account_move_line(osv.osv):
             if ml.account_id.id in account_ids:
                 res[ml.id] = False
                 continue
+            # False if "corrected_upstream" is True and that we come from project level
+            if ml.corrected_upstream and level == 'project':
+                res[ml.id] = False
+                continue
             # False if this line is a revaluation
             if ml.journal_id.type == 'revaluation':
                 res[ml.id] = False
+                continue
         return res
 
     _columns = {
@@ -761,6 +771,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     al_obj.write(cr, uid, search_ids, search_data[1])
             # Add this line to succeded lines
             success_move_line_ids.append(ml.id)
+            # Mark it as "corrected_upstream" if needed
+            self.corrected_upstream_marker(cr, uid, [ml.id], context=context)
         return success_move_line_ids
 
     def correct_partner_id(self, cr, uid, ids, date=None, partner_id=None, context=None):
@@ -858,6 +870,25 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Add this line to succeded lines
             success_move_line_ids.append(move_line.id)
         return success_move_line_ids
+
+    def corrected_upstream_marker(self, cr, uid, ids, context=None):
+        """
+        Check if we are in a COORDO / HQ instance. If yes, set move line(s) as corrected upstream.
+        """
+        # Some check
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        # Check if we come from COORDO/HQ instance
+        if company and company.instance_id and company.instance_id.level in ['section', 'coordo']:
+            # UF-1746: Set also all other move lines as corrected upstream to disallow projet user to correct any move line of this move.
+            move_ids = [x and x.get('move_id', False) and x.get('move_id')[0] for x in self.read(cr, uid, ids, ['move_id'], context=context)]
+            ml_ids = self.search(cr, uid, [('move_id', 'in', move_ids)])
+            self.write(cr, uid, ml_ids, {'corrected_upstream': True}, check=False, update_check=False, context=context)
+        return True
 
 account_move_line()
 

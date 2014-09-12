@@ -3574,8 +3574,8 @@ msgstr "La Commande d'Approvisionnement passe sous statut fermé"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:186
 #, python-format
-msgid "Period for migration is not open!"
-msgstr "La période de la date de migration n'est pas ouverte !"
+msgid "Period for is not open!"
+msgstr "La période n'est pas ouverte !"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
@@ -29466,7 +29466,7 @@ msgstr "Mexico"
 #: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
 #: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
 #: view:msf.doc.import.accounting:0
-msgid "Import Migration Entries"
+msgid "Import Entries"
 msgstr "Import d'entrées de migration"
 
 #. module: sale
@@ -30357,7 +30357,7 @@ msgstr "Ligne %s. Monnaie non trouvée : %s"
 
 #. module: msf_doc_import
 #: view:msf.doc.import.accounting:0
-msgid "This will import Migration Entries from a XML file."
+msgid "This will import Entries from a XML file."
 msgstr "Ceci va importer les entrées de migration depuis un fichier XML."
 
 #. module: financing_contract
@@ -60481,8 +60481,8 @@ msgstr "Produits - Type de Prix"
 
 #. module: msf_doc_import
 #: field:msf.doc.import.accounting,date:0
-msgid "Migration date"
-msgstr "Date de migration"
+msgid "Date"
+msgstr "Date"
 
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:455

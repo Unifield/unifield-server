@@ -37,6 +37,7 @@ from msf_doc_import import MAX_LINES_NB
 from msf_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION, NEW_COLUMNS_HEADER
 
 from lxml import etree
+import datetime
 
 
 class purchase_order(osv.osv):
@@ -156,6 +157,24 @@ class purchase_order(osv.osv):
                 'target': 'new',
                 'context': context}
 
+    def export_get_file_name(self, cr, uid, ids, prefix='PO', context=None):
+        """
+        UFTP-56: get export file name
+        :param prefix: prefix of the file (POV for PO Validated, etc)
+        :return POV_14_OC_MW101_PO00060_YYYY_MM_DD.xls or POV_14_OC_MW101_PO00060_YYYY_MM_DD.xml
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) != 1:
+            return False
+        po_r = self.read(cr, uid, ids[0], ['name'], context=context)
+        if not po_r or not po_r['name']:
+            return False
+        dt_now = datetime.datetime.now()
+        po_name = "%s_%s_%d_%02d_%02d" % (prefix,
+            po_r['name'].replace('/', '_'),
+            dt_now.year, dt_now.month, dt_now.day)
+        return po_name
 
     def export_xml_po_integration(self, cr, uid, ids, context=None):
         '''
@@ -169,6 +188,10 @@ class purchase_order(osv.osv):
 
         datas = {}
         datas['ids'] = ids
+        file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
+            context=context)
+        if file_name:
+            datas['target_filename'] = file_name
         report_name = 'validated.purchase.order_xml'
 
         return {
@@ -190,6 +213,10 @@ class purchase_order(osv.osv):
 
         datas = {}
         datas['ids'] = ids
+        file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
+            context=context)
+        if file_name:
+            datas['target_filename'] = file_name
         report_name = 'validated.purchase.order_xls'
 
         return {

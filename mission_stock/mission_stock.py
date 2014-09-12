@@ -23,12 +23,10 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 import pooler
 import time
 import threading
-import base64
 import logging
 
 REPLACE_DICT = {'cell': 'Cell',
@@ -96,11 +94,17 @@ class stock_mission_report(osv.osv):
         'last_update': fields.datetime(string='Last update'),
         'move_ids': fields.many2many('stock.move', 'mission_move_rel', 'mission_id', 'move_id', string='Noves'),
         'export_ok': fields.boolean(string='Export file possible ?'),
-        'ns_nv_file': fields.binary(string='XML export'),
-        'ns_v_file': fields.binary(string='XML export'),
-        's_nv_file': fields.binary(string='XML export'),
-        's_v_file': fields.binary(string='XML export'),
+        'ns_nv_vals': fields.text(string='XML values'),
+        's_nv_vals': fields.text(string='XML values'),
+        'ns_v_vals': fields.text(string='XML values'),
+        's_v_vals': fields.text(string='XML values'),
     }
+
+    def __init__(self, pool, cr):
+        a = super(stock_mission_report, self).__init__(pool, cr)
+        for col in ['ns_nv_vals', 's_nv_vals', 'ns_v_vals', 's_v_vals']:
+            self._columns[col]._prefetch = False
+        return a
 
     _defaults = {
         'full_view': lambda *a: False,
@@ -136,10 +140,11 @@ class stock_mission_report(osv.osv):
     def update_newthread(self, cr, uid, ids=[], context=None):
         # Open a new cursor : Don't forget to close it at the end of method
         cr = pooler.get_db(cr.dbname).cursor()
-        a = time.strftime('%H-%M-%S')
         try:
             self.update(cr, uid, ids=[], context=None)
             cr.commit()
+        except Exception:
+            cr.rollback()
         finally:
             cr.close()
 
@@ -353,31 +358,6 @@ class stock_mission_report(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        line_obj = self.pool.get('stock.mission.report.line')
-
-        # ns_nv => No split, no valuation
-        # ns_v => No split, valuation
-        # s_nv => Split, no valuation
-        # s_v => Split, valuation
-        # headers (_(Field name), Field type, Technical field name, ns_nv, ns_v, s_nv, s_v
-        headers = [(_('Reference'), 'string', 'default_code', 1, 1, 1, 1),
-                   (_('Name'), 'string', 'name', 1, 1, 1, 1),
-                   (_('UoM'), 'string', 'uom_id', 1, 1, 1, 1),
-                   (_('Cost price'), 'number', 'cost_price', 0, 1, 0, 1),
-                   (_('Func. Cur.'), 'string', 'currency_id', 0, 1, 0, 1),
-                   (_('Instance stock'), 'number', 'internal_qty', 1, 1, 1, 1),
-                   (_('Instance stock val.'), 'number', 'internal_val', 0, 1, 0, 1),
-                   (_('Warehouse stock'), 'number', 'wh_qty', 1, 1, 0, 0),
-                   (_('Stock Qty.'), 'number', 'stock_qty', 0, 0, 1, 1),
-                   (_('Unallocated Stock Qty.'), 'number', 'central_qty', 0, 0, 1, 1),
-                   (_('Cross-Docking Qty.'), 'number', 'cross_qty', 1, 1, 1, 1),
-                   (_('Secondary Stock Qty.'), 'number', 'secondary_qty', 1, 1, 1, 1),
-                   (_('Internal Cons. Unit Qty.'), 'number', 'cu_qty', 1, 1, 1, 1),
-                   (_('AMC'), 'number', 'product_amc', 1, 1, 1, 1),
-                   (_('FMC'), 'number', 'reviewed_consumption', 1, 1, 1, 1),
-                   (_('In Pipe Qty.'), 'number', 'in_pipe_qty', 1, 1, 1, 1),]
-        fields = ['product_amc', 'reviewed_consumption']
-
         def set_data(request, report_id, line, data_name,):
             data = ''
             cr.execute(request, (report_id, line['id']))
@@ -395,23 +375,14 @@ class stock_mission_report(osv.osv):
 #        for report in self.browse(cr, uid, ids, context=context):
         for report_id in ids:
             # No split, no valuation
-            ns_nv_headers = [(x[0], x[1]) for x in headers if x[3] == 1]
             ns_nv_data = ''
             # No split, valuation
-            ns_v_headers = [(x[0], x[1]) for x in headers if x[4] == 1]
             ns_v_data = ''
             # Split, no valuation
-            s_nv_headers = [(x[0], x[1]) for x in headers if x[5] == 1]
             s_nv_data = ''
             # Split, valuation
-            s_v_headers = [(x[0], x[1]) for x in headers if x[6] == 1]
             s_v_data = ''
 
-#            lines_ids = line_obj.search(cr, uid, [('mission_report_id', '=', report_id)], context=context)
-#            start = 0
-
-#            for line in line_obj.read(cr, uid, lines_ids, ['product_id'], context=context):
-                # No split, No valuation
             request = '''SELECT
                 l.product_id AS product_id,
                 xmlelement(name Row,
@@ -650,51 +621,10 @@ class stock_mission_report(osv.osv):
                 except Exception, e:
                     logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file. Data: \n %s""" % line)
 
-            # No split - No valuation
-            ns_nv_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', ns_nv_headers, [])
-            ns_nv_split = ns_nv_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
-            ns_nv_split[0] = ns_nv_split[0].replace('ss:ExpandedRowCount="1" ', '')
-            ns_nv_file = base64.encodestring(ns_nv_split[0] + '</Row>' + ns_nv_data + ns_nv_split[1])
-            del ns_nv_tmpl
-            del ns_nv_split
-            del ns_nv_data
+            for data, field in [(ns_nv_data, 'ns_nv_vals'), (ns_v_data, 'ns_v_vals'), (s_nv_data, 's_nv_vals'), (s_v_data, 's_v_vals')]:
+                self.write(cr, uid, [report_id], {field: data}, context=context)
 
-
-            # No split, valuation
-            ns_v_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', ns_v_headers, [])
-            ns_v_split = ns_v_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
-            ns_v_split[0] = ns_v_split[0].replace('ss:ExpandedRowCount="1" ', '')
-            ns_v_file = base64.encodestring(ns_v_split[0] + '</Row>' + ns_v_data + ns_v_split[1])
-            del ns_v_tmpl
-            del ns_v_split
-            del ns_v_data
-
-
-            # Split, no valuation
-            s_nv_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', s_nv_headers, [])
-            s_nv_split = s_nv_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
-            s_nv_split[0] = s_nv_split[0].replace('ss:ExpandedRowCount="1" ', '')
-            s_nv_file = base64.encodestring(s_nv_split[0] + '</Row>' + s_nv_data + s_nv_split[1])
-            del s_nv_tmpl
-            del s_nv_split
-            del s_nv_data
-
-
-            # Split, valuation
-            s_v_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', s_v_headers, [])
-            s_v_split = s_v_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
-            s_v_split[0] = s_v_split[0].replace('ss:ExpandedRowCount="1" ', '')
-            s_v_file = base64.encodestring(s_v_split[0] + '</Row>' + s_v_data + s_v_split[1])
-            del s_v_tmpl
-            del s_v_split
-            del s_v_data
-
-
-            self.write(cr, uid, [report_id], {'ns_nv_file': ns_nv_file,
-                                              'ns_v_file': ns_v_file,
-                                              's_nv_file': s_nv_file,
-                                              's_v_file': s_v_file,
-                                              'export_ok': True}, context=context)
+            self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
 
         return True
 

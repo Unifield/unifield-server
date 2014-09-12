@@ -961,3 +961,54 @@ class ir_values(osv.osv):
         return True
 
 ir_values()
+
+
+class board_board(osv.osv):
+    '''
+    Override the board object because the ACL aren't used on dashboard
+    and user can show an error message if he tries to open a dashboard
+    containing a view of an object on which he doesn't have access.
+    '''
+    _inherit = 'board.board'
+
+    def remove_unauthorized_children(self,cr, uid, node):
+        for child in node.iterchildren():
+            if child.tag == 'action':
+                if child.get('invisible'):
+                    node.remove(child)
+                    break
+                elif child.get('name'):
+                    action_id = int(child.get('name'))
+                    model = self.pool.get('ir.actions.act_window').browse(cr, uid, action_id).res_model
+                    if not self.pool.get('ir.model.access').check(cr, uid, model, mode='read', raise_exception=False):
+                        node.remove(child)
+                        break
+
+                if child.get('menu_ref'):
+                    menu_ids = child.get('menu_ref').split(',')
+                    if not isinstance(menu_ids, list):
+                        menu_ids = [menu_ids]
+
+                    for menu_id in menu_ids:
+                        menu_id = int(menu_id)
+                        if not self.pool.get('ir.ui.menu').search(cr, uid, [('id', '=', menu_id)]):
+                            node.remove(child)
+                            break
+            else:
+                child = self.remove_unauthorized_children(cr, uid, child)
+
+        return node
+
+    def _arch_preprocessing(self, cr, user, arch, context=None):
+        from lxml import etree
+
+        def encode(s):
+            if isinstance(s, unicode):
+                return s.encode('utf8')
+            return s
+
+        archnode = etree.fromstring(encode(arch))
+        return etree.tostring(self.remove_unauthorized_children(cr, user, archnode),pretty_print=True)
+
+
+board_board()

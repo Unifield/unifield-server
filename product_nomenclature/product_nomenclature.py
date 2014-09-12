@@ -740,10 +740,12 @@ class product_product(osv.osv):
 
         # save the data to db
         if 'batch_management' in vals:
-            vals.update({'track_production': vals['batch_management'],
-                         'track_incoming': vals['batch_management'],
-                         'track_outgoing': vals['batch_management'],
-                         'perishable': vals['batch_management']})
+            vals.update({
+                'track_production': vals['batch_management'],
+                'track_incoming': vals['batch_management'],
+                'track_outgoing': vals['batch_management'],
+                'perishable': vals.get('perishable', vals['batch_management']),
+            })
 
         if default_code:
             vals['duplicate_ok'] = default_code == 'XXX'

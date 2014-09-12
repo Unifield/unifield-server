@@ -246,11 +246,17 @@ class stock_move_processor(osv.osv):
             loc_cust = line.move_id.location_dest_id.usage == 'customer'
             valid_pt = line.move_id.picking_id.type == 'out' and line.move_id.picking_id.subtype == 'picking' and line.move_id.picking_id.state != 'draft'
 
+            # UF-2426: point 1) If the source location is given in line, use it, not from the move
+            if line.location_id and line.location_id.id:
+                location_id = line.location_id.id
+            else:
+                location_id = line.move_id.location_id.id
+
             res[line.id] = {
                 'ordered_product_id': line.move_id.product_id.id,
                 'ordered_uom_id': line.move_id.product_uom.id,
                 'ordered_uom_category': line.move_id.product_uom.category_id.id,
-                'location_id': line.move_id.location_id.id,
+                'location_id': location_id,
                 'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
                 'type_check': line.move_id.picking_id.type,
             }
@@ -731,6 +737,7 @@ class stock_move_processor(osv.osv):
             'prodlot_id': move.prodlot_id and move.prodlot_id.id,
             'cost': move.price_unit,
             'currency': move.price_currency_id.id,
+            'location_id': move.location_id and move.location_id.id,
         }
 
         return line_data
@@ -763,7 +770,7 @@ class stock_move_processor(osv.osv):
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)') %
-                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
+                    (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
                 )
             elif new_qty == line.ordered_quantity:
                 # Cannot select more than initial quantity

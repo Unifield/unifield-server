@@ -24,6 +24,7 @@
             <field name="priority">2</field>
             <field name="arch" type="xml">
                 <tree string="Sales Orders" colors="grey:state=='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except')">
+                    <field name="vat_ok" invisible="1" />
                     <field name="name"/>
                     <field name="date_order"/>
                     <field name="client_order_ref" />
@@ -33,7 +34,7 @@
                     <!-- WAS
                     <field name="invoiced_rate" widget="progressbar"/>
                      -->
-                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="amount_untaxed" sum="Total Tax Excluded" attrs="{'invisible': [('vat_ok', '=', False)]}" />
                     <field name="amount_total" sum="Total Tax Included"/>
                     <field name="state"/>
                 </tree>

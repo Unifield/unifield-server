@@ -225,6 +225,47 @@ class stock_picking(osv.osv):
 
         return result
 
+    def _get_do_not_sync(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        if context is None:
+            context = {}
+
+        current_company_p_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = False
+            if pick.partner_id.id == current_company_p_id:
+                res[pick.id] = True
+
+        return res
+
+    def _src_do_not_sync(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns picking ticket that do not synched because the partner of the
+        picking is the partner of the current company.
+        '''
+        res = []
+        curr_partner_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+
+        if context is None:
+            context = {}
+
+        for arg in args:
+
+            eq_false = arg[1] == '=' and arg[2] in (False, 'f', 'false', 'False', 0)
+            neq_true = arg[1] in ('!=', '<>') and arg[2] in (True, 't', 'true', 'True', 1)
+            eq_true = arg[1] == '=' and arg[2] in (True, 't', 'true', 'True', 1)
+            neq_false = arg[1] in ('!=', '<>') and arg[2] in (False, 'f', 'false', 'False', 0)
+
+            if arg[0] == 'do_not_sync' and (eq_false or neq_true):
+                res.append(('partner_id', '!=', curr_partner_id))
+            elif arg[0] == 'do_not_sync' and (eq_true or neq_false):
+                res.append(('partner_id', '=', curr_partner_id))
+
+        return res
+
+
     _columns = {
         'state': fields.selection([
             ('draft', 'Draft'),
@@ -247,6 +288,7 @@ class stock_picking(osv.osv):
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'from_wkf': fields.boolean('From wkf'),
+        'from_wkf_sourcing': fields.boolean('From wkf sourcing'),
         'update_version_from_in_stock_picking': fields.integer(string='Update version following IN processing'),
         'partner_type_stock_picking': fields.function(_vals_get_stock_ov, method=True, type='selection', selection=PARTNER_TYPE, string='Partner Type', multi='get_vals_stock_ov', readonly=True, select=True,
                                                       store={'stock.picking': (lambda self, cr, uid, ids, c=None: ids, ['partner_id2'], 10),
@@ -263,10 +305,20 @@ class stock_picking(osv.osv):
         'dpo_out': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Out', multi='dpo',
                                         store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
                                                'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
+        'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),
+        'do_not_sync': fields.function(
+            _get_do_not_sync,
+            fnct_search=_src_do_not_sync,
+            method=True,
+            type='boolean',
+            string='Do not sync.',
+            store=False,
+        ),
     }
 
     _defaults = {'from_yml_test': lambda *a: False,
                  'from_wkf': lambda *a: False,
+                 'from_wkf_sourcing': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
                  'fake_type': 'in',
                  'shipment_ref':False
@@ -278,6 +330,13 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         default.update(shipment_ref=False)
+
+        if not 'from_wkf_sourcing' in default:
+            default['from_wkf_sourcing'] = False
+
+        if not 'previous_chained_pick_id' in default:
+            default['previous_chained_pick_id'] = False
+
         return super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
 
     def _check_active_product(self, cr, uid, ids, context=None):
@@ -340,6 +399,13 @@ class stock_picking(osv.osv):
         # in case me make a copy of a stock.picking coming from a workflow
         if context.get('not_workflow', False):
             vals['from_wkf'] = False
+
+        if vals.get('from_wkf') and vals.get('purchase_id'):
+            po = self.pool.get('purchase.order').browse(cr, uid, vals.get('purchase_id'), context=context)
+            for line in po.order_line:
+                if line.procurement_id and line.procurement_id.sale_id:
+                    vals['from_wkf_sourcing'] = True
+                    break
 
         if not vals.get('partner_id2') and vals.get('address_id'):
             addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
@@ -1466,6 +1532,11 @@ class stock_move(osv.osv):
         loc_obj = self.pool.get('stock.location')
         prodlot_obj = self.pool.get('stock.production.lot')
         for move in self.browse(cr, uid, ids, context):
+            compare_date = context.get('rw_date', False)
+            if compare_date:
+                compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
+            else:
+                compare_date = datetime.today()
             # FEFO logic
             if move.state == 'assigned' and not move.prodlot_id:  # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
                 needed_qty = move.product_qty
@@ -1488,7 +1559,7 @@ class stock_move(osv.osv):
                         if not move.location_dest_id.id == loc['location_id']:
                             # we ignore the batch that are outdated
                             expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
-                            if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                            if datetime.strptime(expired_date, "%Y-%m-%d") >= compare_date:
                                 existed_moves = []
                                 if not move.move_dest_id:
                                     # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
@@ -1530,7 +1601,7 @@ class stock_move(osv.osv):
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
-                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= datetime.today():
+                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
                             if not self.search(cr, uid, [('move_dest_id', '=', move.id)], context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
@@ -1615,11 +1686,14 @@ class stock_move(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
 
         for line in self.browse(cr, uid, ids, context):
             if line.prodlot_id:
                 self.write(cr, uid, ids, {'prodlot_id': False, 'expired_date': False})
-            if line.location_id.location_id and line.location_id.location_id.usage != 'view':
+            # UF-2426: If the cancel is called from sync, do not change the source location!
+            if not context.get('sync_message_execution', False) and line.location_id.location_id and line.location_id.location_id.usage != 'view':
                 self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
         return True
 
@@ -1963,6 +2037,7 @@ class stock_move(osv.osv):
             'sale_id': picking.sale_id and picking.sale_id.id or False,
             'auto_picking': picking.type == 'in' and picking.move_lines[0]['direct_incoming'],
             'reason_type_id': reason_type_id,
+            'previous_chained_pick_id': picking.id,
         }
 
         return picking_obj.create(cr, uid, pick_values, context=context)

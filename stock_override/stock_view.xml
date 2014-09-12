@@ -52,6 +52,9 @@
                 <xpath expr="/form//field[@name='partner_id2']" position="attributes">
                     <attribute name="domain">[('customer', '=', True)]</attribute>
                 </xpath>
+                <xpath expr="/form//field[@name='move_lines']/tree//field[@name='location_id']" position="after">
+                    <field name="location_dest_id" readonly="1" />
+                </xpath>
             </field>
         </record>
 
@@ -450,7 +453,6 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
-                                        <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -658,7 +660,6 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
-                                        <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -674,8 +675,10 @@
                                     context="{'cancel_type': 'update_out'}"
                                     confirm="Warning, you are going to Cancel!"
                                     />
+                                <field name="from_wkf_sourcing" invisible="1" />
                                 <button name="enter_reason"
                                     states="assigned,confirmed,draft,shipped"
+                                    attrs="{'invisible': [('from_wkf_sourcing', '=', False)]}"
                                     string="Cancel &amp; Resource"
                                     type="object"
                                     icon="gtk-cancel"
@@ -942,7 +945,6 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
-                                        <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>

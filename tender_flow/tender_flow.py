@@ -421,6 +421,7 @@ class tender(osv.osv):
                                             'is_tender': True,
                                             'tender_id': tender.id,
                                             'tender_line_id': line.id,
+                                            'tender_done': True,
                                             'price_unit': line.price_unit,
                                             'date_planned': rts,
                                             'origin': tender.sale_order_id.name,
@@ -1386,7 +1387,18 @@ class purchase_order(osv.osv):
         This hook belongs to the rfq_sent method from tender_flow>tender_flow.py
         - check lines after import
         '''
-        res = True
+        pol_obj = self.pool.get('purchase.order.line')                          
+        
+        res = True                                                              
+        empty_lines = pol_obj.search(cr, uid, [                                 
+            ('order_id', 'in', ids),                                            
+            ('product_qty', '<=', 0.00),                                        
+        ], context=context)                                                     
+        if empty_lines:                                                         
+            raise osv.except_osv(                                               
+                _('Error'),                                                     
+                _('All lines of the RfQ should have a quantity before sending the RfQ to the supplier'),
+                    ) 
         return res
 
         

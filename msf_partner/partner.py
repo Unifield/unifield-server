@@ -141,6 +141,17 @@ class res_partner(osv.osv):
 
 ## QT : Remove _get_valide_until_date
 
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VA management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid,).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection(PARTNER_TYPE, string='Partner type', required=True),
@@ -170,11 +181,13 @@ class res_partner(osv.osv):
         'price_unit': fields.function(_get_price_info, method=True, type='float', string='Unit price', multi='info'),
         'valide_until_date' : fields.function(_get_price_info, method=True, type='char', string='Valid until date', multi='info'),
         'price_currency': fields.function(_get_price_info, method=True, type='many2one', relation='res.currency', string='Currency', multi='info'),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     _defaults = {
         'manufacturer': lambda *a: False,
         'partner_type': lambda *a: 'external',
+        'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
 
@@ -445,6 +458,9 @@ class res_partner(osv.osv):
             other_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')
             if other_supplier:
                 r.update({'property_stock_supplier': other_supplier[1]})
+
+        if partner_type and partner_type == 'esc':
+            r['zone'] = 'international'
 
         return {'value': r}
 

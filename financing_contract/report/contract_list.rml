@@ -199,7 +199,7 @@
         </td>
       </tr>
       <tr>
-          <para style="P20">[[ repeatIn(get_contract_list(), 'line', 'tr') ]]</para>
+          <para style="P20">[[ repeatIn(get_contract_list(objects), 'line', 'tr') ]]</para>
           <td>
             <parawrap style="P3">[[ line['code'] ]]</parawrap>
           </td>
