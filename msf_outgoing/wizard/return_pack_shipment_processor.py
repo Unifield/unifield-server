@@ -125,8 +125,10 @@ class return_pack_shipment_processor(osv.osv):
         overlap_ids = []
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            sequences = []
+            fo_family = {}
             for family in wizard.family_ids:
+                fo_id = family.sale_order_id and family.sale_order_id.id or False
+                fo_family.setdefault(fo_id, [])
                 if family.return_from == 0 and family.return_to == 0:
                     continue
                 if family.return_from > family.return_to:
@@ -134,19 +136,21 @@ class return_pack_shipment_processor(osv.osv):
                 elif not (family.return_from >= family.from_pack and family.return_to <= family.to_pack):
                     out_of_range_ids.append(family.id)
                 else:
-                    sequences.append((family.return_from, family.return_to, family.id))
+                    fo_family[fo_id].append((family.return_from, family.return_to, family.id))
 
-            sequences = sorted(sequences, key=lambda seq: seq[0])
-            # Go through the list of sequences applying the rules
-            for i in range(len(sequences)):
-                seq = sequences[i]
-                # Rule #3 applies from second element
-                if i > 0:
-                    # previous sequence
-                    seqb = sequences[i - 1]
-                    # Rule #3: sfrom[i] > sto[i-1] for i>0 // no overlapping, unique sequence
-                    if not (seq[0] > seqb[1]):
-                        overlap_ids.append(seq[2])
+            for sequences in fo_family.values():
+                sequences = sorted(sequences, key=lambda seq: seq[0])
+                # Go through the list of sequences applying the rules
+                for i in range(len(sequences)):
+                    seq = sequences[i]
+                    # Rule #3 applies from second element
+                    if i > 0:
+                        # previous sequence
+                        seqb = sequences[i - 1]
+                        print seqb, seq
+                        # Rule #3: sfrom[i] > sto[i-1] for i>0 // no overlapping, unique sequence
+                        if not (seq[0] > seqb[1]):
+                            overlap_ids.append(seq[2])
 
             if overlap_ids:
                 family_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
