@@ -363,6 +363,10 @@ class stock_move_in_processor(osv.osv):
                 
             res[moves_to_ids[move.id]] = ','.join(map(lambda id: str(id), location_ids))
 
+        # set ids default value for ids with no specific location
+        for id in ids:
+            if id not in res:
+                res[id] = False
         return res
 
     _columns = {
