@@ -814,12 +814,15 @@ class stock_picking(osv.osv):
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
     
-        # Call do_incoming_shipment()
-        res = self.do_incoming_shipment(new_cr, uid, wizard_ids, context=context)
-
-        # Close the cursor
-        new_cr.commit()
-        new_cr.close()
+        try:
+            # Call do_incoming_shipment()
+            res = self.do_incoming_shipment(new_cr, uid, wizard_ids, context=context)
+            new_cr.commit()
+        except Exception, e:
+            new_cr.rollback()
+        finally:
+            # Close the cursor
+            new_cr.close()
 
         return res
 

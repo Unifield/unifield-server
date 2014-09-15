@@ -209,6 +209,7 @@ class stock_incoming_processor(osv.osv):
         if to_unlink:
             in_proc_obj.unlink(cr, uid, to_unlink, context=context)
 
+        cr.commit()
         new_thread = threading.Thread(target=picking_obj.do_incoming_shipment_new_cr, args=(cr, uid, ids, context))
         new_thread.start()
         new_thread.join(30.0)
