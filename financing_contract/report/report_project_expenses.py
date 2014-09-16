@@ -6,6 +6,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 
+
 class report_project_expenses(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
@@ -118,6 +119,10 @@ class report_project_expenses2(report_sxw.rml_parse):
 
     def getLines(self,contract):
         lines = {}
+        if self.objects[0].format_id.reporting_type == 'allocated' and self.name == 'financing.project.expenses.2':
+            return []
+        if self.objects[0].format_id.reporting_type == 'project' and self.name == 'financing.allocated.expenses.2':
+            return []
         pool = pooler.get_pool(self.cr.dbname)
         contract_obj = self.pool.get('financing.contract.contract')
         format_line_obj = self.pool.get('financing.contract.format.line')
@@ -154,7 +159,7 @@ class report_project_expenses2(report_sxw.rml_parse):
                 if lines.has_key(fcfl.code):
                     if not ana_tuple in lines[fcfl.code]:
                         lines[fcfl.code] += [ana_tuple]
-                else:
+                else:    
                     lines[fcfl.code] = [ana_tuple]
 
         self.lines = lines

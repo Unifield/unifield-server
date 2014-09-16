@@ -79,7 +79,8 @@ class stock_production_lot(osv.osv):
         
         # UF-2148: make the xmlid_name from batch name for building xmlid if the value is not given in vals
         if 'xmlid_name' not in vals or not vals['xmlid_name']:
-            vals['xmlid_name'] = vals['name'] 
+            prod_name = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
+            vals['xmlid_name'] = '%s_%s' % (prod_name.default_code, vals['name'])
             
         exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']), ('partner_name', '=', vals['partner_name']), ('product_id', '=', vals['product_id'])], context=context)
         if exist:

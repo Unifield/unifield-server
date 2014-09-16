@@ -182,6 +182,7 @@
       <font color="white"> </font>
     </para>
     <para style="P10">Bank Reconciliation</para>
+    <para style="P13">Period: [[ o.period_id and o.period_id.code or '' ]]</para>
     <para style="P6">
       <font color="white"> </font>
     </para>
@@ -202,18 +203,12 @@
           <para style="P13">Register name: [[ o.name ]]</para>
         </td>11
         <td>
-          <para style="P13"> </para>
-        </td>
-        <td>
           <para style="P13">Journal code: [[ o.journal_id and o.journal_id.code or '' ]]</para>
         </td>
       </tr>
       <tr>
         <td>
           <para style="P13">Responsible: [[ o.user_id and o.user_id.name or '' ]]</para>
-        </td>
-        <td>
-          <para style="P13">Period: [[ o.period_id and o.period_id.code or '' ]]</para>
         </td>
         <td>
           <para style="P13">Journal name: [[ o.journal_id and o.journal_id.name or '' ]]</para>

@@ -46,6 +46,7 @@ class picking_ticket(report_sxw.rml_parse):
             'cr': cr,
             'uid': uid,
             'getWarningMessage': self.get_warning,
+            'getStock': self.get_qty_available,
         })
 
     def get_warning(self, picking):
@@ -75,6 +76,39 @@ class picking_ticket(report_sxw.rml_parse):
             return _('You are about to pick %s%s%s products, please refer to the appropriate procedures') % (kc, and_msg, dg)
 
         return False
+
+    def get_qty_available(self, move=False):
+        """
+        Return the available quantity of product in the source location of the move.
+        I use this method because, by default, m.product_id.qty_available doesn't
+        take care of the context.
+
+        :param move: browse_record of a stock move
+
+        :return The available stock for the product of the stock move in the
+                source location of the stock move
+        :rtype float
+        """
+        product_obj = self.pool.get('product.product')
+
+        context = {}
+
+        if not move:
+            return 0.00
+
+        if move.location_id:
+            context = {
+                'location': move.location_id.id,
+                'location_id': move.location_id.id,
+            }
+
+        qty_available = product_obj.browse(
+                self.cr,
+                self.uid,
+                move.product_id.id,
+                context=context).qty_available
+
+        return qty_available
 
     def set_context(self, objects, data, ids, report_type=None):
         """

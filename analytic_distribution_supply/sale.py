@@ -171,12 +171,13 @@ class sale_order(osv.osv):
                         'sale_order_line_ids': [(4, line.id)],
                         'cost_center_lines': [(0, 0, {
                             'destination_id': destination_id[0],
-                            'analytic_id': intermission_cc[1] ,
-                            'percentage':'100',
+                            'analytic_id': intermission_cc[1],
+                            'percentage': '100',
                             'currency_id': so.currency_id.id,
                         })],
                     }, context=context)
-
+                    # UFTP-277: Check funding pool lines if missing
+                    ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
                     sol_obj.write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id}, context=context)
                     line = sol_obj.browse(cr, uid, line.id, context=context)
 
@@ -218,7 +219,8 @@ class sale_order(osv.osv):
                         distrib_line_obj.copy(cr, uid, x.id, {'distribution_id': id_ad, 'destination_id': bro_dest_ok.id}, context=context)
                         # Write new distribution and link it to the line
                         sol_obj.write(cr, uid, [line.id], {'analytic_distribution_id': id_ad}, context=context)
-
+                    # UFTP-277: Check funding pool lines if missing
+                    ana_obj.create_funding_pool_lines(cr, uid, [id_ad], context=context)
         return True
 
 sale_order()

@@ -33,6 +33,7 @@
         'security/ir.model.access.csv',
         'msf_budget_sequence.xml',
         'msf_budget_report.xml',
+        'wizard/wizard_budget_monthly.xml',
         'msf_budget_view.xml',
         'msf_budget_workflow.xml',
         'data/msf_budget_decision_moment_data.xml',

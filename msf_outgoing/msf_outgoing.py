@@ -425,6 +425,7 @@ class shipment(osv.osv):
             for family in wizard.family_ids:
                 if not family.selected_number: # UTP-1015 fix from Quentin
                     continue
+
                 picking = family.draft_packing_id
                 # Copy the picking object without moves
                 # Creation of moves and update of initial in picking create method
@@ -471,7 +472,7 @@ class shipment(osv.osv):
             self.log(cr, uid, shipment.id, _('The new Shipment %s has been created.') % (shipment_name,))
             # The shipment is automatically shipped, no more pack states in between.
             self.ship(cr, uid, [shipment_id], context=context)
-        picking_obj.browse(cr, uid, new_packing_id, context=context)['already_replicated']
+
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
 
@@ -953,6 +954,10 @@ class shipment(osv.osv):
             vals = {'shipment_actual_date': today,}
             if context.get('source_shipment_address_id', False):
                 vals['address_id'] = context['source_shipment_address_id']
+
+            if pick_obj._get_usb_entity_type(cr, uid) == pick_obj.REMOTE_WAREHOUSE:
+                vals['already_replicated'] = False
+
             shipment.write(vals)
             # corresponding packing objects
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
@@ -1223,6 +1228,8 @@ class shipment(osv.osv):
                         sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
                         if sol_ana_dist_id:
                             distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
+                            # create default funding pool lines (if no one)
+                            self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id])
 
                     # set UoS if it's a sale and the picking doesn't have one
                     uos_id = move.product_uos and move.product_uos.id or False
@@ -2351,11 +2358,11 @@ class stock_picking(osv.osv):
                     Please refer to the code and explanation in sync_so/in_rw.py, method usb_replicate_in(), line 90 for further information on this issue
 
                 '''
-                if new_packing.type in ('in', 'internal'):
-                    seq_obj_name =  'stock.picking.' + vals['type']
-                    sequence_id = self.get_current_pick_sequence_for_rw(cr, uid, seq_obj_name, context)
-                    if sequence_id:
-                        for_update['rw_force_seq'] = sequence_id
+#                if new_packing.type in ('in', 'internal'):
+#                    seq_obj_name =  'stock.picking.' + vals['type']
+#                    sequence_id = self.get_current_pick_sequence_for_rw(cr, uid, seq_obj_name, context)
+#                    if sequence_id:
+#                        for_update['rw_force_seq'] = sequence_id
                 self.write(cr, uid, [new_packing_id], for_update, context=context)
 
         if 'subtype' in vals and vals['subtype'] == 'packing':
@@ -2873,8 +2880,10 @@ class stock_picking(osv.osv):
                    move_data[move.id]['original_qty'] != move_data[move.id]['processed_qty']:
                     need_new_picking = True
                     break
-
-            if need_new_picking:
+            rw_full_process = context.get('rw_full_process', False)
+            if rw_full_process:
+                del context['rw_full_process']
+            if need_new_picking and not rw_full_process:
                 cp_vals = {
                     'name': sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
                     'move_lines' : [],
@@ -2920,11 +2929,6 @@ class stock_picking(osv.osv):
                 if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-
-                    '''
-                    UF-2377: AGAIN IN RW, THE CALL TO trg_write not working!!!!!!!????????
-                    '''
-
                     update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}
                     if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                         update_vals.update({'already_replicated': False})
@@ -2932,9 +2936,6 @@ class stock_picking(osv.osv):
 
                     # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
                     self._hook_create_sync_messages(cr, uid, [picking.id], context)
-
-
-
 
                 delivered_pack_id = picking.id
 
@@ -3446,6 +3447,12 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         wf_service = netsvc.LocalService("workflow")
 
+
+        date_tools = self.pool.get('date.tools')
+        db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+        today = time.strftime(db_datetime_format)
+
+
         if context is None:
             context = {}
 
@@ -3476,6 +3483,7 @@ class stock_picking(osv.osv):
                 'shipment_id': False,
                 'origin': picking.origin,
                 'move_lines': [],
+                'date': today, # Set date as today for the new PACK object
             }
 
             # Change the context for copy
@@ -4120,11 +4128,12 @@ class stock_move(osv.osv):
                 continue
 
             pick_type = move.picking_id.type
+            pick_cancel = move.picking_id.change_reason
             pick_subtype = move.picking_id.subtype
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
 
-            if pick_type == 'in' and move.purchase_line_id:
+            if pick_type == 'in' and move.purchase_line_id and not pick_cancel:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
