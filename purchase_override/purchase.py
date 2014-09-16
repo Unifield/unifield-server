@@ -2615,7 +2615,7 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
-            if sol_ids:
+            if sol_ids and not context.get('from_del_wizard'):
                 wiz_id = wiz_obj.create(cr, uid, {'line_id': line.id}, context=context)
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'purchase.order.line.unlink.wizard',
@@ -2641,6 +2641,7 @@ class purchase_order_line(osv.osv):
                         activity = wkf_act_obj.browse(cr, uid, wkf_id, context=context)
                         _eval_expr(cr, [uid, 'procurement.order', proc_id], False, activity.action)
 
+        context['from_del_wizard'] = False
         return self.unlink(cr, uid, ids, context=context)
 
     def cancel_sol(self, cr, uid, ids, context=None):
@@ -2784,6 +2785,9 @@ class purchase_order_line(osv.osv):
             context['skipResourcing'] = True
             self._update_merged_line(cr, uid, line_id, False, context=context)
             context['skipResourcing'] = tmp_skip_resourcing
+
+        if context.get('from_del_wizard'):
+            return self.ask_unlink(cr, uid, ids, context=context)
 
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 
