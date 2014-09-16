@@ -116,7 +116,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         }
                         common_vals.update({'analytic_id': l.cost_center_id.id,})
                         cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                        common_vals.update({'analytic_id': msf_fp_id, 'cost_center_id': l.cost_center_id.id,})
+                        common_vals.update({'analytic_id': l.funding_pool_id.id, 'cost_center_id': l.cost_center_id.id,})
                         fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     # Create move line
                     move_line_vals = {
@@ -134,6 +134,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'analytic_distribution_id': distrib_id,
                         'partner_id': l.partner_id and l.partner_id.id or False,
                         'employee_id': l.employee_id and l.employee_id.id or False,
+                        'transfer_journal_id': l.transfer_journal_id and l.transfer_journal_id.id or False,
                     }
                     self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
                 # Validate the Journal Entry for lines to be valid (if possible)
@@ -164,6 +165,10 @@ class msf_doc_import_accounting(osv.osv_memory):
             cr = dbname
         else:
             cr = pooler.get_db(dbname).cursor()
+        try:
+            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            msf_fp_id = 0
         created = 0
         processed = 0
         errors = []
@@ -207,7 +212,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
                 # Use the first row to find which column to use
                 cols = {}
-                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Booking Debit', 'Booking Credit', 'Booking Currency']
+                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Partner', 'Employee', 'Journal', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit', 'Booking Credit', 'Booking Currency']
                 for num, r in enumerate(rows):
                     header = [x and x.data for x in r.iter_cells()]
                     for el in col_names:
@@ -239,8 +244,11 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_credit = 0
                     r_currency = False
                     r_partner = False
+                    r_employee = False
+                    r_journal = False
                     r_account = False
                     r_destination = False
+                    r_fp = False
                     r_cc = False
                     # UTP-1047: Use Document date column (contrary of UTP-766)
                     r_document_date = False
@@ -323,17 +331,42 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_account = account_ids[0]
                     account = self.pool.get('account.account').browse(cr, uid, r_account)
                     # Check that Third party exists (if not empty)
-                    tp_label = _('Partner')
-                    if line[cols['Third party']]:
-                        if account.type_for_register == 'advance':
-                            tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Third party']])])
-                            tp_label = _('Employee')
-                        else:
-                            tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Third party']])])
+                    tp_label = False
+                    tp_content = False
+                    if line[cols['Partner']]:
+                        tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Partner']])])
                         if not tp_ids:
-                            errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['Third party']],))
-                            continue
-                        r_partner = tp_ids[0]
+                            tp_label = _('Partner')
+                            tp_content = line[cols['Partner']]
+                        else:
+                            r_partner = tp_ids[0]
+                    if line[cols['Employee']]:
+                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Employee']])])
+                        if not tp_ids:
+                            tp_label = _('Employee')
+                            tp_content = line[cols['Employee']]
+                        else:
+                            r_employee = tp_ids[0]
+                    if line[cols['Journal']]:
+                        tp_ids = self.pool.get('account.journal').search(cr, uid, ['|', ('name', '=', line[cols['Journal']]), ('code', '=', line[cols['Journal']])])
+                        if not tp_ids:
+                            tp_label = _('Journal')
+                            tp_content = line[cols['Journal']]
+                        else:
+                            r_journal = tp_ids[0]
+                    if tp_label and tp_content:
+                        errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, tp_content,))
+                        continue
+                    list_third_party = []
+                    if r_employee:
+                        list_third_party.append(r_employee)
+                    if r_partner:
+                        list_third_party.append(r_partner)
+                    if r_journal:
+                        list_third_party.append(r_journal)
+                    if len(list_third_party) > 1:
+                        errors.append(_('Line %s. You cannot only add partner or employee or journal.') % (current_line_num,))
+                        continue
                     # Check analytic axis only if G/L account is analytic-a-holic
                     if account.is_analytic_addicted:
                         # Check Destination
@@ -354,6 +387,14 @@ class msf_doc_import_accounting(osv.osv_memory):
                             errors.append(_('Line %s. Cost Center %s not found!') % (current_line_num, line[cols['Cost Centre']]))
                             continue
                         r_cc = cc_ids[0]
+                        # Check Funding Pool (added since UTP-1082)
+                        r_fp = msf_fp_id
+                        if line[cols['Funding Pool']]:
+                            fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['Funding Pool']]), ('code', '=', line[cols['Funding Pool']])])
+                            if not fp_ids:
+                                errors.append(_('Line %s. Funding Pool %s not found!') % (current_line_num, line[cols['Funding Pool']]))
+                                continue
+                            r_fp = fp_ids[0]
                     # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
 
                     # Registering data regarding these "keys":
@@ -371,15 +412,30 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'cost_center_id': r_cc or False,
                         'destination_id': r_destination or False,
                         'document_date': r_document_date or False,
+                        'funding_pool_id': r_fp or False,
                         'date': date or False,
                         'currency_id': r_currency or False,
                         'wizard_id': wiz.id,
                         'period_id': period and period.id or False,
+                        'employee_id': r_employee or False,
+                        'partner_id': r_partner or False,
+                        'transfer_journal_id': r_journal or False,
                     }
-                    if account.type_for_register == 'advance':
-                        vals.update({'employee_id': r_partner,})
-                    else:
-                        vals.update({'partner_id': r_partner,})
+                    # UTP-1056: Add employee possibility. So we need to check if employee and/or partner is authorized
+                    partner_needs = self.pool.get('account.bank.statement.line').onchange_account(cr, uid, False, account_id=account.id, context=context)
+                    if not partner_needs:
+                        errors.append(_('Line %s. No info about given account: %s') % (current_line_num, account.code,))
+                        continue
+                    # Check result
+                    partner_options = partner_needs['value']['partner_type']['options']
+                    if r_partner and ('res.partner', 'Partner') not in partner_options:
+                        errors.append(_('Line %s. You cannot use a partner for the given account: %s.') % (current_line_num, account.code))
+                        continue
+                    if r_employee and ('hr.employee', 'Employee') not in partner_options:
+                        errors.append(_('Line %s. You cannot use an employee for the given account: %s.') % (current_line_num, account.code))
+                        continue
+                    if r_journal and ('account.journal', 'Journal') not in partner_options:
+                        errors.append(_('Line %s. You cannot use a journal for the given account: %s.') % (current_line_num, account.code))
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
                         errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
@@ -469,11 +525,13 @@ class msf_doc_import_accounting_lines(osv.osv):
         'account_id': fields.many2one('account.account', "G/L Account", required=True, readonly=True),
         'destination_id': fields.many2one('account.analytic.account', "Destination", required=False, readonly=True),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, readonly=True),
+        'funding_pool_id': fields.many2one('account.analytic.account', "Funding Pool", required=False, readonly=True),
         'debit': fields.float("Debit", required=False, readonly=True),
         'credit': fields.float("Credit", required=False, readonly=True),
         'currency_id': fields.many2one('res.currency', "Currency", required=True, readonly=True),
         'partner_id': fields.many2one('res.partner', "Partner", required=False, readonly=True),
         'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
+        'transfer_journal_id': fields.many2one('account.journal', 'Journal', required=False, readonly=True),
         'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
         'wizard_id': fields.integer("Wizard", required=True, readonly=True),
     }
