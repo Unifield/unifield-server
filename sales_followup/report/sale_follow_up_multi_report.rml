@@ -244,7 +244,7 @@
 	    		</td>
 	    	</tr>
             <tr>
-                [[ repeatIn(getLines(o), 'line') ]]
+                [[ repeatIn(getLines(o), 'line', grouped=True) ]]
 	    		<td>
                     <para style="LinesBlue">[[ line.get('line_number', '-') ]]</para>
 	    		</td>
