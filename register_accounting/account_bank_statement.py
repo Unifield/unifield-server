@@ -1435,11 +1435,12 @@ class account_bank_statement_line(osv.osv):
 
         if context is None:
             context = {}
+            
+        acc_move_line_obj = self.pool.get('account.move.line')
 
         for st_line in self.browse(cr, uid, ids, context=context):
             # Prepare some values
             move_line_values = dict(values)
-            acc_move_line_obj = self.pool.get('account.move.line')
             # Get first line (from Register account)
             register_line = st_line.first_move_line_id
             # Delete 'from_import_cheque_id' field not to break the account move line write
@@ -1511,13 +1512,12 @@ class account_bank_statement_line(osv.osv):
                     'debit': register_debit,
                     'credit': register_credit,
                     'amount_currency': register_amount_currency, 'currency_id': currency_id,
-                })
-                if ref:
                     # UTP-1097 update reference field
                     # note:
                     # - 'ref' field is a field function,
                     # - 'reference' is the writable one
-                    move_line_values['reference'] = ref
+                    'reference': ref,
+                })
                 # Write move line object for register line
                 #+ Optimization: Do not check line because of account_move.write() method at the end of this method
                 acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context, check=False, update_check=False)
@@ -1550,14 +1550,22 @@ class account_bank_statement_line(osv.osv):
                     partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
                 # finally write move object
                 move_vals = { 'partner_type': partner_type, }
-                if ref:
-                    # UTP 1097 update reference field
-                    move_vals['ref'] = ref
+                # UTP 1097 update reference field
+                move_vals['ref'] = ref
                 if 'document_date' in move_line_values:
                     move_vals.update({'document_date': move_line_values.get('document_date')})
                 if 'cheque_number' in move_line_values:
                     move_vals.update({'cheque_number': move_line_values.get('cheque_number')})
                 self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
+                if st_line.ref and not ref:
+                    # UTP-1097 ref field is cleared (a value to empty/False)
+                    # ref of AJIs is not properly cleared in this case 
+                    aml_ids = acc_move_line_obj.search(cr, uid, 
+                        [('move_id', '=', register_line.move_id.id), ],
+                        context = context)
+                    if aml_ids:
+                        acc_move_line_obj.write(cr, uid, aml_ids,
+                            {'ref': '', }, context=context)
         return True
 
     def do_direct_expense(self, cr, uid, st_line, context=None):
