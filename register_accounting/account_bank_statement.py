@@ -1557,7 +1557,7 @@ class account_bank_statement_line(osv.osv):
                 if 'cheque_number' in move_line_values:
                     move_vals.update({'cheque_number': move_line_values.get('cheque_number')})
                 self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
-                if st_line.ref and not ref:
+                if st_line.ref and not ref and register_line.move_id:
                     # UTP-1097 ref field is cleared (a value to empty/False)
                     # ref of AJIs is not properly cleared in this case 
                     aml_ids = acc_move_line_obj.search(cr, uid, 
