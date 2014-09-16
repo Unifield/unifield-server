@@ -25,6 +25,8 @@ from tools.translate import _
 
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
+import threading
+
 
 class stock_incoming_processor(osv.osv):
     """
@@ -148,10 +150,19 @@ class stock_incoming_processor(osv.osv):
         # Objects
         in_proc_obj = self.pool.get('stock.move.in.processor')
         picking_obj = self.pool.get('stock.picking')
+        data_obj = self.pool.get('ir.model.data')
+
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('No wizard found !'),
+            )
 
         to_unlink = []
 
+        picking_id = None
         for proc in self.browse(cr, uid, ids, context=context):
+            picking_id = proc.picking_id.id
             total_qty = 0.00
 
             for line in proc.move_ids:
@@ -198,7 +209,40 @@ class stock_incoming_processor(osv.osv):
         if to_unlink:
             in_proc_obj.unlink(cr, uid, to_unlink, context=context)
 
-        return picking_obj.do_incoming_shipment(cr, uid, ids, context=context)
+        cr.commit()
+        new_thread = threading.Thread(target=picking_obj.do_incoming_shipment_new_cr, args=(cr, uid, ids, context))
+        new_thread.start()
+        new_thread.join(30.0)
+
+        if new_thread.isAlive():
+            view_id = data_obj.get_object_reference(cr, uid, 'delivery_mechanism', 'stock_picking_processing_info_form_view')[1]
+            prog_id = picking_obj.update_processing_info(cr, uid, picking_id, prog_id=False, values={}, context=context)
+
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking.processing.info',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': prog_id,
+                'view_id': [view_id],
+                'context': context,
+                'target': 'new',
+            }
+
+        if context.get('from_simu_screen'):
+            view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking',
+                'res_id': picking_id,
+                'view_id': [view_id],
+                'view_mode': 'form, tree',
+                'view_type': 'form',
+                'target': 'crush',
+                'context': context,
+            }
+
+        return {'type': 'ir.actions.act_window_close'}
 
     """
     Controller methods
