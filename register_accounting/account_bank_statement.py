@@ -1559,13 +1559,14 @@ class account_bank_statement_line(osv.osv):
                 self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
                 if st_line.ref and not ref and register_line.move_id:
                     # UTP-1097 ref field is cleared (a value to empty/False)
-                    # ref of AJIs is not properly cleared in this case 
+                    # ref of JIs/AJIs is not properly cleared in this case 
                     aml_ids = acc_move_line_obj.search(cr, uid, 
                         [('move_id', '=', register_line.move_id.id), ],
                         context = context)
                     if aml_ids:
+                        # note: move line will update its AJIs ref
                         acc_move_line_obj.write(cr, uid, aml_ids,
-                            {'ref': '', }, context=context)
+                            {'reference': ''}, context=context)
         return True
 
     def do_direct_expense(self, cr, uid, st_line, context=None):
