@@ -99,6 +99,19 @@ class account_move_line(osv.osv):
         sync_check = check
         if context.get('sync_update_execution', False):
             sync_check = False
+
+        # UTP-1100: Add explicit the value of partner/employee if they are sent by sync with False but removed by the sync engine!
+        # THIS IS A BUG OF SYNC CORE!
+        if context.get('fields', False):
+            fields =  context.get('fields')
+            if 'partner_txt' in fields and 'partner_txt' not in vals:
+                vals['partner_txt'] = False 
+            if 'partner_id/id' in fields and 'partner_id' not in vals:
+                vals['partner_id'] = False                 
+            if 'partner_id2/id' in fields and 'partner_id' not in vals:
+                vals['partner_id2'] = False                 
+            if 'employee_id/id' in fields and 'employee_id' not in vals:
+                vals['employee_id'] = False
                 
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=sync_check, update_check=update_check)
     
