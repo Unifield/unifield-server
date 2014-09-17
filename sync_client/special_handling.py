@@ -64,7 +64,7 @@ class account_move(osv.osv):
         context['do_not_create_analytic_line'] = True
         return super(account_move, self).create(cr, uid, vals, context=context)
     
-    def write(self, cr, uid, ids, vals, context=None):
+    def write(self, cr, uid, ids, vals, context=None, check=True):
         if not context:
             context = {}
 
