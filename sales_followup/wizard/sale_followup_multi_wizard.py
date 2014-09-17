@@ -195,7 +195,7 @@ class sale_followup_multi_wizard(osv.osv):
             'report_name': 'sales.follow.up.multi.report_xls',
         }, context=context)
         context['background_id'] = background_id
-        context['background_time'] = 1
+        context['background_time'] = 30
 
         data = {'ids': ids, 'context': context}
         return {
@@ -223,7 +223,7 @@ class sale_followup_multi_wizard(osv.osv):
             'report_name': 'sales.follow.up.multi.report_pdf',
         }, context=context)
         context['background_id'] = background_id
-        context['background_time'] = 1
+        context['background_time'] = 30
 
         data = {'ids': ids, 'context': context}
         return {
