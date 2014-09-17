@@ -34,6 +34,7 @@ import pooler
 from ..register_tools import open_register_view
 from lxml import etree
 
+
 class wizard_register_import(osv.osv_memory):
     _name = 'wizard.register.import'
 
@@ -164,6 +165,8 @@ class wizard_register_import(osv.osv_memory):
                 }
                 if cheque_number:
                     vals['cheque_number'] = str(cheque_number)
+                else:
+                    vals['cheque_number'] = ''
                 absl_id = absl_obj.create(cr, uid, vals, context)
                 # Analytic distribution
                 distrib_id = False
@@ -358,6 +361,9 @@ class wizard_register_import(osv.osv_memory):
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+                    # utp1043 pad the line with False if some trailing columns missing. Occurs on Excel 2003 
+ 		    line.extend([False for i in range(len(cols) - len(line))])
+		    	
                     # Bypass this line if NO debit AND NO credit
                     try:
                         bd = line[cols['amount_in']]
@@ -424,6 +430,9 @@ class wizard_register_import(osv.osv_memory):
                     account = self.pool.get('account.account').read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
                     type_for_register = account.get('type_for_register', '')
 
+                    
+
+
                     # cheque_number
                     r_cheque_number = line[cols['cheque_number']]
                     # cheque unicity
@@ -441,8 +450,10 @@ class wizard_register_import(osv.osv_memory):
                             errors.append(_('Line %s. Cheque number is missing') % (current_line_num,))
  
                     # Check that Third party exists (if not empty)
-                    tp_label = _('Partner')
+                    
+		    tp_label = _('Partner')
                     partner_type = 'partner'
+                    third_party_journal_ids = None
                     if line[cols['third_party']]:
                         if type_for_register == 'advance':
                             tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
@@ -452,6 +463,13 @@ class wizard_register_import(osv.osv_memory):
                             tp_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', line[cols['third_party']])])
                             tp_label = _('Journal')
                             partner_type = 'journal'
+                            tp_journal = self.pool.get('account.journal').browse(cr, uid, tp_ids, context=context)[0]
+                            if type_for_register == 'transfer':
+                                if tp_journal.currency.id == register_currency:
+                                    errors.append(_('Line %s. A Transfer Journal must have a different currency than the register.') % (current_line_num,))
+                            if type_for_register == 'transfer_same':
+                                if tp_journal.currency.id != register_currency:
+                                    errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
                         else:
                             tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             partner_type = 'partner'
