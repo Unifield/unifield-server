@@ -32,7 +32,7 @@ def check_ssl():
     try:
         from OpenSSL import SSL
         import socket
-        
+
         return hasattr(socket, 'ssl') and hasattr(SSL, "Connection")
     except:
         return False
@@ -65,6 +65,9 @@ class configmanager(object):
             'language': None,
             'pg_path': None,
             'admin_passwd': 'admin',
+            'admin_dropdb_passwd': 'dropadmin',
+            'admin_bkpdb_passwd': 'bkpadmin',
+            'admin_restoredb_passwd': 'restoreadmin',
             'csv_internal_sep': ',',
             'addons_path': None,
             'root_path': None,
@@ -100,7 +103,7 @@ class configmanager(object):
             'osv_memory_age_limit': 1, # hours
             'additional_xml': False,
         }
-        
+
         self.blacklist_for_save = set(["publisher_warranty_url", "load_language"])
 
         self.misc = {}
@@ -533,4 +536,3 @@ config = configmanager()
 # when it starts, to allow doing 'import tools.config' from
 # other python executables without parsing *their* args.
 config.parse_config()
-
