@@ -64,26 +64,22 @@ class account_move(osv.osv):
         context['do_not_create_analytic_line'] = True
         return super(account_move, self).create(cr, uid, vals, context=context)
     
-    def write(self, cr, uid, ids, vals, context=None, check=True):
+    def write(self, cr, uid, ids, vals, context=None):
         if not context:
             context = {}
 
         # indicate to the account.analytic.line not to create such an object to avoid duplication
         context['do_not_create_analytic_line'] = True
-        
-        sync_check = check
+
         if context.get('sync_update_execution', False):
-            sync_check = False
-            
             # UTP-1097: Add explicit the value if they are sent by sync with False but removed by the sync engine!
             # THIS IS A BUG OF SYNC CORE!
-            sync_check = check
             if context.get('fields', False):
                 fields =  context.get('fields')
                 if 'ref' in fields and 'ref' not in vals:
                     vals['ref'] = False
-        
-        return super(account_move, self).write(cr, uid, ids, vals, context=context, check=sync_check)
+
+        return super(account_move, self).write(cr, uid, ids, vals, context=context)
 
 account_move()
 
