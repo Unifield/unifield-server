@@ -1806,7 +1806,22 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
             'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id,
             'sale_id': line.order_id.id,
+            'purchase_id': line.created_by_po.id or False,
         }
+
+        if line.created_by_rfq:
+            proc_data.update({
+                'purchase_id': False,
+                'is_rfq': True,
+                'is_rfq_done': True,
+                'po_cft': 'rfq',
+            })
+
+        if line.created_by_tender:
+            proc_data.update({
+                'is_tender_done': True,
+                'po_cft': 'cft',
+            })
 
         if line.product_id:
             proc_data['product_id'] = line.product_id.id
@@ -1838,6 +1853,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         date_tools = self.pool.get('date.tools')
         proc_obj = self.pool.get('procurement.order')
         pol_obj = self.pool.get('purchase.order.line')
+        tl_obj = self.pool.get('tender.line')
 
         if context is None:
             context = {}
@@ -1927,7 +1943,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
                         display_log = False
 
-                    if line.created_by_po_line:
+                    if line.created_by_po_line and not line.created_by_po_line.order_id.rfq_ok:
                         pol_obj.write(cr, uid, [line.created_by_po_line.id], {'procurement_id': proc_id}, context=context)
 
                     line_values = {
@@ -1944,10 +1960,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     sol_obj.write(cr, uid, [line.id], line_values, context=context)
 
+                    if line.created_by_tender_line:
+                        tl_obj.write(cr, uid, [line.created_by_tender_line.id], {
+                            'sale_order_line_id': line.id,
+                        }, context=context)
+
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 
-                    if line.created_by_po:
+                    if line.created_by_po or line.created_by_rfq or line.created_by_tender:
                         wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+
+                    if line.created_by_po:
                         proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
 
                 line_done += 1
@@ -2054,6 +2077,8 @@ class sale_order_line(osv.osv):
                 'manually_corrected': fields.boolean(string='FO line is manually corrected by user'),
                 'created_by_po': fields.many2one('purchase.order', string='Created by PO'),
                 'created_by_po_line': fields.many2one('purchase.order.line', string='Created by PO line'),
+                'created_by_rfq': fields.many2one('purchase.order', string='Created by RfQ'),
+                'created_by_rfq_line': fields.many2one('purchase.order.line', string='Created by RfQ line'),
                 'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
                 'sync_sourced_origin': fields.char(string='Sync. Origin', size=256),
                 'cancel_split_ok': fields.boolean(
@@ -2280,9 +2305,19 @@ class sale_order_line(osv.osv):
             default = {}
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
-            default.update({'so_back_update_dest_po_id_sale_order_line': False,
-                            'so_back_update_dest_pol_id_sale_order_line': False, })
-        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
+            default.update({
+                'so_back_update_dest_po_id_sale_order_line': False,
+                'so_back_update_dest_pol_id_sale_order_line': False,
+            })
+
+        default.update({
+            'sync_order_line_db_id': False,
+            'manually_corrected': False,
+            'created_by_po': False,
+            'created_by_po_line': False,
+            'created_by_rfq': False,
+            'created_by_rfq_line': False,
+        })
 
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
@@ -2426,7 +2461,14 @@ class sale_order_line(osv.osv):
         if not default:
             default = {}
 
-        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
+        default.update({
+            'sync_order_line_db_id': False,
+            'manually_corrected': False,
+            'created_by_po': False,
+            'created_by_po_line': False,
+            'created_by_rfq': False,
+            'created_by_rfq_line': False,
+        })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
