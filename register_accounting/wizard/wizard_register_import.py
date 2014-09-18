@@ -34,12 +34,6 @@ import pooler
 from ..register_tools import open_register_view
 from lxml import etree
 
-import logging
-import netsvc
-import sys, traceback
-
-logger = logging.getLogger('server')
-
 class wizard_register_import(osv.osv_memory):
     _name = 'wizard.register.import'
 
@@ -238,7 +232,6 @@ class wizard_register_import(osv.osv_memory):
         processed = 0
         errors = []
         cheque_numbers = []
-
         try:
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00}, context)
@@ -366,8 +359,6 @@ class wizard_register_import(osv.osv_memory):
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
-                    logger.info("line: {0}".format(line))
-                    logger.info("cols: {0}".format(cols))  
                     # utp1043 pad the line with False if some trailing columns missing. Occurs on Excel 2003 
  		    line.extend([False for i in range(len(cols) - len(line))])
 		    	
@@ -434,14 +425,11 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
                         continue
                     r_account = account_ids[0]
-                    acct = self.pool.get('account.account').browse(cr, uid, r_account, context=context)
-	            if acct.restricted_area == True:
-                        if acct.code == '10210':  # uftp-78
-                            pass
-                        else:
-                            errors.append(_('Line %s. G/L account %s is restricted.') % (current_line_num, account_code,))
-                            continue
-                    account = self.pool.get('account.account').read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
+                    account_obj = self.pool.get('account.account')
+                    restricted_ids = account_obj.search(cr, uid, [('restricted_area', '=', 'register_line'), ('id', '=', r_account)])
+	            if not restricted_ids:
+                        errors.append(_('Line %s. G/L account %s is restricted.') % (current_line_num, account_code,))
+                    account = account_obj.read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
                     type_for_register = account.get('type_for_register', '')
 
                     # cheque_number
@@ -612,7 +600,6 @@ class wizard_register_import(osv.osv_memory):
             self.write(cr, uid, ids, {'message': _("An error occured %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
             cr.close()
         except Exception as e:
-            logger.info("Exception on line {0}: {1}".format(sys.exc_info()[-1].tb_lineno,e.args[0]))
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
             cr.close()
