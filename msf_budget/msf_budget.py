@@ -22,7 +22,9 @@
 from osv import fields, osv
 from tools.translate import _
 
-import datetime
+
+
+
 
 class msf_budget(osv.osv):
     _name = "msf.budget"
@@ -189,13 +191,16 @@ class msf_budget(osv.osv):
           - state is in vals
           - state is different from draft (validated or done)
         """
+
+        if not ids:
+            return True
         if context is None:
             context = {}
         res = super(msf_budget, self).write(cr, uid, ids, vals, context=context)
         if context.get('sync_update_execution', False) and vals.get('state', False) and vals.get('state') != 'draft':
             # Update parent budget
             self.update_parent_budgets(cr, uid, ids, context=context)
-            
+        
         budget = self.browse(cr, uid, ids, context=context)[0]
         if budget.type == 'normal' and vals.get('state') == 'done':  # do not process for view accounts
             peer_budget_ids = self.search(cr, uid, [('cost_center_id','=',budget.cost_center_id.id),('decision_moment_id','=',budget.decision_moment_id.id),'!',('id','=',budget.id)],context=context)
