@@ -24,6 +24,7 @@ from osv import osv
 from osv import fields
 import tools
 from datetime import datetime
+from tools.translate import _
 
 class BackupConfig(osv.osv):
     """ Backup configurations """
@@ -96,4 +97,40 @@ class BackupConfig(osv.osv):
         if bkp_ids:
             self.exp_dump(cr, uid, bkp_ids, context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        toret = super(BackupConfig, self).write(cr, uid, ids, vals, context=context)
+        backups = self.browse(cr, uid, ids, context=context)
+        #if context:
+        #    for backup in backups:
+        #        if not os.path.isdir(backup.name):
+        #            raise osv.warning(_('Error'), _("The selected path doesn't exist!"))
+        if backups and backups[0]:
+            #Find the scheduled action
+            ircron_model = self.pool.get('ir.cron')
+            cron_ids = ircron_model.search(cr, uid, ([('name', '=', 'Automatic backup'), ('model', '=', 'backup.config'), '|', ('active', '=', True), ('active', '=', False)]), context=context)
+            crons = ircron_model.browse(cr, uid, cron_ids, context=context)
+            for cron in crons:
+                if cron.active != backups[0].scheduledbackup:
+                    ircron_model.write(cr, uid, [cron.id,], {'active': backups[0].scheduledbackup}, context=context)
+        return toret
+
 BackupConfig()
+
+class ir_cron(osv.osv):
+    _name = 'ir.cron'
+    _inherit = 'ir.cron'
+
+    def write(self, cr, uid, ids, vals, context=None):
+        toret = super(ir_cron, self).write(cr, uid, ids, vals, context=context)
+        crons = self.browse(cr, uid, ids, context=context)
+        if crons and crons[0] and crons[0].model=='backup.config':
+            #Find the scheduled action
+            bkp_model = self.pool.get('backup.config')
+            bkp_ids = bkp_model.search(cr, uid, (['|', ('scheduledbackup', '=', True), ('scheduledbackup', '=', False)]), context=context)
+            bkps = bkp_model.browse(cr, uid, bkp_ids, context=context)
+            for bkp in bkps:
+                if crons[0].active != bkp.scheduledbackup:
+                    bkp_model.write(cr, uid, [bkp.id,], {'scheduledbackup': crons[0].active}, context=context)
+        return toret
+
+ir_cron()

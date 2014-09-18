@@ -6,7 +6,7 @@
       <field name="model">backup.config</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree string="Backup Tree">
+        <tree string="Backup Tree" hide_new_button="1" hide_delete_button="1" >
           <field name="name"/>
           <field name="beforemanualsync"/>
           <field name="beforeautomaticsync"/>
@@ -22,7 +22,7 @@
       <field name="model">backup.config</field>
       <field name="type">form</field>
       <field name="arch" type="xml">
-        <form string="Message Received">
+        <form string="Backup configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
             <group col="6" colspan="6">
             <field name="name"/>
             </group>
