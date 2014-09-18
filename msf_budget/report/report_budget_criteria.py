@@ -260,8 +260,11 @@ class report_budget_actual_2(report_sxw.rml_parse):
         # Some checks
         if not budget_line_ids:
             return {}, {}
-        # Prepare some values
         context = {}
+        parameters = self.localcontext.get('data',{}).get('form',{})
+        if 'period_id' in parameters:
+            context.update({'period_id': parameters['period_id']})
+        # Prepare some values
         ids = [x.id for x in budget_line_ids]
         fields = [
             'account_code',
