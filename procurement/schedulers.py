@@ -217,8 +217,13 @@ class procurement_order(osv.osv):
     def _do_create_proc_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         hook to update defaults data
+        kwargs['op'] is the current min/max rule
+        kwargs['opl'] is the current min/max rule line
+        kwargs['qty'] is the quantity to generate
+        kwargs['newdate'] is the new planned date
         '''
         op = kwargs.get('op', False)
+        opl = kwargs.get('opl', False)
         qty = kwargs.get('qty', False)
         newdate = kwargs.get('newdate', False)
         assert op, 'missing op'
@@ -227,9 +232,9 @@ class procurement_order(osv.osv):
         
         values = {'name': op.name,
                   'date_planned': newdate.strftime('%Y-%m-%d'),
-                  'product_id': op.product_id.id,
+                  'product_id': opl.product_id.id,
                   'product_qty': qty,
-                  'product_uom': op.product_uom.id,
+                  'product_uom': opl.product_uom_id.id,
                   'location_id': op.location_id.id,
                   'procure_method': 'make_to_order',
                   'origin': op.name,
@@ -240,15 +245,22 @@ class procurement_order(osv.osv):
     def _hook_product_type_consu(self, cr, uid, *args, **kwargs):
         '''
         kwargs['op'] is the current min/max rule
+        kwargs['opl'] is the current min/max rule line
         '''
-        op = kwargs['op']
-        return op.product_id.type not in ('consu')
+        opl = kwargs['opl']
+        return opl.product_id.type not in ('consu')
 
-    def _procure_orderpoint_confirm(self, cr, uid, automatic=False,\
+    def _procure_orderpoint_confirm(self, cr, uid, automatic=False,
             use_new_cursor=False, context=None, user_id=False):
         '''
         Create procurement based on Orderpoint
         use_new_cursor: False or the dbname
+
+        UTP-1186:
+            - compute is done now at stock warehouse order point LINE level,
+            - each stock warehouse order point line is linked to a procurement,
+            - the procurement at header level is just a link to the last
+                procurement created at line level.
 
         @param self: The object pointer
         @param cr: The current row, from the database cursor,
@@ -263,6 +275,7 @@ class procurement_order(osv.osv):
         if use_new_cursor:
             cr = pooler.get_db(use_new_cursor).cursor()
         orderpoint_obj = self.pool.get('stock.warehouse.orderpoint')
+        orderpoint_line_obj = self.pool.get('stock.warehouse.orderpoint.line')
         location_obj = self.pool.get('stock.location')
         procurement_obj = self.pool.get('procurement.order')
         request_obj = self.pool.get('res.request')
@@ -270,64 +283,119 @@ class procurement_order(osv.osv):
         report = []
         offset = 0
         ids = [1]
+        created_proc = []
+        report_except = 0
+        start_date = time.strftime('%Y-%m-%d %H:%M:%S')
         if automatic:
             self.create_automatic_op(cr, uid, context=context)
+
         while ids:
             ids = orderpoint_obj.search(cr, uid, [], offset=offset, limit=100)
+            # Put a lock on stock.warehouse.orderpoint
+            orderpoint_obj.write(cr, uid, ids, {}, context=context)
             for op in orderpoint_obj.browse(cr, uid, ids, context=context):
-                if op.procurement_id.state != 'exception':
-                    if op.procurement_id and op.procurement_id.purchase_id and op.procurement_id.purchase_id.state in ('draft', 'confirmed'):
-                        continue
-                prods = location_obj._product_virtual_get(cr, uid,
-                        op.location_id.id, [op.product_id.id],
-                        {'uom': op.product_uom.id})[op.product_id.id]
+                for opl in op.line_ids:
+                    if opl.procurement_id.state != 'exception':
+                        if opl.procurement_id and \
+                            opl.procurement_id.purchase_id and \
+                            opl.procurement_id.purchase_id.state in (
+                                'draft', 'confirmed'):
+                            continue
 
-                if prods < op.product_min_qty:
-                    qty = max(op.product_min_qty, op.product_max_qty)-prods
+                    prods = location_obj._product_virtual_get(cr, uid,
+                            op.location_id.id, [opl.product_id.id],
+                            {'uom': opl.product_uom_id.id})[opl.product_id.id]
 
-                    reste = qty % op.qty_multiple
-                    if reste > 0:
-                        qty += op.qty_multiple - reste
+                    if prods < opl.product_min_qty:
+                        qty = max(opl.product_min_qty, opl.product_max_qty)-prods
 
-                    newdate = datetime.today() + relativedelta(
-                            days = int(op.product_id.seller_delay))
-                    if qty <= 0:
-                        continue
-                    if self._hook_product_type_consu(cr, uid, op=op):
-#                    if op.product_id.type not in ('consu'):
-                        if op.procurement_draft_ids:
-                        # Check draft procurement related to this order point
-                            pro_ids = [x.id for x in op.procurement_draft_ids]
-                            cr.execute('select id, product_qty from procurement_order where id in %s order by product_qty desc', (tuple(pro_ids), ))
-                            procure_datas = cr.dictfetchall()
-                            to_generate = qty
-                            for proc_data in procure_datas:
-                                if to_generate >= proc_data['product_qty']:
-                                    wf_service.trg_validate(uid, 'procurement.order', proc_data['id'], 'button_confirm', cr)
-                                    procurement_obj.write(cr, uid, [proc_data['id']],  {'origin': op.name}, context=context)
-                                    to_generate -= proc_data['product_qty']
-                                if not to_generate:
-                                    break
-                            qty = to_generate
+                        reste = qty % opl.qty_multiple
+                        if reste > 0:
+                            qty += opl.qty_multiple - reste
 
-                    if qty:
-                        values = self._do_create_proc_hook(cr, uid, ids, context=context, op=op, qty=qty, newdate=newdate)
-                        proc_id = procurement_obj.create(cr, uid, values, context=context)
-                        wf_service.trg_validate(uid, 'procurement.order', proc_id,
-                                'button_confirm', cr)
-                        wf_service.trg_validate(uid, 'procurement.order', proc_id,
-                                'button_check', cr)
-                        orderpoint_obj.write(cr, uid, [op.id],
-                                {'procurement_id': proc_id}, context=context)
+                        newdate = datetime.today() + relativedelta(
+                                days = int(opl.product_id.seller_delay))
+                        if qty <= 0:
+                            continue
+                        if self._hook_product_type_consu(cr, uid, op=op, opl=opl):
+    #                    if opl.product_id.type not in ('consu'):
+                            if opl.procurement_id and \
+                                opl.procurement_id.state == 'draft':
+                                # Check draft procurement related to this order point line
+                                pro_ids = [x.id for x in op.procurement_draft_ids]
+                                cr.execute('select id, product_qty from procurement_order where id = %s order by product_qty desc', str(opl.procurement_id.id))
+                                procure_datas = cr.dictfetchall()
+                                to_generate = qty
+                                for proc_data in procure_datas:
+                                    if to_generate >= proc_data['product_qty']:
+                                        wf_service.trg_validate(uid,
+                                            'procurement.order',
+                                            proc_data['id'], 'button_confirm',
+                                            cr)
+                                        procurement_obj.write(cr, uid,
+                                            [proc_data['id']],
+                                            {'origin': op.name},
+                                            context=context)
+                                        to_generate -= proc_data['product_qty']
+                                    if not to_generate:
+                                        break
+                                qty = to_generate
+
+                        if qty:
+                            values = self._do_create_proc_hook(cr, uid, ids,
+                                context=context, op=op, opl=opl, qty=qty,
+                                newdate=newdate)
+                            proc_id = procurement_obj.create(cr, uid, values,
+                                context=context)
+                            created_proc.append(proc_id)
+                            wf_service.trg_validate(uid, 'procurement.order',
+                                proc_id, 'button_confirm', cr)
+                            wf_service.trg_validate(uid, 'procurement.order',
+                                proc_id, 'button_check', cr)
+                            orderpoint_line_obj.write(cr, uid, [opl.id],
+                                    {'procurement_id': proc_id},
+                                    context=context)  # order point line procurement created
+                            orderpoint_obj.write(cr, uid, [op.id],
+                                    {'procurement_id': proc_id},
+                                    context=context)  # header level log of last procurement created
             offset += len(ids)
             if use_new_cursor:
                 cr.commit()
-        if user_id and report:
+
+        ###
+        # Add created document and exception in a request
+        ###
+        created_doc = '''################################
+ Created documents : \n'''
+
+        for proc in procurement_obj.browse(cr, uid, created_proc):
+            if proc.state == 'exception':
+                report.append('PROC %d: from stock - %3.2f %-5s - %s' % \
+                    (proc.id, proc.product_qty, proc.product_uom.name,
+                     proc.product_id.name,))
+                report_except += 1
+            elif proc.purchase_id:
+                created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)
+
+        end_date = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        summary = '''Here is the procurement scheduling report for Automatic Supplies
+
+ Start Time: %s
+ End Time: %s
+ Total Procurements processed: %d
+ Procurements with exceptions: %d
+ 
+ \n %s \n  Exceptions: \n'''% (start_date, end_date, len(created_proc), report_except, len(created_proc) > 0 and created_doc or '')
+
+        summary += '\n'.join(report)
+
+        if uid and summary:
             request_vals = {
-                'name': 'Orderpoint report.',
-                'act_from': user_id,
-                'act_to': user_id,
-                'body': '\n'.join(report)
+                'name': "Procurement Processing Report (Min/Max rules).",
+                'act_from': uid,
+                'act_to': uid,
+                'body': summary,
             }
             request_vals = self._hook_request_vals(cr, uid, request_vals=request_vals, context=context)
             request_obj.create(cr, uid, request_vals)
