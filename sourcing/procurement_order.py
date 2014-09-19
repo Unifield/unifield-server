@@ -66,7 +66,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
+        'from_splitted_po_line': fields.boolean(string='From splitted PO line'),
     }
+
+    def copy_data(self, cr, uid, copy_id, default_values=None, context=None):
+        if default_values is None:
+            default_values = {}
+
+        if not default_values.get('from_splitted_po_line'):
+            default_values['from_splitted_po_line'] = False
+
+        return super(procurement_order, self).copy_data(cr, uid, copy_id, default_values, context=context)
 
     def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -213,6 +223,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # the purchase order to merge the new line to is locked and provided in the procurement
         if procurement.so_back_update_dest_po_id_procurement_order:
             purchase_ids = [procurement.so_back_update_dest_po_id_procurement_order.id]
+        elif procurement.from_splitted_po_line and procurement.purchase_id:
+            purchase_ids = [procurement.purchase_id.id]
         else:
             # search for purchase order according to defined domain
             purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)

@@ -153,6 +153,7 @@ Created documents : \n'''
     def _hook_product_type_consu(self, cr, uid, *args, **kwargs):
         '''
         kwargs['op'] is the current min/max rule
+        kwargs['opl'] is the current min/max rule line
         '''
         return True
         
