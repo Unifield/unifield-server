@@ -36,7 +36,7 @@ class account_move_line(osv.osv):
         currency_obj = self.pool.get('res.currency')
         func_amount = ml.amount_currency
         original_currency = ml.currency_id.id
-        if ml.journal_id.type == 'cur_adj':
+        if ml.journal_id.type in ['cur_adj','revaluation']:
             # UF-2296: in case of Current Adjustmeent Journal (MT)
             # if output ccy == fonctional ccy we must return functional amount
             # explanation: export search result account_mcdb/report/account_mcdb_export.py
