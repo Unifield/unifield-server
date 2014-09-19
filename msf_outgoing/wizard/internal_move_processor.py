@@ -228,6 +228,9 @@ class internal_picking_processor(osv.osv):
 
         for wizard in wizards:
             for line in wizard.move_ids:
+                if line.quantity <= 0.00:
+                    continue
+
                 if line.prodlot_id:
                     if line.location_id:
                         context['location_id'] = line.location_id.id
