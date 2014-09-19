@@ -6,12 +6,15 @@ import csv
 import copy
 import os
 from datetime import datetime
+import re
 
 from osv import osv, fields, orm
 from tools.translate import _
 from sync_client import sync_process
 import release
 import pooler
+from sync_common import get_md5
+
 
 class Entity(osv.osv):
 
@@ -58,7 +61,10 @@ class Entity(osv.osv):
             self.usb_pull_update_rule_file,
             self.usb_pull_message_rule_file,
         ]
-    
+
+    def _check_md5(self, md5_data, data, filename):
+        if md5_data[filename] != get_md5(data):
+            raise osv.except_osv(_("Error!"), _('Zip file is corrupted, file %s: checksum does not match ') % (filename, ))
     def _usb_change_sync_step(self, cr, uid, step):
         if self._DEBUG:
             return True
@@ -336,17 +342,31 @@ class Entity(osv.osv):
             zip_base64_output = StringIO()
             zip_file = ZipFile(zip_file_string_io, 'w')
             
-            zip_file.writestr('header', generate_header())
-            zip_file.writestr('sync_remote_warehouse.update_received.csv', update_csv_string_io.getvalue())
-            zip_file.writestr('sync_remote_warehouse.message_received.csv', message_csv_string_io.getvalue())
+            header_data = generate_header()
+            md5_data = "header: %s\n" % get_md5(header_data)
+            zip_file.writestr('header', header_data)
+
+            update_csv_string_io_data = update_csv_string_io.getvalue()
+            md5_data += "sync_remote_warehouse.update_received.csv: %s\n" % get_md5(update_csv_string_io_data)
+            zip_file.writestr('sync_remote_warehouse.update_received.csv', update_csv_string_io_data)
+
+            message_csv_string_io_data = message_csv_string_io.getvalue()
+            md5_data += "sync_remote_warehouse.message_received.csv: %s\n" % get_md5(message_csv_string_io_data)
+            zip_file.writestr('sync_remote_warehouse.message_received.csv', message_csv_string_io_data)
             
             # compress update and message rules into zip file
-            if entity.usb_instance_type == 'central_platform': 
-                zip_file.writestr('update_rules.txt', update_rules_string_io.getvalue())
-                zip_file.writestr('message_rules.txt', message_rules_string_io.getvalue())
-                
+            if entity.usb_instance_type == 'central_platform':
+                update_rules_string_io_data = update_rules_string_io.getvalue()
+                md5_data += "update_rules.txt: %s\n" % get_md5(update_rules_string_io_data)
+                zip_file.writestr('update_rules.txt', update_rules_string_io_data)
+
+                message_rules_string_io_data = message_rules_string_io.getvalue()
+                md5_data += "message_rules.txt: %s\n" % get_md5(message_rules_string_io_data)
+                zip_file.writestr('message_rules.txt', message_rules_string_io_data)
+
+            zip_file.writestr('md5', md5_data)
             zip_file.close()
-                    
+
             # add to entity object
             zip_file_contents = zip_file_string_io.getvalue()
             zip_base64 = base64.encodestring(zip_file_contents)
@@ -484,9 +504,17 @@ class Entity(osv.osv):
             zip_stream = StringIO(uploaded_file)
             zip_file = ZipFile(zip_stream, 'r')
             
+            md5_data = {}
+            md5_data_file = zip_file.read('md5')
+            for line in md5_data_file.split("\n"):
+                m = re.match('^([^:]+): (.*)$', line)
+                if m:
+                    md5_data[m.group(1)] = m.group(2)
+
             # read the header if possible
             try:
                 header = zip_file.read("header")
+                self._check_md5(md5_data, header, 'header')
             except KeyError:
                 logger.append(_("Warning: the zip-file does not contain a header"))
             else:
@@ -519,13 +547,13 @@ class Entity(osv.osv):
                 
             # import rules if RW 
             if entity.usb_instance_type == 'remote_warehouse':
-                self.usb_pull_import_rules(cr, uid, zip_file, context)
+                self.usb_pull_import_rules(cr, uid, zip_file, md5_data, context)
             
             # import updates
-            data, updates_import_error, updates_ran, updates_run_error = self.usb_pull_import_updates(cr, uid, zip_file, context)
+            data, updates_import_error, updates_ran, updates_run_error = self.usb_pull_import_updates(cr, uid, zip_file, md5_data, context)
             logger.switch('data_pull','ok')
             logger.switch('msg_pull','in-progress')
-            messages, messages_import_error, messages_ran, messages_run_error = self.usb_pull_import_messages(cr, uid, zip_file, context)
+            messages, messages_import_error, messages_ran, messages_run_error = self.usb_pull_import_messages(cr, uid, zip_file, md5_data, context)
             
             zip_file.close()
                     
@@ -543,16 +571,18 @@ class Entity(osv.osv):
         return (len(data), updates_import_error, updates_ran, updates_run_error, 
                 len(messages), messages_import_error, messages_ran, messages_run_error)
     
-    def usb_pull_import_rules(self, cr, uid, zip_file, context):
+    def usb_pull_import_rules(self, cr, uid, zip_file, md5_data, context):
         update_rules = zip_file.read(self.usb_pull_update_rule_file)
+        self._check_md5(md5_data, update_rules, self.usb_pull_update_rule_file)
         update_rules = eval(update_rules)
         self.pool.get('sync.client.rule').save(cr, uid, update_rules, context=context)
         
         message_rules = zip_file.read(self.usb_pull_message_rule_file)
+        self._check_md5(md5_data, message_rules, self.usb_pull_message_rule_file)
         message_rules = eval(message_rules)
         self.pool.get('sync.client.message_rule').save(cr, uid, message_rules, context=context)
             
-    def usb_pull_import_updates(self, cr, uid, zip_file, context):
+    def usb_pull_import_updates(self, cr, uid, zip_file, md5_data, context):
         logger = context.get('logger')
         logger_index = logger.append()
         
@@ -566,11 +596,12 @@ class Entity(osv.osv):
         run_error = None
         
         # get CSV object to read data_to_import_data
-        csv_file = zip_file.read('%s.csv' % self.usb_pull_update_received_model_name)
+        file_name = '%s.csv' % self.usb_pull_update_received_model_name
+        csv_file = zip_file.read(file_name)
         
         if csv_file:
+            self._check_md5(md5_data, csv_file, file_name)
             csv_reader = csv.reader(StringIO(csv_file))
-            
             # loop through csv rows and insert into data_to_import_fields or data_to_import_data array
             for row in csv_reader:
                 if is_first_csv_row:
@@ -612,7 +643,7 @@ class Entity(osv.osv):
             
         return (data_to_import_data, import_error, number_of_updates_ran, run_error)
     
-    def usb_pull_import_messages(self, cr, uid, zip_file, context):
+    def usb_pull_import_messages(self, cr, uid, zip_file, md5_data, context):
         logger = context.get('logger')
         logger_index = logger.append()
         
@@ -626,9 +657,11 @@ class Entity(osv.osv):
         run_error = None
         
         # get CSV object to read data_to_import_data
-        csv_file = zip_file.read('%s.csv' % self.usb_pull_message_received_model_name)
+        file_name = '%s.csv' % self.usb_pull_message_received_model_name
+        csv_file = zip_file.read(file_name)
         
         if csv_file:
+            self._check_md5(md5_data, csv_file, file_name)
             csv_reader = csv.reader(StringIO(csv_file))
             
             # loop through csv rows and insert into data_to_import_fields or data_to_import_data array
