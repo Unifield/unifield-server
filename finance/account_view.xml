@@ -73,12 +73,26 @@
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
                             <field name="name" readonly="1"/>
                             <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
-                            <field name="ref" attrs="{'readonly': [('status', '=', 'sys')]}"/>
-                            <field name="partner_id" invisible="1"/>
                             <field name="document_date" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
                             <field name="date" string="Posting Date" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
-                            <field name="amount" invisible="1"/>
+
+                            <group col="6" colspan="6">
+                                <group col="2" colspan="2">
+                                    <group  attrs="{'invisible': [('status', '!=', 'sys')]}">
+                                      <label string=""/>
+                                    </group>
+                                    <field name="manual_name" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')], 'invisible': [('status', '=', 'sys')]}"/>
+                                </group>
+                                <field name="ref" attrs="{'readonly': [('status', '=', 'sys')]}"/>
+                                <group colspan="2" col="2">
+                                    <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', '|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True), ('state', '=', 'posted')], 'invisible': [('status', '=', 'sys')]}"/>
+                                    <field name="currency_id" readonly="True" attrs="{'invisible': [('status', '=', 'manu')]}"/>
+                                </group>
+                          </group>
                         </group>
+                        <field name="partner_id" invisible="1"/>
+                        <field name="block_manual_currency_id" invisible="1"/>
+                        <field name="amount" invisible="1"/>
                         <notebook colspan="4">
                             <page string="Journal Items">
                                 <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id, 'move_reference': ref}" attrs="{'readonly': [('status', '=', 'sys')]}">

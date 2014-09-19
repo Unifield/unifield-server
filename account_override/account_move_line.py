@@ -232,7 +232,7 @@ class account_move_line(osv.osv):
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
             help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
         'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True),
-        'name': fields.char('Description', size=64, required=True),
+        'name': fields.char('Description', size=64, required=True, readonly=True),
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Func. Credit', digits_compute=dp.get_precision('Account')),
@@ -388,6 +388,9 @@ class account_move_line(osv.osv):
             if m and m.date:
                 vals.update({'date': m.date})
                 context.update({'date': m.date})
+            # UFTP-262: Add description from the move_id
+            if m and m.manual_name:
+                vals.update({'name': m.manual_name})
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
         # UTP-317: Check partner (if active or not)
         if res and not context.get('sync_update_execution', False): #UF-2214: Not for the case of sync
