@@ -987,7 +987,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
         wiz2 = self.browse(cr, uid, ids, context=context)[0]
         line_totals = 0.0
-        for line in wiz2.fp_line_ids:
+        for line in wiz2.line_ids or wiz2.fp_line_ids:
             line_totals += line.amount
 
         if wiz2.amount != line_totals:
