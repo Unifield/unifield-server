@@ -102,7 +102,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'delivered_uom': move.product_uom.name,
                             'rts': move.picking_id.shipment_id.shipment_expected_date[0:10],
                             'eta': move.picking_id.shipment_id.planned_date_of_arrival,
-                            'transport': move.picking_id.shipment_id
+                            'transport': move.picking_id.shipment_id.transport_type,
                         })
                     else:
                         packing = move.picking_id.name
