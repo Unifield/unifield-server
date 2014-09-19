@@ -3,7 +3,7 @@ import xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 import logging
 
-from timeout_transport import TimeoutTransport
+from timeout_transport import TimeoutTransport, TimeoutSafeTransport
 
 # xmlrpc server side
 
@@ -44,7 +44,6 @@ class GzipXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 self.connection.shutdown(1)
 
 # xmlrpc client side
-
 class GzipTransport(TimeoutTransport):
 
     def __init__(self, timeout=None, *args, **kwargs):
@@ -85,7 +84,6 @@ class GzipTransport(TimeoutTransport):
         # is_gzip
         if headers.has_key('accept-encoding') and headers['accept-encoding'] == 'gzip':
             return self._parse_gzipped_response(h.getfile(), sock)
-
         return self._parse_response(h.getfile(), sock)
 
     def _parse_gzipped_response(self, file, sock):
@@ -107,3 +105,10 @@ class GzipTransport(TimeoutTransport):
         p.close()
         return u.close()
 
+class GzipSafeTransport(TimeoutSafeTransport, GzipTransport):
+    def __init__(self, timeout=None, *args, **kwargs):
+        TimeoutSafeTransport.__init__(self, timeout=timeout, *args, **kwargs)
+        self._logger = logging.getLogger('xmlrpc.transport')
+
+    def request(self, host, handler, request_body, verbose=0):
+        return GzipTransport.request(self, host, handler, request_body, verbose)
