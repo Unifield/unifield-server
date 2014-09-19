@@ -275,7 +275,7 @@
                 <Cell ss:StyleID="line_header_last"><Data ss:Type="String">RTS Date</Data></Cell>
             </Row>
 
-            % for line in getLines(o):
+            % for line in getLines(o, grouped=True):
             <Row ss:Height="11.25">
                 % if line.get('line_number'):
                 <Cell ss:StyleID="line_first"><Data ss:Type="Number">${line.get('line_number')|x}</Data></Cell>
@@ -287,20 +287,20 @@
                 % if line.get('ordered_qty'):
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">-</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
                 % if line.get('delivered_qty'):
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">-</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
-                % if line.get('backordered_qty'):
+                % if line.get('backordered_qty') and line.get('backorder_qty') >= 0:
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">-</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">+${abs(line.get('backordered_qty', 0.00)|x}</Data></Cell>
                 % endif
                 % if line.get('transport'):
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(line['transport'], 'transport_type')|x}</Data></Cell>
@@ -311,12 +311,12 @@
                 % if line.get('eta', False) not in (False, 'False'):
                 <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line.get('eta')|n}T00:00:00.000</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_left_date"><Data ss:Type="String">-</Data></Cell>
+                <Cell ss:StyleID="line_left_date"><Data ss:Type="String">N/A</Data></Cell>
                 % endif
                 % if line.get('rts', False) not in (False, 'False'):
                 <Cell ss:StyleID="line_last_date"><Data ss:Type="DateTime">${line.get('rts')|n}T00:00:00.000</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_last_date"><Data ss:Type="String">-</Data></Cell>
+                <Cell ss:StyleID="line_last_date"><Data ss:Type="String">N/A</Data></Cell>
                 % endif
             </Row>
             % endfor
