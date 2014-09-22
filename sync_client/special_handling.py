@@ -70,6 +70,15 @@ class account_move(osv.osv):
 
         # indicate to the account.analytic.line not to create such an object to avoid duplication
         context['do_not_create_analytic_line'] = True
+
+        if context.get('sync_update_execution', False):
+            # UTP-1097: Add explicit the value if they are sent by sync with False but removed by the sync engine!
+            # THIS IS A BUG OF SYNC CORE!
+            if context.get('fields', False):
+                fields =  context.get('fields')
+                if 'ref' in fields and 'ref' not in vals:
+                    vals['ref'] = False
+
         return super(account_move, self).write(cr, uid, ids, vals, context=context)
 
 account_move()
@@ -99,6 +108,22 @@ class account_move_line(osv.osv):
         sync_check = check
         if context.get('sync_update_execution', False):
             sync_check = False
+
+            # UTP-1100: Add explicit the value of partner/employee if they are sent by sync with False but removed by the sync engine!
+            # THIS IS A BUG OF SYNC CORE!
+            if context.get('fields', False):
+                fields =  context.get('fields')
+                if 'partner_txt' in fields and 'partner_txt' not in vals:
+                    vals['partner_txt'] = False 
+                if 'partner_id/id' in fields and 'partner_id' not in vals:
+                    vals['partner_id'] = False                 
+                if 'partner_id2/id' in fields and 'partner_id2' not in vals:
+                    vals['partner_id2'] = False                 
+                if 'employee_id/id' in fields and 'employee_id' not in vals:
+                    vals['employee_id'] = False
+                if 'reference' in fields and 'reference' not in vals:
+                    # UTP-1097: same issue as UTP-1100 (when ref field is cleared)
+                    vals['reference'] = False
                 
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=sync_check, update_check=update_check)
     
