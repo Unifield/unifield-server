@@ -233,4 +233,27 @@ class sale_followup_multi_wizard(osv.osv):
             'context': context,
         }
 
+    def partner_onchange(self, cr, uid, ids, partner_id=False, order_id=False):
+        '''
+        If the partner is changed, check if the order is to this partner
+        '''
+        so_obj = self.pool.get('sale.order')
+
+        res = {}
+
+        if partner_id and order_id:
+            so_ids = so_obj.search(cr, uid, [
+                ('id', '=', order_id),
+                ('partner_id', '=', partner_id),
+            ], count=True)
+            if not so_ids:
+                res['value'] = {'order_id': False}
+                res['warning'] = {
+                    'title': _('Warning'),
+                    'message': _('The partner of the selected order doesn\'t \
+match with the selected partner. The selected order has been reset'),
+                }
+
+        return res
+
 sale_followup_multi_wizard()
