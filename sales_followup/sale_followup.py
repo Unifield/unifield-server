@@ -1018,7 +1018,7 @@ class sale_order(osv.osv):
 
         return res
 
-    def _src_to_partner(self, cr, uid, obj, name, args):
+    def _src_to_partner(self, cr, uid, obj, name, args, context=None):
         res = []
 
         for arg in args:
