@@ -383,6 +383,7 @@ class documents_done_wizard(osv.osv):
         '''
         Set the document to done state
         '''
+        pb_obj = self.pool.get('documents.done.problem')
         if not context:
             context = {}
         
@@ -391,6 +392,8 @@ class documents_done_wizard(osv.osv):
                 self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, all_doc=all_doc, context=context)
                 if all_doc:
                     self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.')%(self._get_model_name(doc.real_model), doc.name), context=context)
+                    pb_ids = pb_obj.search(cr, uid, [('wizard_id', '=', doc.id)], context=context)
+                    pb_obj.done_all_documents(cr, uid, pb_ids, all_doc=all_doc, context=context)
                 
         if not context.get('direct_cancel', False):
             return {'type': 'ir.actions.act_window_close'}
@@ -547,14 +550,14 @@ class documents_done_problem(osv.osv_memory):
                 elif self.pool.get(line.doc_model).browse(cr, uid, line.doc_id, context=context).state not in ('cancel', 'done'):
                     self.pool.get(line.doc_model).set_manually_done(cr, uid, line.doc_id, all_doc=all_doc, context=context)
 
-            return self.pool.get('documents.done.wizard').go_to_problems(cr, uid, [wiz.wizard_id.id], context=context)
+#            return self.pool.get('documents.done.wizard').go_to_problems(cr, uid, [wiz.wizard_id.id], context=context)
 
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'documents.done.wizard',
-                'view_type': 'form',
-                'view_mode': 'tree',
-                'context': context,
-                'target': 'crush'}
+#        return {'type': 'ir.actions.act_window',
+#                'res_model': 'documents.done.wizard',
+#                'view_type': 'form',
+#                'view_mode': 'tree',
+#                'context': context,
+#                'target': 'crush'}
 
     def cancel_document(self, cr, uid, ids, context=None):
         '''
