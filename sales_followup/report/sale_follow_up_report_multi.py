@@ -64,8 +64,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         '''
         prod_obj = self.pool.get('product.product')
 
-        self.cr.execute('''SELECT distinct(product_id) FROM sale_order_line WHERE order_id = %s''', (order.id))
-        product_ids = self.cr.fetchall()
+        self.cr.execute('''SELECT distinct(product_id) FROM sale_order_line WHERE order_id = %(order_id)s''', {'order_id': order.id})
+        product_ids = [x[0] for x in self.cr.fetchall()]
 
         if count:
             return len(product_ids)
