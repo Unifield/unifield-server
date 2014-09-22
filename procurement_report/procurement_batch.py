@@ -26,21 +26,30 @@ import time
 
 class procurement_batch_cron(osv.osv):
     _name = 'procurement.batch.cron'
-    _inherit = 'ir.cron'
+#    _inherit = 'ir.cron'
     
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
+        'active': fields.boolean('Active'),
         'type': fields.selection([('standard', 'POs creation Batch (from orders)'), ('rules', 'POs creation Batch (replenishment rules)')], string='Type', required=True),
         'request_ids': fields.one2many('res.request', 'batch_id', string='Associated Requests', readonly=True),
         'cron_ids': fields.one2many('ir.cron', 'batch_id', string='Associated Cron tasks'),
         'last_run_on': fields.datetime('Last run on', readonly=True),
+        'interval_number': fields.integer('Interval Number',help="Repeat every x."),
+        'interval_type': fields.selection( [('minutes', 'Minutes'),
+            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
+        'nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
+    }
+
+    _defaults = {
+        'nextcall' : lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'interval_number' : lambda *a: 1,
+        'interval_type' : lambda *a: 'weeks',
+        'active' : lambda *a: 1, 
     }
     
     _constraints = [
     ]
-
-    def _poolJobs(self, db_name, check=False):
-        return False
 
     def open_request_view(self, cr, uid, ids, context=None):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_report', 'batch_requests_view')[1]
