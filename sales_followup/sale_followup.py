@@ -1022,7 +1022,7 @@ class sale_order(osv.osv):
         res = []
 
         for arg in args:
-            if arg[0] == 'to_partner_id' and arg[1] is not False:
+            if arg[0] == 'to_partner_id' and arg[2] is not False:
                 res.append(('partner_id', arg[1], arg[2]))
 
         return res
