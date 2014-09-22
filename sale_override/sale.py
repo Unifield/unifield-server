@@ -1186,7 +1186,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'note': line.notes,
             'company_id': order.company_id.id,
             'reason_type_id': self._get_reason_type(cr, uid, order),
-            'price_currency_id': order.pricelist_id.currency_id.id,
+            'price_currency_id': order.procurement_request and order.functional_currency_id.id or order.pricelist_id.currency_id.id,
             'line_number': line.line_number,
         }
 
