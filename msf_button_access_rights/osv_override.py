@@ -112,13 +112,27 @@ method_whitelist = [
     'name_get',
 ]
 
-super_execute_cr = osv.object_proxy.execute_cr
+class fakeUid(int):
+    """
+    Emulates the behaviour of an INT while having the ability to store the users real uid in a property called realUid
+    @param fakeuid The int that will be outputted when this class is used like a normal integer
+    @param realUid The value that will be stored in parameter realUid of this object
+    """
+    def __new__(self, fakeUid, realUid):
+        return int.__new__(self, fakeUid)
+    
+    def __init__(self, fakeUid, realUid):
+        self.realUid = realUid
 
+super_execute_cr = osv.object_proxy.execute_cr
 
 def execute_cr(self, cr, uid, obj, method, *args, **kw):
     
     if uid == 1:
         return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
+    
+    # create a fakeuid that will act as an int that will output the admin uid, but also store the users real uid
+    adminUid = fakeUid(1, uid)
     
     if '.' in method:
         module_name = obj.split('.')[0]
@@ -130,19 +144,19 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
     else:
         # load button access rights for this method
         pool = pooler.get_pool(cr.dbname) 
-        model_id = pool.get('ir.model').search(cr, 1, [('model','=',obj)])
+        model_id = pool.get('ir.model').search(cr, adminUid, [('model','=',obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')
         if rules_pool:
-            rules_search = rules_pool.search(cr, 1, [('name','=',method),('model_id','=',model_id)])
+            rules_search = rules_pool.search(cr, adminUid, [('name','=',method),('model_id','=',model_id)])
             
             # do we have rules?
             if rules_search:
-                rule = rules_pool.browse(cr, 1, rules_search[0])
+                rule = rules_pool.browse(cr, adminUid, rules_search[0])
                 
                 # does user have access? 
                 access = False
                 if rule.group_ids:
-                    user = pool.get('res.users').read(cr, 1, uid)
+                    user = pool.get('res.users').read(cr, adminUid, uid)
                     if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
                         access = True
                 else:
@@ -162,7 +176,7 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
 
                     # continue action as admin user
                     context['real_user'] = uid
-                    return super_execute_cr(self, cr, 1, obj, method, *args, **kw)
+                    return super_execute_cr(self, cr, adminUid, obj, method, *args, **kw)
                     
                 else:
                     # throw access denied
@@ -184,6 +198,9 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
     if uid == 1:
         return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
 
+    # create a fakeuid that will act as an int that will output the admin uid, but also store the users real uid
+    adminUid = fakeUid(1, uid)
+    
     if '.' in method:
         module_name = obj.split('.')[0]
     else:
@@ -194,19 +211,19 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
     else:
         # load button access rights for this method
         pool = pooler.get_pool(cr.dbname) 
-        object_id = pool.get('ir.model').search(cr, 1, [('model','=',obj)])
+        object_id = pool.get('ir.model').search(cr, adminUid, [('model','=',obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')
         if rules_pool:
-            rules_search = rules_pool.search(cr, 1, [('name','=',method),('model_id','=',object_id)])
+            rules_search = rules_pool.search(cr, adminUid, [('name','=',method),('model_id','=',object_id)])
             
             # do we have rules?
             if rules_search:
-                rule = rules_pool.browse(cr, 1, rules_search[0])
+                rule = rules_pool.browse(cr, adminUid, rules_search[0])
                 
                 # does user have access? 
                 access = False
                 if rule.group_ids:
-                    user = pool.get('res.users').read(cr, 1, uid)
+                    user = pool.get('res.users').read(cr, adminUid, uid)
                     if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
                         access = True
                 else:
@@ -214,7 +231,7 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
                 
                 if access:
                     # execute workflow as admin
-                    return super_execute_workflow_cr(self, cr, 1, obj, method, *args)
+                    return super_execute_workflow_cr(self, cr, adminUid, obj, method, *args)
                 else:
                     # throw access denied
                     raise osv.except_osv('Access Denied', 'You do not have permission to use this button')

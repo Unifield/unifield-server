@@ -19,6 +19,7 @@
 #
 ##############################################################################
 import wizards
+import res_log
 import osv_override
 import ir_ui_view
 import ir_model_data
