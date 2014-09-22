@@ -419,6 +419,16 @@ class wizard_cash_return(osv.osv_memory):
                 new_amount = currency_obj.compute(cr, uid, currency_id, register.company_id.currency_id.id, credit, round=False, context=context)
                 new_credit = abs(new_amount)
 
+        if analytic_distribution_id:
+            # UF-2440
+            # copy AD to isolate it from wizard global or line AD
+            # to prevent delete of all AJIs linked to global AD...
+            ad_obj = self.pool.get('analytic.distribution')
+            new_analytic_distribution_id = ad_obj.copy(cr, uid,
+                analytic_distribution_id, context=context)
+        else:
+            new_analytic_distribution_id = False
+
         # Create an account move line
         move_line_vals = {
             'name': description,
@@ -435,7 +445,7 @@ class wizard_cash_return(osv.osv_memory):
             'period_id': period_id,
             'currency_id': currency_id,
             'amount_currency': amount_currency,
-            'analytic_distribution_id': analytic_distribution_id,
+            'analytic_distribution_id': new_analytic_distribution_id,
             'partner_type_mandatory': partner_mandatory or False,
             'reference': new_reference or False,
         }
