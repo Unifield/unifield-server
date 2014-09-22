@@ -824,6 +824,8 @@ class orm_template(object):
             for i in range(len(fields)):
                 res = False
                 if not line[i]:
+                    if context.get('sync_update_execution', False):
+                        row[fields[i][len(prefix)]] = False
                     continue
                 if i >= len(line):
                     raise Exception(_('Please check that all your lines have %d columns.') % (len(fields),))
