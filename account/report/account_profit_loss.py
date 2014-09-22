@@ -89,13 +89,15 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         types = [
             'expense',
             'income'
-                ]
+        ]
 
         ctx = self.context.copy()
         ctx['fiscalyear'] = data['form'].get('fiscalyear_id', False)
 
         if data['form']['filter'] == 'filter_period':
-            ctx['periods'] =  data['form'].get('periods', False)
+            if data['form'].get('period_from', False) and data['form'].get('period_to', False):
+                period_obj = self.pool.get('account.period')
+                ctx['periods'] = period_obj.build_ctx_periods(cr, uid, data['form']['period_from'], data['form']['period_to'])
         elif data['form']['filter'] == 'filter_date':
             ctx['date_from'] = data['form'].get('date_from', False)
             ctx['date_to'] =  data['form'].get('date_to', False)
