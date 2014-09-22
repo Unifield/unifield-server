@@ -35,6 +35,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             'upper': self._upper,
             'getLines': self._get_lines,
             'getOrders': self._get_orders,
+            'getProducts': self._get_products,
         })
         self._order_iterator = 0
         self._nb_orders = 0
@@ -56,6 +57,20 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         self._nb_orders = len(orders)
 
         return orders
+
+    def _get_products(self, order, count=False):
+        '''
+        Returns the list of products in the order
+        '''
+        prod_obj = self.pool.get('product.product')
+
+        self.cr.execute('''SELECT distinct(product_id) FROM sale_order_line WHERE order_id = %s''', (order.id))
+        product_ids = self.cr.fetchall()
+
+        if count:
+            return len(product_ids)
+
+        return prod_obj.browse(self.cr, self.uid, product_ids)
 
     def _get_lines(self, order, grouped=False):
         '''
