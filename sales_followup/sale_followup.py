@@ -1011,7 +1011,7 @@ class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
-    def _get_dummy(self, cr, uid, ids, context=None):
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for so_id in ids:
             res[so_id] = True
