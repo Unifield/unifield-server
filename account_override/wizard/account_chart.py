@@ -94,6 +94,12 @@ class account_chart(osv.osv_memory):
                 context.update({'move_state': wiz.target_move})
             if wiz.output_currency_id:
                 context.update({'output_currency_id': wiz.output_currency_id.id})
+            if wiz.fiscalyear:
+                context['fiscalyear'] = wiz.fiscalyear.id
+            if wiz.period_from:
+                context['period_from'] = wiz.period_from.id
+            if wiz.period_to:
+                context['period_to'] = wiz.period_to.id
             account_ids = self.pool.get('account.account').search(cr, uid, args, context=context)
             # fetch target move value
             o = wiz
