@@ -1012,7 +1012,11 @@ class sale_order(osv.osv):
     _inherit = 'sale.order'
 
     def _get_dummy(self, cr, uid, ids, context=None):
-        return {x: True for x in ids}
+        res = {}
+        for so_id in ids:
+            res[so_id] = True
+
+        return res
 
     def _src_to_partner(self, cr, uid, obj, name, args):
         res = []
