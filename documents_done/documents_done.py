@@ -330,6 +330,16 @@ class documents_done_wizard(osv.osv):
             elif wiz.real_model == 'tender':
                 order = self.pool.get('tender').browse(cr, uid, wiz.res_id, context=context)
                 po_ids = self._get_problem_tender(cr, uid, order, context=context)
+
+            # Remove duplicate
+            pick_ids = list(set(pick_ids))
+            move_ids = list(set(move_ids))
+            proc_ids = list(set(proc_ids))
+            po_ids = list(set(po_ids))
+            so_ids = list(set(so_ids))
+            tender_ids = list(set(tender_ids))
+            invoice_ids = list(set(invoice_ids))
+
             # Process all stock moves
             self._add_stock_move_pb(cr, uid, pb_id, move_ids, context=context)
             # Process all PO/RfQ
