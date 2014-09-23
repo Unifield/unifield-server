@@ -604,6 +604,7 @@ class stock_picking(osv.osv):
         uom_obj = self.pool.get('product.uom')
         move_obj = self.pool.get('stock.move')
         sequence_obj = self.pool.get('ir.sequence')
+        cur_obj = self.pool.get('res.currency')
         wf_service = netsvc.LocalService("workflow")
 
         if context is None:
@@ -709,6 +710,18 @@ class stock_picking(osv.osv):
                             break
 
                         out_move = move_obj.browse(cr, uid, lst_out_move.id, context=context)
+
+                        if values.get('price_unit', False) and out_move.price_currency_id.id != move.price_currency_id.id:
+                            price_unit = cur_obj.compute(
+                                cr,
+                                uid,
+                                move.price_currency_id.id,
+                                out_move.price_currency_id.id,
+                                values.get('price_unit'),
+                                round=False,
+                                context=context
+                            )
+                            out_values['price_unit'] = price_unit
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
                         if out_move.picking_id.type == 'out' \
