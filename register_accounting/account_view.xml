@@ -532,7 +532,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="18"/>
             <field name="arch" type="xml">
-                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
+                <tree colors="red:msf_calculated_balance &lt; 0;blue:state=='draft';black:(state in ('open','confirm') and msf_calculated_balance &gt;= 0)" string="Registers" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
