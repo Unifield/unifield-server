@@ -402,6 +402,8 @@ class account_bank_statement_line(osv.osv):
                 vals['partner_id2'] = False                 
             if 'employee_id/id' in fields and 'employee_id' not in vals:
                 vals['employee_id'] = False
+            if 'ref' in fields and 'ref' not in vals:
+                vals['ref'] = False  # UTP-1097
             
         return super(account_bank_statement_line, self).write(cr, uid, ids, vals, context=context)
 
