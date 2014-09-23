@@ -53,7 +53,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         ctx = self.context.copy()
         ctx['fiscalyear'] = data['form']['fiscalyear_id']
         if data['form']['filter'] == 'filter_period':
-            ctx['periods'] = data['form']['periods']
+            if data['form'].get('period_from', False) and data['form'].get('period_to', False):
+                ctx['period_from'] = data['form']['period_from']
+                ctx['period_to'] = data['form']['period_to']
+            elif data['form'].get('periods', False):
+                ctx['periods'] = data['form']['periods']
         elif data['form']['filter'] == 'filter_date':
             ctx['date_from'] = data['form']['date_from']
             ctx['date_to'] =  data['form']['date_to']
