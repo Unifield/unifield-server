@@ -26,7 +26,7 @@ from tools.translate import _
 import time
 
 
-class sale_followup_multi_wizard(osv.osv):
+class sale_followup_multi_wizard(osv.osv_memory):
     _name = 'sale.followup.multi.wizard'
     _rec_name = 'report_date'
     _order = 'report_date desc'

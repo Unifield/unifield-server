@@ -280,7 +280,7 @@
                 % if line.get('line_number'):
                 <Cell ss:StyleID="line_first"><Data ss:Type="Number">${line.get('line_number')|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_first"><Data ss:Type="String">${line.get('line_number')|x}</Data></Cell>
+                <Cell ss:StyleID="line_first"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-')|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-')|x}</Data></Cell>
