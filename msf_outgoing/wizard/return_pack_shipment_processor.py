@@ -147,7 +147,6 @@ class return_pack_shipment_processor(osv.osv):
                     if i > 0:
                         # previous sequence
                         seqb = sequences[i - 1]
-                        print seqb, seq
                         # Rule #3: sfrom[i] > sto[i-1] for i>0 // no overlapping, unique sequence
                         if not (seq[0] > seqb[1]):
                             overlap_ids.append(seq[2])
