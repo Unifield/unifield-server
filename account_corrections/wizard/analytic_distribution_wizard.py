@@ -130,6 +130,20 @@ class analytic_distribution_wizard(osv.osv_memory):
         to_reverse = []
         old_line_ok = []
         period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
+        ana_obj = self.pool.get('account.analytic.line')
+        # Prepare journal and period information for entry sequences
+        cr.execute("select id, code from account_journal where type = 'correction' and is_current_instance = true")
+        for row in cr.dictfetchall():
+            journal_id = row['id']
+            code = row['code']
+        journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
+        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
+        if not period_ids:
+            raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (wizard.date or ''))
+        period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
+        move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
+        seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
+        entry_seq = "%s-%s-%s" % (move_prefix, code, seqnum)
 
         #####
         ## FUNDING POOL
@@ -174,8 +188,14 @@ class analytic_distribution_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.analytic_id.code))
             if period_closed:
                 # reverse the line
-                to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
-                self.pool.get('account.analytic.line').unlink(cr, uid, to_reverse_ids)
+                to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
+                reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids)
+                # Set initial lines as non correctible
+                ana_obj.write(cr, uid, to_reverse_ids, {'is_reallocated': True})
+                # Set right journal and right entry sequence
+                ana_obj.write(cr, uid, reversed_ids, {'journal_id': correction_journal_id})
+                for reversed_id in reversed_ids:
+                    cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, reversed_id) )
                 # delete the distribution line
                 wiz_line.unlink()
             else:
@@ -229,21 +249,6 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             # get the original sequence
             orig_line = self.pool.get('account.analytic.line').browse(cr, uid, to_reverse_ids)[0]
-            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
-            if not period_ids:
-                raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (wizard.date or ''))
-            period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
-
-            # note that account_analytic_line.move_id is actually account_analytic_line.move_line_id, but the journal_id is
-            # Get a new OD sequence for the REV / COR rows
-            cr.execute("select id, code from account_journal where type = 'correction' and is_current_instance = true")
-            for row in cr.dictfetchall():
-                journal_id = row['id']
-                code = row['code']
-            journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
-            move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
-            seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
-            entry_seq = "%s-%s-%s" % (move_prefix, code, seqnum)
 
             # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
             reversed_id = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids[0], posting_date=wizard.date, context=context)[0]
