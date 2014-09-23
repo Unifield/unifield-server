@@ -8,9 +8,13 @@
                         % for log in logs[:5]:
                             <tr>
                                 <td class="logActions">
+                                    % if log['read_ok']:
                                     <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'])}">
                                         &rarr; ${log['name']}
                                     </a>
+                                    % else:
+                                    <span>&rarr; ${log['name']}</span>
+                                    % endif
                                 </td>
                             </tr>
                         % endfor
@@ -42,9 +46,13 @@
                         % for log in logs:
                             <tr>
                                 <td class="logActions">
+                                    % if log['read_ok']:
                                     <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'])}">
                                         &rarr; ${log['name']}
                                     </a>
+                                    % else:
+                                    <span>&rarr; ${log['name']}</span>
+                                    % endif
                                 </td>
                             </tr>
                         % endfor
