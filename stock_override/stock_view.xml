@@ -679,7 +679,7 @@
                                 <field name="from_wkf_sourcing" invisible="1" />
                                 <button name="enter_reason"
                                     states="assigned,confirmed,draft,shipped"
-                                    attrs="{'invisible': [('from_wkf_sourcing', '=', False)]}"
+                                    attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped']), ('from_wkf_sourcing', '=', False)]}"
                                     string="Cancel &amp; Resource"
                                     type="object"
                                     icon="gtk-cancel"
