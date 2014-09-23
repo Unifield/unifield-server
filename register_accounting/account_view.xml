@@ -447,14 +447,15 @@
                         <field name="sequence_for_reference" select='1'/>
                         <field name="name" select='1' string="Description"/>
                         <field name="ref" select='1'/>
+                        <field name="journal_id" select='1'/>
                         <newline/>
                         <field name="account_id" select='1'/>
                         <field name="amount_in" select='1'/>
                         <field name="amount_out" select='1'/>
                         <newline/>
-                        <field name="partner_id" select='1'/>
-                        <field name="transfer_journal_id" select='1'/>
-                        <field name="employee_id" select='1'/>
+                        <field name="partner_id" select='1' string="3RD Party Partner"/>
+                        <field name="transfer_journal_id" select='1' string='3RD Party Journal'/>
+                        <field name="employee_id" select='1' string="3RD Party Employee"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="12" col="10">
@@ -539,7 +540,7 @@
                     <field name="journal_id"/>
                     <field name="balance_start"/>
                     <field name="msf_calculated_balance"/>
-                    <field name="balance_end_real"/>
+                    <field name="balance_end_cash" string="Cashbox balance" />
                     <field name="state"/>
                     <button type="object" string="Open" name="button_open_cash" states="draft" icon="terp-gtk-go-back-rtl"/>
                     <button type="object" string="Close Register" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
@@ -684,7 +685,7 @@
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
-                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="(red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp'))">
+                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp'))">
                                     <field name="transfer_amount" invisible="1"/>
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
@@ -768,7 +769,6 @@
                     </notebook>
                     <group col="8" colspan="4">
                         <field name="state" readonly="1"/>
-                        <field name="balance_end" readonly="1"/>
                         <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
                         <button name="button_confirm_cheque" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                     </group>
@@ -789,7 +789,6 @@
                     <field name="period_id"/>
                     <field name="currency"/>
                     <field name="journal_id"/>
-                    <field name="balance_end" />
                     <field name="state"/>
                     <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_cheque" states="open" string="Close Register" type="object"  icon="terp-camera_test"/>
@@ -859,46 +858,6 @@
     <!-- UF-426: remove Journal Items in Cash and Bank -->
     <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
 
-    <!-- UF-1719: Add employee_id + transfer_journal_id on Journal Entries -->
-        <record model="ir.ui.view" id="inherit_view_account_move_filter_register">
-            <field name="name">inherit.view.account.move.filter.register</field>
-            <field name="model">account.move</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_move_filter" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//field[@name='partner_id']" position="replace">
-                        <newline/>
-                        <field name="partner_id" select="1" string="3RD Party Partner"/>
-                        <field name="employee_id" select="1" string="3RD Party Employee"/>
-                        <field name="transfer_journal_id" select="1" string="3RD Party Journal"/>
-                        <newline/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-    
-    <!-- UF-1719: Add employee_id + transfer_journal_id on Journal Items -->
-        <record model="ir.ui.view" id="inherit_view_account_move_line_filter_register">
-            <field name="name">inherit.view.account.move.line.filter.register</field>
-            <field name="model">account.move.line</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_move_line_filter" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//field[@name='name']" position="after">
-                        <newline/>
-                        <field name="partner_id" select="1" string="3RD Party Partner"/>
-                        <field name="employee_id" select="1" string="3RD Party Employee"/>
-                        <field name="transfer_journal_id" select="1" string="3RD Party Journal"/>
-                        <field name="is_reconciled" select="1"/>
-                        <field name="reconcile_total_partial_id" select="1"/>
-                        <newline/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
     <!--
       Add onchange on account_id for Journal entries (account.move)
     -->
@@ -919,51 +878,6 @@
                 </data>
             </field>
         </record>
-
-        <record model="ir.ui.view" id="view_move_line_tree_from_move">
-            <field name="name">account.move.line.tree.from.move</field>
-            <field name="model">account.move.line</field>
-            <field name="type">tree</field>
-            <field name="priority" eval="1"/>
-            <field name="arch" type="xml">
-                <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1" hide_delete_button="1" >
-                    <field name="is_corrigible" invisible="1"/>
-                    <field name="have_an_historic" invisible="1"/>
-                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
-                        attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
-                    <button name="button_open_corrections" type="object" string="Open corrections history" 
-                        attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
-                    <field name="journal_id"/>
-                    <field name="move_id"/>
-                    <field name="name"/>
-                    <field name="ref"/>
-                    <field name="document_date"/>
-                    <field name="date"/>
-                    <field name="period_id" domain="[('state','=','draft')]"/>
-                    <field name="account_id"/>
-                    <field name="move_state" invisible="1"/>
-                    <field name="partner_id" invisible="1"/>
-                    <field name="partner_txt"/>
-                    <field name="partner_type" invisible="1"/>
-                    <field name="debit_currency" sum="Total Book. Debit"/>
-                    <field name="credit_currency" sum="Total Book. Credit"/>
-                    <field name="currency_id"/>
-                    <field name="debit" sum="Total Func. Debit"/>
-                    <field name="credit" sum="Total Func. Credit"/>
-                    <field name="functional_currency_id"/>
-                    <field name="reconcile_total_partial_id"/>
-                    <field name="state"/>
-                </tree>
-            </field>
-        </record>
-
-        <act_window
-            id="account.act_account_move_to_account_move_line_open"
-            name="Journal Items"
-            domain="[('move_id', 'in', [active_id])]"
-            res_model="account.move.line"
-            src_model="account.move"
-            view_id="view_move_line_tree_from_move"/>
 
     <!--
       Add partner_txt to analytic journal entries

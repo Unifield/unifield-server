@@ -32,6 +32,7 @@ class financing_contract_donor(osv.osv):
         'active': fields.boolean('Active'),
         # Define for _inherits
         'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
+        'reporting_currency': fields.many2one('res.currency', 'Reporting currency', required=True),
     }
     
     _defaults = {

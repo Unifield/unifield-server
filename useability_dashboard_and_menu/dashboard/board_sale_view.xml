@@ -16,7 +16,8 @@
                     <field name="picked_rate" widget="progressbar"/>
                     <!-- Remove invoiced rate because it's always N/A 
                     <field name="invoiced_rate" widget="progressbar"/>-->
-                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="vat_ok" invisible="1" />
+                    <field name="amount_untaxed" sum="Total Tax Excluded" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
                     <field name="amount_total" sum="Total Tax Included"/>
                     <field name="procurement_request" invisible="1"/>
                     <field name="state" string="State" />
@@ -81,14 +82,14 @@
                 <form string="Sales Manager Dashboard">
                     <hpaned position="100">
                         <child1>
-                            <action  name="%(internal_request_action_draft)d" string="Internal Request Waiting For Validation"/>
-                            <action  name="%(order_action_draft)d" string="Order Waiting For Validation"/>
-                            <action  name="%(internal_request_action_validated)d" string="Internal Request Waiting For Sourcing"/>
-                            <action  name="%(order_action_validated)d" string="Order Waiting For Sourcing"/>
+                            <action  name="%(internal_request_action_draft)d" string="Internal Request Waiting For Validation" menu_ref="%(procurement_request.menu_procurement_request)d,%(base.menu_sales)d" />
+                            <action  name="%(order_action_draft)d" string="Order Waiting For Validation" menu_ref="%(sale.menu_sale_order)d,%(base.menu_sales)d" />
+                            <action  name="%(internal_request_action_validated)d" string="Internal Request Waiting For Sourcing" menu_ref="%(procurement_request.menu_procurement_request)d,%(base.menu_sales)d" />
+                            <action  name="%(order_action_validated)d" string="Order Waiting For Sourcing" menu_ref="%(sale.menu_sale_order)d,%(base.menu_sales)d" />
                             <!-- Remove the two lines because there are same as above and made let me fix on Field order follow-up (see UF-1650) 
                             <action colspan="4" height="220" name="%(order_action_draft)d" string="Orders Waiting For Validation" width="510"/>
                             <action colspan="4" height="220" name="%(order_action_validated)d" string="Orders Waiting For Sourcing" width="510"/> -->
-                            <action colspan="4" height="220" name="%(order_action_sourced)d" string="Orders Sourced" width="510"/>
+                            <action colspan="4" height="220" name="%(order_action_sourced)d" string="Orders Sourced" width="510" menu_ref="%(base.menu_sales)d" />
                         </child1>
                     </hpaned>
                 </form>

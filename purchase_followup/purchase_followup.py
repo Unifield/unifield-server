@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -28,15 +28,15 @@ from tools.translate import _
 
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
-ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
-              ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
+ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+              ('donation_st', 'Standard donation'), ('loan', 'Loan'),
               ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
               ('direct', 'Direct Purchase Order')]
 
 class purchase_order_followup(osv.osv_memory):
     _name = 'purchase.order.followup'
     _description = 'Purchase Order Followup'
-    
+
     def _shipped_rate(self, cr, uid, line, context=None):
         '''
         Return the shipped rate of a PO line
@@ -51,12 +51,12 @@ class purchase_order_followup(osv.osv_memory):
                     move_value -= product_qty*move.price_unit
                 elif move.type == 'in':
                     move_value += product_qty*move.price_unit
-            
+
         return round((move_value/line_value)*100, 2)
-    
+
     def _get_move_state(self, cr, uid, move_state, context=None):
         return self.pool.get('ir.model.fields').get_selection(cr, uid, 'stock.move', 'state', move_state, context)
-        
+
     def update_view(self, cr, uid, ids, context=None):
         '''
         Reload the view
@@ -67,21 +67,21 @@ class purchase_order_followup(osv.osv_memory):
             order_id = self.browse(cr, uid, ids, context=context)[0].order_id.id
         else:
             raise osv.except_osv(_('Error'), _('Order followup not found !'))
-        
+
         self.unlink(cr, uid, ids, context=context)
-        
-        context.update({'active_id': order_id, 
-                        'active_ids': [order_id], 
+
+        context.update({'active_id': order_id,
+                        'active_ids': [order_id],
                         'update': True})
-        
+
         return self.start_order_followup(cr, uid, ids, context)
-    
+
     def close_view(self, cr, uid, ids, context=None):
         '''
         Close the view
         '''
         return {'type': 'ir.actions.act_window_close'}
-    
+
     def start_order_followup(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -90,30 +90,30 @@ class purchase_order_followup(osv.osv_memory):
         # openERP BUG ?
         ids = context.get('active_ids',[])
         split = True
-        
+
         if not ids:
             raise osv.except_osv(_('Error'), _('No order found !'))
         if len(ids) != 1:
-            raise osv.except_osv(_('Error'), 
+            raise osv.except_osv(_('Error'),
                                  _('You should select one order to follow !'))
-        
+
         order_obj = self.pool.get('purchase.order')
         line_obj = self.pool.get('purchase.order.followup.line')
-        
+
         for order in order_obj.browse(cr, uid, ids, context=context):
             if order.state not in ('approved', 'done', 'confirmed_wait', 'split',
                                    'sourced', 'except_picking', 'except_invoice'):
-                raise osv.except_osv(_('Error'), 
+                raise osv.except_osv(_('Error'),
                        _('You cannot follow a non-confirmed Purchase order !'))
-            
-            followup_id = self.create(cr, uid, 
+
+            followup_id = self.create(cr, uid,
                                        {'order_id': order.id}, context=context)
-            
+
             order_ids = order_obj.search(cr, uid, [('id', '!=', order.id), ('name', 'like', order.name)], context=context)
             if not order_ids:
                 split = False
                 order_ids = [order.id]
-            
+
             for o in order_obj.browse(cr, uid, order_ids, context=context):
                 for line in o.order_line:
                     # If the line has no moves
@@ -183,16 +183,16 @@ class purchase_order_followup(osv.osv_memory):
                                          'return_move': move.type == 'out',
                                          }
                             line_obj.create(cr, uid, line_data, context=context)
-                            
+
                             # Unflag the first move
                             if first_move:
                                 first_move = False
-                                
+
         if split:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase_followup', 'purchase_order_followup_split_form_view')[1]
         else:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase_followup', 'purchase_order_followup_form_view')[1]
-                        
+
         res = {'type': 'ir.actions.act_window',
                'res_model': 'purchase.order.followup',
                'view_type': 'form',
@@ -200,13 +200,13 @@ class purchase_order_followup(osv.osv_memory):
                'view_id': [view_id],
                'res_id': followup_id,
                'context': context,}
-        
+
         # If update the view, return the view in the same screen
         if context.get('update'):
             res.update({'target': 'dummy'})
-            
+
         return res
-        
+
     def export_get_file_name(self, cr, uid, ids, prefix='PO_Follow_Up', context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -220,7 +220,7 @@ class purchase_order_followup(osv.osv_memory):
             foup.order_id.name.replace('/', '_'),
             dt_now.year, dt_now.month, dt_now.day)
         return po_name
-        
+
     def export_xls(self, cr, uid, ids, context=None):
         """
         Print the report (Excel)
@@ -238,7 +238,7 @@ class purchase_order_followup(osv.osv_memory):
             'context': context,
             'nodestroy': True,
         }
-                
+
     def export_pdf(self, cr, uid, ids, context=None):
         """
         Print the report (PDF)
@@ -256,7 +256,7 @@ class purchase_order_followup(osv.osv_memory):
             'context': context,
             'nodestroy': True,
         }
-    
+
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Order reference', readonly=True),
         'supplier_ref': fields.related('order_id', 'partner_ref', string='Supplier Reference', readonly=True, type='char'),
@@ -268,16 +268,16 @@ class purchase_order_followup(osv.osv_memory):
         'priority': fields.related('order_id', 'priority', string='Priority', type='selection', selection=ORDER_PRIORITY, readonly=True),
         'categ': fields.related('order_id', 'categ', string='Order Category', type='selection', selection=ORDER_CATEGORY, readonly=True),
         'line_ids': fields.one2many('purchase.order.followup.line', 'followup_id', readonly=True),
-        
+
     }
-    
+
 purchase_order_followup()
 
 class purchase_order_followup_line(osv.osv_memory):
     _name = 'purchase.order.followup.line'
     _description = 'Purchase Order Followup Line'
     _rec_name = 'move_id'
-    
+
     _columns = {
         'move_id': fields.many2one('stock.move', string='Move'),
         'order_id': fields.many2one('purchase.order', string='Order'),
@@ -307,7 +307,7 @@ class purchase_order_followup_line(osv.osv_memory):
                     r['line_shipped_rate'] = 0.00
 
         return res
-    
+
     def go_to_incoming(self, cr, uid, ids, context=None):
         '''
         Open the associated Incoming shipment
@@ -323,7 +323,7 @@ class purchase_order_followup_line(osv.osv_memory):
                     'view_type': 'form',
                     'view_mode': 'form,tree',
                     'view_id': [view_id]}
-            
+
 purchase_order_followup_line()
 
 class purchase_order_followup_from_menu(osv.osv_memory):
@@ -367,9 +367,9 @@ class purchase_order_followup_from_menu(osv.osv_memory):
             res.update({'cust_order_id': False, 'order_id': False, 'cust_order_id2': False})
         if type == 'cust_order_id2' and cust_order_id2:
             res.update({'cust_order_id': False, 'order_id': False, 'incoming_id': False})
-        
+
         return {'value': res}
- 
+
 purchase_order_followup_from_menu()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

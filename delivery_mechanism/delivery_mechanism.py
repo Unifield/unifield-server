@@ -20,8 +20,104 @@
 ##############################################################################
 
 import netsvc
+import time
 from osv import osv, fields
+from osv.orm import browse_record
 from tools.translate import _
+
+
+class stock_picking_processing_info(osv.osv_memory):
+    _name = 'stock.picking.processing.info'
+
+    _columns = {
+        'picking_id': fields.many2one(
+            'stock.picking',
+            string='Picking',
+            required=True,
+            readonly=True,
+        ),
+        'progress_line': fields.char(
+            size=64,
+            string='Processing of lines',
+            readonly=True,
+        ),
+        'create_invoice': fields.char(
+            size=64,
+            string='Create invoice',
+            readonly=True,
+        ),
+        'create_bo': fields.char(
+            size=64,
+            string='Create Backorder',
+            readonly=True,
+        ),
+        'close_in': fields.char(
+            size=64,
+            string='Close IN',
+            readonly=True,
+        ),
+        'prepare_pick': fields.char(
+            size=64,
+            string='Prepare picking ticket',
+            readonly=True,
+        ),
+        'start_date': fields.datetime(
+            string='Date start',
+            readonly=True,
+        ),
+        'end_date': fields.datetime(
+            string='Date end',
+            readonly=True,
+        ),
+    }
+
+    _defaults = {
+        'progress_line': _('Not started'),
+        'create_invoice': _('Not started'),
+        'create_bo': _('Not started'),
+        'close_in': _('Not started'),
+        'prepare_pick': _('Not started'),
+        'end_date': False,
+    }
+
+    def refresh(self, cr, uid, ids, context=None):
+        '''
+        Just refresh the current page
+        '''
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
+    def close(self, cr, uid, ids, context=None):
+        '''
+        Just close the page
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        mem_brw = self.browse(cr, uid, ids[0], context=context)
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'res_id': mem_brw.picking_id.id,
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'view_id': [view_id],
+            'target': 'same',
+            'context': context,
+        }
+
+stock_picking_processing_info()
 
 
 class stock_move(osv.osv):
@@ -263,6 +359,41 @@ class stock_picking(osv.osv):
     do_partial modification
     '''
     _inherit = 'stock.picking'
+
+    def _get_progress_memory(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the ID of the stock.picking.processing.info osv_memory linked
+        to the picking.
+        '''
+        mem_obj = self.pool.get('stock.picking.processing.info')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for pick_id in ids:
+            res[pick_id] = {
+                'progress_memory': -1,
+                'progress_memory_not_done': 0,
+            }
+            mem_ids = mem_obj.search(cr, uid, [
+                ('picking_id', '=', pick_id),
+            ], order='start_date desc', context=context)
+            if mem_ids:
+                res[pick_id]['progress_memory'] = mem_ids[0]
+                nd_ids = mem_obj.search(cr, uid, [
+                    ('end_date', '=', False),
+                    ('id', 'in', mem_ids),
+                ], context=context)
+                if nd_ids:
+                    res[pick_id]['progress_memory_not_done'] = 1
+
+        return res
+
+
     _columns = {
         'move_sequence_id': fields.many2one(
             'ir.sequence',
@@ -276,7 +407,53 @@ class stock_picking(osv.osv):
             size=1024,
             readonly=True,
         ),
+        'progress_memory': fields.function(
+            _get_progress_memory,
+            method=True,
+            string='Has processing info',
+            type='integer',
+            store=False,
+            readonly=True,
+            multi='process',
+        ),
+        'progress_memory_not_done': fields.function(
+            _get_progress_memory,
+            method=True,
+            string='Is in progress',
+            type='boolean',
+            store=False,
+            readonly=True,
+            multi='process',
+        ),
     }
+
+    def go_to_processing_wizard(self, cr, uid, ids, context=None):
+        '''
+        If the stock.picking has a stock.picking.processing.info linked to it,
+        open this wizard.
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for picking in self.browse(cr, uid, ids, context=context):
+            if picking.progress_memory > 0:
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'stock.picking.processing.info',
+                    'res_id': int(picking.progress_memory),
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': context,
+                }
+
+        raise osv.except_osv(
+            _('Error'),
+            _('The picking has no processing in progress or is already processed'),
+        )
 
     def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -291,7 +468,7 @@ class stock_picking(osv.osv):
             ids = [ids]
         res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
         wizard_obj = self.pool.get('wizard')
-        res = wizard_obj.open_wizard(cr, uid, ids, type='update', context=dict(context,
+        res = wizard_obj.open_wizard(cr, uid, ids, w_type='update', context=dict(context,
                                                                                wizard_ids=[res['res_id']],
                                                                                wizard_name=res['name'],
                                                                                model=res['res_model'],
@@ -592,6 +769,63 @@ class stock_picking(osv.osv):
 
         return values
 
+    def update_processing_info(self, cr, uid, picking, prog_id=False, values=None, context=None):
+        '''
+        Update the osv_memory processing info object linked to picking ID.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that calls the method
+        :param picking: browse_record of a stock.picking or the ID of a
+                        stock.picking
+        :param prog_id: ID of a stock.picking.processing.info to update
+        :param values: Dictoionary that contains the values to put on picking
+                       processing object
+        :param context: Context of the call
+
+        :return: The ID of the stock.picking.processing.info that have been
+                 updated.
+        '''
+        prog_obj = self.pool.get('stock.picking.processing.info')
+
+        if not prog_id:
+            if not isinstance(picking, browse_record) and isinstance(picking, (int, long)):
+                picking = self.browse(cr, uid, picking, context=context)
+
+            prog_ids = prog_obj.search(cr, uid, [('picking_id', '=', picking.id)], context=context)
+            if prog_ids:
+                prog_id = prog_ids[0]
+            else:
+                prog_id = prog_obj.create(cr, uid, {
+                    'picking_id': picking.id,
+                }, context=context)
+
+        if not values:
+            return prog_id
+
+        prog_obj.write(cr, uid, [prog_id], values, context=context)
+
+        return prog_id
+
+    def do_incoming_shipment_new_cr(self, cr, uid, wizard_ids, context=None):
+        """
+        Call the do_incoming_shipment() method with a new cursor.
+        """
+        # Create new cursor
+        import pooler
+        new_cr = pooler.get_db(cr.dbname).cursor()
+
+        try:
+            # Call do_incoming_shipment()
+            res = self.do_incoming_shipment(new_cr, uid, wizard_ids, context=context)
+            new_cr.commit()
+        except Exception, e:
+            new_cr.rollback()
+        finally:
+            # Close the cursor
+            new_cr.close()
+
+        return res
+
     def do_incoming_shipment(self, cr, uid, wizard_ids, context=None):
         """
         Take the data in wizard_ids and lines of stock.incoming.processor and
@@ -616,21 +850,41 @@ class stock_picking(osv.osv):
 
         # UF-1617: Get the sync_message case
         sync_in = context.get('sync_message_execution', False)
+        if context.get('rw_sync', False):
+            sync_in = False
+
+        in_out_updated = True
+        if sync_in:
+            in_out_updated = False
+
+        backorder_id = False
 
         internal_loc = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('cross_docking_location_ok', '=', False)])
         proc_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'location_procurement')[1]
         context['location'] = internal_loc
 
         product_availability = {}
+        picking_ids = []
 
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
             picking = wizard.picking_id
+            picking_ids.append(picking)
             backordered_moves = []  # Moves that need to be put in a backorder
             done_moves = []  # Moves that are completed
             out_picks = set()
             processed_out_moves = []
 
+            total_moves = len(picking.move_lines)
+            move_done = 0
+            prog_id = self.update_processing_info(cr, uid, picking, False, {
+                'progress_line': _('In progress (%s/%s)') % (move_done, total_moves),
+                'start_date': time.strftime('%Y-%m-%d %H:%M:%S')
+            }, context=context)
             for move in picking.move_lines:
+                move_done += 1
+                prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                    'progress_line': _('In progress (%s/%s)') % (move_done, total_moves),
+                }, context=context)
                 # Get all processed lines that processed this stock move
                 proc_ids = move_proc_obj.search(cr, uid, [('wizard_id', '=', wizard.id), ('move_id', '=', move.id)], context=context)
                 # The processed quantity
@@ -691,8 +945,16 @@ class stock_picking(osv.osv):
 
                     remaining_out_qty = line.quantity
                     out_move = None
-                    for out_move in out_moves:
-                        out_move = move_obj.browse(cr, uid, out_move.id, context=context)
+
+                    # Sort the OUT moves to get the closest quantities as the IN quantity
+                    out_moves = sorted(out_moves, key=lambda x: abs(x.product_qty-line.quantity))
+
+
+                    for lst_out_move in out_moves:
+                        if remaining_out_qty <= 0.00:
+                            break
+
+                        out_move = move_obj.browse(cr, uid, lst_out_move.id, context=context)
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
                         if out_move.picking_id.type == 'out' \
@@ -710,7 +972,7 @@ class stock_picking(osv.osv):
                             out_values.update({
                                 'product_qty': remaining_out_qty,
                                 'product_uom': line.uom_id.id,
-                                'in_out_updated': sync_in and False or True,
+                                'in_out_updated': in_out_updated,
                             })
                             context['keepLineNumber'] = True
                             new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
@@ -725,19 +987,44 @@ class stock_picking(osv.osv):
                             out_values.update({
                                 'product_qty': remaining_out_qty,
                                 'product_uom': line.uom_id.id,
-                                'in_out_updated': sync_in and False or True,
+                                'in_out_updated': in_out_updated,
                             })
+                            remaining_out_qty = 0.00
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
+                        elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1]:
+                            # Just update the out move with the value of the out move with UoM of IN
+                            out_qty = out_move.product_qty
+                            if line.uom_id.id != out_move.product_uom.id:
+                                out_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, out_move.product_qty, line.uom_id.id)
+
+                            out_values.update({
+                                'product_qty': out_qty,
+                                'product_uom': line.uom_id.id,
+                                'in_out_updated': in_out_updated,
+                            })
+                            remaining_out_qty -= out_qty
+                            move_obj.write(cr, uid, [out_move.id], out_values, context=context)
+                            processed_out_moves.append(out_move.id)
+                            remaining_out_qty = 0.00
                         else:
                             # Just update the data of the initial out move
+                            processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty or out_move.product_qty
                             out_values.update({
-                                'product_qty': uom_partial_qty,
+                                'product_qty': processed_qty,
                                 'product_uom': line.uom_id.id,
-                                'in_out_updated': sync_in and False or True
+                                'in_out_updated': in_out_updated,
                             })
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
+
+                            if line.uom_id.id != out_move.product_uom.id:
+                                uom_processed_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, processed_qty, line.uom_id.id)
+                            else:
+                                uom_processed_qty = processed_qty
+
+                            remaining_out_qty -= uom_processed_qty
+
 
                 # Decrement the inital move, cannot be less than zero
                 diff_qty = move.product_qty - count
@@ -749,7 +1036,7 @@ class stock_picking(osv.osv):
                 # UTP-967
                 if move.state != 'cancel' and move.purchase_line_id and move.purchase_line_id.procurement_id:
                     proc = move.purchase_line_id.procurement_id
-                    if proc.move_id.location_id.id == proc_loc_id:
+                    if proc.move_id and proc.move_id.location_id.id == proc_loc_id:
                         if diff_qty > 0:
                             # REF-59: move of partial in,
                             # adapt proc order's move qty (for correct virtual stock)
@@ -759,13 +1046,30 @@ class stock_picking(osv.osv):
                             # note: do not close move until a diff qty is applied above
                             move_obj.write(cr, uid, [proc.move_id.id], {'product_qty': 0.00, 'state': 'done'}, context=context)
 
+            prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                'progress_line': _('Done (%s/%s)') % (move_done, total_moves),
+            }, context=context)
+
             # Create the backorder if needed
             if backordered_moves:
-                backorder_id = self.copy(cr, uid, picking.id, {
-                    'name': sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
-                    'move_lines': [],
-                    'state': 'draft',
+                prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                    'create_bo': _('In progress'),
                 }, context=context)
+                initial_vals_copy = {
+                    'name':sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
+                    'move_lines':[],
+                    'state':'draft'}
+
+                if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                    initial_vals_copy.update({
+                        'already_replicated': False,
+                    })
+
+                backorder_id = self.copy(cr, uid, picking.id, initial_vals_copy, context=context)
+                if self._get_usb_entity_type(cr, uid) == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
+                    new_name = context.get('rw_backorder_name')
+                    del context['rw_backorder_name']
+                    self.write(cr, uid, backorder_id, {'name': new_name}, context=context)
 
                 for bo_move, bo_qty, av_values, data_back in backordered_moves:
                     if bo_move.product_qty != bo_qty:
@@ -792,6 +1096,10 @@ class stock_picking(osv.osv):
                     'picking_id': backorder_id,
                     'dpo_line_id': 0,
                 }, context=context)
+                prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                    'create_bo': _('Done'),
+                    'close_in': _('In progress'),
+                }, context=context)
 
                 if sync_in:
                     # UF-1617: When it is from the sync., then just send the IN to shipped, then return the backorder_id
@@ -800,26 +1108,47 @@ class stock_picking(osv.osv):
 
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                self.write(cr, uid, [picking.id], {
-                    'backorder_id': backorder_id,
-                    'cd_from_bo': values.get('cd_from_bo', False),
-                }, context=context)
+                self.write(cr, uid, [picking.id], {'backorder_id': backorder_id,'cd_from_bo': values.get('cd_from_bo', False),}, context=context)
                 self.action_move(cr, uid, [backorder_id])
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
+                prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                    'close_in': _('Done'),
+                }, context=context)
             else:
+                prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                    'create_bo': _('N/A'),
+                    'close_in': _('In progress'),
+                }, context=context)
                 if sync_in:  # If it's from sync, then we just send the pick to become Available Shippde, not completely close!
                     self.write(cr, uid, [picking.id], {'state': 'shipped'}, context=context)
                     return picking.id
                 else:
                     self.action_move(cr, uid, [picking.id], context=context)
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+                    if picking.purchase_id:
+                        so_ids = self.pool.get('purchase.order').get_so_ids_from_po_ids(cr, uid, picking.purchase_id.id, context=context)
+                        for so_id in so_ids:
+                            wf_service.trg_write(uid, 'sale.order', so_id, cr)
+                    if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE:
+                        self.write(cr, uid, [picking.id], {'already_replicated': False}, context=context)
+                prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                    'close_in': _('Done'),
+                }, context=context)
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)
 
+        if not out_picks:
+            prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                'prepare_pick': _('N/A'),
+            }, context=context)
+
         # Create the first picking ticket if we are on a draft picking ticket
         for picking in self.browse(cr, uid, list(out_picks), context=context):
+            prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                'prepare_pick': _('In progress'),
+            }, context=context)
             wiz = self.create_picking(cr, uid, [picking.id], context=context)
             wiz_obj = self.pool.get(wiz['res_model'])
             wiz_context = wiz.get('context', {})
@@ -836,6 +1165,20 @@ class stock_picking(osv.osv):
                 wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz_context)
                 # We process the creation of the picking
                 wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
+
+            prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                'prepare_pick': _('Done'),
+            }, context=context)
+
+        for picking in picking_ids:
+            prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
+            }, context=context)
+
+        if context.get('rw_sync', False):
+            if backorder_id:
+                return backorder_id
+            return wizard.picking_id.id
 
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
@@ -895,11 +1238,11 @@ class stock_picking(osv.osv):
                 if out_move_id:
                     out_move = move_obj.browse(cr, uid, out_move_id, context=context)
                     cond1 = out_move.picking_id.subtype == 'standard'
-                    tmp_cond = out_move.picking_id.has_picking_ticket_in_progress(context=context)[out_move.picking_id.id]
-                    cond2 = out_move.picking_id.subtype == 'picking' and tmp_cond
+                    cond2 = out_move.picking_id.subtype == 'picking'
+                    cond3 = cond2 and out_move.picking_id.has_picking_ticket_in_progress(context=context)[out_move.picking_id.id]
                     if out_move.picking_id.subtype in ('standard', 'picking') and out_move.picking_id.type == 'out' and not out_move.product_qty:
                         # replace the stock move in the procurement order by the non cancelled stock move
-                        if (cond1 or cond2) and out_move.picking_id and out_move.picking_id.sale_id:
+                        if (cond1 or cond3) and out_move.picking_id and out_move.picking_id.sale_id:
                             sale_id = out_move.picking_id.sale_id.id
                             move_id = move_obj.search(cr, uid, [('picking_id.type', '=', 'out'),
                                                                 ('picking_id.subtype', 'in', ('standard', 'picking')),
@@ -919,6 +1262,12 @@ class stock_picking(osv.osv):
                             if out_move.picking_id.sale_id.id not in sale_ids:
                                 sale_ids.append(out_move.picking_id.sale_id.id)
 
+                if move.purchase_line_id and move.purchase_line_id.procurement_id:
+                    procurement = move.purchase_line_id.procurement_id
+                    if not procurement.sale_id and procurement.move_id:
+                        self.pool.get('stock.move').action_cancel(cr, uid, [move.purchase_line_id.procurement_id.move_id.id])
+                        wf_service.trg_validate(uid, 'procurement.order', move.purchase_line_id.procurement_id.id, 'button_cancel', cr)
+
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
@@ -929,6 +1278,32 @@ class stock_picking(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)
 
         return True
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Return True in case of context contains "go_to_processing_wizard" because
+        without that, the displaying of the wizard waits that the background
+        process (SQL LOCK on row)
+        '''
+        if context is None:
+            context = {}
+
+        if context.get('button', False) == 'go_to_processing_wizard':
+            return True
+        elif context.get('button', False) == 'enter_reason':
+            mem_obj = self.pool.get('stock.picking.processing.info')
+            mem_ids = mem_obj.search(cr, uid, [
+                ('end_date', '=', False),
+                ('picking_id', 'in', ids),
+            ], context=context)
+            if mem_ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The processing of this picking is in progress - You can\'t cancel it.'),
+                )
+
+        return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
+
 
 stock_picking()
 

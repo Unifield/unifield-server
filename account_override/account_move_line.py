@@ -260,6 +260,7 @@ class account_move_line(osv.osv):
         ),
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
         'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
+        'corrected_upstream': fields.boolean('Corrected from CC/HQ', readonly=True, help='This line have been corrected from Coordo or HQ level to a cost center that have the same level or superior.'),
         'line_number': fields.integer(string='Line Number'),
         'invoice_partner_link': fields.many2one('account.invoice', string="Invoice partner link", readonly=True,
             help="This link implies this line come from the total of an invoice, directly from partner account.", ondelete="cascade"),
@@ -273,6 +274,7 @@ class account_move_line(osv.osv):
         'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
         'date': lambda self, cr, uid, c: c.get('date', False) or strftime('%Y-%m-%d'),
         'exported': lambda *a: False,
+        'corrected_upstream': lambda *a: False,
         'line_number': lambda *a: 0,
     }
 
@@ -325,7 +327,7 @@ class account_move_line(osv.osv):
             if vals.get('date', False):
                 date = vals.get('date')
             if date < dd:
-                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+                raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (date, dd))
         return True
 
     def _check_date_validity(self, cr, uid, ids, vals=None):
@@ -362,7 +364,7 @@ class account_move_line(osv.osv):
         if not vals.get('document_date') and vals.get('date'):
             vals.update({'document_date': vals.get('date')})
         if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
-            raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+            raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (vals.get('date'), vals.get('document_date')))
         if 'move_id' in vals and context.get('from_web_menu'):
             m = self.pool.get('account.move').browse(cr, uid, vals.get('move_id'))
             if m and m.document_date:
@@ -373,7 +375,7 @@ class account_move_line(osv.osv):
                 context.update({'date': m.date})
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
         # UTP-317: Check partner (if active or not)
-        if res and not context.get('sync_update_execution', False): #UF-2214: Not for the case of sync
+        if res and not (context.get('sync_update_execution', False) or context.get('addendum_line_creation', False)): #UF-2214: Not for the case of sync. # UTP-1022: Not for the case of addendum line creation
             aml = self.browse(cr, uid, [res], context)
             if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))

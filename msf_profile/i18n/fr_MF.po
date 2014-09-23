@@ -3574,8 +3574,8 @@ msgstr "La Commande d'Approvisionnement passe sous statut fermé"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:186
 #, python-format
-msgid "Period for migration is not open!"
-msgstr "La période de la date de migration n'est pas ouverte !"
+msgid "Period for is not open!"
+msgstr "La période n'est pas ouverte !"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
@@ -9569,8 +9569,8 @@ msgstr "Montant initial en type de devise donnée"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:182
 #, python-format
-msgid "Given date is inferior to those from the maximum posting date. You cannot post lines before the youngest one. Please change it to be superior or equal to %s"
-msgstr "Given date is inferior to those from the maximum posting date. You cannot post lines before the youngest one. Please change it to be superior or equal to %s"
+msgid "Posting date should be later than all Document Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s"
+msgstr "La date de comptabilisation doit être postérieure à toutes les dates du document. Vous ne pouvez pas comptabiliser des lignes avant la plus récente. Veuillez la modifier pour être supérieure ou égale à %s"
 
 #. module: analytic_distribution
 #: view:analytic.distribution.wizard:0
@@ -10265,14 +10265,19 @@ msgstr "Transferts"
 #: code:addons/account_override/account.py:175
 #: code:addons/account_override/account_analytic_line.py:105
 #: code:addons/account_override/account_analytic_line.py:120
-#: code:addons/account_override/account_move_line.py:243
-#: code:addons/account_override/account_move_line.py:264
 #: code:addons/account_override/invoice.py:146
 #: code:addons/analytic_distribution_invoice/account_invoice_refund.py:105
 #: code:addons/analytic_distribution_invoice/account_invoice_refund.py:116
 #, python-format
 msgid "Posting date should be later than Document Date."
 msgstr "Date de comptabilisation devrait être postérieure à celle du document."
+
+#. module: account_override
+#: code:addons/account_override/account_move_line.py:243
+#: code:addons/account_override/account_move_line.py:264
+#, python-format
+msgid "Posting date (%s) should be later than Document Date (%s)."
+msgstr "Date de comptabilisation (%s) devrait être postérieure à celle du document (%s)."
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -29466,7 +29471,7 @@ msgstr "Mexico"
 #: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
 #: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
 #: view:msf.doc.import.accounting:0
-msgid "Import Migration Entries"
+msgid "Import Entries"
 msgstr "Import d'entrées de migration"
 
 #. module: sale
@@ -30357,7 +30362,7 @@ msgstr "Ligne %s. Monnaie non trouvée : %s"
 
 #. module: msf_doc_import
 #: view:msf.doc.import.accounting:0
-msgid "This will import Migration Entries from a XML file."
+msgid "This will import Entries from a XML file."
 msgstr "Ceci va importer les entrées de migration depuis un fichier XML."
 
 #. module: financing_contract
@@ -56968,8 +56973,8 @@ msgstr "Nom Fournisseur"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:180
 #, python-format
-msgid "Given date is inferior to those from the maximum document date. Please change it to be superior or equal to %s"
-msgstr "La date indiquée est inférieure à la date du document. Veuillez mettre une date supérieure ou égale à %s"
+msgid "Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s"
+msgstr "La date de comptabilisation doit être postérieure à toutes les dates du document. Veuillez mettre une date supérieure ou égale à %s"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -60481,8 +60486,8 @@ msgstr "Produits - Type de Prix"
 
 #. module: msf_doc_import
 #: field:msf.doc.import.accounting,date:0
-msgid "Migration date"
-msgstr "Date de migration"
+msgid "Date"
+msgstr "Date"
 
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:455

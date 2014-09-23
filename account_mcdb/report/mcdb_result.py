@@ -24,7 +24,6 @@
 from report import report_sxw
 import pooler
 import csv
-from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import zipfile
 import tempfile
@@ -56,7 +55,7 @@ def getIterObjects(self, cr, uid, ids, context):
     field_process = None
     back_browse = False
     if context.get('background_id'):
-         back_browse = self.pool.get('memory.background.report').browse(cr, uid, context['background_id'])
+        back_browse = self.pool.get('memory.background.report').browse(cr, uid, context['background_id'])
 
     if hasattr(self, '_fields_process'):
         field_process = self._fields_process

@@ -51,14 +51,20 @@ class account_account(osv.osv):
             account_id = account.get('id', False)
             user_type = account.get('user_type_code', False)
             code = account.get('code')
-            res[account_id] = False
-            if user_type == 'expense':
-                res[account_id] = True
-            elif user_type == 'income':
-                if not company_account_active:
-                    res[account_id] = True
-                elif company_account_active and code.startswith(str(company_account)):
-                    res[account_id] = True
+            res[account_id] = self.is_analytic_addicted(cr, uid, user_type, code, company_account, company_account_active)
+        return res
+
+    def is_analytic_addicted(self, cr, uid, user_type, code, company_account, company_account_active):
+        res = False
+        if not user_type:
+            return res
+        if user_type == 'expense':
+            res = True
+        elif user_type == 'income':
+            if not company_account_active:
+                res = True
+            elif company_account_active and code.startswith(str(company_account)):
+                res = True
         return res
 
     def _search_is_analytic_addicted(self, cr, uid, ids, field_name, args, context=None):

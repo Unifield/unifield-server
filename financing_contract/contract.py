@@ -191,7 +191,12 @@ class financing_contract_contract(osv.osv):
                 else:
                     # first time
                     analytic_domain = temp
-
+        # UTP-1063: Don't use MSF Private Funds anymore
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except Exception as e:
+            fp_id = 0
+        analytic_domain = [('account_id', '!=', fp_id)] + analytic_domain
         return analytic_domain
 
     def _get_overhead_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -267,6 +272,7 @@ class financing_contract_contract(osv.osv):
         self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.format_id.id, copy.format_id.id, context=context)
         return copy_id
 
+
     def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context=None):
         res = {}
         if donor_id:
@@ -278,8 +284,10 @@ class financing_contract_contract(osv.osv):
                     'reporting_type': source_format.reporting_type,
                     'overhead_type': source_format.overhead_type,
                     'overhead_percentage': source_format.overhead_percentage,
+                    'reporting_currency': donor.reporting_currency.id,
                 }
                 res = {'value': format_vals}
+
         return res
 
     def onchange_currency_table(self, cr, uid, ids, currency_table_id, reporting_currency_id, context=None):
@@ -443,6 +451,7 @@ class financing_contract_contract(osv.osv):
     def menu_project_expense_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+
         wiz_obj = self.pool.get('wizard.expense.report')
         wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'project',
                                           'filename': 'project_expenses.csv',
@@ -475,10 +484,33 @@ class financing_contract_contract(osv.osv):
                 'context': context,
         }
 
+    def allocated_expenses_report(self, cr, uid, ids, context=None):
+        """
+        Check if contract gives some FP. If not raise an error.
+        Otherwise launch the report.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for contract in self.browse(cr, uid, ids, context=context):
+            if not contract.format_id.funding_pool_ids:
+                raise osv.except_osv(_('Error'), _('No FP selected in the financing contract: %s') % (contract.name or ''))
+        # We launch the report
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'financing.allocated.expenses.2',
+            'datas': {'ids': ids},
+            'context': context,
+        }
+
     def create(self, cr, uid, vals, context=None):
         # Do not copy lines from the Donor on create if coming from the sync server
         if context is None:
             context = {}
+
+
         result = super(financing_contract_contract, self).create(cr, uid, vals, context=context)
         if not context.get('sync_update_execution'):
             contract = self.browse(cr, uid, result, context=context)
@@ -496,6 +528,8 @@ class financing_contract_contract(osv.osv):
 
         if 'funding_pool_ids' in vals: # When the FP is added into the contract, then set this flag into the database
             vals['fp_added_flag'] = True
+
+
 
         # check if the flag has been set TRUE in the previous save
         fp_added_flag = self.browse(cr, uid, ids[0], context=context).fp_added_flag
@@ -519,6 +553,12 @@ class financing_contract_contract(osv.osv):
         # get list of all valid ids for this contract
         format =  self.browse(cr,uid,ids,context=context)[0].format_id
         funding_pool_ids = [x.funding_pool_id.id for x in format.funding_pool_ids]
+
+        earmarked_funding_pools = [x.funded for x in format.funding_pool_ids]
+        if not any(earmarked_funding_pools) and format.reporting_type == 'allocated':
+            raise osv.except_osv(_('Error'), _("At least one funding pool should be defined as earmarked in the funding pool list of this financing contract."))
+
+
         cost_center_ids = [x.id for x in format.cost_center_ids]
 
         quad_obj = self.pool.get('financing.contract.account.quadruplet')
@@ -535,6 +575,9 @@ class financing_contract_contract(osv.osv):
             if list_diff:
                 ret = format_line_obj.write(cr, uid, format_line.id, {'account_quadruplet_ids': [(6, 0, filtered_quads)]}, context=context)
         return res
+
+
+
 
 financing_contract_contract()
 

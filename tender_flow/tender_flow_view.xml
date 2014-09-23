@@ -267,7 +267,7 @@
                         <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='fiscal_position']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])], 'invisible': [('vat_ok', '=', False)]}</attribute>
                     </xpath>
                 </data>
             </field>
@@ -537,6 +537,65 @@
                     <separator string="Actions" />
                     <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
                     <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="rfq_line_unlink_wizard_form_view" model="ir.ui.view">
+            <field name="name">rfq.line.unlink.wizard.form.view</field>
+            <field name="model">purchase.order.line.unlink.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Request for quotation line cancelation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">Would you re-source the needs sourced by this request for quotation line ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
+                    <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="rfq_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">rfq.cancel.wizard.form.view</field>
+            <field name="model">purchase.order.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Cancel Request for Quotation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Request for Quotation will be re-sourced.</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="cancel_po" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="ask_rfq_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">ask.rfq.cancel.wizard.form.view</field>
+            <field name="model">purchase.order.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Cancel Request for Quotation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">You removed all lines of this request for quotation, would you cancel it ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
+                    <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="Close window" />
+                    <button colspan="2" type="object" icon="gtk-execute" name="cancel_po" string="Cancel RfQ" />
                 </form>
             </field>
         </record>

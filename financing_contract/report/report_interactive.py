@@ -30,7 +30,7 @@ class report_interactive(report_sxw.rml_parse):
             return False
         return True
 
-    def checkType(self,obj,line):
+    def checkType(self,obj,line=False):
         if line:
             if obj.reporting_type == 'project' or len(line) < 7:
                 return False

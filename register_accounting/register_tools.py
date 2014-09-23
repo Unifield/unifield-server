@@ -201,6 +201,32 @@ def previous_register_id(self, cr, uid, period_id, journal_id, context=None):
         return False
     return previous_reg_ids[0]
 
+
+def previous_register_instance_id(self, cr, uid, period_id, journal_id, context=None):
+    """
+    get instance_id for the previous register 
+     - period_id: the period of current register
+     - journal_id: this include same currency and same type
+     - fiscalyear_id: current fiscalyear
+    """
+    # TIP - Use this postgresql query to verify current registers:
+    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name
+    # from account_bank_statement as s, account_journal as j, res_currency as c
+    # where s.journal_id = j.id and j.currency = c.id;
+
+    # Prepare some values
+    st_obj = self.pool.get('account.bank.statement')
+    # Search journal_ids that have the type we search
+    prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
+    previous_reg_ids = st_obj.search(cr, uid, [('journal_id', '=', journal_id), ('period_id', '=', prev_period_id)], context=context)
+    prev_reg_browse = st_obj.browse(cr, uid, previous_reg_ids, context=context)
+
+    if len(previous_reg_ids) != 1:
+        return False
+    instance_id = prev_reg_browse[0].instance_id.id
+    return instance_id
+
+
 def previous_register_is_closed(self, cr, uid, ids, context=None):
     """
     Return true if previous register is closed. Otherwise return an exception
@@ -211,7 +237,7 @@ def previous_register_is_closed(self, cr, uid, ids, context=None):
         ids = [ids]
     # Verify that the previous register is closed
     for reg in self.pool.get('account.bank.statement').browse(cr, uid, ids, context=context):
-        # if no previous register (case where register is the first register) we don't need to close unexistent register
+        # if no previous register (case where register is the first register) we don't need to close non-existent registers
         if reg.prev_reg_id:
             if reg.prev_reg_id.state not in ['partial_close', 'confirm']:
                 raise osv.except_osv(_('Error'),

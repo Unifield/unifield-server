@@ -22,6 +22,7 @@
 import time
 
 from report import report_sxw
+from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 
@@ -36,7 +37,7 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
          })
         self._dates_context = {}
         self._report_context = {}
-        
+
         #self.module_instance = self.pool.get('sale.order.followup')
         
     def _parse_date_xls(self, dt_str, is_datetime=True):
@@ -61,7 +62,7 @@ report_sxw.report_sxw(
     'addons/sales_followup/report/sale_follow_up_report.rml',
     parser=sale_follow_up_report_parser,
     header=False)
-    
+
 
 class sale_follow_up_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
@@ -73,7 +74,7 @@ class sale_follow_up_report_xls(SpreadsheetReport):
         a = super(sale_follow_up_report_xls, self).create(cr, uid, ids,
         data, context)
         return (a[0], 'xls')
-        
+
 sale_follow_up_report_xls(
     'report.sales.follow.up.report_xls',
     'sale.order.followup',

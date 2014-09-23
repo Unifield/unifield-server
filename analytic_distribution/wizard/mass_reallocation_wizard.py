@@ -120,11 +120,11 @@ class mass_reallocation_wizard(osv.osv_memory):
     _columns = {
         'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
         'date': fields.date('Posting date', required=True),
-        'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id', 
+        'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id',
             string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
         'display_fp': fields.boolean('Display FP'),
-        'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_other_rel', 'wizard_id', 'analytic_line_id', 
+        'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_other_rel', 'wizard_id', 'analytic_line_id',
             string="Non eligible analytic journal items", required=False, readonly=True),
     }
 
@@ -163,7 +163,7 @@ class mass_reallocation_wizard(osv.osv_memory):
         if fields is None:
             fields = []
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         # Default behaviour
         res = super(mass_reallocation_wizard, self).default_get(cr, uid, fields, context=context)
@@ -173,7 +173,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             res['account_id'] =  context['analytic_account_from']
         if context.get('active_ids', False) and context.get('active_model', False) == 'account.analytic.line':
             res['line_ids'] = context.get('active_ids')
-            # Search which lines are eligible
+            # Search which lines are eligible (add another criteria if we come from project)
             search_args = [
                 ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|',
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
@@ -183,6 +183,19 @@ class mass_reallocation_wizard(osv.osv_memory):
                 ('move_state', '=', 'draft'),
                 ('account_id.category', 'in', ['FREE1', 'FREE2'])
             ]
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            if company and company.instance_id and company.instance_id.level == 'project':
+                search_args = [
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
+                    ('is_reversal', '=', True),
+                    ('journal_id.type', 'in', ['engagement', 'revaluation']),
+                    ('from_write_off', '=', True),
+                    ('move_state', '=', 'draft'),
+                    ('account_id.category', 'in', ['FREE1', 'FREE2']),
+                    ('move_id.corrected_upstream', '=', True)
+                ]
+
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args, context=context)
             # Process lines if exist
             if search_ns_ids:
@@ -221,9 +234,9 @@ class mass_reallocation_wizard(osv.osv_memory):
         if dd > pd:
             raise osv.except_osv(_('Error'), _('Maximum document date is superior to maximum of posting date. Check selected analytic lines dates first.'))
         if date < dd:
-            raise osv.except_osv(_('Warning'), _('Given date is inferior to those from the maximum document date. Please change it to be superior or equal to %s') % (dd,))
+            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s') % (dd,))
         if date < pd:
-            raise osv.except_osv(_('Warning'), _('Given date is inferior to those from the maximum posting date. You cannot post lines before the youngest one. Please change it to be superior or equal to %s') % (pd,))
+            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Document Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s') % (pd,))
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -231,7 +244,7 @@ class mass_reallocation_wizard(osv.osv_memory):
         Launch mass reallocation process
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -241,6 +254,8 @@ class mass_reallocation_wizard(osv.osv_memory):
         process_ids = []
         account_id = False
         date = False
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        level = company and company.instance_id and company.instance_id.level or ''
         # Browse given wizard
         for wiz in self.browse(cr, uid, ids, context=context):
             to_process = [x.id for x in wiz.line_ids] or []
@@ -266,6 +281,17 @@ class mass_reallocation_wizard(osv.osv_memory):
                 ('move_state', '=', 'draft'),
                 ('account_id.category', 'in', ['FREE1', 'FREE2'])
             ]
+            if level == 'project':
+                search_args = [
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
+                    ('is_reversal', '=', True),
+                    ('journal_id.type', 'in', ['engagement', 'revaluation']),
+                    ('from_write_off', '=', True),
+                    ('move_state', '=', 'draft'),
+                    ('account_id.category', 'in', ['FREE1', 'FREE2']),
+                    ('move_id.corrected_upstream', '=', True)
+                ]
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args)
             if search_ns_ids:
                 non_supported_ids.extend(search_ns_ids)

@@ -36,9 +36,9 @@ class purchase_follow_up_report_parser(report_sxw.rml_parse):
          })
         self._dates_context = {}
         self._report_context = {}
-        
+
         #self.module_instance = self.pool.get('purchase.order.followup')
-        
+
     def _parse_date_xls(self, dt_str, is_datetime=True):
         if not dt_str or dt_str == 'False':
             return ''
@@ -47,7 +47,7 @@ class purchase_follow_up_report_parser(report_sxw.rml_parse):
         if dt_str:
             dt_str += 'T00:00:00.000'
         return dt_str
-        
+
     def _upper(self, s):
         if not isinstance(s, (str, unicode)):
             return s
@@ -61,7 +61,7 @@ report_sxw.report_sxw(
     'addons/purchase_followup/report/purchase_follow_up_report.rml',
     parser=purchase_follow_up_report_parser,
     header=False)
-    
+
 
 class purchase_follow_up_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
@@ -73,7 +73,7 @@ class purchase_follow_up_report_xls(SpreadsheetReport):
         a = super(purchase_follow_up_report_xls, self).create(cr, uid, ids,
         data, context)
         return (a[0], 'xls')
-        
+
 purchase_follow_up_report_xls(
     'report.purchase.follow.up.report_xls',
     'purchase.order.followup',

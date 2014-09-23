@@ -49,7 +49,7 @@ class stock_inventory(osv.osv):
                                         \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity"""),
         'import_error_ok':fields.function(_get_import_error,  method=True, type="boolean", string="Error in Import", store=True),
     }
-    
+
     def _check_active_product(self, cr, uid, ids, context=None):
         '''
         Check if the stock inventory contains a line with an inactive products
@@ -57,7 +57,7 @@ class stock_inventory(osv.osv):
         inactive_lines = self.pool.get('stock.inventory.line').search(cr, uid, [('product_id.active', '=', False),
                                                                                 ('inventory_id', 'in', ids),
                                                                                 ('inventory_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
-        
+
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
             l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
@@ -65,11 +65,11 @@ class stock_inventory(osv.osv):
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
             return False
         return True
-    
+
     _constraints = [
         (_check_active_product, "You cannot confirm this stock inventory because it contains a line with an inactive product", ['order_line', 'state'])
     ]
-    
+
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines form file
@@ -97,7 +97,7 @@ class stock_inventory(osv.osv):
 
         # iterator on rows
         reader = fileobj.getRows()
-        
+
         # ignore the first row
         reader.next()
         line_num = 1
@@ -189,10 +189,12 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 except Exception:
                     error_list.append(_('The Location has to be a string.'))
                     location_id = False
-            
+
             # Batch
             batch = row.cells[3].data
             if batch:
+                if isinstance(batch, int):
+                    batch = str(batch)
                 try:
                     batch = batch.strip()
                     batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
@@ -205,6 +207,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     else:
                         batch = batch_ids[0]
                 except Exception:
+                    batch = False
                     error_list.append(_('The Batch has to be a string.'))
 
             # Expiry date
@@ -285,26 +288,26 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 'comment': comment,
                 'to_correct': to_correct_ok,
             }
-            
+
             vals['inventory_line_id'].append((0, 0, to_write))
-            
+
         # write order line on Inventory
         vals.update({'file_to_import': False})
         self.write(cr, uid, ids, vals, context=context)
-        
+
         view_id = obj_data.get_object_reference(cr, uid, 'specific_rules','stock_initial_inventory_form_view')[1]
-       
+
         if import_to_correct:
             msg_to_return = _("The import of lines had errors, please correct the red lines below")
-        
+
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
-        
+
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         message = ''
         plural= ''
-            
+
         for var in self.browse(cr, uid, ids, context=context):
             if var.inventory_line_id:
                 for var in var.inventory_line_id:
@@ -323,7 +326,7 @@ stock_inventory()
 
 class stock_inventory_line(osv.osv):
     _inherit = 'stock.inventory.line'
-    
+
     def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
         '''
         Fill the error message if the product of the line is inactive
@@ -339,26 +342,26 @@ class stock_inventory_line(osv.osv):
                     'inactive_product': True,
                     'inactive_error': _('The product in line is inactive !')
                 }
-                
+
         return res
-    
+
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'comment': fields.text('Comment', readonly=True),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }
-    
+
     _defaults = {
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
-    
+
     def create(self, cr, uid, vals, context=None):
         comment = ''
         hidden_batch_management_mandatory = False
         hidden_perishable_mandatory = False
-        
+
         if vals.get('product_id', False):
             product = self.pool.get('product.product').browse(cr, uid, vals.get('product_id'), context=context)
             hidden_batch_management_mandatory = product.batch_management
@@ -389,7 +392,7 @@ class stock_inventory_line(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         comment = ''
-        
+
         line = self.browse(cr, uid, ids[0], context=context)
 
         if vals.get('product_id', False):
@@ -444,7 +447,7 @@ class initial_stock_inventory(osv.osv):
                                         \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity"""),
         'import_error_ok':fields.function(_get_import_error,  method=True, type="boolean", string="Error in Import", store=True),
     }
-    
+
     def _check_active_product(self, cr, uid, ids, context=None):
         '''
         Check if the initial stock inventory contains a line with an inactive products
@@ -452,7 +455,7 @@ class initial_stock_inventory(osv.osv):
         inactive_lines = self.pool.get('initial.stock.inventory.line').search(cr, uid, [('product_id.active', '=', False),
                                                                                         ('inventory_id', 'in', ids),
                                                                                         ('inventory_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
-        
+
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
             l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
@@ -460,7 +463,7 @@ class initial_stock_inventory(osv.osv):
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
             return False
         return True
-    
+
     _constraints = [
         (_check_active_product, "You cannot confirm this stock inventory because it contains a line with an inactive product", ['order_line', 'state'])
     ]
@@ -491,7 +494,7 @@ class initial_stock_inventory(osv.osv):
 
         # iterator on rows
         reader = fileobj.getRows()
-        
+
         # ignore the first row
         reader.next()
         line_num = 1
@@ -580,8 +583,8 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 else:
                     product_cost = 1.00
                     error_list.append(_('The Average Cost was not set, we set it to 1.00.'))
-                    
-           
+
+
             # Location
             loc_id = row.cells[3].data
             if not loc_id:
@@ -603,7 +606,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 except Exception:
                     error_list.append(_('The Location has to be a string.'))
                     location_id = False
-            
+
             # Batch
             batch = row.cells[4].data
             if batch:
@@ -670,26 +673,26 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 'comment': comment,
                 'to_correct': to_correct_ok,
             }
-            
+
             vals['inventory_line_id'].append((0, 0, to_write))
-            
+
         # write order line on Inventory
         vals.update({'file_to_import': False})
         self.write(cr, uid, ids, vals, context=context)
-        
+
         view_id = obj_data.get_object_reference(cr, uid, 'specific_rules','stock_initial_inventory_form_view')[1]
-       
+
         if import_to_correct:
             msg_to_return = _("The import of lines had errors, please correct the red lines below")
-        
+
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
-        
+
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         message = ''
         plural= ''
-            
+
         for var in self.browse(cr, uid, ids, context=context):
             if var.inventory_line_id:
                 for var in var.inventory_line_id:
@@ -710,7 +713,7 @@ class initial_stock_inventory_line(osv.osv):
     override of initial_stock_inventory_line class
     '''
     _inherit = 'initial.stock.inventory.line'
-    
+
     def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
         '''
         Fill the error message if the product of the line is inactive
@@ -726,35 +729,39 @@ class initial_stock_inventory_line(osv.osv):
                     'inactive_product': True,
                     'inactive_error': _('The product in line is inactive !')
                 }
-                
+
         return res
-    
+
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'comment': fields.text('Comment', readonly=True),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }
-    
+
     _defaults = {
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
-    
+
     def create(self, cr, uid, vals, context=None):
         comment = ''
         hidden_batch_management_mandatory = False
         hidden_perishable_mandatory = False
-        
+
         if vals.get('product_id', False):
             product = self.pool.get('product.product').browse(cr, uid, vals.get('product_id'), context=context)
             hidden_batch_management_mandatory = product.batch_management
             hidden_perishable_mandatory = product.perishable
 
         location_id = vals.get('location_id')
-        batch = vals.get('prodlot_name')
-        expiry = vals.get('expiry_date')
 
+        batch = vals.get('prodlot_name')
+        batch_numer = vals.get('prod_lot_id', False)
+        if batch_numer and not batch: # for the sync case, sometime only the prodlot id is given but not the name, so search for name
+            batch = self.pool.get('stock.production.lot').browse(cr, uid, batch_numer, context=context).name
+            vals.update({'prodlot_name':batch})
+        expiry = vals.get('expiry_date')
 
         if not location_id:
             comment += _('Location is missing.\n')
@@ -774,7 +781,7 @@ class initial_stock_inventory_line(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         comment = ''
-        
+
         line = self.browse(cr, uid, ids[0], context=context)
 
         if vals.get('product_id', False):

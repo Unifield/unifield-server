@@ -3,6 +3,11 @@
   <template pageSize="(1191.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
     <pageTemplate id="first">
       <frame id="first" x1="14.0" y1="14.0" width="1163" height="814"/>
+      <pageGraphics>
+          <setFont name="Helvetica" size="8"/>
+          <fill color="black"/>
+          <drawString x="1100" y="5">Page <pageNumber /> / </drawString><drawString x="1160" y="5"><pageCount /></drawString>
+      </pageGraphics>
     </pageTemplate>
   </template>
   <stylesheet>

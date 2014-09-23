@@ -399,7 +399,7 @@
    </Style>
 
    <Style ss:ID="short_date3">
-     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+     <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
      <NumberFormat ss:Format="Short Date"/>
 
      <Borders>

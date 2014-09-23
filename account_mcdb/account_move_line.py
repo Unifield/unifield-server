@@ -30,7 +30,7 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
-    # UTP-936: Extract the method to calculate the output here, so that it can be used at other places, for example: 
+    # UTP-936: Extract the method to calculate the output here, so that it can be used at other places, for example:
     # account_mcdb/report/account_mcdb_export.py, which is used to generate csv reports
     def calculate_output(self, cr, uid, currency_id, ml, round, context):
         currency_obj = self.pool.get('res.currency')
@@ -69,8 +69,8 @@ class account_move_line(osv.osv):
             context = {}
         # Return nothing if no 'output_currency_id' in context
         if not context or not context.get('output_currency_id', False):
-            for id in ids:
-                res[id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
+            for o_id in ids:
+                res[o_id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             return res
         # Retrieve currency
         currency_id = context.get('output_currency_id')
@@ -78,15 +78,15 @@ class account_move_line(osv.osv):
         rate = currency_obj.read(cr, uid, currency_id, ['rate'], context=context).get('rate', False)
         # Do calculation
         if not rate:
-            for id in ids:
-                res[id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
+            for out_id in ids:
+                res[out_id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             return res
         for ml in self.browse(cr, uid, ids, context=context):
             res[ml.id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
             context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
-            # Now call the common method to calculate the output values      
+            # Now call the common method to calculate the output values
             amount = self.calculate_output(cr, uid, currency_id, ml, round=True, context=context)
             res[ml.id]['output_amount'] = amount or 0.0
             if amount < 0.0:
@@ -103,7 +103,7 @@ class account_move_line(osv.osv):
         'output_amount': fields.function(_get_output, string="Output amount", type='float', method=True, store=False, multi="output_currency"),
         'output_amount_debit': fields.function(_get_output, string="Output debit", type='float', method=True, store=False, multi="output_currency"),
         'output_amount_credit': fields.function(_get_output, string="Output credit", type='float', method=True, store=False, multi="output_currency"),
-        'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False, 
+        'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False,
             multi="output_currency"),
     }
 
