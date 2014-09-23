@@ -126,6 +126,8 @@ class return_pack_shipment_processor(osv.osv):
 
         for wizard in self.browse(cr, uid, ids, context=context):
             fo_family = {}
+            no_sequence = True
+
             for family in wizard.family_ids:
                 fo_id = family.sale_order_id and family.sale_order_id.id or False
                 fo_family.setdefault(fo_id, [])
@@ -140,6 +142,8 @@ class return_pack_shipment_processor(osv.osv):
 
             for sequences in fo_family.values():
                 sequences = sorted(sequences, key=lambda seq: seq[0])
+                if sequences:
+                    no_sequence = False
                 # Go through the list of sequences applying the rules
                 for i in range(len(sequences)):
                     seq = sequences[i]
@@ -171,7 +175,7 @@ class return_pack_shipment_processor(osv.osv):
                     'context': context,
                 }
 
-            if not sequences:
+            if no_sequence:
                 raise osv.except_osv(
                     _('Processing Error'),
                     _('You must enter the number of packs you want to return before performing the return.'),
