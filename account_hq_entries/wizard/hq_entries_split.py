@@ -62,6 +62,7 @@ class hq_entries_split_lines(osv.osv_memory):
     }
 
     def _get_original_line(self, cr, uid, context=None):
+
         """
         Fetch original line from context. If not, return False.
         """

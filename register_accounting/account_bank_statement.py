@@ -966,6 +966,9 @@ class account_bank_statement_line(osv.osv):
             if absl.imported_invoice_line_ids:
                 for ml in absl.imported_invoice_line_ids:
                     res.add(ml.move_id.id)
+            # UTP-1039: Show the search loop for direct invoice
+            if absl.direct_invoice and absl.invoice_id:
+                res.add(absl.invoice_id.move_id.id)
         return list(res)
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
@@ -2001,7 +2004,9 @@ class account_bank_statement_line(osv.osv):
 
                 account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
                 # Optimizations: Do check=False and update_check=False because it would be done for the same move lines at the end of this loop
-                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=False, update_check=False)
+
+                # UTP-1039: Update also the statement_id = absl.statement_id to the new account_move_lines
+                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft', 'statement_id': absl.statement_id.id}, context=context, check=False, update_check=False)
                 # link to account_move_reconcile on account_move_line
                 account_move_reconcile = self.pool.get('account.move.reconcile')
                 for line in account_move_line.read(cr, uid, account_move_line_ids, ['reconcile_id'], context=context):
