@@ -24,6 +24,34 @@ from tools.translate import _
 
 class common_report_header(object):
 
+    def _set_context(self, data):
+        """UFTP 284-285
+        - default context values for FY/period/date filters
+        - we do not set/touch in context any filter if already set from parent
+          caller report parser"""
+        if not hasattr(self, 'context') or not self.context or not data or \
+            not 'form' in data:
+            return
+        form = data['form']
+
+        if 'fiscalyear_id' in form:
+            self._set_context_val('fiscalyear', form['fiscalyear_id'])
+
+        filter = data['form'].get('filter', '')
+        if filter == 'filter_period':
+            if form.get('period_from', False) and form.get('period_to', False):
+                self._set_context_val('period_from', form['period_from'])
+                self._set_context_val('period_to', form['period_to'])
+            elif form.get('periods', False):
+                self._set_context_val('periods', form['periods'])
+        elif filter == 'filter_date':
+            self._set_context_val('date_from', form['date_from'])
+            self._set_context_val('date_to', form['date_to'])
+
+    def _set_context_val(self, key, val):
+        if self.context and not key in self.context:
+            self.context[key] = val
+
     def _sum_debit(self, period_id=False, journal_id=False):
         if journal_id and isinstance(journal_id, int):
             journal_id = [journal_id]

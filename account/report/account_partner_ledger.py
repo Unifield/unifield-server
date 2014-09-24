@@ -110,7 +110,9 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         new_ids = partner_to_use
         self.partner_ids = new_ids
         objects = obj_partner.browse(self.cr, self.uid, new_ids)
-        return super(third_party_ledger, self).set_context(objects, data, new_ids, report_type)
+        res = super(third_party_ledger, self).set_context(objects, data, new_ids, report_type)
+        common_report_header._set_context(self, data)
+        return res
 
     def comma_me(self, amount):
         if type(amount) is float:
