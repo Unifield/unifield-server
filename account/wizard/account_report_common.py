@@ -82,6 +82,20 @@ class account_common_report(osv.osv_memory):
             if periods and len(periods) > 1:
                 start_period = periods[0]
                 end_period = periods[1]
+
+            # UFTP-284
+            # for exemple on OCBA_ESET101 Jan period id is 5 and Sept of id 3
+            # so from/to period are inversed from above union, check this and fix that
+            period_br = self.pool.get('account.period').browse(cr, uid, periods,
+                context=context)
+            if period_br and len(period_br) == 2:
+                effective_start_id = period_br[0].id
+                if period_br[0].date_start > period_br[1].date_start:
+                    effective_start_id = period_br[1].id
+                if effective_start_id != start_period:
+                    end_period = start_period
+                    start_period = effective_start_id
+
             res['value'] = {'period_from': start_period, 'period_to': end_period, 'date_from': False, 'date_to': False}
         return res
 
