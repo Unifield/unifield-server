@@ -334,12 +334,6 @@
             <Layout x:Orientation="Landscape"/>
             <Footer x:Data="Page &amp;P of &amp;N"/>
         </PageSetup>
-        <Print>
-             <ValidPrinterInfo/>
-             <PaperSizeIndex>9</PaperSizeIndex>
-             <HorizontalResolution>600</HorizontalResolution>
-             <VerticalResolution>600</VerticalResolution>
-        </Print>
         <Selected/>
         <Panes>
             <Pane>
