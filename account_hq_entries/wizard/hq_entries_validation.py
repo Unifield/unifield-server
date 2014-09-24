@@ -248,7 +248,7 @@ class hq_entries_validation(osv.osv_memory):
             # get the counterpart id
             counterpart_id = aml_obj.search(cr, uid, ['&',('move_id','=',corr_move_id),('corrected_line_id','=',False)], context=context)
             aml_obj.write(cr, uid, counterpart_id, {'reversal': True, 'name': 'REV - ' + original_move.name, 'account_id': original_account_id,
-                                                    'reversal_line_id':original_move.id}, context=context, check=False, update_check=False)
+                'reversal_line_id':original_move.id, 'partner_txt': original_move.partner_txt or ''}, context=context, check=False, update_check=False)
             # create the analytic lines as a reversed copy of the original
             initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
             res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
