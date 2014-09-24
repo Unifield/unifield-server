@@ -28,6 +28,7 @@ import pooler
 from osv import fields, osv, orm
 from tools.translate import _
 
+
 class account_invoice(osv.osv):
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = {}
@@ -663,6 +664,7 @@ class account_invoice(osv.osv):
                 ait_obj.create(cr, uid, taxe)
         # Update the stored value (fields.function), so we write to trigger recompute
         self.pool.get('account.invoice').write(cr, uid, ids, {'invoice_line':[]}, context=ctx)
+        amount_untaxed = self.pool.get('account.invoice').browse(cr, uid, ids, ctx)[0].amount_untaxed
         return True
 
     def button_compute(self, cr, uid, ids, context=None, set_total=False):
@@ -1605,8 +1607,28 @@ class account_invoice_tax(osv.osv):
         'tax_amount': fields.float('Tax Code Amount', digits_compute=dp.get_precision('Account')),
         'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'factor_base': fields.function(_count_factor, method=True, string='Multipication factor for Base code', type='float', multi="all"),
-        'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all")
+        'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all"),
+        'account_tax_id': fields.many2one('account.tax', 'Tax')
     }
+
+
+    def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed):
+	atx_obj = self.pool.get('account.tax')
+        atx = atx_obj.browse(cr, uid, account_tax_id)
+	return {'value': {'account_id': atx.account_paid_id.id, 'name': "{0} - {1}".format(atx.name,atx.description), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id,amount_untaxed)}}
+        
+
+    def _calculate_tax(self, cr, uid, account_tax_id, amount_untaxed):
+	atx_obj = self.pool.get('account.tax')
+        atx = atx_obj.browse(cr, uid, account_tax_id)
+        tax_amount = 0.0
+        if atx.type == 'fixed':
+            tax_amount = atx.amount
+        if atx.type == 'percent':
+            tax_amount = (atx.amount / 100) * amount_untaxed
+            tax_amount = round(tax_amount,2)
+        return tax_amount
+
 
     def base_change(self, cr, uid, ids, base, currency_id=False, company_id=False, date_invoice=False):
         cur_obj = self.pool.get('res.currency')
@@ -1685,7 +1707,16 @@ class account_invoice_tax(osv.osv):
             t['amount'] = cur_obj.round(cr, uid, cur.rounding, t['amount'])
             t['base_amount'] = cur_obj.round(cr, uid, cur.rounding, t['base_amount'])
             t['tax_amount'] = cur_obj.round(cr, uid, cur.rounding, t['tax_amount'])
-        return tax_grouped
+        
+
+        ai = self.pool.get('account.invoice').browse(cr, uid, invoice_id)
+        ait_ids = self.pool.get('account.invoice.tax').search(cr, uid, [('invoice_id','=',invoice_id)])
+        aits = self.pool.get('account.invoice.tax').browse(cr, uid, ait_ids)
+        for ait in aits:
+            if ait.account_tax_id:
+                self.pool.get('account.invoice.tax').write(cr, uid, ait.id, {'amount': self._calculate_tax(cr, uid, ait.account_tax_id.id,ai.amount_untaxed)})
+        
+	return tax_grouped
 
     def move_line_get(self, cr, uid, invoice_id):
         res = []
