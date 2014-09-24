@@ -258,8 +258,7 @@ class hq_entries_validation(osv.osv_memory):
             acor_journal_id = acor_journal_ids[0]
             if not acor_journal_id:
                 raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
-            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
-
+            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'move_id': counterpart_id[0]}) # UTP-1106: change move_id link as it's wrong one
 
             # Mark new analytic items as correction for original line
             # - take original move line
@@ -277,11 +276,8 @@ class hq_entries_validation(osv.osv_memory):
             # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
             cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (aal.entry_sequence, res_reverse[0]))
         # Mark ALL lines as user_validated
-
         self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
         return original_move_ids
-
-
 
     def button_validate(self, cr, uid, ids, context=None):
         """
