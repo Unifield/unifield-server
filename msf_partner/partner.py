@@ -366,11 +366,14 @@ class res_partner(osv.osv):
                     del vals[field]
         # [utp-315] avoid deactivating partner that have still open document linked to them
         if 'active' in vals and vals.get('active') == False:
-            objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
-            if objects_linked_to_partner:
-                raise osv.except_osv(_('Warning'),
-                                     _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
-                                       ) % (objects_linked_to_partner))
+            # UTP-1214: only show error message if it is really a "deactivate partner" action, if not, just ignore 
+            oldValue = self.read(cr, uid, ids[0], ['active'], context=context)['active']
+            if oldValue == True: # from active to inactive ---> check if any ref to it
+                objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
+                if objects_linked_to_partner:
+                    raise osv.except_osv(_('Warning'),
+                                         _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
+                                           ) % (objects_linked_to_partner))
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
