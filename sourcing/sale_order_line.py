@@ -53,6 +53,7 @@ class sale_order_line(osv.osv):
             context = {}
             
         '''
+            !!!!! ATTENTION ATTENTION!!!!!!
             UTP-1021: This solution is NOT stable and could be dangerous!!!! need to have a proper fix for this, currently we have only 3 tree views for sale.order.line
             so I use the value in the context to identify that it is not the view of wizard, but this assumption could be totally WRONG! 
             But in this current version, it works!
