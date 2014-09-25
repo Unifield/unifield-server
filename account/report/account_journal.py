@@ -64,7 +64,9 @@ class journal_print(report_sxw.rml_parse, common_report_header):
             self.cr.execute('SELECT period_id, journal_id FROM account_journal_period WHERE id IN %s', (tuple(new_ids),))
             res = self.cr.fetchall()
             self.period_ids, self.journal_ids = zip(*res)
-        return super(journal_print, self).set_context(objects, data, ids, report_type=report_type)
+        res = super(journal_print, self).set_context(objects, data, ids, report_type=report_type)
+        common_report_header._set_context(self, data)
+        return res
 
     def _sum_debit(self, period_id=False, journal_id=False):
         if journal_id and isinstance(journal_id, int):

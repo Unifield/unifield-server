@@ -50,17 +50,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.init_balance = data['form']['initial_balance']
         self.display_account = data['form']['display_account']
         self.target_move = data['form'].get('target_move', 'all')
-        ctx = self.context.copy()
-        ctx['fiscalyear'] = data['form']['fiscalyear_id']
-        if data['form']['filter'] == 'filter_period':
-            ctx['periods'] = data['form']['periods']
-        elif data['form']['filter'] == 'filter_date':
-            ctx['date_from'] = data['form']['date_from']
-            ctx['date_to'] =  data['form']['date_to']
-        ctx['state'] = data['form']['target_move']
+        self.context['state'] = data['form']['target_move']
         if 'instance_ids' in data['form']:
-            ctx['instance_ids'] = data['form']['instance_ids']
-        self.context.update(ctx)
+            self.context['instance_ids'] = data['form']['instance_ids']
         if (data['model'] == 'ir.ui.menu'):
             new_ids = [data['form']['chart_account_id']]
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids, context=self.context)
@@ -91,6 +83,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.init_query += ' AND ' + instance_ids_in
         
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
+        common_report_header._set_context(self, data)
 
         # UF-1714
         # accounts 8*, 9* are not displayed:

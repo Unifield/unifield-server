@@ -63,7 +63,9 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids)
             lang_dict = self.pool.get('res.users').read(self.cr,self.uid,self.uid,['context_lang'])
             data['lang'] = lang_dict.get('context_lang') or False
-        return super(report_pl_account_horizontal, self).set_context(objects, data, new_ids, report_type=report_type)
+        res = super(report_pl_account_horizontal, self).set_context(objects, data, new_ids, report_type=report_type)
+        common_report_header._set_context(self, data)
+        return res
 
 
     def final_result(self):
@@ -100,7 +102,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
                 ctx['periods'] = period_obj.build_ctx_periods(cr, uid, data['form']['period_from'], data['form']['period_to'])
         elif data['form']['filter'] == 'filter_date':
             ctx['date_from'] = data['form'].get('date_from', False)
-            ctx['date_to'] =  data['form'].get('date_to', False)
+            ctx['date_to'] = data['form'].get('date_to', False)
 
         cal_list = {}
         account_id = data['form'].get('chart_account_id', False)

@@ -69,7 +69,9 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     "WHERE a.type IN %s " \
                     "AND a.active", (self.ACCOUNT_TYPE,))
         self.account_ids = [a for (a,) in self.cr.fetchall()]
-        return super(partner_balance, self).set_context(objects, data, ids, report_type=report_type)
+        res = super(partner_balance, self).set_context(objects, data, ids, report_type=report_type)
+        common_report_header._set_context(self, data)
+        return res
 
     def lines(self):
         move_state = ['draft','posted']

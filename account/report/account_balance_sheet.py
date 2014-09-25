@@ -67,7 +67,9 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids)
             lang_dict = self.pool.get('res.users').read(self.cr,self.uid,self.uid,['context_lang'])
             data['lang'] = lang_dict.get('context_lang') or False
-        return super(report_balancesheet_horizontal, self).set_context(objects, data, new_ids, report_type=report_type)
+        res = super(report_balancesheet_horizontal, self).set_context(objects, data, new_ids, report_type=report_type)
+        common_report_header._set_context(self, data)
+        return res
 
     def sum_dr(self):
         if self.res_bl['type'] == _('Net Profit'):

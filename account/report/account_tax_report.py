@@ -43,7 +43,9 @@ class tax_report(report_sxw.rml_parse, common_report_header):
                     res['periods'] = period['name']
                 else:
                     res['periods'] += ", "+ period['name']
-        return super(tax_report, self).set_context(objects, data, new_ids, report_type=report_type)
+        res = super(tax_report, self).set_context(objects, data, new_ids, report_type=report_type)
+        common_report_header._set_context(self, data)
+        return res
 
     def __init__(self, cr, uid, name, context=None):
         super(tax_report, self).__init__(cr, uid, name, context=context)

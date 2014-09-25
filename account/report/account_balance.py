@@ -56,7 +56,9 @@ class account_balance(report_sxw.rml_parse, common_report_header):
         if (data['model'] == 'ir.ui.menu'):
             new_ids = 'chart_account_id' in data['form'] and [data['form']['chart_account_id']] or []
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids)
-        return super(account_balance, self).set_context(objects, data, new_ids, report_type=report_type)
+        res = super(account_balance, self).set_context(objects, data, new_ids, report_type=report_type)
+        common_report_header._set_context(self, data)
+        return res
 
     #def _add_header(self, node, header=1):
     #    if header == 0:
