@@ -147,18 +147,10 @@
 					<group expand="0" string="Group By..." colspan="11" col="11">
                         <filter string="IR/FO Order" icon="terp-accessories-archiver" domain="[]"
 							context="{'group_by':'order_id'}" />
-						<filter string="Priority" icon="terp-emblem-important"
-							domain="[]" context="{'group_by':'priority'}" />
-						<filter string="Category" icon="terp-stock_symbol-selection"
-							domain="[]" context="{'group_by':'categ'}" />
-						<filter string="Order State" icon="terp-rating-rated"
-							domain="[]" context="{'group_by':'sale_order_state'}" />
 						<filter string="Product" icon="terp-product"
 							domain="[]" context="{'group_by':'product_id'}" />
 						<filter string="Supplier" icon="terp-personal+"
 							domain="[]" context="{'group_by':'supplier'}" />
-						<filter string="Customer" icon="terp-personal-"
-							domain="[]" context="{'group_by':'customer'}" />
 					</group>
 				</search>
 			</field>
