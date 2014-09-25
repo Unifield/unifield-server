@@ -674,8 +674,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 context=context)
             # Note: this search result will be used near end of this function
             # (see # Change analytic lines that come from)
-            if not initial_al_ids and new_account and \
+            if not distrib_id and \
+                not initial_al_ids and new_account and \
                 new_account.is_analytic_addicted:
+                # we check only if no distrib_id arg passed to function
                 msg = _("The line '%s' with new account '%s - %s' need an" \
                     " analytic distribution (you may have changed account from" \
                     " one with no AD required to a new one with AD required).")
