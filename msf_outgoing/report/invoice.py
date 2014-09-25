@@ -92,7 +92,7 @@ class invoice(report_sxw.rml_parse):
         name = pl.ppl_id.name
         if name:
             split = name.split('/')
-            if len(split) > 0:
+            if len(split) > 1:
                 return split[1]
 
         return res
