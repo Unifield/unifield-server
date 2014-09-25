@@ -227,7 +227,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if l_type == 'make_to_stock':
             return {'value': {'po_cft': False, 'supplier': False}}
 
-        return {}
+        return {'value': {'location_id': False}}
 
     def change_po_cft(self, cr, uid, ids, po_cft, context=None):
         '''
@@ -235,7 +235,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         '''
         if po_cft == 'cft':
             return {'value': {'supplier': False}}
-
+            
         return {}
 
     def change_supplier(self, cr, uid, ids, supplier, context=None):
