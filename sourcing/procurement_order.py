@@ -301,6 +301,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if location_id:
                 po_values.update({'location_id': location_id, 'cross_docking_ok': False})
 
+            if values.get('cross_docking_ok') == True:
+                po_values['cross_docking_ok'] = values.get('cross_docking_ok')
+
             if po_values:
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], po_values, context=dict(context, import_in_progress=True))
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
