@@ -249,9 +249,10 @@ class hq_entries_validation(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('An account is missing!'))
             # create new distribution (only for expense accounts)
             distrib_id = self.create_distribution_id(cr, uid, line.currency_id.id, line, line.account_id_first_value)
-            aml_obj.write(cr, uid, counterpart_id, {'reversal': True, 'name': 'REV - ' + original_move.name, 'account_id': original_account_id,
-                                                    'analytic_distribution_id': distrib_id, 'reversal_line_id':original_move.id},
-                                                    context=context, check=False, update_check=False)
+            aml_obj.write(cr, uid, counterpart_id, {
+                'reversal': True, 'name': 'REV - ' + original_move.name, 'account_id': original_account_id,
+                'analytic_distribution_id': distrib_id, 'reversal_line_id': original_move.id, 'partner_txt': original_move.partner_txt or ''
+                }, context=context, check=False, update_check=False)
 
             # create the analytic lines as a reversed copy of the original
             initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
@@ -262,8 +263,7 @@ class hq_entries_validation(osv.osv_memory):
             acor_journal_id = acor_journal_ids[0]
             if not acor_journal_id:
                 raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
-            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
-
+            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'move_id': counterpart_id[0]}) # UTP-1106: change move_id link as it's wrong one
 
             # Mark new analytic items as correction for original line
             # - take original move line
@@ -281,11 +281,8 @@ class hq_entries_validation(osv.osv_memory):
             # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
             cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (aal.entry_sequence, res_reverse[0]))
         # Mark ALL lines as user_validated
-
         self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
         return original_move_ids
-
-
 
     def button_validate(self, cr, uid, ids, context=None):
         """
