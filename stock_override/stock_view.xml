@@ -710,7 +710,7 @@
                                      <button name="go_to_simulation_screen" states="assigned,shipped" string="Simulate" type="object" icon="gtk-execute" attrs="{'invisible': [('is_esc', '=', False)]}" />-->
                                 <field name="progress_memory" invisible="1" />
                                 <button name="go_to_processing_wizard" states="assigned,shipped" string="Open processing wizard" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'shipped']), ('progress_memory', '=', -1), ('progress_memory_not_done', '=', False)]}" context="{'progress_wizard': True}" />
-                                <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward" attrs="{'invisible': [('progress_memory_not_done', '=', True)]}"/>
+                                <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'shipped']), ('progress_memory_not_done', '=', True)]}"/>
                                 <group colspan="1" states="done">
                                     <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 </group>
