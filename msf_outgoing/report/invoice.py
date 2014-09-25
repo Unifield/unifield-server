@@ -32,6 +32,7 @@ class PackFamily(object):
         self.shipment_id = shipment
         self.moves = moves
         self.ident = (ppl and ppl.id or False, ppl and ppl.sale_id and ppl.sale_id.id or False)
+        self.total = 0
 
     def __eq__(self, other):
         return self.ident == other.ident
@@ -76,6 +77,7 @@ class invoice(report_sxw.rml_parse):
                 pf_done.setdefault(pf.ident, pf)
             
             pf_done[pf.ident].moves.extend(self._get_moves(pl))
+            pf_done[pf.ident].total += self._get_total(pl)
 
         return sorted(pf_done.values(), key=lambda pf: pf.ident)
 
@@ -138,16 +140,15 @@ class invoice(report_sxw.rml_parse):
             index += 1
         return res
         
-    def _get_total(self, shipment):
+    def _get_total(self, pf):
         """
         get total amount
         :rtype float
         """
         res = 0.
-        for pf in shipment.pack_family_memory_ids:
-            for move in pf.move_lines:
-                if move.total_amount:
-                    res += move.total_amount
+        for move in pf.move_lines:
+            if move.total_amount:
+                res += move.total_amount
         return res
 
     def _get_ccy_name(self, shipment, in_parenthesis):

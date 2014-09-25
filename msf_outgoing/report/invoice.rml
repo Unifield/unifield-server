@@ -258,7 +258,7 @@
           <para style="HeaderInfosTitleRight">[[ getCurrency(objects[0], True) ]]</para>
         </td>
         <td>
-          <para style="HeaderInfosTitleRight">[[ formatLang(getTotal(objects[0])) ]]</para>
+          <para style="HeaderInfosTitleRight">[[ formatLang(pl.total) ]]</para>
         </td>
       </tr>
     </blockTable>
