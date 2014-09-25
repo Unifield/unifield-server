@@ -67,7 +67,7 @@
     </stylesheet>
   
   <story>
-    <para style="HeaderInfosTitle">[[ repeatIn(objects[0].pack_family_memory_ids, 'pl') ]]</para>
+    <para style="HeaderInfosTitle">[[ repeatIn(getInvoice(objects[0]), 'pl') ]]</para>
     <pto>
     <!-- header: title -->
     <pto_header>
@@ -200,7 +200,7 @@
           </td>
         </tr>
         <tr>
-            [[ repeatIn(getMoves(pl),'move') ]]
+            [[ repeatIn(pl.moves, 'move') ]]
             <td>
               <para style="ItemsLineValueRight">[[ move[0] ]]</para>
             </td>
