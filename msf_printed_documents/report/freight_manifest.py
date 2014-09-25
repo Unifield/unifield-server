@@ -110,8 +110,8 @@ class freight_manifest(report_sxw.rml_parse):
         return ligne and ligne.num_of_packs or '0'
 
     def getDataM3(self, ligne):
-        self.voltot += ligne.total_volume
-        return ligne and ligne.total_volume or '0.0'
+        self.voltot += ligne.total_volume/1000.00
+        return ligne and ligne.total_volume/1000.00 or '0.0'
 
     def getDataValue(self, ligne):
         self.valtot += ligne.total_amount
@@ -151,7 +151,7 @@ class freight_manifest(report_sxw.rml_parse):
         return line.comment
 
     def getadditional_items_volume(self, line):
-        return line.volume
+        return line.volume / 1000.00
 
     def getadditional_items_weight(self, line):
         self.getadditional_items_kgtot += line.weight

@@ -152,7 +152,7 @@ class shipment(osv.osv):
                 # state check
                 # because when the packings are validated one after the other, it triggers the compute of state, and if we have multiple packing for this shipment, it will fail
                 # if one packing is draft, even if other packing have been shipped, the shipment must stay draft until all packing are done
-                if state != 'draft':
+                if state not in ('draft', 'assigned'):
                     state = packing.state
 
                 # all corresponding shipment must be dev validated or not

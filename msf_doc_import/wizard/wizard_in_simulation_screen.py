@@ -258,6 +258,11 @@ class wizard_import_in_simulation_screen(osv.osv):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
+            if not wiz.file_to_import:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Please select a file to import !'),
+                )
             if wiz.filetype == 'excel':
                 xml_file = base64.decodestring(wiz.file_to_import)
                 excel_file = SpreadsheetXML(xmlstring=xml_file)
