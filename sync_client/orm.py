@@ -261,6 +261,13 @@ SELECT res_id, touched
         assert synchronize or previous_values is not None, \
             "This call is useless"
 
+        # UF-2272
+        # enumeration of models where to skip their one2many(s)
+        # was decided to do a specific skip versus global impact of touch...
+        write_skip_o2m = [
+            'supplier.catalogue',
+        ]
+
         _previous_calls = _previous_calls or []
         me = (self._name, ids)
         if me not in _previous_calls:
@@ -350,6 +357,10 @@ SELECT res_id, touched
                 # handle one2many (because orm don't call write() on them)
                 if synchronize:
                     for field, column in filter_o2m(whole_fields):
+                        if context.get('from_orm_write', False) and \
+                            write_skip_o2m and self._name in write_skip_o2m:
+                            # UF-2272 skip model's one2many(s)
+                            continue
                         self.pool.get(column._obj).touch(
                             cr, uid, list(set(prev_rec[field] + next_rec[field])),
                             None, data_base_values,
@@ -506,10 +517,15 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             audit_obj.audit_log(cr, uid, audit_rule_ids, self, ids, 'write', previous_values, current_values, context=context)
 
         if to_be_synchronized or hasattr(self, 'on_change'):
+            # UF-2272 flag we are in orm write (for touch() function)
+            from_orm_write = context.get('from_orm_write', True)
+            context['from_orm_write'] = from_orm_write
             changes = self.touch(cr, uid, ids, previous_values,
                 to_be_synchronized, current_values=current_values, context=context)
             if hasattr(self, 'on_change'):
                 self.on_change(cr, uid, changes, context=context)
+            if from_orm_write:
+                del context['from_orm_write']
         return result
 
     # BECAREFUL: This method is ONLY for deleting account.analytic.line by sync. NOT GENERIC!
