@@ -96,18 +96,30 @@ class res_log(osv.osv):
 
         return res
 
+    def _check_read_rights(self, cr, uid, model=False, rr=None, context=None):
+        if rr is None:
+            rr = {}
+
+        user_id = hasattr(uid, 'realUid') and uid.realUid or uid
+        read_ok = False
+        if user_id and model:
+
+            if (user_id, model) in rr:
+                return rr[(user_id, model)]
+
+            read_ok = self.pool.get('ir.model.access').check(cr, user_id, model, 'read', context=context)
+            if read_ok:
+                read_ok = self._check_menu_access(cr, user_id, model, context=context)
+            
+            rr[(user_id, model)] = read_ok
+        
+        return read_ok
+
     def create(self, cr, uid, vals, context=None):
         if vals is None:
             vals = {}
 
-        user_id = hasattr(uid, 'realUid') and uid.realUid or uid
-        read_ok = False
-        if user_id and vals.get('res_model', False):
-            read_ok = self.pool.get('ir.model.access').check(cr, user_id, vals.get('res_model'), 'read', context=context)
-            if read_ok:
-                read_ok = self._check_menu_access(cr, user_id, vals.get('res_model'), context=context)
-
-        vals['read_ok'] = read_ok
+#        vals['read_ok'] = self._check_read_rights(cr, uid, vals.get('res_model', False), context=context)
 
         return super(res_log, self).create(cr, hasattr(uid, 'realUid') and uid.realUid or uid, vals, context=context)
 
@@ -126,6 +138,8 @@ class res_log(osv.osv):
             'read_ok',
         ]
 
+        read_rights = {}
+
         res = self.read(cr, uid, unread_log_ids, list_of_fields, context=context)
         res.reverse()
 
@@ -133,6 +147,7 @@ class res_log(osv.osv):
         res_dict = {}
 
         for r in res:
+           r['read_ok'] = self._check_read_rights(cr, uid, r['res_model'], read_rights, context=context)
            t = (r['res_model'], r['res_id'])
            if t not in res_dict:
                res_dict[t] = True
