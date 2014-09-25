@@ -91,24 +91,41 @@ class multiple_sourcing_wizard(osv.osv_memory):
         res['type'] = 'make_to_stock'
         res['po_cft'] = False
         loc = -1 # first location flag
+        supplier = -1 # first location flag
         for line in self.pool.get('sale.order.line').browse(cr, uid, active_ids, context=context):
             if line.state == 'draft' and line.sale_order_state == 'validated':
                 res['line_ids'].append(line.id)
             else:
                 res['error_on_lines'] = True
+                
             if line.type == 'make_to_order':
                 res['type'] = 'make_to_order'
                 res['po_cft'] = 'po'
+                
+                loc = False # always set False for location if source on order
+                if not line.supplier: 
+                    supplier = False
+                else:
+                    temp = line.supplier.id
+                    if supplier == -1: # first location
+                        supplier = temp
+                    elif supplier != temp:
+                        supplier = False
             else:
                 # UTP-1021: Calculate the location to set into the wizard view if all lines are sourced from the same location
+                supplier = False # if source from stock, always set False to partner
                 temploc = line.location_id.id
                 if loc == -1: # first location
                     loc = temploc
-                else:
-                    if temploc != loc:
-                        loc = False
+                elif temploc != loc:
+                    loc = False
+                    
+        # UTP-1021: Set default values on openning the wizard
         if loc != -1:
             res['location_id'] = loc
+        if supplier != -1:
+            res['supplier'] = supplier
+            
         if not res['line_ids']:
             raise osv.except_osv(_('Error'), _('No non-sourced lines are selected. Please select non-sourced lines'))
 
