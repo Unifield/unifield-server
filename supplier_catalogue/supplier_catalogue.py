@@ -204,7 +204,7 @@ class supplier_catalogue(osv.osv):
                 #    if line.partner_info_id:
                 #        pricelist_ids.append(line.partner_info_id.id)
                 cr.execute('''select partner_info_id from supplier_catalogue_line where catalogue_id = %s ''' % (ids[0]))
-                pricelist_ids += [x[0] for x in cr.fetchall()]   
+                pricelist_ids += [x[0] for x in cr.fetchall() if x[0] is not None]   
                 #pricelist_ids =  cr.fetchall()  returns tuples - may be a problem
                 # Update the supplier info and price lines
                 supplierinfo_ids = supinfo_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
