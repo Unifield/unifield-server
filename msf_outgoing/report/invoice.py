@@ -91,10 +91,10 @@ class invoice(report_sxw.rml_parse):
         res = ''
         name = pl.ppl_id.name
         if name:
-            index = name.find('/')
-            if index > 0:
-                end = name.find('-')
-                res = name[index + 1:end]
+            split = name.split('/')
+            if len(split) > 0:
+                return split[1]
+
         return res
     
     def _get_company_info(self, field):
