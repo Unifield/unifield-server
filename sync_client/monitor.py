@@ -35,9 +35,21 @@ class MonitorLogger(object):
         self.info = {
             'status' : 'in-progress',
             'data_pull' : 'null',
+            'data_pull_receive' : 'null',
+            'data_pull_execute' : 'null',
+            
             'msg_pull' : 'null',
-            'data_push' : 'null',
+            'msg_pull_receive' : 'null',
+            'msg_pull_execute' : 'null',
+            
             'msg_push' : 'null',
+            'msg_push_create' : 'null',
+            'msg_push_send' : 'null',
+            
+            'data_push' : 'null',
+            'data_push_create' : 'null',
+            'data_push_send' : 'null',
+            
         }
         self.info.update(defaults)
         self.final_status = 'ok'
@@ -155,9 +167,20 @@ class sync_monitor(osv.osv):
         'start' : fields.datetime("Start Date", readonly=True, required=True),
         'end' : fields.datetime("End Date", readonly=True),
         'data_pull' : fields.selection(status_dict.items(), string="Data Pull", readonly=True),
+        'data_pull_receive' : fields.selection(status_dict.items(), string="DP receive", readonly=True),
+        'data_pull_execute' : fields.selection(status_dict.items(), string="DP execute", readonly=True),
+        
         'msg_pull' : fields.selection(status_dict.items(), string="Msg Pull", readonly=True),
+        'msg_pull_receive' : fields.selection(status_dict.items(), string="MP receive", readonly=True),
+        'msg_pull_execute' : fields.selection(status_dict.items(), string="Msg execute", readonly=True),
+        
         'data_push' : fields.selection(status_dict.items(), string="Data Push", readonly=True),
+        'data_push_create' : fields.selection(status_dict.items(), string="DP create", readonly=True),
+        'data_push_send' : fields.selection(status_dict.items(), string="DP send", readonly=True),
+        
         'msg_push' : fields.selection(status_dict.items(), string="Msg Push", readonly=True),
+        'msg_push_create' : fields.selection(status_dict.items(), string="MP Create", readonly=True),
+        'msg_push_send' : fields.selection(status_dict.items(), string="MP Send", readonly=True),
         'status' : fields.selection(status_dict.items(), string="Status", readonly=True),
         'error' : fields.text("Messages", readonly=True),
         'state' : fields.function(_is_syncing, method=True, type='selection', string="Is Syncing", selection=[('syncing', 'Syncing'), ('not_syncing', 'Not Syncing')]),

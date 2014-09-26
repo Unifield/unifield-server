@@ -88,7 +88,44 @@ class BackgroundProcess(Thread):
             pass
         finally:
             cr.close()
+            
+def sync_subprocess(step='status', defaults_logger={}):
+    def decorator(fn):
 
+        @functools.wraps(fn)
+        def wrapper(self, cr, uid, *args, **kwargs):
+            context = kwargs['context'] = kwargs.get('context') is not None and dict(kwargs.get('context', {})) or {}
+            logger = context.get('logger')
+            logger.switch(step, 'in-progress')
+            logger.write()
+            try:
+                res = fn(self, self.sync_cursor, uid, *args, **kwargs)
+            except osv.except_osv, e:
+                logger.switch(step, 'failed')
+                raise
+            except BaseException, e:
+                # Handle aborting of synchronization
+                if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
+                    logger.switch(step, 'aborted')
+                    self.sync_cursor = None
+                    raise
+                logger.switch(step, 'failed')
+                error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', tools.ustr(e)))
+                self._logger.exception('Error in sync_process at step %s' % step)
+                logger.append(error, step)
+                raise
+            else:
+                logger.switch(step, 'ok')
+                if isinstance(res, (str, unicode)) and res:
+                    logger.append(res, step)
+            finally:
+                # gotcha!
+                logger.write()
+            return res
+        return wrapper
+    return decorator
+
+    
 def sync_process(step='status', need_connection=True, defaults_logger={}):
     is_step = not (step == 'status')
 
@@ -351,10 +388,10 @@ class Entity(osv.osv):
             self._logger.info("update validated")
 
         return True
-
+    
+    @sync_subprocess('data_push_create')
     def create_update(self, cr, uid, context=None):
         context = context or {}
-        logger = context.get('logger')
         updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
 
         def set_rules(identifier):
@@ -380,6 +417,7 @@ class Entity(osv.osv):
         return updates_count
         #state init => update_send
 
+    @sync_subprocess('data_push_send')
     def send_update(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -474,13 +512,13 @@ class Entity(osv.osv):
 
         return True
 
+    @sync_subprocess('data_pull_receive')
     def retrieve_update(self, cr, uid, max_packet_size, recover=False, context=None):
         context = context or {}
         logger = context.get('logger')
         updates = self.pool.get(context.get('update_received_model', 'sync.client.update_received'))
 
         entity = self.get_entity(cr, uid, context)
-        last = False
         last_seq = entity.update_last
         max_seq = entity.max_update
         offset = entity.update_offset
@@ -511,6 +549,7 @@ class Entity(osv.osv):
 
         return updates_count
 
+    @sync_subprocess('data_pull_execute')
     def execute_updates(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -601,6 +640,7 @@ class Entity(osv.osv):
 
         return True
 
+    @sync_subprocess('msg_push_create')
     def create_message(self, cr, uid, context=None):
         context = context or {}
         messages = self.pool.get(context.get('message_to_send_model', 'sync.client.message_to_send'))
@@ -619,7 +659,8 @@ class Entity(osv.osv):
             messages_count += messages.create_from_rule(cr, uid, rule, context=context)
 
         return messages_count
-
+    
+    @sync_subprocess('msg_push_send')
     def send_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -659,7 +700,6 @@ class Entity(osv.osv):
     @sync_process('msg_pull')
     def pull_message(self, cr, uid, recover=False, context=None):
         context = context or {}
-        logger = context.get('logger')
 
         entity = self.get_entity(cr, uid, context=context)
         if recover:
@@ -672,7 +712,8 @@ class Entity(osv.osv):
         self.get_message(cr, uid, context=context)
         self.execute_message(cr, uid, context=context)
         return True
-
+    
+    @sync_subprocess('msg_pull_receive')
     def get_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -703,6 +744,7 @@ class Entity(osv.osv):
 
         return messages_count
 
+    @sync_subprocess('msg_pull_execute')
     def execute_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
