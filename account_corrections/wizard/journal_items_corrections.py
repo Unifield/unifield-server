@@ -162,9 +162,6 @@ class journal_items_corrections_lines(osv.osv_memory):
                 'context': context,
         }
 
-    """def on_change_account(self, cr, uid, ids, move_id, account_id,
-        context=None):"""
-
 journal_items_corrections_lines()
 
 class journal_items_corrections(osv.osv_memory):
