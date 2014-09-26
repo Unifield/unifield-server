@@ -1578,8 +1578,9 @@ class account_invoice_tax(osv.osv):
 
 
     def _check_untaxed_amount(self, cr, uid, vals, context=None):
-	if vals['base_amount'] == 0:        
-	    raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Calculate Taxes button before saving the %s tax.') % (vals['name']))
+        logger.info("vals: {0}".format(vals))
+	if vals['account_tax_id'] and vals['base_amount'] == 0:        
+	    raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Save & Edit button before saving the %s tax.') % (vals['name']))
         return True
 
 
@@ -1730,7 +1731,7 @@ class account_invoice_tax(osv.osv):
         ait_ids = self.pool.get('account.invoice.tax').search(cr, uid, [('invoice_id','=',invoice_id)])
         aits = self.pool.get('account.invoice.tax').browse(cr, uid, ait_ids)
         for ait in aits:
-            if ait.account_tax_id:
+            if ait.account_tax_id and not ait.amount:
                 self.pool.get('account.invoice.tax').write(cr, uid, ait.id, {'amount': self._calculate_tax(cr, uid, ait.account_tax_id.id,ai.amount_untaxed)})
         
 	return tax_grouped
