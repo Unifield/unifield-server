@@ -52,6 +52,16 @@ class journal_items_corrections_lines(osv.osv_memory):
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
         return res
 
+    def _get_is_analytic_target(self, cr, uid, ids, name, args,  context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for line_br in self.browse(cr, uid, ids, context=context):
+            res[line_br.id] = line_br.account_id and line_br.account_id.is_analytic_addicted or False
+        return res
+
     _columns = {
         'move_line_id': fields.many2one('account.move.line', string="Account move line", readonly=True, required=True),
         'wizard_id': fields.many2one('wizard.journal.items.corrections', string="wizard"),
@@ -71,10 +81,12 @@ class journal_items_corrections_lines(osv.osv_memory):
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'is_analytic_target': fields.function(_get_is_analytic_target, type='boolean', string='Is analytic target', method=True, invisible=True),
     }
 
     _defaults = {
         'from_donation': lambda *a: False,
+        'is_analytic_target': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -149,6 +161,9 @@ class journal_items_corrections_lines(osv.osv_memory):
                 'res_id': [wiz_id],
                 'context': context,
         }
+
+    """def on_change_account(self, cr, uid, ids, move_id, account_id,
+        context=None):"""
 
 journal_items_corrections_lines()
 
