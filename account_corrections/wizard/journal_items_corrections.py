@@ -274,7 +274,13 @@ class journal_items_corrections(osv.osv_memory):
             # cmp(old_line.register_id, new_line.register_id):
             res += 2
         if cmp(old_distrib, new_distrib):
-            res += 4
+            # UFTP-1187
+            if old_line.account_id.is_analytic_addicted and \
+                new_account.account_id.is_analytic_addicted:
+                # tolerate this diff (no +4)
+                # if we correct an account with no AD required to a new account
+                # with AD required or from AD required to no AD
+                res += 4
         return res
 
     # UF-2056: Delete reverse button
