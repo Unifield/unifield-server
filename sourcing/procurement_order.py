@@ -22,13 +22,15 @@
 from osv import fields
 from osv import osv
 from osv.orm import browse_record
-
+from workflow.wkf_expr import _eval_expr
 from tools.translate import _
 
 from sourcing.sale_order_line import _SELECTION_PO_CFT
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
+import netsvc
 
 
 class procurement_order(osv.osv):
@@ -593,6 +595,25 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             self.write(cr, uid, [procurement.id], {'state': 'running', 'purchase_id': purchase_id})
         return res
     # @@@END override
+
+    def set_manually_done(self, cr, uid, ids, all_doc=False, context=None):
+        """
+        Detach the workflow of the procurement.order object and set state
+        to done.
+        """
+        wf_service = netsvc.LocalService("workflow")
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for proc_id in ids:
+            wf_service.trg_delete(uid, 'procurement.order', proc_id, cr)
+            # Search the method called when the workflow enter in the last activity
+            wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement', 'act_done')[1]
+            activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
+            _eval_expr(cr, [uid, 'procurement.order', proc_id], False, activity.action)
+
+        return True
 
 procurement_order()
 
