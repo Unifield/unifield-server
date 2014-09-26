@@ -244,8 +244,8 @@ class Entity(osv.osv):
             uuid = self.generate_uuid()
             self.create(cr, 1, {'identifier': uuid}, context=context)
             res_company = self.pool.get('res.company')
-            company_ids = res_company.search(cr, uid, [])
-            for company in res_company.browse(cr, uid, company_ids):
+            company_ids = res_company.search(cr, 1, [])
+            for company in res_company.browse(cr, 1, company_ids):
                 if company.instance_id:
                     company.instance_id.write({'instance_identifier': uuid})
         return res

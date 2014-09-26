@@ -368,8 +368,8 @@ class account_analytic_line(osv.osv):
 
             # UF-1011: generate delete msg if correction is made on coordo CC coming from project
             old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
-            if old_destination_level == 'coordo' and not xml_id.startswith(instance_identifier) and instance_level == 'coordo':
-                creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id.split('/')[0].split('.')[1])])
+            if old_destination_level == 'coordo' and not xml_id_record.name.startswith(instance_identifier) and instance_level == 'coordo':
+                creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id_record.name.split('/')[0]), ('level', '=', 'project')])
                 if creation_instance_ids:
                     msf_instance = msf_instance_obj.browse(cr, uid, creation_instance_ids[0])
                     now = fields.datetime.now()
@@ -407,6 +407,38 @@ class account_analytic_line(osv.osv):
                     if exist_ids:
                         msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
 
+    def unlink(self, cr, uid, ids, context=None):
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+
+        data_obj = self.pool.get('ir.model.data')
+        msf_instance_obj = self.pool.get('msf.instance')
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+        instance = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context)
+        instance_identifier = instance.identifier
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
+
+        if instance_level == 'coordo':
+            for al in self.read(cr, uid, ids, ['cost_center_id']):
+                if al['cost_center_id']:
+                    cost_center_id = al['cost_center_id'][0]
+                    destination_level = self.get_instance_level_from_cost_center(cr, uid, cost_center_id, context=context)
+                    if destination_level == 'coordo':
+                        xml_id = self.pool.get('ir.model.data').get(cr, uid, self, al['id'], context=context)
+                        xml_id_record = data_obj.read(cr, uid, xml_id, ['name'])
+                        if not xml_id_record['name'].startswith(instance_identifier):
+                            creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id_record['name'].split('/')[0]), ('level', '=', 'project')])
+                            if creation_instance_ids:
+                                msf_instance = msf_instance_obj.browse(cr, uid, creation_instance_ids[0])
+                                now = fields.datetime.now()
+                                message_data = {'identifier':'delete_%s' % (xml_id,),
+                                    'sent':False,
+                                    'generate_message':True,
+                                    'remote_call':self._name + ".message_unlink_analytic_line",
+                                    'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
+                                    'destination_name': msf_instance.name}
+                                msg_to_send_obj.create(cr, uid, message_data)
+        return super(account_analytic_line, self).unlink(cr, uid, ids, context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
