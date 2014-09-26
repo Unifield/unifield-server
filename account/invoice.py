@@ -1576,6 +1576,20 @@ class account_invoice_tax(osv.osv):
     _name = "account.invoice.tax"
     _description = "Invoice Tax"
 
+
+    def _check_untaxed_amount(self, cr, uid, vals, context=None):
+	if vals['base_amount'] == 0:        
+	    raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Calculate Taxes button before saving the %s tax.') % (vals['name']))
+        return True
+
+
+    def create(self, cr, uid, vals, context=None):
+        if context == None:
+            context = {} 
+        self._check_untaxed_amount(cr, uid, vals, context)
+	return super(account_invoice_tax, self).create(cr, uid, vals, context=context)
+
+
     def _count_factor(self, cr, uid, ids, name, args, context=None):
         res = {}
         for invoice_tax in self.browse(cr, uid, ids, context=context):
@@ -1615,7 +1629,9 @@ class account_invoice_tax(osv.osv):
     def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed):
 	atx_obj = self.pool.get('account.tax')
         atx = atx_obj.browse(cr, uid, account_tax_id)
-	return {'value': {'account_id': atx.account_paid_id.id, 'name': "{0} - {1}".format(atx.name,atx.description), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id,amount_untaxed)}}
+        #if amount_untaxed == 0:
+        #    raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Calculate Taxes button to allow the %s tax to evalaute.') % (atx.name))
+	return {'value': {'account_id': atx.account_collected_id.id, 'name': "{0} - {1}".format(atx.name,atx.description), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id,amount_untaxed)}}
         
 
     def _calculate_tax(self, cr, uid, account_tax_id, amount_untaxed):
@@ -1625,8 +1641,9 @@ class account_invoice_tax(osv.osv):
         if atx.type == 'fixed':
             tax_amount = atx.amount
         if atx.type == 'percent':
-            tax_amount = (atx.amount / 100) * amount_untaxed
+            tax_amount = atx.amount * amount_untaxed
             tax_amount = round(tax_amount,2)
+        
         return tax_amount
 
 
