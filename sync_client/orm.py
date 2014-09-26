@@ -526,6 +526,9 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         # UF-2343: check if there is any data update with correction date is later than this delete message, if yes, ignore this message
         # Check if the correction_date of this record is older than the one of delete message, then ignore this delete message
         analytic_line = self.pool.get('account.analytic.line').browse(cr, uid, res_id, context=context)
+        if not analytic_line.exists():
+            return "Object %s %s already deleted by an update" % (model_name, xml_id)
+
         correction_date_in_db = analytic_line.correction_date
         correction_date = unlink_info.correction_date
 
