@@ -341,8 +341,12 @@ class account_analytic_line(osv.osv):
     # Generate delete message for AJI at Project
     def generate_delete_message_at_project(self, cr, uid, ids, vals, context):
         # NEED REFACTORING FOR THIS METHOD, if the action write on Analytic.line happens often!
+        msf_instance_obj = self.pool.get('msf.instance')
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-        instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
+        instance = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context)
+        instance_name = instance.name
+        instance_identifier = instance.identifier
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
         xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
         line_data = self.read(cr, uid, ids, ['cost_center_id'], context=context)
         line_data = dict((data['id'], data) for data in line_data)
@@ -361,12 +365,26 @@ class account_analytic_line(osv.osv):
                 must not be generated for P1, because if it got generated, this deletion will be spread up to Coordo, then resync 
                 back to P1 making that P1 deletes also the line with cost center of P2 <--- this is wrong as stated in the ticket
             '''
-            # UF-2342: only generate delete message if the instance is at Project level
+
+            # UF-1011: generate delete msg if correction is made on coordo CC coming from project
             old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
+            if old_destination_level == 'coordo' and not xml_id.startswith(instance_identifier) and instance_level == 'coordo':
+                creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id.split('/')[0].split('.')[1])])
+                if creation_instance_ids:
+                    msf_instance = msf_instance_obj.browse(cr, uid, creation_instance_ids[0])
+                    now = fields.datetime.now()
+                    message_data = {'identifier':'delete_%s' % (xml_id,),
+                        'sent':False,
+                        'generate_message':True,
+                        'remote_call':self._name + ".message_unlink_analytic_line",
+                        'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
+                        'destination_name': msf_instance.name}
+                    msg_to_send_obj.create(cr, uid, message_data)
+
+            # UF-2342: only generate delete message if the instance is at Project level
             if old_destination_level == 'project':
                 old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
                 new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-
                 # UTP-1128: if the old cost center belong to the current instance, do not generate the delete message
                 if instance_name != old_destination_name and old_destination_name != new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
                     now = fields.datetime.now()
@@ -404,9 +422,7 @@ class account_analytic_line(osv.osv):
             vals['correction_date'] = fields.datetime.now() # This timestamp is used for the write, but need to set BEFORE
         # call to generate delete message if the cost center is removed from a project
         self.generate_delete_message_at_project(cr, uid, ids, vals, context)
-
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
-
 
 account_analytic_line()
 
