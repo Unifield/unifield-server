@@ -188,6 +188,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False), # Do not allow user to select accounts with "Not HQ correctible" set to True
         ('code', '<', '80000'),  # UTP-1187 exclude 8/9 accounts
+        ('code', 'not in', ['10100', '10200', '10210']),  # UTP-1187 exclude liquidity / cash (10100, 10200, 10210) accounts
     ],
 }
 
