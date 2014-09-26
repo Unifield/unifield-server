@@ -220,10 +220,10 @@
               <para style="ItemsLineValue">[[ move[1].product_uom and move[1].product_uom.name or '' ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValueRight">[[ formatLang((move[1].sale_line_id and move[1].sale_line_id.price_unit) or 0.) ]]</para>
+              <para style="ItemsLineValueRight">[[ formatLang((move[1].sale_line_id and move[1].sale_line_id.price_unit) or 0., digits=3) ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValueRight">[[ formatLang(move[1].total_amount or 0.) ]]</para>
+              <para style="ItemsLineValueRight">[[ formatLang(move[1].total_amount or 0., digits=3) ]]</para>
             </td>
         </tr>
     </blockTable>
@@ -258,7 +258,7 @@
           <para style="HeaderInfosTitleRight">[[ getCurrency(objects[0], True) ]]</para>
         </td>
         <td>
-          <para style="HeaderInfosTitleRight">[[ formatLang(pl.total) ]]</para>
+          <para style="HeaderInfosTitleRight">[[ formatLang(pl.total, digits=3) ]]</para>
         </td>
       </tr>
     </blockTable>
