@@ -525,7 +525,8 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
         # UF-2343: check if there is any data update with correction date is later than this delete message, if yes, ignore this message
         # Check if the correction_date of this record is older than the one of delete message, then ignore this delete message
-        correction_date_in_db = self.pool.get('account.analytic.line').browse(cr, uid, res_id, context=context).correction_date
+        analytic_line = self.pool.get('account.analytic.line').browse(cr, uid, res_id, context=context)
+        correction_date_in_db = analytic_line.correction_date
         correction_date = unlink_info.correction_date
 
         # UF-2343: to handle this if both time exists
@@ -536,6 +537,10 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             # If there is an update happening after the delete, then ignore this delete message
             if date_in_db > date_in_sync:
                 return "The delete message is ignored as the analytic line got updated after this delete message."
+
+        # UF-1011 delete the associated distribution line
+        if analytic_line.distrib_line_id:
+            analytic_line.distrib_line_id.unlink(context=context)
 
         return self.unlink(cr, uid, [res_id], context=context)
 
