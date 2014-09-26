@@ -241,13 +241,7 @@ class Entity(osv.osv):
     def _auto_init(self,cr,context=None):
         res = super(Entity, self)._auto_init(cr, context=context)
         if not self.search(cr, 1, [], context=context):
-            uuid = self.generate_uuid()
-            self.create(cr, 1, {'identifier': uuid}, context=context)
-            res_company = self.pool.get('res.company')
-            company_ids = res_company.search(cr, 1, [])
-            for company in res_company.browse(cr, 1, company_ids):
-                if company.instance_id:
-                    company.instance_id.write({'instance_identifier': uuid})
+            self.create(cr, 1, {'identifier' : self.generate_uuid()}, context=context)
         return res
 
     def _get_state(self, cr, uid, ids, name, arg, context=None):
