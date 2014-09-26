@@ -425,6 +425,7 @@ class shipment(osv.osv):
             for family in wizard.family_ids:
                 if not family.selected_number: # UTP-1015 fix from Quentin
                     continue
+
                 picking = family.draft_packing_id
                 # Copy the picking object without moves
                 # Creation of moves and update of initial in picking create method
@@ -1227,6 +1228,8 @@ class shipment(osv.osv):
                         sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
                         if sol_ana_dist_id:
                             distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
+                            # create default funding pool lines (if no one)
+                            self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id])
 
                     # set UoS if it's a sale and the picking doesn't have one
                     uos_id = move.product_uos and move.product_uos.id or False
@@ -4125,11 +4128,12 @@ class stock_move(osv.osv):
                 continue
 
             pick_type = move.picking_id.type
+            pick_cancel = move.picking_id.change_reason
             pick_subtype = move.picking_id.subtype
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
 
-            if pick_type == 'in' and move.purchase_line_id:
+            if pick_type == 'in' and move.purchase_line_id and not pick_cancel:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)

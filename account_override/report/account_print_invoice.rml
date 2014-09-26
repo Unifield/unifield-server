@@ -252,10 +252,10 @@
           <para style="terp_tblheader_General_Centre">Description</para>
         </td>
 	<td>
-          <para style="terp_tblheader_General_Centre">Your Reference</para>
+          <para style="terp_tblheader_General_Centre">Free Reference</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Origin</para>
+          <para style="terp_tblheader_General_Centre">Source Document</para>
         </td>
       </tr>
     </blockTable>
@@ -265,13 +265,13 @@
           <para style="terp_default_Centre_9">[[ formatLang(o.date_invoice,date=True) ]]</para>
         </td>
         <td>
-          <para style="terp_default_Centre_9">[[ o.name or ' ' ]]</para>
+          <parawrap style="terp_default_Centre_9">[[ o.name or ' ' ]]</parawrap>
         </td>
 	<td>
           <para style="terp_default_Centre_9">[[ (o.address_invoice_id and o.address_invoice_id.partner_id and o.address_invoice_id.partner_id.ref) or ' ' ]]</para>
         </td>
         <td>
-          <para style="terp_default_Centre_9">[[ o.origin or '' ]]</para>
+          <parawrap style="terp_default_Centre_9">[[ o.origin or '' ]]</parawrap>
         </td>
       </tr>
     </blockTable>
@@ -313,7 +313,7 @@
       <blockTable colWidths="140.0,50.0,100.0,100.0,140.0" style="Table8">
         <tr>
           <td>
-            <para style="terp_default_9">[[ l.name ]]</para>
+            <parawrap style="terp_default_9">[[ l.name ]]</parawrap>
           </td>
           <td>
             <para style="terp_default_Right_9">[[ l.account_id and l.account_id.code or '' ]]</para>

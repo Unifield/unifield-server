@@ -280,6 +280,18 @@ class product_attributes(osv.osv):
         res = {}
         for id in ids:
             res[id] = False
+
+        return res
+
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
         return res
 
     # This method is here because the following domain didn't work on field order/purchase order lines
@@ -412,6 +424,7 @@ class product_attributes(osv.osv):
         'fit_value': fields.text(string='Form', translate=True),
         'function_value': fields.text(string='Form', translate=True),
         'standard_ok': fields.boolean(string='Standard'),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -431,6 +444,7 @@ class product_attributes(osv.osv):
         'restricted_country': False,
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
+        'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     def _check_uom_category(self, cr, uid, ids, context=None):

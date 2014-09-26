@@ -175,7 +175,7 @@ class stock_partial_picking(osv.osv_memory):
             integrity_check = self.integrity_check_do_incoming_shipment(cr, uid, ids, picking_type, partial_datas, context=context)
             if not integrity_check:
                 # the windows must be updated to trigger tree colors
-                return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+                return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_incoming_shipment(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
     

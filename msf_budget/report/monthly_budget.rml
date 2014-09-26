@@ -8,8 +8,7 @@
             <image x="15" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
-            <drawString x="770" y="550">Page <pageNumber /></drawString>
-            <drawString x="765" y="520.0">/</drawString><drawString x="770" y="520.0"><pageCount /> </drawString>
+            <drawString x="700" y="550">Page <pageNumber /> / </drawString><drawString x="750" y="550"><pageCount /></drawString>
         </pageGraphics>
 
     	</pageTemplate>
@@ -158,7 +157,7 @@
       <font color="white"> </font>
     </para>
 
-    <blockTable colWidths="97.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0" style="Table10"  repeatRows="1" >
+    <blockTable colWidths="49.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0" style="Table10"  repeatRows="1" >
       <tr>
         <td>
           <para style="P2a">Account</para>

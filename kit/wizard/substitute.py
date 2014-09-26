@@ -93,7 +93,7 @@ class substitute(osv.osv_memory):
         # kit ids
         kit_ids = context['active_ids']
         # simple refresh the wizard, as availability is now a function at line level
-        return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
+        return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, w_type='update', context=context)
     
     def _check_integrity(self, cr, uid, ids, context=None):
         '''
@@ -286,7 +286,7 @@ class substitute(osv.osv_memory):
         integrity_check = self._check_integrity(cr, uid, ids, context=context)
         if not integrity_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, w_type='update', context=context)
         for obj in self.browse(cr, uid, ids, context=context):
             # we create the internal picking object
             pick_id = self._create_picking(cr, uid, ids, obj, date, context=context)
@@ -433,7 +433,7 @@ class substitute(osv.osv_memory):
         integrity_check = self._check_integrity(cr, uid, ids, context=context)
         if not integrity_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, w_type='update', context=context)
         for obj in self.browse(cr, uid, ids, context=context):
             # we create the internal picking object
             pick_id = self._create_picking(cr, uid, ids, obj, date, context=context)
@@ -489,7 +489,7 @@ class substitute(osv.osv_memory):
         # kit ids
         kit_ids = context['active_ids']
         # simple refresh the wizard, as availability is now a function at line level
-        return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
+        return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, w_type='update', context=context)
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """

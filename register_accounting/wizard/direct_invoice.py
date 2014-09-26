@@ -221,9 +221,20 @@ class wizard_account_invoice(osv.osv):
 
         # Do reconciliation
         # Moved since UF-1471. This is now down when you hard post the linked register line.
-
+        
         # fix the reference UFTP-167
-        self.pool.get('account.invoice').fix_aal_aml_reference(cr, uid, inv_id, context=context)
+        inv_obj.fix_aal_aml_reference(cr, uid, inv_id, context=context)
+     
+        # UTP-1041 : additional reference field functionality
+        if inv['reference'] is False:
+            inv_number = inv_obj.browse(cr, uid, inv_id, context=context).number
+            absl = absl_obj.browse(cr, uid, reg_line_id, context=context)
+            am = absl.move_ids[0]
+            aml_obj = self.pool.get('account.move.line')
+            aml_ids = aml_obj.search(cr, uid,[('move_id','=',am.id)], context=context)
+            amls = aml_obj.browse(cr, uid, aml_ids, context=context)
+            for aml in amls:
+                aml_obj.write(cr, uid, aml.id, {'reference': inv_number}, context=context, check=False, update_check=False)
 
         # Delete the wizard
         self.unlink(cr, uid, ids, context=context)

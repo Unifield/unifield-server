@@ -238,8 +238,8 @@ class analytic_account(osv.osv):
     def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
             context = {}
-        for account in self.browse(cr, uid, ids, context=context):
-            bad_ids = self.search(cr, uid, [('category', '=', account.category),('|'),('name', '=ilike', account.name),('code', '=ilike', account.code)])
+        for account in self.read(cr, uid, ids, ['category', 'name', 'code'], context=context):
+            bad_ids = self.search(cr, uid, [('category', '=', account.get('category', '')), ('|'), ('name', '=ilike', account.get('name', '')), ('code', '=ilike', account.get('code', ''))])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
@@ -383,12 +383,17 @@ class analytic_account(osv.osv):
         if not default:
             default = {}
         default = default.copy()
+        name = '%s(copy)' % account['name'] or ''
         default['code'] = (account['code'] or '') + '(copy)'
-        default['name'] = (account['name'] or '') + '(copy)'
+        default['name'] = name
         default['tuple_destination_summary'] = []
         # code is deleted in copy method in addons
         new_id = super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
-        self.write(cr, uid, new_id, {'code': '%s(copy)' % (account['code'] or '')})
+        # UFTP-83: Add name + context (very important) in order the translation to not display wrong element. This is because context is missing (wrong language)
+        self.write(cr, uid, new_id, {'name': name,'code': '%s(copy)' % (account['code'] or '')}, context=context)
+        trans_obj = self.pool.get('ir.translation')
+        trans_ids = trans_obj.search(cr, uid, [('name', '=', 'account.analytic.account,name'), ('res_id', '=', new_id)])
+        trans_obj.unlink(cr, uid, trans_ids)
         return new_id
 
     def create(self, cr, uid, vals, context=None):
@@ -403,9 +408,21 @@ class analytic_account(osv.osv):
         """
         Some verifications before analytic account write
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         self._check_date(vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
-        return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
+        # UFTP-83: Error after duplication, the _constraints is not called with right params. So the _check_unicity gets wrong.
+        if vals.get('name', False):
+            cr.execute('UPDATE account_analytic_account SET name = %s WHERE id IN %s', (vals.get('name'), tuple(ids)))
+        res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
+        # UFTP-83: Use name as SRC value for translations (to be done after WRITE())
+        if vals.get('name', False):
+            trans_obj = self.pool.get('ir.translation')
+            trans_ids = trans_obj.search(cr, uid, [('name', '=', 'account.analytic.account,name'), ('res_id', 'in', ids)])
+            if trans_ids:
+                cr.execute('UPDATE ir_translation SET src = %s WHERE id IN %s', (vals.get('name'), tuple(trans_ids)))
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         """

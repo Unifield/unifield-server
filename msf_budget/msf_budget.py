@@ -262,7 +262,7 @@ class msf_budget(osv.osv):
                     'month12': 0.0
                 }
                 # search all linked budget lines
-                args = [('budget_id', 'in', budget_ids), ('account_id', '=', budget_line.account_id.id)]
+                args = [('budget_id', 'in', budget_ids), ('account_id', '=', budget_line.account_id.id), ('line_type', '=', budget_line.line_type)]
                 if budget_line.destination_id:
                     args.append(('destination_id', '=', budget_line.destination_id.id))
                 child_line_ids = line_obj.search(cr, uid, args, context=context)

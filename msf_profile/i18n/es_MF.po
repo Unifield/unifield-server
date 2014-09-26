@@ -71609,8 +71609,8 @@ msgstr "Saldo calculado en la moneda funcional"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:226
 #, python-format
-msgid "Given date is inferior to those from the maximum posting date. You cannot post lines before the youngest one. Please change it to be superior or equal to %s"
-msgstr "La fecha indicada es inferior a la última fecha de contabilización. No puede contabilizar líneas anteriores a la más reciente. Por favor, introduzca una fecha posterior o igual a %s"
+msgid "Posting date should be later than all Document Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s"
+msgstr "Fecha de contabilizacion debe ser posterior a todas las fechas de documento. No puede contabilizar asientos anteriores al asiento que tiene el plazo minimo. Por favor modifica la fecha de contabilizacion para que sea igual o posterior a %s"
 
 #. module: base
 #: selection:ir.property,type:0
@@ -74978,8 +74978,8 @@ msgstr "Seleccione esta opción si desea realizar un seguimiento de la modificac
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:224
 #, python-format
-msgid "Given date is inferior to those from the maximum document date. Please change it to be superior or equal to %s"
-msgstr "La fecha indicada es anterior a la fecha del documento. Por favor, introduzca una fecha posterior o igual a %s"
+msgid "Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s"
+msgstr "Fecha de contabilizacion debe ser posterior a todas las fechas de documento. Por favor modifica la fecha de contabilizacion para que sea igual o posterior a %s"
 
 #. module: account_invoice_split
 #: code:addons/account_invoice_split/wizard/split_invoice.py:92

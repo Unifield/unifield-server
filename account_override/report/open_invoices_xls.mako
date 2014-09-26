@@ -229,7 +229,7 @@
 
 <Worksheet ss:Name="${_('Open Invoices')}">
     <Table>
-    <Column ss:AutoFitWidth="0" ss:Width="90.5" ss:Span="1"/>
+    <Column ss:AutoFitWidth="0" ss:Width="70.5" ss:Span="1"/>
     <Column ss:Index="3" ss:Width="88.5"/>
     <Column ss:Width="91.5"/>
     <Column ss:Width="108"/>
@@ -358,7 +358,7 @@
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s40"/>
         <Cell ss:StyleID="s40"/>
-        <Cell ss:StyleID="s44"><Data ss:Type="String">${_('Sub Total')} =</Data></Cell>
+        <Cell ss:StyleID="s44"><Data ss:Type="String">${_('Subtotal')} =</Data></Cell>
         % if nb_line:
             <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number" ></Data></Cell>
             <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
@@ -375,6 +375,11 @@
 % endfor
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Layout x:Orientation="Landscape"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+   </PageSetup>
+   <FitToPage/>
    <Print>
     <ValidPrinterInfo/>
     <PaperSizeIndex>9</PaperSizeIndex>
@@ -385,5 +390,6 @@
    <ProtectObjects>False</ProtectObjects>
    <ProtectScenarios>False</ProtectScenarios>
   </WorksheetOptions>
- </Worksheet>
+
+</Worksheet>
 </Workbook>

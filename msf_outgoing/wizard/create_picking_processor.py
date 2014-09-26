@@ -309,7 +309,7 @@ class create_picking(osv.osv_memory):
         if create.product_moves_returnproducts:
             for move in create.product_moves_returnproducts:
                 self.pool.get('stock.move.memory.returnproducts').write(cr, uid, [move.id], {'quantity': move.ordered_quantity})
-        return self.pool.get('wizard').open_wizard(cr, uid, [ids[0]], type='update', context=context)
+        return self.pool.get('wizard').open_wizard(cr, uid, [ids[0]], w_type='update', context=context)
 
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object.
@@ -560,7 +560,7 @@ class create_picking(osv.osv_memory):
             for line in wiz.product_moves_returnproducts:
                 line.write({'qty_to_return':line.ordered_quantity, }, context=context)
         # update the current wizard
-        return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+        return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, w_type='update', context=context)
 
     def deselect_all(self, cr, uid, ids, context=None):
         '''
@@ -574,7 +574,7 @@ class create_picking(osv.osv_memory):
             for line in wiz.product_moves_returnproducts:
                 line.write({'qty_to_return':0.0, }, context=context)
         # update the current wizard
-        return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+        return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, w_type='update', context=context)
 
     def generate_data_from_partial(self, cr, uid, ids, context=None):
         '''
@@ -873,7 +873,7 @@ class create_picking(osv.osv_memory):
         prodlot_check = self.integrity_check_prodlot(cr, uid, ids, partial_datas, validate=False, context=context)
         if not quantity_check or not prodlot_check:
             # the windows must be updated to trigger tree colors - so no raise
-            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_create_picking(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
 
@@ -969,7 +969,7 @@ class create_picking(osv.osv_memory):
         prodlot_check = self.integrity_check_prodlot(cr, uid, ids, partial_datas, context=context)
         if not quantity_check or not prodlot_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_validate_picking(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
 
@@ -1055,7 +1055,7 @@ class create_picking(osv.osv_memory):
         quantity_check = self.integrity_check_return_products(cr, uid, ids, partial_datas, context=context)
         if not quantity_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, w_type='update', context=context)
         return pick_obj.do_return_products(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
 
     def integrity_check_sequences(self, cr, uid, ids, data, context=None):
@@ -1156,7 +1156,7 @@ class create_picking(osv.osv_memory):
         sequence_check = self.integrity_check_sequences(cr, uid, ids, partial_datas_ppl1, context=context)
         if not sequence_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, w_type='update', context=context)
 
         # call stock_picking method which returns action call
         return pick_obj.do_ppl1(cr, uid, picking_ids, context=dict(context, partial_datas_ppl1=partial_datas_ppl1))
@@ -1171,7 +1171,7 @@ class create_picking(osv.osv_memory):
         wiz_obj = self.pool.get('wizard')
 
         # no data for type 'back'
-        return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], w_type='back', context=context)
 
     def integrity_check_weight(self, cr, uid, ids, data, context=None):
         '''
@@ -1227,7 +1227,7 @@ class create_picking(osv.osv_memory):
         weight_check = self.integrity_check_weight(cr, uid, ids, partial_datas_ppl1, context=context)
         if not weight_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_ppl2(cr, uid, picking_ids, context=context)
 

@@ -440,11 +440,11 @@ class shipment_wizard(osv.osv_memory):
             # for not blocking yml test with the raise I use 'yml_test' in context
             if not context.get('yml_test'):
                 # the windows must be updated to trigger tree colors
-                self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
+                self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, w_type='update', context=context)
                 raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
             # the windows must be updated to trigger tree colors
             else:
-                return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
+                return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_create_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas_shipment=partial_datas_shipment))
     
@@ -470,7 +470,7 @@ class shipment_wizard(osv.osv_memory):
         packs_check = self.integrity_check_packs(cr, uid, ids, partial_datas, model_name='stock.move.memory.shipment.returnpacks', context=context)
         if not packs_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_return_packs(cr, uid, shipment_ids, context=dict(context, partial_datas=partial_datas))
     
@@ -568,7 +568,7 @@ class shipment_wizard(osv.osv_memory):
         sequence_check = self.integrity_check_return_packs_from_shipment(cr, uid, ids, partial_datas, context=context)
         if not sequence_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_return_packs_from_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas=partial_datas))
     
