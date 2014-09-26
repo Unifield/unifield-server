@@ -35,6 +35,7 @@
                     <field name="timeout" required="1"/>
                     <label string="" colspan="2" />
                     <field name="netrpc_retry" required="1" />
+                    <field name="xmlrpc_retry" required="1" />
                     <separator string="Connection state" colspan="4"/>
                     <!-- the following line break the 6.1 web client backport because its a functional field of type integer -->
                     <!-- <field name="uid" invisible="1"/> -->

@@ -861,6 +861,7 @@ class Connection(osv.osv):
         'max_size' : fields.integer("Max Packet Size"),
         'timeout' : fields.float("Timeout"),
         'netrpc_retry' : fields.integer("NetRPC retry"),
+        'xmlrpc_retry' : fields.integer("XmlRPC retry"),
     }
 
     _defaults = {
@@ -872,7 +873,8 @@ class Connection(osv.osv):
         'max_size' : 500,
         'database' : 'SYNC_SERVER',
         'timeout' : 10.0,
-        'netrpc_retry' : 1,
+        'netrpc_retry' : 0,
+        'xmlrpc_retry' : 0,
     }
 
     def _get_connection_manager(self, cr, uid, context=None):
@@ -883,11 +885,11 @@ class Connection(osv.osv):
 
     def connector_factory(self, con):
         if con.protocol == 'xmlrpc':
-            connector = rpc.XmlRPCConnector(con.host, con.port, timeout=con.timeout)
+            connector = rpc.XmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
         elif con.protocol == 'gzipxmlrpc':
-            connector = rpc.GzipXmlRPCConnector(con.host, con.port, timeout=con.timeout)
+            connector = rpc.GzipXmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
         elif con.protocol == 'xmlrpcs':
-            connector = rpc.SecuredXmlRPCConnector(con.host, con.port, timeout=con.timeout)
+            connector = rpc.SecuredXmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
         elif con.protocol == 'netrpc':
             connector = rpc.NetRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.netrpc_retry)
         elif con.protocol == 'netrpc_gzip':

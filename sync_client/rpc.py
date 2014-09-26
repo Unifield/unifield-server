@@ -84,16 +84,35 @@ class XmlRPCConnector(Connector):
     """
     PROTOCOL = 'xmlrpc'
 
-    def __init__(self, hostname, port=8069, timeout=10.0):
+    def __init__(self, hostname, port=8069, timeout=10.0, retry=0):
         Connector.__init__(self, hostname, port, timeout=timeout)
         self._logger = logging.getLogger('connector.xmlrpc')
         self.url = 'http://%s:%s/xmlrpc' % (self.hostname, self.port)
+        self.retry = retry
 
     def send(self, service_name, method, *args):
         url = '%s/%s' % (self.url, service_name)
         transport = TimeoutTransport(timeout=self.timeout)
         service = xmlrpclib.ServerProxy(url, allow_none=1, transport=transport)
-        return getattr(service, method)(*args)
+        return self._send(service, method, *args)
+    
+    def _send(self, service, method, *args):
+        i = 0
+        retry = True
+        while retry:
+            try:
+                retry = False
+                return getattr(service, method)(*args)
+            except Exception, e:
+                error = e
+                if i < self.retry:
+                    print 'retry xml_rpc', i
+                    retry = True
+                    self._logger.debug("retry to connect %s, error : %s" ,i, e)
+                i += 1
+        if error:
+            raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (e.faultCode if hasattr(e, 'faultCode') else tools.ustr(e)))
+        
 
 """Modified version of xmlrcpclib.Transport.request (same in Python 2.4, 2.5, 2.6)
    to workaround Python bug http://bugs.python.org/issue1223
@@ -131,14 +150,14 @@ class SecuredXmlRPCConnector(XmlRPCConnector):
     """
     PROTOCOL = 'xmlrpcs'
 
-    def __init__(self, hostname, port=8070, timeout=10.0):
-        XmlRPCConnector.__init__(self, hostname, port, timeout=timeout)
+    def __init__(self, hostname, port=8070, timeout=10.0, retry=0):
+        XmlRPCConnector.__init__(self, hostname, port, timeout=timeout, retry=retry)
         self.url = 'https://%s:%s/xmlrpc' % (self.hostname, self.port)
 
     def send(self, service_name, method, *args):
         url = '%s/%s' % (self.url, service_name)
         service = xmlrpclib.ServerProxy(url, allow_none=1)
-        return getattr(service, method)(*args)
+        return self._send(service, method, *args)
 
 class GzipXmlRPCConnector(XmlRPCConnector):
     """
@@ -150,7 +169,7 @@ class GzipXmlRPCConnector(XmlRPCConnector):
         url = '%s/%s' % (self.url, service_name)
         gzip_transport = GzipTransport(timeout=self.timeout)
         service = xmlrpclib.ServerProxy(url, allow_none=1, transport=gzip_transport)
-        return getattr(service, method)(*args)
+        return self._send(service, method, *args)
 
 class NetRPC_Exception(Exception):
     def __init__(self, faultCode, faultString):
