@@ -56,8 +56,6 @@ class shipment(osv.osv):
         '''
         Set the shipment at CP according to the state when it is flagged on RW
         '''
-        pick_obj = self.pool.get('stock.picking')
-
         if context is None:
             context = {}
 
@@ -70,21 +68,17 @@ class shipment(osv.osv):
         elif state == 'shipped':
             self._logger.info("+++ RW: Validated the SHIP: %s from %s to %s" % (ship_name, source, cr.dbname))
 
-        rw_type = pick_obj._get_usb_entity_type(cr, uid)
-        if rw_type == pick_obj.CENTRAL_PLATFORM:
-            ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
-            if not ship_ids:
-                message = _("Sorry, no Shipment with the name %s in state %s found !") % (ship_name, state)
-                raise Exception, message # keep this message to not run, because other previous messages in the flow are also not run
-            else:
-                if state == 'done':
-                    self.set_delivered(cr, uid, ship_ids, context=context)
-                    self.write(cr, uid, ship_ids, {'already_rw_delivered': True}, context=context)
-                elif state == 'shipped':
-                    self.validate(cr, uid, ship_ids, context=context)
-                    self.write(cr, uid, ship_ids, {'already_rw_validated': True}, context=context)
+        ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
+        if not ship_ids:
+            message = _("Sorry, no Shipment with the name %s in state %s found !") % (ship_name, state)
+            raise Exception, message # keep this message to not run, because other previous messages in the flow are also not run
         else:
-            message = ("Sorry, the given operation is only available for Central Platform instance!")
+            if state == 'done':
+                self.set_delivered(cr, uid, ship_ids, context=context)
+                self.write(cr, uid, ship_ids, {'already_rw_delivered': True}, context=context)
+            elif state == 'shipped':
+                self.validate(cr, uid, ship_ids, context=context)
+                self.write(cr, uid, ship_ids, {'already_rw_validated': True}, context=context)
             
         self._logger.info(message)
         return message
@@ -461,6 +455,10 @@ class stock_picking(osv.osv):
             purchase_line_id = data['purchase_line_id']['id']
             purchase_line_id = self.pool.get('purchase.order.line').find_sd_ref(cr, uid, xmlid_to_sdref(purchase_line_id), context=context)
             result.update({'purchase_line_id': purchase_line_id,})
+            
+        if data['price_unit']: # if the cost price got changed from RW
+            result.update({'price_unit': data['price_unit'],})
+            
         return result
 
     def get_picking_lines(self, cr, uid, source, out_info, context=None):
