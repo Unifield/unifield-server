@@ -960,21 +960,50 @@ class stock_production_lot(osv.osv):
         '''
         return super(stock_production_lot, self)._stock_search(cr, uid, obj, name, args, context=context)
 
+    def _parse_context_location_id(self, cr, uid, context=None):
+        if context:
+            location_id = context.get('location_id', False)
+            if location_id:
+                if isinstance(location_id, (str, unicode)):
+                    location_id = [int(id) for id in location_id.split(',')]
+
+                if context.get('location_dive', False):
+                    new_location_ids = []
+                    self._location_dive(cr, uid, location_id,
+                        result_ids=new_location_ids, context=context)
+                    location_id = new_location_ids
+
+                context['location_id'] = location_id
+
+    def _location_dive(self, cr, uid, parent_location_ids, result_ids=None,
+        context=None):
+        result_ids += [id for id in parent_location_ids if id not in result_ids]
+        for r in self.pool.get('stock.location').read(cr, uid,
+            parent_location_ids, ['child_ids'], context=context):
+            if r['child_ids']:
+                self._location_dive(cr, uid, r['child_ids'],
+                    result_ids=result_ids, context=context)
+
     def _get_stock_virtual(self, cr, uid, ids, field_name, arg, context=None):
         """ Gets stock of products for locations
         @return: Dictionary of values
         """
         if context is None:
             context = {}
+        self._parse_context_location_id(cr, uid, context=context)
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         # when the location_id = False results now in showing stock for all internal locations
         # *previously*, was showing the location of no location (= 0.0 for all prodlot)
         if 'location_id' not in context or not context['location_id']:
             locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
         else:
-            locations = context['location_id'] and [context['location_id']] or []
+            locations = context['location_id'] or []
 
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+        if isinstance(locations, (int, long)):
+            locations = [locations]
 
         res = {}.fromkeys(ids, 0.0)
         if locations:
@@ -993,6 +1022,7 @@ class stock_production_lot(osv.osv):
         '''
         call super method, as fields.function does not work with inheritance
         '''
+        self._parse_context_location_id(cr, uid, context=context)
         return super(stock_production_lot, self)._get_stock(cr, uid, ids, field_name, arg, context=context)
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
@@ -1418,7 +1448,7 @@ class stock_inventory_line(osv.osv):
         #uom = uom or product_obj.uom_id.id
         # UF-2427: Add one little minute to make sure that all inventories created in the same minute will be included
         if to_date:
-            to_date = (DateTimeFrom( to_date ) + RelativeDateTime(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')        
+            to_date = (DateTimeFrom( to_date ) + RelativeDateTime(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')
         stock_context = {'uom': product_uom, 'to_date': to_date,
                          'prodlot_id':prod_lot_id,}
         if location_id:
