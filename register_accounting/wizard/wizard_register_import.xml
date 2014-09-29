@@ -34,7 +34,7 @@
                     <newline />
                     <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
                     <group col="4" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}">
-                        <label string="The import template is:"/>
+                        <label string="The import template is detailed below. Cheque number is considered only for the Cheque Register, and must left blank for Bank and Cash Registers."/>
                         <newline />
                         <html>
                           <br />
@@ -67,9 +67,13 @@
                                 <th class='destination' style='border: thin solid black; border-left: none;'>Destination</th>
                                 <th class='cost_center' style='border: thin solid black; border-left: none;'>Cost Centre</th>
                                 <th class='funding_pool' style='border: thin solid black; border-left: none;'>Funding Pool</th>
+                                <th class='free1' style='border: thin solid black; border-left: none;'>Free 1</th>
+                                <th class='free2' style='border: thin solid black; border-left: none;'>Free 2</th>
                               </tr>
                               <tr>
                                 <th style="border: thin solid black; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
                                 <th style="border: thin solid black; border-left: none; border-top: none;"></th>
                                 <th style="border: thin solid black; border-left: none; border-top: none;"></th>
                                 <th style="border: thin solid black; border-left: none; border-top: none;"></th>
