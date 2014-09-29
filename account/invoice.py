@@ -1112,7 +1112,7 @@ class account_invoice(osv.osv):
             del line['id']
             del line['invoice_id']
             for field in ('company_id', 'partner_id', 'account_id', 'product_id',
-                          'uos_id', 'account_analytic_id', 'tax_code_id', 'base_code_id'):
+                          'uos_id', 'account_analytic_id', 'tax_code_id', 'base_code_id','account_tax_id'):
                 line[field] = line.get(field, False) and line[field][0]
             if 'invoice_line_tax_id' in line:
                 line['invoice_line_tax_id'] = [(6,0, line.get('invoice_line_tax_id', [])) ]
@@ -1587,7 +1587,7 @@ class account_invoice_tax(osv.osv):
         if context == None:
             context = {} 
         self._check_untaxed_amount(cr, uid, vals, context)
-	return super(account_invoice_tax, self).create(cr, uid, vals, context=context)
+    	return super(account_invoice_tax, self).create(cr, uid, vals, context=context)
 
 
     def _count_factor(self, cr, uid, ids, name, args, context=None):
