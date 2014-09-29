@@ -223,8 +223,9 @@ def get_hardware_id():
             for line in os.popen("/sbin/ifconfig"): 
                 if line.find('Ether') > -1: 
                     mac.append(line.split()[4]) 
-        print mac
-        return hashlib.md5(''.join(mac)).hexdigest()
+        hw_hash = hashlib.md5(''.join(mac)).hexdigest()
+        logging.getLogger('sync.client').info('Hardware identifier: %s' % (hw_hash,))
+        return hw_hash
 
 class Entity(osv.osv):
     """ OpenERP entity name and unique identifier """
