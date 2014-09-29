@@ -1268,6 +1268,15 @@ class procurement_order(osv.osv):
         '''
         self.write(cr, uid, ids, {'is_rfq_done': True, 'state': 'exception',}, context=context)
         return True
+
+    def _get_pricelist_from_currency(self, cr, uid, currency_id, context=None):
+        price_obj = self.pool.get('product.pricelist')
+        price_ids = price_obj.search(cr, uid, [
+            ('currency_id', '=', currency_id),
+            ('type', '=', 'purchase'),
+        ], context=context)
+
+        return price_ids and price_ids[0] or False
     
     def action_po_assign(self, cr, uid, ids, context=None):
         '''
@@ -1304,9 +1313,19 @@ class procurement_order(osv.osv):
         if procurement.tender_id:
             values['origin_tender_id'] = procurement.tender_id.id
 
+        # set tender line currency in purchase order
+        if procurement.tender_line_id:
+            cur_id = procurement.tender_line_id.currency_id.id
+            pricelist_id = self._get_pricelist_from_currency(cr, uid, cur_id, context=context)
+            if pricelist_id:
+                values['pricelist_id'] = pricelist_id
+
         # set rfq link in purchase order
         if procurement.rfq_id:
-            values['origin_rfq_id'] = procurement.rfq_id.id
+            values.update({
+                'origin_rfq_id': procurement.rfq_id.id,
+                'pricelist_id': procurement.rfq_id.pricelist_id.id,
+            })
 
         values['date_planned'] = procurement.date_planned
         
