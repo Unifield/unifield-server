@@ -28,6 +28,7 @@ import pooler
 from osv import fields, osv, orm
 from tools.translate import _
 
+
 class account_invoice(osv.osv):
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = {}
@@ -1110,7 +1111,7 @@ class account_invoice(osv.osv):
             del line['id']
             del line['invoice_id']
             for field in ('company_id', 'partner_id', 'account_id', 'product_id',
-                          'uos_id', 'account_analytic_id', 'tax_code_id', 'base_code_id'):
+                          'uos_id', 'account_analytic_id', 'tax_code_id', 'base_code_id','account_tax_id'):
                 line[field] = line.get(field, False) and line[field][0]
             if 'invoice_line_tax_id' in line:
                 line['invoice_line_tax_id'] = [(6,0, line.get('invoice_line_tax_id', [])) ]
@@ -1574,6 +1575,20 @@ class account_invoice_tax(osv.osv):
     _name = "account.invoice.tax"
     _description = "Invoice Tax"
 
+
+    def _check_untaxed_amount(self, cr, uid, vals, context=None):
+        if 'account_tax_id' in vals and vals['account_tax_id'] and vals['base_amount'] == 0:
+            raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Save & Edit button before saving the %s tax.') % (vals['name']))
+        return True
+
+
+    def create(self, cr, uid, vals, context=None):
+        if context == None:
+            context = {}
+        self._check_untaxed_amount(cr, uid, vals, context)
+        return super(account_invoice_tax, self).create(cr, uid, vals, context=context)
+
+
     def _count_factor(self, cr, uid, ids, name, args, context=None):
         res = {}
         for invoice_tax in self.browse(cr, uid, ids, context=context):
@@ -1605,8 +1620,29 @@ class account_invoice_tax(osv.osv):
         'tax_amount': fields.float('Tax Code Amount', digits_compute=dp.get_precision('Account')),
         'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'factor_base': fields.function(_count_factor, method=True, string='Multipication factor for Base code', type='float', multi="all"),
-        'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all")
+        'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all"),
+        'account_tax_id': fields.many2one('account.tax', 'Tax')
     }
+
+
+    def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed):
+        atx_obj = self.pool.get('account.tax')
+        atx = atx_obj.browse(cr, uid, account_tax_id)
+        return {'value': {'account_id': atx.account_collected_id.id, 'name': "{0} - {1}".format(atx.name,atx.description), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id,amount_untaxed)}}
+
+
+    def _calculate_tax(self, cr, uid, account_tax_id, amount_untaxed):
+        atx_obj = self.pool.get('account.tax')
+        atx = atx_obj.browse(cr, uid, account_tax_id)
+        tax_amount = 0.0
+        if atx.type == 'fixed':
+            tax_amount = atx.amount
+        if atx.type == 'percent':
+            tax_amount = atx.amount * amount_untaxed
+            tax_amount = round(tax_amount,2)
+
+        return tax_amount
+
 
     def base_change(self, cr, uid, ids, base, currency_id=False, company_id=False, date_invoice=False):
         cur_obj = self.pool.get('res.currency')
@@ -1685,6 +1721,14 @@ class account_invoice_tax(osv.osv):
             t['amount'] = cur_obj.round(cr, uid, cur.rounding, t['amount'])
             t['base_amount'] = cur_obj.round(cr, uid, cur.rounding, t['base_amount'])
             t['tax_amount'] = cur_obj.round(cr, uid, cur.rounding, t['tax_amount'])
+
+        ai = self.pool.get('account.invoice').browse(cr, uid, invoice_id)
+        ait_ids = self.pool.get('account.invoice.tax').search(cr, uid, [('invoice_id','=',invoice_id)])
+        aits = self.pool.get('account.invoice.tax').browse(cr, uid, ait_ids)
+        for ait in aits:
+            if ait.account_tax_id and not ait.amount:
+                self.pool.get('account.invoice.tax').write(cr, uid, ait.id, {'amount': self._calculate_tax(cr, uid, ait.account_tax_id.id,ai.amount_untaxed)})
+
         return tax_grouped
 
     def move_line_get(self, cr, uid, invoice_id):
