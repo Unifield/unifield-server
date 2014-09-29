@@ -822,7 +822,7 @@ class weekly_forecast_report(osv.osv):
                AND
                s.state IN ('assigned', 'confirmed')
                AND
-               s.id IN 
+               s.id NOT IN 
                     (SELECT
                         l.move_dest_id
                      FROM
@@ -831,7 +831,7 @@ class weekly_forecast_report(osv.osv):
                      WHERE
                         l.move_dest_id IS NOT NULL
                         AND
-                        o.state IN ('approved', 'except_picking', 'except_invoice', 'done')
+                        o.state NOT IN ('approved', 'except_picking', 'except_invoice', 'done')
                     )
             GROUP BY p.id, s.date)
         UNION
@@ -852,7 +852,7 @@ class weekly_forecast_report(osv.osv):
               AND
               s.state IN ('assigned', 'confirmed')
               AND
-              s.id IN 
+              s.id NOT IN 
                    (SELECT
                        l.move_dest_id
                     FROM
@@ -861,7 +861,7 @@ class weekly_forecast_report(osv.osv):
                     WHERE
                        l.move_dest_id IS NOT NULL
                        AND
-                       o.state IN ('approved', 'except_picking', 'except_invoice', 'done')
+                       o.state NOT IN ('approved', 'except_picking', 'except_invoice', 'done')
                    )
             GROUP BY p.id, s.date))
             AS subrequest
