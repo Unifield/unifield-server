@@ -74,14 +74,19 @@ class MonitorLogger(object):
             self.info['end'] = fields.datetime.now()
             self.monitor.last_status = (status, self.info['end'])
 
-    def close(self):
-        self.switch('status', self.final_status)
+    def update_sale_purchase_logger(self):
+        # UTP-1200: Moved to this method and call this right after the message pull is done, not need to wait until 
+        # the end of sync since it's not relevant to the push but also to avoid unnecessary error caused by the 
+        # "in progress" issue (fixed but better to avoid)
         for model, column, res_id in self.link_to:
             # if a message failed, a rollback is made so the log message doesn't exist anymore
             if self.monitor.pool.get(model).exists(self.cr, self.uid, res_id, self.context):
                 self.monitor.pool.get(model).write(self.cr, self.uid, res_id, {
                     column : self.row_id,
                 }, context=self.context)
+
+    def close(self):
+        self.switch('status', self.final_status)
         self.write()
         self.cr.close()
         del self.cr

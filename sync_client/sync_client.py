@@ -772,6 +772,8 @@ class Entity(osv.osv):
                 notrun_count = messages.search(cr, uid, [('run', '=', False)], count=True, context=context)
                 if notrun_count > 0: logger.append(_("Message(s) not run left: %d") % notrun_count)
                 logger.write()
+                # UTP-1200: Update already the sync_id to the logger lines for FO/PO 
+                logger.update_sale_purchase_logger()
 
         return messages_count
 
