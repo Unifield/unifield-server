@@ -116,18 +116,21 @@ class res_company(osv.osv):
             if len(ids) != 1:
                 raise osv.except_osv(_('Error'), _("Only one company per instance!") or '')
             company = self.browse(cr, uid, ids[0], context=context)
+            instance_data = {
+                'instance': cr.dbname,
+                'state': 'active',
+                'instance_identifier': self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).identifier,
+            }
             if not company.instance_id:
                 # An instance was not set; add DB name and activate it
-                instance_obj.write(cr, uid, [vals['instance_id']], {'instance': cr.dbname,
-                                                                    'state': 'active'}, context=context)
+                instance_obj.write(cr, uid, [vals['instance_id']], instance_data, context=context)
             elif company.instance_id.id != vals.get('instance_id'):
                 # An instance was already set
                 old_instance_id = company.instance_id.id
                 # Deactivate the instance
-                instance_obj.write(cr, uid, [old_instance_id], {'state': 'inactive'}, context=context)
+                instance_obj.write(cr, uid, [old_instance_id], {'state': 'inactive', 'instance_identifier': False}, context=context)
                 # add DB name and activate it
-                instance_obj.write(cr, uid, [vals['instance_id']], {'instance': cr.dbname,
-                                                                    'state': 'active'}, context=context)
+                instance_obj.write(cr, uid, [vals['instance_id']], instance_data, context=context)
                 # refresh all objects
                 for object in ['account.analytic.journal', 'account.journal', 'account.analytic.line', 'account.move', 'account.move.line', 'account.bank.statement']:
                     self._refresh_objects(cr, uid, object, old_instance_id, vals['instance_id'], context=context)

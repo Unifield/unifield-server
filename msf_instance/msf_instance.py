@@ -99,6 +99,7 @@ class msf_instance(osv.osv):
         'current_instance_level': fields.function(_get_current_instance_level, method=True, store=False, string="Current Instance Level", type="char", readonly="True"),
         'top_cost_center_id': fields.function(_get_top_cost_center, method=True, store=False, string="Top cost centre for budget consolidation", type="many2one", relation="account.analytic.account", readonly="True"),
         'po_fo_cost_center_id': fields.function(_get_po_fo_cost_center, method=True, store=False, string="Cost centre picked for PO/FO reference", type="many2one", relation="account.analytic.account", readonly="True"),
+        'instance_identifier': fields.char('Instance identifier', size=64, readonly=1),
     }
     
     _defaults = {
