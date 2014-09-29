@@ -261,6 +261,9 @@ class update(osv.osv):
         if update_ids:
             sequence = self._get_next_sequence(cr, uid, context=context)
             self.write(cr, 1, update_ids, {'sequence' : sequence}, context=context)
+        self._logger.info("[%s] Data Push :: Number of data pushed: %d" % (entity.name, len(update_ids)))
+        if sequence:
+            self._logger.info("[%s] Data Push :: New server's sequence number: %s" % (entity.name, sequence))
         return (True, sequence)
 
     def _get_next_sequence(self, cr, uid, context=None):
@@ -444,6 +447,9 @@ class update(osv.osv):
                     'handle_priority' : update.handle_priority,
                 })
 
+        self._logger.info("[%s] Data pull :: Client last sequence number: %s" % (entity.name, last_seq))
+        self._logger.info("[%s] Data pull :: Server last sequence number: %s" % (entity.name, self.get_last_sequence(cr, uid)))
+        self._logger.info("[%s] Data pull :: Number of data pulled: %s" % (entity.name, len(update_to_send)))
         return data
     
     def get_additional_forced_field(self, update): 

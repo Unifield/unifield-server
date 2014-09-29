@@ -346,7 +346,6 @@ class Entity(osv.osv):
     @sync_process('data_push')
     def push_update(self, cr, uid, context=None):
         context = context or {}
-        logger = context.get('logger')
 
         entity = self.get_entity(cr, uid, context)
 
@@ -358,18 +357,19 @@ class Entity(osv.osv):
             updates_count = self.create_update(cr, uid, context=context)
             cr.commit()
             cont = updates_count > 0
-            self._logger.info("init")
+            self._logger.info("Push data :: Updates created: %d" % updates_count)
         if cont or entity.state == 'update_send':
             updates_count = self.send_update(cr, uid, context=context)
             cr.commit()
             cont = True
-            self._logger.info("sent update")
+            self._logger.info("Push data :: Updates sent: %d" % updates_count)
         if cont or entity.state == 'update_validate':
             server_sequence = self.validate_update(cr, uid, context=context)
             cr.commit()
-            if logger and server_sequence:
-                logger.append(_("Update's server sequence: %d") % server_sequence)
-            self._logger.info("update validated")
+            if server_sequence:
+                self._logger.info(_("Push data :: New server's sequence number: %d") % server_sequence)
+
+
 
         return True
 
@@ -471,7 +471,6 @@ class Entity(osv.osv):
     @sync_process('data_pull')
     def pull_update(self, cr, uid, recover=False, context=None):
         context = context or {}
-        logger = context.get('logger')
 
         entity = self.get_entity(cr, uid, context=context)
         if entity.state not in ('init', 'update_pull'):
@@ -490,8 +489,10 @@ class Entity(osv.osv):
         updates_count = self.retrieve_update(cr, uid, max_packet_size, recover=recover, context=context)
         self._logger.info("::::::::The instance " + entity.name + " pulled: " + str(res[1]) + " messages and " + str(updates_count) + " updates.")        
         updates_executed = self.execute_updates(cr, uid, context=context)
-        if updates_executed == 0 and updates_count > 0 and logger:
-            logger.append(_("Warning: no update to execute, this case should never occurs."))
+        if updates_executed == 0 and updates_count > 0:
+            self._logger.warning("No update to execute, this case should never occurs.")
+
+        self._logger.info("Pull data :: Number of data pull: %s" % updates_count)
         return True
 
     def set_last_sequence(self, cr, uid, context=None):
@@ -500,6 +501,7 @@ class Entity(osv.osv):
         res = proxy.get_max_sequence(entity.identifier, self._hardware_id)
         if res and res[0]:
             check_md5(res[2], res[1], _('method get_max_sequence'))
+            self._logger.info("Pull data :: Last sequence: %s" % res[1])
             return self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
             raise Exception, res[1]
@@ -619,7 +621,6 @@ class Entity(osv.osv):
     @sync_process('msg_push')
     def push_message(self, cr, uid, context=None):
         context = context or {}
-        logger = context.get('logger')
         entity = self.get_entity(cr, uid, context)
 
         if entity.state not in ['init', 'msg_push']:
@@ -629,8 +630,10 @@ class Entity(osv.osv):
             self.create_message(cr, uid, context=context)
             cr.commit()
 
-        self.send_message(cr, uid, context=context)
+        nb_msg = self.send_message(cr, uid, context=context)
         cr.commit()
+
+        self._logger.info("Push messages :: Number of messages pushed: %d" % nb_msg)
 
         return True
 
@@ -706,7 +709,8 @@ class Entity(osv.osv):
         self.get_message(cr, uid, context=context)
         # UTP-1177: Reset the message ids of the entity at the server side
         proxy.reset_message_ids(entity.identifier, self._hardware_id)
-        self.execute_message(cr, uid, context=context)
+        msg_count = self.execute_message(cr, uid, context=context)
+        self._logger.info("Pull message :: Number of messages pulled: %s" % msg_count)
         return True
 
     def get_message(self, cr, uid, context=None):
@@ -801,10 +805,12 @@ class Entity(osv.osv):
 
     @sync_process()
     def sync(self, cr, uid, context=None):
+        self._logger.info("Start synchronization")
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
+        self._logger.info("Synchronization succesfully done")
         return True
 
     def get_upgrade_status(self, cr, uid, context=None):
@@ -848,6 +854,7 @@ class Connection(osv.osv):
         This class is also a singleton
 
     """
+    _logger = logging.getLogger('sync.client.sync_server_connection')
 
     def _auto_init(self,cr,context=None):
         res = super(Connection, self)._auto_init(cr, context=context)
@@ -931,6 +938,11 @@ class Connection(osv.osv):
             return True
         try:
             con = self._get_connection_manager(cr, uid, context=context)
+            sync_args = {
+                'client_name': cr.dbname,
+                'server_name': con.database,
+            }
+            self._logger.info('Client \'%(client_name)s\' attempts to connect to sync. server \'%(server_name)s\'' % sync_args)
             connector = self.connector_factory(con)
             if not getattr(self, '_password', False):
                 self._password = con.login
@@ -946,6 +958,7 @@ class Connection(osv.osv):
         except BaseException, e:
             raise osv.except_osv(_("Error"), _(unicode(e)))
 
+        self._logger.info('Client \'%(client_name)s\' succesfully connected to sync. server \'%(server_name)s\'' % sync_args)
         return True
 
     def action_connect(self, cr, uid, ids, context=None):
@@ -963,14 +976,21 @@ class Connection(osv.osv):
         return rpc.Object(cnx, model)
 
     def disconnect(self, cr, uid, context=None):
+        con = self._get_connection_manager(cr, uid, context=context)
+        sync_args = {
+            'client_name': cr.dbname,
+            'server_name': con.database,
+        }
         entity = self.pool.get('sync.client.entity')
         if entity.is_syncing():
             try:
                 entity._renew_sync_lock()
             except StandardError:
+                self._logger.warning('Error during the disconnection of client \'%(client_name)s\'' % sync_args)
                 return False
             entity.sync_cursor.close()
         self._uid = False
+        self._logger.info('Client \'%(client_name)s\' succesfully disconnected from the sync. server \'%(server_name)s\'' % sync_args)
         return True
 
     def action_disconnect(self, cr, uid, ids, context=None):
