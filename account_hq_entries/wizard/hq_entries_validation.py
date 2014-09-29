@@ -356,7 +356,7 @@ class hq_entries_validation(osv.osv_memory):
                                 'destination_id': line.destination_id.id,
                             })]
                         })
-                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
+                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
 
             for line in cc_change:
                 # actual distrib_id
@@ -382,10 +382,28 @@ class hq_entries_validation(osv.osv_memory):
                 # create new lines
                 if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
                     continue
-                cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id,
+                # UTP-1118: posting date should be those from initial HQ entry line
+                cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': line.date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id,
                     'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': fp_old_lines[0]})
                 # update new ana line
-                ana_line_obj.write(cr, uid, cor_ids, {'last_corrected_id': fp_old_lines[0]})
+                cor_vals = {'last_corrected_id': fp_old_lines[0]}
+                # Add COR before analytic line name (UTP-1118: missing info)
+                cor_data = ana_line_obj.read(cr, uid, cor_ids, ['name'])
+                for piece_of_cor_data in cor_data:
+                    cor_name = cor_data.get('name', '')
+                    new_name = self.pool.get('account.move.line').join_without_redundancy(cor_name, 'COR')
+                    if new_name:
+                        cor_vals.update({'name': new_name})
+                ana_line_obj.write(cr, uid, cor_ids, cor_vals)
+                # UTP-1118: Change entry sequence so that it's compatible with analytic journal (correction)
+                if isinstance(cor_ids, (int, long)):
+                    cor_ids = [cor_ids]
+                cor_ids += res_reverse
+                for ana_line in ana_line_obj.browse(cr, uid, cor_ids, context=context):
+                    prefix = ana_line.instance_id.move_prefix
+                    seqnum = ana_line.entry_sequence.split('-')[2]
+                    entry_seq = "%s-%s-%s" % (prefix, ana_line.journal_id.code, seqnum)
+                    cr.execute('UPDATE account_analytic_line SET entry_sequence = %s WHERE id = %s', (entry_seq, ana_line.id))
                 # update old ana lines
                 ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
