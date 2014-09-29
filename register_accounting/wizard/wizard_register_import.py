@@ -34,6 +34,7 @@ import pooler
 from ..register_tools import open_register_view
 from lxml import etree
 
+
 class wizard_register_import(osv.osv_memory):
     _name = 'wizard.register.import'
 
@@ -232,6 +233,7 @@ class wizard_register_import(osv.osv_memory):
         processed = 0
         errors = []
         cheque_numbers = []
+
         try:
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00}, context)
@@ -425,12 +427,11 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
                         continue
                     r_account = account_ids[0]
-                    account_obj = self.pool.get('account.account')
-                    restricted_ids = account_obj.search(cr, uid, [('restricted_area', '=', 'register_line'), ('id', '=', r_account)])
-	            if not restricted_ids:
-                        errors.append(_('Line %s. G/L account %s is restricted.') % (current_line_num, account_code,))
-                    account = account_obj.read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
+                    account = self.pool.get('account.account').read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
                     type_for_register = account.get('type_for_register', '')
+
+                    
+
 
                     # cheque_number
                     r_cheque_number = line[cols['cheque_number']]
@@ -534,7 +535,7 @@ class wizard_register_import(osv.osv_memory):
                     # - Booking Currency
                     vals = {
                         'description': r_description or '',
-                        'ref': line[5]  or '',
+                        'ref': line[4]  or '',
                         'account_id': r_account or False,
                         'debit': r_debit or 0.0,
                         'credit': r_credit or 0.0,
