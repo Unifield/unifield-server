@@ -26,21 +26,30 @@ import time
 
 class procurement_batch_cron(osv.osv):
     _name = 'procurement.batch.cron'
-    _inherit = 'ir.cron'
+#    _inherit = 'ir.cron'
     
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
+        'active': fields.boolean('Active'),
         'type': fields.selection([('standard', 'POs creation Batch (from orders)'), ('rules', 'POs creation Batch (replenishment rules)')], string='Type', required=True),
         'request_ids': fields.one2many('res.request', 'batch_id', string='Associated Requests', readonly=True),
         'cron_ids': fields.one2many('ir.cron', 'batch_id', string='Associated Cron tasks'),
         'last_run_on': fields.datetime('Last run on', readonly=True),
+        'interval_number': fields.integer('Interval Number',help="Repeat every x."),
+        'interval_type': fields.selection( [('minutes', 'Minutes'),
+            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
+        'nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
+    }
+
+    _defaults = {
+        'nextcall' : lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'interval_number' : lambda *a: 1,
+        'interval_type' : lambda *a: 'weeks',
+        'active' : lambda *a: 1, 
     }
     
     _constraints = [
     ]
-
-    def _poolJobs(self, db_name, check=False):
-        return False
 
     def open_request_view(self, cr, uid, ids, context=None):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_report', 'batch_requests_view')[1]
@@ -119,16 +128,24 @@ class procurement_batch_cron(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
-        for batch in self.browse(cr, uid, ids, context=context):
-            if vals.get('type') and vals.get('type') != batch.type:
-                for cron in batch.cron_ids:
-                    cron_obj.unlink(cr, uid, cron.id, context=context)
-                self._create_associated_cron(cr, uid, batch.id, vals, context=context)
-            else:
-                for cron in batch.cron_ids:
-                    if 'name' in vals:
-                        vals.pop('name')
-                    cron_obj.write(cr, uid, cron.id, vals, context=context)
+        if vals is None:
+            vals = {}
+
+        cron_vals = vals.copy()
+        if cron_vals.get('last_run_on'):
+            del cron_vals['last_run_on']
+
+        if cron_vals:
+            for batch in self.browse(cr, uid, ids, context=context):
+                if vals.get('type') and vals.get('type') != batch.type:
+                    for cron in batch.cron_ids:
+                        cron_obj.unlink(cr, uid, cron.id, context=context)
+                    self._create_associated_cron(cr, uid, batch.id, vals, context=context)
+                else:
+                    for cron in batch.cron_ids:
+                         if 'name' in vals:
+                            vals.pop('name')
+                         cron_obj.write(cr, uid, cron.id, vals, context=context)
                     
         return super(procurement_batch_cron, self).write(cr, uid, ids, vals, context=context)
 
