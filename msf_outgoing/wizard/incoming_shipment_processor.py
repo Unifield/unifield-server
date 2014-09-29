@@ -660,6 +660,29 @@ class stock_move_in_processor(osv.osv):
 
         return line_data
 
+    def open_change_product_wizard(self, cr, uid, ids, context=None):
+        """
+        Change the locations on which product quantities are computed
+        """
+        # Objects
+        wiz_obj = self.pool.get('change.product.move.processor')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = super(stock_move_in_processor, self).\
+            open_change_product_wizard(cr, uid, ids, context=context)
+
+        wiz_id = res.get('res_id', False)
+        if wiz_id:
+            in_move = self.browse(cr, uid, ids[0], context=context)
+            if in_move.batch_location_ids:
+                wiz_obj.write(cr, uid, [wiz_id], {
+                    'move_location_ids': in_move.batch_location_ids,
+                }, context=context)
+
+        return res
+
 stock_move_in_processor()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
