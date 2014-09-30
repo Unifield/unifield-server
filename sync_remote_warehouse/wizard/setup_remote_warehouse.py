@@ -64,7 +64,7 @@ class setup_remote_warehouse(osv.osv_memory):
         server_connection_pool = self.pool.get('sync.client.sync_server_connection')
         connection_manager_ids = server_connection_pool.search(cr, uid, [])
         if connection_manager_ids:
-            server_connection_pool.browse(cr, uid, connection_manager_ids[0]).disconnect()
+            server_connection_pool.disconnect(cr, uid)
             
     def _fill_ir_model_data_dates(self, cr):
         """ 
