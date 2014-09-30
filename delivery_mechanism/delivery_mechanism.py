@@ -787,6 +787,12 @@ class stock_picking(osv.osv):
         '''
         prog_obj = self.pool.get('stock.picking.processing.info')
 
+        if context is None:
+            context = {}
+
+        if context.get('sync_message_execution', False):
+            return False
+
         if not prog_id:
             if not isinstance(picking, browse_record) and isinstance(picking, (int, long)):
                 picking = self.browse(cr, uid, picking, context=context)
@@ -1189,6 +1195,9 @@ class stock_picking(osv.osv):
             }, context=context)
 
         if context.get('rw_sync', False):
+            prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
+            }, context=context)
             if backorder_id:
                 return backorder_id
             return wizard.picking_id.id
