@@ -66,6 +66,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
+        'unique_rule_type': fields.char(
+            size=128,
+            string='Unique Replenishment rule type',
+            readonly=True,
+            help="""This field is used to have only one PO by replenishment
+rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
+""",
+        ),
     }
 
     def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -202,7 +210,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         # Isolated requirements => One PO for one IR/FO
         if partner.po_by_project == 'isolated':
-            purchase_domain.append(('origin', '=', procurement.origin))
+            if line and line.order_id:
+                purchase_domain.append(('unique_fo_id', '=', line.order_id.id))
+                values['unique_fo_id'] = line.order_id.id
+            elif procurement.unique_rule_type:
+                purchase_domain.append(('unique_rule_type', '=', procurement.unique_rule_type))
+                values['unique_rule_type'] = procurement.unique_rule_type
 
         # Category requirements => Search a PO with the same category than the IR/FO category
         if partner.po_by_project in ('category_project', 'category'):
@@ -593,6 +606,19 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             self.write(cr, uid, [procurement.id], {'state': 'running', 'purchase_id': purchase_id})
         return res
     # @@@END override
+
+    def _do_create_proc_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        """
+        Puth the unique rule type on the procurement order
+        """
+        res = super(procurement_order, self)._do_create_proc_hook(cr, uid, ids, context=context, *args, **kwargs)
+
+        if res is None:
+            res = {}
+
+        res['unique_rule_type'] = 'stock.warehouse.orderpoint'
+
+        return res
 
 procurement_order()
 

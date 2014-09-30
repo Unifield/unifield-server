@@ -137,6 +137,7 @@ Created documents : \n'''
             proc_id = proc_obj.create(cr, uid, {
                                         'name': _('Automatic Supply: %s') % (auto_sup.name,),
                                         'origin': auto_sup.name,
+                                        'unique_rule_type': 'stock.warehouse.automatic.supply',
                                         'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
                                         'product_id': product_id.id,
                                         'product_qty': qty,

@@ -175,6 +175,7 @@ Created documents : \n'''
             proc_id = proc_obj.create(cr, uid, {
                                     'name': _('Procurement cycle: %s') % (cycle.name,),
                                     'origin': cycle.name,
+                                    'unique_rule_type': 'stock.warehouse.order.cycle',
                                     'date_planned': newdate,
                                     'product_id': product.id,
                                     'product_qty': quantity_to_order,
