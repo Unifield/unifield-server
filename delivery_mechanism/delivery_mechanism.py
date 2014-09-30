@@ -787,7 +787,10 @@ class stock_picking(osv.osv):
         '''
         prog_obj = self.pool.get('stock.picking.processing.info')
 
-        if context.get('rw_sync', False):
+        if context is None:
+            context = {}
+
+        if context.get('sync_message_execution', False):
             return False
 
         if not prog_id:
