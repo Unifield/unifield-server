@@ -391,7 +391,12 @@ class documents_done_wizard(osv.osv):
             if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
                 self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, all_doc=all_doc, context=context)
                 if all_doc:
-                    self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.')%(self._get_model_name(doc.real_model), doc.name), context=context)
+                    if doc.real_model == 'sale.order' and self.pool.get(doc.real_model).read(cr, uid, doc.res_id, ['procurement_request'])['procurement_request']:
+                        proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
+                        context.update({'view_id': proc_view and proc_view[1] or False})
+                        self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The Internal request \'%s\' has been closed.')%(doc.name), context=context)
+                    else:
+                        self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.')%(self._get_model_name(doc.real_model), doc.name), context=context)
                     pb_ids = pb_obj.search(cr, uid, [('wizard_id', '=', doc.id)], context=context)
                     pb_obj.done_all_documents(cr, uid, pb_ids, all_doc=all_doc, context=context)
                 
