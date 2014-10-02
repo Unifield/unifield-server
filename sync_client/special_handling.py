@@ -54,7 +54,7 @@ class account_analytic_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No period found for the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
             if period and period.state == 'created':
-                raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No AJI is created') % (period.name,))
+                raise osv.except_osv(_('Error !'), _('Period \'%s\' of the given date %s is not open! No AJI is created') % (period.name, vals['date'] or ''))
         
         # continue the create request if it comes from a normal requester
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
