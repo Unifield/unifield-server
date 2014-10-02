@@ -381,6 +381,7 @@ class stock_picking(osv.osv):
             }
             mem_ids = mem_obj.search(cr, uid, [
                 ('picking_id', '=', pick_id),
+                ('picking_id.state', '!=', 'done'),
             ], order='start_date desc', context=context)
             if mem_ids:
                 res[pick_id]['progress_memory'] = mem_ids[0]
