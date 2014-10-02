@@ -415,10 +415,11 @@ class res_partner(osv.osv):
         """
         [utp-315] avoid deactivating partner that have still open document linked to them.
         """
-        if not active:
-            # some verifications
-            if isinstance(ids, (int, long)):
-                ids = [ids]
+        # some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # UF-2463: If the partner is not saved into the system yet, just ignore this check
+        if not active and len(ids) > 0:
             if context is None:
                 context = {}
 
