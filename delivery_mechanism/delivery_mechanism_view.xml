@@ -53,8 +53,28 @@
                         <field name="error_msg" widget="text" nolabel="1" colspan="4" />
                     </group>
                     <separator colspan="4" string="Actions" />
-                    <button name="refresh" type="object" string="Refresh" icon="gtk-refresh" colspan="2" />
-                    <button name="close" type="object" string="Close" icon="gtk-close" colspan="2" />
+                    <group colspan="4" col="6">
+                        <button
+                            name="refresh"
+                            type="object"
+                            attrs="{'invisible': [('error_msg', '!=', False)]}"
+                            string="Refresh"
+                            icon="gtk-refresh"
+                            colspan="2" />
+                        <button
+                            name="reset_incoming"
+                            type="object"
+                            attrs="{'invisible': [('error_msg', '=', False)]}"
+                            string="Reset processing"
+                            icon="terp-gtk-jump-to-rtl"
+                            colspan="2" />
+                        <button
+                            name="close"
+                            type="object"
+                            string="Close"
+                            icon="gtk-close"
+                            colspan="2" />
+                    </group>
                 </form>
             </field>
         </record>
