@@ -450,6 +450,9 @@ class account_move_line_compute_currency(osv.osv):
                 logger = netsvc.Logger()
                 logger.notifyChannel("warning", netsvc.LOG_WARNING, "No date for new account_move_line!")
                 traceback.print_stack()
+                # UTP-1194: Raise exception if the move is not in vals when creating move line
+                raise osv.except_osv(_('Error !'), _('Cannot create move line due to missing the parent move id'))
+            
         if not context:
             context = {}
         
