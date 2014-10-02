@@ -57,6 +57,8 @@ class procurement_order(osv.osv):
         report = []
         report_except = 0
         ran_proc = []
+
+        self.check_exception_proc(cr, uid, [], context=context)
         
         # We start with only category Automatic Supply
         for cycle in cycle_obj.browse(cr, uid, cycle_ids):

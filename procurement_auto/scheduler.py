@@ -22,16 +22,34 @@
 from osv import osv
 from datetime import datetime
 from tools.translate import _
+from dateutil.relativedelta import relativedelta
 
 import time
 import pooler
 import netsvc
+import tools
 
 
 
 class procurement_order(osv.osv):
     _name = 'procurement.order'
     _inherit = 'procurement.order'
+
+    def check_exception_proc(self, cr, uid, ids, context=None):
+        '''
+        Check again the procurement orders that are in exception
+        '''
+        wf_service = netsvc.LocalService("workflow")
+        # Re-try all procurement orders
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        maxdate = (datetime.today() + relativedelta(days=company.schedule_range)).strftime(tools.DEFAULT_SERVER_DATE_FORMAT)
+        ids = self.search(cr, uid, [('state', '=', 'exception')], order="date_planned")
+        for proc in self.browse(cr, uid, ids, context=context):
+            if maxdate >= proc.date_planned:
+                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_restart', cr)
+                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+
+        return True
     
     def run_automatic_supply(self, cr, uid, use_new_cursor=False, batch_id=False, context=None):
         '''
@@ -51,6 +69,8 @@ class procurement_order(osv.osv):
         created_proc = []
         report = []
         report_except = 0
+
+        self.check_exception_proc(cr, uid, [], context=context)
         
         # We start with only category Automatic Supply
         for auto_sup in auto_sup_obj.browse(cr, uid, auto_sup_ids):
