@@ -821,6 +821,18 @@ class weekly_forecast_report(osv.osv):
                s.product_id IN %(product_ids)s
                AND
                s.state IN ('assigned', 'confirmed')
+               AND
+               s.id NOT IN 
+                    (SELECT
+                        l.move_dest_id
+                     FROM
+                        purchase_order_line l
+                        LEFT JOIN purchase_order o ON o.id = l.order_id
+                     WHERE
+                        l.move_dest_id IS NOT NULL
+                        AND
+                        o.state NOT IN ('approved', 'except_picking', 'except_invoice', 'done')
+                    )
             GROUP BY p.id, s.date)
         UNION
             (SELECT
@@ -839,6 +851,18 @@ class weekly_forecast_report(osv.osv):
               s.product_id IN %(product_ids)s
               AND
               s.state IN ('assigned', 'confirmed')
+              AND
+              s.id NOT IN 
+                   (SELECT
+                       l.move_dest_id
+                    FROM
+                       purchase_order_line l
+                       LEFT JOIN purchase_order o ON o.id = l.order_id
+                    WHERE
+                       l.move_dest_id IS NOT NULL
+                       AND
+                       o.state NOT IN ('approved', 'except_picking', 'except_invoice', 'done')
+                   )
             GROUP BY p.id, s.date))
             AS subrequest
             GROUP BY product_id, date;

@@ -232,7 +232,7 @@ class account_move_line(osv.osv):
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
             help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
         'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True),
-        'name': fields.char('Description', size=64, required=True),
+        'name': fields.char('Description', size=64, required=True, readonly=True),
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Func. Credit', digits_compute=dp.get_precision('Account')),
@@ -279,6 +279,18 @@ class account_move_line(osv.osv):
     }
 
     _order = 'move_id DESC'
+
+    def default_get(self, cr, uid, fields, context=None):
+        """
+        UFTP-262: As we permit user to define its own reference for a journal item in a Manual Journal Entry, we display the reference from the Journal Entry as default value for Journal Item.
+        """
+        if context is None:
+            context = {}
+        res = super(account_move_line, self).default_get(cr, uid, fields, context=context)
+        if context.get('move_reference', False) and context.get('from_web_menu', False):
+            if not 'reference' in res:
+                res.update({'reference': context.get('move_reference')})
+        return res
 
     def _accounting_balance(self, cr, uid, ids, context=None):
         """
@@ -349,7 +361,8 @@ class account_move_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None, check=True):
         """
-        Filled in 'document_date' if we come from tests
+        Filled in 'document_date' if we come from tests.
+        Check that reference field in fill in. If not, use those from the move.
         """
         if not context:
             context = {}
@@ -360,6 +373,8 @@ class account_move_line(osv.osv):
                 sequence = move.sequence_id
                 line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
+            if move.status == 'manu' and not vals.get('reference', False) and move.ref:
+                vals.update({'reference': move.ref})
         # Some checks
         if not vals.get('document_date') and vals.get('date'):
             vals.update({'document_date': vals.get('date')})
@@ -373,6 +388,9 @@ class account_move_line(osv.osv):
             if m and m.date:
                 vals.update({'date': m.date})
                 context.update({'date': m.date})
+            # UFTP-262: Add description from the move_id
+            if m and m.manual_name:
+                vals.update({'name': m.manual_name})
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
         # UTP-317: Check partner (if active or not)
         if res and not (context.get('sync_update_execution', False) or context.get('addendum_line_creation', False)): #UF-2214: Not for the case of sync. # UTP-1022: Not for the case of addendum line creation
@@ -404,6 +422,11 @@ class account_move_line(osv.osv):
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
+        # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
+        if context.get('from_web_menu', False) and not vals.get('reference', False):
+            for ml in self.browse(cr, uid, ids):
+                if ml.move_id and ml.move_id.status == 'manu' and not ml.reference:
+                    super(account_move_line, self).write(cr, uid, [ml.id], {'reference': ml.move_id.ref}, context=context, check=False, update_check=False)
         return res
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):

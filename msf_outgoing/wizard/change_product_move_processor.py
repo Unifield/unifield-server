@@ -31,11 +31,16 @@ class change_product_move_processor(osv.osv_memory):
     _columns = {
         'processor_line_id': fields.integer(string='ID of the processor line', required=True),
         'processor_type': fields.char(size=256, string='Model of the processor line', required=True),
+        'move_location_ids': fields.char(size=256, string='Move locations', readonly=True),
         'old_product_id': fields.many2one('product.product', string='Present Product', readonly=True),
         'old_uom_id': fields.many2one('product.uom', 'Restricted UoM', readonly=True),
         'old_uom_category_id': fields.many2one('product.uom.categ', 'Restricted UoM Category', readonly=True),
         'new_product_id': fields.many2one('product.product', string='New Product'),
         'change_reason': fields.char(string='Change Reason', size=1024),
+    }
+
+    _defaults = {
+        'move_location_ids': [],
     }
     
     """

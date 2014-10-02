@@ -34,7 +34,6 @@ class procurement_order(osv.osv):
         '''
         Creates procurement for products where real stock is under threshold value
         '''
-
         if context is None:
             context = {}
 
@@ -54,6 +53,8 @@ class procurement_order(osv.osv):
         
         wf_service = netsvc.LocalService("workflow")
         
+        # Put a lock on thershold rules
+        threshold_obj.write(cr, uid, threshold_ids, {}, context=context)
         for threshold in threshold_obj.browse(cr, uid, threshold_ids, context=context):
             c = context.copy()
             c.update({'location': threshold.location_id.id, 'compute_child': True})

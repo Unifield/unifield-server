@@ -30,15 +30,15 @@ import os
 from report import report_sxw
 
 class hq_report_oca(report_sxw.report_sxw):
-            
+
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-    
+
     def _enc(self, st):
         if isinstance(st, unicode):
             return st.encode('utf8')
         return st
-    
+
     def translate_country(self, cr, uid, pool, browse_instance, context={}):
         mapping_obj = pool.get('country.export.mapping')
         if browse_instance:
@@ -60,7 +60,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 line[7],
                 line[9],
                 line[8]] + line[10:]
-    
+
     def create_subtotal(self, cr, uid, line_key, line_debit, line_functional_debit, counterpart_date, country_code, sequence_number):
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
@@ -97,10 +97,10 @@ class hq_report_oca(report_sxw.report_sxw):
                       "0",
                       counterpart_date,
                       "0"]]
-        
+
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
-        
+
         first_header = ['Proprietary Instance',
                         'Journal Code',
                         'Entry Sequence',
@@ -121,7 +121,7 @@ class hq_report_oca(report_sxw.report_sxw):
                         'Functional Credit',
                         'Functional Currency',
                         'Exchange Rate']
-        
+
         # Initialize lists: one for the first report...
         first_result_lines = []
         # ...one for the second report...
@@ -146,12 +146,12 @@ class hq_report_oca(report_sxw.report_sxw):
                 if period and period.date_start:
                     integration_ref = parent_instance.code[:2] + period.date_start[5:7]
                     move_prefix = parent_instance.move_prefix[:2]
-        
+
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
+                                                                       ('account_id.is_analytic_addicted', '=', False),
                                                                        ('analytic_distribution_id', '=', False),
                                                                        ('journal_id.type', 'not in', ['hq', 'migration'])], context=context)
-        
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             journal = move_line.journal_id
             account = move_line.account_id
@@ -189,7 +189,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
-            
+
             # For third report: add to corresponding sub
             if not account.shrink_entries_for_hq:
                 expat_employee = "0"
@@ -219,11 +219,10 @@ class hq_report_oca(report_sxw.report_sxw):
                     account_lines_functional_debit[(account.code, currency.name, period_name)] = 0.0
                 account_lines_debit[(account.code, currency.name, period_name)] += (move_line.debit_currency - move_line.credit_currency)
                 account_lines_functional_debit[(account.code, currency.name, period_name)] += (move_line.debit - move_line.credit)
-        
+
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['hq', 'engagement', 'migration'])], context=context)
-        
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
@@ -231,7 +230,7 @@ class hq_report_oca(report_sxw.report_sxw):
             func_currency = move_line.functional_currency_id
             rate = ""
             if func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, analytic_line.date))
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, analytic_line.date))
                 if cr.rowcount:
                     rate = cr.fetchall()[0][0]
             # For first report: as is
@@ -256,7 +255,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
-            
+
             # Add to second report (expenses only)
             other_formatted_data = [integration_ref ,
                                     analytic_line.document_date and datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
@@ -276,16 +275,16 @@ class hq_report_oca(report_sxw.report_sxw):
                                     analytic_line.ref or "0",
                                     analytic_line.destination_id and analytic_line.destination_id.code or "0"]
             second_result_lines.append(other_formatted_data)
-        
+
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         first_report = [first_header] + first_result_lines
-        
+
         second_report = sorted(second_result_lines, key=lambda line: line[12])
-        
+
         for line in sorted(account_lines, key=lambda line: line[10]):
             third_report.append(line)
             third_report.append(self.create_counterpart(cr, uid, line))
-        
+
         sequence_index = 1
         for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
             # create the sequence number for those lines
@@ -294,7 +293,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               period.date_start[:4] + "-" + \
                               key[0] + "-" + \
                               key[1]
-                
+
             subtotal_lines = self.create_subtotal(cr, uid, key,
                                                   account_lines_debit[key],
                                                   account_lines_functional_debit[key],
@@ -303,7 +302,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                                   sequence_number)
             if subtotal_lines:
                 third_report += subtotal_lines
-        
+
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
@@ -318,6 +317,8 @@ class hq_report_oca(report_sxw.report_sxw):
         second_fileobj.close()
         writer = csv.writer(third_fileobj, quoting=csv.QUOTE_ALL)
         for line in third_report:
+            line.pop()
+            line.pop()
             writer.writerow(map(self._enc,line))
         third_fileobj.close()
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")

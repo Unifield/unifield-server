@@ -100,6 +100,10 @@ THRESHOLD_COLUMNS_HEADER_FOR_IMPORT = [
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('UoM'), 'string'), (_('Product Qty'), 'number'), (_('Threshold value'), 'number')]
 THRESHOLD_LINE_COLUMNS_FOR_IMPORT = [x for (x,y) in THRESHOLD_COLUMNS_HEADER_FOR_IMPORT]
 
+STOCK_WAREHOUSE_ORDERPOINT_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('UoM'), 'string'), (_('Product Min Qty'), 'number'), (_('Product Max Qty'), 'number'), (_('Qty Multiple'), 'number'), ]
+STOCK_WAREHOUSE_ORDERPOINT_LINE_COLUMNS_FOR_IMPORT = [x for (x,y) in STOCK_WAREHOUSE_ORDERPOINT_COLUMNS_HEADER_FOR_IMPORT]
+
 PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT = [
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Comment'), 'string')]
 PRODUCT_LIST_COLUMNS_FOR_IMPORT = [x for (x,y) in PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT]
@@ -116,6 +120,7 @@ import wizard_delete_lines
 import wizard_import_auto_supply_line
 import wizard_import_order_cycle_line
 import wizard_import_threshold_value_line
+import wizard_import_stock_warehouse_order_point_line
 import wizard_import_product_list
 import wizard_po_simulation_screen
 import wizard_in_simulation_screen

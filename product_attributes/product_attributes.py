@@ -718,6 +718,7 @@ class product_attributes(osv.osv):
         threshold_obj = self.pool.get('threshold.value')
         threshold_line_obj = self.pool.get('threshold.value.line')
         orderpoint_obj = self.pool.get('stock.warehouse.orderpoint')
+        orderpoint_line_obj = self.pool.get('stock.warehouse.orderpoint.line')
         invoice_obj = self.pool.get('account.invoice.line')
 
         error_obj = self.pool.get('product.deactivation.error')
@@ -969,8 +970,16 @@ class product_attributes(osv.osv):
                 threshold_line_obj.unlink(cr, uid, [threshold.id], context=context)
 
         # Minimum stock rules
-        orderpoint_ids = orderpoint_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        orderpoint_obj.unlink(cr, uid, orderpoint_ids, context=context)
+        orderpoint_line_ids = orderpoint_line_obj.search(cr, uid,
+            [('product_id', 'in', ids)], context=context)
+        for orderpoint_line in orderpoint_line_obj.browse(cr, uid,
+            orderpoint_line_ids, context=context):
+            if len(orderpoint_line.supply_id.line_ids) == 1:
+                orderpoint_obj.unlink(cr, uid, [orderpoint_line.supply_id.id],
+                    context=context)
+            else:
+                orderpoint_line_obj.unlink(cr, uid, [orderpoint_line.id],
+                    context=context)
 
         self.write(cr, uid, ids, {'active': False}, context=context)
 

@@ -950,9 +950,12 @@ class stock_move_processor(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        move_proc = self.browse(cr, uid, ids[0], context=context)
+
         change_wiz_id = wiz_obj.create(cr, uid, {
             'processor_line_id': ids[0],
             'processor_type': self._name,
+            'move_location_ids': [move_proc.location_id.id],
         }, context=context)
 
         return {

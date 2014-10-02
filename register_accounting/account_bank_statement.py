@@ -555,7 +555,7 @@ class account_bank_statement(osv.osv):
         context.update({
             'journal_type': st_type,
             'search_default_open': 1,
-            'search_default_instance_id': instance_id,
+            #'search_default_instance_id': instance_id,
             'active_id': False, # this is to avoid some "No field_values" problem
             'active_ids': False, # idem that active_id
         })
@@ -966,6 +966,9 @@ class account_bank_statement_line(osv.osv):
             if absl.imported_invoice_line_ids:
                 for ml in absl.imported_invoice_line_ids:
                     res.add(ml.move_id.id)
+            # UTP-1039: Show the search loop for direct invoice
+            if absl.direct_invoice and absl.invoice_id:
+                res.add(absl.invoice_id.move_id.id)
         return list(res)
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
@@ -1123,7 +1126,7 @@ class account_bank_statement_line(osv.osv):
                     account_invoice.write(cr, uid, [ai.id],{'move_id': False}, context=context)
                 else:
                     # UFTP-201: If there is no move linked to this invoice, retrieve the current value
-                    if absl.invoice_id.journal_id and absl.invoice_id.journal_id.id: # not needed but just to be sure 
+                    if absl.invoice_id.journal_id and absl.invoice_id.journal_id.id: # not needed but just to be sure
                         seqnums[absl.invoice_id.journal_id.id] = absl.invoice_id.internal_number
 
                 # TODO: Needs to be fixed during refactoring. The field move_id on account.analytic.line
@@ -1418,14 +1421,14 @@ class account_bank_statement_line(osv.osv):
         """
         if not values:
             return False
-
         if context is None:
             context = {}
+
+        acc_move_line_obj = self.pool.get('account.move.line')
 
         for st_line in self.browse(cr, uid, ids, context=context):
             # Prepare some values
             move_line_values = dict(values)
-            acc_move_line_obj = self.pool.get('account.move.line')
             # Get first line (from Register account)
             register_line = st_line.first_move_line_id
             # Delete 'from_import_cheque_id' field not to break the account move line write
@@ -1492,8 +1495,16 @@ class account_bank_statement_line(osv.osv):
                 for el in ['is_transfer_with_change', 'transfer_amount', 'imported_invoice_line_ids']:
                     if el in move_line_values:
                         del(move_line_values[el])
-                move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit,
-                    'amount_currency': register_amount_currency, 'currency_id': currency_id,})
+
+                for_updates = {
+                    'account_id':register_account_id,
+                    'debit':register_debit,
+                    'credit':register_credit,
+                    'amount_currency':register_amount_currency, 'currency_id':currency_id
+                    }
+                if 'ref' in values: # only get this value if it presented in "values"
+                    for_updates['reference'] = values.get('ref', False)
+                move_line_values.update(for_updates)
                 # Write move line object for register line
                 #+ Optimization: Do not check line because of account_move.write() method at the end of this method
                 acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context, check=False, update_check=False)
@@ -1525,12 +1536,28 @@ class account_bank_statement_line(osv.osv):
                 if st_line.third_parties:
                     partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
                 # finally write move object
-                move_vals = {'partner_type': partner_type}
+                move_vals = { 'partner_type': partner_type, }
+                if 'ref' in values: # only get this value if it presented in "values"
+                    move_vals['ref'] = values.get('ref', False)
                 if 'document_date' in move_line_values:
                     move_vals.update({'document_date': move_line_values.get('document_date')})
                 if 'cheque_number' in move_line_values:
                     move_vals.update({'cheque_number': move_line_values.get('cheque_number')})
                 self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
+
+                # UTP-1097: If ref is given in "values"
+                if 'ref' in values:
+                    ref = values.get('ref', False)
+                    if st_line.ref and not ref and register_line.move_id:
+                        # UTP-1097 ref field is cleared (a value to empty/False)
+                        # ref of JIs/AJIs is not properly cleared in this case
+                        aml_ids = acc_move_line_obj.search(cr, uid,
+                            [('move_id', '=', register_line.move_id.id), ],
+                            context = context)
+                        if aml_ids:
+                            # note: move line will update its AJIs ref
+                            acc_move_line_obj.write(cr, uid, aml_ids,
+                                {'reference': ''}, context=context)
         return True
 
     def do_direct_expense(self, cr, uid, st_line, context=None):
@@ -1977,7 +2004,9 @@ class account_bank_statement_line(osv.osv):
 
                 account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
                 # Optimizations: Do check=False and update_check=False because it would be done for the same move lines at the end of this loop
-                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=False, update_check=False)
+
+                # UTP-1039: Update also the statement_id = absl.statement_id to the new account_move_lines
+                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft', 'statement_id': absl.statement_id.id}, context=context, check=False, update_check=False)
                 # link to account_move_reconcile on account_move_line
                 account_move_reconcile = self.pool.get('account.move.reconcile')
                 for line in account_move_line.read(cr, uid, account_move_line_ids, ['reconcile_id'], context=context):

@@ -787,6 +787,12 @@ class stock_picking(osv.osv):
         '''
         prog_obj = self.pool.get('stock.picking.processing.info')
 
+        if context is None:
+            context = {}
+
+        if context.get('sync_message_execution', False):
+            return False
+
         if not prog_id:
             if not isinstance(picking, browse_record) and isinstance(picking, (int, long)):
                 picking = self.browse(cr, uid, picking, context=context)
@@ -838,6 +844,7 @@ class stock_picking(osv.osv):
         uom_obj = self.pool.get('product.uom')
         move_obj = self.pool.get('stock.move')
         sequence_obj = self.pool.get('ir.sequence')
+        cur_obj = self.pool.get('res.currency')
         wf_service = netsvc.LocalService("workflow")
 
         if context is None:
@@ -955,6 +962,18 @@ class stock_picking(osv.osv):
                             break
 
                         out_move = move_obj.browse(cr, uid, lst_out_move.id, context=context)
+
+                        if values.get('price_unit', False) and out_move.price_currency_id.id != move.price_currency_id.id:
+                            price_unit = cur_obj.compute(
+                                cr,
+                                uid,
+                                move.price_currency_id.id,
+                                out_move.price_currency_id.id,
+                                values.get('price_unit'),
+                                round=False,
+                                context=context
+                            )
+                            out_values['price_unit'] = price_unit
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
                         if out_move.picking_id.type == 'out' \
@@ -1176,6 +1195,9 @@ class stock_picking(osv.osv):
             }, context=context)
 
         if context.get('rw_sync', False):
+            prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
+                'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
+            }, context=context)
             if backorder_id:
                 return backorder_id
             return wizard.picking_id.id

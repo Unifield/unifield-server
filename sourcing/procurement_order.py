@@ -22,13 +22,15 @@
 from osv import fields
 from osv import osv
 from osv.orm import browse_record
-
+from workflow.wkf_expr import _eval_expr
 from tools.translate import _
 
 from sourcing.sale_order_line import _SELECTION_PO_CFT
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
+import netsvc
 
 
 class procurement_order(osv.osv):
@@ -74,7 +76,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
 """,
         ),
+        'from_splitted_po_line': fields.boolean(string='From splitted PO line'),
     }
+
+    def copy_data(self, cr, uid, copy_id, default_values=None, context=None):
+        if default_values is None:
+            default_values = {}
+
+        if not default_values.get('from_splitted_po_line'):
+            default_values['from_splitted_po_line'] = False
+
+        return super(procurement_order, self).copy_data(cr, uid, copy_id, default_values, context=context)
 
     def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -194,6 +206,12 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         else:
             purchase_domain.append(('order_type', '!=', 'direct'))
 
+        if procurement.rfq_id:
+            purchase_domain.append(('pricelist_id', '=', procurement.rfq_id.pricelist_id.id))
+
+        if procurement.tender_line_id and procurement.tender_line_id.purchase_order_line_id:
+            purchase_domain.append(('pricelist_id', '=', procurement.tender_line_id.purchase_order_line_id.order_id.pricelist_id.id))
+
         line = None
         sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         if sale_line_ids:
@@ -226,6 +244,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         # the purchase order to merge the new line to is locked and provided in the procurement
         if procurement.so_back_update_dest_po_id_procurement_order:
             purchase_ids = [procurement.so_back_update_dest_po_id_procurement_order.id]
+        elif procurement.from_splitted_po_line and procurement.purchase_id:
+            purchase_ids = [procurement.purchase_id.id]
         else:
             # search for purchase order according to defined domain
             purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
@@ -301,6 +321,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
 
             if location_id:
                 po_values.update({'location_id': location_id, 'cross_docking_ok': False})
+
+            if values.get('cross_docking_ok') == True:
+                po_values['cross_docking_ok'] = values.get('cross_docking_ok')
 
             if po_values:
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], po_values, context=dict(context, import_in_progress=True))
@@ -619,6 +642,24 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         res['unique_rule_type'] = 'stock.warehouse.orderpoint'
 
         return res
+    def set_manually_done(self, cr, uid, ids, all_doc=False, context=None):
+        """
+        Detach the workflow of the procurement.order object and set state
+        to done.
+        """
+        wf_service = netsvc.LocalService("workflow")
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for proc_id in ids:
+            wf_service.trg_delete(uid, 'procurement.order', proc_id, cr)
+            # Search the method called when the workflow enter in the last activity
+            wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement', 'act_done')[1]
+            activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
+            _eval_expr(cr, [uid, 'procurement.order', proc_id], False, activity.action)
+
+        return True
 
 procurement_order()
 

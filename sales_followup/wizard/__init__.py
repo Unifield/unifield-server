@@ -18,39 +18,5 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 ##############################################################################
-{
-    "name" : "Sales Follow-Up",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
-    "description": """
-        Add wizard to allow users to have
-        an overview of all related 
-        documents to a sale order.
-    """,
-    "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
-    "depends" : [
-        "sale",
-        "stock",
-        "purchase",
-        "msf_order_date",
-        "purchase_double_validation",
-        "procurement",
-        "tender_flow",
-    ],
-    "update_xml": [
-        "sale_followup_view.xml",
-        "report/sale_follow_up_report.xml",
-        "wizard/sale_followup_multi_wizard_view.xml",
-    ],
-    "demo_xml": [
-    ],
-    "test": [
-        "test/data.yml",
-        "test/followup.yml",
-    ],
-    "installable": True,
-    "active": False,
-}
+
+import sale_followup_multi_wizard

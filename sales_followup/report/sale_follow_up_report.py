@@ -18,6 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
 import time
 
 from report import report_sxw
@@ -38,7 +39,7 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
         self._report_context = {}
 
         #self.module_instance = self.pool.get('sale.order.followup')
-
+        
     def _parse_date_xls(self, dt_str, is_datetime=True):
         if not dt_str or dt_str == 'False':
             return ''
@@ -47,7 +48,7 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
         if dt_str:
             dt_str += 'T00:00:00.000'
         return dt_str
-
+        
     def _upper(self, s):
         if not isinstance(s, (str, unicode)):
             return s

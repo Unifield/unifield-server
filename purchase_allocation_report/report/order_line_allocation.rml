@@ -138,10 +138,10 @@
                 <para style="Information">[[ o.account_id.code ]] [[ o.account_id.name ]]</para>
             </td>
             <td>
-                <para style="Information">[[ line.destination_id.code ]]</para>
+                <para style="Information">[[ o.destination_id.code ]]</para>
             </td>
             <td>
-                <para style="Information">[[ line.cost_center_id.code ]]</para>
+                <para style="Information">[[ o.cost_center_id.code ]]</para>
             </td>
             <td>
                 <parawrap style="Information">[[ o.source_doc ]]</parawrap>

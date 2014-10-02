@@ -580,6 +580,81 @@ class stock_picking(osv.osv):
 stock_picking()
 
 
+class stock_warehouse_orderpoint_line(osv.osv):
+    _inherit = 'stock.warehouse.orderpoint.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids,
+        context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+        swo_obj = self.pool.get('stock.warehouse.orderpoint')
+
+        # get parent default vals
+        parent_vals = {
+            'product_min_qty': 0.,
+            'product_max_qty': 0.,
+            'qty_multiple': 1.0,
+        }
+        if parent_id:
+            parent_r = swo_obj.read(cr, uid, parent_id, parent_vals.keys(),
+                context=context)
+            if parent_r:
+                for f in parent_vals.keys():
+                    parent_vals[f] = parent_r[f] or 0.
+
+        # set line vals
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'],
+            context=context):
+            values = {
+                'product_id': p_data['id'],
+                'product_uom_id': p_data['uom_id'][0],
+                'supply_id': parent_id,
+            }
+            for k in parent_vals:
+                values[k] = parent_vals[k]
+
+            values.update(self.onchange_product_id(cr, uid, False,
+                p_data['id'], p_data['uom_id'][0],
+                values.get('product_min_qty', 0.),
+                values.get('product_max_qty', 0.),
+                context=context).get('value', {}))
+
+            domain = [
+                ('product_id', '=', p_data['id']),
+                ('supply_id', '=', parent_id),
+            ]
+            if not self.search(cr, uid, domain, context=context):
+                self.create(cr, uid, values,
+                    context=dict(context, noraise=True))
+
+        return True
+
+stock_warehouse_orderpoint_line()
+
+
+class stock_warehouse_orderpoint(osv.osv):
+    _inherit = 'stock.warehouse.orderpoint'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        if context is None:
+            context = {}
+        context.update({
+            'product_ids_domain': [('type','=','product')],
+            'add_multiple_line': True,
+        })
+
+        return self.pool.get('wizard.common.import.line').open_wizard(cr, uid,
+            ids[0], 'stock.warehouse.orderpoint',
+            'stock.warehouse.orderpoint.line', context=context)
+
+stock_warehouse_orderpoint()
+
+
 class stock_warehouse_auto_supply_line(osv.osv):
     _inherit = 'stock.warehouse.automatic.supply.line'
 

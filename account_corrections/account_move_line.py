@@ -638,27 +638,52 @@ receivable, item have not been corrected, item have not been reversed and accoun
             date = strftime('%Y-%m-%d')
         if not new_account_id:
             raise osv.except_osv(_('Error'), _('No new account_id given!'))
+
         # Prepare some values
         move_obj = self.pool.get('account.move')
         j_obj = self.pool.get('account.journal')
         al_obj = self.pool.get('account.analytic.line')
         success_move_line_ids = []
+
+        # New account
+        new_account = self.pool.get('account.account').browse(cr, uid,
+            new_account_id, context=context)
+
         # Search correction journal
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
                                             ('is_current_instance', '=', True)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
+
         # Search extra-accounting journal
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
                                              ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
+
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
             context=context, limit=1, order='date_start, name')
+
         # Browse all given move line for correct them
         for ml in self.browse(cr, uid, ids, context=context):
             # Abort process if this move line was corrected before
             if ml.corrected:
                 continue
+
+            # UTP-1187 check corrected line has an AD if need one
+            initial_al_ids = al_obj.search(cr, uid, [('move_id', '=', ml.id)],
+                context=context)
+            # Note: this search result will be used near end of this function
+            # (see # Change analytic lines that come from)
+            if not distrib_id and \
+                not initial_al_ids and new_account and \
+                new_account.is_analytic_addicted:
+                # we check only if no distrib_id arg passed to function
+                msg = _("The line '%s' with new account '%s - %s' need an" \
+                    " analytic distribution (you may have changed account from" \
+                    " one with no AD required to a new one with AD required).")
+                raise osv.except_osv(_('Error'), msg % (ml.move_id.name,
+                    new_account.code, new_account.name, ))
+
             # If this line was already been corrected, check the first analytic line ID (but not the first first analytic line)
             first_analytic_line_id = False
             first_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', '=', ml.id)])
@@ -674,8 +699,6 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 journal_id = j_extra_id
                 if not journal_id:
                     raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
-
-                new_account = self.pool.get('account.account').browse(cr, uid, new_account_id)
                 if new_account.type_for_register != 'donation':
                     raise osv.except_osv(_('Error'), _('You come from a donation account. And new one is not a Donation account. You should give a Donation account!'))
             if not journal_id:
@@ -752,23 +775,23 @@ receivable, item have not been corrected, item have not been reversed and accoun
             #- reversal move line: is_reversal is True + initial analytic line
             #- correction line: change is_reallocated and is_reversal to False
             #- old reversal line: reset is_reversal to True (lost previously in validate())
-            initial_al_ids = al_obj.search(cr, uid, [('move_id', '=', ml.id)])
-            search_datas = [(ml.id, {'is_reallocated': True}),
-                            (rev_line_id, {'is_reversal': True, 'reversal_origin': initial_al_ids[0]}),
-                            (correction_line_id, {'is_reallocated': False, 'is_reversal': False, 'last_corrected_id': initial_al_ids[0]})]
-            # If line is already a correction, take the previous reversal move line id
-            # (UF_1234: otherwise, the reversal is not set correctly)
-            if ml.corrected_line_id:
-                old_reverse_ids = self.search(cr, uid, [('reversal_line_id', '=', ml.corrected_line_id.id)])
-                if len(old_reverse_ids) > 0:
-                    search_datas += [(old_reverse_ids[0], {'is_reversal': True, 'reversal_origin': first_analytic_line_id})]
-            for search_data in search_datas:
-                # keep initial analytic line as corrected line if it the 2nd or more correction on this line
-                if ml.corrected_line_id and search_data[0] == ml.id and first_analytic_line_id:
-                    search_data[1].update({'last_corrected_id': first_analytic_line_id, 'have_an_historic': True,})
-                search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0]), ('reversal_origin', '=', False), ('last_corrected_id', '=', False)])
-                if search_ids:
-                    al_obj.write(cr, uid, search_ids, search_data[1])
+            if initial_al_ids:  # as initial AD
+                search_datas = [(ml.id, {'is_reallocated': True}),
+                                (rev_line_id, {'is_reversal': True, 'reversal_origin': initial_al_ids[0]}),
+                                (correction_line_id, {'is_reallocated': False, 'is_reversal': False, 'last_corrected_id': initial_al_ids[0]})]
+                # If line is already a correction, take the previous reversal move line id
+                # (UF_1234: otherwise, the reversal is not set correctly)
+                if ml.corrected_line_id:
+                    old_reverse_ids = self.search(cr, uid, [('reversal_line_id', '=', ml.corrected_line_id.id)])
+                    if len(old_reverse_ids) > 0:
+                        search_datas += [(old_reverse_ids[0], {'is_reversal': True, 'reversal_origin': first_analytic_line_id})]
+                for search_data in search_datas:
+                    # keep initial analytic line as corrected line if it the 2nd or more correction on this line
+                    if ml.corrected_line_id and search_data[0] == ml.id and first_analytic_line_id:
+                        search_data[1].update({'last_corrected_id': first_analytic_line_id, 'have_an_historic': True,})
+                    search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0]), ('reversal_origin', '=', False), ('last_corrected_id', '=', False)])
+                    if search_ids:
+                        al_obj.write(cr, uid, search_ids, search_data[1])
             # Add this line to succeded lines
             success_move_line_ids.append(ml.id)
             # Mark it as "corrected_upstream" if needed
