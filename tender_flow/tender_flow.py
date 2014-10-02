@@ -892,7 +892,7 @@ class tender_line(osv.osv):
         if default is None:
             default = {}
 
-        if not 'created_by_rf' in default:
+        if not 'created_by_rfq' in default:
             default['created_by_rfq'] = False
 
         return super(tender_line, self).copy(cr, uid, id, default, context=context)
@@ -913,6 +913,7 @@ class tender_line(osv.osv):
         to_cancel = []
         sol_ids = {}
         sol_to_update = {}
+        sol_not_to_delete = []
         so_to_update = set()
         tender_to_update = set()
 
@@ -925,6 +926,8 @@ class tender_line(osv.osv):
             tender_to_update.add(line.tender_id.id)
             if line.sale_order_line_id and delete_line:
                 so_to_update.add(line.sale_order_line_id.order_id.id)
+                if line.sale_order_line_id.order_id.procurement_request:
+                    sol_not_to_delete.append(line.sale_order_line_id.id)
                 to_cancel.append(line.id)
                 # Get the ID and the product qty of the FO line to re-source
                 diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.qty, line.sale_order_line_id.product_uom.id)
@@ -955,7 +958,11 @@ class tender_line(osv.osv):
 
         # Update sale order lines
         for sol in sol_to_update:
+            context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete
             sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+
+        if context.get('update_or_cancel_line_not_delete', False):
+            del context['update_or_cancel_line_not_delete']
 
         # Update the FO state
         for so in so_to_update:
