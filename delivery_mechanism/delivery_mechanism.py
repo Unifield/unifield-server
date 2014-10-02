@@ -69,6 +69,10 @@ class stock_picking_processing_info(osv.osv_memory):
             string='Date end',
             readonly=True,
         ),
+        'error_msg': fields.boolean(
+            string='Error',
+            readonly=True,
+        ),
     }
 
     _defaults = {
@@ -391,6 +395,13 @@ class stock_picking(osv.osv):
                 if nd_ids:
                     res[pick_id]['progress_memory_not_done'] = 1
 
+                    err_ids = mem_obj.search(cr, uid, [
+                        ('id', 'in', nd_ids),
+                        ('error_msg', '!=', False),
+                    ], context=context)
+                    if err_ids:
+                        res[pick_id]['progress_memory_error'] = 1
+
         return res
 
 
@@ -421,6 +432,16 @@ class stock_picking(osv.osv):
             method=True,
             string='Is in progress',
             type='boolean',
+            store=False,
+            readonly=True,
+            multi='process',
+        ),
+        'progress_memory_error': fields.function(
+            _get_progress_memory,
+            method=True,
+            string='Processing error',
+            type='char',
+            size=256,
             store=False,
             readonly=True,
             multi='process',
@@ -816,9 +837,13 @@ class stock_picking(osv.osv):
         """
         Call the do_incoming_shipment() method with a new cursor.
         """
+        inc_proc_obj = self.pool.get('stock.incoming.processor')
+
         # Create new cursor
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
+
+        res = True
 
         try:
             # Call do_incoming_shipment()
@@ -826,6 +851,11 @@ class stock_picking(osv.osv):
             new_cr.commit()
         except Exception, e:
             new_cr.rollback()
+
+            for wiz in inc_proc_obj.read(new_cr, uid, wizard_ids, ['picking_id'], context=context):
+                self.update_processing_info(new_cr, uid, wiz['picking_id'][0], False, {
+                    'error_msg': str(e),
+                }, context=context)
         finally:
             # Close the cursor
             new_cr.close()
