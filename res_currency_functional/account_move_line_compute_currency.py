@@ -443,6 +443,12 @@ class account_move_line_compute_currency(osv.osv):
         # Some verifications
         self.check_date(cr, uid, vals)
         date_to_compute = False
+        
+        if 'period_id' in vals:
+            period = self.pool.get('account.period').browse(cr, uid, vals.get('period_id'), context)
+            if period and period.state == 'created':
+                raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Item is created') % (period.name,))
+        
         if not 'date' in vals:
             if vals.get('move_id'):
                 date_to_compute = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['date'])['date']
@@ -451,7 +457,7 @@ class account_move_line_compute_currency(osv.osv):
                 logger.notifyChannel("warning", netsvc.LOG_WARNING, "No date for new account_move_line!")
                 traceback.print_stack()
                 # UTP-1194: Raise exception if the move is not in vals when creating move line
-                raise osv.except_osv(_('Error !'), _('Cannot create move line due to missing the parent move id'))
+                raise osv.except_osv(_('Error !'), _('Cannot create Journal Item due to missing the parent Journal Entry or Date'))
             
         if not context:
             context = {}
