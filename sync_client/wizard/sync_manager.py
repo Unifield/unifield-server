@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from sync_client import sync_client
 
 class sync_manager(osv.osv_memory):
     _name = 'sync.client.sync_manager'
@@ -43,11 +44,7 @@ class sync_manager(osv.osv_memory):
     }
 
     def sync(self, cr, uid, ids, context=None):
-        #Check for a backup before manual sync
-        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync')
-        self.pool.get('sync.client.entity').sync(cr, uid, context=context)
-        #Check for a backup after manual sync
-        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'aftermanualsync')
+        self.pool.get('sync.client.entity').sync_manual_withbackup(cr, uid, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
     def sync_threaded(self, cr, uid, ids, context=None):

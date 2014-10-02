@@ -59,9 +59,17 @@ class BackupConfig(osv.osv):
             os.environ['PGPASSWORD'] = ''
 
     def exp_dump_for_state(self, cr, uid, state, context=None):
+        context = context or {}
+        logger = context.get('logger')
         bkp_ids = self.search(cr, uid, [(state, '=', True)], context=context)
         if bkp_ids:
+            if logger:
+                logger.append("Database %s backup started.." % state)
+                logger.write()
             self.exp_dump(cr, uid, bkp_ids, context)
+            if logger:
+                logger.append("Database %s backup successful" % state)
+                logger.write()
 
     def exp_dump(self, cr, uid, ids, context=None):
         bkp = self.browse(cr, uid, ids, context)

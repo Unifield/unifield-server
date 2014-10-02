@@ -764,10 +764,10 @@ class Entity(osv.osv):
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
         #Check for a backup before automatic sync
-        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync')
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync', context=context)
         self.sync_recover(cr, uid, context=context)
         #Check for a backup after automatic sync
-        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'afterautomaticsync')
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'afterautomaticsync', context=context)
         return {'type': 'ir.actions.act_window_close'}
 
     @sync_process()
@@ -784,10 +784,22 @@ class Entity(osv.osv):
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
         #Check for a backup before automatic sync
-        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync')
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync', context=context)
         self.sync(cr, uid, context=context)
         #Check for a backup after automatic sync
-        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'afterautomaticsync')
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'afterautomaticsync', context=context)
+        return {'type': 'ir.actions.act_window_close'}
+    
+    @sync_process()
+    def sync_manual_withbackup(self, cr, uid, context=None):
+        """
+        Call both pull_all_data and recover_message functions - used in manual sync wizard
+        """
+        #Check for a backup before automatic sync
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
+        self.sync(cr, uid, context=context)
+        #Check for a backup after automatic sync
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'aftermanualsync', context=context)
         return {'type': 'ir.actions.act_window_close'}
 
     def get_upgrade_status(self, cr, uid, context=None):
