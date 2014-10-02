@@ -71,6 +71,7 @@
                     <field name="real_stock" />
                     <field name="available_stock" />
                     <field name="virtual_stock" />
+                    <field name="supplier" invisible="1" />
                 </tree>
             </field>
         </record>
