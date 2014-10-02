@@ -111,6 +111,10 @@ class account_analytic_chart(osv.osv_memory):
                 context.update({'instance_ids': [x.id for x in wiz.instance_ids],})
             if wiz.output_currency_id:
                 context.update({'output_currency_id': wiz.output_currency_id.id})
+            if wiz.from_date:
+                context['from_date'] = wiz.from_date
+            if wiz.to_date:
+                context['to_date'] = wiz.to_date
             account_ids = self.pool.get('account.analytic.account').search(cr, uid, args, context=context)
             wiz_fields = {
                 'fy': wiz.fiscalyear and wiz.fiscalyear.name or '',
