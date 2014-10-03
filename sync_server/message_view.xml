@@ -34,10 +34,10 @@
       <field name="model">sync.server.message</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree string="Message Monitor">
+        <tree string="Message Monitor" resequencable="0">
           <field name="sequence"/>
-        	<field name="identifier" />
-        	<field name="remote_call" />
+          <field name="identifier" />
+          <field name="remote_call" />
           <field name="source"/>
           <field name="destination"/>
           <field name="sent"/>
