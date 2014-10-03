@@ -48,6 +48,9 @@ class except_osv(Exception):
         self.value = value
         self.args = (exc_type, name)
 
+    def __str__(self):
+        return '%s: %s' % (self.name, self.value)
+
 
 class object_proxy(netsvc.Service):
     def __init__(self):
