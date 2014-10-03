@@ -447,9 +447,8 @@ class update(osv.osv):
                     'handle_priority' : update.handle_priority,
                 })
 
-        self._logger.info("[%s] Data pull :: Client last sequence number: %s" % (entity.name, last_seq))
-        self._logger.info("[%s] Data pull :: Server last sequence number: %s" % (entity.name, self.get_last_sequence(cr, uid)))
-        self._logger.info("[%s] Data pull :: Number of data pulled: %s" % (entity.name, len(update_to_send)))
+        # Just shorten the log into one line
+        self._logger.info("[%s] Data pull :: Last Seq: Client= %s, Server= %s, Data pulled: %s" % (entity.name, last_seq, self.get_last_sequence(cr, uid), len(update_to_send)))
         return data
     
     def get_additional_forced_field(self, update): 
