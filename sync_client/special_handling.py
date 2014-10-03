@@ -47,6 +47,15 @@ class account_analytic_line(osv.osv):
                 return False
             del context['do_not_create_analytic_line']
         
+        # UF-2479: Block the creation of an AJI if the given period is not open, in sync context
+        if context.get('sync_update_execution') and 'date' in vals:
+            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
+            if not period_ids:
+                raise osv.except_osv(_('Warning'), _('No period found for the given date: %s') % (vals['date'] or ''))
+            period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
+            if period and period.state == 'created':
+                raise osv.except_osv(_('Error !'), _('Period \'%s\' of the given date %s is not open! No AJI is created') % (period.name, vals['date'] or ''))
+
         # continue the create request if it comes from a normal requester
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
     

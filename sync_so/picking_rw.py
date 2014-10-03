@@ -70,8 +70,12 @@ class shipment(osv.osv):
 
         ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
         if not ship_ids:
-            message = _("Sorry, no Shipment with the name %s in state %s found !") % (ship_name, state)
-            raise Exception, message # keep this message to not run, because other previous messages in the flow are also not run
+            ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', "delivered")], context=context)
+            if ship_ids:
+                message = _("The Shipment %s is already in delivered state!") % (ship_name)
+            else:
+                message = _("Sorry, no Shipment with the name %s in state %s found !") % (ship_name, state)
+                raise Exception, message # keep this message to not run, because other previous messages in the flow are also not run
         else:
             if state == 'done':
                 self.set_delivered(cr, uid, ship_ids, context=context)
