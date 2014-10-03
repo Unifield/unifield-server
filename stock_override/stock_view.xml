@@ -519,17 +519,29 @@
         	<field name="arch" type="xml">
         		<form string="Incoming Shipments">
                     <field name="progress_memory_not_done" invisible="1" />
+                    <field name="progress_memory_error" invisible="1" />
                     <group colspan="6">
                         <html>
                             <p id="view_incoming_in_progress"
                                style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                WARNING: The processing of this incoming shipment is currently in progress, any modifications you make will not be considered.
                             </p>
+                            <p id="view_incoming_in_progress_error"
+                               style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                               ERROR: The processing of this incoming shipment has returned an error, please open the processing wizard to show the error.
+                            </p>
                             <script language="javascript">
-                                var is_synced = $('#progress_memory_not_done').val();
-                                if (is_synced == "1") {
+                                var is_not_done = $('#progress_memory_not_done').val();
+                                var is_error = $('#progress_memory_error').val();
+                                if (is_not_done == "1") {
                                     msg_dom = $('#view_incoming_in_progress')
                                     msg_dom.show();
+                                }
+                                if (is_error == "1") {
+                                    msg_dom = $('#view_incoming_in_progress_error')
+                                    msg_dom.show()
+                                    msg_dom_done = $('#view_incoming_in_progress')
+                                    msg_dom_done.hide()
                                 }
                             </script>
                         </html>

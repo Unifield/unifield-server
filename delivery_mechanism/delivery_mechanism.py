@@ -69,6 +69,10 @@ class stock_picking_processing_info(osv.osv_memory):
             string='Date end',
             readonly=True,
         ),
+        'error_msg': fields.text(
+            string='Error',
+            readonly=True,
+        ),
     }
 
     _defaults = {
@@ -106,16 +110,23 @@ class stock_picking_processing_info(osv.osv_memory):
 
         mem_brw = self.browse(cr, uid, ids[0], context=context)
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'stock.picking',
-            'res_id': mem_brw.picking_id.id,
-            'view_type': 'form',
-            'view_mode': 'form,tree',
-            'view_id': [view_id],
-            'target': 'same',
-            'context': context,
-        }
+        return {'type': 'ir.actions.act_window_close'}
+
+    def reset_incoming(self, cr, uid, ids, context=None):
+        '''
+        Delete the processing wizard and close the page
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = self.close(cr, uid, ids, context=context)
+
+        self.unlink(cr, uid, ids, context=context)
+
+        return res
 
 stock_picking_processing_info()
 
@@ -378,6 +389,7 @@ class stock_picking(osv.osv):
             res[pick_id] = {
                 'progress_memory': -1,
                 'progress_memory_not_done': 0,
+                'progress_memory_error': 0,
             }
             mem_ids = mem_obj.search(cr, uid, [
                 ('picking_id', '=', pick_id),
@@ -390,6 +402,10 @@ class stock_picking(osv.osv):
                 ], context=context)
                 if nd_ids:
                     res[pick_id]['progress_memory_not_done'] = 1
+                    for nd in mem_obj.read(cr, uid, nd_ids, ['error_msg'], context=context):
+                        if nd['error_msg']:
+                            res[pick_id]['progress_memory_error'] = 1
+                            break
 
         return res
 
@@ -420,6 +436,15 @@ class stock_picking(osv.osv):
             _get_progress_memory,
             method=True,
             string='Is in progress',
+            type='boolean',
+            store=False,
+            readonly=True,
+            multi='process',
+        ),
+        'progress_memory_error': fields.function(
+            _get_progress_memory,
+            method=True,
+            string='Processing error',
             type='boolean',
             store=False,
             readonly=True,
@@ -816,9 +841,13 @@ class stock_picking(osv.osv):
         """
         Call the do_incoming_shipment() method with a new cursor.
         """
+        inc_proc_obj = self.pool.get('stock.incoming.processor')
+
         # Create new cursor
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
+
+        res = True
 
         try:
             # Call do_incoming_shipment()
@@ -826,6 +855,13 @@ class stock_picking(osv.osv):
             new_cr.commit()
         except Exception, e:
             new_cr.rollback()
+
+            for wiz in inc_proc_obj.read(new_cr, uid, wizard_ids, ['picking_id'], context=context):
+                self.update_processing_info(new_cr, uid, wiz['picking_id'][0], False, {
+                    'error_msg': '%s\n\nPlease reset the incoming shipment '\
+                                 'processing and fix the source of the error'\
+                                 'before re-try the processing.' % str(e),
+                }, context=context)
         finally:
             # Close the cursor
             new_cr.close()
