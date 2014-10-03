@@ -2124,6 +2124,33 @@ stock moves which are already processed : '''
 
         return ids
 
+    def check_empty_po(self, cr, uid, ids, context=None):
+        """
+        If the PO is empty, return a wizard to ask user if he wants
+        cancel the whole PO
+        """
+        order_wiz_obj = self.pool.get('purchase.order.cancel.wizard')
+        data_obj = self.pool.get('ir.model.data')
+
+        for po in self.browse(cr, uid, ids, context=context):
+            if all(x.state in ('cancel', 'done') for x in po.order_line):
+                wiz_id = order_wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                if po.rfq_ok:
+                    view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'ask_rfq_cancel_wizard_form_view')[1]
+                else:
+                    view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
+                context['view_id'] = False
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'purchase.order.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'view_id': [view_id],
+                        'res_id': wiz_id,
+                        'target': 'new',
+                        'context': context}
+
+        return {'type': 'ir.actions.act_window_close'}
+
 purchase_order()
 
 
@@ -2765,9 +2792,15 @@ class purchase_order_line(osv.osv):
                     if sol.order_id.id not in ir_to_potentialy_cancel_ids:
                         ir_to_potentialy_cancel_ids.append(sol.order_id.id)
 
+        so_to_cancel_ids = []
+        context['pol_ids'] = ids
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
-            sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+            if so_to_cancel_id:
+                so_to_cancel_ids.append(so_to_cancel_id)
+
+        del context['pol_ids']
 
         if context.get('update_or_cancel_line_not_delete', False):
             del context['update_or_cancel_line_not_delete']
@@ -2812,7 +2845,7 @@ class purchase_order_line(osv.osv):
                     self.pool.get('sale.order').write(cr, uid, ir.id,
                         {'state':  ir_new_state}, context=context)
 
-        return True
+        return so_to_cancel_ids
 
     def fake_unlink(self, cr, uid, ids, context=None):
         '''
@@ -2828,6 +2861,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         del_line_obj.create_from_po_line(cr, uid, ids, context=context)
+        so_to_cancel = []
 
         for line in self.browse(cr, uid, ids, context=context):
             # we want to skip resequencing because unlink is performed on merged purchase order lines
@@ -2836,12 +2870,12 @@ class purchase_order_line(osv.osv):
             self._update_merged_line(cr, uid, line.id, False, context=context)
             context['skipResequencing'] = tmp_Resequencing
             if not self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', line.sync_order_line_db_id)], context=context):
-                self.pool.get('purchase.order.line').cancel_sol(cr, uid, [line.id], context=context)
+                so_to_cancel.extend(self.pool.get('purchase.order.line').cancel_sol(cr, uid, [line.id], context=context))
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         self.unlink(cr, uid, ids, context=context)
 
-        return ids
+        return so_to_cancel
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -3488,6 +3522,7 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
         order_wiz_obj = self.pool.get('purchase.order.cancel.wizard')
         data_obj = self.pool.get('ir.model.data')
         po_obj = self.pool.get('purchase.order')
+        so_obj = self.pool.get('sale.order')
 
         # Variables
         if context is None:
@@ -3505,24 +3540,16 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
         if context.get('has_to_be_resourced'):
             line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
 
-        line_obj.fake_unlink(cr, uid, line_ids, context=context)
+        so_to_cancel_ids = line_obj.fake_unlink(cr, uid, line_ids, context=context)
 
-        for po in po_obj.browse(cr, uid, list(po_ids), context=context):
-            if all(x.state in ('cancel', 'done') for x in po.order_line):
-                wiz_id = order_wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
-                if po.rfq_ok:
-                    view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'ask_rfq_cancel_wizard_form_view')[1]
-                else:
-                    view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
-                context['view_id'] = False
-                return {'type': 'ir.actions.act_window',
-                        'res_model': 'purchase.order.cancel.wizard',
-                        'view_type': 'form',
-                        'view_mode': 'form',
-                        'view_id': [view_id],
-                        'res_id': wiz_id,
-                        'target': 'new',
-                        'context': context}
+        if not so_to_cancel_ids:
+            return po_obj.check_empty_po(cr, uid, list(po_ids), context=context)
+        else:
+            context.update({
+                'from_po': True,
+                'po_ids': list(po_ids),
+            })
+            return so_obj.open_cancel_wizard(cr, uid, so_to_cancel_ids, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

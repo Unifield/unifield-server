@@ -2040,6 +2040,93 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
 
+    def _get_ready_to_cancel(self, cr, uid, ids, line_ids=[], context=None):
+        """
+        Returns for each FO/IR in ids if the next line cancelation can
+        cancel the FO/IR.
+        """
+        line_obj = self.pool.get('sale.order.line')
+        po_line_obj = self.pool.get('purchase.order.line')
+        tender_line_obj = self.pool.get('tender.line')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+
+        res = {}
+        for fo in self.browse(cr, uid, ids, context=context):
+            res[fo.id] = True
+            if fo.state in ('cancel', 'done', 'draft'):
+                res[fo.id] = False
+                continue
+
+            remain_lines = line_obj.search(cr, uid, [
+                ('order_id', '=', fo.id),
+                ('id', 'not in', line_ids),
+            ], context=context)
+            if remain_lines:
+                res[fo.id] = False
+                continue
+
+            po_line_domain = [
+                ('order_id.state', 'not in', ('cancel', 'done')),
+                ('origin', '=', fo.name),
+            ]
+            if context.get('pol_ids'):
+                po_line_domain.append(('id', 'not in', context.get('pol_ids')))
+
+            exp_po_lines = po_line_obj.search(cr, uid, po_line_domain, context=context)
+            if exp_po_lines:
+                res[fo.id] = False
+                continue
+
+            tl_domain = [
+                ('tender_id.state', 'not in', ('cancel', 'done')),
+                ('tender_id.sale_order_id', '=', fo.id),
+            ]
+            if context.get('tl_ids'):
+                tl_domain.append(('id', 'not in', context.get('tl_ids')))
+            tender_lines = tender_line_obj.search(cr, uid, tl_domain, context=context)
+            if tender_lines:
+                res[fo.id] = False
+                continue
+
+        return res
+
+    def open_cancel_wizard(self, cr, uid, ids, context=None):
+        """
+        Create and open the asking cancelation wizard
+        """
+        wiz_obj = self.pool.get('sale.order.cancelation.wizard')
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz_id = wiz_obj.create(cr, uid, {'order_ids': [(6, 0, ids)]}, context=context)
+        view_id = data_obj.get_object_reference(cr, uid, 'sale_override', 'sale_order_cancelation_ask_wizard_form_view')[1]
+
+        if context.get('view_id'):
+            del context['view_id']
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'sale.order.cancelation.wizard',
+            'res_id': wiz_id,
+            'view_id': [view_id],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
 sale_order()
 
 
@@ -2155,6 +2242,7 @@ class sale_order_line(osv.osv):
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         po_line_obj = self.pool.get('purchase.order.line')
+        so_obj = self.pool.get('sale.order')
 
         wf_service = netsvc.LocalService("workflow")
 
@@ -2211,10 +2299,13 @@ class sale_order_line(osv.osv):
             if proc:
                 proc_obj.write(cr, uid, [proc], {'product_qty': minus_qty}, context=context)
 
-        if order and (not order_name or not po_line_obj.search(cr, uid, [('origin', '=', order_name)], context=context)):
+        so_to_cancel_id = False
+        if so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
+            so_to_cancel_id = order
+        else:
             wf_service.trg_write(uid, 'sale.order', order, cr)
 
-        return True
+        return so_to_cancel_id
 
     def add_resource_line(self, cr, uid, line, order_id, qty_diff, context=None):
         '''
@@ -2652,8 +2743,44 @@ class sale_order_cancelation_wizard(osv.osv_memory):
     _name = 'sale.order.cancelation.wizard'
 
     _columns = {
-        'order_id': fields.many2one('sale.order', 'Order to delete', required=True),
+        'order_id': fields.many2one('sale.order', 'Order to delete', required=False),
+        'order_ids': fields.many2many(
+            'sale.order',
+            'sale_order_cancel_rel',
+            'wizard_id',
+            'sale_id',
+            string='Orders to cancel',
+            required=True,
+        ),
     }
+
+    def leave_it(self, cr, uid, ids, context=None):
+        """
+        Close the window or open another window according to context
+        """
+        if context is None:
+            context = {}
+
+        if context.get('from_po') and context.get('po_ids'):
+            po_obj = self.pool.get('purchase.order')
+            return po_obj.check_empty_po(cr, uid, context.get('po_ids'), context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_fo(self, cr, uid, ids, context=None):
+        """
+        Make a trg_write on FO to check if it can be canceled
+        """
+        if context is None:
+            context = {}
+
+        wf_service = netsvc.LocalService("workflow")
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for so in wiz.order_ids:
+                wf_service.trg_write(uid, 'sale.order', so.id, cr)
+
+        return self.leave_it(cr, uid, ids, context=context)
 
     def only_cancel(self, cr, uid, ids, context=None):
         '''

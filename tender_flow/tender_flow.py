@@ -954,8 +954,11 @@ class tender_line(osv.osv):
                 sol_obj.add_resource_line(cr, uid, sol, False, sol_ids[sol], context=context)
 
         # Update sale order lines
+        so_to_cancel_ids = []
         for sol in sol_to_update:
-            sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+            if so_to_cancel_id:
+                so_to_cancel_ids.append(so_to_cancel_id)
 
         # Update the FO state
         for so in so_to_update:
@@ -975,7 +978,7 @@ class tender_line(osv.osv):
         if context.get('fake_unlink'):
             return to_remove
 
-        return True
+        return so_to_cancel_ids
 
     def fake_unlink(self, cr, uid, ids, context=None):
         '''
