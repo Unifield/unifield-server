@@ -2114,8 +2114,8 @@ stock moves which are already processed : '''
             if line.procurement_id:
                 proc_ids.append(line.procurement_id.id)
 
-            if not self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', line.sync_order_line_db_id)], context=context):
-                self.pool.get('purchase.order.line').cancel_sol(cr, uid, [line.id], context=context, deleted_line=True)
+#            if not self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', line.sync_order_line_db_id)], context=context):
+#                self.pool.get('purchase.order.line').cancel_sol(cr, uid, [line.id], context=context, deleted_line=True)
 
         # Cancel the listed procurement orders
         for proc_id in proc_ids:
@@ -2835,6 +2835,8 @@ class purchase_order_line(osv.osv):
             context['skipResequencing'] = True
             self._update_merged_line(cr, uid, line.id, False, context=context)
             context['skipResequencing'] = tmp_Resequencing
+            if not self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', line.sync_order_line_db_id)], context=context):
+                self.pool.get('purchase.order.line').cancel_sol(cr, uid, [line.id], context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         self.unlink(cr, uid, ids, context=context)
@@ -2847,8 +2849,11 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
 
         for line_id in ids:
             # we want to skip resequencing because unlink is performed on merged purchase order lines
@@ -2859,6 +2864,14 @@ class purchase_order_line(osv.osv):
 
         if context.get('from_del_wizard'):
             return self.ask_unlink(cr, uid, ids, context=context)
+
+        context['procurement_request'] = True
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.origin and not self.search(cr, uid, [('id', '!=', line.id), ('origin', '=', line.origin)], context=context):
+                fo_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', line.origin)], context=context)
+                for fo_id in fo_ids:
+                    wf_service.trg_write(uid, 'sale.order', fo_id, cr)
+        del context['procurement_request']
 
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 

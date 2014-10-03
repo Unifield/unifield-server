@@ -2154,6 +2154,7 @@ class sale_order_line(osv.osv):
         proc_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
+        po_line_obj = self.pool.get('purchase.order.line')
 
         wf_service = netsvc.LocalService("workflow")
 
@@ -2164,6 +2165,7 @@ class sale_order_line(osv.osv):
             line = self.browse(cr, uid, line, context=context)
 
         order = line.order_id and line.order_id.id
+        order_name = line.order_id and line.order_id.name
 
         if qty_diff >= line.product_uom_qty:
             proc = line.procurement_id and line.procurement_id.id
@@ -2197,9 +2199,9 @@ class sale_order_line(osv.osv):
             elif line.order_id.procurement_request:
                 # UFTP-82: flagging SO is an IR and its PO is cancelled
                 self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
-            if proc:
-                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
-                proc_obj.action_cancel(cr, uid, [proc])
+#            if proc:
+#                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
+#                proc_obj.action_cancel(cr, uid, [proc])
         else:
             minus_qty = line.product_uom_qty - qty_diff
             proc = line.procurement_id and line.procurement_id.id
@@ -2209,7 +2211,7 @@ class sale_order_line(osv.osv):
             if proc:
                 proc_obj.write(cr, uid, [proc], {'product_qty': minus_qty}, context=context)
 
-        if order:
+        if order and (not order_name or not po_line_obj.search(cr, uid, [('origin', '=', order_name)], context=context)):
             wf_service.trg_write(uid, 'sale.order', order, cr)
 
         return True
@@ -2441,7 +2443,8 @@ class sale_order_line(osv.osv):
                 data.update({'partner_id': context.get('partner_id')})
             if context.get('categ'):
                 data.update({'categ': context.get('categ')})
-            self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
+            if data:
+                self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
 
         default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
         default_data.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
