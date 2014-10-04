@@ -2252,6 +2252,8 @@ class sale_order_line(osv.osv):
         if isinstance(line, (int, long)):
             line = self.browse(cr, uid, line, context=context)
 
+        import pdb
+        pdb.set_trace()
         order = line.order_id and line.order_id.id
         order_name = line.order_id and line.order_id.name
 

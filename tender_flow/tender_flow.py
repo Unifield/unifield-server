@@ -448,9 +448,6 @@ class tender(osv.osv):
         # update product supplierinfo and pricelist
         self.update_supplier_info(cr, uid, ids, context=context, integrity_test=False,)
 
-        # Delete lines on FO
-        self.delete_lines_on_fo(cr, uid, ids, context=context)
-
         # change tender state
         self.write(cr, uid, ids, {'state':'done'}, context=context)
         return True
@@ -687,9 +684,6 @@ class tender(osv.osv):
         t_line_obj = self.pool.get('tender.line')
         wf_service = netsvc.LocalService("workflow")
 
-        # Delete lines on FO
-        self.delete_lines_on_fo(cr, uid, ids, context=context)
-
         # set state
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         for tender in self.browse(cr, uid, ids, context=context):
@@ -736,25 +730,6 @@ class tender(osv.osv):
                     else:
                         # Call the cancel method of the tender
                         wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
-
-        return True
-
-    def delete_lines_on_fo(self, cr, uid, ids, context=None):
-        """
-        Update or cancel the FO/IR line that matches with the removed tender line
-        """
-        del_line_obj = self.pool.get('tender.line.deleted')
-
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        del_line_ids = del_line_obj.search(cr, uid, [('tender_id', 'in', ids)], context=context)
-
-        for line in del_line_obj.browse(cr, uid, del_line_ids, context=context):
-            self.pool.get('tender.line').cancel_sourcing(cr, uid, [line.id], context=context, delete_line=True)
 
         return True
 
@@ -897,7 +872,7 @@ class tender_line(osv.osv):
 
         return super(tender_line, self).copy(cr, uid, id, default, context=context)
 
-    def cancel_sourcing(self,cr, uid, ids, context=None, delete_line=False):
+    def cancel_sourcing(self,cr, uid, ids, context=None):
         '''
         Cancel the line and re-source the FO line
         '''
@@ -905,7 +880,6 @@ class tender_line(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
         tender_obj = self.pool.get('tender')
-        del_line_obj = self.pool.get('tender.line.deleted')
 
         # Variables
         wf_service = netsvc.LocalService("workflow")
@@ -916,14 +890,9 @@ class tender_line(osv.osv):
         so_to_update = set()
         tender_to_update = set()
 
-        if delete_line:
-            line_brw = del_line_obj.browse(cr, uid, ids, context=context)
-        else:
-            line_brw = self.browse(cr, uid, ids, context=context)
-
-        for line in line_brw:
+        for line in self.browse(cr, uid, ids, context=context):
             tender_to_update.add(line.tender_id.id)
-            if line.sale_order_line_id and delete_line:
+            if line.sale_order_line_id:
                 so_to_update.add(line.sale_order_line_id.order_id.id)
                 to_cancel.append(line.id)
                 # Get the ID and the product qty of the FO line to re-source
@@ -939,15 +908,8 @@ class tender_line(osv.osv):
             else:
                 to_cancel.append(line.id)
 
-        if to_cancel and not delete_line:
+        if to_cancel:
             self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
-
-        if not delete_line:
-            if to_cancel:
-                self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
-                del_line_obj.create_from_tender_line(cr, uid, to_cancel, context=context)
-            if to_remove:
-                del_line_obj.create_from_tender_line(cr, uid, to_remove, context=context)
 
         if sol_ids:
             for sol in sol_ids:
@@ -1623,7 +1585,6 @@ class purchase_order(osv.osv):
 #                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 #                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
         self.create_extra_lines_on_fo(cr, uid, ids, context=context)
-        self.delete_lines_on_fo(cr, uid, ids, context=context)
 
         return self.write(cr, uid, ids, {'state': 'done'}, context=context)
 
@@ -1847,61 +1808,6 @@ class tender_cancel_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 tender_cancel_wizard()
-
-
-class tender_line_deleted(osv.osv):
-    _name = 'tender.line.deleted'
-
-    _columns = {
-        'sale_order_line_id': fields.many2one(
-            'sale.order.line',
-            string='FO/IR line',
-        ),
-        'has_to_be_resourced': fields.boolean(
-            string='Has to be resourced',
-        ),
-        'qty': fields.float(
-            digits=(16,2),
-            string='Qty',
-        ),
-        'product_uom': fields.many2one(
-            'product.uom',
-            string='UoM',
-        ),
-        'line_tender_id': fields.integer(
-            string='ID of the deleted tender line',
-        ),
-        'tender_id': fields.many2one(
-            'tender',
-            string='Tender',
-        ),
-    }
-
-    def create_from_tender_line(self, cr, uid, ids, context=None):
-        '''
-        Create record of tender.line.deleted according to given
-        ids (List of ID of tender.line)
-        '''
-        line_obj = self.pool.get('tender.line')
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = []
-
-        for tl in line_obj.browse(cr, uid, ids, context=context):
-            res.append(self.create(cr, uid, {
-                'sale_order_line_id': tl.sale_order_line_id and tl.sale_order_line_id.id or False,
-                'has_to_be_resourced': tl.has_to_be_resourced,
-                'qty': tl.qty,
-                'product_uom': tl.product_uom and tl.product_uom.id or False,
-                'line_tender_id': tl.id,
-                'tender_id': tl.tender_id and tl.tender_id.id or False,
-            }, context=context))
-
-        return res
-
-tender_line_deleted()
 
 
 class ir_values(osv.osv):
