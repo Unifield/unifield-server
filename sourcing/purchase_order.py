@@ -47,6 +47,14 @@ if the supplier 'Order creation method' is set to 'Requirements by Order'.""",
 rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
 """,
         ),
+        'po_from_rr': fields.boolean(
+            string='PO from replenishment rules',
+            readonly=True,
+        ),
+    }
+
+    _defaults = {
+        'po_from_rr': False,
     }
 
     def create(self, cr, uid, vals, context=None):

@@ -235,6 +235,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 purchase_domain.append(('unique_rule_type', '=', procurement.unique_rule_type))
                 values['unique_rule_type'] = procurement.unique_rule_type
 
+        if procurement.unique_rule_type:
+            values['po_from_rr'] = True
+
         # Category requirements => Search a PO with the same category than the IR/FO category
         if partner.po_by_project in ('category_project', 'category'):
             if line:

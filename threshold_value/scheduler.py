@@ -52,6 +52,8 @@ class procurement_order(osv.osv):
         start_date = time.strftime('%Y-%m-%d %H:%M:%S')
         
         wf_service = netsvc.LocalService("workflow")
+
+        self.check_exception_proc(cr, uid, [], context=context)
         
         # Put a lock on thershold rules
         threshold_obj.write(cr, uid, threshold_ids, {}, context=context)

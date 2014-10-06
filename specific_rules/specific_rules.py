@@ -199,12 +199,50 @@ class stock_warehouse_orderpoint(osv.osv):
     '''
     _inherit = 'stock.warehouse.orderpoint'
 
+    def _get_product_ids(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Returns a list of products for the rule
+        '''
+        res = {}
+
+        for rule in self.browse(cr, uid, ids, context=context):
+            res[rule.id] = []
+            for line in rule.line_ids:
+                res[rule.id].append(line.product_id.id)
+
+        return res
+
+    def _src_product_ids(self, cr, uid, obj, name, args, context=None):
+        if not context:
+            context = {}
+
+        res = []
+
+        for arg in args:
+            if arg[0] == 'product_line_ids':
+                rule_ids = []
+                line_ids = self.pool.get('stock.warehouse.orderpoint.line').search(cr, uid, [('product_id', arg[1], arg[2])])
+                for l in self.pool.get('stock.warehouse.orderpoint.line').browse(cr, uid, line_ids):
+                    if l.supply_id.id not in rule_ids:
+                        rule_ids.append(l.supply_id.id)
+                res.append(('id', 'in', rule_ids))
+
+        return res
+
     _columns = {
         'name': fields.char('Reference', size=128, required=True, select=True),
         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade",
                                         domain="[('is_replenishment', '=', warehouse_id)]"),
         'product_id': fields.many2one('product.product', 'Product', required=False, ondelete='cascade', domain=[('type','=','product')]),  # UTP-1186 in line_ids now so not required any more
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=False),  # UTP-1186 in line_ids now so not required any more
+        'product_line_ids': fields.function(
+            _get_product_ids,
+            fnct_search=_src_product_ids,
+            type='many2many',
+            relation='product.product',
+            method=True,
+            string='Products',
+        ),
     }
 
     def default_get(self, cr, uid, fields, context=None):
