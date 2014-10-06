@@ -137,7 +137,8 @@ class message_to_send(osv.osv):
     """
         Creation from rule
     """
-    def create_from_rule(self, cr, uid, rule, order=None, context=None):
+    
+    def create_from_rule(self, cr, uid, rule, order=None, initial=False, context=None):
         context = dict(context or {})
         context['active_test'] = False
 
@@ -149,28 +150,39 @@ class message_to_send(osv.osv):
             obj_ids = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
 
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
+        ''' 
+            From Duy: The following block of code needs to be reviewed and refactoring, the calculation of args is not needed
+            if the message existed already in the system (or, it will be rejected in the call self.create_message(xx))
+            The calculation of args on all obj_ids costs too much and useless in most of the case!
+            
+            The solution is to get the identifiers, then check to remove those exist but not sent, no need to calculate args for them 
+        '''
         args = {}
         for obj_id in obj_ids:
-            arg = self.pool.get(rule.model).get_message_arguments(cr, uid, obj_id, rule, context=context)
-            args[obj_id] = arg
+            if initial == False: # default action
+                args[obj_id] = self.pool.get(rule.model).get_message_arguments(cr, uid, obj_id, rule, context=context)
+            else: # UF-2483: fake RW sync on creation of the RW instance 
+                args[obj_id] = "Initial RW Sync - Ignore"
+
         call = rule.remote_call
         identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids, rule.server_id, context=context)
         for id in obj_ids:
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
-                self.create_message(cr, uid, identifiers[id], call, args[id], dest[id], context)
+                # UF-2483: By default the "sent" parameter is False
+                self.create_message(cr, uid, identifiers[id], call, args[id], dest[id], initial, context)
         return len(obj_ids)
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
         return dict( (id, "%s_%s" % (name, server_rule_id)) \
                      for id, name in self.pool.get(model).get_sd_ref(cr, uid, ids, context=context).items() )
 
-    def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, context=None):
+    def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, sent=False, context=None):
         data = {
                 'identifier' : identifier,
                 'remote_call': remote_call,
                 'arguments': arguments,
                 'destination_name': destination_name,
-                'sent' : False,
+                'sent' : sent,
                 'generate_message' : False,
         }
         ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)

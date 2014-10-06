@@ -465,6 +465,25 @@ class Entity(osv.osv):
         
         # return number of messages to send
         return len(message_pool.search(cr, uid, [('sent','=',False)], context=context))
+
+    # UF-2483: Run the initial push messages to create all RW messages, put them into the sent box, to avoid sending them on the first RW sync 
+    def usb_push_create_message_initial(self, cr, uid):
+        context = {}
+        message_pool = self.pool.get('sync_remote_warehouse.message_to_send')
+        rule_pool = self.pool.get("sync.client.message_rule")
+        entity = self.get_entity(cr, uid, context)
+
+        messages_count = 0
+        message_direction = entity.usb_instance_type == 'central_platform' and \
+            ['|', ('direction_usb', '=', 'cp_to_rw'), ('direction_usb', '=', 'bidirectional')] or \
+            ['|', ('direction_usb', '=', 'rw_to_cp'), ('direction_usb', '=', 'bidirectional')]
+        rule_ids = rule_pool.search(cr, uid, [('type','=','USB')] + message_direction, order='sequence_number',  context=context)
+        if rule_ids:
+            for rule in rule_pool.browse(cr, uid, rule_ids, context=context):
+                messages_count += message_pool.create_from_rule(cr, uid, rule, "id asc", True, context=context)
+        
+            if messages_count:
+                cr.commit()
     
     def usb_push_validate(self, cr, uid, ids, context=None):
         """
