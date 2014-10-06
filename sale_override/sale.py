@@ -2020,7 +2020,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Update the context to get IR lines
         context['procurement_request'] = True
 
-        for order in self.read(cr, uid, ids, ['from_yml_test'], context=context):
+        for order in self.read(cr, uid, ids, ['from_yml_test', 'order_line'], context=context):
+            if not self._get_ready_to_cancel(cr, uid, [order['id']], order['order_line'], context=context)[order['id']]:
+                return False
+
             # backward compatibility for yml tests, if test we do not wait
             if order['from_yml_test']:
                 continue
@@ -2076,6 +2079,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             po_line_domain = [
                 ('order_id.state', 'not in', ('cancel', 'done')),
                 ('origin', '=', fo.name),
+                ('procurement_id', '=', False),
             ]
             if context.get('pol_ids'):
                 po_line_domain.append(('id', 'not in', context.get('pol_ids')))
@@ -2103,6 +2107,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         Create and open the asking cancelation wizard
         """
         wiz_obj = self.pool.get('sale.order.cancelation.wizard')
+        wiz_line_obj = self.pool.get('sale.order.leave.close')
         data_obj = self.pool.get('ir.model.data')
 
         if context is None:
@@ -2111,7 +2116,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        wiz_id = wiz_obj.create(cr, uid, {'order_ids': [(6, 0, ids)]}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {}, context=context)
+        for id in ids:
+            wiz_line_obj.create(cr, uid, {
+                'wizard_id': wiz_id,
+                'order_id': id,
+            }, context=context)
+
         view_id = data_obj.get_object_reference(cr, uid, 'sale_override', 'sale_order_cancelation_ask_wizard_form_view')[1]
 
         if context.get('view_id'):
@@ -2252,8 +2263,6 @@ class sale_order_line(osv.osv):
         if isinstance(line, (int, long)):
             line = self.browse(cr, uid, line, context=context)
 
-        import pdb
-        pdb.set_trace()
         order = line.order_id and line.order_id.id
         order_name = line.order_id and line.order_id.name
 
@@ -2746,13 +2755,10 @@ class sale_order_cancelation_wizard(osv.osv_memory):
 
     _columns = {
         'order_id': fields.many2one('sale.order', 'Order to delete', required=False),
-        'order_ids': fields.many2many(
-            'sale.order',
-            'sale_order_cancel_rel',
+        'order_ids': fields.one2many(
+            'sale.order.leave.close',
             'wizard_id',
-            'sale_id',
-            string='Orders to cancel',
-            required=True,
+            string='Orders to check',
         ),
     }
 
@@ -2769,18 +2775,28 @@ class sale_order_cancelation_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def cancel_fo(self, cr, uid, ids, context=None):
+    def close_fo(self, cr, uid, ids, context=None):
         """
         Make a trg_write on FO to check if it can be canceled
         """
+        proc_obj = self.pool.get('procurement.order')
+
         if context is None:
             context = {}
 
         wf_service = netsvc.LocalService("workflow")
 
         for wiz in self.browse(cr, uid, ids, context=context):
-            for so in wiz.order_ids:
-                wf_service.trg_write(uid, 'sale.order', so.id, cr)
+            for lc in wiz.order_ids:
+                if not lc.action:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('You must choose an action for each order'),
+                    )
+                if lc.action == 'close':
+                    proc_ids = proc_obj.search(cr, uid, [('sale_id', '=', lc.order_id.id)], context=context)
+                    proc_obj.action_cancel(cr, uid, proc_ids)
+                    wf_service.trg_write(uid, 'sale.order', lc.order_id.id, cr)
 
         return self.leave_it(cr, uid, ids, context=context)
 
@@ -2831,5 +2847,44 @@ class sale_order_cancelation_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 sale_order_cancelation_wizard()
+
+
+class sale_order_leave_close(osv.osv_memory):
+    _name = 'sale.order.leave.close'
+
+    _columns = {
+        'wizard_id': fields.many2one(
+            'sale.order.cancelation.wizard',
+            string='Wizard',
+            required=True,
+            ondelete='cascade',
+        ),
+        'order_id': fields.many2one(
+            'sale.order',
+            string='Order name',
+            required=True,
+            ondelete='cascade',
+        ),
+        'order_state': fields.related(
+            'order_id',
+            'state',
+            type='selection',
+            string='Order state',
+            selection=SALE_ORDER_STATE_SELECTION,
+        ),
+        'action': fields.selection(
+            selection=[
+                ('close', 'To close'),
+                ('leave', 'To leave'),
+            ],
+            string='Action to do',
+        ),
+    }
+
+    _defaults = {
+        'action': lambda *a: False,
+    }
+
+sale_order_leave_close()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

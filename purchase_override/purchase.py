@@ -1279,6 +1279,7 @@ stock moves which are already processed : '''
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        wf_service = netsvc.LocalService("workflow")
 
         # update corresponding fo if exist
         if so_ids is None:
@@ -1390,6 +1391,7 @@ stock moves which are already processed : '''
                     # write data to so
                     so_obj.write(cr, uid, [so.id], {'delivery_confirmed_date': so_confirmed,
                                                    'ready_to_ship_date': so_rts}, context=context)
+                    wf_service.trg_write(uid, 'sale.order', so.id, cr)
         return True
 
     def check_if_product(self, cr, uid, ids, context=None):
@@ -2686,6 +2688,12 @@ class purchase_order_line(osv.osv):
                         'target': 'new',
                         'context': context}
 
+            # In case of a PO line is created to source a FO/IR but the corresponding
+            # FO/IR line will be created when the PO will be confirmed
+            if not line.procurement_id and line.origin:
+                wiz_id = wiz_obj.create(cr, uid, {'line_id': line.id}, context=context)
+                return wiz_obj.just_cancel(cr, uid, [wiz_id], context=context)
+
             # In case of a PO line is not created to source a FO/IR but from a
             # replenishment rule, cancel the stock move and the procurement order
             if line.move_dest_id:
@@ -2711,6 +2719,7 @@ class purchase_order_line(osv.osv):
         '''
         context = context or {}
         sol_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
         uom_obj = self.pool.get('product.uom')
 
         if isinstance(ids, (int, long)):
@@ -2721,9 +2730,14 @@ class purchase_order_line(osv.osv):
         ir_to_potentialy_cancel_ids = []
         sol_of_po_line_resourced_ids = []
 
+        so_to_cancel_ids = []
         for line in self.browse(cr, uid, ids, context=context):
-
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+
+            if not sol_ids and line.origin:
+                origin_ids = so_obj.search(cr, uid, [('name', '=', line.origin)], context=context)
+                if origin_ids:
+                    so_to_cancel_ids.extend(origin_ids)
 
             line_qty = line.product_qty
             if 'pol_qty' in context and line.id in context['pol_qty']:
@@ -2742,7 +2756,6 @@ class purchase_order_line(osv.osv):
                     if sol.order_id.id not in ir_to_potentialy_cancel_ids:
                         ir_to_potentialy_cancel_ids.append(sol.order_id.id)
 
-        so_to_cancel_ids = []
         context['pol_ids'] = ids
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
@@ -2802,13 +2815,14 @@ class purchase_order_line(osv.osv):
         Add an entry to cancel (and resource if needed) the line when the
         PO will be confirmed
         '''
+        proc_obj = self.pool.get('procurement.order')
+
         if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        del_line_obj.create_from_po_line(cr, uid, ids, context=context)
         so_to_cancel = []
 
         proc_ids = []
@@ -2825,8 +2839,8 @@ class purchase_order_line(osv.osv):
 
             if not self.pool.get('sale.order.line.cancel').search(cr, uid, [
                 ('sync_order_line_db_id', '=', line.sync_order_line_db_id),
-            ], context=contet):
-                self.cancel_sol(cr, uid, [line.id], context=context)
+            ], context=context):
+                so_to_cancel = self.cancel_sol(cr, uid, [line.id], context=context)
 
             # we want to skip resequencing because unlink is performed on merged purchase order lines
             tmp_Resequencing = context.get('skipResequencing', False)
@@ -2838,7 +2852,7 @@ class purchase_order_line(osv.osv):
 
         # Cancel the listed procurement orders
         for proc_id in proc_ids:
-            if not self.search(cr, uid, [('procurement_id', '=', proc_id)], context=context):
+            if not self.search(cr, uid, [('id', 'not in', ids), ('procurement_id', '=', proc_id)], context=context):
                 proc_obj.action_cancel(cr, uid, [proc_id])
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
@@ -2867,17 +2881,6 @@ class purchase_order_line(osv.osv):
 
         if context.get('from_del_wizard'):
             return self.ask_unlink(cr, uid, ids, context=context)
-
-        context['procurement_request'] = True
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.origin and not self.search(cr, uid, [('id', '!=', line.id), ('origin', '=', line.origin)], context=context):
-                fo_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', line.origin)], context=context)
-                context['pol_ids'] = [line.id]
-                ready_to_cancel = self.pool.get('sale.order')._get_ready_to_cancel(cr, uid, fo_ids, context=context)
-                for fo_id in fo_ids:
-                    if ready_to_cancel[fo_id]:
-                        wf_service.trg_write(uid, 'sale.order', fo_id, cr)
-        del context['procurement_request']
 
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 

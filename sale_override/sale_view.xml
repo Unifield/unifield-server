@@ -506,16 +506,17 @@
                                 Would you cancel these FO/IR or leave them in their current status ?
                             </p>
                         </html>
-                        <field name="order_ids" readonly="True" nolabel="1" colspan="4" mode="tree">
-                            <tree string="Field orders / Internal request">
-                                <field name="name" />
-                                <field name="state" />
+                        <field name="order_ids" nolabel="1" colspan="4" mode="tree">
+                            <tree string="Field orders / Internal request" editable="top" hide_new_button="1" hide_delete_button="1">
+                                <field name="order_id" readonly="1" />
+                                <field name="order_state" readonly="1" />
+                                <field name="action" required="1" />
                             </tree>
                         </field>
                     </group>
                     <newline />
-                    <button colspan="2" type="object" icon="gtk-execute" name="cancel_fo" string="Cancel" />
-                    <button colspan="2" type="object" icon="gtk-execute" name="leave_it" string="Leave it" />
+                    <label colspan="2" string=" " />
+                    <button colspan="2" type="object" icon="gtk-execute" name="close_fo" string="Do selected actions" />
                 </form>
             </field>
         </record>
