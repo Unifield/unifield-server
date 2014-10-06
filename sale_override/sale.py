@@ -2874,8 +2874,8 @@ class sale_order_leave_close(osv.osv_memory):
         ),
         'action': fields.selection(
             selection=[
-                ('close', 'To close'),
-                ('leave', 'To leave'),
+                ('close', 'Close it'),
+                ('leave', 'Leave it open'),
             ],
             string='Action to do',
         ),
