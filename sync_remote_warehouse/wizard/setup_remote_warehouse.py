@@ -114,6 +114,7 @@ class setup_remote_warehouse(osv.osv_memory):
         
         #UF-2483: Make a fake sync on messages and set them all the sync before 
         self.pool.get('sync.client.entity').usb_push_create_message_initial(cr, uid)
+        self._logger.info('Run the initial USB messages sync')
         self._setup_remote_warehouse(cr, uid, entity_id)
         
         # commit changes to db then take and save backup to file
