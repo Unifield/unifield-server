@@ -1408,7 +1408,7 @@ stock moves which are already processed : '''
                         raise osv.except_osv(_('Error !'), _('You should have a product on all Purchase Order lines to be able to confirm the Purchase Order.') )
         return True
 
-    def all_po_confirmed(self, cr, uid, ids, context=None):
+    def all_po_confirmed(self, cr, uid, ids, context=None, return_ids=False):
         '''
         condition for the po to leave the act_confirmed_wait state
 
@@ -1450,7 +1450,9 @@ stock moves which are already processed : '''
                                                                  ('procurement_id.state', '!=', 'cancel'),
                                                                  ('state', 'not in', ['confirmed', 'done'])], context=context)
             # if any lines exist, we return False
-            if all_sol_not_confirmed_ids:
+            if all_sol_not_confirmed_ids and return_ids:
+                return all_sol_not_confirmed_ids
+            elif all_sol_not_confirmed_ids:
                 return False
 
         return True
@@ -2864,25 +2866,33 @@ class purchase_order_line(osv.osv):
         '''
         Update the merged line
         '''
+        po_obj = self.pool.get('purchase.order')
+        wf_service = netsvc.LocalService("workflow")
+
         if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        wf_service = netsvc.LocalService("workflow")
-
-        for line_id in ids:
+        order_ids = []
+        for line in self.read(cr, uid, ids, ['id', 'order_id'], context=context):
             # we want to skip resequencing because unlink is performed on merged purchase order lines
             tmp_skip_resourcing = context.get('skipResourcing')
             context['skipResourcing'] = True
-            self._update_merged_line(cr, uid, line_id, False, context=context)
+            self._update_merged_line(cr, uid, line['id'], False, context=context)
             context['skipResourcing'] = tmp_skip_resourcing
+            if line['order_id'][0] not in order_ids:
+                order_ids.append(line['order_id'][0])
 
         if context.get('from_del_wizard'):
             return self.ask_unlink(cr, uid, ids, context=context)
 
-        return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
+        res = super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
+
+        po_obj.wkf_confirm_trigger(cr, uid, order_ids, context=context)
+
+        return res
 
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
         if isinstance(ids, (int, long)):
@@ -3414,8 +3424,41 @@ product_product()
 class purchase_order_line_unlink_wizard(osv.osv_memory):
     _name = 'purchase.order.line.unlink.wizard'
 
+    def _get_last_line(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return True if the line is the last line to confirm before confirm
+        all other PO.
+        """
+        po_obj = self.pool.get('purchase.order')
+        sol_obj = self.pool.get('sale.order.line')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res[wiz.id] = False
+            if wiz.line_id.procurement_id:
+                order_id = wiz.line_id.order_id.id
+                all_sol_not_confirmed = sorted(po_obj.all_po_confirmed(cr, uid, [order_id], context=context, return_ids=True))
+                sol_ids = sorted(sol_obj.search(cr, uid, [('procurement_id', '=', wiz.line_id.procurement_id.id)], context=context))
+                res[wiz.id] = all_sol_not_confirmed == sol_ids
+
+        return res
+
     _columns = {
         'line_id': fields.many2one('purchase.order.line', 'Line to delete'),
+        'last_line': fields.function(
+            _get_last_line,
+            method=True,
+            type='boolean',
+            string='Last line to confirm',
+            readonly=True,
+            store=False,
+        ),
     }
 
     def just_cancel(self, cr, uid, ids, context=None):
