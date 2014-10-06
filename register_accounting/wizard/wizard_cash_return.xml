@@ -104,9 +104,8 @@
                     <field name="document_date" />
                     <field name="description" />
                     <field name="reference" />
-                    <field name="account_id" domain="[('restricted_area', '=', 'cash_return')]"/>
-                    <field name="partner_id" domain="[('supplier', '=', 'True')]"/>
-                    
+                    <field name="account_id" domain="[('restricted_area', '=', 'cash_return')]"/> 
+                    <field name="partner_type"/>
                     <field name="analytic_distribution_id" invisible="1"/>
                     <field name="display_analytic_button" invisible="1"/>
 
@@ -133,7 +132,7 @@
                     <field name="description" />
                     <field name="reference" />
                     <field name="account_id" />
-                    <field name="partner_id" />
+                    <field name="partner_type"/>
                     <field name="amount" />
                 </form>
             </field>

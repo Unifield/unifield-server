@@ -129,6 +129,8 @@ class wizard_advance_line(osv.osv_memory):
         'reference': fields.char(string='Reference', size=64, required=False),
         'account_id': fields.many2one('account.account', string='Account', required=True, domain=[('type', '!=', 'view')]),
         'partner_id': fields.many2one('res.partner', string='Partner', required=False),
+        'employee_id': fields.many2one('hr.employee', string="Employee", required=False),
+        'partner_type': fields.reference("3RD party", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')], size=128),
         'amount': fields.float(string="Amount", size=(16,2), required=True),
         'wizard_id': fields.many2one('wizard.cash.return', string='wizard'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -814,26 +816,52 @@ class wizard_cash_return(osv.osv_memory):
             advances_with_supplier = {}
             # create move line from advance line
             adv_move_line_ids = []
+            e_obj = self.pool.get('hr.employee')
             for advance in wizard.advance_line_ids:
                 # Case where line equals 0
                 if advance.amount == 0.0:
                     continue
                 adv_date = advance.document_date
                 adv_name = advance.description
-                partner_id = advance.partner_id.id or False
-                if partner_id:
-                    if partner_id in advances_with_supplier:
-                        advances_with_supplier[partner_id].append(advance.id)
-                    else:
-                        advances_with_supplier[partner_id] = [advance.id]
+                partner_id = False
+                line_employee_id = False
+                partner = advance.partner_type
+                if partner:
+                    partner_data = partner.split(',')
+                    if partner_data and len(partner_data) >= 2:
+                        partner_type = partner_data[0]
+                    if partner_type == 'res.partner':
+                        partner_id = partner_data[1]
+                        if partner_id in advances_with_supplier:
+                            advances_with_supplier[partner_id].append(advance.id)
+                        else:
+                            advances_with_supplier[partner_id] = [advance.id]
+                    elif partner_type == 'hr.employee':
+                        line_employee_id = partner_data[1]
                 debit = abs(advance.amount)
                 credit = 0.0
                 account_id = advance.account_id.id
+                # Analytic distribution for this line
+                #+ if an employee was filled in, take default analytic distribution from employee
+                #+ else use line allocation or header allocation
                 distrib_id = (advance.analytic_distribution_id and advance.analytic_distribution_id.id) or \
                     (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
+                if line_employee_id:
+                    e_ids = e_obj.search(cr, uid, [('id', '=', int(line_employee_id))])
+                    if e_ids:
+                        employee = e_obj.browse(cr, uid, e_ids)
+                        if employee:
+                            vals_for_analytic_distribution = {
+                                'employee_id': line_employee_id,
+                                'statement_id': wizard.advance_st_line_id.statement_id.id,
+                                'account_id': account_id,
+                            }
+                            new_distrib = self.pool.get('account.bank.statement.line').update_employee_analytic_distribution(cr, uid, vals_for_analytic_distribution)
+                            if new_distrib and new_distrib.get('analytic_distribution_id', False):
+                                distrib_id = new_distrib.get('analytic_distribution_id')
                 line_ref = advance.reference or wizard.reference
 
-                adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, False, account_id, \
+                adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, line_employee_id, account_id, \
                     debit, credit, line_ref, move_id, distrib_id, context=context)
                 adv_move_line_ids.append(adv_id)
 
