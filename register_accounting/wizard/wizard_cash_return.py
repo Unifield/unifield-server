@@ -827,17 +827,14 @@ class wizard_cash_return(osv.osv_memory):
                 line_employee_id = False
                 partner = advance.partner_type
                 if partner:
-                    partner_data = partner.split(',')
-                    if partner_data and len(partner_data) >= 2:
-                        partner_type = partner_data[0]
-                    if partner_type == 'res.partner':
-                        partner_id = partner_data[1]
+                    if partner._name == 'res.employee':
+                        partner_id = partner.id
                         if partner_id in advances_with_supplier:
                             advances_with_supplier[partner_id].append(advance.id)
                         else:
                             advances_with_supplier[partner_id] = [advance.id]
-                    elif partner_type == 'hr.employee':
-                        line_employee_id = partner_data[1]
+                    elif partner._name == 'hr.employee':
+                        line_employee_id = partner.id
                 debit = abs(advance.amount)
                 credit = 0.0
                 account_id = advance.account_id.id
