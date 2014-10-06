@@ -144,19 +144,24 @@ class message_to_send(osv.osv):
 
         # either use rule filter_method or domain to find records for message
         if rule.filter_method:
-            obj_ids = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
+            obj_ids_temp = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
         else:
             domain = rule.domain and eval(rule.domain) or []
-            obj_ids = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
+            obj_ids_temp = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
 
-        dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
-        ''' 
-            From Duy: The following block of code needs to be reviewed and refactoring, the calculation of args is not needed
-            if the message existed already in the system (or, it will be rejected in the call self.create_message(xx))
-            The calculation of args on all obj_ids costs too much and useless in most of the case!
-            
+        '''
+            Add only real new messages to sync those haven't been synced before! This reduces significantly the cost of calculating the args (which is heavy)
             The solution is to get the identifiers, then check to remove those exist but not sent, no need to calculate args for them 
         '''
+        obj_ids = []
+        identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids_temp, rule.server_id, context=context)
+        for obj_id in obj_ids_temp:
+            # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
+            ids = self.search(cr, uid, [('identifier', '=', identifiers[obj_id])], context=context)
+            if not ids:
+                obj_ids.append(obj_id)
+
+        dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
         for obj_id in obj_ids:
             if initial == False: # default action
@@ -164,12 +169,10 @@ class message_to_send(osv.osv):
             else: # UF-2483: fake RW sync on creation of the RW instance 
                 args[obj_id] = "Initial RW Sync - Ignore"
 
-        call = rule.remote_call
-        identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids, rule.server_id, context=context)
         for id in obj_ids:
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
                 # UF-2483: By default the "sent" parameter is False
-                self.create_message(cr, uid, identifiers[id], call, args[id], dest[id], initial, context)
+                self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], dest[id], initial, context)
         return len(obj_ids)
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
