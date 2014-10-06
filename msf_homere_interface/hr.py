@@ -105,6 +105,13 @@ class hr_employee(osv.osv):
             if e.identification_id:
                 same = self.search(cr, uid, [('identification_id', '=', e.identification_id)])
                 if same and len(same) > 1:
+                    same_data = self.read(cr, uid, same, ['name'])
+                    names = [e.name]
+                    for employee in same_data:
+                        employee_name = employee.get('name', False)
+                        if employee_name and employee_name not in names:
+                            names.append(employee_name)
+                    raise osv.except_osv(_('Error'), _('Some employees have the same unique code: %s') % (';'.join(names)))
                     return False
         return True
 
