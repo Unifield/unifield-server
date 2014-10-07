@@ -46,6 +46,7 @@ class hr_employee(osv.osv):
     _inherit = 'hr.employee'
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
     }
 hr_employee()
 
@@ -58,22 +59,20 @@ class res_partner(osv.osv):
             ret[i] = False
         return ret
 
-    # This method have been abandonned since UTP-510 because of prepaid accounts (type receivable) that doesn't show any partners.
     def _search_filter_third(self, cr, uid, obj, name, args, context):
+        """
+        Return only suppliers
+        """
         if not context:
             context = {}
         if not args:
             return []
-        if args[0][2]:
-            t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type', 'type_for_register'])
-            if t['type'] == 'payable' and t['type_for_register'] != 'down_payment':
-                return [('property_account_payable', '=', args[0][2])]
-            if t['type'] == 'receivable' and t['type_for_register'] != 'down_payment':
-                return [('property_account_receivable', '=', args[0][2])]
-        return []
+        return [('supplier', '=', True)]
 
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=True), # search is now fake because of UTP-510
+        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+
     }
 res_partner()
 
