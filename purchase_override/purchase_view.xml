@@ -457,6 +457,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Cancel Purchase Order">
+                    <field name="last_lines" invisible="1" />
                     <group colspan="4" col="1">
                         <html>
                             <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Purchase Order will be re-sourced.</h4>

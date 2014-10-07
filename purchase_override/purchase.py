@@ -462,7 +462,10 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             for l in po.order_line:
                 if line_obj.get_sol_ids_from_pol_ids(cr, uid, [l.id], context=context):
-                    wiz_id = wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                    wiz_id = wiz_obj.create(cr, uid, {
+                        'order_id': po.id,
+                        'last_lines': wiz_obj._get_last_lines(cr, uid, po.id, context=context),
+                    }, context=context)
                     return {'type': 'ir.actions.act_window',
                             'res_model': 'purchase.order.cancel.wizard',
                             'res_id': wiz_id,
@@ -3634,8 +3637,37 @@ purchase_order_line_unlink_wizard()
 class purchase_order_cancel_wizard(osv.osv_memory):
     _name = 'purchase.order.cancel.wizard'
 
-    _columns = {'order_id': fields.many2one('purchase.order', 'Order to delete'),
-                'unlink_po': fields.boolean(string='Unlink PO'),}
+    _columns = {
+        'order_id': fields.many2one(
+            'purchase.order',
+            string='Order to delete',
+        ),
+        'unlink_po': fields.boolean(
+            string='Unlink PO',
+        ),
+        'last_lines': fields.boolean(
+            string='Remove last lines of the FO',
+        ),
+    }
+
+    def _get_last_lines(self, cr, uid, order_id, context=None):
+        """
+        Returns True if the deletion of the PO will delete the last lines
+        of the FO/IR.
+        """
+        exp_sol_obj = self.pool.get('expected.sale.order.line')
+        po_obj = self.pool.get('purchase.order')
+
+        po_so_ids, po_ids, so_ids, sol_nc_ids = po_obj.sourcing_document_state(cr, uid, [order_id], context=context)
+        if order_id in po_ids:
+            po_ids.remove(order_id)
+
+        exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', 'in', po_so_ids), ('po_id', '!=', order_id)], context=context)
+
+        if not exp_sol_ids and not po_ids:
+            return True
+
+        return False
 
     def fields_view_get(self, cr, uid, view_id=False, view_type='form', context=None, toolbar=False, submenu=False):
         return super(purchase_order_cancel_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
@@ -3675,8 +3707,10 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         Cancel the PO and display his form
         '''
         po_obj = self.pool.get('purchase.order')
+        so_obj = self.pool.get('sale.order')
         line_obj = self.pool.get('purchase.order.line')
         wf_service = netsvc.LocalService("workflow")
+
 
         if context is None:
             context = {}
@@ -3686,10 +3720,15 @@ class purchase_order_cancel_wizard(osv.osv_memory):
 
         line_ids = []
         order_ids = []
+        order_to_check = []
         for wiz in self.browse(cr, uid, ids, context=context):
             order_ids.append(wiz.order_id.id)
+            if wiz.last_lines and wiz.order_id.id not in order_to_check:
+                order_to_check.append(wiz.order_id.id)
             if context.get('has_to_be_resourced'):
                 line_ids.extend([l.id for l in wiz.order_id.order_line])
+
+        po_so_ids, po_ids, so_ids, sol_nc_ids = po_obj.sourcing_document_state(cr, uid, order_to_check, context=context)
 
         # Mark lines as 'To be resourced'
         line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
@@ -3697,6 +3736,13 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         po_obj.write(cr, uid, order_ids, {'canceled_end': True}, context=context)
         for order_id in order_ids:
             wf_service.trg_validate(uid, 'purchase.order', order_id, 'purchase_cancel', cr)
+
+        if po_so_ids:
+            context.update({
+                'from_po': True,
+                'po_ids': list(order_to_check),
+            })
+            return so_obj.open_cancel_wizard(cr, uid, po_so_ids, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
