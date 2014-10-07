@@ -3571,7 +3571,8 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
                 if order_id in po_ids:
                     po_ids.remove(order_id)
                 for sol_id in sol_ids:
-                    sol_nc_ids.remove(sol_id)
+                    if sol_id in sol_nc_ids:
+                        sol_nc_ids.remove(sol_id)
 
                 if po_ids and not sol_nc_ids and not exp_sol_ids:
                     res[wiz.id] = True
