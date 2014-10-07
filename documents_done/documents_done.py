@@ -546,7 +546,7 @@ class documents_done_problem(osv.osv_memory):
 #                    elif invoice_state not in ('cancel', 'paid'):
 #                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Closed\' because the following invoices are not Cancelled or Paid : %s') % ([map(x.name + '/') for x in error_inv_ids]))
                 elif line.doc_model == 'tender':
-                    wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'manually_done', cr)
+                    self.pool.get('tender').set_manually_done(cr, uid, [line.doc_id], context=context)
                 elif self.pool.get(line.doc_model).browse(cr, uid, line.doc_id, context=context).state not in ('cancel', 'done'):
                     self.pool.get(line.doc_model).set_manually_done(cr, uid, line.doc_id, all_doc=all_doc, context=context)
 
