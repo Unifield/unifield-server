@@ -2739,15 +2739,16 @@ class purchase_order_line(osv.osv):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
             exp_sol_ids = self.get_exp_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
             if (sol_ids or exp_sol_ids) and not context.get('from_del_wizard'):
-                wiz_id = wiz_obj.create(cr, uid, {'line_id': line.id, 'only_exp': not sol_ids and exp_sol_ids}, context=context)
-                return {'type': 'ir.actions.act_window',
-                        'res_model': 'purchase.order.line.unlink.wizard',
-                        'view_type': 'form',
-                        'view_mode': 'form',
-                        'view_id': [view_id],
-                        'res_id': wiz_id,
-                        'target': 'new',
-                        'context': context}
+                wiz_id = wiz_obj.create(cr, uid, {'line_id': line.id, 'only_exp': (not sol_ids and exp_sol_ids) and True or False}, context=context)
+                if sol_ids or wiz_obj.read(cr, uid, wiz_id, ['last_line'], context=context)['last_line']:
+                    return {'type': 'ir.actions.act_window',
+                            'res_model': 'purchase.order.line.unlink.wizard',
+                            'view_type': 'form',
+                            'view_mode': 'form',
+                            'view_id': [view_id],
+                            'res_id': wiz_id,
+                            'target': 'new',
+                            'context': context}
 
             # In case of a PO line is created to source a FO/IR but the corresponding
             # FO/IR line will be created when the PO will be confirmed
@@ -2780,6 +2781,7 @@ class purchase_order_line(osv.osv):
         '''
         context = context or {}
         sol_obj = self.pool.get('sale.order.line')
+        exp_sol_obj = self.pool.get('expected.sale.order.line')
         so_obj = self.pool.get('sale.order')
         uom_obj = self.pool.get('product.uom')
 
@@ -2798,7 +2800,8 @@ class purchase_order_line(osv.osv):
             if not sol_ids and line.origin:
                 origin_ids = so_obj.search(cr, uid, [('name', '=', line.origin)], context=context)
                 for origin in so_obj.read(cr, uid, origin_ids, ['order_line'], context=context):
-                    if not origin['order_line']:
+                    exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', '=', origin['id']), ('po_line_id', '!=', line.id)], context=context)
+                    if not origin['order_line'] and not exp_sol_ids:
                         so_to_cancel_ids.extend(origin_ids)
 
             line_qty = line.product_qty
