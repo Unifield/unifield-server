@@ -3568,7 +3568,8 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
                 po_so_ids, po_ids, so_ids, sol_nc_ids = po_obj.sourcing_document_state(cr, uid, [order_id], context=context)
                 sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', wiz.line_id.procurement_id.id)], context=context)
 
-                po_ids.remove(order_id)
+                if order_id in po_ids:
+                    po_ids.remove(order_id)
                 for sol_id in sol_ids:
                     sol_nc_ids.remove(sol_id)
 
