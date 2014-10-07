@@ -375,14 +375,14 @@ class account_analytic_line(osv.osv):
                 if creation_instance_ids:
                     msf_instance = msf_instance_obj.browse(cr, uid, creation_instance_ids[0])
                     new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-                    if new_destination_name != msf_instance.name:
+                    if new_destination_name != msf_instance.instance:
                         now = fields.datetime.now()
                         message_data = {'identifier':'delete_%s' % (xml_id,),
                             'sent':False,
                             'generate_message':True,
                             'remote_call':self._name + ".message_unlink_analytic_line",
                             'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                            'destination_name': msf_instance.name}
+                            'destination_name': msf_instance.instance} # UF-2499: Use instance field, and not name
                         msg_to_send_obj.create(cr, uid, message_data)
 
             # UF-2342: only generate delete message if the instance is at Project level
@@ -440,7 +440,7 @@ class account_analytic_line(osv.osv):
                                     'generate_message':True,
                                     'remote_call':self._name + ".message_unlink_analytic_line",
                                     'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                                    'destination_name': msf_instance.name}
+                                    'destination_name': msf_instance.instance}
                                 msg_to_send_obj.create(cr, uid, message_data)
         return super(account_analytic_line, self).unlink(cr, uid, ids, context)
 
