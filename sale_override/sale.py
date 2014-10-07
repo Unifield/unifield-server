@@ -2679,6 +2679,43 @@ class sale_order_line_cancel(osv.osv):
 sale_order_line_cancel()
 
 
+class expected_sale_order_line(osv.osv):
+    _name = 'expected.sale.order.line'
+
+    _columns = {
+        'order_id': fields.many2one(
+            'sale.order',
+            string='Order',
+            required=True,
+            ondelete='cascade',
+        ),
+        'po_line_id': fields.many2one(
+            'purchase.order.line',
+            string='Purchase order line',
+            ondelete='cascade',
+        ),
+        'po_id': fields.related(
+            'po_line_id',
+            'order_id',
+            type='many2one',
+            relation='purchase.order',
+        ),
+        #'tender_line_id': fields.many2one(
+        #    'tender.line',
+        #    string='Tender line',
+        #    ondelete='cascade',
+        #),
+        #'tender_id': fields.related(
+        #    'tender_line_id',
+        #    'tender_id',
+        #    type='many2one',
+        #    relation='tender',
+        #),
+    }
+
+expected_sale_order_line()
+
+
 class procurement_order(osv.osv):
     _inherit = 'procurement.order'
 
