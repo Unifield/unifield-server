@@ -78,14 +78,15 @@ class stock_production_lot(osv.osv):
 
         
         # UF-2148: make the xmlid_name from batch name for building xmlid if the value is not given in vals
-        if 'xmlid_name' not in vals or not vals['xmlid_name']:
+        if 'product_id' in vals and ('xmlid_name' not in vals or not vals['xmlid_name']):
             prod_name = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
             vals['xmlid_name'] = '%s_%s' % (prod_name.default_code, vals['name'])
-            
-        exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']), ('partner_name', '=', vals['partner_name']), ('product_id', '=', vals['product_id'])], context=context)
-        if exist:
-            # but if the value exist for xmlid_name, then add a suffix to differentiate, no constraint unique required here  
-            vals['xmlid_name'] = vals['xmlid_name'] + "_1"
+        
+        if 'xmlid_name' in vals:
+            exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']), ('partner_name', '=', vals['partner_name']), ('product_id', '=', vals['product_id'])], context=context)
+            if exist:
+                # but if the value exist for xmlid_name, then add a suffix to differentiate, no constraint unique required here  
+                vals['xmlid_name'] = vals['xmlid_name'] + "_1"
         
         return super(stock_production_lot, self).create(cr, uid, vals, context)
 
