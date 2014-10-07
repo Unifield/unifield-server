@@ -2597,7 +2597,7 @@ class purchase_order_line(osv.osv):
             name = order.name
             super(purchase_order_line, self).write(cr, uid, [po_line_id], {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
 
-        if self._name != 'purchase.order.merged.line' and vals.get('origin'):
+        if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('procurement_id'):
             so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
             for so_id in so_ids:
                 self.pool.get('expected.sale.order.line').create(cr, uid, {
@@ -2682,7 +2682,7 @@ class purchase_order_line(osv.osv):
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
 
-        if 'state' in vals and vals.get('state') != 'draft':
+        if ('state' in vals and vals.get('state') != 'draft') or ('procurement_id' in vals and vals.get('procurement_id')):
             exp_sol_ids = self.pool.get('expected.sale.order.line').search(cr, uid, [('po_line_id', 'in', ids)], context=context)
             self.pool.get('expected.sale.order.line').unlink(cr, uid, exp_sol_ids, context=context)
 
@@ -3755,11 +3755,17 @@ class purchase_order_cancel_wizard(osv.osv_memory):
             wf_service.trg_validate(uid, 'purchase.order', order_id, 'purchase_cancel', cr)
 
         if po_so_ids:
-            context.update({
-                'from_po': True,
-                'po_ids': list(order_to_check),
-            })
-            return so_obj.open_cancel_wizard(cr, uid, po_so_ids, context=context)
+            order_to_cancel = []
+            for so_id in po_so_ids:
+                if so_obj._get_ready_to_cancel(cr, uid, so_id, context=context)[so_id]:
+                    order_to_cancel.append(so_id)
+
+            if order_to_cancel:
+                context.update({
+                    'from_po': True,
+                    'po_ids': list(order_to_check),
+                })
+                return so_obj.open_cancel_wizard(cr, uid, po_so_ids, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

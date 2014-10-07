@@ -2049,8 +2049,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         cancel the FO/IR.
         """
         line_obj = self.pool.get('sale.order.line')
-        po_line_obj = self.pool.get('purchase.order.line')
-        tender_line_obj = self.pool.get('tender.line')
+        exp_sol_obj = self.pool.get('expected.sale.order.line')
 
         if context is None:
             context = {}
@@ -2076,27 +2075,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 res[fo.id] = False
                 continue
 
-            po_line_domain = [
-                ('order_id.state', 'not in', ('cancel', 'done')),
-                ('origin', '=', fo.name),
-                ('procurement_id', '=', False),
-            ]
+            exp_domain = [('order_id', '=', fo.id)]
+
             if context.get('pol_ids'):
-                po_line_domain.append(('id', 'not in', context.get('pol_ids')))
+                exp_domain.append(('po_id', 'not in', context.get('pol_ids')))
 
-            exp_po_lines = po_line_obj.search(cr, uid, po_line_domain, context=context)
-            if exp_po_lines:
-                res[fo.id] = False
-                continue
-
-            tl_domain = [
-                ('tender_id.state', 'not in', ('cancel', 'done')),
-                ('tender_id.sale_order_id', '=', fo.id),
-            ]
             if context.get('tl_ids'):
-                tl_domain.append(('id', 'not in', context.get('tl_ids')))
-            tender_lines = tender_line_obj.search(cr, uid, tl_domain, context=context)
-            if tender_lines:
+                exp_domain.append(('tender_id', 'not in', context.get('tl_ids')))
+
+            if exp_sol_obj.search(cr, uid, exp_domain, context=context):
                 res[fo.id] = False
                 continue
 
@@ -2700,17 +2687,6 @@ class expected_sale_order_line(osv.osv):
             type='many2one',
             relation='purchase.order',
         ),
-        #'tender_line_id': fields.many2one(
-        #    'tender.line',
-        #    string='Tender line',
-        #    ondelete='cascade',
-        #),
-        #'tender_id': fields.related(
-        #    'tender_line_id',
-        #    'tender_id',
-        #    type='many2one',
-        #    relation='tender',
-        #),
     }
 
 expected_sale_order_line()
@@ -2809,6 +2785,9 @@ class sale_order_cancelation_wizard(osv.osv_memory):
         if context.get('from_po') and context.get('po_ids'):
             po_obj = self.pool.get('purchase.order')
             return po_obj.check_empty_po(cr, uid, context.get('po_ids'), context=context)
+        elif context.get('from_tender') and context.get('tender_ids'):
+            tender_obj = self.pool.get('tender')
+            return tender_obj.check_empty_tender(cr, uid, context.get('tender_ids'), context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
