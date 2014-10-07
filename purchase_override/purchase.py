@@ -3536,6 +3536,11 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
         res = {}
         for wiz in self.browse(cr, uid, ids, context=context):
             res[wiz.id] = False
+
+            # Add a check to avoid error in server log
+            if not pol_obj.search(cr, uid, [('id', '=', wiz.line_id.id)], context=context):
+                continue
+
             exp_sol_ids = pol_obj.get_exp_sol_ids_from_pol_ids(cr, uid, [wiz.line_id.id], context=context, po_line=wiz.line_id.id)
 
             if wiz.line_id.procurement_id:
