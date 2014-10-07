@@ -156,7 +156,7 @@ class wizard_advance_line(osv.osv_memory):
         'have_analytic_distribution_from_header': lambda *a: True,
     }
 
-    def create(self, cr, uid, vals, context=None):
+    def check_employee_distribution(self, cr, uid, vals, context=None):
         """
         Check vals. If employee_id given, add new analytic distribution
         """
@@ -180,7 +180,35 @@ class wizard_advance_line(osv.osv_memory):
                     new_distrib = self.pool.get('account.bank.statement.line').update_employee_analytic_distribution(cr, uid, vals_4_distrib)
                     if new_distrib and new_distrib.get('analytic_distribution_id', False):
                         vals.update({'analytic_distribution_id': new_distrib.get('analytic_distribution_id')})
-        return super(wizard_advance_line, self).create(cr, uid, vals, context=context)
+        return vals
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Check vals. If employee_id given, add new analytic distribution
+        """
+        if context is None:
+            context = {}
+        new_vals = vals.copy()
+        new_vals = self.check_employee_distribution(cr, uid, new_vals)
+        return super(wizard_advance_line, self).create(cr, uid, new_vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check vals. If employee_id given, add new analytic distribution
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = []
+        # Need to process each line
+        for line in self.read(cr, uid, ids, ['wizard_id'], context=context):
+            new_vals = vals.copy()
+            new_vals.update({'wizard_id': line.get('wizard_id', False)}) # Add wizard_id so that we can check statement_id
+            new_vals = self.check_employee_distribution(cr, uid, new_vals)
+            tmp_res = super(wizard_advance_line, self).write(cr, uid, [line.get('id', False)], new_vals, context=context)
+            res.append(tmp_res)
+        return res
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
