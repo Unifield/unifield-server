@@ -49,7 +49,7 @@
             <field name="model">stock.move</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Stock Moves">
+                <tree string="Stock Moves" hide_new_button="1">
                     <field name="product_id" />
                     <field name="prodlot_id" />
                     <field name="expired_date" />
