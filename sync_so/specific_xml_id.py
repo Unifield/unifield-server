@@ -346,7 +346,7 @@ class account_analytic_line(osv.osv):
         msf_instance_obj = self.pool.get('msf.instance')
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
         instance = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context)
-        instance_name = instance.instance
+        instance_name = instance.name
         instance_identifier = instance.identifier
         instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
         xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
