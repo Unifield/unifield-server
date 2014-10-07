@@ -445,6 +445,8 @@ class purchase_order(osv.osv):
         '''
         line_obj = self.pool.get('purchase.order.line')
         wiz_obj = self.pool.get('purchase.order.cancel.wizard')
+        exp_sol_obj = self.pool.get('expected.sale.order.line')
+        so_obj = self.pool.get('sale.order')
         data_obj = self.pool.get('ir.model.data')
         wf_service = netsvc.LocalService("workflow")
 
@@ -459,6 +461,7 @@ class purchase_order(osv.osv):
         else:
             view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'purchase_order_cancel_wizard_form_view')[1]
 
+        so_to_cancel_ids = set()
         for po in self.browse(cr, uid, ids, context=context):
             for l in po.order_line:
                 if line_obj.get_sol_ids_from_pol_ids(cr, uid, [l.id], context=context):
@@ -474,8 +477,22 @@ class purchase_order(osv.osv):
                             'view_id': [view_id],
                             'target': 'new',
                             'context': context}
+                else:
+                    exp_sol_ids = exp_sol_obj.search(cr, uid, [('po_id', '=', po.id)], context=context)
+                    for exp in exp_sol_obj.browse(cr, uid, exp_sol_ids, context=context):
+                        if not exp.order_id.order_line:
+                            so_to_cancel_ids.add(exp.order_id.id)
 
             wf_service.trg_validate(uid, 'purchase.order', po.id, 'purchase_cancel', cr)
+
+        # Ask user to choose what must be done on the FO/IR
+        if so_to_cancel_ids:
+            context.update({
+                'from_po': True,
+                'po_ids': list(ids),
+            })
+            return so_obj.open_cancel_wizard(cr, uid, set(so_to_cancel_ids), context=context)
+
 
         return True
 
