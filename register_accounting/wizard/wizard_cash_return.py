@@ -156,6 +156,32 @@ class wizard_advance_line(osv.osv_memory):
         'have_analytic_distribution_from_header': lambda *a: True,
     }
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        Check vals. If employee_id given, add new analytic distribution
+        """
+        if context is None:
+            context = {}
+        if vals.get('partner_type', False):
+            partner_string = vals.get('partner_type')
+            partner_data = partner_string.split(',')
+            if partner_data and len(partner_data) >= 2:
+                partner_obj = partner_data[0]
+                partner_id = partner_data[1]
+                if partner_obj == 'hr.employee':
+                    account_id = vals.get('account_id', False)
+                    wizard_id = vals.get('wizard_id', False)
+                    wizard = self.pool.get('wizard.cash.return').browse(cr, uid, [wizard_id], context=context)[0]
+                    vals_4_distrib = {
+                        'employee_id': partner_id,
+                        'account_id': account_id,
+                        'statement_id': wizard.advance_st_line_id.statement_id.id,
+                    }
+                    new_distrib = self.pool.get('account.bank.statement.line').update_employee_analytic_distribution(cr, uid, vals_4_distrib)
+                    if new_distrib and new_distrib.get('analytic_distribution_id', False):
+                        vals.update({'analytic_distribution_id': new_distrib.get('analytic_distribution_id')})
+        return super(wizard_advance_line, self).create(cr, uid, vals, context=context)
+
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard from a statement line
@@ -716,7 +742,6 @@ class wizard_cash_return(osv.osv_memory):
             context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
 
-
         advance_settled_100_cash_return = self._is_advance_settled_100_cash_return(wizard)
         if advance_settled_100_cash_return:
             """
@@ -741,7 +766,6 @@ class wizard_cash_return(osv.osv_memory):
 
         # Do computation of total_amount of advance return lines
         self.compute_total_amount(cr, uid, ids, context=context)
-
 
         # Verify dates
         self.verify_date(cr, uid, ids, context=context)
@@ -787,14 +811,11 @@ class wizard_cash_return(osv.osv_memory):
                 wizard.additional_amount, 0.0, wizard.reference, move_id, False, context=context)
             self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, addl_dr_move_line_id, context=context)
 
-
-
         # create a cash return move line ONLY IF this return is superior to 0
         if wizard.returned_amount > 0:
             return_acc_id = register.journal_id.default_credit_account_id.id
             self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, return_acc_id, \
                 wizard.returned_amount, 0.0, wizard.reference, move_id, False, context=context)
-
 
         if wizard.display_invoice:
             # make treatment for invoice lines
@@ -839,25 +860,10 @@ class wizard_cash_return(osv.osv_memory):
                 credit = 0.0
                 account_id = advance.account_id.id
                 # Analytic distribution for this line
-                #+ if an employee was filled in, take default analytic distribution from employee
-                #+ else use line allocation or header allocation
                 distrib_id = (advance.analytic_distribution_id and advance.analytic_distribution_id.id) or \
                     (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
-                if line_employee_id:
-                    e_ids = e_obj.search(cr, uid, [('id', '=', int(line_employee_id))])
-                    if e_ids:
-                        employee = e_obj.browse(cr, uid, e_ids)
-                        if employee:
-                            vals_for_analytic_distribution = {
-                                'employee_id': line_employee_id,
-                                'statement_id': wizard.advance_st_line_id.statement_id.id,
-                                'account_id': account_id,
-                            }
-                            new_distrib = self.pool.get('account.bank.statement.line').update_employee_analytic_distribution(cr, uid, vals_for_analytic_distribution)
-                            if new_distrib and new_distrib.get('analytic_distribution_id', False):
-                                distrib_id = new_distrib.get('analytic_distribution_id')
+                # other infos
                 line_ref = advance.reference or wizard.reference
-
                 adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, line_employee_id, account_id, \
                     debit, credit, line_ref, move_id, distrib_id, context=context)
                 adv_move_line_ids.append(adv_id)
