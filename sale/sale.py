@@ -651,6 +651,8 @@ class sale_order(osv.osv):
                             write_cancel_ids.append(line.id)
                     else:
                         notcanceled = True
+            if not self._get_ready_to_cancel(cr, uid, order.id)[order.id]:
+                canceled = False
         if write_done_ids:
             self.pool.get('sale.order.line').write(cr, uid, write_done_ids, {'state': 'done'})
         if write_cancel_ids:
