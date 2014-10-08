@@ -2070,6 +2070,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             remain_lines = line_obj.search(cr, uid, [
                 ('order_id', '=', fo.id),
                 ('id', 'not in', line_ids),
+                ('state', '!=', 'cancel'),
             ], context=context)
             if remain_lines:
                 res[fo.id] = False
