@@ -1072,6 +1072,14 @@ class tender_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # Check if the line has been already deleted
+        ids = self.search(cr, uid, [('id', 'in', ids), ('line_state', '!=', 'cancel')], context=context)
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('The line has already been canceled - Please refresh the page'),
+            )
+
         tender_id = False
         for line in self.browse(cr, uid, ids, context=context):
             tender_id = line.tender_id.id

@@ -2750,6 +2750,14 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # Check if the line is not already removed
+        ids = self.search(cr, uid, [('id', 'in', ids)], context=context)
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('The line has been already deleted - Please refresh the page'),
+            )
+
         if context.get('rfq_ok', False):
             view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'rfq_line_unlink_wizard_form_view')[1]
         else:
