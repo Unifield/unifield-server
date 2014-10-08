@@ -114,4 +114,24 @@ class UnifieldTest(unittest.TestCase):
             return res
         return True
 
+    def get_test_obj(self, db, object_ref):
+        '''
+        Returns the object created by the test files.
+
+        :param db: Connection to the database
+        :param object_ref: XML ID of the object to find
+
+        :return The ID of the object given in object_ref
+        :rtype integer or False
+        '''
+        # Object
+        data_obj = db.get('ir.model.data')
+
+        obj = data_obj.get_object_reference(self.test_module_name, object_ref)
+
+        if obj:
+            return obj[1]
+
+        return False
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
