@@ -857,9 +857,18 @@ class account_invoice(osv.osv):
             # one move line per tax line
             iml += ait_obj.move_line_get(cr, uid, inv.id)
 
+            # UTP-594: Check the Name according to new requests of this ticket
+            name = inv['name'] or '/'
             entry_type = ''
             if inv.type in ('in_invoice', 'in_refund'):
-                ref = inv.reference
+                # UTP-594: Get ref and name
+                if inv.type == 'in_invoice':
+                    name = inv.origin and inv.origin or '/'
+                    ref = inv.origin and inv.origin or inv.reference and inv.reference
+                else:
+                    name = inv.name and inv.name
+                    ref = inv.origin and inv.origin
+
                 entry_type = 'journal_pur_voucher'
                 if inv.type == 'in_refund':
                     entry_type = 'cont_voucher'
@@ -876,7 +885,6 @@ class account_invoice(osv.osv):
             total, total_currency, iml = self.compute_invoice_totals(cr, uid, inv, company_currency, ref, iml)
             acc_id = inv.account_id.id
 
-            name = inv['name'] or '/'
             totlines = False
             if inv.payment_term:
                 totlines = self.pool.get('account.payment.term').compute(cr,
@@ -924,6 +932,7 @@ class account_invoice(osv.osv):
                     'currency_id': diff_currency_p \
                             and inv.currency_id.id or False,
                     'ref': ref,
+                    'reference': ref, # UTP-594: Use both ref and reference
                     'is_counterpart': True,
             })
 
@@ -942,8 +951,15 @@ class account_invoice(osv.osv):
 
             line = self.finalize_invoice_move_lines(cr, uid, inv, line)
 
+            # UTP-594: Get the ref from Inv
+            move_ref = inv.reference and inv.reference or inv.name
+            if inv.type in ('in_invoice'):
+                move_ref = inv.origin and inv.origin or inv.reference and inv.reference or inv.number
+            if inv.type in ('in_refund'):
+                move_ref = inv.name and inv.name
+
             move = {
-                'ref': inv.reference and inv.reference or inv.name,
+                'ref': move_ref,
                 'line_id': line,
                 'journal_id': journal_id,
                 'date': date,
@@ -959,7 +975,7 @@ class account_invoice(osv.osv):
                 move['period_id'] = period_id
                 for i in line:
                     i[2]['period_id'] = period_id
-                    
+
             #  ticket utp917 - need seqnums variable in the context if ir is in *args
             for argdict in args:
                 if 'seqnums' in argdict:
@@ -990,6 +1006,7 @@ class account_invoice(osv.osv):
             'tax_code_id': x.get('tax_code_id', False),
             'tax_amount': x.get('tax_amount', False),
             'ref': x.get('ref', False),
+            'reference': x.get('reference', False),
             'quantity': x.get('quantity',1.00),
             'product_id': x.get('product_id', False),
             'product_uom_id': x.get('uos_id', False),
@@ -1013,25 +1030,54 @@ class account_invoice(osv.osv):
 
             self.write(cr, uid, ids, {'internal_number':number})
 
-            if invtype in ('in_invoice', 'in_refund'):
+            if invtype in ('in_invoice'):
                 if not reference:
                     ref = self._convert_ref(cr, uid, number)
                 else:
                     ref = reference
+            elif invtype in ('in_refund'):
+                ref = obj_inv.origin
             else:
                 ref = self._convert_ref(cr, uid, number)
 
-            cr.execute('UPDATE account_move SET ref=%s ' \
-                    'WHERE id=%s AND (ref is null OR ref = \'\')',
-                    (ref, move_id))
-            cr.execute('UPDATE account_move_line SET ref=%s ' \
-                    'WHERE move_id=%s AND (ref is null OR ref = \'\')',
-                    (ref, move_id))
-            cr.execute('UPDATE account_analytic_line SET ref=%s ' \
-                    'FROM account_move_line ' \
-                    'WHERE account_move_line.move_id = %s ' \
-                        'AND account_analytic_line.move_id = account_move_line.id',
+            # UTP-594: for invoice, the ref on move, move lines and analytic lines must be checked and updated
+            if invtype in ('in_invoice'):
+                if not obj_inv.move_id.ref:
+                    cr.execute('UPDATE account_move SET ref=%s WHERE id=%s ', (ref, move_id))
+
+                for line in obj_inv.move_id.line_id:
+                    if not line.ref:
+                        cr.execute('UPDATE account_move_line SET ref=%s, reference=%s WHERE id=%s ', (ref,ref, line.id))
+                    else:
+                        cr.execute('UPDATE account_move_line SET reference=%s WHERE id=%s ', (line.ref, line.id))
+
+                    # now update account analytic line with the new ref, only when the ref is null
+                    analytic_line_obj = self.pool.get('account.analytic.line')
+                    analytic_lines = analytic_line_obj.search(cr, uid, [('move_id','=',line.id)])
+                    for an in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
+                        if not an.ref:
+                            cr.execute('UPDATE account_analytic_line SET ref=%s where id =%s ', (ref, an.id))
+            elif invtype in ('in_refund'):
+                # UTP-594: same for refund, the ref on move, move lines and analytic lines must be checked and updated
+                for line in obj_inv.move_id.line_id:
+                    cr.execute('UPDATE account_move_line SET ref=%s, reference=%s WHERE id=%s ', (ref,ref, line.id))
+                    # now update account analytic line with the new ref, only when the ref is null
+                    analytic_line_obj = self.pool.get('account.analytic.line')
+                    analytic_lines = analytic_line_obj.search(cr, uid, [('move_id','=',line.id)])
+                    for an in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
+                        cr.execute('UPDATE account_analytic_line SET ref=%s where id =%s ', (ref, an.id))
+            else:
+                cr.execute('UPDATE account_move SET ref=%s ' \
+                        'WHERE id=%s AND (ref is null OR ref = \'\')',
                         (ref, move_id))
+                cr.execute('UPDATE account_move_line SET ref=%s ' \
+                        'WHERE move_id=%s AND (ref is null OR ref = \'\')',
+                        (ref, move_id))
+                cr.execute('UPDATE account_analytic_line SET ref=%s ' \
+                        'FROM account_move_line ' \
+                        'WHERE account_move_line.move_id = %s ' \
+                            'AND account_analytic_line.move_id = account_move_line.id',
+                            (ref, move_id))
 
             for inv_id, name in self.name_get(cr, uid, [id]):
                 ctx = context.copy()
@@ -1121,7 +1167,7 @@ class account_invoice(osv.osv):
         """
         Permits to change fields list to be use for creating invoice refund from an invoice.
         """
-        res = ['name', 'type', 'number', 'reference', 'comment', 'date_due', 'partner_id', 'address_contact_id', 'address_invoice_id', 
+        res = ['name', 'type', 'number', 'reference', 'comment', 'date_due', 'partner_id', 'address_contact_id', 'address_invoice_id',
             'partner_contact', 'partner_insite', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line', 'journal_id']
         return res
 
@@ -1180,7 +1226,8 @@ class account_invoice(osv.osv):
                 'number': False,
                 'invoice_line': invoice_lines,
                 'tax_line': tax_lines,
-                'journal_id': refund_journal_ids
+                'journal_id': refund_journal_ids,
+                'origin': invoice['number']
             })
             if period_id:
                 invoice.update({
