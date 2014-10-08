@@ -20,73 +20,36 @@
 ##############################################################################
 
 from report import report_sxw
-import pooler
-import csv
-import StringIO
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
-class report_cheque_inventory(report_sxw.report_sxw):
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+class report_cheque_inventory(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(report_cheque_inventory, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'getLines': self.getLines,
+        })
+        return
 
-    def translate_state(self, cr, line):
-        # Parse each budget line
-        pool = pooler.get_pool(cr.dbname)
-        register_states = dict(pool.get('account.bank.statement')._columns['state'].selection)
-        if len(line) > 2 and line[2] in register_states:
-            return list(line[:2]) + [register_states[line[2]]] + list(line[3:])
-        else:
-            return line
-
-    def create(self, cr, uid, ids, data, context=None):
-        pool = pooler.get_pool(cr.dbname)
-        lines = []
-        # Create the header
-        header = [['Register Name', 'Register Period', 'Register State', 'Document Date', 'Posting Date', 'Cheque Number', 'Sequence', 'Description', 'Reference', 'Account', 'Third Parties', 'Amount Out', 'Currency']]
-
-        # retrieve a big sql query with all information
-        sql_posted_moves = """
-            SELECT DISTINCT st.id, abs.name, ap.name, abs.state,
-                   st.document_date, st.date, st.cheque_number,
-                   st.sequence_for_reference, st.name, st.ref,
-                   ac.code || ' ' || ac.name as account_name,
-                   COALESCE(tprp.name,tphe.name,tpabs.name,tpaj.name) as third_party,
-                   -st.amount as amount_out, rc.name as currency FROM
-                account_bank_statement_line st
-                LEFT JOIN account_bank_statement abs ON abs.id = st.statement_id
-                LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
-                LEFT JOIN account_move move ON rel.statement_id = move.id
-                LEFT JOIN account_move_line line ON line.move_id = move.id
-                LEFT JOIN account_account ac ON ac.id = line.account_id
-                LEFT JOIN account_journal aj ON abs.journal_id = aj.id
-                LEFT JOIN account_period ap ON abs.period_id = ap.id
-                LEFT JOIN res_partner tprp ON st.partner_id = tprp.id
-                LEFT JOIN hr_employee tphe ON st.employee_id = tphe.id
-                LEFT JOIN res_currency rc ON aj.currency = rc.id
-                LEFT JOIN account_bank_statement tpabs ON st.register_id = tpabs.id
-                LEFT JOIN account_journal tpaj ON st.transfer_journal_id = tpaj.id
-            WHERE
-                aj.type = 'cheque' AND
-                rel.move_id is not null AND ac.id = st.account_id
-            ORDER BY st.date
+    def getLines(self, statement):
         """
-        cr.execute(sql_posted_moves)
-        # Filter unreconciled statement lines
-        for statement_line in cr.fetchall():
-            statement_line_id = statement_line[0]
-            if not pool.get('account.bank.statement.line')._get_reconciled_state(cr, uid, [statement_line_id])[statement_line_id]:
-                lines.append(statement_line[1:])
-        res = header + map((lambda x: self.translate_state(cr, x)), lines)
+        Return list of lines from given register and previous ones that are not reconciled
+        """
+        # Prepare some values
+        res = []
+        absl_obj = self.pool.get('account.bank.statement.line')
+        # Fetch all previous registers linked to this one
+        prev_reg_ids = [statement.id]
+        if statement.prev_reg_id:
+            prev_reg_ids.append(statement.prev_reg_id.id)
+            prev_reg_id = statement.prev_reg_id
+            while prev_reg_id != False:
+                prev_reg_id = prev_reg_id.prev_reg_id or False
+                if prev_reg_id:
+                    prev_reg_ids.append(prev_reg_id.id)
+        absl_ids = absl_obj.search(self.cr, self.uid, [('statement_id', 'in', prev_reg_ids), ('reconciled', '=', False)])
+        if absl_ids:
+            res = absl_obj.browse(self.cr, self.uid, absl_ids)
+        return res
 
-        b = StringIO.StringIO()
-        writer = csv.writer(b, quoting=csv.QUOTE_ALL)
-        for line in res:
-            writer.writerow(line)
-        out = b.getvalue()
-        b.close()
-        return (out, 'csv')
-
-report_cheque_inventory('report.cheque.inventory', 'account.bank.statement', False, parser=False)
-
-SpreadsheetReport('report.cheque.inventory.2','account.bank.statement','addons/register_accounting/report/cheque_inventory_xls.mako')
+SpreadsheetReport('report.cheque.inventory.2','account.bank.statement','addons/register_accounting/report/cheque_inventory_xls.mako', parser=report_cheque_inventory)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

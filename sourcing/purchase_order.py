@@ -32,6 +32,29 @@ class purchase_order(osv.osv):
 
     _columns = {
         'customer_id': fields.many2one('res.partner', string='Customer', domain=[('customer', '=', True)]),
+        'unique_fo_id': fields.many2one(
+            'sale.order',
+            string='Unique FO',
+            readonly=True,
+            help="""This field is used to have only one PO for a specific FO/IR 
+if the supplier 'Order creation method' is set to 'Requirements by Order'.""",
+        ),
+        'unique_rule_type': fields.char(
+            size=128,
+            string='Unique Replenishment rule type',
+            readonly=True,
+            help="""This field is used to have only one PO by replenishment
+rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
+""",
+        ),
+        'po_from_rr': fields.boolean(
+            string='PO from replenishment rules',
+            readonly=True,
+        ),
+    }
+
+    _defaults = {
+        'po_from_rr': False,
     }
 
     def create(self, cr, uid, vals, context=None):

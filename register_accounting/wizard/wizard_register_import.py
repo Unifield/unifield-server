@@ -34,6 +34,7 @@ import pooler
 from ..register_tools import open_register_view
 from lxml import etree
 
+
 class wizard_register_import(osv.osv_memory):
     _name = 'wizard.register.import'
 
@@ -184,7 +185,7 @@ class wizard_register_import(osv.osv_memory):
                     self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': funding_pool_id or msf_fp_id, 'cost_center_id': cost_center_id,})
                     self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
-                    
+
                     if free_1_id:
                         common_vals.update({'analytic_id': free_1_id,})
                         self.pool.get('free.1.distribution.line').create(cr,uid,common_vals)
@@ -192,7 +193,7 @@ class wizard_register_import(osv.osv_memory):
                     if free_2_id:
                         common_vals.update({'analytic_id': free_2_id,})
                         self.pool.get('free.2.distribution.line').create(cr,uid,common_vals)
-              
+
                     # Check analytic distribution. Use SKIP_WRITE_CHECK to not do anything else that writing analytic distribution field
                     absl_obj.write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,}, context={'skip_write_check': True})
                     # Add this line to be check at the end of the process
@@ -232,6 +233,7 @@ class wizard_register_import(osv.osv_memory):
         processed = 0
         errors = []
         cheque_numbers = []
+
         try:
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00}, context)
@@ -263,8 +265,8 @@ class wizard_register_import(osv.osv_memory):
                 # cols variable describe each column and its expected number
                 cols = {
                     'document_date': 0,
-                    'posting_date':  1, 
-                    'cheque_number': 2,   
+                    'posting_date':  1,
+                    'cheque_number': 2,
                     'description':   3,
                     'reference':     4,
                     'account':       5,
@@ -275,7 +277,7 @@ class wizard_register_import(osv.osv_memory):
                     'cost_center':   10,
                     'funding_pool':  11,
                     'free1':         12,
-                    'free2':         13,   
+                    'free2':         13,
                 }
                 # Number of line to bypass in line's count
                 base_num = 5 # because of Python that begins to 0.
@@ -359,9 +361,8 @@ class wizard_register_import(osv.osv_memory):
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
-                    # utp1043 pad the line with False if some trailing columns missing. Occurs on Excel 2003 
- 		    line.extend([False for i in range(len(cols) - len(line))])
-		    	
+                    # utp1043 pad the line with False if some trailing columns missing. Occurs on Excel 2003
+                    line.extend([False for i in range(len(cols) - len(line))])
                     # Bypass this line if NO debit AND NO credit
                     try:
                         bd = line[cols['amount_in']]
@@ -443,14 +444,12 @@ class wizard_register_import(osv.osv_memory):
                             absl = self.pool.get('account.bank.statement.line')
                             cheque_number_id = absl.search(cr, uid, [('cheque_number','=',r_cheque_number)],context=context)
                             if cheque_number_id:
-                               errors.append(_('Line %s. Cheque number %s has already been entered into the system.') % (current_line_num,r_cheque_number,))    
+                               errors.append(_('Line %s. Cheque number %s has already been entered into the system.') % (current_line_num,r_cheque_number,))
                             cheque_numbers.append(r_cheque_number)
                         else:
                             errors.append(_('Line %s. Cheque number is missing') % (current_line_num,))
- 
                     # Check that Third party exists (if not empty)
-                    
-		    tp_label = _('Partner')
+                    tp_label = _('Partner')
                     partner_type = 'partner'
                     third_party_journal_ids = None
                     if line[cols['third_party']]:
@@ -534,7 +533,7 @@ class wizard_register_import(osv.osv_memory):
                     # - Booking Currency
                     vals = {
                         'description': r_description or '',
-                        'ref': line[5]  or '',
+                        'ref': line[4]  or '',
                         'account_id': r_account or False,
                         'debit': r_debit or 0.0,
                         'credit': r_credit or 0.0,

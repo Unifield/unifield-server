@@ -29,7 +29,6 @@ _SELECTION_TYPE = [
     ('make_to_stock', 'from stock'),
     ('make_to_order', 'on order'), ]
 
-
 class multiple_sourcing_wizard(osv.osv_memory):
     _name = 'multiple.sourcing.wizard'
 
@@ -49,6 +48,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
         'po_cft': fields.selection(
             _SELECTION_PO_CFT,
             string='PO/CFT',
+        ),
+        'location_id': fields.many2one(
+            'stock.location',
+            string='Location',
         ),
         'supplier': fields.many2one(
             'res.partner',
@@ -72,23 +75,56 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if not context.get('active_ids') or len(context.get('active_ids')) < 2:
+        active_ids = context.get('active_ids')
+        if not active_ids or len(active_ids) < 2:
             raise osv.except_osv(_('Error'), _('You should select at least two lines to process.'))
 
         res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields_list, context=context)
 
         res['line_ids'] = []
         res['error_on_lines'] = False
-        res['type'] = 'make_to_order'
-        res['po_cft'] = 'po'
+
+        # Check if all lines are with the same type, then set that type, otherwise set make_to_order
 
         # Ignore all lines which have already been sourced, if there are some alredy sourced lines, a message
         # will be displayed at the top of the wizard
-        for line in self.pool.get('sale.order.line').browse(cr, uid, context.get('active_ids'), context=context):
+        res['type'] = 'make_to_stock'
+        res['po_cft'] = False
+        loc = -1 # first location flag
+        supplier = -1 # first location flag
+        for line in self.pool.get('sale.order.line').browse(cr, uid, active_ids, context=context):
             if line.state == 'draft' and line.sale_order_state == 'validated':
                 res['line_ids'].append(line.id)
             else:
                 res['error_on_lines'] = True
+
+            if line.type == 'make_to_order':
+                res['type'] = 'make_to_order'
+                res['po_cft'] = 'po'
+
+                loc = False # always set False for location if source on order
+                if not line.supplier:
+                    supplier = False
+                else:
+                    temp = line.supplier.id
+                    if supplier == -1: # first location
+                        supplier = temp
+                    elif supplier != temp:
+                        supplier = False
+            else:
+                # UTP-1021: Calculate the location to set into the wizard view if all lines are sourced from the same location
+                supplier = False # if source from stock, always set False to partner
+                temploc = line.location_id.id
+                if loc == -1: # first location
+                    loc = temploc
+                elif temploc != loc:
+                    loc = False
+
+        # UTP-1021: Set default values on openning the wizard
+        if loc != -1:
+            res['location_id'] = loc
+        if supplier != -1:
+            res['supplier'] = supplier
 
         if not res['line_ids']:
             raise osv.except_osv(_('Error'), _('No non-sourced lines are selected. Please select non-sourced lines'))
@@ -123,7 +159,9 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     try:
                         line_obj.write(cr, uid, [line.id], {'type': wiz.type,
                                                             'po_cft': wiz.po_cft,
-                                                            'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
+                                                            'supplier': wiz.supplier and wiz.supplier.id or False,
+                                                            'location_id': wiz.location_id.id and wiz.location_id.id or False},
+                                                             context=context)
                     except osv.except_osv, e:
                         errors.setdefault(e.value, [])
                         errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.order_id.name)))
@@ -189,7 +227,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if l_type == 'make_to_stock':
             return {'value': {'po_cft': False, 'supplier': False}}
 
-        return {}
+        return {'value': {'location_id': False}}
 
     def change_po_cft(self, cr, uid, ids, po_cft, context=None):
         '''
@@ -217,6 +255,30 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     'message': _('The chosen partner has no address. Please define an address before continuing.'),
                 }
         return result
+
+    def change_location(self, cr, uid, ids, location_id, context=None):
+        res = {'value': {}}
+        if not location_id:
+            return res
+
+        if not context or not context[0] or not context[0][2]:
+            return res
+
+        line_obj = self.pool.get('sale.order.line')
+        active_ids = context[0][2]
+
+        context = {}
+        context.update({'from_multiple_line_sourcing': False})
+        for line in self.pool.get('sale.order.line').browse(cr, uid, active_ids, context=context):
+            line_obj.write(cr, uid, [line.id], {'type': 'make_to_stock',
+                                                        'po_cft': False,
+                                                        'supplier': False,
+                                                        'location_id': location_id}, # UTP-1021: Update loc and ask the view to refresh
+                                                         context=context)
+        res = {'value':
+               {'line_ids': active_ids, 'error_on_lines': False, 'po_cft':False,}}
+        return res
+
 
 multiple_sourcing_wizard()
 

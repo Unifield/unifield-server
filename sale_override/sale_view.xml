@@ -130,8 +130,13 @@
                         <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
                         <attribute name="invisible">1</attribute>
                     </xpath>
+                    <xpath expr="/form/notebook//separator[@string='Conditions']" position="replace">
+                        <group colspan="2" col="2" attrs="{'invisible': [('vat_ok', '=', False)]}">
+                            <separator string="Conditions" colspan="2"/>
+                        </group>
+                    </xpath>
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')], 'invisible': [('vat_ok', '=', False)]}</attribute>
                     </xpath>
                     <xpath expr="//field[@name='create_date']" position="replace" />
                     <xpath expr="//field[@name='date_confirm']" position="replace" />
@@ -486,6 +491,81 @@
                 </form>
             </field>
         </record>
+
+        <record id="sale_order_cancelation_ask_wizard_form_view" model="ir.ui.view">
+            <field name="name">sale.order.cancelation.ask.wizard.form.view</field>
+            <field name="model">sale.order.cancelation.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="1" />
+            <field name="arch" type="xml">
+                <form string="Cancel Field Order">
+                    <group colspan="4" col="1">
+                        <html>
+                            <p style="text-align:center; font-weight: bold; font-size: 1.2em;">
+                                WARNING: The line that you canceled has removed/canceled the last line of the following FO/IR.
+                                Would you cancel these FO/IR or leave them in their current status ?
+                            </p>
+                        </html>
+                        <field name="order_ids" nolabel="1" colspan="4" mode="tree">
+                            <tree string="Field orders / Internal request" editable="top" hide_new_button="1" hide_delete_button="1">
+                                <field name="order_id" readonly="1" />
+                                <field name="order_state" readonly="1" />
+                                <field name="action" required="1" />
+                            </tree>
+                        </field>
+                    </group>
+                    <newline />
+                    <label colspan="2" string=" " />
+                    <button colspan="2" type="object" icon="gtk-execute" name="close_fo" string="Do selected actions" />
+                </form>
+            </field>
+        </record>
+
+        <!-- Sourcing progress -->
+        <record id="sale_order_sourcing_progress_view" model="ir.ui.view">
+            <field name="name">sale.order.sourcing.progress.view</field>
+            <field name="model">sale.order.sourcing.progress</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Sourcing progress" colors="green: prepare_picking == 'Done'">
+                    <field name="order_id" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="split_order" />
+                    <field name="check_data" />
+                    <field name="line_completed" />
+                    <field name="prepare_picking" />
+                    <field name="error" attrs="{'invisible': [('error', '=', False)}" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="sale_order_sourcing_progress_search_view" model="ir.ui.view">
+            <field name="name">sale.order.sourcing.progress.search.view</field>
+            <field name="model">sale.order.sourcing.progress</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Sourcing progress">
+                    <filter string="Done" name="done" domain="[('end_date', '!=', False)]" icon="terp-check" />
+                    <filter string="In Progress" name="progress" domain="[('end_date', '=', False), ('start_date', '!=', False)]" icon="gtk-execute" />
+                    <field name="order_id" context="{'procurement_order': True}" />
+                    <field name="start_date" />
+                </search>
+            </field>
+        </record>
+
+        <record id="sale_order_sourcing_progress_action" model="ir.actions.act_window">
+            <field name="name">Sourcing progress</field>
+            <field name="res_model">sale.order.sourcing.progress</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+        <menuitem
+            action="sale_order_sourcing_progress_action"
+            id="sale_order_sourcing_progress_menu"
+            parent="base.menu_sales" />
+                  
 
     </data>
 </openerp>

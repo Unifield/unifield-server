@@ -419,6 +419,16 @@ class wizard_cash_return(osv.osv_memory):
                 new_amount = currency_obj.compute(cr, uid, currency_id, register.company_id.currency_id.id, credit, round=False, context=context)
                 new_credit = abs(new_amount)
 
+        if analytic_distribution_id:
+            # UF-2440
+            # copy AD to isolate it from wizard global or line AD
+            # to prevent delete of all AJIs linked to global AD...
+            ad_obj = self.pool.get('analytic.distribution')
+            new_analytic_distribution_id = ad_obj.copy(cr, uid,
+                analytic_distribution_id, context=context)
+        else:
+            new_analytic_distribution_id = False
+
         # Create an account move line
         move_line_vals = {
             'name': description,
@@ -435,7 +445,7 @@ class wizard_cash_return(osv.osv_memory):
             'period_id': period_id,
             'currency_id': currency_id,
             'amount_currency': amount_currency,
-            'analytic_distribution_id': analytic_distribution_id,
+            'analytic_distribution_id': new_analytic_distribution_id,
             'partner_type_mandatory': partner_mandatory or False,
             'reference': new_reference or False,
         }
@@ -551,6 +561,23 @@ class wizard_cash_return(osv.osv_memory):
                 if wizard.invoice_line_ids:
                     for line in wizard.invoice_line_ids:
                         total += line.amount
+
+                # Fetch invoices
+                # acct_bank_stmt = account_bank_statement
+                # absl = account_bank_statement_line
+                invoice_payments = 0
+                acct_bank_stmt = wizard.advance_st_line_id.statement_id
+                for absl in acct_bank_stmt.line_ids:  #should be absl
+                    if absl.state == 'hard':
+                        absl_move_ids = []
+                        for ml in absl.imported_invoice_line_ids:
+                            if ml.move_id:
+                                absl_move_ids.append(ml.move_id.id)
+                        inv_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id', 'in', absl_move_ids)])
+                        if inv_ids:
+                            if inv_ids[0] == invoice.id:
+                                invoice_payments += absl.amount
+
                 # We search all move_line that results from an invoice (so they have the same move_id that the invoice)
                 line_ids = move_line_obj.search(cr, uid, [('move_id', '=', invoice.move_id.id), \
                     ('account_id', '=', account_id)], context=context)
@@ -562,10 +589,12 @@ class wizard_cash_return(osv.osv_memory):
                     account_id = move_line.account_id.id or False
                     # abs() should be deleted if we take care of "Credit Note".
                     #+ Otherwise abs() give an absolute amount.
-                    amount = move_line.invoice.amount_total or 0.0
+
+                    amount = (move_line.invoice.amount_total - invoice_payments) or 0.0
+                    #amount = move_line.invoice.amount_total or 0.0
                     # Calculate the good amount seeing currency
                     if move_line.currency_id and move_line.currency_id.id == st_currency:
-                        amount = abs(move_line.amount_currency) or 0.0
+                        amount = abs(move_line.amount_currency - invoice_payments) or 0.0
                     # Add this line to our wizard
                     new_lines.append((0, 0, {'document_date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
                         'account_id': account_id, 'amount': amount, 'invoice_id': invoice.id}))

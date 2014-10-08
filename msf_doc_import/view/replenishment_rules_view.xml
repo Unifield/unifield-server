@@ -53,5 +53,22 @@
             </field>
         </record>
 
+        <record id="stock_warehouse_order_point_import_lines" model="ir.ui.view">
+            <field name="name">stock.warehouse.orderpoint.import.lines</field>
+            <field name="model">stock.warehouse.orderpoint</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="specific_rules.add_onchange_uom_stock_warehouse_orderpoint_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='line_ids']" position="before">
+                    <group name="import" string=" Import Lines " colspan="1" col="4">
+                        <button name="wizard_import_stock_warehouse_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object" />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="2" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>

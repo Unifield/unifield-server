@@ -9,6 +9,7 @@ SALE_ORDER_STATE_SELECTION = [('draft', 'Draft'),
                               ('split_so', 'Split'),
                               ('done', 'Closed'),
                               ('cancel', 'Cancelled'),
+                              ('rw', 'RW'),
                               ]
 
 SALE_ORDER_LINE_STATE_SELECTION = [('draft', 'Draft'),

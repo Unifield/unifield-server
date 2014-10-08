@@ -353,6 +353,10 @@ class analytic_line(osv.osv):
                 # - the destination is in compatible account/destination tuple
                 if aline.cost_center_id and aline.cost_center_id.id in cc_ids and aline.general_account_id and aline.destination_id and (aline.general_account_id.id, aline.destination_id.id) in tuple_list:
                     res.append(aline.id)
+        elif account_type == "DEST":
+            for aline in self.browse(cr, uid, ids, context=context):
+                if aline.general_account_id and account_id in [x.id for x in aline.general_account_id.destination_ids]:
+                    res.append(aline.id)
         else:
             # Case of FREE1 and FREE2 lines
             for i in ids:

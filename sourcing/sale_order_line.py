@@ -29,12 +29,12 @@ from osv.orm import browse_record
 import pooler
 from tools import misc
 from tools.translate import _
+from collections import deque
 
 import decimal_precision as dp
 from order_types import ORDER_PRIORITY
 from order_types import ORDER_CATEGORY
 from sale_override import SALE_ORDER_STATE_SELECTION
-
 
 _SELECTION_PO_CFT = [
     ('po', 'Purchase Order'),
@@ -47,6 +47,20 @@ _SELECTION_PO_CFT = [
 class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if not context:
+            context = {}
+
+        '''
+            !!!!! ATTENTION ATTENTION!!!!!!
+            UTP-1021: This solution is NOT stable and could be dangerous!!!! need to have a proper fix for this, currently we have only 3 tree views for sale.order.line
+            so I use the value in the context to identify that it is not the view of wizard, but this assumption could be totally WRONG!
+            But in this current version, it works!
+        '''
+        if not context.get('search_default_need_sourcing', False) and view_type == 'tree':
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sourcing', 'sourcing_line_special_tree_view')[1]
+        return super(sale_order_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
 
     """
     Other methods
@@ -1029,6 +1043,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             if line['order_id'][0] not in order_to_check:
                 order_to_check.update({line['order_id'][0]: state_to_use})
 
+        order_to_process = {}
         for order_id, state_to_use in order_to_check.iteritems():
             lines_not_confirmed = self.search(cr, uid, [
                 ('order_id', '=', order_id),
@@ -1036,24 +1051,47 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             ], count=True, context=context)
 
             if lines_not_confirmed:
-                break
+                pass
+            else:
+                order_to_process.setdefault(state_to_use, [])
+                order_to_process[state_to_use].append(order_id)
 
-            self.pool.get('sale.order').write(cr, uid, [order_id], {
-                'sourcing_trace_ok': True,
-                'sourcing_trace': 'Sourcing in progress',
-            }, context=context)
-            thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_id, state_to_use, context))
-            thread.start()
+        for state_to_use, val in order_to_process.iteritems():
+            queue = deque(val)
+            while queue:
+                i = 0
+                order_ids = []
+                # We create 20 threads (so if there are 15 order to process,
+                # we will create 15 threads (1 per order), but if there are 50
+                # order to process, we will create 20 threads (1 per 2/3 orders)
+                while i < (len(order_to_check)/20 or 1) and queue:
+                    i +=1
+                    order_id = queue.popleft()
+                    order_ids.append(order_id)
+
+                    # Create the sourcing process object
+                    self.pool.get('sale.order.sourcing.progress').create(cr, uid, {
+                        'order_id': order_id,
+                        'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    }, context=context)
+
+                self.pool.get('sale.order').write(cr, uid, order_ids, {
+                    'sourcing_trace_ok': True,
+                    'sourcing_trace': 'Sourcing in progress',
+                }, context=context)
+
+                thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_ids, state_to_use, context))
+                thread.start()
 
         return True
 
-    def confirmOrder(self, cr, uid, order_id, state_to_use, context=None, new_cursor=True):
+    def confirmOrder(self, cr, uid, order_ids, state_to_use, context=None, new_cursor=True):
         """
         Confirm the order specified in the parameter.
 
         :param cr: Cursor to the database
         :param uid: ID of the user that runs the method
-        :param order_id: ID of the order to confirm
+        :param order_id: List of ID of the orders to confirm
         :param state_to_use: Determine if the order is an IR or a FO
         :param context: Context of the call
         :param new_cursor: Use a new DB cursor or not
@@ -1069,24 +1107,43 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         if new_cursor:
             cr = pooler.get_db(cr.dbname).cursor()
 
-        try:
-            if state_to_use == 'confirmed':
-                wf_service.trg_validate(uid, 'sale.order', order_id, 'procurement_confirm', cr)
-            else:
-                wf_service.trg_validate(uid, 'sale.order', order_id, 'order_confirm', cr)
-            self.pool.get('sale.order').write(cr, uid, [order_id],
-                                              {'sourcing_trace_ok': False,
-                                               'sourcing_trace': ''}, context=context)
-        except osv.except_osv, e:
-            cr.rollback()
-            self.pool.get('sale.order').write(cr, uid, order_id,
-                                              {'sourcing_trace_ok': True,
-                                               'sourcing_trace': e.value}, context=context)
-        except Exception, e:
-            cr.rollback()
-            self.pool.get('sale.order').write(cr, uid, order_id,
-                                              {'sourcing_trace_ok': True,
-                                               'sourcing_trace': misc.ustr(e)}, context=context)
+        for order_id in order_ids:
+            try:
+                if state_to_use == 'confirmed':
+                    wf_service.trg_validate(uid, 'sale.order', order_id, 'procurement_confirm', cr)
+                else:
+                    wf_service.trg_validate(uid, 'sale.order', order_id, 'order_confirm', cr)
+                self.pool.get('sale.order').write(cr, uid, [order_id],
+                                                  {'sourcing_trace_ok': False,
+                                                   'sourcing_trace': ''}, context=context)
+                prog_ids = self.pool.get('sale.order.sourcing.progress').search(cr, uid, [
+                    ('order_id', '=', order_id),
+                ], context=context)
+                self.pool.get('sale.order.sourcing.progress').write(cr, uid, prog_ids, {
+                    'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                }, context=context)
+            except osv.except_osv, e:
+                cr.rollback()
+                self.pool.get('sale.order').write(cr, uid, order_id,
+                                                  {'sourcing_trace_ok': True,
+                                                   'sourcing_trace': e.value}, context=context)
+                prog_ids = self.pool.get('sale.order.sourcing.progress').search(cr, uid, [
+                    ('order_id', '=', order_id),
+                ], context=context)
+                self.pool.get('sale.order.sourcing.progress').write(cr, uid, prog_ids, {
+                    'error': e.value,
+                }, context=context)
+            except Exception, e:
+                cr.rollback()
+                self.pool.get('sale.order').write(cr, uid, order_id,
+                                                  {'sourcing_trace_ok': True,
+                                                   'sourcing_trace': misc.ustr(e)}, context=context)
+                prog_ids = self.pool.get('sale.order.sourcing.progress').search(cr, uid, [
+                    ('order_id', '=', order_id),
+                ], context=context)
+                self.pool.get('sale.order.sourcing.progress').write(cr, uid, prog_ids, {
+                    'error': misc.ustr(e),
+                }, context=context)
 
         if new_cursor:
             cr.commit()

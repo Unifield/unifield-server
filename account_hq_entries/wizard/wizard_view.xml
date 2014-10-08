@@ -45,7 +45,7 @@
                             <field name="amount"/>
                             <field name="destination_id"/>
                             <field name="cost_center_id"/>
-                            <field name="analytic_id"/>
+                            <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]" string="Funding Pool" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('document_date')}"/>
                             <field name="state"/>
                             <field name="state_info"/>
                         </tree>

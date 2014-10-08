@@ -43,6 +43,7 @@
     "update_xml": [
         "sale_followup_view.xml",
         "report/sale_follow_up_report.xml",
+        "wizard/sale_followup_multi_wizard_view.xml",
     ],
     "demo_xml": [
     ],

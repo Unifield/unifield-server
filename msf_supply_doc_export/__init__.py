@@ -20,3 +20,6 @@
 ##############################################################################
 
 import msf_supply_doc_export
+import wizard
+import report
+

@@ -13,13 +13,6 @@
             <field name="inherit_id" ref="account.view_move_form"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form//field[@name='ref']" position="after">
-                      <field name="block_manual_currency_id" invisible="1"/>
-                      <group colspan="2" col="2">
-                          <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', '|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True), ('state', '=', 'posted')], 'invisible': [('status', '=', 'sys')]}"/>
-                          <field name="currency_id" readonly="True" attrs="{'invisible': [('status', '=', 'manu')]}"/>
-                      </group>
-                    </xpath>
                     <xpath expr="/form/notebook/page/field[@name='line_id']/tree/field[@name='currency_id']" position="attributes">
                         <attribute name="readonly">1</attribute>
                     </xpath>

@@ -547,25 +547,30 @@
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
 <% invoice_lines = [] %>
 % if line.invoice_id:
-<% invoice_lines = line.invoice_id.invoice_line %>
+<% invoice_lines = getInvoiceLines([line.invoice_id.id]) %>
 % elif line.imported_invoice_line_ids:
+<% invoices = [] %>
 % for ji in line.imported_invoice_line_ids:
-% if ji.invoice and ji.invoice.invoice_line:
-<% invoice_lines += ji.invoice.invoice_line %>
+% if ji.invoice:
+<% invoices.append(ji.invoice.id) %>
 % endif
 % endfor
+<% invoice_lines = getInvoiceLines(invoices) %>
 % endif
 
 % for inv_line in invoice_lines:
       <Row>
         <Cell ss:Index="4" ss:StyleID="text_center">
-          <Data ss:Type="String">${inv_line.line_number or ''|x}</Data>
+          <Data ss:Type="String">${hasattr(inv_line, 'line_number') and inv_line.line_number or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_line.product_id and inv_line.product_id.name or ''|x}</Data>
+          <Data ss:Type="String">${hasattr(inv_line, 'product_id') and inv_line.product_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code + ' ' + inv_line.account_id.name or ''|x}</Data>
@@ -577,9 +582,10 @@
           <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${inv_line.price_subtotal or 0.0}</Data>
+          <Data ss:Type="Number">${hasattr(inv_line, 'price_subtotal') and inv_line.price_subtotal or hasattr(inv_line, 'amount') and inv_line.amount or 0.0}</Data>
         </Cell>
       </Row>
+% if hasattr(inv_line, 'analytic_lines'):
 % for ana_line in sorted(inv_line.analytic_lines, key=lambda x: x.id):
 <%
 line_color = 'blue'
@@ -618,6 +624,7 @@ endif
         </Cell>
       </Row>
 % endfor
+% endif
 % endfor
 
 <!-- Display analytic lines linked to this register line -->

@@ -43,6 +43,9 @@ class account_analytic_line(osv.osv):
             if l.move_id:
                 if l.move_id.partner_type and l.move_id.partner_type.name:
                     res[l.id] = l.move_id.partner_type.name or ''
+                # UTP-1106: In case of HQ Entries, we don't have any "real 3RD party", but just a partner_txt. That's why we use it as it is!
+                else:
+                    res[l.id] = l.move_id.partner_txt or ''
             elif l.commitment_line_id and l.commitment_line_id.commit_id and l.commitment_line_id.commit_id.partner_id and l.commitment_line_id.commit_id.partner_id.name:
                 res[l.id] = l.commitment_line_id.commit_id.partner_id.name or ''
             elif l.imported_commitment:

@@ -109,8 +109,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         """'default_get' method overridden."""
         res = super(WizardCurrencyrevaluation, self).default_get(
             cr, uid, fields, context=context)
+
         user_obj = self.pool.get('res.users')
-        fiscalyear_obj = self.pool.get('account.fiscalyear')
         period_obj = self.pool.get('account.period')
         journal_obj = self.pool.get('account.journal')
         # Fiscalyear
@@ -132,7 +132,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 cr, uid, res['fiscalyear_id'], context=context)
             res['revaluation_date'] = fiscalyear.date_stop
 
-         # Period
+        # Period
         period_date = datetime.date.today()
         # NOTE: the method 'get_period_from_date()' supplied by the
         #       'account_tools' module is used here
@@ -179,6 +179,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             res['posting_date'] = period.date_stop
         return res
 
+
     def on_change_revaluation_method(
             self, cr, uid, ids, method, fiscalyear_id, period_id):
         """'on_change' method for the 'revaluation_method', 'fiscalyear_id' and
@@ -214,7 +215,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Set values according to the user input
         value['result_period_id'] = period_id
-        period_obj = self.pool.get('account.period')
 
         period = period_obj.browse(cr, uid, period_id, context=None)
         value['posting_date'] = period.date_stop
@@ -234,11 +234,13 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                  ('number', '=', 13)])
             if period_ids:
                 value['result_period_id'] = period_ids[0]
+
         res = {'value': value, 'warning': warning}
         return res
 
     def on_change_fiscalyear_id(self, cr, uid, ids, method, fiscalyear_id):
         """'on_change' method for the 'fiscalyear_id' field."""
+
         if not method or not fiscalyear_id:
             return {}
         value = {}
@@ -292,6 +294,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             period_obj = self.pool.get('account.period')
             period = period_obj.browse(cr, uid, result_period_id, context=context)
             value['posting_date'] = period.date_stop
+            value['result_period_id'] = result_period_id
         return {'value': value, 'warning': warning}
 
     def _compute_unrealized_currency_gl(self, cr, uid,
@@ -551,10 +554,11 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Get posting date (as the field is readonly, its value is not sent
         # to the server by the web client
-        tmp = form.posting_date
-        form.posting_date = form.result_period_id and form.result_period_id.date_stop
-        if not form.posting_date:
-            form.posting_date = tmp
+        if form.period_id and form.period_id.date_stop:
+            form.posting_date = form.period_id.date_stop
+        else:
+            form.posting_date = form.revaluation_date
+
 
         # Search for accounts Balance Sheet or Liquidity to be eevaluated
         """Determine accounts to be used in the revaluation based on the "included in reval" checkbox.
@@ -585,28 +589,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                                  _('No special period found for the fiscalyear %s') %
                                    form.fiscalyear_id.code)
 
-        # FIXME
-        #opening_move_ids = []
-        #if special_period_ids:
-        #    opening_move_ids = move_obj.search(
-        #        cr, uid, [('period_id', '=', special_period_ids[0])])
-        #    if not opening_move_ids:
-        #        # if the first move is on this fiscalyear, this is the first
-        #        # financial year
-        #        first_move_id = move_obj.search(
-        #            cr, uid, [('company_id', '=', company.id)],
-        #            order='date', limit=1)
-        #        if not first_move_id:
-        #            raise osv.except_osv(
-        #                _('Error!'),
-        #                _('No fiscal entries found'))
-        #        first_move = move_obj.browse(
-        #                cr, uid, first_move_id[0], context=context)
-        #        if fiscalyear.id != first_move.period_id.fiscalyear_id:
-        #            raise osv.except_osv(
-        #                _('Error!'),
-        #                _('No opening entries in opening period for this fiscal year %s' % (
-        #                    fiscalyear.code,)))
+
 
         period_ids = []
         if form.revaluation_method == 'liquidity_month':

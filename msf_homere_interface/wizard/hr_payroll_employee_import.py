@@ -190,17 +190,43 @@ class hr_payroll_employee_import(osv.osv_memory):
             return False
         # Check staffcode
         staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
+        what_changed = None
+        def changed(mission1, mission2, staff1, staff2, unique1, unique2):
+            res = None
+            if mission1 != mission2:
+                res = 'mission'
+            elif staff1 != staff2:
+                res = 'staff'
+            elif unique1 != unique2:
+                res = 'unique'
+            return res
         if staffcode_ids:
             message = "Several employee have the same ID code: "
             employee_error_list = []
+            # UTP-1098: Do not make an error if the employee have the same code staff and the same name
             for employee in self.pool.get('hr.employee').browse(cr, uid, staffcode_ids):
-                if employee.homere_codeterrain != missioncode or str(employee.homere_id_staff) != staff_id or employee.homere_id_unique != uniq_id:
+                what_changed = changed(employee.homere_codeterrain, missioncode, str(employee.homere_id_staff), staff_id, employee.homere_id_unique, uniq_id)
+                if employee.name == employee_name:
+                    continue
+                if what_changed != None:
                     employee_error_list.append(employee.name)
             if employee_error_list:
                 message += ' ; '.join([employee_name] + employee_error_list)
                 self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
-                return False
-        return True
+                return False, what_changed
+        return True, what_changed
+
+    def read_employee_infos(self, cr, uid, line='', context=None):
+        """
+        Read each line to extract infos (code, name and surname)
+        """
+        res = False
+        code_staff = line.get('code_staff', False)
+        nom = line.get('nom', False)
+        prenom = line.get('prenom', False)
+        if code_staff:
+            res = (code_staff, nom, prenom)
+        return res
 
     def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None, line_number=None):
         """
@@ -246,11 +272,14 @@ class hr_payroll_employee_import(osv.osv_memory):
             # Employee name
             employee_name = (nom and prenom and ustr(nom) + ', ' + ustr(prenom)) or (nom and ustr(nom)) or (prenom and ustr(prenom)) or False
             # Do some check
-            employee_check = self.update_employee_check(cr, uid, ustr(code_staff), ustr(codeterrain), id_staff, ustr(uniq_id), wizard_id, employee_name)
-            if not employee_check:
+            employee_check, what_changed = self.update_employee_check(cr, uid, ustr(code_staff), ustr(codeterrain), id_staff, ustr(uniq_id), wizard_id, employee_name)
+            if not employee_check and not what_changed:
                 return False, created, updated
             # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
+            # UTP-1098: If what_changed is not None, we should search the employee only on code_staff
+            if what_changed:
+                e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', ustr(code_staff)), ('name', '=', employee_name)])
             # Prepare vals
             res = False
             vals = {
@@ -460,14 +489,42 @@ class hr_payroll_employee_import(osv.osv_memory):
                 reader = csv.DictReader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             else:
                 raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (staff_file,))
-            res = True
-            for i, employee_data in enumerate(reader):
-                update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id, i)
-                if not update:
-                    res = False
-                created += nb_created
-                updated += nb_updated
+            # UF-2472: Read all lines to check employee's code before importing
+            staff_data = []
+            staff_codes = []
+            duplicates = []
+            for line in reader:
+                data = self.read_employee_infos(cr, uid, line)
                 processed += 1
+                if data: # to avoid False value in staff_data list
+                    staff_data.append(data)
+                    code = data[0]
+                    if code in staff_codes:
+                        duplicates.append(code)
+                    staff_codes.append(code)
+            # Delete duplicates of… duplicates!
+            duplicates = list(set(duplicates))
+            details = []
+            for employee_infos in staff_data:
+                employee_code = employee_infos[0]
+                if employee_code in duplicates:
+                    details.append(','.join([employee_infos[1], employee_infos[2]]))
+            res = True
+            if not details:
+                created = 0
+                processed = 0
+                updated = 0
+                for i, employee_data in enumerate(reader):
+                    update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id, i)
+                    if not update:
+                        res = False
+                    created += nb_created
+                    updated += nb_updated
+                    processed += 1
+            else:
+                res = False
+                message = _('Several employees have the same unique code: %s.') % (';'.join(details))
+                self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': message})
             # Close Temporary File
             # Delete previous created lines for employee's contracts
             if contract_ids:

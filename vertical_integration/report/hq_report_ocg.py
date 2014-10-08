@@ -147,7 +147,7 @@ class hq_report_ocg(report_sxw.report_sxw):
         
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
-                                                                       ('analytic_distribution_id', '=', False),
+                                                                       ('account_id.is_analytic_addicted', '=', False),
                                                                        ('journal_id.type', 'not in', ['migration', 'hq', 'cur_adj', 'inkind'])], context=context)
         
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
@@ -210,6 +210,7 @@ class hq_report_ocg(report_sxw.report_sxw):
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
             currency = analytic_line.currency_id
+            cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code or ""
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
@@ -222,7 +223,7 @@ class hq_report_ocg(report_sxw.report_sxw):
                               account and account.code,
                               account and account.code + " " + account.name or "",
                               analytic_line.destination_id and analytic_line.destination_id.code or "",
-                              analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",
+                              cost_center_code,
                               analytic_line.account_id and analytic_line.account_id.code or "",
                               analytic_line.partner_txt or "",
                               analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
@@ -235,6 +236,10 @@ class hq_report_ocg(report_sxw.report_sxw):
             
             cost_center = formatted_data[11][:5] or " "
             field_activity = formatted_data[11][6:] or " "
+            # UTP-1104: Hard code the fact that cc-intermission should appears as MI998 + SUPZZZ
+            if cost_center_code == 'cc-intermission':
+                cost_center = 'MI998'
+                field_activity = 'SUPZZZ'
             
             if (journal.code, journal.id, currency.id) not in main_lines:
                 main_lines[(journal.code, journal.id, currency.id)] = []

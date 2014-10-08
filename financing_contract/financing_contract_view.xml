@@ -259,6 +259,7 @@
                         <newline/>
                         <field name="reporting_type"/>
                         <field name="active" colspan="2"/>
+                        <field name="reporting_currency"/>
                         <newline/>
                         <field name="overhead_type"/>
                         <field name="overhead_percentage" colspan="2"/>
@@ -467,6 +468,23 @@
                 <field name="name">Interactive Report</field>
                 <field eval="'ir.actions.server,%d'%act_financing_contract_donor_reporting_tree" name="value"/>
                 <field eval="True" name="object"/>
+            </record>
+
+        <!-- Allocated expense report -->
+            <record id="act_allocated_expenses_report" model="ir.actions.server">
+                <field name="name">Allocated Expenses</field>
+                <field name="model_id" ref="model_financing_contract_contract"/>
+                <field name="state">code</field>
+                <field name="code">action = obj.allocated_expenses_report(context=context)</field>
+            </record>
+
+            <record id="ir_allocated_expenses_report" model="ir.values">
+                <field eval="'client_print_multi'" name="key2"/>
+                <field eval="'financing.contract.contract'" name="model"/>
+                <field name="name">Allocated Expenses</field>
+                <field eval="'ir.actions.server,%d'%act_allocated_expenses_report" name="value"/>
+                <field eval="True" name="object"/>
+                <field name="sequence" eval="1"/>
             </record>
 
             <record id="action_open_analytic_lines_button" model="ir.actions.act_window">

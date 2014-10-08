@@ -330,6 +330,16 @@ class documents_done_wizard(osv.osv):
             elif wiz.real_model == 'tender':
                 order = self.pool.get('tender').browse(cr, uid, wiz.res_id, context=context)
                 po_ids = self._get_problem_tender(cr, uid, order, context=context)
+
+            # Remove duplicate
+            pick_ids = list(set(pick_ids))
+            move_ids = list(set(move_ids))
+            proc_ids = list(set(proc_ids))
+            po_ids = list(set(po_ids))
+            so_ids = list(set(so_ids))
+            tender_ids = list(set(tender_ids))
+            invoice_ids = list(set(invoice_ids))
+
             # Process all stock moves
             self._add_stock_move_pb(cr, uid, pb_id, move_ids, context=context)
             # Process all PO/RfQ
@@ -373,6 +383,7 @@ class documents_done_wizard(osv.osv):
         '''
         Set the document to done state
         '''
+        pb_obj = self.pool.get('documents.done.problem')
         if not context:
             context = {}
         
@@ -380,7 +391,14 @@ class documents_done_wizard(osv.osv):
             if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
                 self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, all_doc=all_doc, context=context)
                 if all_doc:
-                    self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.')%(self._get_model_name(doc.real_model), doc.name), context=context)
+                    if doc.real_model == 'sale.order' and self.pool.get(doc.real_model).read(cr, uid, doc.res_id, ['procurement_request'])['procurement_request']:
+                        proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
+                        context.update({'view_id': proc_view and proc_view[1] or False})
+                        self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The Internal request \'%s\' has been closed.')%(doc.name), context=context)
+                    else:
+                        self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.')%(self._get_model_name(doc.real_model), doc.name), context=context)
+                    pb_ids = pb_obj.search(cr, uid, [('wizard_id', '=', doc.id)], context=context)
+                    pb_obj.done_all_documents(cr, uid, pb_ids, all_doc=all_doc, context=context)
                 
         if not context.get('direct_cancel', False):
             return {'type': 'ir.actions.act_window_close'}
@@ -537,14 +555,14 @@ class documents_done_problem(osv.osv_memory):
                 elif self.pool.get(line.doc_model).browse(cr, uid, line.doc_id, context=context).state not in ('cancel', 'done'):
                     self.pool.get(line.doc_model).set_manually_done(cr, uid, line.doc_id, all_doc=all_doc, context=context)
 
-            return self.pool.get('documents.done.wizard').go_to_problems(cr, uid, [wiz.wizard_id.id], context=context)
+#            return self.pool.get('documents.done.wizard').go_to_problems(cr, uid, [wiz.wizard_id.id], context=context)
 
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'documents.done.wizard',
-                'view_type': 'form',
-                'view_mode': 'tree',
-                'context': context,
-                'target': 'crush'}
+#        return {'type': 'ir.actions.act_window',
+#                'res_model': 'documents.done.wizard',
+#                'view_type': 'form',
+#                'view_mode': 'tree',
+#                'context': context,
+#                'target': 'crush'}
 
     def cancel_document(self, cr, uid, ids, context=None):
         '''

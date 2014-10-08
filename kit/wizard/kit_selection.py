@@ -111,7 +111,7 @@ class kit_selection(osv.osv_memory):
                           'uom_id_kit_selection_line': item.item_uom_id.id,
                           }
                 line_obj.create(cr, uid, values, context=dict(context, pol_ids=context['active_ids']))
-        return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, type='update', context=context)
+        return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, w_type='update', context=context)
     
     def validate_lines(self, cr, uid, ids, context=None):
         '''
@@ -167,7 +167,7 @@ class kit_selection(osv.osv_memory):
         integrity_check = self.validate_lines(cr, uid, ids, context=context)
         if not integrity_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, w_type='update', context=context)
         # process
         ctx_keep_info = context.copy()
         ctx_keep_info['keepDateAndDistrib'] = True

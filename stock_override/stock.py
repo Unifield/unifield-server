@@ -225,6 +225,47 @@ class stock_picking(osv.osv):
 
         return result
 
+    def _get_do_not_sync(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        if context is None:
+            context = {}
+
+        current_company_p_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = False
+            if pick.partner_id.id == current_company_p_id:
+                res[pick.id] = True
+
+        return res
+
+    def _src_do_not_sync(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns picking ticket that do not synched because the partner of the
+        picking is the partner of the current company.
+        '''
+        res = []
+        curr_partner_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+
+        if context is None:
+            context = {}
+
+        for arg in args:
+
+            eq_false = arg[1] == '=' and arg[2] in (False, 'f', 'false', 'False', 0)
+            neq_true = arg[1] in ('!=', '<>') and arg[2] in (True, 't', 'true', 'True', 1)
+            eq_true = arg[1] == '=' and arg[2] in (True, 't', 'true', 'True', 1)
+            neq_false = arg[1] in ('!=', '<>') and arg[2] in (False, 'f', 'false', 'False', 0)
+
+            if arg[0] == 'do_not_sync' and (eq_false or neq_true):
+                res.append(('partner_id', '!=', curr_partner_id))
+            elif arg[0] == 'do_not_sync' and (eq_true or neq_false):
+                res.append(('partner_id', '=', curr_partner_id))
+
+        return res
+
+
     _columns = {
         'state': fields.selection([
             ('draft', 'Draft'),
@@ -265,6 +306,14 @@ class stock_picking(osv.osv):
                                         store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
                                                'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
         'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),
+        'do_not_sync': fields.function(
+            _get_do_not_sync,
+            fnct_search=_src_do_not_sync,
+            method=True,
+            type='boolean',
+            string='Do not sync.',
+            store=False,
+        ),
     }
 
     _defaults = {'from_yml_test': lambda *a: False,
@@ -897,10 +946,33 @@ class stock_picking(osv.osv):
         Create automatically invoice or NOT (regarding some criteria in is_invoice_needed)
         """
         res = super(stock_picking, self).action_done(cr, uid, ids, context=context)
+
         if res:
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
+                prog_id = self.update_processing_info(cr, uid, sp.id, False, {
+                   'close_in': _('Invoice creation in progress'),
+                }, context=context)
+                # If the IN is linked to a PO and has a backorder not closed, change the subflow
+                # of the PO to the backorder
+                if sp.type == 'in' and sp.purchase_id:
+                    po_id = sp.purchase_id.id
+                    bo_id = False
+                    if sp.backorder_id and sp.backorder_id.state not in ('done', 'cancel'):
+                        bo_id = sp.backorder_id.id
+                    else:
+                        picking_ids = self.search(cr, uid, [
+                            ('purchase_id', '=', po_id),
+                            ('id', '!=', sp.id),
+                            ('state', 'not in', ['done', 'cancel']),
+                        ], limit=1, context=context)
+                        if picking_ids:
+                            bo_id = picking_ids[0]
+
+                    if bo_id:
+                        netsvc.LocalService("workflow").trg_change_subflow(uid, 'purchase.order', [po_id], 'stock.picking', [sp.id], bo_id, cr)
+
                 self._create_invoice(cr, uid, sp)
 
         return res
@@ -1163,6 +1235,8 @@ class stock_move(osv.osv):
         '''
         Call the wizard to ask user if he wants to re-source the need
         '''
+        mem_obj = self.pool.get('stock.picking.processing.info')
+
         if context is None:
             context = {}
 
@@ -1172,6 +1246,15 @@ class stock_move(osv.osv):
         backmove_ids = self.search(cr, uid, [('backmove_id', 'in', ids), ('state', 'not in', ('done', 'cancel'))], context=context)
 
         for move in self.browse(cr, uid, ids, context=context):
+            mem_ids = mem_obj.search(cr, uid, [
+                ('picking_id', '=', move.picking_id.id),
+                ('end_date', '=', False),
+            ], context=context)
+            if mem_ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The processing of the picking is in progress - You can\'t cancel this move.'),
+                )
             if backmove_ids or move.product_qty == 0.00:
                 raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
             if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and (move.purchase_line_id.order_id.po_from_ir or move.purchase_line_id.order_id.po_from_fo)):
@@ -1483,6 +1566,11 @@ class stock_move(osv.osv):
         loc_obj = self.pool.get('stock.location')
         prodlot_obj = self.pool.get('stock.production.lot')
         for move in self.browse(cr, uid, ids, context):
+            compare_date = context.get('rw_date', False)
+            if compare_date:
+                compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
+            else:
+                compare_date = datetime.today()
             # FEFO logic
             if move.state == 'assigned' and not move.prodlot_id:  # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
                 needed_qty = move.product_qty
@@ -1505,7 +1593,7 @@ class stock_move(osv.osv):
                         if not move.location_dest_id.id == loc['location_id']:
                             # we ignore the batch that are outdated
                             expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
-                            if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                            if datetime.strptime(expired_date, "%Y-%m-%d") >= compare_date:
                                 existed_moves = []
                                 if not move.move_dest_id:
                                     # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
@@ -1547,7 +1635,7 @@ class stock_move(osv.osv):
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
-                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= datetime.today():
+                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
                             if not self.search(cr, uid, [('move_dest_id', '=', move.id)], context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
@@ -1632,11 +1720,14 @@ class stock_move(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
 
         for line in self.browse(cr, uid, ids, context):
             if line.prodlot_id:
                 self.write(cr, uid, ids, {'prodlot_id': False, 'expired_date': False})
-            if line.location_id.location_id and line.location_id.location_id.usage != 'view':
+            # UF-2426: If the cancel is called from sync, do not change the source location!
+            if not context.get('sync_message_execution', False) and line.location_id.location_id and line.location_id.location_id.usage != 'view':
                 self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
         return True
 

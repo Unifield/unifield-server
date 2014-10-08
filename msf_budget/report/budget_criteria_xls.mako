@@ -399,7 +399,7 @@
    </Style>
 
    <Style ss:ID="short_date3">
-     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+     <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
      <NumberFormat ss:Format="Short Date"/>
 
      <Borders>
@@ -433,7 +433,7 @@
 <ss:Worksheet ss:Name="${sheet_name(o.name and o.name.split('/')[-1])|x}">
 
 <% cost_center_ids = getCostCenters(o.cost_center_id.id) %>
-<% date_start = o.fiscalyear_id.date_start %>
+<% date_start = o.fiscalyear_id.date_start.val %>
 <% date_stop = getDateStop(o.fiscalyear_id.date_stop) %>
 <% granularity = getGranularity() %>
 <% granularity_code = getGranularityCode() %>

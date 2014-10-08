@@ -74,8 +74,11 @@ class account_move_line(osv.osv):
             ('reconcile_id','=',False),
             ('state', '=', 'valid'),
             ('move_state', '=', 'posted'), # UFTP-204: Exclude the Direct Invoice from the list
-            ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr']),
-            ('account_id.type_for_register', 'not in', ['down_payment'])
+            ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr', 'extra', 'correction', 'intermission']),  # UTP-1088 add extra(OD)/correction/intermission types
+            ('account_id.type_for_register', 'not in', ['down_payment']),
+            # UTP-1088 exclude correction/reversal lines as can be in journal of type correction
+            ('corrected_line_id', '=', False),  # is a correction line if has a corrected line
+            ('reversal_line_id', '=', False),  # is a reversal line if a reversed line
         ]
         # verify debit note default account configuration
         default_account = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.import_invoice_default_account

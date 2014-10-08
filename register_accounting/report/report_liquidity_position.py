@@ -83,12 +83,17 @@ class report_liquidity_position2(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
 
         sql_register_ids = """
-            SELECT abs.id FROM account_bank_statement abs
-                LEFT JOIN account_journal aj ON abs.journal_id = aj.id
-            WHERE
-                aj.type != 'cheque' AND abs.state != 'draft' AND abs.id not in (
-                    SELECT prev_reg_id FROM account_bank_statement WHERE prev_reg_id is not null AND state != 'draft'
-                )
+            SELECT abs.id 
+            FROM account_bank_statement abs
+            LEFT JOIN account_journal aj ON abs.journal_id = aj.id
+            WHERE aj.type != 'cheque' 
+            AND abs.state != 'draft'
+            AND abs.period_number = (SELECT max(abs2.period_number) 
+                                       FROM account_bank_statement abs2
+                                       LEFT JOIN account_journal aj2 ON abs2.journal_id = aj2.id
+                                       WHERE aj2.type != 'cheque' AND abs2.state != 'draft'
+                                       AND abs2.instance_id = abs.instance_id
+                                       AND abs2.journal_id = abs.journal_id)
         """
 
         self.cr.execute(sql_register_ids)

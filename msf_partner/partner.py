@@ -141,6 +141,17 @@ class res_partner(osv.osv):
 
 ## QT : Remove _get_valide_until_date
 
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VA management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid,).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection(PARTNER_TYPE, string='Partner type', required=True),
@@ -170,11 +181,13 @@ class res_partner(osv.osv):
         'price_unit': fields.function(_get_price_info, method=True, type='float', string='Unit price', multi='info'),
         'valide_until_date' : fields.function(_get_price_info, method=True, type='char', string='Valid until date', multi='info'),
         'price_currency': fields.function(_get_price_info, method=True, type='many2one', relation='res.currency', string='Currency', multi='info'),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     _defaults = {
         'manufacturer': lambda *a: False,
         'partner_type': lambda *a: 'external',
+        'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
 
@@ -353,11 +366,14 @@ class res_partner(osv.osv):
                     del vals[field]
         # [utp-315] avoid deactivating partner that have still open document linked to them
         if 'active' in vals and vals.get('active') == False:
-            objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
-            if objects_linked_to_partner:
-                raise osv.except_osv(_('Warning'),
-                                     _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
-                                       ) % (objects_linked_to_partner))
+            # UTP-1214: only show error message if it is really a "deactivate partner" action, if not, just ignore 
+            oldValue = self.read(cr, uid, ids[0], ['active'], context=context)['active']
+            if oldValue == True: # from active to inactive ---> check if any ref to it
+                objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
+                if objects_linked_to_partner:
+                    raise osv.except_osv(_('Warning'),
+                                         _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
+                                           ) % (objects_linked_to_partner))
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
@@ -368,6 +384,10 @@ class res_partner(osv.osv):
                 vals['property_stock_customer'] = msf_customer[1]
             if msf_supplier and not 'property_stock_supplier' in vals:
                 vals['property_stock_supplier'] = msf_supplier[1]
+
+        if not vals.get('address'):
+            vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
+
         return super(res_partner, self).create(cr, uid, vals, context=context)
 
 
@@ -395,10 +415,11 @@ class res_partner(osv.osv):
         """
         [utp-315] avoid deactivating partner that have still open document linked to them.
         """
-        if not active:
-            # some verifications
-            if isinstance(ids, (int, long)):
-                ids = [ids]
+        # some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # UF-2463: If the partner is not saved into the system yet, just ignore this check
+        if not active and len(ids) > 0:
             if context is None:
                 context = {}
 
@@ -505,6 +526,41 @@ class res_partner(osv.osv):
         return view
 
 res_partner()
+
+
+class res_partner_address(osv.osv):
+    _inherit = 'res.partner.address'
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Remove empty addresses if exist and create the new one
+        '''
+        if vals.get('partner_id'):
+            domain_dict = {
+                'partner_id': vals.get('partner_id'),
+                'function': False,
+                'city': False,
+                'fax': False,
+                'name': False,
+                'zip': False,
+                'title': False,
+                'mobile': False,
+                'street2': False,
+                'country_id': False,
+                'phone': False,
+                'street': False,
+                'active': True,
+                'state_id': False,
+                'type': False,
+                'email': False,
+            }
+            domain = [(k, '=', v) for k, v in domain_dict.iteritems()]
+            addr_ids = self.search(cr, uid, domain, context=context)
+            self.unlink(cr, uid, addr_ids, context=context)
+
+        return super(res_partner_address, self).create(cr, uid, vals, context=context)
+
+res_partner_address()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

@@ -189,12 +189,38 @@ class msf_budget(osv.osv):
           - state is in vals
           - state is different from draft (validated or done)
         """
+
+        if not ids:
+            return True
         if context is None:
             context = {}
         res = super(msf_budget, self).write(cr, uid, ids, vals, context=context)
         if context.get('sync_update_execution', False) and vals.get('state', False) and vals.get('state') != 'draft':
             # Update parent budget
             self.update_parent_budgets(cr, uid, ids, context=context)
+
+        budget = self.browse(cr, uid, ids, context=context)[0]
+        if budget.type == 'normal' and vals.get('state') == 'done':  # do not process for view accounts
+            ala_obj = self.pool.get('account.analytic.account')
+            # get parent cc
+            cc_parent_ids = ala_obj._get_parent_of(cr, uid, budget.cost_center_id.id, context=context)
+            # exclude the cc of the current budget line
+            parent_cc_ids = [x for x in cc_parent_ids if x != budget.cost_center_id.id]
+            # find all ccs which have the same parent
+            all_cc_ids = ala_obj.search(cr, uid, [('parent_id','in',parent_cc_ids)], context=context)
+            # remove parent ccs from the list
+            peer_cc_ids = [x for x in all_cc_ids if x not in parent_cc_ids]
+            # find peer budget lines based on cc
+            peer_budget_ids = self.search(cr, uid, [('cost_center_id','in',peer_cc_ids),('decision_moment_id','=',budget.decision_moment_id.id),('fiscalyear_id','=',budget.fiscalyear_id.id),'!',('id','=',budget.id)],context=context)
+            peer_budgets = self.browse(cr, uid, peer_budget_ids, context=context)
+
+            all_done = True
+            for peer in peer_budgets:
+                if peer.state != 'done':
+                    all_done = False
+            if all_done == True:
+                parent_ids = self.search(cr, uid, [('cost_center_id', 'in', parent_cc_ids),('decision_moment_id','=',budget.decision_moment_id.id),('fiscalyear_id','=',budget.fiscalyear_id.id),'!',('state','=','done')],context=context)
+                self.write(cr, uid, parent_ids, {'state': 'done'},context=context)
         return res
 
     def update(self, cr, uid, ids, context=None):
@@ -262,7 +288,7 @@ class msf_budget(osv.osv):
                     'month12': 0.0
                 }
                 # search all linked budget lines
-                args = [('budget_id', 'in', budget_ids), ('account_id', '=', budget_line.account_id.id)]
+                args = [('budget_id', 'in', budget_ids), ('account_id', '=', budget_line.account_id.id), ('line_type', '=', budget_line.line_type)]
                 if budget_line.destination_id:
                     args.append(('destination_id', '=', budget_line.destination_id.id))
                 child_line_ids = line_obj.search(cr, uid, args, context=context)
