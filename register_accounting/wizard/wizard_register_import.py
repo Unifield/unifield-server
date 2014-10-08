@@ -427,8 +427,8 @@ class wizard_register_import(osv.osv_memory):
                         continue
                     r_account = account_ids[0]
                     account_obj = self.pool.get('account.account')
-                    restricted_ids = account_obj.search(cr, uid, [('restricted_area', '=', 'register_line'), ('id', '=', r_account)])
-	            if not restricted_ids:
+                    restricted_ids = account_obj.search(cr, uid, [('restricted_area', '=', 'register_lines'), ('id', '=', r_account)])
+                    if not restricted_ids:
                         errors.append(_('Line %s. G/L account %s is restricted.') % (current_line_num, account_code,))
                     account = account_obj.read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
                     type_for_register = account.get('type_for_register', '')
