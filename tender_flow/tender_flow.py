@@ -1968,10 +1968,6 @@ class tender_cancel_wizard(osv.osv_memory):
 
         if so_to_cancel_ids:
             # Ask user to choose what must be done on the FO/IR
-            context.update({
-                'from_tender': True,
-                'tender_ids': list(tender_ids),
-            })
             return so_obj.open_cancel_wizard(cr, uid, set(so_to_cancel_ids), context=context)
 
         return {'type': 'ir.actions.act_window_close'}
