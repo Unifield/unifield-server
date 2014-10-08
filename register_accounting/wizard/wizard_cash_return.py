@@ -876,7 +876,7 @@ class wizard_cash_return(osv.osv_memory):
                 line_employee_id = False
                 partner = advance.partner_type
                 if partner:
-                    if partner._name == 'res.employee':
+                    if partner._name == 'res.partner':
                         partner_id = partner.id
                         if partner_id in advances_with_supplier:
                             advances_with_supplier[partner_id].append(advance.id)
