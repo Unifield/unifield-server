@@ -593,6 +593,10 @@ class account_move(osv.osv):
             if not period_ids:
                 raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
+            # UF-2479: If the period is not open yet, raise exception for the move
+            if period and period.state == 'created':
+                raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Entry is created') % (period.name,))
+
             # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!
             sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
             if instance and journal and sequence_number and ('name' not in vals or vals['name'] == '/'):

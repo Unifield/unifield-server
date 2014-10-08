@@ -113,7 +113,12 @@ class po_follow_up(osv.osv_memory):
             report_header_line2 += wiz.partner_id.name
         report_header_line2 += '  Report run date: ' + time.strftime("%d/%m/%Y")  #TODO to be removed
         if wiz.po_date_from:
-            report_header_line2 += wiz.po_date_from + ' - ' + wiz.po_date_thru
+            report_header_line2 += wiz.po_date_from
+        #UF-2496: Minor fix to append the "date from" correctly into header
+        if wiz.po_date_thru:
+            if wiz.po_date_from:
+                report_header_line2 += ' - '
+            report_header_line2 += wiz.po_date_thru
         report_header.append(report_header_line2)
       
         datas = {'ids': po_ids, 'report_header': report_header, 'report_parms': report_parms}       

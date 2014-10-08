@@ -29,6 +29,7 @@ import os
 
 from report import report_sxw
 
+
 class hq_report_oca(report_sxw.report_sxw):
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -227,7 +228,7 @@ class hq_report_oca(report_sxw.report_sxw):
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
             currency = analytic_line.currency_id
-            func_currency = move_line.functional_currency_id
+            func_currency = analytic_line.move_id.functional_currency_id
             rate = ""
             if func_currency:
                 cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, analytic_line.date))
