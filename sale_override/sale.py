@@ -2020,7 +2020,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Update the context to get IR lines
         context['procurement_request'] = True
 
-        for order in self.read(cr, uid, ids, ['from_yml_test'], context=context):
+        for order in self.read(cr, uid, ids, ['from_yml_test', 'order_line'], context=context):
+            if not self._get_ready_to_cancel(cr, uid, [order['id']], order['order_line'], context=context)[order['id']]:
+                return False
+
             # backward compatibility for yml tests, if test we do not wait
             if order['from_yml_test']:
                 continue
@@ -2039,6 +2042,88 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 return False
 
         return True
+
+    def _get_ready_to_cancel(self, cr, uid, ids, line_ids=[], context=None):
+        """
+        Returns for each FO/IR in ids if the next line cancelation can
+        cancel the FO/IR.
+        """
+        line_obj = self.pool.get('sale.order.line')
+        exp_sol_obj = self.pool.get('expected.sale.order.line')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+
+        res = {}
+        for fo in self.browse(cr, uid, ids, context=context):
+            res[fo.id] = True
+            if fo.state in ('cancel', 'done', 'draft'):
+                res[fo.id] = False
+                continue
+
+            remain_lines = line_obj.search(cr, uid, [
+                ('order_id', '=', fo.id),
+                ('id', 'not in', line_ids),
+            ], context=context)
+            if remain_lines:
+                res[fo.id] = False
+                continue
+
+            exp_domain = [('order_id', '=', fo.id)]
+
+            if context.get('pol_ids'):
+                exp_domain.append(('po_id', 'not in', context.get('pol_ids')))
+
+            if context.get('tl_ids'):
+                exp_domain.append(('tender_id', 'not in', context.get('tl_ids')))
+
+            if exp_sol_obj.search(cr, uid, exp_domain, context=context):
+                res[fo.id] = False
+                continue
+
+        return res
+
+    def open_cancel_wizard(self, cr, uid, ids, context=None):
+        """
+        Create and open the asking cancelation wizard
+        """
+        wiz_obj = self.pool.get('sale.order.cancelation.wizard')
+        wiz_line_obj = self.pool.get('sale.order.leave.close')
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz_id = wiz_obj.create(cr, uid, {}, context=context)
+        for id in ids:
+            wiz_line_obj.create(cr, uid, {
+                'wizard_id': wiz_id,
+                'order_id': id,
+            }, context=context)
+
+        view_id = data_obj.get_object_reference(cr, uid, 'sale_override', 'sale_order_cancelation_ask_wizard_form_view')[1]
+
+        if context.get('view_id'):
+            del context['view_id']
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'sale.order.cancelation.wizard',
+            'res_id': wiz_id,
+            'view_id': [view_id],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
 
 sale_order()
 
@@ -2154,6 +2239,8 @@ class sale_order_line(osv.osv):
         proc_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
+        po_line_obj = self.pool.get('purchase.order.line')
+        so_obj = self.pool.get('sale.order')
 
         wf_service = netsvc.LocalService("workflow")
 
@@ -2164,6 +2251,7 @@ class sale_order_line(osv.osv):
             line = self.browse(cr, uid, line, context=context)
 
         order = line.order_id and line.order_id.id
+        order_name = line.order_id and line.order_id.name
 
         if qty_diff >= line.product_uom_qty:
             proc = line.procurement_id and line.procurement_id.id
@@ -2197,9 +2285,9 @@ class sale_order_line(osv.osv):
             elif line.order_id.procurement_request:
                 # UFTP-82: flagging SO is an IR and its PO is cancelled
                 self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
-            if proc:
-                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
-                proc_obj.action_cancel(cr, uid, [proc])
+#            if proc:
+#                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
+#                proc_obj.action_cancel(cr, uid, [proc])
         else:
             minus_qty = line.product_uom_qty - qty_diff
             proc = line.procurement_id and line.procurement_id.id
@@ -2209,10 +2297,13 @@ class sale_order_line(osv.osv):
             if proc:
                 proc_obj.write(cr, uid, [proc], {'product_qty': minus_qty}, context=context)
 
-        if order:
+        so_to_cancel_id = False
+        if so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
+            so_to_cancel_id = order
+        else:
             wf_service.trg_write(uid, 'sale.order', order, cr)
 
-        return True
+        return so_to_cancel_id
 
     def add_resource_line(self, cr, uid, line, order_id, qty_diff, context=None):
         '''
@@ -2441,7 +2532,8 @@ class sale_order_line(osv.osv):
                 data.update({'partner_id': context.get('partner_id')})
             if context.get('categ'):
                 data.update({'categ': context.get('categ')})
-            self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
+            if data:
+                self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
 
         default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
         default_data.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
@@ -2574,6 +2666,32 @@ class sale_order_line_cancel(osv.osv):
 sale_order_line_cancel()
 
 
+class expected_sale_order_line(osv.osv):
+    _name = 'expected.sale.order.line'
+
+    _columns = {
+        'order_id': fields.many2one(
+            'sale.order',
+            string='Order',
+            required=True,
+            ondelete='cascade',
+        ),
+        'po_line_id': fields.many2one(
+            'purchase.order.line',
+            string='Purchase order line',
+            ondelete='cascade',
+        ),
+        'po_id': fields.related(
+            'po_line_id',
+            'order_id',
+            type='many2one',
+            relation='purchase.order',
+        ),
+    }
+
+expected_sale_order_line()
+
+
 class procurement_order(osv.osv):
     _inherit = 'procurement.order'
 
@@ -2649,8 +2767,54 @@ class sale_order_cancelation_wizard(osv.osv_memory):
     _name = 'sale.order.cancelation.wizard'
 
     _columns = {
-        'order_id': fields.many2one('sale.order', 'Order to delete', required=True),
+        'order_id': fields.many2one('sale.order', 'Order to delete', required=False),
+        'order_ids': fields.one2many(
+            'sale.order.leave.close',
+            'wizard_id',
+            string='Orders to check',
+        ),
     }
+
+    def leave_it(self, cr, uid, ids, context=None):
+        """
+        Close the window or open another window according to context
+        """
+        if context is None:
+            context = {}
+
+        if context.get('from_po') and context.get('po_ids'):
+            po_obj = self.pool.get('purchase.order')
+            return po_obj.check_empty_po(cr, uid, context.get('po_ids'), context=context)
+        elif context.get('from_tender') and context.get('tender_ids'):
+            tender_obj = self.pool.get('tender')
+            return tender_obj.check_empty_tender(cr, uid, context.get('tender_ids'), context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def close_fo(self, cr, uid, ids, context=None):
+        """
+        Make a trg_write on FO to check if it can be canceled
+        """
+        proc_obj = self.pool.get('procurement.order')
+
+        if context is None:
+            context = {}
+
+        wf_service = netsvc.LocalService("workflow")
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for lc in wiz.order_ids:
+                if not lc.action:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('You must choose an action for each order'),
+                    )
+                if lc.action == 'close':
+                    proc_ids = proc_obj.search(cr, uid, [('sale_id', '=', lc.order_id.id)], context=context)
+                    proc_obj.action_cancel(cr, uid, proc_ids)
+                    wf_service.trg_write(uid, 'sale.order', lc.order_id.id, cr)
+
+        return self.leave_it(cr, uid, ids, context=context)
 
     def only_cancel(self, cr, uid, ids, context=None):
         '''
@@ -2699,5 +2863,44 @@ class sale_order_cancelation_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 sale_order_cancelation_wizard()
+
+
+class sale_order_leave_close(osv.osv_memory):
+    _name = 'sale.order.leave.close'
+
+    _columns = {
+        'wizard_id': fields.many2one(
+            'sale.order.cancelation.wizard',
+            string='Wizard',
+            required=True,
+            ondelete='cascade',
+        ),
+        'order_id': fields.many2one(
+            'sale.order',
+            string='Order name',
+            required=True,
+            ondelete='cascade',
+        ),
+        'order_state': fields.related(
+            'order_id',
+            'state',
+            type='selection',
+            string='Order state',
+            selection=SALE_ORDER_STATE_SELECTION,
+        ),
+        'action': fields.selection(
+            selection=[
+                ('close', 'Close it'),
+                ('leave', 'Leave it open'),
+            ],
+            string='Action to do',
+        ),
+    }
+
+    _defaults = {
+        'action': lambda *a: False,
+    }
+
+sale_order_leave_close()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
