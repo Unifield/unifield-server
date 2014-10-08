@@ -1866,6 +1866,8 @@ class tender_line_cancel_wizard(osv.osv_memory):
         line_ids = []
         tender_ids = set()
         so_ids = set()
+        import pdb
+        pdb.set_trace()
         for wiz in self.browse(cr, uid, ids, context=context):
             tender_ids.add(wiz.tender_line_id.tender_id.id)
             line_ids.append(wiz.tender_line_id.id)
@@ -1882,8 +1884,8 @@ class tender_line_cancel_wizard(osv.osv_memory):
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
 
         so_to_cancel_ids = []
-        if so_ids:
-            for so_id in so_ids:
+        if tender_so_ids:
+            for so_id in tender_so_ids:
                 if so_obj._get_ready_to_cancel(cr, uid, so_id, context=context)[so_id]:
                     so_to_cancel_ids.append(so_id)
 
