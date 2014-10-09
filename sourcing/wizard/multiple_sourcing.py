@@ -224,10 +224,32 @@ class multiple_sourcing_wizard(osv.osv_memory):
         '''
         Unset the other fields if the type is 'from stock'
         '''
-        if l_type == 'make_to_stock':
-            return {'value': {'po_cft': False, 'supplier': False}}
+        if l_type == 'make_to_order':
+            return {'value': {'location_id': False}}
 
-        return {'value': {'location_id': False}}
+        res = {'value': {'po_cft': False, 'supplier': False}}
+        if not context or not context[0] or not context[0][2]:
+            return res
+
+        # UF-2508: Set by default Stock if all the lines had either no location or stock before
+        active_ids = context[0][2]
+        context = {}
+        if not active_ids:
+            return res
+
+        wh_obj = self.pool.get('stock.warehouse')
+        wh_ids = wh_obj.search(cr, uid, [], context=context)
+        if wh_ids:
+            stock_loc = wh_obj.browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id
+
+        all_line_empty = True
+        for line in self.pool.get('sale.order.line').browse(cr, uid, active_ids, context=context):
+            if line.location_id and line.location_id.id != stock_loc:
+                all_line_empty = False
+                
+        if all_line_empty: # by default, and if all lines has no location, then set by default Stock
+            return {'value': {'po_cft': False, 'supplier': False, 'location_id': stock_loc}}
+        return {'value': {'po_cft': False, 'supplier': False}}
 
     def change_po_cft(self, cr, uid, ids, po_cft, context=None):
         '''
