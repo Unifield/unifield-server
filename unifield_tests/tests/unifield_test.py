@@ -114,7 +114,7 @@ class UnifieldTest(unittest.TestCase):
             return res
         return True
 
-    def get_test_obj(self, db, object_ref):
+    def get_test_obj(self, db, object_ref, module=None):
         '''
         Returns the object created by the test files.
 
@@ -127,7 +127,10 @@ class UnifieldTest(unittest.TestCase):
         # Object
         data_obj = db.get('ir.model.data')
 
-        obj = data_obj.get_object_reference(self.test_module_name, object_ref)
+        if module is None:
+            module = self.test_module_name
+
+        obj = data_obj.get_object_reference(module, object_ref)
 
         if obj:
             return obj[1]
