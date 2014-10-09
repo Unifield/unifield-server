@@ -1253,7 +1253,8 @@ stock moves which are already processed : '''
 
         # corresponding sale order
         so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context, sol_ids=sol_ids)
-        exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', '=', so_ids)], context=context)
+        # UF-2509: so_ids is a list, not an int
+        exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', 'in', so_ids)], context=context)
         # from so, list corresponding po
         all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
         for exp_sol in exp_sol_obj.browse(cr, uid, exp_sol_ids, context=context):
