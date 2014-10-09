@@ -4,6 +4,7 @@ from __future__ import print_function
 from unifield_test import UnifieldTest
 from time import strftime
 from random import randint
+from oerplib import error
 
 class FinanceTest(UnifieldTest):
 
@@ -36,9 +37,12 @@ class FinanceTest(UnifieldTest):
             periods = period_obj.search([('fiscalyear_id', 'in', fy_ids), ('number', '<=', month), ('state', '=', 'created')], 0, 16, 'number')
             for period in periods:
                 try:
-                    period_obj.action_set_state(period, {'state': 'draft'})
+                    period_obj.action_set_state(period, context={'state': 'draft'})
+                except error.RPCError as e:
+                    print(e.oerp_traceback)
+                    print(e.message)
                 except Exception, e:
-                    raise Exception('error', e)
+                    raise Exception('error', str(e))
             # Write the fact that data have been loaded
             database.get(self.test_module_obj_name).create({'name': keyword, 'active': True})
             print (database.colored_name + ' [' + colors.BGreen + 'OK'.center(4) + colors.Color_Off + '] %s: Data loaded' % (keyword))
