@@ -514,6 +514,10 @@ class hr_payroll_employee_import(osv.osv_memory):
                 created = 0
                 processed = 0
                 updated = 0
+                # UF-2504 read staff file again for next enumeration
+                # (because already read/looped above for staff codes)
+                reader = csv.DictReader(zipobj.open(staff_file), quotechar='"',
+                    delimiter=',', doublequote=False, escapechar='\\')
                 for i, employee_data in enumerate(reader):
                     update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id, i)
                     if not update:
