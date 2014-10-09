@@ -43,3 +43,91 @@
   !record {model: res.partner.address, id: address3}:
     name: S3
     partner_id: supplier3
+-
+  Create 3 suppliers for test
+-
+  Create an external supplier
+-
+  !record {model: res.partner, id: ext_supplier_1}:
+    name: External Supplier 1 (Test)
+    supplier: 1
+    customer: 0
+    partner_type: 'external'
+-
+  Create an address for external supplier 1
+-
+  !record {model: res.partner.address, id: ext_supplier_1_addr}:
+    partner_id: ext_supplier_1
+    name: External Supplier 1 (Test)
+-
+  Create an external supplier
+-
+  !record {model: res.partner, id: ext_supplier_2}:
+    name: External Supplier 2 (Test)
+    supplier: 1
+    customer: 0
+    partner_type: 'external'
+-
+  Create an address for external supplier 2
+-
+  !record {model: res.partner.address, id: ext_supplier_2_addr}:
+    partner_id: ext_supplier_2
+    name: External Supplier 2 (Test)
+-
+  Create an external supplier
+-
+  !record {model: res.partner, id: ext_supplier_3}:
+    name: External Supplier 3 (Test)
+    supplier: 1
+    customer: 0
+    partner_type: 'external'
+-
+  Create an address for external supplier 3
+-
+  !record {model: res.partner.address, id: ext_supplier_3_addr}:
+    partner_id: ext_supplier_3
+    name: External Supplier 3 (Test)
+-
+  Create 3 customers for test
+-
+  Create an external customer
+-
+  !record {model: res.partner, id: ext_customer_1}:
+    name: External Customer 1 (Test)
+    customer: 1
+    supplier: 0
+    partner_type: 'external'
+-
+  Create an address for external customer 1
+-
+  !record {model: res.partner.address, id: ext_customer_1_addr}:
+    partner_id: ext_customer_1
+    name: External Customer 1 (Test)
+-
+  Create an external customer
+-
+  !record {model: res.partner, id: ext_customer_2}:
+    name: External Customer 2 (Test)
+    customer: 1
+    supplier: 0
+    partner_type: 'external'
+-
+  Create an address for external customer 2
+-
+  !record {model: res.partner.address, id: ext_customer_2_addr}:
+    partner_id: ext_customer_2
+    name: External Customer 2 (Test)
+-
+  Create an external customer
+-
+  !record {model: res.partner, id: ext_customer_3}:
+    name: External Customer 3 (Test)
+    customer: 1
+    supplier: 0
+    partner_type: 'external'
+-
+  Create an address for external customer 3
+-
+  !record {model: res.partner.address, id: ext_customer_3_addr}:
+    partner_id: ext_customer_3
+    name: External Customer 3 (Test)
