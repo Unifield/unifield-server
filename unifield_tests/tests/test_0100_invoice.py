@@ -13,8 +13,6 @@ class InvoiceTest(FinanceTest):
         Then I validate this invoice.
         '''
         # Prepare some values
-        # TODO: To remove when the case is fixed
-        return
         db = self.p1
         partner_obj = db.get('res.partner')
         invoice_obj = db.get('account.invoice')

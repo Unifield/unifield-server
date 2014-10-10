@@ -11,7 +11,7 @@ class MassReallocationTest(FinanceTest):
         Create analytic lines then reallocate them on another destination axis.
         '''
         # Prepare some values
-        # TODO: To remove when the case is fixed
+        # TODO: To remove when fixed
         return
         db = self.p1
         ana_obj = db.get('account.analytic.line')

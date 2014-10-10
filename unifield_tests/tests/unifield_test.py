@@ -114,7 +114,7 @@ class UnifieldTest(unittest.TestCase):
             return res
         return True
 
-    def get_test_obj(self, db, object_ref, module=None):
+    def get_record(self, db, object_ref, module=None):
         '''
         Returns the object created by the test files.
 
