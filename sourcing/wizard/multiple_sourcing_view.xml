@@ -29,7 +29,7 @@
                         </field>
                         <separator colspan="4" string="Procurement method" />
                         <field name="type" 
-                               on_change="change_type(type)"/>
+                               on_change="change_type(type, line_ids)"/>
                         <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
                                on_change="change_po_cft(po_cft)"/>
                         <separator colspan="4" string="Supplier selection" />
