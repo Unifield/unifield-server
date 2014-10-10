@@ -866,7 +866,7 @@ class account_invoice(osv.osv):
                     name = inv.origin and inv.origin or '/'
                     ref = inv.origin and inv.origin or inv.reference and inv.reference
                 else:
-                    name = inv.name and inv.name
+                    name = inv.name and inv.name or '/'
                     ref = inv.origin and inv.origin
 
                 entry_type = 'journal_pur_voucher'
