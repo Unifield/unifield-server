@@ -422,7 +422,7 @@ class wizard_register_import(osv.osv_memory):
                     # Check G/L account
                     account_code = str(line[cols['account']]).split(' ') and str(line[cols['account']]).split(' ')[0] or str(line[cols['account']])
                     account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
-                    if not account_ids:
+                    if not account_ids and account_code != '10210':
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
                         continue
                     r_account = account_ids[0]
