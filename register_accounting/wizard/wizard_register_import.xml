@@ -63,7 +63,7 @@
                                 <th class='account' style='border: thin solid black; border-left: none;'>Account</th>
                                 <th class='third_party' style='border: thin solid black; border-left: none;'>Third party</th>
                                 <th class='amount_in' style='border: thin solid black; border-left: none;'>Amount IN</th>
-                                <th class='amount_out' style='border: thin solid black; border-left: none;'>Amount ON</th>
+                                <th class='amount_out' style='border: thin solid black; border-left: none;'>Amount OUT</th>
                                 <th class='destination' style='border: thin solid black; border-left: none;'>Destination</th>
                                 <th class='cost_center' style='border: thin solid black; border-left: none;'>Cost Centre</th>
                                 <th class='funding_pool' style='border: thin solid black; border-left: none;'>Funding Pool</th>

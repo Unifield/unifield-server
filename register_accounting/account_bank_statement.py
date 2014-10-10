@@ -427,7 +427,7 @@ class account_bank_statement(osv.osv):
                 create_cashbox_lines(self, cr, uid, reg.id, context=context)
             # For bank statement, give balance_end
             elif reg.journal_id.type == 'bank':
-                # Verify that another bank statement exists
+                # Verify that another bank statement exists.
                 st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
                 if len(st_prev_ids) > 1:
                     raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
@@ -974,6 +974,7 @@ class account_bank_statement_line(osv.osv):
         """
         Get all analytic lines linked to the given register lines
         """
+
         if not context:
             context = {}
 
@@ -986,6 +987,18 @@ class account_bank_statement_line(osv.osv):
             # Then retrieve all corrections/reversals from them
             res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
         return res
+
+    def _check_red_on_supplier(self, cr, uid, ids, name, arg, context=None):
+        result = {}
+        for id in ids:
+            result[id] = {'red_on_supplier': False}
+
+        for out in self.browse(cr, uid, ids, context=context):
+            type_for_register = out.account_id.type_for_register
+            if type_for_register in ['advance','transfer_same','down_payment','transfer']:
+                if out.partner_id.id is False and out.employee_id.id is False and out.transfer_journal_id.id is False: 
+                    result[out.id]['red_on_supplier'] = True
+        return result
 
     _columns = {
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
@@ -1027,6 +1040,7 @@ class account_bank_statement_line(osv.osv):
             ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
             ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
+        'red_on_supplier': fields.function(_check_red_on_supplier, method=True, type="boolean", string="Supplier flag", store=False, readonly=True, multi="m"),
         'journal_id': fields.related('statement_id','journal_id', string="Journal", type='many2one', relation='account.journal', readonly=True),
     }
 
