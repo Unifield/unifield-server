@@ -607,7 +607,7 @@ class stock_picking(osv.osv):
         return res
 
     def create(self, cr, user, vals, context=None):
-        if ('name' not in vals) or (vals.get('name')=='/'):
+        if 'type' in vals and (('name' not in vals) or (vals.get('name')=='/')):
             seq_obj_name =  'stock.picking.' + vals['type']
             vals['name'] = self.pool.get('ir.sequence').get(cr, user, seq_obj_name)
         new_id = super(stock_picking, self).create(cr, user, vals, context)
