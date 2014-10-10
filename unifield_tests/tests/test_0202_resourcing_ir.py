@@ -16,7 +16,7 @@ class ResourcingIRTest(ResourcingTest):
         """
         return len(db.get('sale.order.line').search([
             ('order_id', '=', order_id),
-            ('state', '!=', 'cancel'),
+            ('state', '!=', 'done'),
         ]))
 
     def _get_order_values(self, db, values=None):

@@ -201,6 +201,16 @@ No split of FO found !""")
         """
         # Prepare object
         po_obj = db.get('purchase.order')
+        pol_obj = db.get('purchase.order.line')
+
+        # Add an analytic distribution on PO lines that have no
+        no_ana_line_ids = pol_obj.search([
+            ('order_id', 'in', po_ids),
+            ('analytic_distribution_id', '=', False),
+        ])
+        pol_obj.write(no_ana_line_ids, {
+            'analytic_distribution_id': self.get_record(db, 'distrib_1'),
+        })
 
         # Check if the PO is draft
         for po_id in po_ids:
@@ -319,7 +329,7 @@ The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
         po_line_ids = po_obj.read(po_ids[0], ['order_line'])['order_line']
         self.assert_(
             len(po_line_ids) == 3,
-            "The line has not been removed well on the PO",
+            "The line has not been removed well on the PO (%s - should be 3)" % len(po_line_ids),
         )
         # Check the FO line has been removed
         self.assert_(
@@ -330,14 +340,18 @@ The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
         """
         3/ Add a new line without origin set
         """
-        ana_distrib_id = pol_obj.read(po_line_ids[1], ['analytic_distribution_id'])
+        ana_distrib_id = pol_obj.read(po_line_ids[1], ['analytic_distribution_id'])['analytic_distribution_id']
+        if not ana_distrib_id:
+            ana_distrib_id = self.get_record(db, 'distrib_1')
+        else:
+            ana_distrib_id = ana_distrib_id[0]
         line_values = {
             'order_id': po_ids[0],
             'product_id': self.get_record(db, 'prod_log_1'),
             'product_uom': self.get_record(db, 'product_uom_unit', module='product'),
             'product_qty': 123,
             'price_unit': 01.20,
-            'analytic_distribution_id': ana_distrib_id['analytic_distribution_id'][0],
+            'analytic_distribution_id': ana_distrib_id,
         }
         new_pol_id = pol_obj.create(line_values)
 
@@ -364,9 +378,10 @@ The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
         6/ Check the number of lines in the FO/IR
         """
         # Check the FO line has been added
+        fo_lines_nb = self._get_number_of_valid_lines(db, order_id)
         self.assert_(
-            self._get_number_of_valid_lines(db, order_id) == 4,
-            "The line has not been added well on the order",
+            fo_lines_nb == 4,
+            "The line has not been added well on the order (%s - should be 4)" % fo_lines_nb,
         )
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
