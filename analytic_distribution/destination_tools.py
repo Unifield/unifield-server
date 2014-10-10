@@ -84,6 +84,9 @@ class many2many_notlazy(many2many_sorted):
         for act in values:
             if not (isinstance(act, list) or isinstance(act, tuple)) or not act:
                 continue
+            if act[0] == 4 and self._rel == 'account_destination_link':
+                link_obj = pooler.get_pool(cr.dbname).get('account.destination.link')
+                link_obj.create(cr, user, {self._id1: m_id, self._id2: act[1]})
             if act[0] == 6:
                 d1, d2,tables = obj.pool.get('ir.rule').domain_get(cr, user, obj._name, context=context)
                 if d1:
