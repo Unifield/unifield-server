@@ -22,10 +22,11 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 from mx.DateTime import DateFrom
 from mx.DateTime import now
-from mx.DateTime import RelativeDate 
+from mx.DateTime import RelativeDate
 
 class threshold_value(osv.osv):
     _name = 'threshold.value'
@@ -260,6 +261,23 @@ class threshold_value(osv.osv):
         ret = super(threshold_value, self).write(cr, uid, ids, vals, context=context)
         return ret
 
+    def on_change_compute_method(self, cr, uid, ids, compute_method,
+        context=None):
+        res = {}
+        if compute_method and compute_method == 'computed':
+            # UF-2511: switch from 'fixed' to 'compute' compute method
+            # warn user to refresh values
+            # (are not any more computed in 'fixed' mode)
+            msg = "You switch from 'fixed values' to 'computed values'. " \
+                "Please click on 'Refresh values' button to compute values."
+            res = {
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _(msg),
+                    },
+            }
+        return res
+
 threshold_value()
 
 class threshold_value_line(osv.osv):
@@ -349,6 +367,18 @@ class threshold_value_line(osv.osv):
         res = {}
 
         for line in self.browse(cr, uid, ids, context=context):
+            if context and context.get('compute_method', False) == 'fixed':
+                # UF-2511: do not compute in 'fixed' compute method mode
+                res[line.id] = {
+                    'consumption': 0.,
+                    'real_stock': 0.,
+                    'available_stock': 0.,
+                    'expiry_before': False,
+                    'supplier_id': False,
+                    'required_date': False,
+                }
+                continue
+
             # Stock values
             location_id = line.threshold_value_id.location_id.id
             stock_product = product_obj.browse(cr, uid, line.product_id.id, context=dict(context, location=location_id))
