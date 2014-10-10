@@ -422,14 +422,15 @@ class wizard_register_import(osv.osv_memory):
                     # Check G/L account
                     account_code = str(line[cols['account']]).split(' ') and str(line[cols['account']]).split(' ')[0] or str(line[cols['account']])
                     account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
-                    if not account_ids and account_code != '10210':
+                    if not account_ids:
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
                         continue
                     r_account = account_ids[0]
                     account_obj = self.pool.get('account.account')
                     restricted_ids = account_obj.search(cr, uid, [('restricted_area', '=', 'register_lines'), ('id', '=', r_account)])
-                    if not restricted_ids:
+                    if not restricted_ids and account_code != '10210':
                         errors.append(_('Line %s. G/L account %s is restricted.') % (current_line_num, account_code,))
+                        continue
                     account = account_obj.read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
                     type_for_register = account.get('type_for_register', '')
 
