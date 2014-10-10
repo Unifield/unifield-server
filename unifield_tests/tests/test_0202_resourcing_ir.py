@@ -7,6 +7,18 @@ import time
 
 class ResourcingIRTest(ResourcingTest):
 
+    def _get_number_of_valid_lines(self, db, order_id):
+        """
+        Returns the number of lines in the FO
+        :param db: Connection to the database
+        :param order_id: ID of the sale.order to get the number of lines
+        :return: The number of lines in the FO
+        """
+        return len(db.get('sale.order.line').search([
+            ('order_id', '=', order_id),
+            ('state', '!=', 'done'),
+        ]))
+
     def _get_order_values(self, db, values=None):
         """
         Returns specific values for an Internal Request

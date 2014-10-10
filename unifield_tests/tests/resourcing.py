@@ -24,23 +24,28 @@ class ResourcingTest(UnifieldTest):
         """
         # Prepare object
         order_obj = db.get('sale.order')
-        line_obj = db.get('sale.order.line')
         proc_obj = db.get('procurement.order')
 
         pr = order_obj.browse(order_to_check).procurement_request
 
         new_order_id = None
         if pr:
+            state = 'progress'
+        else:
+            state = 'done'
+
+        order_state = order_obj.read(order_to_check, ['state'])['state']
+        while order_state != state:
+            time.sleep(0.5)
+            order_state = order_obj.read(order_to_check, ['state'])['state']
+
+        if pr:
             new_order_id = order_to_check
         else:
-            order_state = order_obj.read(order_to_check, ['state'])['state']
-            while order_state != 'done':
-                time.sleep(0.5)
-                order_state = order_obj.read(order_to_check, ['state'])['state']
-
             new_order_ids = order_obj.search([
                 ('original_so_id_sale_order', '=', order_to_check)
             ])
+
             self.assert_(len(new_order_ids) > 0, msg="""
 No split of FO found !""")
             if new_order_ids:
@@ -88,11 +93,11 @@ No split of FO found !""")
         line_obj = db.get('sale.order.line')
 
         # Prepare values for the field order
-        prod_log1_id = self.get_test_obj(db, 'prod_log_1')
-        prod_log2_id = self.get_test_obj(db, 'prod_log_2')
-        prod_med1_id = self.get_test_obj(db, 'prod_med_1')
-        prod_med2_id = self.get_test_obj(db, 'prod_med_2')
-        uom_pce_id = self.get_test_obj(db, 'product_uom_unit', module='product')
+        prod_log1_id = self.get_record(db, 'prod_log_1')
+        prod_log2_id = self.get_record(db, 'prod_log_2')
+        prod_med1_id = self.get_record(db, 'prod_med_1')
+        prod_med2_id = self.get_record(db, 'prod_med_2')
+        uom_pce_id = self.get_record(db, 'product_uom_unit', module='product')
 
         order_values = self._get_order_values(db)
 
@@ -154,7 +159,7 @@ No split of FO found !""")
         line_ids = line_obj.search([('order_id', '=', order_id)])
         line_obj.write(line_ids, {
             'po_cft': 'po',
-            'supplier': self.get_test_obj(db, 'ext_supplier_1'),
+            'supplier': self.get_record(db, 'ext_supplier_1'),
         })
         line_obj.confirmLine(line_ids)
 
@@ -162,7 +167,6 @@ No split of FO found !""")
         new_order_id = self.run_auto_pos_creation(db, order_to_check=order_id)
 
         line_ids = line_obj.search([('order_id', '=', new_order_id)])
-        self.assert_(len(line_ids), msg="Pas de ligne")
         not_sourced = True
         while not_sourced:
             not_sourced = False
@@ -193,9 +197,20 @@ No split of FO found !""")
 
         :param db: Connection to the database
         :param po_ids: List of ID of purchase.order to validate
+        :return The list of ID of purchase.order validated
         """
         # Prepare object
         po_obj = db.get('purchase.order')
+        pol_obj = db.get('purchase.order.line')
+
+        # Add an analytic distribution on PO lines that have no
+        no_ana_line_ids = pol_obj.search([
+            ('order_id', 'in', po_ids),
+            ('analytic_distribution_id', '=', False),
+        ])
+        pol_obj.write(no_ana_line_ids, {
+            'analytic_distribution_id': self.get_record(db, 'distrib_1'),
+        })
 
         # Check if the PO is draft
         for po_id in po_ids:
@@ -207,5 +222,216 @@ The state of the generated PO is %s - Should be 'draft'""" % po_state)
             po_state = po_obj.browse(po_id).state
             self.assert_(po_state == 'confirmed', msg="""
 The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
+
+        return po_ids
+
+    def _confirm_po(self, db, po_ids, dcd=None):
+        """
+        1/ Check if the PO are in 'confirrmed' state
+        2/ Confirm them
+        3/ Check if all PO are now in 'assigned' state
+        :param db: Connection to the database
+        :param po_ids: List of ID of purchase.order to confirm
+        :param dcd: Delivery confirmed date to set
+        :return: The list of ID of purchase.order confirmed
+        """
+        # Prepare object
+        po_obj = db.get('purchase.order')
+
+        if not dcd:
+            dcd = time.strftime('%Y-%m-%d')
+
+        po_obj.write(po_ids, {'delivery_confirmed_date': dcd})
+
+        for po_id in po_ids:
+            """
+            1/ Check if the PO are in 'confirmed' state
+            """
+            po_state = po_obj.read(po_id, ['state'])['state']
+            self.assert_(
+                po_state == 'confirmed',
+                "The state of the generated PO is %s - Should be 'confirmed'" % po_state,
+            )
+            """
+            2/ Confirm the PO
+            """
+            po_obj.confirm_button([po_id])
+            """
+            3/ Check if all PO are now in 'approved' state
+            """
+            po_state = po_obj.read(po_id, ['state'])['state']
+            self.assert_(
+                po_state == 'approved',
+                "The state of the generated PO is %s - Should be 'approved'" % po_state,
+            )
+
+        return po_ids
+
+    def _get_number_of_valid_lines(self, db, order_id):
+        raise NotImplementedError
+
+    def test_uf_2505(self):
+        """
+        Create two field ordes and source them on the same PO. Then,
+        validate and confirm the PO.
+        """
+        db = self.c1
+
+        # Prepare object
+        po_obj = db.get('purchase.order')
+
+        # Create and source the first FO
+        f_order_id, f_order_line_ids, f_po_ids, f_po_line_ids = self.\
+            order_source_all_one_po(db)
+
+        # Check if the number of created PO is good
+        self.assert_(len(f_po_ids) == 1, msg="""
+The number of generated POs is %s - Should be 1.""" % len(f_po_ids))
+
+        # Create and source the second FO
+        s_order_id, s_order_line_ids, s_po_ids, s_po_line_ids = self.\
+            order_source_all_one_po(db)
+
+        # Check if the number of created PO is good
+        self.assert_(len(s_po_ids) == 1, msg="""
+The number of generated POs is %s - Should be 1.""" % len(s_po_ids))
+
+        # Check the two orders have been sourced on the same PO
+        self.assertEquals(f_po_ids, s_po_ids, msg="""
+The two orders have not been sourced on the same PO :: %s - %s""" % (s_po_ids, f_po_ids))
+
+        self._validate_po(db, s_po_ids)
+
+        # Confirm POs
+        po_obj.write(s_po_ids, {
+            'delivery_confirmed_date': time.strftime('%Y-%m-%d'),
+        })
+        try:
+            po_obj.confirm_button(s_po_ids)
+        except Exception as e:
+            self.assert_(False, str(e))
+
+        # Last check
+        for po_id in s_po_ids:
+            po_state = po_obj.read(po_id, ['state'])['state']
+            self.assert_(po_state == 'approved', msg="""
+The state of the generated PO is %s - Should be 'approved'""" % po_state)
+
+        ## End of test
+        return True
+
+    def test_uf_2507(self):
+        """
+        1/ Create a field order with 4 lines and source all lines
+        in the same PO.
+        2/ Delete the first line.
+        3/ Add a new line without origin set
+        4/ Set the origin on the new line
+        5/ Validate and confirm the PO
+        6/ Check the number of lines in the FO
+        """
+        db = self.c1
+
+        # Prepare object
+        c_wiz_model = 'purchase.order.line.unlink.wizard'
+
+        order_obj = db.get('sale.order')
+        pol_obj = db.get('purchase.order.line')
+        po_obj = db.get('purchase.order')
+        c_wiz = db.get(c_wiz_model)
+
+        """
+        1/ Create and source the first FO
+        """
+        order_id, order_line_ids, po_ids, po_line_ids = self.\
+            order_source_all_one_po(db)
+
+        # Check number of generated PO and PO lines
+        self.assertEqual(
+            len(po_ids),
+            1,
+            "Number of generated PO : %s - Should be 1" % len(po_ids),
+        )
+        self.assertEqual(
+            len(po_line_ids),
+            4,
+            "Number of lines generated in PO : %s - Should be 4" % len(po_line_ids),
+        )
+
+        """
+        2/ Delete the first line of the PO
+        """
+        c_res = pol_obj.ask_unlink(po_line_ids[0])
+
+        # Check display of cancel wizard
+        self.assert_(
+            c_res.get('res_id'),
+            "No wizard returned by the cancellation of the PO line",
+        )
+        self.assert_(
+            c_res.get('res_model') == c_wiz_model,
+            "The model returned by the cancellation of the PO line is not good",
+        )
+
+        c_wiz.just_cancel(c_res.get('res_id'))
+
+        # Check the PO line has been removed
+        po_line_ids = po_obj.read(po_ids[0], ['order_line'])['order_line']
+        self.assert_(
+            len(po_line_ids) == 3,
+            "The line has not been removed well on the PO (%s - should be 3)" % len(po_line_ids),
+        )
+        # Check the FO line has been removed
+        self.assert_(
+            self._get_number_of_valid_lines(db, order_id) == 3,
+            "The line has not been removed well on the FO",
+        )
+
+        """
+        3/ Add a new line without origin set
+        """
+        ana_distrib_id = pol_obj.read(po_line_ids[1], ['analytic_distribution_id'])['analytic_distribution_id']
+        if not ana_distrib_id:
+            ana_distrib_id = self.get_record(db, 'distrib_1')
+        else:
+            ana_distrib_id = ana_distrib_id[0]
+        line_values = {
+            'order_id': po_ids[0],
+            'product_id': self.get_record(db, 'prod_log_1'),
+            'product_uom': self.get_record(db, 'product_uom_unit', module='product'),
+            'product_qty': 123,
+            'price_unit': 01.20,
+            'analytic_distribution_id': ana_distrib_id,
+        }
+        new_pol_id = pol_obj.create(line_values)
+
+        # Check the PO line has been added well
+        po_line_ids = po_obj.read(po_ids[0], ['order_line'])['order_line']
+        self.assert_(
+            len(po_line_ids) == 4,
+            "Number of lines generated in PO : %s - Should be 4" % len(po_line_ids),
+        )
+
+        """
+        4/ Set the origin on the new line
+        """
+        order_name = order_obj.read(order_id, ['name'])['name']
+        pol_obj.write(new_pol_id, {'origin': order_name})
+
+        """
+        5/ Validate and confirm the PO
+        """
+        self._validate_po(db, po_ids)
+        self._confirm_po(db, po_ids)
+
+        """
+        6/ Check the number of lines in the FO/IR
+        """
+        # Check the FO line has been added
+        fo_lines_nb = self._get_number_of_valid_lines(db, order_id)
+        self.assert_(
+            fo_lines_nb == 4,
+            "The line has not been added well on the order (%s - should be 4)" % fo_lines_nb,
+        )
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

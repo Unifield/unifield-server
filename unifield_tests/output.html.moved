@@ -189,9 +189,9 @@ function showOutput(id, name) {
 
 <div class='heading'>
 <h1>Example tests</h1>
-<p class='attribute'><strong>Start Time:</strong> 2014-10-10 09:53:34</p>
-<p class='attribute'><strong>Duration:</strong> 0:01:56.900900</p>
-<p class='attribute'><strong>Status:</strong> Pass 8</p>
+<p class='attribute'><strong>Start Time:</strong> 2014-10-10 09:40:50</p>
+<p class='attribute'><strong>Duration:</strong> 0:00:23.213288</p>
+<p class='attribute'><strong>Status:</strong> Pass 5</p>
 
 <p class='description'>A suite of tests that permit to test PyUnit class</p>
 </div>
@@ -269,47 +269,23 @@ function showOutput(id, name) {
 </tr>
 
 <tr class='passClass'>
-    <td>test_0201_resourcing_fo.ResourcingFOTest</td>
-    <td>2</td>
-    <td>2</td>
+    <td>test_0202_resourcing_ir.ResourcingIRTest</td>
+    <td>1</td>
+    <td>1</td>
     <td>0</td>
     <td>0</td>
-    <td><a href="javascript:showClassDetail('c4',2)">Detail</a></td>
+    <td><a href="javascript:showClassDetail('c4',1)">Detail</a></td>
 </tr>
 
 <tr id='pt4.1' class='hiddenRow'>
-    <td class='none'><div class='testcase'>test_uf_2505</div></td>
-    <td colspan='5' align='center'>pass</td>
-</tr>
-
-<tr id='pt4.2' class='hiddenRow'>
-    <td class='none'><div class='testcase'>test_uf_2507</div></td>
-    <td colspan='5' align='center'>pass</td>
-</tr>
-
-<tr class='passClass'>
-    <td>test_0202_resourcing_ir.ResourcingIRTest</td>
-    <td>2</td>
-    <td>2</td>
-    <td>0</td>
-    <td>0</td>
-    <td><a href="javascript:showClassDetail('c5',2)">Detail</a></td>
-</tr>
-
-<tr id='pt5.1' class='hiddenRow'>
-    <td class='none'><div class='testcase'>test_uf_2505</div></td>
-    <td colspan='5' align='center'>pass</td>
-</tr>
-
-<tr id='pt5.2' class='hiddenRow'>
     <td class='none'><div class='testcase'>test_uf_2507</div></td>
     <td colspan='5' align='center'>pass</td>
 </tr>
 
 <tr id='total_row'>
     <td>Total</td>
-    <td>8</td>
-    <td>8</td>
+    <td>5</td>
+    <td>5</td>
     <td>0</td>
     <td>0</td>
     <td>&nbsp;</td>
