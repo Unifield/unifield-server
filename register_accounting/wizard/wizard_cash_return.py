@@ -768,7 +768,7 @@ class wizard_cash_return(osv.osv_memory):
         # Verify dates
         self.verify_date(cr, uid, ids, context=context)
         # retrieve some values
-        if (wizard.initial_amount + wizard.additional_amount) != wizard.total_amount:
+        if abs(wizard.initial_amount + wizard.additional_amount -  wizard.total_amount) > 10**-3:
             raise osv.except_osv(_('Warning'), _('Initial advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button') % (wizard.initial_amount, wizard.total_amount))
 
         # prepare some values
