@@ -505,6 +505,8 @@ class procurement_order(osv.osv):
         self._procure_orderpoint_confirm(cr, uid, automatic=automatic,\
                 use_new_cursor=use_new_cursor, context=context)
 
+        return True
+
 procurement_order()
 
 class StockPicking(osv.osv):
