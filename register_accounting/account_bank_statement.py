@@ -46,6 +46,7 @@ class hr_employee(osv.osv):
     _inherit = 'hr.employee'
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
     }
 hr_employee()
 
@@ -58,22 +59,20 @@ class res_partner(osv.osv):
             ret[i] = False
         return ret
 
-    # This method have been abandonned since UTP-510 because of prepaid accounts (type receivable) that doesn't show any partners.
     def _search_filter_third(self, cr, uid, obj, name, args, context):
+        """
+        Return only suppliers
+        """
         if not context:
             context = {}
         if not args:
             return []
-        if args[0][2]:
-            t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type', 'type_for_register'])
-            if t['type'] == 'payable' and t['type_for_register'] != 'down_payment':
-                return [('property_account_payable', '=', args[0][2])]
-            if t['type'] == 'receivable' and t['type_for_register'] != 'down_payment':
-                return [('property_account_receivable', '=', args[0][2])]
-        return []
+        return [('supplier', '=', True)]
 
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=True), # search is now fake because of UTP-510
+        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+
     }
 res_partner()
 
@@ -1308,7 +1307,7 @@ class account_bank_statement_line(osv.osv):
             res.update({'amount': amount})
         return res
 
-    def _update_employee_analytic_distribution(self, cr, uid, values):
+    def update_employee_analytic_distribution(self, cr, uid, values):
         """
         Update analytic distribution if some expat staff is in values
         """
@@ -1789,7 +1788,7 @@ class account_bank_statement_line(osv.osv):
         if 'analytic_distribution_id' in values and values.get('analytic_distribution_id') != False:
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
-            values = self._update_employee_analytic_distribution(cr, uid, values=values)
+            values = self.update_employee_analytic_distribution(cr, uid, values=values)
         if 'cheque_number' in values and values.get('cheque_number', False):
             cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (values['cheque_number'], ))
             for row in cr.dictfetchall():
@@ -1843,7 +1842,7 @@ class account_bank_statement_line(osv.osv):
                     values.update({'account_id': line.get('account_id')[0]})
                 if not 'statement_id' in values:
                     values.update({'statement_id': line.get('statement_id')[0]})
-                values = self._update_employee_analytic_distribution(cr, uid, values)
+                values = self.update_employee_analytic_distribution(cr, uid, values)
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 res.append(tmp)
             return res
@@ -2025,7 +2024,7 @@ class account_bank_statement_line(osv.osv):
                     self.update_analytic_lines(cr, uid, absl)
                 # some verifications
                 if self.analytic_distribution_is_mandatory(cr, uid, absl, context=context):
-                    vals = self._update_employee_analytic_distribution(cr, uid, {'employee_id': absl.employee_id and absl.employee_id.id or False, 'account_id': absl.account_id.id, 'statement_id': absl.statement_id.id,})
+                    vals = self.update_employee_analytic_distribution(cr, uid, {'employee_id': absl.employee_id and absl.employee_id.id or False, 'account_id': absl.account_id.id, 'statement_id': absl.statement_id.id,})
                     if 'analytic_distribution_id' in vals:
                         self.write(cr, uid, [absl.id], {'analytic_distribution_id': vals.get('analytic_distribution_id'),})
                     else:
