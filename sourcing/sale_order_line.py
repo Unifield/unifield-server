@@ -234,6 +234,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if line.type == 'make_to_stock' and line.location_id:
                     context['location'] = line.location_id.id
 
+                if 'to_date' in context:
+                    del context['to_date']
+
                 product = product_obj.get_product_available(cr, uid, [line.product_id.id], context=context)
                 res = real_stock + product.get(line.product_id.id, 0.00)
             else:

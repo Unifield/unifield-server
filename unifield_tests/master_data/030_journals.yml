@@ -133,6 +133,7 @@
     default_debit_account_id: account_account_cheque0
     default_credit_account_id: account_account_cheque0
     allow_date: 0
+    bank_journal_id: account_journal_bank_eur
 -
   I create a Cheque Journal in USD
 -
@@ -145,3 +146,4 @@
     default_debit_account_id: account_account_cheque1
     default_credit_account_id: account_account_cheque1
     allow_date: 0
+    bank_journal_id: account_journal_bank_usd

@@ -1253,7 +1253,8 @@ stock moves which are already processed : '''
 
         # corresponding sale order
         so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context, sol_ids=sol_ids)
-        exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', '=', so_ids)], context=context)
+        # UF-2509: so_ids is a list, not an int
+        exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', 'in', so_ids)], context=context)
         # from so, list corresponding po
         all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
         for exp_sol in exp_sol_obj.browse(cr, uid, exp_sol_ids, context=context):
@@ -2663,6 +2664,8 @@ class purchase_order_line(osv.osv):
         '''
         Update merged line
         '''
+        so_obj = self.pool.get('sale.order')
+
         if context is None:
             context = {}
 
@@ -2696,15 +2699,24 @@ class purchase_order_line(osv.osv):
                 if vals.get('procurement_id', line.procurement_id.id):
                     proc = self.pool.get('procurement.order').browse(cr, uid, vals.get('procurement_id', line.procurement_id.id))
                 if not proc or not proc.sale_id:
-                    new_vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
+                    link_so_dict = self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context)
+                    new_vals.update(link_so_dict)
 
             if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
                 new_vals['from_fo'] = True
 
             if not context.get('update_merge'):
-                new_vals = self._update_merged_line(cr, uid, line.id, vals, context=dict(context, skipResequencing=True, noraise=True))
+                new_vals.update(self._update_merged_line(cr, uid, line.id, vals, context=dict(context, skipResequencing=True, noraise=True)))
 
             res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
+
+            if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('procurement_id', line.procurement_id):
+                so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
+                for so_id in so_ids:
+                    self.pool.get('expected.sale.order.line').create(cr, uid, {
+                        'order_id': so_id,
+                        'po_line_id': line.id,
+                    }, context=context)
 
         # Check the selected product UoM
         if not context.get('import_in_progress', False):

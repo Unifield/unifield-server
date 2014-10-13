@@ -1882,8 +1882,8 @@ class tender_line_cancel_wizard(osv.osv_memory):
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
 
         so_to_cancel_ids = []
-        if so_ids:
-            for so_id in so_ids:
+        if tender_so_ids:
+            for so_id in tender_so_ids:
                 if so_obj._get_ready_to_cancel(cr, uid, so_id, context=context)[so_id]:
                     so_to_cancel_ids.append(so_id)
 
@@ -1968,10 +1968,6 @@ class tender_cancel_wizard(osv.osv_memory):
 
         if so_to_cancel_ids:
             # Ask user to choose what must be done on the FO/IR
-            context.update({
-                'from_tender': True,
-                'tender_ids': list(tender_ids),
-            })
             return so_obj.open_cancel_wizard(cr, uid, set(so_to_cancel_ids), context=context)
 
         return {'type': 'ir.actions.act_window_close'}
