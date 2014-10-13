@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
-    <data>
+    <data noupdate="1">
 		<record id="backup_config_default" model="backup.config">
 			<field name="name">c:\backup\</field>
 			<field eval="True" name="beforemanualsync"/>
