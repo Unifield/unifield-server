@@ -1097,7 +1097,7 @@ stock moves which are already processed : '''
             is_regular = po.order_type == 'regular' # True if order_type is regular, else False
             line_error = []
             # msf_order_date checks
-            if not po.delivery_confirmed_date:
+            if po.state == 'approved' and not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
             if is_regular:
