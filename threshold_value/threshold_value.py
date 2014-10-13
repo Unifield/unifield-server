@@ -516,17 +516,21 @@ class threshold_value_line(osv.osv):
             
         return {'threshold_value': threshold_value, 'product_qty': qty_to_order}
 
-    def onchange_product_id(self, cr, uid, ids, product_id, compute_method=False, consumption_method=False,
-                                consumption_period_from=False, consumption_period_to=False, frequency=False,
-                                safety_month=False, lead_time=False, supplier_lt=False, fixed_tv=0.00, 
-                                fixed_qty=0.00, uom_id=False, field='product_id', context=None):
+    def onchange_product_id(self, cr, uid, ids, product_id, compute_method,
+        consumption_method, consumption_period_from, consumption_period_to,
+        frequency, safety_month, lead_time, supplier_lt, fixed_tv, fixed_qty,
+        uom_id, field, context=None):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
         @return: Dictionary of values.
         """
         if not context:
             context = {}
-        
+        if not fixed_tv:
+            fixed_tv = 0.0
+        if not fixed_qty:
+            fixed_qty = 0.0
+
         res = {'value': {'product_uom_id': False,
                          'fake_threshold_value': 0.00,
                          'threshold_value': 0.00}}

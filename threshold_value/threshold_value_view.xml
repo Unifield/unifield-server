@@ -69,7 +69,7 @@
                         <field name="fixed_line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('compute_method', '!=', 'fixed')]}" context="{'compute_method': compute_method}">
                             <tree string="Products" editable="top">
                                 <field name="product_id" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['service', 'service_recep', 'consu'])]"
-                                       on_change="onchange_product_id(product_id, parent.compute_method, parent.consumption_method, parent.consumption_period_from, parent.consumption_period_to, parent.frequency, parent.safety_month, parent.lead_time,parent.supplier_lt, fixed_threshold_value, fixed_product_qty, context)"/>
+                                       on_change="onchange_product_id(product_id, parent.compute_method, parent.consumption_method, parent.consumption_period_from, parent.consumption_period_to, parent.frequency, parent.safety_month, parent.lead_time,parent.supplier_lt, fixed_threshold_value, fixed_product_qty, product_uom_id, 'product_id', context)"/>
                                 <field name="product_uom_id" domain="[('uom_by_product', '=', product_id)]" 
                                     on_change="onchange_uom_qty(product_uom_id, fixed_threshold_value, fixed_product_qty)" />
                                 <field name="fixed_threshold_value" required="1" 
