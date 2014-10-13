@@ -31,6 +31,14 @@
                         <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object" states="simu_progress,import_progress" />
                         <button name="print_simulation_report" string="Print report" icon="gtk-print" type="object" states="simu_done,import_progress,done" />
                     </group>
+                    <group name="errors" colspan="4" attrs="{'invisible': [('import_error_ok', '=', False)]}">
+                        <html>
+                            <p id="view_error_msg"
+                                style="text-align:center; color:red; font-weight: bold; font-size: 1.2.em;">
+                                WARNING: There are problems with the import file. Please see the 'Information' tab.
+                            </p>
+                        </html>
+                    </group>
                     <notebook colspan="4">
                         <page string="Purchase Order">
                             <field name="in_dest_addr" />

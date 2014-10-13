@@ -920,19 +920,25 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 screen. This message is a merge between all errors.
                 '''
                 # Generate the message
+                import_error_ok = False
                 if len(values_header_errors):
+                    import_error_ok = True
                     message += '\n## Error on header values ##\n\n'
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
+                    import_error_ok = True
                     message += '\n## Error on line values ##\n\n'
                     for err in values_line_errors:
                         message += '%s\n' % err
 
-                header_values['message'] = message
-                header_values['state'] = 'simu_done'
-                header_values['percent_completed'] = 100.0
+                header_values.update({
+                    'message': message,
+                    'state': 'simu_done',
+                    'percent_completed': 100.0,
+                    'import_error_ok': import_error_ok,
+                })
                 self.write(cr, uid, [wiz.id], header_values, context=context)
 
     #            res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
