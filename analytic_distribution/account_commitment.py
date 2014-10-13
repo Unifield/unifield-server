@@ -526,7 +526,7 @@ class account_commitment_line(osv.osv):
                 raise osv.except_osv(_('Error'), _("You cannot create a commitment voucher line on a 'view' account type!"))
         # Verify amount validity
         if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
-            raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
+            raise osv.except_osv(_('Warning'), _('Total amount should be equal or superior to 0!'))
         if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
             raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
         if 'initial_amount' in vals and 'amount' in vals:
