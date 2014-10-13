@@ -399,6 +399,21 @@ class account_analytic_line(osv.osv):
                         'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
                         'destination_name':old_destination_name}
                     msg_to_send_obj.create(cr, uid, message_data)
+                    
+                    #UF-2439: If the old destination is not the same as the creating instance, then a delete message needs also be generated for the creating instance                     
+                    creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id_record.name.split('/')[0]), ('level', '=', 'project')])
+                    if creation_instance_ids:
+                        msf_instance = msf_instance_obj.browse(cr, uid, creation_instance_ids[0])
+                        if old_destination_name != msf_instance.instance:
+                            now = fields.datetime.now()
+                            message_data = {'identifier':'delete_%s_to_%s' % (xml_id, msf_instance.instance),
+                                'sent':False,
+                                'generate_message':True,
+                                'remote_call':self._name + ".message_unlink_analytic_line",
+                                'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
+                                'destination_name': msf_instance.instance}
+                            msg_to_send_obj.create(cr, uid, message_data)
+                    
 
             # Check if the new code center belongs to a project that has *previously* a delete message for the same AJI created but not sent
             # -> remove that delete message from the queue
