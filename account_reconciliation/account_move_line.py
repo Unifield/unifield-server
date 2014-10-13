@@ -93,8 +93,8 @@ class account_move_line(osv.osv):
             # Do level check only if we don't know if more than 1 different level exists between lines
             if not different_level:
                 if not previous_level:
-                    previous_level = line.instance_id.level
-                if previous_level != line.instance_id.level:
+                    previous_level = line.instance_id.id
+                if previous_level != line.instance_id.id:
                     different_level = True
             company_currency_id = line.company_id.currency_id
             if line.reconcile_id:
@@ -158,8 +158,8 @@ class account_move_line(osv.osv):
             # instance level
             if not different_level:
                 if not previous_level:
-                    previous_level = line.instance_id.level
-                if previous_level != line.instance_id.level:
+                    previous_level = line.instance_id.id
+                if previous_level != line.instance_id.id:
                     different_level = True
         for line in unrec_lines:
             if line.state <> 'valid':
