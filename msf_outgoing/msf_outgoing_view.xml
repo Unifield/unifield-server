@@ -1206,7 +1206,7 @@
 					<notebook colspan="4">
 						<page string="Pack Families">
 							<field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" readonly="True">
-								<tree string="Pack Families">
+								<tree string="Pack Families" colors="red: not_shipped">
 									<field name="sale_order_id"/>
 									<field name="ppl_id" />
                                     <field name="description_ppl" />
@@ -1221,7 +1221,8 @@
 									<field name="total_amount" />
 									<field name="currency_id" />
 									<field name="location_id" />
-									<field name="state" />
+                                    <field name="state" />
+                                    <field name="not_shipped" invisible="1" />
 								</tree>
 								<form>
 									<field name="sale_order_id"/>
@@ -1401,7 +1402,7 @@
             <field name="model">stock.move</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Closed shipped lines" editable="top" noteditable="1" hide_delete_button="1" hide_new_button="1">
+                <tree string="Closed shipped lines" editable="top" noteditable="1" hide_delete_button="1" hide_new_button="1" colors="red: not_shipped">
                     <field name="origin"/>
                     <field name="picking_id" string="Pack"/>
                     <field name="line_number"/>
@@ -1413,6 +1414,7 @@
                     <field name="asset_id"/>
                     <field name="partner_id"/>
                     <field name="date"/>
+                    <field name="not_shipped" invisible="1" />
                 </tree>
             </field>
         </record>
