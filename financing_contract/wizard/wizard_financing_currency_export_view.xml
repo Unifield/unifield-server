@@ -3,7 +3,7 @@
     <data>
 
         <record id="action_financing_currency_export_menu" model="ir.actions.act_window">
-            <field name="name">Interactive Report</field>
+            <field name="name">Financing Contracts Budget vs Actuals</field>
             <field name="res_model">wizard.financing.currency.export</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
