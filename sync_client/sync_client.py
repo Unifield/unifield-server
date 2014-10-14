@@ -746,6 +746,12 @@ class Entity(osv.osv):
             context).start()
         return True
 
+    def sync_manual_threaded(self, cr, uid, recover=False, context=None):
+        BackgroundProcess(cr, uid,
+            ('sync_manual_recover_withbackup' if recover else 'sync_manual_withbackup'),
+            context).start()
+        return True
+
     @sync_process()
     def sync_recover(self, cr, uid, context=None):
         """
@@ -771,6 +777,18 @@ class Entity(osv.osv):
         return {'type': 'ir.actions.act_window_close'}
 
     @sync_process()
+    def sync_manual_recover_withbackup(self, cr, uid, context=None):
+        """
+        Call both pull_all_data and recover_message functions - used in manual sync wizard
+        """
+        #Check for a backup before automatic sync
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
+        self.sync_recover(cr, uid, context=context)
+        #Check for a backup after automatic sync
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'aftermanualsync', context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+    @sync_process()
     def sync(self, cr, uid, context=None):
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
@@ -789,7 +807,7 @@ class Entity(osv.osv):
         #Check for a backup after automatic sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'afterautomaticsync', context=context)
         return {'type': 'ir.actions.act_window_close'}
-    
+
     @sync_process()
     def sync_manual_withbackup(self, cr, uid, context=None):
         """

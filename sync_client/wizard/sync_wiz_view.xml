@@ -158,8 +158,8 @@
 	                        <button type="object" string="Resume All Synchronization Process" name="sync" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
 	                    </group>
 	                    <group col="2" colspan="3">
-	                        <button type="object" string="Start All Synchronization In Background" name="sync_threaded" states="init"/>
-	                        <button type="object" string="Resume All Synchronization In Background" name="sync_threaded" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
+	                        <button type="object" string="Start All Synchronization In Background" name="sync_manual_threaded" states="init"/>
+	                        <button type="object" string="Resume All Synchronization In Background" name="sync_manual_threaded" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
 	                    </group>
 	                </group>
                     <separator string="Debug" colspan="4"/>
@@ -236,4 +236,3 @@
 <!--
     vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 -->
-
