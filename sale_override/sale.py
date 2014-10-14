@@ -2801,6 +2801,9 @@ class sale_order_cancelation_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         wf_service = netsvc.LocalService("workflow")
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -2811,6 +2814,8 @@ class sale_order_cancelation_wizard(osv.osv_memory):
                         _('You must choose an action for each order'),
                     )
                 if lc.action == 'close':
+                    import pdb
+                    pdb.set_trace()
                     proc_ids = proc_obj.search(cr, uid, [('sale_id', '=', lc.order_id.id)], context=context)
                     proc_obj.action_cancel(cr, uid, proc_ids)
                     wf_service.trg_write(uid, 'sale.order', lc.order_id.id, cr)
