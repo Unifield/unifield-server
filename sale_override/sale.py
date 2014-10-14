@@ -2115,6 +2115,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if context.get('view_id'):
             del context['view_id']
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'sale.order.cancelation.wizard',
@@ -2814,8 +2815,6 @@ class sale_order_cancelation_wizard(osv.osv_memory):
                         _('You must choose an action for each order'),
                     )
                 if lc.action == 'close':
-                    import pdb
-                    pdb.set_trace()
                     proc_ids = proc_obj.search(cr, uid, [('sale_id', '=', lc.order_id.id)], context=context)
                     proc_obj.action_cancel(cr, uid, proc_ids)
                     wf_service.trg_write(uid, 'sale.order', lc.order_id.id, cr)

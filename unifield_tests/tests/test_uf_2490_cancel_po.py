@@ -229,7 +229,7 @@ class UF2490OnePO(ResourcingTest):
 
         wiz_obj.close_fo(w_res.get('res_id'))
 
-        self.check_order_state(mode='closed')
+        self.check_order_state(mode='sourced')
 
     def test_create_order_cancel_po_close_order(self):
         """
@@ -271,28 +271,58 @@ class UF2490OnePO(ResourcingTest):
         """
         db = self.used_db
 
+        wiz_obj = db.get('sale.order.cancelation.wizard')
+        w_line_obj = db.get('sale.order.leave.close')
+
         self.create_order_and_source()
 
         line_ids = self.pol_obj.search([('order_id', '=', self.po_id)])
 
-        #for x in xrange(0, len(line_ids)-1):
-            #if
+        for x in xrange(0, len(line_ids)):
+            res = self.pol_obj.ask_unlink(line_ids[x])
+            self.assert_(
+                res.get('res_id', False) and res.get('res_model', False) == 'purchase.order.line.unlink.wizard',
+                "There is no wizard displayed when cancel a PO line that sources a FO/IR line",
+            )
 
+            w_res = db.get('purchase.order.line.unlink.wizard').just_cancel(res.get('res_id'))
 
+            # Check if the wizard to cancel the PO is displayed
+            if x == len(line_ids)-1:
+                self.assert_(
+                    w_res.get('res_id') and w_res.get('res_model') == 'sale.order.cancelation.wizard',
+                    "The wizard to choose what should be done on the FO/IR is not displayed",
+                )
 
-        #res = self.pol_obj.ask_unlink(line_brw.id)
+                # Choose close it
+                w_line_ids = w_line_obj.search([
+                    ('wizard_id', '=', w_res.get('res_id')),
+                    ('order_id', '=', self.order_id),
+                ])
+                w_line_obj.write(w_line_ids, {'action': 'close'})
 
+                w2_res = wiz_obj.close_fo(w_res.get('res_id'), w_res.get('context'))
+
+                self.assert_(
+                    w2_res.get('res_id') and w2_res.get('res_model') == 'purchase.order.cancel.wizard',
+                    "The wizard to cancel the PO because there is no lines on PO is not displayed",
+                )
+
+            order_nb_lines = self._get_number_of_valid_lines(db, self.order_id)
+            self.assert_(
+                order_nb_lines == (3-x),
+                "There is %s lines on the FO/IR - Should be %s" % (order_nb_lines, 4-x),
+            )
+
+        order_nb_lines = self._get_number_of_valid_lines(db, self.order_id)
         self.assert_(
-            res.get('res_id', False),
-            "There is no wizard displayed when cancel a PO line that sources a FO/IR line",
-        )
-        self.assert_(
-            res.get('res_model', False) == 'urchase.order.line.unlink.wizard',
-            "There is a displayed wizard but it's not the good wizard",
+            order_nb_lines == 0,
+            "There is %s lines on the FO/IR - Should be %s" % (order_nb_lines, 0),
         )
 
 
 class UF2490FOOnePO(UF2490OnePO):
+
     def setUp(self):
         self.pr = False
         super(UF2490FOOnePO, self).setUp()
@@ -316,6 +346,7 @@ class UF2490FOOnePO(UF2490OnePO):
 
 
 class UF2490IROnePO(UF2490OnePO):
+
     def setUp(self):
         self.pr = True
         super(UF2490IROnePO, self).setUp()
