@@ -27,6 +27,7 @@ import base64
 import StringIO
 import csv
 
+
 class import_currencies(osv.osv_memory):
     _name = "import.currencies"
     
@@ -120,6 +121,9 @@ class import_currencies(osv.osv_memory):
                         })
                     if not line_res:
                         currency_list.append([line, "%s (%s)" % (line[0], line_problem_description)])
+                else:
+                    raise osv.except_osv(_('Warning'), _('File is not in the correct format and cannot be imported.'))
+ 
 
         # Prepare some info
         model = 'confirm.import.currencies'
