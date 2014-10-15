@@ -1092,6 +1092,7 @@ class tender_line(osv.osv):
             tender_id = line.tender_id.id
             wiz_id = False
             last_line = False
+            exp_sol_ids = None
 
             if line.tender_id.sale_order_id:
                 exp_sol_ids = exp_sol_obj.search(cr, uid, [
