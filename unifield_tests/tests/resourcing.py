@@ -16,6 +16,8 @@ class ResourcingTest(UnifieldTest):
         self.pol_obj = db.get('purchase.order.line')
         self.proc_obj = db.get('procurement.order')
         self.data_obj = db.get('ir.model.data')
+        self.tender_obj = db.get('tender')
+        self.tender_line_obj = db.get('tender.line')
 
         if not hasattr(self, 'pr'):
             self.pr = False

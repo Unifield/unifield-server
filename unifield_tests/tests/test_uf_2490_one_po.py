@@ -80,11 +80,20 @@ class UF2490OnePO(ResourcingTest):
 
     def check_order_state(self, mode='sourced'):
         """
-        Check the state of the order (Implemented in children classes)
-        :param mode: 'sourced' or 'closed'
+        Check the state of the order
+        :param mode: 'sourced' or 'clostest_create_ired'
         :return:
         """
-        raise NotImplemented
+        if mode == 'sourced':
+            order_to_check = 'sourced'
+        else:
+            order_to_check = 'done'
+
+        order_state = self.order_obj.read(self.order_id, ['state'])['state']
+        self.assert_(
+            order_state == order_to_check,
+            "The %s state is '%s' - Should be '%s'" % (self.pr and 'IR' or 'FO', order_state, order_to_check),
+        )
 
     def create_order_and_source(self):
         """
@@ -162,6 +171,12 @@ class UF2490OnePO(ResourcingTest):
         # Cancel PO
         self.cancel_po(po_id)
 
+        po_state = self.po_obj.read(po_id, ['state'])['state']
+        self.assert_(
+            po_state == 'cancel',
+            "The PO is in state '%s' - Should be 'cancel'" % po_state
+        )
+
     def test_cancel_non_empty_po_from_scratch(self):
         """
         Create a PO from scratch, add a line on the PO
@@ -175,6 +190,12 @@ class UF2490OnePO(ResourcingTest):
 
         # Cancel PO
         self.cancel_po(po_id)
+
+        po_state = self.po_obj.read(po_id, ['state'])['state']
+        self.assert_(
+            po_state == 'cancel',
+            "The PO is in state '%s' - Should be 'cancel'" % po_state
+        )
 
     def test_cancel_validated_po_from_scracth(self):
         """
@@ -198,6 +219,65 @@ class UF2490OnePO(ResourcingTest):
 
         # Cancel the PO
         self.cancel_po(po_id)
+
+        po_state = self.po_obj.read(po_id, ['state'])['state']
+        self.assert_(
+            po_state == 'cancel',
+            "The PO is in state '%s' - Should be 'cancel'" % po_state
+        )
+
+    def test_cancel_line_po_from_scratch(self):
+        """
+        Create a PO from scratch, add a line on the PO,
+        then, cancel the line
+        :return:
+        """
+        # Create PO
+        po_id = self.create_po_from_scratch()
+
+        # Create PO line
+        self.create_po_line(po_id)
+
+        # Cancel the PO line
+        line_ids = self.pol_obj.search([('order_id', '=', po_id)])
+
+        for x in xrange(0, len(line_ids)):
+            res = self.pol_obj.ask_unlink(line_ids[x])
+
+            self.assert_(
+                res == True,
+                "A wizard is diplayed when the line is remove from a PO from scratch",
+            )
+
+    def test_cancel_line_validated_po_from_scratch(self):
+        """
+        Create a PO from scratch, add a line on the PO,
+        then, cancel the line
+        :return:
+        """
+        # Create PO
+        po_id = self.create_po_from_scratch()
+
+        # Create PO line
+        self.create_po_line(po_id)
+
+        # Add an analytic distribution on the PO
+        ad_id = self.get_record(self.used_db, 'distrib_1')
+        self.po_obj.write(po_id, {'analytic_distribution_id': ad_id})
+
+        # Validate the PO
+        self.used_db.exec_workflow('purchase.order', 'purchase_confirm', po_id)
+
+        # Cancel the PO line
+        line_ids = self.pol_obj.search([('order_id', '=', po_id)])
+
+        for x in xrange(0, len(line_ids)):
+            res = self.pol_obj.ask_unlink(line_ids[x])
+
+            self.assert_(
+                res == True,
+                "A wizard is diplayed when the line is remove from a PO from scratch",
+            )
 
     def test_create_order_cancel_po_leave_order(self):
         """
@@ -327,46 +407,12 @@ class UF2490FOOnePO(UF2490OnePO):
         self.pr = False
         super(UF2490FOOnePO, self).setUp()
 
-    def check_order_state(self, mode='sourced'):
-        """
-        Check the state of the order
-        :param mode: 'sourced' or 'clostest_create_ired'
-        :return:
-        """
-        if mode == 'sourced':
-            order_to_check = 'sourced'
-        else:
-            order_to_check = 'done'
-
-        order_state = self.order_obj.read(self.order_id, ['state'])['state']
-        self.assert_(
-            order_state == order_to_check,
-            "The FO state is '%s' - Should be '%s'" % (order_state, order_to_check),
-        )
-
 
 class UF2490IROnePO(UF2490OnePO):
 
     def setUp(self):
         self.pr = True
         super(UF2490IROnePO, self).setUp()
-
-    def check_order_state(self, mode='sourced'):
-        """
-        Check the state of the order
-        :param mode: 'sourced' or 'closed'
-        :return:
-        """
-        if mode == 'sourced':
-            order_to_check = 'sourced'
-        else:
-            order_to_check = 'done'
-
-        order_state = self.order_obj.read(self.order_id, ['state'])['state']
-        self.assert_(
-            order_state == order_to_check,
-            "The IR state is '%s' - Should be '%s'" % (order_state, order_to_check),
-        )
 
 
 def get_test_suite():
