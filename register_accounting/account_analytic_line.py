@@ -52,8 +52,19 @@ class account_analytic_line(osv.osv):
                 res[l.id] = l.imported_partner_txt
         return res
 
+    def _set_partner(self, cr, uid, ids, name, value, arg, context=None):
+        """
+        Set the partner_txt field if a value given
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self.write(cr, uid, ids, {'partner_txt': value}, context=context)
+        return True
+
     _columns = {
-        'partner_txt': fields.function(_get_partner, method=True, string="Third Party", readonly=True, type="text", store=True),
+        'partner_txt': fields.function(_get_partner, fnct_inv=_set_partner, method=True, string="Third Party", readonly=True, type="text", store=True),
         'imported_partner_txt': fields.text("Imported Third Party"),
     }
 
