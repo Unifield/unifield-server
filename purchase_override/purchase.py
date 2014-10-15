@@ -2325,6 +2325,11 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
+    _sql_constraints = [
+        ('product_qty', 'CHECK (product_qty > 0)',
+         'You can not have an order line with a negative or zero quantity'),
+    ]
+
     def link_merged_line(self, cr, uid, vals, product_id, order_id, product_qty, uom_id, price_unit=0.00, context=None):
         '''
         Check if a merged line exist. If not, create a new one and attach them to the Po line
