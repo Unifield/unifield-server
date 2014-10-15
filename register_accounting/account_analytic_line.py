@@ -60,7 +60,7 @@ class account_analytic_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self.write(cr, uid, ids, {'partner_txt': value}, context=context)
+        cr.execute("UPDATE %s SET partner_txt = %s WHERE id in %s", (self._table, value, tuple(ids),))
         return True
 
     _columns = {
