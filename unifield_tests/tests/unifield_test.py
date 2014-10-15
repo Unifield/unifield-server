@@ -27,6 +27,7 @@ class UnifieldTest(unittest.TestCase):
     db = {}
     test_module_name = 'unifield_tests'
     test_module_obj_name = 'unifield.test'
+    already_loaded = False
 
     # FIXME/TODO: Make unittest.TestCase inherit from oerplib.error class because of RPCError that could be raised by unittest.TestCase
 
@@ -77,6 +78,8 @@ class UnifieldTest(unittest.TestCase):
         # For each database, check that unifield_tests module is loaded
         #+ If not, load it.
         #+ Except if the database is sync one
+        if UnifieldTest.already_loaded:
+            return
         for database_name in self.db:
             if database_name == 'sync':
                 continue
@@ -100,6 +103,7 @@ class UnifieldTest(unittest.TestCase):
                     raise EnvironmentError(' Wrong module state: %s' % (state or '',))
             # Some processes after instanciation for this database
             self._hook_db_process(database_name, database)
+        UnifieldTest.already_loaded = True
 
     def is_keyword_present(self, db, keyword):
         '''
