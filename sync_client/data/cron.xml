@@ -15,5 +15,19 @@
 			<field name="model">sync.client.entity</field>
 		</record>
 
+        <record id="ir_cron_automaticsyncbackup" model="ir.cron">
+            <field name="function">scheduled_backups</field>
+            <field name="user_id">1</field>
+            <field name="name">Automatic backup</field>
+            <field name="interval_type">days</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="0" name="active"/>
+            <field eval="1" name="interval_number"/>
+            <field name="model">backup.config</field>
+            <field name="active">1</field>
+        </record>
+
 	</data>
 </openerp>
