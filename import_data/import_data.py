@@ -124,6 +124,10 @@ class import_data(osv.osv_memory):
     }
 
     def _import(self, dbname, uid, ids, context=None):
+        """if context includes 'import_data_field_max_size' dict,
+        this dict specifies the max tolerated field length at import
+        (key: field name, value: field size)
+        """
         cr = pooler.get_db(dbname).cursor()
 
         obj = self.read(cr, uid, ids[0])
@@ -298,11 +302,31 @@ WHERE n3.level = 3)
             data = {}
             try:
                 n = 0
+                line_ok = True
                 if self.pre_hook.get(impobj._name):
                     self.pre_hook[impobj._name](impobj, cr, uid, headers, row, col_datas)
 
                 for n,h in enumerate(headers):
                     row[n] = row[n].rstrip()
+
+                    # UFTP-327
+                    # if required reject cells with exceeded field length
+                    if 'import_data_field_max_size' in context:
+                        if h in context['import_data_field_max_size']:
+                            max_size = context['import_data_field_max_size'][h]
+                            if len(row[n]) > max_size:
+                                msg_tpl = "field '%s' value exceed field length of %d"
+                                msg = msg_tpl % (h , max_size, )
+                                logging.getLogger('import data').info(
+                                    'Error %s'% (msg, ))
+                                cr.rollback()
+                                row.append("Line %s, row: %s, %s" % (i, n,
+                                    msg, ))
+                                writer.writerow(row)
+                                nb_error += 1
+                                line_ok = False
+                                break
+
                     if newo2m and ('.' not in h or h.split('.')[0] != newo2m or h.split('.')[1] == delimiter):
                         data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
                         o2mdatas = {}
@@ -327,6 +351,8 @@ WHERE n3.level = 3)
                                 data[points[0]] = _get_obj(h, row[n], fields_def) or False
                         elif fields_def[points[0]]['type'] in 'many2many' and row[n]:
                             data.setdefault(points[0], []).append((4, _get_obj(h, row[n], fields_def)))
+                if not line_ok:
+                    continue
                 if newo2m and o2mdatas:
                     data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
 
@@ -438,6 +464,14 @@ class import_product(osv.osv_memory):
     }
 
     def import_csv(self, cr, uid, ids, context=None):
+        # UFTP-327
+        fg = self.pool.get('product.product').fields_get(cr, uid,
+            fields=['default_code'], context=context)
+        if fg and 'default_code' in fg and 'size' in fg['default_code']:
+            context['import_data_field_max_size'] = {
+                'default_code': fg['default_code']['size'],
+            }
+
         super(import_product, self).import_csv(cr, uid, ids, context=context)
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'import_data', 'import_product_end')[1]
         return {'type': 'ir.actions.act_window',
