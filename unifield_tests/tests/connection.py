@@ -54,6 +54,7 @@ class XMLRPCConnection(OERP):
         # Login initialization
         db_name = '%s%s' % (db_prefix, db_suffix)
         self.login(uid, pwd, db_name)
+        self.db_name = db_name
 
 if __name__ == '__main__':
     c = XMLRPCConnection('HQ1C1P1')

@@ -53,7 +53,10 @@ class ResourcingTest(UnifieldTest):
         :return True
         :rtype bool
         """
-        pr = self.order_obj.browse(order_to_check).procurement_request
+        order_obj = db.get('sale.order')
+        proc_obj = db.get('procurement.order')
+
+        pr = order_obj.browse(order_to_check).procurement_request
 
         new_order_id = None
         if pr:
@@ -61,15 +64,15 @@ class ResourcingTest(UnifieldTest):
         else:
             state = 'done'
 
-        order_state = self.order_obj.read(order_to_check, ['state'])['state']
+        order_state = order_obj.read(order_to_check, ['state'])['state']
         while order_state != state:
             time.sleep(0.5)
-            order_state = self.order_obj.read(order_to_check, ['state'])['state']
+            order_state = order_obj.read(order_to_check, ['state'])['state']
 
         if pr:
             new_order_id = order_to_check
         else:
-            new_order_ids = self.order_obj.search([
+            new_order_ids = order_obj.search([
                 ('original_so_id_sale_order', '=', order_to_check)
             ])
 
@@ -78,7 +81,7 @@ No split of FO found !""")
             if new_order_ids:
                 new_order_id = new_order_ids[0]
 
-        self.proc_obj.run_scheduler()
+        proc_obj.run_scheduler()
 
         return new_order_id
 
@@ -98,7 +101,6 @@ No split of FO found !""")
 
         # Prepare values for the field order
         partner_id = self.get_record(db, 'ext_customer_1')
-        p_addr_id = self.get_record(db, 'ext_customer_1_addr')
         order_type = 'regular'
 
         change_vals = self.order_obj.\
@@ -377,5 +379,63 @@ The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
             return self._get_number_of_ir_valid_lines(db, order_id)
         else:
             return self._get_number_of_fo_valid_lines(db, order_id)
+
+    def create_analytic_distribution(self, db):
+        """
+        Create an analytic distribution
+        :param db: Connection on which the distribution must be created
+        :return: The ID of distribution
+        """
+        distrib_obj = db.get('analytic.distribution')
+        cc_line_obj = db.get('cost.center.distribution.line')
+        fp_line_obj = db.get('funding.pool.distribution.line')
+
+        distrib_id = distrib_obj.create({
+            'name': 'Distrib 2',
+        })
+
+        cc_line1_id = cc_line_obj.create({
+            'name': 'CC Line 1',
+            'amount': 0.0,
+            'percentage': 75.0,
+            'currency_id': self.get_record(db, 'EUR', module='base'),
+            'analytic_id': self.get_record(db, 'analytic_cc1'),
+            'distribution_id': distrib_id,
+            'destination_id': self.get_record(db, 'analytic_account_destination_operation', module='analytic_distribution'),
+        })
+
+        cc_line2_id = cc_line_obj.create({
+            'name': 'CC Line 2',
+            'amount': 0.0,
+            'percentage': 25.0,
+            'currency_id': self.get_record(db, 'EUR', module='base'),
+            'analytic_id': self.get_record(db, 'analytic_cc2'),
+            'distribution_id': distrib_id,
+            'destination_id': self.get_record(db, 'analytic_account_destination_operation', module='analytic_distribution'),
+        })
+
+        fp_line1_id = fp_line_obj.create({
+            'name': 'FP Line 1',
+            'amount': 0.0,
+            'percentage': 75.0,
+            'currency_id': self.get_record(db, 'EUR', module='base'),
+            'analytic_id': self.get_record(db, 'analytic_cc1'),
+            'distribution_id': distrib_id,
+            'cost_center_id': self.get_record(db, 'analytic_cc1'),
+            'destination_id': self.get_record(db, 'analytic_account_destination_operation', module='analytic_distribution'),
+        })
+
+        fp_line2_id = fp_line_obj.create({
+            'name': 'FP Line 2',
+            'amount': 0.0,
+            'percentage': 25.0,
+            'currency_id': self.get_record(db, 'EUR', module='base'),
+            'analytic_id': self.get_record(db, 'analytic_cc2'),
+            'distribution_id': distrib_id,
+            'cost_center_id': self.get_record(db, 'analytic_cc1'),
+            'destination_id': self.get_record(db, 'analytic_account_destination_operation', module='analytic_distribution'),
+        })
+
+        return distrib_id
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
