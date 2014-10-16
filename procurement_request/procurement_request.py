@@ -259,11 +259,8 @@ class procurement_request(osv.osv):
         if not default:
             default = {}
 
-        seq_obj = self.pool.get('ir.sequence')
         order = self.browse(cr, uid, id)
-
         proc = order.procurement_request or context.get('procurement_request', False)
-
         default.update({
             'shipped': False,
             'invoice_ids': [],
@@ -271,11 +268,8 @@ class procurement_request(osv.osv):
             'date_confirm': False,
             'procurement_request': proc,
         })
-
-        if not 'name' in default:
-            name = (order.procurement_request or context.get('procurement_request', False)) and seq_obj.get(cr, uid, 'procurement.request') or seq_obj.get(cr, uid, 'sale.order')
-            default.update({'name': name})
-
+        # UFTP-322: Remove the block of code to calculate 'name' as the creation could be blocked by the user right to make a wrong increase of sequence
+        # moved this block of code to analytic_distribution_supply/sale.py method copy_data() 
         return default
 
     def copy(self, cr, uid, id, default, context=None):
