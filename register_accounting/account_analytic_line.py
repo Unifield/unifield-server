@@ -39,7 +39,13 @@ class account_analytic_line(osv.osv):
         # Prepare some values
         res = {}
         for l in self.browse(cr, uid, ids, context=context):
-            res[l.id] = ''
+            # UTP-1182: 
+            if context.get('sync_update_execution', False):
+#                sql = "SELECT partner_txt FROM account_analytic_line WHERE id = %s"
+#                cr.execute(sql, (tuple([int(l.id)]),))
+                continue
+            else:
+                res[l.id] = ''
             if l.move_id:
                 if l.move_id.partner_type and l.move_id.partner_type.name:
                     res[l.id] = l.move_id.partner_type.name or ''
@@ -58,9 +64,12 @@ class account_analytic_line(osv.osv):
         """
         if context is None:
             context = {}
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
-        cr.execute("UPDATE %s SET partner_txt = %s WHERE id in %s", (self._table, value, tuple(ids),))
+        sql = "UPDATE " + self._table + " SET partner_txt = '" + value + "' WHERE id in %s"
+        cr.execute(sql, (tuple(ids),))
         return True
 
     _columns = {
