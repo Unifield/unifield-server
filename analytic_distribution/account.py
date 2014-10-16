@@ -225,7 +225,10 @@ class account_account(osv.osv):
             context = {}
         # Add default_destination_id in destination_ids if exists
         if not context.get('sync_update_execution') and 'default_destination_id' in vals and vals.get('default_destination_id', False):
-            vals.update({'destination_ids': [(4, vals.get('default_destination_id'))]})
+            dest_list = [(4, vals.get('default_destination_id'))]
+            if vals.get('destination_ids', False):
+                dest_list += vals.get('destination_ids')
+            vals.update({'destination_ids': dest_list})
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
