@@ -172,7 +172,6 @@ class stock_picking(osv.osv):
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
         move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
 
         # package data
         pack_data = self.package_data_update_in(cr, uid, source, pick_dict, context=context)
@@ -184,7 +183,10 @@ class stock_picking(osv.osv):
         if shipment:
             shipment_ref = shipment['name'] # shipment made
         else:
+            #UFTP-332: Check if name is really an OUT, because DPO could have PICk but no SHIP nor OUT --> do not link this PICK to IN
             shipment_ref = pick_dict.get('name', False) # the case of OUT
+            if shipment_ref and 'OUT' not in shipment_ref:
+                shipment_ref = False 
         if not po_id:
             # UF-1830: Check if the PO exist, if not, and in restore mode, send a warning and create a message to remove the ref on the partner document
             if context.get('restore_flag'):
@@ -194,7 +196,8 @@ class stock_picking(osv.osv):
 
             raise Exception, "The PO is not found for the given FO Ref: " + so_ref
 
-        shipment_ref = source + "." + shipment_ref
+        if shipment_ref:
+            shipment_ref = source + "." + shipment_ref
         po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
 
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
@@ -204,7 +207,6 @@ class stock_picking(osv.osv):
             self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context)
             partial_datas = {}
             partial_datas[in_id] = {}
-            line_numbers = {}
             context['InShipOut'] = "IN"  # asking the IN object to be logged
             for line in pack_data:
                 line_data = pack_data[line]
@@ -301,7 +303,12 @@ class stock_picking(osv.osv):
             # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
             if new_picking != in_id:
                 self.write(cr, uid, in_id, {'backorder_id': new_picking}, context)
-            self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
+            
+            #UFTP-332: Check if shipment/out is given
+            if shipment_ref:
+                self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
+            else:
+                self.write(cr, uid, new_picking, {'already_shipped': True}, context)
 
             in_name = self.browse(cr, uid, new_picking, context=context)['name']
             message = "The INcoming " + in_name + "(" + po_name + ") is now become shipped available!"
@@ -314,8 +321,12 @@ class stock_picking(osv.osv):
                 message = "The IN linked to " + po_name + " is not found in the system!"
                 self._logger.info(message)
                 raise Exception(message)
-
-            same_in = self.search(cr, uid, [('id', '=', in_id), ('shipment_ref', '=', shipment_ref)], context=context)
+            
+            #UFTP-332: Check if shipment/out is given 
+            if shipment_ref:
+                same_in = self.search(cr, uid, [('id', '=', in_id), ('shipment_ref', '=', shipment_ref)], context=context)
+            else:
+                same_in = self.search(cr, uid, [('id', '=', in_id)], context=context)
             if not same_in:
                 message = "Sorry, this seems to be an extra ship. This feature is not available now!"
                 self._logger.info(message)
