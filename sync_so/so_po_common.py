@@ -466,7 +466,7 @@ class so_po_common(osv.osv_memory):
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 existing_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', so_id)], context=context)
 
-            if existing_line_ids and update_lines:
+            if (existing_line_ids and update_lines) or (line_vals_dict.get('state', False) == 'done' and existing_line_ids):
                 for existing_line in existing_line_ids:
                     if existing_line not in update_lines:
                         if po_id:
