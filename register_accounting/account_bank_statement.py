@@ -1795,6 +1795,8 @@ class account_bank_statement_line(osv.osv):
         """
         Create a new account bank statement line with values
         """
+        if context is None:
+            context = {}
         # First update amount
         values = self._update_amount(values=values)
         # Then update expat analytic distribution
@@ -1803,7 +1805,7 @@ class account_bank_statement_line(osv.osv):
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
             values = self.update_employee_analytic_distribution(cr, uid, values=values)
-        if not context.get('sync_update_execution'):
+        if not context.get('sync_update_execution',False):
             if 'cheque_number' in values and values.get('cheque_number', False):
                 cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (values['cheque_number'], ))
                 for row in cr.dictfetchall():
