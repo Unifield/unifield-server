@@ -29,6 +29,7 @@ from account_override import finance_export
 
 from report import report_sxw
 
+
 class finance_archive(finance_export.finance_archive):
     """
     Extend existing class with new methods for this particular export.
@@ -56,13 +57,14 @@ class finance_archive(finance_export.finance_archive):
           - id
         """
         # Prepare some values
+        context = {}
         new_data = []
         dbname = cr.dbname
         pool = pooler.get_pool(dbname)
         column_number = 0
         partner_obj = pool.get('res.partner')
         partner_name_column_number = 10
-        partner_id_column_number = 20
+        partner_id_column_number = 21
         for line in data:
             tmp_line = list(line)
             line_ids = str(line[column_number])
@@ -124,16 +126,30 @@ class finance_archive(finance_export.finance_archive):
         sqlmark = """UPDATE account_move_line SET exporting_sequence = %s WHERE id in %s;"""
         cr.execute(sqlmark, (seq, tuple(ids),))
         # Do right request
-        sqltwo = """SELECT req.concat AS "DB ID", i.code, j.code, j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", c.name AS "booking_currency", CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit"
+        sqltwo = """SELECT req.concat AS "DB ID", i.code, j.code, j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", 
+CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", 
+CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", 
+c.name AS "booking_currency", 
+CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", 
+CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit"
             FROM (
-                SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, SUM(amount_currency) AS total, SUM(debit - credit) AS func_total, array_to_string(array_agg(aml.id), ',') AS concat
+                SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, 
+                       SUM(amount_currency) AS total, 
+                       SUM(debit - credit) AS func_total, 
+                       array_to_string(array_agg(aml.id), ',') AS concat
                 FROM account_move_line AS aml, account_journal AS j
                 WHERE aml.exporting_sequence = %s
                 AND aml.journal_id = j.id
                 AND j.type NOT IN %s
                 GROUP BY aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id
                 ORDER BY aml.account_id
-            ) AS req, account_account AS a, account_period AS p, account_journal AS j, res_currency AS c, account_fiscalyear AS f, msf_instance AS i
+            ) AS req, 
+                 account_account AS a, 
+                 account_period AS p, 
+                 account_journal AS j, 
+                 res_currency AS c, 
+                 account_fiscalyear AS f, 
+                 msf_instance AS i
             WHERE req.account_id = a.id
             AND req.period_id = p.id
             AND req.journal_id = j.id
@@ -198,7 +214,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             context = {}
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
-        excluded_journal_types = ['hq','migration', 'cur_adj'] # journal types that should not be used to take lines
+        excluded_journal_types = ['hq','cur_adj'] # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -220,6 +236,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         to_export = ['f'] # Default export value for exported field on analytic/move lines
         year = '%s' % (strptime(first_day_of_period, '%Y-%m-%d').tm_year)
         month = '%02d' % (strptime(first_day_of_period, '%Y-%m-%d').tm_mon)
+        period_yyyymm = "{0}{1}".format(year,month)
         if not selection:
             raise osv.except_osv(_('Error'), _('No selection value for lines to select.'))
         if selection == 'all':
@@ -252,19 +269,37 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND j.instance_id in %s;
                 """,
             'costcenter': """
-                SELECT name, code, type, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
-                FROM account_analytic_account
-                WHERE category = 'OC'
-                AND id in (
+            SELECT tr.value, aa.code, aa.type, 
+            CASE WHEN aa.date_start < %s AND (aa.date IS NULL OR aa.date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
+                FROM account_analytic_account aa, ir_translation tr 
+                WHERE tr.res_id = aa.id 
+                  and tr.lang = 'en_MF' 
+                  and tr.name = 'account.analytic.account,name' 
+                  and tr.value is not null
+                and aa.category = 'OC'
+                AND aa.id in (
                     SELECT cost_center_id
                     FROM account_target_costcenter
-                    WHERE instance_id in %s
-                );
-                """,
+                    WHERE instance_id in %s)
+            UNION ALL
+            SELECT aa.name, aa.code, aa.type, 
+                CASE WHEN aa.date_start < %s AND (aa.date IS NULL OR aa.date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
+                FROM account_analytic_account aa
+                where aa.category = 'OC'
+                AND aa.id in (
+                    SELECT cost_center_id
+                    FROM account_target_costcenter
+                    WHERE instance_id in %s)
+                AND NOT EXISTS (select 'X' 
+				from ir_translation tr 
+				WHERE tr.res_id = aa.id 
+				and tr.lang = 'en_MF' 
+				and tr.name = 'account.analytic.account,name');
+                """, 
             'fxrate': """
                 SELECT req.name, req.code, req.rate, req.period
                 FROM (
-                    SELECT rc.currency_name AS "name", rc.name AS "code", r.rate AS "rate", r.name AS "date", p.name AS "period"
+                    SELECT rc.currency_name AS "name", rc.name AS "code", r.rate AS "rate", r.name AS "date", to_char(p.date_start,'YYYYMM') AS "period"
                     FROM account_period AS p, res_currency_rate AS r LEFT JOIN res_currency rc ON r.currency_id = rc.id
                     WHERE p.date_start <= r.name
                     AND p.date_stop >= r.name
@@ -340,8 +375,25 @@ class hq_report_ocb(report_sxw.report_sxw):
                 """,
             # Pay attention to take analytic line that are not on HQ and MIGRATION journals.
             'rawdata': """
-                SELECT al.id, i.code, aj.code, al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit, cc.name AS "functional_currency", aml.partner_id
-                FROM account_analytic_line AS al, account_account AS a, account_analytic_account AS aa, account_analytic_account AS aa2, account_analytic_account AS aa3, res_currency AS c, res_company AS e, res_currency AS cc, account_analytic_journal AS j, account_move_line AS aml, account_journal AS aj, msf_instance AS i
+                SELECT al.id, i.code, aj.code, al.entry_sequence, al.name, al.ref, al.document_date, al.date, 
+                       a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, 
+                       CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, 
+                       CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit, 
+                       c.name AS "booking_currency", 
+                       CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, 
+                       CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
+                       cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id
+                FROM account_analytic_line AS al, 
+                     account_account AS a, 
+                     account_analytic_account AS aa, 
+                     account_analytic_account AS aa2, 
+                     account_analytic_account AS aa3, 
+                     res_currency AS c, 
+                     res_company AS e, 
+                     res_currency AS cc, 
+                     account_analytic_journal AS j, 
+                     account_move_line aml left outer join hr_employee hr on hr.id = aml.employee_id, 
+                     account_journal AS aj, msf_instance AS i 
                 WHERE al.destination_id = aa.id
                 AND al.cost_center_id = aa2.id
                 AND al.account_id = aa3.id
@@ -378,8 +430,17 @@ class hq_report_ocb(report_sxw.report_sxw):
             # Do not take lines that come from a HQ or MIGRATION journal
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
             'bs_entries': """
-                SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name, aml.debit, aml.credit, cc.name, aml.partner_id
-                FROM account_move_line AS aml, account_account AS a, res_currency AS c, account_move AS m, res_company AS e, account_journal AS j, res_currency AS cc, msf_instance AS i
+                SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, 
+                       a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name, aml.debit, 
+                       aml.credit, cc.name, hr.identification_id as "Emplid"
+                FROM account_move_line aml left outer join hr_employee hr on hr.id = aml.employee_id, 
+                     account_account AS a, 
+                     res_currency AS c, 
+                     account_move AS m, 
+                     res_company AS e, 
+                     account_journal AS j, 
+                     res_currency AS cc, 
+                     msf_instance AS i
                 WHERE aml.account_id = a.id
                 AND aml.id not in (
                   SELECT amla.id
@@ -443,7 +504,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Name', 'Code', 'Type', 'Status'],
                 'filename': instance_name + '_' + year + month + '_Cost Centres.csv',
                 'key': 'costcenter',
-                'query_params': (last_day_of_period, last_day_of_period, tuple(instance_ids)),
+                'query_params': (last_day_of_period, last_day_of_period, tuple(instance_ids),last_day_of_period, last_day_of_period, tuple(instance_ids)),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.analytic.account', 'type', 2)],
                 },
@@ -457,7 +518,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance'],
                 'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
                 'key': 'liquidity',
-                'query_params': (tuple([period.code]), first_day_of_period, period.id, last_day_of_period, tuple(instance_ids)),
+                'query_params': (tuple([period_yyyymm]), first_day_of_period, period.id, last_day_of_period, tuple(instance_ids)),
                 },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
@@ -468,7 +529,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
                 },
             {
-                'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY', 'Partner DB ID'],
+                'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit',  'Functional CCY', 'Emplid', 'Partner DB ID'],
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'rawdata',
                 'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with

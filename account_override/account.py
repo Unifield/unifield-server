@@ -481,6 +481,7 @@ class account_move(osv.osv):
             help="This indicates which Journal Type is attached to this Journal Entry"),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
             help="This field contains the information related to the numbering of the lines of this journal entry."),
+        'manual_name': fields.char('Description', size=64, required=True),
     }
 
     _defaults = {
@@ -488,7 +489,8 @@ class account_move(osv.osv):
         'document_date': lambda *a: False,
         'date': lambda *a: False,
         'period_id': lambda *a: '',
-    }
+        'manual_name': lambda *a: '',
+   }
 
     def _check_document_date(self, cr, uid, ids, context=None):
         """
@@ -578,6 +580,9 @@ class account_move(osv.osv):
                 context['document_date'] = vals.get('document_date')
             if 'date' in vals:
                 context['date'] = vals.get('date')
+            # UTFTP-262: Make manual_name mandatory
+            if 'manual_name' not in vals or not vals.get('manual_name', False) or vals.get('manual_name') == '':
+                raise osv.except_osv(_('Error'), _('Description is mandatory!'))
 
         if context.get('seqnums',False):
             # utp913 - reuse sequence numbers if in the context
@@ -588,6 +593,10 @@ class account_move(osv.osv):
             if not period_ids:
                 raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
+            # UF-2479: If the period is not open yet, raise exception for the move
+            if period and period.state == 'created':
+                raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Entry is created') % (period.name,))
+
             # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!
             sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
             if instance and journal and sequence_number and ('name' not in vals or vals['name'] == '/'):
@@ -630,6 +639,9 @@ class account_move(osv.osv):
                     if el in vals:
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
+                # UFTP-262: For manual_name (description on account.move), update "name" on account.move.line
+                if 'manual_name' in vals:
+                    ml_vals.update({'name': vals.get('manual_name', '')})
                 # Update document date AND date at the same time
                 if ml_vals:
                     for ml in m.line_id:

@@ -1011,6 +1011,34 @@ class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for so_id in ids:
+            res[so_id] = True
+
+        return res
+
+    def _src_to_partner(self, cr, uid, obj, name, args, context=None):
+        res = []
+
+        for arg in args:
+            if arg[0] == 'to_partner_id' and arg[2] is not False:
+                res.append(('partner_id', arg[1], arg[2]))
+
+        return res
+
+    _columns = {
+        'to_partner_id': fields.function(
+            _get_dummy,
+            fnct_search=_src_to_partner,
+            method=True,
+            type='boolean',
+            string='To partner',
+            readonly=True,
+            store=False,
+        ),
+    }
+
     def name_search(self, cr, uid, name='', args=None, operator='ilike', context=None, limit=80):
         '''
         Search all SO by internal or customer reference

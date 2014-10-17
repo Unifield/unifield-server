@@ -124,6 +124,7 @@
     </initialize>
     <paraStyle name="P1" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
     <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER"/>
+    <paraStyle name="P2c" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER"/>
     <paraStyle name="P2a" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
     <paraStyle name="P3a" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
@@ -243,13 +244,13 @@
           <blockTable style="Table3">
             <tr>
               <td>
-                <para style="P2">Values</para>
+                <para style="P2c">Values</para>
               </td>
               <td>
-                <para style="P2">Number</para>
+                <para style="P2c">Number</para>
               </td>
               <td>
-                <para style="P2">Sub-total</para>
+                <para style="P2c">Sub-total</para>
               </td>
             </tr>
           </blockTable>
@@ -258,13 +259,13 @@
           <blockTable style="Table3">
             <tr>
               <td>
-                <para style="P2">Values</para>
+                <para style="P2c">Values</para>
               </td>
               <td>
-                <para style="P2">Number</para>
+                <para style="P2c">Number</para>
               </td>
               <td>
-                <para style="P2">Sub-total</para>
+                <para style="P2c">Sub-total</para>
               </td>
             </tr>
           </blockTable>
@@ -281,10 +282,10 @@
             <blockTable style="Table12">
               <tr>
                 <td>
-                  <para style="P3">[[ line.pieces ]]</para>
+                  <para style="P18">[[ line.pieces ]]</para>
                 </td>
                 <td>
-                  <para style="P3">[[ line.number and line.number or '0' ]]</para>
+                  <para style="P18">[[ line.number and line.number or '0' ]]</para>
                 </td>
                 <td>
                   <para style="P18">[[ line.subtotal and line.subtotal or '0.00' ]]</para>
@@ -299,10 +300,10 @@
             <blockTable style="Table12">
               <tr>
                 <td>
-                  <para style="P3">[[ line.pieces ]]</para>
+                  <para style="P18">[[ line.pieces ]]</para>
                 </td>
                 <td>
-                  <para style="P3">[[ line.number and line.number or '0' ]]</para>
+                  <para style="P18">[[ line.number and line.number or '0' ]]</para>
                 </td>
                 <td>
                   <para style="P18">[[ line.subtotal and line.subtotal or '0.00' ]]</para>

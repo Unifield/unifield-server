@@ -168,17 +168,9 @@ class supplier_catalogue(osv.osv):
         '''
         if context is None:
             context = {}
-        supinfo_obj = self.pool.get('product.supplierinfo')
-        price_obj = self.pool.get('pricelist.partnerinfo')
 
-        supplierinfo_ids = supinfo_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
 
         for catalogue in self.browse(cr, uid, ids, context=context):
-            pricelist_ids = []
-
-            for line in catalogue.line_ids:
-                if line.partner_info_id:
-                    pricelist_ids.append(line.partner_info_id.id)
 
             # Check if other catalogues need to be updated because they finished
             # after the starting date of the updated catalogue.
@@ -190,6 +182,9 @@ class supplier_catalogue(osv.osv):
 
             # Update product pricelists only if the catalogue is confirmed
             if vals.get('state', catalogue.state) == 'confirmed':
+                supinfo_obj = self.pool.get('product.supplierinfo')
+                price_obj = self.pool.get('pricelist.partnerinfo')
+
                 new_supinfo_vals = {}
                 # Change the partner of all supplier info instances
                 if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
@@ -203,7 +198,16 @@ class supplier_catalogue(osv.osv):
                                   'currency_id': vals.get('currency_id', catalogue.currency_id.id),
                                   'name': vals.get('name', catalogue.name),}
 
+                # utp1033 optimisation
+                pricelist_ids = []
+                #for line in catalogue.line_ids:
+                #    if line.partner_info_id:
+                #        pricelist_ids.append(line.partner_info_id.id)
+                cr.execute('''select partner_info_id from supplier_catalogue_line where catalogue_id = %s ''' % (ids[0]))
+                pricelist_ids += [x[0] for x in cr.fetchall() if x[0] is not None]
+                #pricelist_ids =  cr.fetchall()  returns tuples - may be a problem
                 # Update the supplier info and price lines
+                supplierinfo_ids = supinfo_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
                 supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
                 price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
@@ -233,17 +237,29 @@ class supplier_catalogue(osv.osv):
         Reset to draft the catalogue
         '''
         ids = isinstance(ids, (int, long)) and [ids] or ids
-        line_obj = self.pool.get('supplier.catalogue.line')
+        #line_obj = self.pool.get('supplier.catalogue.line')
 
-        line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
+        #line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
 
         if not all(x['state'] == 'confirmed' for x in self.read(cr, uid, ids, ['state'], context=context)):
             raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already in draft state. Please reload the page to update the status of this catalogue'))
 
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+
         # Update lines
-        line_obj.write(cr, uid, line_ids, {}, context=context)
+        #line_obj.write(cr, uid, line_ids, {}, context=context)
+        #utp1033
+        cr.execute('''delete from pricelist_partnerinfo
+                      where id in (select partner_info_id
+                                    from supplier_catalogue_line
+                                    where catalogue_id = %s)''' % (ids[0]))
+        cr.execute('''delete from product_supplierinfo
+                        where id in (select supplier_info_id
+                                    from supplier_catalogue_line
+                                     where catalogue_id = %s)
+                        and id not in (select suppinfo_id from
+                                    pricelist_partnerinfo ) ''' % (ids[0]))
 
 
         return True
@@ -813,8 +829,8 @@ class supplier_catalogue_line(osv.osv):
         if context is None:
             context = {}
 
-        product_obj = self.pool.get('product.product')
-        uom_obj = self.pool.get('product.uom')
+        #product_obj = self.pool.get('product.product')
+        #uom_obj = self.pool.get('product.uom')
         cat_obj = self.pool.get('supplier.catalogue')
         obj_data = self.pool.get('ir.model.data')
         uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
@@ -826,7 +842,7 @@ class supplier_catalogue_line(osv.osv):
             if 'product_id' in new_vals and 'line_uom_id' in new_vals and new_vals['product_id'] != prod_id and new_vals['line_uom_id'] != uom_id:
                 new_vals['to_correct_ok'] = False
             # If product is changed
-            if new_vals.get('product_id', line.product_id.id) != line.product_id.id and cat_state != 'draft':
+            if cat_state != 'draft' and new_vals.get('product_id', line.product_id.id) != line.product_id.id:
                 c = context.copy()
                 c.update({'product_change': True})
                 # Remove the old pricelist.partnerinfo and create a new one
@@ -869,13 +885,17 @@ class supplier_catalogue_line(osv.osv):
                                  'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),})
                 new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
             elif cat_state == 'draft':
-                context.update({'product_change': True})
-                if line.partner_info_id:
-                    self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=context)
-                if line.supplier_info_id and len(line.supplier_info_id.pricelist_ids) == 0:
-                    # Remove the supplier info
-                    self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=context)
-                context.update({'product_change': False})
+                #utp1033
+                cr.execute('''delete from pricelist_partnerinfo
+                              where id in (select partner_info_id
+                                          from supplier_catalogue_line
+                                          where catalogue_id = %s)''' % (ids[0]))
+                cr.execute('''delete from product_supplierinfo
+                              where id in (select supplier_info_id
+                                          from supplier_catalogue_line
+                                          where catalogue_id = %s)
+                              and id not in (select suppinfo_id from
+                                            pricelist_partnerinfo ) ''' % (ids[0]))
 
             res = super(supplier_catalogue_line, self).write(cr, uid, [line.id], new_vals, context=context)
 

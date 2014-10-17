@@ -216,6 +216,18 @@ class hr_payroll_employee_import(osv.osv_memory):
                 return False, what_changed
         return True, what_changed
 
+    def read_employee_infos(self, cr, uid, line='', context=None):
+        """
+        Read each line to extract infos (code, name and surname)
+        """
+        res = False
+        code_staff = line.get('code_staff', False)
+        nom = line.get('nom', False)
+        prenom = line.get('prenom', False)
+        if code_staff:
+            res = (code_staff, nom, prenom)
+        return res
+
     def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None, line_number=None):
         """
         Get employee infos and set them to DB.
@@ -477,14 +489,46 @@ class hr_payroll_employee_import(osv.osv_memory):
                 reader = csv.DictReader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             else:
                 raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (staff_file,))
-            res = True
-            for i, employee_data in enumerate(reader):
-                update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id, i)
-                if not update:
-                    res = False
-                created += nb_created
-                updated += nb_updated
+            # UF-2472: Read all lines to check employee's code before importing
+            staff_data = []
+            staff_codes = []
+            duplicates = []
+            for line in reader:
+                data = self.read_employee_infos(cr, uid, line)
                 processed += 1
+                if data: # to avoid False value in staff_data list
+                    staff_data.append(data)
+                    code = data[0]
+                    if code in staff_codes:
+                        duplicates.append(code)
+                    staff_codes.append(code)
+            # Delete duplicates of… duplicates!
+            duplicates = list(set(duplicates))
+            details = []
+            for employee_infos in staff_data:
+                employee_code = employee_infos[0]
+                if employee_code in duplicates:
+                    details.append(','.join([employee_infos[1], employee_infos[2]]))
+            res = True
+            if not details:
+                created = 0
+                processed = 0
+                updated = 0
+                # UF-2504 read staff file again for next enumeration
+                # (because already read/looped above for staff codes)
+                reader = csv.DictReader(zipobj.open(staff_file), quotechar='"',
+                    delimiter=',', doublequote=False, escapechar='\\')
+                for i, employee_data in enumerate(reader):
+                    update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id, i)
+                    if not update:
+                        res = False
+                    created += nb_created
+                    updated += nb_updated
+                    processed += 1
+            else:
+                res = False
+                message = _('Several employees have the same unique code: %s.') % (';'.join(details))
+                self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': message})
             # Close Temporary File
             # Delete previous created lines for employee's contracts
             if contract_ids:

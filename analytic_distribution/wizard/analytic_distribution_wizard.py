@@ -990,7 +990,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         for line in wiz2.line_ids or wiz2.fp_line_ids:
             line_totals += line.amount
 
-        if wiz2.amount != line_totals:
+        if abs(wiz2.amount - line_totals) > 10**-3:
             raise osv.except_osv(_('Error'), _('Line amounts do not equal the total.'))
 
         o2m_toreload = {}

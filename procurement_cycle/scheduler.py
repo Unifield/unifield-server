@@ -57,6 +57,8 @@ class procurement_order(osv.osv):
         report = []
         report_except = 0
         ran_proc = []
+
+        self.check_exception_proc(cr, uid, [], context=context)
         
         # We start with only category Automatic Supply
         for cycle in cycle_obj.browse(cr, uid, cycle_ids):
@@ -175,6 +177,7 @@ Created documents : \n'''
             proc_id = proc_obj.create(cr, uid, {
                                     'name': _('Procurement cycle: %s') % (cycle.name,),
                                     'origin': cycle.name,
+                                    'unique_rule_type': 'stock.warehouse.order.cycle',
                                     'date_planned': newdate,
                                     'product_id': product.id,
                                     'product_qty': quantity_to_order,

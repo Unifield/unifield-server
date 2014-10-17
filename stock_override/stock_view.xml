@@ -519,17 +519,29 @@
         	<field name="arch" type="xml">
         		<form string="Incoming Shipments">
                     <field name="progress_memory_not_done" invisible="1" />
+                    <field name="progress_memory_error" invisible="1" />
                     <group colspan="6">
                         <html>
                             <p id="view_incoming_in_progress"
                                style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                WARNING: The processing of this incoming shipment is currently in progress, any modifications you make will not be considered.
                             </p>
+                            <p id="view_incoming_in_progress_error"
+                               style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                               ERROR: The processing of this incoming shipment has returned an error, please open the processing wizard to show the error.
+                            </p>
                             <script language="javascript">
-                                var is_synced = $('#progress_memory_not_done').val();
-                                if (is_synced == "1") {
+                                var is_not_done = $('#progress_memory_not_done').val();
+                                var is_error = $('#progress_memory_error').val();
+                                if (is_not_done == "1") {
                                     msg_dom = $('#view_incoming_in_progress')
                                     msg_dom.show();
+                                }
+                                if (is_error == "1") {
+                                    msg_dom = $('#view_incoming_in_progress_error')
+                                    msg_dom.show()
+                                    msg_dom_done = $('#view_incoming_in_progress')
+                                    msg_dom_done.hide()
                                 }
                             </script>
                         </html>
@@ -599,7 +611,8 @@
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
-                                    <button name="call_cancel_wizard" type="object" string="Cancel" attrs="{'invisible': [('fake_state', 'in', ('cancel', 'done'))]}" icon="gtk-del" />
+                                    <field name="from_wkf" invisible="1" />
+                                    <button name="call_cancel_wizard" type="object" string="Cancel" attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}" icon="gtk-del" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -710,7 +723,7 @@
                                      <button name="go_to_simulation_screen" states="assigned,shipped" string="Simulate" type="object" icon="gtk-execute" attrs="{'invisible': [('is_esc', '=', False)]}" />-->
                                 <field name="progress_memory" invisible="1" />
                                 <button name="go_to_processing_wizard" states="assigned,shipped" string="Open processing wizard" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'shipped']), ('progress_memory', '=', -1), ('progress_memory_not_done', '=', False)]}" context="{'progress_wizard': True}" />
-                                <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward" attrs="{'invisible': [('progress_memory_not_done', '=', True)]}"/>
+                                <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'shipped']), ('progress_memory_not_done', '=', True)]}"/>
                                 <group colspan="1" states="done">
                                     <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 </group>
@@ -854,7 +867,7 @@
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped==True; red: inactive_product == True or product_tbd == True" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
+                                <tree colors="grey:scrapped==True; red: inactive_product == True or product_tbd == True" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True">
                                     <field name="line_number"/>
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
                                     <field name="composition_list_id"/>

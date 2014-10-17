@@ -1,0 +1,144 @@
+-
+  Create LOG products
+-
+  Create Product PL1
+-
+  !record {model: product.product, id: prod_log_1}:
+    code: PL1 (Test)
+    name: PL1 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root
+-
+  Create Product PL2
+-
+  !record {model: product.product, id: prod_log_2}:
+    code: PL2 (Test)
+    name: PL2 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root
+-
+  Create Product PL3
+-
+  !record {model: product.product, id: prod_log_3}:
+    code: PL3 (Test)
+    name: PL3 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root
+-
+  Create Product PL4
+-
+  !record {model: product.product, id: prod_log_4}:
+    code: PL4 (Test)
+    name: PL4 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root
+-
+  Create Product PL5
+-
+  !record {model: product.product, id: prod_log_5}:
+    code: PL5 (Test)
+    name: PL5 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root
+-
+  Create MED products
+-
+  Create Product PM1
+-
+  !record {model: product.product, id: prod_med_1}:
+    code: PM1 (Test)
+    name: PM1 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root
+-
+  Create Product PM
+-
+  !record {model: product.product, id: prod_med_2}:
+    code: PM2 (Test)
+    name: PM2 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root
+-
+  Create Product PM3
+-
+  !record {model: product.product, id: prod_med_3}:
+    code: PM3 (Test)
+    name: PM3 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root
+-
+  Create Product PM4
+-
+  !record {model: product.product, id: prod_med_4}:
+    code: PM4 (Test)
+    name: PM4 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root
+-
+  Create Product PM5
+-
+  !record {model: product.product, id: prod_med_5}:
+    code: PM5 (Test)
+    name: PM5 (Test)
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    nomen_manda_0: nomen_log_main_type
+    nomen_manda_1: nomen_log_group
+    nomen_manda_2: nomen_log_family
+    nomen_manda_3: nomen_log_root

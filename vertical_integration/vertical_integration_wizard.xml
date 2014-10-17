@@ -72,7 +72,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Export to HQ system">
-                <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
+                <field name="instance_id" domain="[('level', 'in', ['coordo','section'])]"/>
                 <field name="fiscalyear_id"/>
                 <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id)]"/>
                 <field name="selection"/>

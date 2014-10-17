@@ -158,14 +158,14 @@ class min_max_rules_report(osv.osv):
         cr.execute("""
             CREATE OR REPLACE view min_max_rules_report AS (
                 SELECT 
-                    row_number() OVER(ORDER BY product_id) AS id,
-                    min.id AS rule_id,
-                    min.product_id AS product_id,
-                    min.location_id AS location_id,
-                    min.product_uom AS product_uom_id,
-                    min.product_min_qty AS min_qty,
-                    min.product_max_qty AS max_qty,
-                    min.qty_multiple AS multiple_qty,
+                    row_number() OVER(ORDER BY swopl.product_id) AS id,
+                    swop.id AS rule_id,
+                    swopl.product_id AS product_id,
+                    swop.location_id AS location_id,
+                    swopl.product_uom_id AS product_uom_id,
+                    swopl.product_min_qty AS min_qty,
+                    swopl.product_max_qty AS max_qty,
+                    swopl.qty_multiple AS multiple_qty,
                     prod.default_code AS product_reference,
                     temp.name AS product_name,
                     temp.nomen_manda_0 AS nomen_manda_0,
@@ -173,15 +173,18 @@ class min_max_rules_report(osv.osv):
                     temp.nomen_manda_2 AS nomen_manda_2,
                     temp.nomen_manda_3 AS nomen_manda_3
                 FROM
-                    stock_warehouse_orderpoint min
+                    stock_warehouse_orderpoint_line swopl
                     LEFT JOIN
-                        product_product prod
+                        stock_warehouse_orderpoint swop
+                    ON swopl.supply_id = swop.id
+                        LEFT JOIN
+                            product_product prod
                         ON
-                        min.product_id = prod.id
-                    LEFT JOIN
-                        product_template temp
-                        ON
-                        prod.product_tmpl_id = temp.id
+                        swopl.product_id = prod.id
+                            LEFT JOIN
+                                product_template temp
+                            ON
+                            prod.product_tmpl_id = temp.id
             )
             """)
     

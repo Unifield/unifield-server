@@ -52,8 +52,9 @@
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp'))">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True">
                                         <field name="transfer_amount" invisible="1"/>
+                                        <field name="red_on_supplier" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
@@ -194,7 +195,7 @@
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp'))">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True">
                                       <field name="transfer_amount" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
@@ -204,6 +205,7 @@
                                             attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), '|',
                                             ('employee_id', '=', False), ('type_for_register','!=','advance')]}"/>
                                         <field name="document_date"/>
+                                        <field name="red_on_supplier" invisible="1" />
                                         <field name="date" />
                                         <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
@@ -532,7 +534,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="18"/>
             <field name="arch" type="xml">
-                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
+                <tree colors="red:msf_calculated_balance &lt; 0;blue:state=='draft';black:(state in ('open','confirm') and msf_calculated_balance &gt;= 0)" string="Registers" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
@@ -685,11 +687,12 @@
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
-                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp'))">
+                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True">
                                     <field name="transfer_amount" invisible="1"/>
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                                     <field name="document_date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                    <field name="red_on_supplier" invisible="1" />
                                     <field name="date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
                                     <field name="cheque_number" required="1"/>
                                     <field name="sequence_for_reference"/>

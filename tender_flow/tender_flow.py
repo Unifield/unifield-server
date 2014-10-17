@@ -226,7 +226,17 @@ class tender(osv.osv):
         """
         Check consistency between lines and categ of tender
         """
+        exp_sol_obj = self.pool.get('expected.sale.order.line')
+
         self._check_service(cr, uid, ids, vals, context=context)
+
+        if ('state' in vals and vals.get('state') not in ('draft', 'comparison')) or \
+           ('sale_order_line_id' in vals and vals.get('sale_order_line_id')):
+            exp_sol_ids = exp_sol_obj.search(cr, uid, [
+                ('tender_id', 'in', ids),
+            ], context=context)
+            exp_sol_obj.unlink(cr, uid, exp_sol_ids, context=context)
+
         return super(tender, self).write(cr, uid, ids, vals, context=context)
 
     def onchange_categ(self, cr, uid, ids, categ, context=None):
@@ -447,9 +457,6 @@ class tender(osv.osv):
                     
         # update product supplierinfo and pricelist
         self.update_supplier_info(cr, uid, ids, context=context, integrity_test=False,)
-
-        # Delete lines on FO
-        self.delete_lines_on_fo(cr, uid, ids, context=context)
 
         # change tender state
         self.write(cr, uid, ids, {'state':'done'}, context=context)
@@ -687,9 +694,6 @@ class tender(osv.osv):
         t_line_obj = self.pool.get('tender.line')
         wf_service = netsvc.LocalService("workflow")
 
-        # Delete lines on FO
-        self.delete_lines_on_fo(cr, uid, ids, context=context)
-
         # set state
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         for tender in self.browse(cr, uid, ids, context=context):
@@ -739,24 +743,75 @@ class tender(osv.osv):
 
         return True
 
-    def delete_lines_on_fo(self, cr, uid, ids, context=None):
+    def check_empty_tender(self, cr, uid, ids, context=None):
         """
-        Update or cancel the FO/IR line that matches with the removed tender line
+        If the tender is empty, return a wizard to ask user if he wants to
+        cancel the whole tender
         """
-        del_line_obj = self.pool.get('tender.line.deleted')
+        tender_wiz_obj = self.pool.get('tender.cancel.wizard')
+        data_obj = self.pool.get('ir.model.data')
 
-        if context is None:
+        for tender in self.browse(cr, uid, ids, context=context):
+            if all(x.line_state in ('cancel', 'done') for x in tender.tender_line_ids):
+                wiz_id = tender_wiz_obj.create(cr, uid, {'tender_id': tender.id}, context=context)
+                view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'ask_tender_cancel_wizard_form_view')[1]
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'tender.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'view_id': [view_id],
+                        'res_id': wiz_id,
+                        'target': 'new',
+                        'context': context}
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'tender',
+            'view_type': 'form',
+            'view_mode': 'form, tree',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'crush',
+        }
+
+    def sourcing_document_state(self, cr, uid, ids, context=None):
+        """
+        Returns all documents that are in the sourcing for a givent tender
+        """
+        if not context:
             context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        del_line_ids = del_line_obj.search(cr, uid, [('tender_id', 'in', ids)], context=context)
+        sol_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
+        po_obj = self.pool.get('purchase.order')
 
-        for line in del_line_obj.browse(cr, uid, del_line_ids, context=context):
-            self.pool.get('tender.line').cancel_sourcing(cr, uid, [line.id], context=context, delete_line=True)
+        # corresponding sale order
+        so_ids = []
+        for tender in self.browse(cr, uid, ids, context=context):
+            if tender.sale_order_id and tender.sale_order_id.id not in so_ids:
+                so_ids.append(tender.sale_order_id.id)
 
-        return True
+        # from so, list corresponding po
+        all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+
+        # from listed po, list corresponding so
+        all_so_ids = po_obj.get_so_ids_from_po_ids(cr, uid, all_po_ids, context=context)
+
+        all_sol_not_confirmed_ids = []
+        # if we have sol_ids, we are treating a po which is make_to_order from sale order
+        if all_so_ids:
+            all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [
+                ('order_id', 'in', all_so_ids),
+                ('type', '=', 'make_to_order'),
+                ('product_id', '!=', False),
+                ('procurement_id.state', '!=', 'cancel'),
+                ('state', 'not in', ['confirmed', 'done']),
+            ], context=context)
+
+        return so_ids, all_po_ids, all_so_ids, all_sol_not_confirmed_ids
 
 tender()
 
@@ -887,17 +942,43 @@ class tender_line(osv.osv):
 #        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
+    def create(self, cr, uid, vals, context=None):
+        exp_sol_obj = self.pool.get('expected.sale.order.line')
+        tender_obj = self.pool.get('tender')
+
+        res = super(tender_line, self).create(cr, uid, vals, context=context)
+
+        if 'tender_id' in vals and not vals.get('sale_order_line_id'):
+            so_id = tender_obj.read(cr, uid, vals.get('tender_id'), ['sale_order_id'], context=context)['sale_order_id']
+            if so_id:
+                exp_sol_obj.create(cr, uid, {
+                    'order_id': so_id[0],
+                    'tender_line_id': res,
+                }, context=context)
+
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        exp_sol_obj = self.pool.get('expected.sale.order.line')
+
+        if 'state' in vals and vals.get('state') != 'draft':
+            exp_sol_ids = exp_sol_obj.search(cr, uid, [
+                ('tender_line_id', 'in', ids),
+            ], context=context)
+            exp_sol_obj.unlink(cr, uid, exp_sol_ids, context=context)
+
+        return super(tender_line, self).write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
 
-        if not 'created_by_rf' in default:
+        if not 'created_by_rfq' in default:
             default['created_by_rfq'] = False
 
         return super(tender_line, self).copy(cr, uid, id, default, context=context)
 
-    def cancel_sourcing(self,cr, uid, ids, context=None, delete_line=False):
+    def cancel_sourcing(self,cr, uid, ids, context=None):
         '''
         Cancel the line and re-source the FO line
         '''
@@ -905,7 +986,6 @@ class tender_line(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
         tender_obj = self.pool.get('tender')
-        del_line_obj = self.pool.get('tender.line.deleted')
 
         # Variables
         wf_service = netsvc.LocalService("workflow")
@@ -913,18 +993,16 @@ class tender_line(osv.osv):
         to_cancel = []
         sol_ids = {}
         sol_to_update = {}
+        sol_not_to_delete = []
         so_to_update = set()
         tender_to_update = set()
 
-        if delete_line:
-            line_brw = del_line_obj.browse(cr, uid, ids, context=context)
-        else:
-            line_brw = self.browse(cr, uid, ids, context=context)
-
-        for line in line_brw:
+        for line in self.browse(cr, uid, ids, context=context):
             tender_to_update.add(line.tender_id.id)
-            if line.sale_order_line_id and delete_line:
+            if line.sale_order_line_id:
                 so_to_update.add(line.sale_order_line_id.order_id.id)
+                if line.sale_order_line_id.order_id.procurement_request:
+                    sol_not_to_delete.append(line.sale_order_line_id.id)
                 to_cancel.append(line.id)
                 # Get the ID and the product qty of the FO line to re-source
                 diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.qty, line.sale_order_line_id.product_uom.id)
@@ -939,27 +1017,27 @@ class tender_line(osv.osv):
             else:
                 to_cancel.append(line.id)
 
-        if to_cancel and not delete_line:
+        if to_cancel:
             self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
-
-        if not delete_line:
-            if to_cancel:
-                self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
-                del_line_obj.create_from_tender_line(cr, uid, to_cancel, context=context)
-            if to_remove:
-                del_line_obj.create_from_tender_line(cr, uid, to_remove, context=context)
 
         if sol_ids:
             for sol in sol_ids:
                 sol_obj.add_resource_line(cr, uid, sol, False, sol_ids[sol], context=context)
 
         # Update sale order lines
+        so_to_cancel_ids = []
         for sol in sol_to_update:
-            sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+            context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete
+            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+            if so_to_cancel_id:
+                so_to_cancel_ids.append(so_to_cancel_id)
+
+        if context.get('update_or_cancel_line_not_delete', False):
+            del context['update_or_cancel_line_not_delete']
 
         # Update the FO state
-        for so in so_to_update:
-            wf_service.trg_write(uid, 'sale.order', so, cr)
+        #for so in so_to_update:
+        #    wf_service.trg_write(uid, 'sale.order', so, cr)
 
         # UF-733: if all tender lines have been compared (have PO Line id), then set the tender to be ready
         # for proceeding to other actions (create PO, Done etc) 
@@ -975,7 +1053,7 @@ class tender_line(osv.osv):
         if context.get('fake_unlink'):
             return to_remove
 
-        return True
+        return so_to_cancel_ids
 
     def fake_unlink(self, cr, uid, ids, context=None):
         '''
@@ -991,6 +1069,8 @@ class tender_line(osv.osv):
         '''
         # Objects
         wiz_obj = self.pool.get('tender.line.cancel.wizard')
+        tender_obj = self.pool.get('tender')
+        exp_sol_obj = self.pool.get('expected.sale.order.line')
 
         # Variables
         if context is None:
@@ -999,12 +1079,46 @@ class tender_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # Check if the line has been already deleted
+        ids = self.search(cr, uid, [('id', 'in', ids), ('line_state', '!=', 'cancel')], context=context)
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('The line has already been canceled - Please refresh the page'),
+            )
+
         tender_id = False
         for line in self.browse(cr, uid, ids, context=context):
             tender_id = line.tender_id.id
+            wiz_id = False
+            last_line = False
+
+            if line.tender_id.sale_order_id:
+                exp_sol_ids = exp_sol_obj.search(cr, uid, [
+                    ('tender_id', '=', tender_id),
+                    ('tender_line_id', '!=', line.id),
+                ], context=context)
+
+                tender_so_ids, po_ids, so_ids, sol_nc_ids = tender_obj.sourcing_document_state(cr, uid, [tender_id], context=context)
+                if line.sale_order_line_id and line.sale_order_line_id.id in sol_nc_ids:
+                    sol_nc_ids.remove(line.sale_order_line_id.id)
+
+                if po_ids and not exp_sol_ids and not sol_nc_ids:
+                    last_line = True
+
             if line.sale_order_line_id:
-                wiz_id = wiz_obj.create(cr, uid, {'tender_line_id': line.id}, context=context)
-        
+                wiz_id = wiz_obj.create(cr, uid, {
+                    'tender_line_id': line.id,
+                    'last_line': last_line,
+                }, context=context)
+            elif not exp_sol_ids and line.tender_id.sale_order_id:
+                wiz_id = wiz_obj.create(cr, uid, {
+                    'tender_line_id': line.id,
+                    'only_exp': True,
+                    'last_line': last_line,
+                }, context=context)
+
+            if wiz_id:
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'tender.line.cancel.wizard',
                         'view_type': 'form',
@@ -1012,8 +1126,12 @@ class tender_line(osv.osv):
                         'res_id': wiz_id,
                         'target': 'new',
                         'context': context}
-        
-        self.fake_unlink(cr, uid, ids, context=context)
+
+        for line_id in ids:
+            wiz_id = wiz_obj.create(cr, uid, {'tender_line_id': line_id}, context=context)
+
+        if wiz_id:
+            return wiz_obj.just_cancel(cr, uid, wiz_id, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'tender',
@@ -1268,6 +1386,15 @@ class procurement_order(osv.osv):
         '''
         self.write(cr, uid, ids, {'is_rfq_done': True, 'state': 'exception',}, context=context)
         return True
+
+    def _get_pricelist_from_currency(self, cr, uid, currency_id, context=None):
+        price_obj = self.pool.get('product.pricelist')
+        price_ids = price_obj.search(cr, uid, [
+            ('currency_id', '=', currency_id),
+            ('type', '=', 'purchase'),
+        ], context=context)
+
+        return price_ids and price_ids[0] or False
     
     def action_po_assign(self, cr, uid, ids, context=None):
         '''
@@ -1304,9 +1431,19 @@ class procurement_order(osv.osv):
         if procurement.tender_id:
             values['origin_tender_id'] = procurement.tender_id.id
 
+        # set tender line currency in purchase order
+        if procurement.tender_line_id:
+            cur_id = procurement.tender_line_id.currency_id.id
+            pricelist_id = self._get_pricelist_from_currency(cr, uid, cur_id, context=context)
+            if pricelist_id:
+                values['pricelist_id'] = pricelist_id
+
         # set rfq link in purchase order
         if procurement.rfq_id:
-            values['origin_rfq_id'] = procurement.rfq_id.id
+            values.update({
+                'origin_rfq_id': procurement.rfq_id.id,
+                'pricelist_id': procurement.rfq_id.pricelist_id.id,
+            })
 
         values['date_planned'] = procurement.date_planned
         
@@ -1601,7 +1738,6 @@ class purchase_order(osv.osv):
 #                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 #                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
         self.create_extra_lines_on_fo(cr, uid, ids, context=context)
-        self.delete_lines_on_fo(cr, uid, ids, context=context)
 
         return self.write(cr, uid, ids, {'state': 'done'}, context=context)
 
@@ -1699,6 +1835,12 @@ class tender_line_cancel_wizard(osv.osv_memory):
 
     _columns = {
         'tender_line_id': fields.many2one('tender.line', string='Tender line', required=True),
+        'only_exp': fields.boolean(
+            string='Only added lines',
+        ),
+        'last_line': fields.boolean(
+            string='Last line of the FO to source',
+        ),
     }
 
 
@@ -1710,7 +1852,9 @@ class tender_line_cancel_wizard(osv.osv_memory):
         line_obj = self.pool.get('tender.line')
         tender_obj = self.pool.get('tender')
         data_obj = self.pool.get('ir.model.data')
+        so_obj = self.pool.get('sale.order')
         tender_wiz_obj = self.pool.get('tender.cancel.wizard')
+        wf_service = netsvc.LocalService("workflow")
 
         # Variables
         if context is None:
@@ -1721,29 +1865,37 @@ class tender_line_cancel_wizard(osv.osv_memory):
 
         line_ids = []
         tender_ids = set()
+        so_ids = set()
         for wiz in self.browse(cr, uid, ids, context=context):
             tender_ids.add(wiz.tender_line_id.tender_id.id)
             line_ids.append(wiz.tender_line_id.id)
+            if wiz.tender_line_id.tender_id.sale_order_id:
+                so_ids.add(wiz.tender_line_id.tender_id.sale_order_id.id)
 
         if context.get('has_to_be_resourced'):
             line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
 
         line_obj.fake_unlink(cr, uid, line_ids, context=context)
 
-        for tender in tender_obj.browse(cr, uid, list(tender_ids), context=context):
-            if all(x.line_state in ('cancel', 'done') for x in tender.tender_line_ids):
-                wiz_id = tender_wiz_obj.create(cr, uid, {'tender_id': tender.id}, context=context)
-                view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'ask_tender_cancel_wizard_form_view')[1]
-                return {'type': 'ir.actions.act_window',
-                        'res_model': 'tender.cancel.wizard',
-                        'view_type': 'form',
-                        'view_mode': 'form',
-                        'view_id': [view_id],
-                        'res_id': wiz_id,
-                        'target': 'new',
-                        'context': context}
+        tender_so_ids, po_ids, so_ids, sol_nc_ids = tender_obj.sourcing_document_state(cr, uid, list(tender_ids), context=context)
+        for po_id in po_ids:
+            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
 
-        return {'type': 'ir.actions.act_window_close'}
+        so_to_cancel_ids = []
+        if tender_so_ids:
+            for so_id in tender_so_ids:
+                if so_obj._get_ready_to_cancel(cr, uid, so_id, context=context)[so_id]:
+                    so_to_cancel_ids.append(so_id)
+
+        if so_to_cancel_ids:
+            # Ask user to choose what must be done on the FO/IR
+            context.update({
+                'from_tender': True,
+                'tender_ids': list(tender_ids),
+            })
+            return so_obj.open_cancel_wizard(cr, uid, set(so_to_cancel_ids), context=context)
+
+        return tender_obj.check_empty_tender(cr, uid, list(tender_ids), context=context)
 
     def cancel_and_resource(self, cr, uid, ids, context=None):
         '''
@@ -1774,6 +1926,7 @@ class tender_cancel_wizard(osv.osv_memory):
         '''
         # Objects
         line_obj = self.pool.get('tender.line')
+        so_obj = self.pool.get('sale.order')
 
         # Variables
         if context is None:
@@ -1786,8 +1939,11 @@ class tender_cancel_wizard(osv.osv_memory):
         line_ids = []
         tender_ids = []
         rfq_ids = []
+        so_ids = []
         for wiz in self.browse(cr, uid, ids, context=context):
             tender_ids.append(wiz.tender_id.id)
+            if wiz.tender_id.sale_order_id and wiz.tender_id.sale_order_id.id not in so_ids:
+                so_ids.append(wiz.tender_id.sale_order_id.id)
             for line in wiz.tender_id.tender_line_ids:
                 line_ids.append(line.id)
             for rfq in wiz.tender_id.rfq_ids:
@@ -1803,6 +1959,16 @@ class tender_cancel_wizard(osv.osv_memory):
 
         for tender in tender_ids:
             wf_service.trg_validate(uid, 'tender', tender, 'tender_cancel', cr)
+
+        so_to_cancel_ids = []
+        if so_ids:
+            for so_id in so_ids:
+                if so_obj._get_ready_to_cancel(cr, uid, so_id, context=context)[so_id]:
+                    so_to_cancel_ids.append(so_id)
+
+        if so_to_cancel_ids:
+            # Ask user to choose what must be done on the FO/IR
+            return so_obj.open_cancel_wizard(cr, uid, set(so_to_cancel_ids), context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -1827,59 +1993,25 @@ class tender_cancel_wizard(osv.osv_memory):
 tender_cancel_wizard()
 
 
-class tender_line_deleted(osv.osv):
-    _name = 'tender.line.deleted'
+class expected_sale_order_line(osv.osv):
+    _inherit = 'expected.sale.order.line'
 
     _columns = {
-        'sale_order_line_id': fields.many2one(
-            'sale.order.line',
-            string='FO/IR line',
+        'tender_line_id': fields.many2one(
+            'tender.line',
+            string='Tender line',
+            ondelete='cascade',
         ),
-        'has_to_be_resourced': fields.boolean(
-            string='Has to be resourced',
-        ),
-        'qty': fields.float(
-            digits=(16,2),
-            string='Qty',
-        ),
-        'product_uom': fields.many2one(
-            'product.uom',
-            string='UoM',
-        ),
-        'line_tender_id': fields.integer(
-            string='ID of the deleted tender line',
-        ),
-        'tender_id': fields.many2one(
-            'tender',
+        'tender_id': fields.related(
+            'tender_line_id',
+            'tender_id',
             string='Tender',
+            type='many2one',
+            relation='tender',
         ),
     }
 
-    def create_from_tender_line(self, cr, uid, ids, context=None):
-        '''
-        Create record of tender.line.deleted according to given
-        ids (List of ID of tender.line)
-        '''
-        line_obj = self.pool.get('tender.line')
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = []
-
-        for tl in line_obj.browse(cr, uid, ids, context=context):
-            res.append(self.create(cr, uid, {
-                'sale_order_line_id': tl.sale_order_line_id and tl.sale_order_line_id.id or False,
-                'has_to_be_resourced': tl.has_to_be_resourced,
-                'qty': tl.qty,
-                'product_uom': tl.product_uom and tl.product_uom.id or False,
-                'line_tender_id': tl.id,
-                'tender_id': tl.tender_id and tl.tender_id.id or False,
-            }, context=context))
-
-        return res
-
-tender_line_deleted()
+expected_sale_order_line()
 
 
 class ir_values(osv.osv):

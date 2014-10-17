@@ -289,7 +289,7 @@ class shipment_family_processor(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             num_of_packs = line.to_pack - line.from_pack + 1
             res[line.id] = {
-                'volume': (line.length * line.width * line.height * float(num_of_packs)) / 100.0,
+                'volume': (line.length * line.width * line.height * float(num_of_packs)) / 1000.0,
                 'num_of_packs': num_of_packs,
                 'selected_weight': line.weight * line.selected_number,
             }

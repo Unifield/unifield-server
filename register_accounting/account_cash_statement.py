@@ -69,7 +69,8 @@ class account_cash_statement(osv.osv):
 
         # UFTP-116: Fixed a serious problem detected very late: the cashbox lines created by default even for the Cash Reg from sync!
         # This leads to the problem that each time, a Cash Reg is new from a sync, it added new 16 lines for the Cash Reg
-        if journal.type == 'cash' and not context.get('sync_update_execution', False):
+        sync_update = context.get('sync_update_execution', False)
+        if journal.type == 'cash' and not sync_update:
             open_close = self._get_cash_open_close_box_lines(cr, uid, context)
             if vals.get('starting_details_ids', False):
                 for start in vals.get('starting_details_ids'):
@@ -86,6 +87,13 @@ class account_cash_statement(osv.osv):
                 'ending_details_ids': False,
                 'starting_details_ids': False
             })
+
+        # UF-2479: Block the creation of the register if the given period is not open, in sync context
+        if 'period_id' in vals and sync_update:
+            period = self.pool.get('account.period').browse(cr, uid, vals.get('period_id'), context)
+            if period and period.state == 'created':
+                raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Register is created') % (period.name,))
+
         # @@@end
         # Observe register state
         prev_reg_id = vals.get('prev_reg_id', False)
@@ -97,7 +105,7 @@ class account_cash_statement(osv.osv):
                     vals.update({'balance_start': prev_reg.msf_calculated_balance})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists (or discard if they come from sync)
-        if prev_reg_id and not context.get('sync_update_execution', False):
+        if prev_reg_id and not sync_update:
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
         # update balance_end
         self._get_starting_balance(cr, uid, [res_id], context=context)

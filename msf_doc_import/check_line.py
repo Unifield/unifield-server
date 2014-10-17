@@ -320,6 +320,44 @@ def quantity_value(**kwargs):
     return {'product_qty': product_qty, 'error_list': error_list, 'warning_list': warning_list}
 
 
+def number_value(**kwargs):
+    """
+    get/check value of a number cell
+    kwargs must contains 'field_name' and 'cell_nb' values
+    kwargs must contains 'to_write/error_list' and 'to_write/warning_list' values
+    kwargs should contain a 'field_desc' value
+    kwargs should contain a 'default' value (0 if not set)
+    :rtype: dict
+    """
+    field_name = kwargs['field_name']  # let raise an except if missing bc mandatory
+    cell_nb = kwargs['cell_nb']  # let raise an except if missing bc mandatory
+    field_desc = kwargs.get('field_desc', 'Cell %d' % (cell_nb, ))
+    default = kwargs.get('default', 0)
+    res_val = default
+
+    row = kwargs['row']
+    error_list = kwargs['to_write']['error_list']
+    # with warning_list: the line does not appear in red, it is just informative
+    warning_list = kwargs['to_write']['warning_list']
+    try:
+        if not row.cells[cell_nb]:
+            warning_list.append(_('%s was not set. It is set to %d by default.') % (field_desc, default, ))
+        else:
+            if row.cells[cell_nb].type in ['int', 'float']:
+                res_val = row.cells[cell_nb].data
+            else:
+                error_list.append(_('%s was not a number, it is set to %d by default.') % (field_desc, default, ))
+    # if the cell is empty
+    except IndexError:
+        warning_list.append(_('%s was not set. It is set to %d by default.') % (field_desc, default, ))
+    res = {
+        'error_list': error_list,
+        'warning_list': warning_list
+    }
+    res[field_name] = res_val
+    return res
+
+
 def compute_uom_value(cr, uid, **kwargs):
     """
     Retrieves product UOM from Excel file

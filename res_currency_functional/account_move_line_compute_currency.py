@@ -109,7 +109,7 @@ class account_move_line_compute_currency(osv.osv):
                 if rline.date > oldiest_date:
                     oldiest_date = rline.date
 #                break
-            
+
             # Search attached period
             period_id = None
             for tested_date in [oldiest_date, current_date]:
@@ -119,10 +119,10 @@ class account_move_line_compute_currency(osv.osv):
                 if self.pool.get('account.period').browse(cr, uid, period_ids[0]).state == 'draft':
                     period_id = period_ids[0]
                     break
-            
+
             if not period_id:
                 raise osv.except_osv(_('Warning'), _('No open period found for this date: %s') % current_date)
-            
+
             # verify that a fx gain/loss account exists
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
             if not search_ids:
@@ -163,7 +163,7 @@ class account_move_line_compute_currency(osv.osv):
                     raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
                 distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0],})
                 self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
-            
+
             move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': oldiest_date or current_date}, context=context)
             # Create default vals for the new two move lines
             vals = {
@@ -335,7 +335,7 @@ class account_move_line_compute_currency(osv.osv):
             # source_date is more important than date
             if move_line.source_date:
                 ctx['date'] = move_line.source_date
-            
+
             if move_line.period_id.state != 'done':
                 if move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0:
                     # amount currency is not set; it is computed from the 2 other fields
@@ -346,7 +346,7 @@ class account_move_line_compute_currency(osv.osv):
                         move_line.functional_currency_id.id, move_line.credit_currency, round=True, context=ctx)
                     cr.execute('update account_move_line set debit=%s, \
                                                              credit=%s, \
-                                                             amount_currency=%s where id=%s', 
+                                                             amount_currency=%s where id=%s',
                               (debit_computed, credit_computed, amount_currency, move_line.id))
                 elif move_line.debit_currency == 0.0 and \
                      move_line.credit_currency == 0.0 and \
@@ -361,7 +361,7 @@ class account_move_line_compute_currency(osv.osv):
                     amount_currency = debit_currency_computed - credit_currency_computed
                     cr.execute('update account_move_line set debit_currency=%s, \
                                                              credit_currency=%s, \
-                                                             amount_currency=%s where id=%s', 
+                                                             amount_currency=%s where id=%s',
                               (debit_currency_computed, credit_currency_computed, amount_currency, move_line.id))
                 elif move_line.debit_currency == 0.0 and \
                      move_line.credit_currency == 0.0 and \
@@ -374,7 +374,7 @@ class account_move_line_compute_currency(osv.osv):
                     else:
                         debit_currency = move_line.amount_currency
                     cr.execute('update account_move_line set debit_currency=%s, \
-                                                             credit_currency=%s where id=%s', 
+                                                             credit_currency=%s where id=%s',
                               (debit_currency, credit_currency, move_line.id))
                 # Refresh the associated analytic lines
                 analytic_line_ids = []
@@ -400,16 +400,16 @@ class account_move_line_compute_currency(osv.osv):
         newvals = {}
         ctxcurr = {}
         cur_obj = self.pool.get('res.currency')
-        
+
         # WARNING: source_date field have priority to date field. This is because of SP2 Specifications
         if vals.get('date', date):
             ctxcurr['date'] = vals.get('date', date)
         if vals.get('source_date', source_date):
             ctxcurr['date'] = vals.get('source_date', source_date)
-        
+
 #        if ctxcurr.get('date', False):
 #            newvals['date'] = ctxcurr['date']
-        
+
         if vals.get('credit_currency') or vals.get('debit_currency'):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
@@ -443,6 +443,12 @@ class account_move_line_compute_currency(osv.osv):
         # Some verifications
         self.check_date(cr, uid, vals)
         date_to_compute = False
+
+        if 'period_id' in vals:
+            period = self.pool.get('account.period').browse(cr, uid, vals.get('period_id'), context)
+            if period and period.state == 'created':
+                raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Item is created') % (period.name,))
+
         if not 'date' in vals:
             if vals.get('move_id'):
                 date_to_compute = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['date'])['date']
@@ -450,9 +456,12 @@ class account_move_line_compute_currency(osv.osv):
                 logger = netsvc.Logger()
                 logger.notifyChannel("warning", netsvc.LOG_WARNING, "No date for new account_move_line!")
                 traceback.print_stack()
+                # UTP-1194: Raise exception if the move is not in vals when creating move line
+                raise osv.except_osv(_('Error !'), _('Cannot create Journal Item due to missing the parent Journal Entry or Date'))
+
         if not context:
             context = {}
-        
+
         ctx = context.copy()
         data = {}
         if 'journal_id' in vals:
@@ -467,10 +476,10 @@ class account_move_line_compute_currency(osv.osv):
                 m_currency = self.pool.get('account.move').read(cr, uid, vals.get('move_id'), ['manual_currency_id'])
                 if m_currency and m_currency.get('manual_currency_id'):
                     vals.update({'currency_id': m_currency.get('manual_currency_id')[0]})
-        
+
         account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
         curr_fun = account.company_id.currency_id.id
-        
+
         newvals = vals.copy()
         if not newvals.get('currency_id'):
             if account.currency_id:
@@ -516,7 +525,7 @@ class account_move_line_compute_currency(osv.osv):
 
     def _get_journal_move_line(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, [('journal_id', 'in', ids)])
-    
+
     def _get_line_account_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]

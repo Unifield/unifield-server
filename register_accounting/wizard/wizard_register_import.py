@@ -34,6 +34,7 @@ import pooler
 from ..register_tools import open_register_view
 from lxml import etree
 
+
 class wizard_register_import(osv.osv_memory):
     _name = 'wizard.register.import'
 
@@ -61,7 +62,7 @@ class wizard_register_import(osv.osv_memory):
         view = super(wizard_register_import, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type=='form':
             form = etree.fromstring(view['arch'])
-            for el in [('document_date', 'Document Date'), ('posting_date', 'Posting Date'), ('description', 'Description'), ('reference', 'Reference'), ('account', 'Account'), ('third_party', 'Third Party'), ('amount_in', 'Amount In'), ('amount_out', 'Amount Out'), ('destination', 'Destination'), ('cost_center', 'Cost Centre'), ('funding_pool', 'Funding Pool'), ('proprietary_instance', "Proprietary instance's code"), ('journal', "Journal's code"), ('currency', "Currency's code")]:
+            for el in [('document_date', 'Document Date'), ('posting_date', 'Posting Date'), ('cheque_number', 'Cheque Number'), ('description', 'Description'), ('reference', 'Reference'), ('account', 'Account'), ('third_party', 'Third Party'), ('amount_in', 'Amount In'), ('amount_out', 'Amount Out'), ('destination', 'Destination'), ('cost_center', 'Cost Centre'), ('funding_pool', 'Funding Pool'), ('proprietary_instance', "Proprietary instance's code"), ('journal', "Journal's code"), ('currency', "Currency's code"),('free1', "Free 1"),('free2', "Free 2")]:
                 fields = form.xpath('/form//th[@class="' + el[0] + '"]')
                 for field in fields:
                     field.text = _(el[1])
@@ -86,7 +87,7 @@ class wizard_register_import(osv.osv_memory):
     def create_entries(self, cr, uid, ids, remaining_percent=50.0, context=None):
         """
         Create register lines with/without analytic distribution.
-        If all neeeded info for analytic distribution are present: attempt to create analytic distribution.
+        If all needed info for analytic distribution are present: attempt to create analytic distribution.
         If this one is invalid, delete it!
         """
         # Checks
@@ -113,6 +114,7 @@ class wizard_register_import(osv.osv_memory):
                 'description',
                 'ref',
                 'document_date',
+                'cheque_number',
                 'account_id',
                 'debit',
                 'credit',
@@ -123,7 +125,10 @@ class wizard_register_import(osv.osv_memory):
                 'funding_pool_id',
                 'cost_center_id',
                 'date',
-                'currency_id'
+                'currency_id',
+                'cheque_number',
+                'free_1_id',
+                'free_2_id'
             ]
             b_entries = self.pool.get('wizard.register.import.lines').read(cr, uid, entries, fields)
             current_percent = 100.0 - remaining_percent
@@ -142,6 +147,9 @@ class wizard_register_import(osv.osv_memory):
                 date = l.get('date', False)
                 currency_id = l.get('currency_id', False) and l.get('currency_id')[0] or False
                 account = account_obj.read(cr, uid, account_id, ['is_analytic_addicted'])
+                cheque_number = l.get('cheque_number')
+                free_1_id = l.get('free_1_id',False) and l.get('free_1_id')[0] or False
+                free_2_id = l.get('free_2_id',False) and l.get('free_2_id')[0] or False
 
                 vals = {
                     'name':                l.get('description', ''),
@@ -155,6 +163,10 @@ class wizard_register_import(osv.osv_memory):
                     'transfer_journal_id': transfer_journal_id,
                     'statement_id':        register_id,
                 }
+                if cheque_number:
+                    vals['cheque_number'] = str(cheque_number)
+                else:
+                    vals['cheque_number'] = ''
                 absl_id = absl_obj.create(cr, uid, vals, context)
                 # Analytic distribution
                 distrib_id = False
@@ -173,6 +185,15 @@ class wizard_register_import(osv.osv_memory):
                     self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': funding_pool_id or msf_fp_id, 'cost_center_id': cost_center_id,})
                     self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+
+                    if free_1_id:
+                        common_vals.update({'analytic_id': free_1_id,})
+                        self.pool.get('free.1.distribution.line').create(cr,uid,common_vals)
+
+                    if free_2_id:
+                        common_vals.update({'analytic_id': free_2_id,})
+                        self.pool.get('free.2.distribution.line').create(cr,uid,common_vals)
+
                     # Check analytic distribution. Use SKIP_WRITE_CHECK to not do anything else that writing analytic distribution field
                     absl_obj.write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,}, context={'skip_write_check': True})
                     # Add this line to be check at the end of the process
@@ -211,6 +232,7 @@ class wizard_register_import(osv.osv_memory):
         created = 0
         processed = 0
         errors = []
+        cheque_numbers = []
 
         try:
             # Update wizard
@@ -244,15 +266,18 @@ class wizard_register_import(osv.osv_memory):
                 cols = {
                     'document_date': 0,
                     'posting_date':  1,
-                    'description':   2,
-                    'reference':     3,
-                    'account':       4,
-                    'third_party':   5,
-                    'amount_in':     6,
-                    'amount_out':    7,
-                    'destination':   8,
-                    'cost_center':   9,
-                    'funding_pool': 10,
+                    'cheque_number': 2,
+                    'description':   3,
+                    'reference':     4,
+                    'account':       5,
+                    'third_party':   6,
+                    'amount_in':     7,
+                    'amount_out':    8,
+                    'destination':   9,
+                    'cost_center':   10,
+                    'funding_pool':  11,
+                    'free1':         12,
+                    'free2':         13,
                 }
                 # Number of line to bypass in line's count
                 base_num = 5 # because of Python that begins to 0.
@@ -330,9 +355,14 @@ class wizard_register_import(osv.osv_memory):
                     r_document_date = False
                     r_date = False
                     r_period = False
+                    r_cheque_number = False
+                    r_free1 = False
+                    r_free2 = False
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+                    # utp1043 pad the line with False if some trailing columns missing. Occurs on Excel 2003
+                    line.extend([False for i in range(len(cols) - len(line))])
                     # Bypass this line if NO debit AND NO credit
                     try:
                         bd = line[cols['amount_in']]
@@ -343,6 +373,7 @@ class wizard_register_import(osv.osv_memory):
                     except IndexError, e:
                         bc = 0.0
                     if (not bd and not bc) or (bd == 0.0 and bc == 0.0):
+                        errors.append(_('Line %s: Neither Amount IN or Amount OUT are present.') % (current_line_num,))
                         continue
                     if bd and bc and (bc != 0.0 or bd != 0.0):
                         errors.append(_('Line %s: Double amount, IN and OUT. Use only one!') % (current_line_num,))
@@ -351,6 +382,7 @@ class wizard_register_import(osv.osv_memory):
                     # Get amount
                     r_debit = bd
                     r_credit = bc
+
                     # Mandatory columns
                     if not line[cols['document_date']]:
                         errors.append(_('Line %s: Document date is missing.') % (current_line_num,))
@@ -358,7 +390,7 @@ class wizard_register_import(osv.osv_memory):
                     if not line[cols['posting_date']]:
                         errors.append(_('Line %s: Posting date is missing.') % (current_line_num,))
                         continue
-                    if not line[cols['description']]:
+                    if line[cols['document_date']] and not line[cols['description']]:
                         errors.append(_('Line %s: Description is missing.') % (current_line_num,))
                         continue
                     if not line[cols['account']]:
@@ -375,7 +407,7 @@ class wizard_register_import(osv.osv_memory):
                     r_description = line[cols['description']]
                     # Check document/posting dates
                     if line[cols['document_date']] > line[cols['posting_date']]:
-                        errors.append(_("Line %s. Document date '%s' should be inferior or equal to Posting date '%s'.") % (current_line_num, line[cols['document_date']], line[cols['posting_date']],))
+                        errors.append(_("Line %s. Document date '%s' should be earlier than or equal to Posting date '%s'.") % (current_line_num, line[cols['document_date']], line[cols['posting_date']],))
                         continue
                     # Check that a period exist and is open
                     period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, r_date, context)
@@ -394,20 +426,49 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
                         continue
                     r_account = account_ids[0]
-                    account = self.pool.get('account.account').read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
+                    account_obj = self.pool.get('account.account')
+                    restricted_ids = account_obj.search(cr, uid, [('restricted_area', '=', 'register_lines'), ('id', '=', r_account)])
+                    if not restricted_ids and account_code != '10210':
+                        errors.append(_('Line %s. G/L account %s is restricted.') % (current_line_num, account_code,))
+                        continue
+                    account = account_obj.read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
                     type_for_register = account.get('type_for_register', '')
+
+                    # cheque_number
+                    r_cheque_number = line[cols['cheque_number']]
+                    # cheque unicity
+                    register_type = wiz.register_id.journal_id.type
+                    if register_type == 'cheque':
+                        if r_cheque_number:
+                            if r_cheque_number in cheque_numbers:
+                                errors.append(_('Line %s. Cheque number %s is duplicated from another line') % (current_line_num,r_cheque_number,))
+                            absl = self.pool.get('account.bank.statement.line')
+                            cheque_number_id = absl.search(cr, uid, [('cheque_number','=',r_cheque_number)],context=context)
+                            if cheque_number_id:
+                               errors.append(_('Line %s. Cheque number %s has already been entered into the system.') % (current_line_num,r_cheque_number,))
+                            cheque_numbers.append(r_cheque_number)
+                        else:
+                            errors.append(_('Line %s. Cheque number is missing') % (current_line_num,))
                     # Check that Third party exists (if not empty)
                     tp_label = _('Partner')
                     partner_type = 'partner'
+                    third_party_journal_ids = None
                     if line[cols['third_party']]:
                         if type_for_register == 'advance':
                             tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             tp_label = _('Employee')
                             partner_type = 'employee'
                         elif type_for_register in ['transfer', 'transfer_same']:
-                            tp_ids = self.pool.get('account.bank.statement').search(cr, uid, [('name', '=', line[cols['third_party']])])
+                            tp_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', line[cols['third_party']])])
                             tp_label = _('Journal')
                             partner_type = 'journal'
+                            tp_journal = self.pool.get('account.journal').browse(cr, uid, tp_ids, context=context)[0]
+                            if type_for_register == 'transfer':
+                                if tp_journal.currency.id == register_currency:
+                                    errors.append(_('Line %s. A Transfer Journal must have a different currency than the register.') % (current_line_num,))
+                            if type_for_register == 'transfer_same':
+                                if tp_journal.currency.id != register_currency:
+                                    errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
                         else:
                             tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             partner_type = 'partner'
@@ -418,9 +479,25 @@ class wizard_register_import(osv.osv_memory):
                             partner_type = 'employee'
                             # If really not, raise an error for this line
                             if not tp_ids:
-                                errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['third_party']],))
+                                errors.append(_('Line %s. Third party not found: %s') % (current_line_num, line[cols['third_party']],))
                                 continue
                         r_partner = tp_ids[0]
+
+                    # free 1
+                    if line[cols['free1']]:
+                        free1 = line[cols['free1']]
+                        free_1_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FREE1'), ('code', '=', free1)])
+                        if free_1_ids:
+                            r_free1 = free_1_ids[0]
+
+
+                    # free 2
+                    if line[cols['free2']]:
+                        free2 = line[cols['free2']]
+                        free_2_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FREE2'), ('code', '=', free2)])
+                        if free_2_ids:
+                            r_free2 = free_2_ids[0]
+
                     # Check analytic axis only if G/L account is an analytic-a-holic account
                     if account.get('is_analytic_addicted', False):
                         # Check Destination
@@ -457,7 +534,7 @@ class wizard_register_import(osv.osv_memory):
                     # - Booking Currency
                     vals = {
                         'description': r_description or '',
-                        'ref': line[3]  or '',
+                        'ref': line[4]  or '',
                         'account_id': r_account or False,
                         'debit': r_debit or 0.0,
                         'credit': r_credit or 0.0,
@@ -469,6 +546,9 @@ class wizard_register_import(osv.osv_memory):
                         'currency_id': r_currency or False,
                         'wizard_id': wiz.id,
                         'period_id': r_period or False,
+                        'cheque_number': r_cheque_number or False,
+                        'free_1_id': r_free1 or False,
+                        'free_2_id': r_free2 or False,
                     }
                     if type_for_register == 'advance':
                         vals.update({'employee_id': r_partner,})
@@ -587,7 +667,10 @@ class wizard_register_import_lines(osv.osv):
         'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
         'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
         'wizard_id': fields.integer("Wizard", required=True, readonly=True),
-        'transfer_journal_id': fields.many2one('account.bank.statement', 'Transfer Journal', required=False, readonly=True,)
+        'transfer_journal_id': fields.many2one('account.journal', 'Transfer Journal', required=False, readonly=True,),
+        'cheque_number': fields.text("Cheque Number", required=False, readonly=True),
+        'free_1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'free_2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
     }
 
     _defaults = {
