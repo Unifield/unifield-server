@@ -911,6 +911,8 @@ class Form(TinyInputWidget):
                     continue
                 try:
                     fields[name]['link'] = attrs.get('link', '1')
+                    if fields[name].get('no_write_access') and 'attrs' in attrs:
+                        del attrs['attrs']
                     fields[name].update(attrs)
                 except:
                     print "-"*30,"\n malformed tag for:", attrs
