@@ -228,7 +228,6 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
 </Borders>
 <Font  ss:Bold="1"/>
-<Interior  ss:Pattern="Solid"/>
 </Style>
 
 <Style ss:ID="s43">
@@ -424,7 +423,7 @@
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${_('Reporting type:')}</Data>
 </Cell>
-<Cell ss:StyleID="s25">
+<Cell ss:StyleID="s21">
 <Data ss:Type="String">${( o.reporting_type and getSel(o, 'reporting_type') or '')|x}</Data>
 </Cell>
 </Row>
@@ -432,7 +431,7 @@
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${_('Cost centers:')}</Data>
 </Cell>
-<Cell ss:StyleID="s25">
+<Cell ss:StyleID="s21">
 <Data ss:Type="String">${( getCostCenter(o)  or '')|x}</Data>
 </Cell>
 </Row>
