@@ -30,6 +30,7 @@ from lxml import etree
 import re
 import netsvc
 
+
 import decimal_precision as dp
 
 class account_invoice(osv.osv):
@@ -991,6 +992,7 @@ class account_invoice_line(osv.osv):
          - compute total amount (check_total field)
          - write total to the register line
         """
+
         if not context:
             context = {}
         if isinstance(ids, (int, long)):

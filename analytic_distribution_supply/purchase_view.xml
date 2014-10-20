@@ -47,11 +47,8 @@
             <field name="arch" type="xml">
                 <field name="account_analytic_id" position="replace">
                     <group colspan="6" attrs="{'invisible': [('rfq_ok', '=', True)]}">
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="{'partner_type': parent.partner_type}" colspan="1" attrs="{'invisible': ['|', ('analytic_distribution_id', '=', False), ('line_number','=',0)]}"/>
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="{'partner_type': parent.partner_type}" colspan="1" attrs="{'invisible': ['|', ('analytic_distribution_id', '!=', False), ('line_number','=',0)]}"/>
                             <field name="analytic_distribution_id" invisible="1"/>
                             <field name="line_number" invisible="1"/>
-                            <field name="have_analytic_distribution_from_header"/>
                             <label string=" " />
                             <field name="account_4_distribution" invisible="1"/>
                     </group>

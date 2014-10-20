@@ -1258,7 +1258,8 @@ stock moves which are already processed : '''
         # from so, list corresponding po
         all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
         for exp_sol in exp_sol_obj.browse(cr, uid, exp_sol_ids, context=context):
-            if exp_sol.po_id.id not in all_po_ids:
+            # UFTP-335: Added a check in if to avoid False value being taken
+            if exp_sol.po_id and exp_sol.po_id.id not in all_po_ids:
                 all_po_ids.append(exp_sol.po_id.id)
         list_po_name = ', '.join([linked_po.name for linked_po in self.browse(cr, uid, all_po_ids, context) if linked_po.id != ids[0]])
         self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
@@ -2981,7 +2982,7 @@ class purchase_order_line(osv.osv):
         order_ids = []
         for line in self.read(cr, uid, ids, ['id', 'order_id'], context=context):
             # we want to skip resequencing because unlink is performed on merged purchase order lines
-            tmp_skip_resourcing = context.get('skipResourcing')
+            tmp_skip_resourcing = context.get('skipResourcing', False)
             context['skipResourcing'] = True
             self._update_merged_line(cr, uid, line['id'], False, context=context)
             context['skipResourcing'] = tmp_skip_resourcing

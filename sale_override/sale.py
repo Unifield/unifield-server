@@ -2115,6 +2115,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if context.get('view_id'):
             del context['view_id']
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'sale.order.cancelation.wizard',
@@ -2800,6 +2801,9 @@ class sale_order_cancelation_wizard(osv.osv_memory):
 
         if context is None:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
 
