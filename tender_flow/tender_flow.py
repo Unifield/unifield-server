@@ -226,6 +226,9 @@ class tender(osv.osv):
         """
         Check consistency between lines and categ of tender
         """
+        # UFTP-317: Make sure ids is a list
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         exp_sol_obj = self.pool.get('expected.sale.order.line')
 
         self._check_service(cr, uid, ids, vals, context=context)
