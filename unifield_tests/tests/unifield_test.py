@@ -27,6 +27,7 @@ class UnifieldTest(unittest.TestCase):
     db = {}
     test_module_name = 'unifield_tests'
     test_module_obj_name = 'unifield.test'
+    already_loaded = False
 
     # FIXME/TODO: Make unittest.TestCase inherit from oerplib.error class because of RPCError that could be raised by unittest.TestCase
 
@@ -77,6 +78,8 @@ class UnifieldTest(unittest.TestCase):
         # For each database, check that unifield_tests module is loaded
         #+ If not, load it.
         #+ Except if the database is sync one
+        if UnifieldTest.already_loaded:
+            return
         for database_name in self.db:
             if database_name == 'sync':
                 continue
@@ -100,6 +103,7 @@ class UnifieldTest(unittest.TestCase):
                     raise EnvironmentError(' Wrong module state: %s' % (state or '',))
             # Some processes after instanciation for this database
             self._hook_db_process(database_name, database)
+        UnifieldTest.already_loaded = True
 
     def is_keyword_present(self, db, keyword):
         '''
@@ -136,5 +140,46 @@ class UnifieldTest(unittest.TestCase):
             return obj[1]
 
         return False
+
+    def synchronize(self, db=None):
+        '''
+        Connect the 'db' database to the sync. server
+        and run  synchronization.
+        If no database givent in parameters, sync. all
+        databases.
+        :param db: DB connection to synchronize (can be None
+                   or a list.
+        :return: True
+        '''
+        if not db:
+            for db_conn in self.db:
+                self.synchronize(db=db_conn)
+
+        if db and isinstance(db, list):
+            for db_conn in db:
+                self.synchronize(db=db_conn)
+
+        conn_obj = db.get('sync.client.sync_server_connection')
+        sync_obj = db.get('sync.client.sync_manager')
+
+        conn_ids = conn_obj.search([])
+        conn_obj.action_connect(conn_ids)
+        sync_ids = sync_obj.search([])
+        sync_obj.sync(sync_ids)
+
+    def get_db_partner_name(self, db):
+        '''
+        Return the name of partner associated
+        to the company of the database
+        :param db: DB connection of which we
+                   get the partner.
+        :return: Name of the partner associated
+                 to the company of the database
+        '''
+        company_obj = db.get('res.company')
+
+        company_ids = company_obj.search([])
+        return company_obj.browse(company_ids[0]).partner_id.name
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
