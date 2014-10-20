@@ -61,6 +61,13 @@ def main():
                 test_suite = unittest.TestSuite((unittest.makeSuite(class_type), ))
                 suite.addTest(test_suite)
 
+            if 'get_test_suite' in module.__dict__:
+                suite_type = module.get_test_suite()
+                print ("%s module:" % (suite_type[0].__module__,))
+                for class_type in suite_type:
+                    test_suite = unittest.TestSuite((unittest.makeSuite(class_type), ))
+                    suite.addTest(test_suite)
+
         _separator()
         # Create a file for the output result
         output = file('output.html', 'wb')
