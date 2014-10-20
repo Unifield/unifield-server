@@ -32,6 +32,7 @@ from register_tools import open_register_view
 import time
 import decimal_precision as dp
 
+
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
     for i in ids:
@@ -1818,6 +1819,7 @@ class account_bank_statement_line(osv.osv):
         """
         Write some existing account bank statement lines with 'values'.
         """
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:
