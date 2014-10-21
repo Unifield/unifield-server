@@ -1322,11 +1322,22 @@ class stock_picking(osv.osv):
                                 sale_ids.append(out_move.picking_id.sale_id.id)
 
                     # UFTP-345: Check if all lines from the original pick are either closed or cancel and qty is 0, then close this PICK
-                    if out_move.picking_id and out_move.picking_id.id: 
-                        ptc = self.browse(cr, uid, out_move.picking_id.id, context=context)
+                    mirror_pick = out_move.picking_id
+                    if mirror_pick and mirror_pick.id: 
+                        ptc = self.browse(cr, uid, mirror_pick.id, context=context)
                         if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
                             ptc.action_done(context=context)
-
+                        else:
+                            # If there are still some lines available with qty 0, then check if any in progress PICK, if all complete, then close the PICK
+                            if self.has_picking_ticket_in_progress(cr, uid, [mirror_pick.id], context=context):
+                                # - all picking are completed (means ppl completed and all shipment validated)
+                                wf_service.trg_validate(uid, 'stock.picking', mirror_pick.id, 'button_confirm', cr)
+                                # we force availability
+                                mirror_pick.force_assign()
+                                # finish
+                                mirror_pick.action_move()
+                                wf_service.trg_validate(uid, 'stock.picking', mirror_pick.id, 'button_done', cr)
+                
                 if move.purchase_line_id and move.purchase_line_id.procurement_id:
                     procurement = move.purchase_line_id.procurement_id
                     if not procurement.sale_id and procurement.move_id:
