@@ -1504,6 +1504,28 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return result
 
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None,
+        context=None, orderby=False):
+        res = super(sale_order_line, self).read_group(cr, uid, domain, fields,
+            groupby, offset=offset, limit=limit, context=context,
+            orderby=orderby)
+
+        if 'line_number' in fields:
+            """
+            UFTP-346 'order sourcing tool search view'
+            (and all SO line search views with line_number field)
+            replace the sum of 'line_number' by count of so lines
+            """
+            for g in res:
+                # for each group line, compute so lines count by domain,
+                # then replace sum('line_number') value by the count
+                if '__domain' in g:
+                    # aware to manage all group levels chain with __domain
+                    line_count = self.search(cr, uid, g.get('__domain', []),
+                        context={}, count=True)  # search with 'new' context
+                    g['line_number'] = line_count
+        return res
+
 sale_order_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
