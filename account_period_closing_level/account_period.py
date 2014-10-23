@@ -215,6 +215,15 @@ class account_period(osv.osv):
                     self.write(cr, uid, p_id, {'state':'field-closed', 'field_process': False}, context=context)
                 return True
 
+            # UFTP-351: Check that no Journal Entries are Unposted for this period
+            if period.state == 'field-closed' and context['state'] == 'mission-closed':
+                sql = """SELECT COUNT(id) FROM account_move WHERE period_id = %s AND state != 'posted'""" % period.id
+                cr.execute(sql)
+                sql_res = cr.fetchall()
+                count_moves = sql_res and sql_res[0] and sql_res[0][0] or 0
+                if count_moves > 0:
+                    raise osv.except_osv(_('Warning'), _('Close this period is not possible because some Journal Entries remain unposted.'))
+
         # check if unposted move lines are linked to this period
         move_line_obj = self.pool.get('account.move.line')
         move_lines = move_line_obj.search(cr, uid, [('period_id', 'in', ids)])
