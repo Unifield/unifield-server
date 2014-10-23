@@ -581,6 +581,13 @@ class stock_picking(osv.osv):
         # Variables
         wf_service = netsvc.LocalService("workflow")
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context = {}
+
+        context['cancel_type'] = 'update_out'
         res = super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
 
         # Re-source the sale.order.line
