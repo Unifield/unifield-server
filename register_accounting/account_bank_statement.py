@@ -984,7 +984,7 @@ class account_bank_statement_line(osv.osv):
         aml_obj = self.pool.get('account.move.line')
         for absl in self.browse(cr, uid, ids, context=context):
             # UTP-1055: In case of Cash Advance register line, we don't need to see all other advance lines allocation (analytic lines). So we keep only analytic lines with the same "name" than register line
-            aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING'), ('name', 'ilike', '%%%s' % absl.name)])
+            aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING'), ('name', '=ilike', '%%%s' % absl.name)])
             # Then retrieve all corrections/reversals from them
             res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
         return res
@@ -1088,7 +1088,7 @@ class account_bank_statement_line(osv.osv):
             if name_len > 1:
                 domain += ['|' for x in range(0,name_len - 1)]
             for name in advance_names:
-                domain.append(('name', 'ilike', '%%%s' % name))
+                domain.append(('name', '=ilike', '%%%s' % name))
         context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
         return {
             'name': _('Analytic Journal Items'),
