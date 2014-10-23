@@ -564,9 +564,6 @@
           <Data ss:Type="String">${hasattr(inv_line, 'line_number') and inv_line.line_number or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${hasattr(inv_line, 'product_id') and inv_line.product_id.name or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
