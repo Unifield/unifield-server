@@ -192,7 +192,7 @@
     </Style>
     <Style ss:ID="s39">
       <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
         <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
       </Borders>
@@ -200,7 +200,7 @@
     </Style>
     <Style ss:ID="s39b">
       <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
         <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
       </Borders>
