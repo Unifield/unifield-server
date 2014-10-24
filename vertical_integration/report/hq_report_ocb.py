@@ -404,6 +404,10 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND e.currency_id = cc.id
                 AND al.journal_id = j.id
                 AND al.move_id = aml.id
+                AND aml.id in (select aml2.id 
+                               from account_move_line aml2, account_move am
+                               where am.id = aml2.move_id 
+                                and am.state = 'posted')
                 AND al.instance_id = i.id
                 AND aml.journal_id = aj.id
                 AND al.date >= %s
@@ -458,6 +462,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND j.type not in %s
                 AND aml.exported in %s
                 AND aml.instance_id in %s
+                AND m.state = 'posted'
                 ORDER BY aml.id;
                 """,
         }
