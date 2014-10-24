@@ -67,7 +67,7 @@ class res_currency_rate_functional(osv.osv):
         if date:
             search_params.append('|')
             search_params.append(('source_date', '>=', date))
-            search_params.append('&')
+            search_params.append('&')  # UFTP-361 in case source_date no set
             search_params.append(('source_date', '=', False))
             search_params.append(('date', '>=', date))
         eng_ids = eng_obj.search(cr, uid, search_params, context=context)

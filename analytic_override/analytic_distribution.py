@@ -286,6 +286,7 @@ class distribution_line(osv.osv):
                 'distrib_id': line.distribution_id.id,
                 'distrib_line_id': '%s,%s'%(self._name, line.id),
                 'ref': ref or move_line.move_id.name,
+                'source_date': date,  # UFTP-361 source_date from date (posting date)
             }
             if self._name == 'funding.pool.distribution.line':
                 vals.update({
