@@ -146,8 +146,8 @@ class UTP1007Test(ResourcingTest):
         sol_ids = self.c_sol_obj.search([('order_id', '=', self.c_so_id)])
         sol_qty = self.c_sol_obj.read(sol_ids[0], ['product_uom_qty'])['product_uom_qty']
         self.assert_(
-            sol_qty == 98.0,
-            "The quantity on original IR is %s - Should be 98.00" % sol_qty
+            sol_qty == 100.0,
+            "The quantity on original IR is %s - Should be 100.00" % sol_qty
         )
 
     def test_resource_bo(self):
@@ -181,12 +181,12 @@ class UTP1007Test(ResourcingTest):
         )
 
         # Check quantity on new IR line
-        new_ir_ids = self.c_so_obj.search([('parent_order_name', '=', self.c_so_name)])
+        new_ir_ids = self.c_so_obj.search([('parent_order_name', '=', self.c_so_name), ('procurement_request', '=', True)])
         self.assert_(
             len(new_ir_ids) == 1,
             "No new order created after resourcing",
         )
-        sol_ids = self.c_sol_obj.search([('order_id', '=', new_ir_ids[0]), ('procurement_request', '=', True)])
+        sol_ids = self.c_sol_obj.search([('order_id', '=', new_ir_ids[0])])
         sol_qty = self.c_sol_obj.read(sol_ids[0], ['product_uom_qty'])['product_uom_qty']
         self.assert_(
             sol_qty == 2.0,

@@ -210,10 +210,13 @@ class UFTP326Test(ResourcingTest):
             'picking_id': c_in_ids[0],
             'change_reason': 'test_cancel_in_at_coordo',
         })
-        self.c_enter_reason_obj.do_cancel([wiz_id], {
+        ctx = {
             'active_ids': c_in_ids,
-            'cancel_type': resource and '' or 'update_out',
-        })
+        }
+        if not resource:
+            ctx['cancel_type'] = 'update_out'
+
+        self.c_enter_reason_obj.do_cancel([wiz_id], ctx)
 
         # Check IN and OUT states
         in_state = self.c_pick_obj.read(c_in_ids, ['state'])
