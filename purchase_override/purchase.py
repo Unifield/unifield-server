@@ -1848,8 +1848,16 @@ stock moves which are already processed : '''
                 else:
                     sol_ids = line_obj.get_sol_ids_from_pol_ids(cr, uid, [order_line.id], context=context)
                     for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
-                        if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
-                            dest = input_loc
+                        if sol.order_id and sol.order_id.procurement_request:
+                            if order_line.product_id.type == 'service_recep':
+                                dest = self.pool.get('stock.location').get_service_location(cr, uid)
+                                break
+                            elif order_line.product_id.type == 'consu':
+                                dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+                                break
+                            elif sol.order_id.location_requestor_id.usage != 'customer':
+                                dest = input_loc
+                                break
 
                 move_values = {
                     'name': order.name + ': ' +(order_line.name or ''),
