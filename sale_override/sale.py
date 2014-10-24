@@ -1816,6 +1816,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'is_rfq': True,
                 'is_rfq_done': True,
                 'po_cft': 'rfq',
+                'rfq_id': line.created_by_rfq and line.created_by_rfq.id,
             })
 
         if line.created_by_tender:
