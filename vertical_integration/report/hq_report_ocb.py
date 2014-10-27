@@ -263,7 +263,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE e.resource_id = r.id;
                 """,
             'journal': """
-                SELECT i.name, j.code, j.name, j.type, c.name
+                SELECT i.code, j.code, j.name, j.type, c.name
                 FROM account_journal AS j LEFT JOIN res_currency c ON j.currency = c.id, msf_instance AS i
                 WHERE j.instance_id = i.id
                 AND j.instance_id in %s;
@@ -306,6 +306,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     AND r.currency_id IS NOT NULL
                     AND rc.active = 't'
                     AND p.number NOT IN (13, 14, 15)
+                    and rc.reference_currency_id is null
                     ORDER BY rc.name
                 ) AS req
                 WHERE req.date >= %s
