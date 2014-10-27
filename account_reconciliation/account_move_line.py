@@ -224,6 +224,7 @@ class account_move_line(osv.osv):
             'line_id': map(lambda x: (4, x, False), ids),
             'line_partial_ids': map(lambda x: (3, x, False), ids),
             'is_multi_instance': different_level,
+            'multi_instance_level_creation': multi_instance_level_creation,
         })
         
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
