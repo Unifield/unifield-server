@@ -1282,7 +1282,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if line.order_id.manually_corrected:
             return False
 
-        if res and line.order_id.procurement_request and line.type == 'make_to_order':
+        if line.order_id.procurement_request and line.type == 'make_to_order':
             # Create OUT lines for MTO lines with an external CU as requestor location
             if line.order_id.location_requestor_id.usage != 'customer':
                 res = False
