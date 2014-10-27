@@ -67,6 +67,43 @@ class account_move_line_compute_currency(osv.osv):
         """
         if context is None:
             context = {}
+
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        current_instance_level = current_instance.level
+        current_instance_id = current_instance.id
+        all_line_equal_to_current = True
+        to_create = False
+        previous = None
+        has_section_line = False
+        for line in self.browse(cr, uid, lines):
+            if not previous:
+                previous = line.instance_id.id
+
+            if line.instance_id.level == 'section':
+                has_section_line = True
+
+            if not has_section_line and current_instance_level == 'section' and line.instance_id.level == 'project':
+                to_create = False
+                all_line_equal_to_current = False
+                break
+
+            if previous != line.instance_id.id:
+                all_line_equal_to_current = False
+                to_create = True
+                if current_instance_level != 'section':
+                    break
+            elif line.instance_id.id != current_instance_id:
+                all_line_equal_to_current = False
+                to_create = False
+
+            previous = line.instance_id.id
+
+        if all_line_equal_to_current:
+            to_create = True
+
+        if not to_create:
+            return False
+
         current_date = time.strftime('%Y-%m-%d')
         j_obj = self.pool.get('account.journal')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
@@ -294,22 +331,29 @@ class account_move_line_compute_currency(osv.osv):
                 if total != 0.0:
                     # UTP-752: Do not make FX Adjustement line (addendum line) if the reconciliation comes from a multi instance and that we are in synchronization
                     multi_instance = reconciled.is_multi_instance
+                    current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+                    current_instance_id = current_instance.id
+                    current_instance_level = current_instance.level
+                    # UF-2501: when proj + coor are reconciled from HQ adj line should be created at coordo only
+                    if not multi_instance and reconciled.multi_instance_level_creation:
+                        multi_instance = reconciled.multi_instance_level_creation != current_instance_level
+
                     from_sync = context.get('sync_update_execution', False) and context.get('sync_update_execution') is True or False
                     from_another_instance = False
                     reconciliation_instance = reconciled.instance_id and reconciled.instance_id.id or False
-                    current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
-                    if reconciliation_instance and reconciliation_instance != current_instance:
+                    if reconciliation_instance and reconciliation_instance != current_instance_id:
                         from_another_instance = True
                     if multi_instance and (from_sync or from_another_instance):
                         continue
                     # If no exception, do main process about new addendum lines
                     partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total)
-                    # Add it to reconciliation (same that other lines)
-                    reconcile_txt = ''
-                    data = self.pool.get('account.move.reconcile').name_get(cr, uid, [reconciled.id])
-                    if data and data[0] and data[0][1]:
-                        reconcile_txt = data[0][1]
-                    cr.execute('update account_move_line set reconcile_id=%s, reconcile_txt=%s where id=%s',(reconciled.id, reconcile_txt or '', partner_line_id))
+                    if partner_line_id:
+                        # Add it to reconciliation (same that other lines)
+                        reconcile_txt = ''
+                        data = self.pool.get('account.move.reconcile').name_get(cr, uid, [reconciled.id])
+                        if data and data[0] and data[0][1]:
+                            reconcile_txt = data[0][1]
+                        cr.execute('update account_move_line set reconcile_id=%s, reconcile_txt=%s where id=%s',(reconciled.id, reconcile_txt or '', partner_line_id))
         return True
 
     def update_amounts(self, cr, uid, ids):
