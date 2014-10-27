@@ -454,9 +454,18 @@ class ir_sequence(osv.osv):
         parent_seen = []
         while parent_id:
             code = parent_id.po_fo_cost_center_id and parent_id.po_fo_cost_center_id.code or ''
+            
+            hq_instance_code = parent_id.code
             parent_id = parent_id.parent_id or False
             if parent_id in parent_seen:
                 raise osv.except_osv(_('Error'), _('Loop detected in Proprietary Instance tree, you should have a top level instance without any parent.'))
+
+            ########### UFTP-341            
+            ########### THIS IS A TRY FOR THE TICKET UFTP-341, AS IT COULD MAKE A GREAT IMPACT ON SYNC, REPORT AND OTHERS!
+            ## When it come to the HQ code, just take the instance code instead of the cost center code, to avoid having same code for different OC 
+            if parent_id is False:
+                code = hq_instance_code
+                
             parent_seen.append(parent_id)
         return code
 
