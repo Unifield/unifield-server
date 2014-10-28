@@ -74,9 +74,6 @@
         <field name="categ_id" ref="product.cat0"/>
         <field name="active" eval="False" />
         <field name="international_status" ref="product_attributes.int_5"/>
-        <field name="property_stock_procurement" ref="stock.location_procurement" />
-        <field name="property_stock_production" ref="stock.location_production" />
-        <field name="property_stock_inventory" ref="stock.location_inventory" />
     </record>
     
     <!-- Partner to be defined -->
