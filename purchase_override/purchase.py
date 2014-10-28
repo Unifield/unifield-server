@@ -1192,7 +1192,7 @@ stock moves which are already processed : '''
             # If the order is an Internal request with External location, create a new
             # stock move on the picking ticket (if not closed)
             # Get move data and create the move
-            if l.link_so_id.procurement_request and l.link_so_id.location_requestor_id.usage == 'customer':
+            if l.link_so_id.procurement_request and l.link_so_id.location_requestor_id.usage == 'customer' and l.product_id.type == 'product':
                 # Get OUT linked to IR
                 pick_to_confirm = None
                 out_ids = pick_obj.search(cr, uid, [
@@ -1271,7 +1271,9 @@ stock moves which are already processed : '''
         # !!BEWARE!! we must update the So lines before any writing to So objects
         for po in self.browse(cr, uid, ids, context=context):
             # hook for corresponding Fo update
+            context['wait_order'] = True
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po, so_ids=so_ids)
+            del context['wait_order']
 
         return True
 
@@ -1308,6 +1310,8 @@ stock moves which are already processed : '''
         so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
         move_obj = self.pool.get('stock.move')
+        proc_obj = self.pool.get('procurement.order')
+        pick_obj = self.pool.get('stock.picking')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1319,6 +1323,7 @@ stock moves which are already processed : '''
         ctx = context.copy()
         ctx['no_store_function'] = ['sale.order.line']
         store_to_call = []
+        picks_to_check = set()
         if so_ids:
             # date values
             ship_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
@@ -1383,6 +1388,20 @@ stock moves which are already processed : '''
                                               and line.procurement_id.move_id \
                                               and not line.procurement_id.move_id.processed_stock_move:
                         out_move_id = line.procurement_id.move_id
+                        # If there is a non-stockable or service product, remove the OUT
+                        # stock move and update the stock move on the procurement
+                        if context.get('wait_order') and line.product_id.type in ('service', 'service_recep', 'consu') and out_move_id.picking_id:
+                            out_pick_id = out_move_id.picking_id.id
+                            proc_obj.write(cr, uid, [line.procurement_id.id], {
+                                'move_id': line.move_dest_id.id,
+                            }, context=context)
+                            move_obj.write(cr, uid, [out_move_id.id], {'state': 'draft'})
+                            move_obj.unlink(cr, uid, out_move_id.id)
+                            if out_pick_id:
+                                picks_to_check.add(out_pick_id)
+
+                            continue
+
                         if out_move_id.state == 'assigned':
                             move_obj.cancel_assign(cr, uid, [out_move_id.id])
                         elif out_move_id.state in ('cancel', 'done'):
@@ -1424,6 +1443,11 @@ stock moves which are already processed : '''
                     so_obj.write(cr, uid, [so.id], {'delivery_confirmed_date': so_confirmed,
                                                    'ready_to_ship_date': so_rts}, context=context)
                     wf_service.trg_write(uid, 'sale.order', so.id, cr)
+
+        for out_pick_id in picks_to_check:
+            full_out = pick_obj.read(cr, uid, out_pick_id, ['move_lines'])['move_lines']
+            if out_pick_id and not full_out:
+                pick_obj.unlink(cr, uid, out_pick_id)
         return True
 
     def check_if_product(self, cr, uid, ids, context=None):

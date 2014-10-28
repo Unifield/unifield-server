@@ -1277,7 +1277,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Check type of parameter
         self._check_browse_param(line, '_get_new_picking')
 
-        res = line.product_id and line.product_id.type in ['product']
+        res = line.product_id and line.product_id.type in ['product', 'service', 'consu']
 
         if line.order_id.manually_corrected:
             return False
@@ -1286,7 +1286,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # Create OUT lines for MTO lines with an external CU as requestor location
             if line.order_id.location_requestor_id.usage != 'customer':
                 res = False
-            elif line.order_id.location_requestor_id.usage == 'customer':
+            elif line.order_id.location_requestor_id.usage == 'customer' and (not line.product_id or line.product_id.type == 'product'):
                 res = True
 
         return res
