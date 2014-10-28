@@ -311,8 +311,9 @@
                         <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                     </button>
 
+                    <!-- Take care of attrs redefinition that omit the "states" one. So we need to add readonly with state to avoid this bug  -->
                     <xpath expr="/form//button[@name='button_reset_taxes']" position="attributes">
-                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)], 'readonly': [('state', '!=', 'draft')]}</attribute>
                     </xpath>
                 </data>
             </field>
@@ -367,8 +368,9 @@
                         <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
                     </xpath>
 
+                    <!-- Take care of attrs redefinition that omit the "states" one. So we need to add readonly with state to avoid this bug  -->
                     <xpath expr="/form//button[@name='button_reset_taxes']" position="attributes">
-                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)], 'readonly': [('state', '!=', 'draft')]}</attribute>
                     </xpath>
                 </data>
             </field>
