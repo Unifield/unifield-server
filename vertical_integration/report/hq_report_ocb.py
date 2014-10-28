@@ -47,6 +47,7 @@ class finance_archive(finance_export.finance_archive):
             p_id = line[0]
             tmp_line[0] = self.get_hash(cr, uid, [p_id], 'res.partner')
             new_data.append(self.line_to_utf8(tmp_line))
+            
         return self.postprocess_selection_columns(cr, uid, new_data, [('res.partner', 'partner_type', 3)], column_deletion=column_deletion)
 
     def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
@@ -96,10 +97,15 @@ class finance_archive(finance_export.finance_archive):
             # Complete last column with partner_hash
             if not partner_id_present:
                 tmp_line.append('')
+            emplid = tmp_line[partner_id_column_number - 2]
+            
+            if emplid:
+                partner_hash = ''
             tmp_line[partner_id_column_number - 1] = partner_hash
             # Add result to new_data
             new_data.append(self.line_to_utf8(tmp_line))
-        return self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
+        res = self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
+        return res
 
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
@@ -254,8 +260,9 @@ class hq_report_ocb(report_sxw.report_sxw):
         sqlrequests = {
             'partner': """
                 SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
-                FROM res_partner
-                WHERE partner_type != 'internal';
+                FROM res_partner 
+                WHERE partner_type != 'internal'
+                  and name != 'To be defined';
                 """,
             'employee': """
                 SELECT r.name, e.identification_id, r.active, e.employee_type
