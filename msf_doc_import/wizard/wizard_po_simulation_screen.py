@@ -709,8 +709,9 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     file_line_error = []
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
-                            if manda_field[1] == 'Delivery Confirmed Date':
-                                continue  # field not really mandatory, can be empty in export model
+# Removed by QT on UFTP-370
+#                            if manda_field[1] == 'Delivery Confirmed Date':
+#                                continue  # field not really mandatory, can be empty in export model
                             not_ok = True
                             err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
                             err = _('Line %s of the file: %s') % (x, err1)
@@ -1434,6 +1435,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals = {'product_uom': line.imp_uom.id,
                                  'product_id': line.imp_product_id.id,
                                  'price_unit': line.imp_price,
+                                 'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
                                 }
                     if line.imp_dcd:
                         line_vals['confirmed_delivery_date'] = line.imp_dcd
@@ -1452,7 +1454,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
                              'line_number': line.in_line_number,
-                             'date_planned': line.imp_drd or line.imp_dcd,
+                             'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
                             }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
@@ -1468,7 +1470,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'product_uom': line.imp_uom.id,
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
-                             'date_planned': line.imp_drd,
+                             'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
                             }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
