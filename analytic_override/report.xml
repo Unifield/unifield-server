@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <!-- UFTP-312: Delete links on analytic account view about Analytic Balance, Cost Ledger, Inverted Analytic Balance and Cost Ledger (only quantities) -->
+        <delete model="ir.actions.report.xml" id="account_analytic_account_balance"/>
+
+        <delete model="ir.actions.report.xml" id="account_analytic_account_inverted_balance"/>
+
+        <delete model="ir.actions.report.xml" id="account_analytic_account_cost_ledger"/>
+
+        <delete model="ir.actions.report.xml" id="account_analytic_account_quantity_cost_ledger"/>
+
+    </data>
+</openerp>

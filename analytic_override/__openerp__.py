@@ -32,6 +32,7 @@
     "init_xml" : [],
     "update_xml": [
         'security/ir.model.access.csv',
+        'report.xml',
     ],
     'test': [],
     'demo_xml': [
