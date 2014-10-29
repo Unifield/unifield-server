@@ -122,7 +122,7 @@ class update_to_send(osv.osv):
         'force_recreation' : fields.boolean('Force record recreation', readonly=True),
         'handle_priority': fields.boolean('Handle Priority'),
     }
-    
+
     _defaults = {
         'sent' : False,
         'is_deleted' : False,
@@ -141,8 +141,8 @@ class update_to_send(osv.osv):
 
         def create_normal_update(self, rule, context):
             domain = eval(rule.domain or '[]')
-            export_fields = eval(rule.included_fields or '[]') 
-            if 'id' not in export_fields: 
+            export_fields = eval(rule.included_fields or '[]')
+            if 'id' not in export_fields:
                 export_fields.append('id')
 
             ids_to_compute = self.need_to_push(cr, uid,
@@ -213,12 +213,12 @@ class update_to_send(osv.osv):
     def create_package(self, cr, uid, session_id=None, packet_size=None, context=None):
         domain = session_id and [('session_id', '=', session_id), ('sent', '=', False)] or [('sent', '=', False)]
         ids = self.search(cr, uid, domain, limit=packet_size,  order='id asc', context=context)
-        
+
         if not ids:
             return False
-            
+
         update_master = self.browse(cr, uid, ids[0], context=context)
-        data = {  
+        data = {
             'session_id' : update_master.session_id,
             'model' : update_master.model,
             'rule_id' : update_master.rule_id.server_id,
@@ -270,8 +270,8 @@ class update_received(osv.osv):
     _sync_field = 'sync_field'
 
     _columns = {
-        'source': fields.char('Source Instance', size=128, readonly=True), 
-        'owner': fields.char('Owner Instance', size=128, readonly=True), 
+        'source': fields.char('Source Instance', size=128, readonly=True),
+        'owner': fields.char('Owner Instance', size=128, readonly=True),
         'model' : fields.char('Model', size=64, readonly=True, select=True),
         'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
@@ -293,7 +293,7 @@ class update_received(osv.osv):
     }
 
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
-    
+
     _logger = logging.getLogger('sync.client')
 
     @translate_column('model', 'ir_model', 'model', 'character varying(64)')
@@ -450,20 +450,20 @@ class update_received(osv.osv):
 
             #3 check for missing field : report missing fields
             bad_fields = self._check_fields(cr, uid, obj._name, import_fields, context=context)
-            if bad_fields: 
+            if bad_fields:
                 message += "Missing or unauthorized fields found : %s\n" % ", ".join(bad_fields)
                 bad_fields = [import_fields.index(x) for x in bad_fields]
 
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
-                       
+
                 row = eval(update.values)
 
                 #4 check for fallback value : report missing fallback_value
                 self._check_and_replace_missing_id(cr, uid, import_fields, row, fallback, message, context=context)
 
-                if bad_fields : 
+                if bad_fields :
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
                 values.append(row)
@@ -547,6 +547,7 @@ class update_received(osv.osv):
 
         def group_unlink_update_execution(obj, sdref_update_ids):
             obj_ids = obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), context=context)
+            done_ids = []
             for id, update_id in zip(
                         obj_ids.values(),
                         sdref_update_ids.values()
@@ -570,10 +571,20 @@ class update_received(osv.osv):
 
 #                    raise
                 else:
+                    done_ids.append(update_id)
                     self.write(cr, uid, [update_id], {
                         'editable' : False,
                         'run' : True,
                         'log' : '',
+                    }, context=context)
+
+                sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
+                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False)], context=context)
+                if toSetRun_ids:
+                    self.write(cr, uid, toSetRun_ids, {
+                        'editable' : False,
+                        'run' : True,
+                        'log' : 'Manually set to run by the system. Due to a delete',
                     }, context=context)
 
             return
@@ -604,6 +615,17 @@ class update_received(osv.osv):
                 'run' : True,
                 'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
             }, context=context)
+
+            sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
+            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False), ('run', '=', False)], context=context)
+            if toSetRun_ids:
+                self.write(cr, uid, toSetRun_ids, {
+                    'editable' : False,
+                    'run' : True,
+                    'log' : '',
+                }, context=context)
+
+
             updates = filter(lambda update: update.id not in deleted_update_ids or
                                             (not do_deletion and force_recreation),
                              updates)
@@ -664,7 +686,7 @@ class update_received(osv.osv):
             else:
                 error_message += group_import_update_execution(obj, updates)
                 imported += len(updates)
-        
+
         return (error_message.strip(), imported, deleted)
 
     def _check_fields(self, cr, uid, model, fields, context=None):
@@ -679,21 +701,21 @@ class update_received(osv.osv):
             if '.id' in field:
                 bad_field.append(field)
                 continue
-            
+
             part = field.split('/')
             if len(part) > 2 or (len(part) == 2 and part[1] != 'id') or not fields_ref.get(part[0]):
                 bad_field.append(field)
-        
+
         return bad_field
-         
+
     def _remove_bad_fields_values(self, fields, values, bad_fields):
         for bad_field in bad_fields:
             i = fields.index(bad_field)
             fields.pop(i)
             values.pop(i)
-        
+
         return (fields, values)
-    
+
     def _conflict(self, cr, uid, sdref, next_version, context=None):
         ir_data = self.pool.get('ir.model.data')
         data_id = ir_data.find_sd_ref(cr, uid, sdref, context=context)
@@ -705,7 +727,7 @@ class update_received(osv.osv):
                      or (data_rec.last_modification                           # if last_modification exists, try the next
                          and data_rec.sync_date < data_rec.last_modification) # modification after synchro => conflict
                      or next_version < data_rec.version))                     # next version is lower than current version
-    
+
     def _check_and_replace_missing_id(self, cr, uid, fields, values, fallback, message, context=None):
         ir_model_data_obj = self.pool.get('ir.model.data')
 
