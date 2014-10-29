@@ -669,6 +669,7 @@
                         <field name="currency" readonly="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
+                        <field name="prev_reg_id" invisible="1"/>
                     </group>
                     <group col="2" colspan="4">
                         <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
