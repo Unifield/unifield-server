@@ -91,6 +91,43 @@ class BackgroundProcess(Thread):
         finally:
             cr.close()
 
+def sync_subprocess(step='status', defaults_logger={}):
+    def decorator(fn):
+
+        @functools.wraps(fn)
+        def wrapper(self, cr, uid, *args, **kwargs):
+            context = kwargs['context'] = kwargs.get('context') is not None and dict(kwargs.get('context', {})) or {}
+            logger = context.get('logger')
+            logger.switch(step, 'in-progress')
+            logger.write()
+            try:
+                res = fn(self, self.sync_cursor, uid, *args, **kwargs)
+            except osv.except_osv, e:
+                logger.switch(step, 'failed')
+                raise
+            except BaseException, e:
+                # Handle aborting of synchronization
+                if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
+                    logger.switch(step, 'aborted')
+                    self.sync_cursor = None
+                    raise
+                logger.switch(step, 'failed')
+                error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', tools.ustr(e)))
+                self._logger.exception('Error in sync_process at step %s' % step)
+                logger.append(error, step)
+                raise
+            else:
+                logger.switch(step, 'ok')
+                if isinstance(res, (str, unicode)) and res:
+                    logger.append(res, step)
+            finally:
+                # gotcha!
+                logger.write()
+            return res
+        return wrapper
+    return decorator
+
+
 def sync_process(step='status', need_connection=True, defaults_logger={}):
     is_step = not (step == 'status')
 
@@ -373,9 +410,9 @@ class Entity(osv.osv):
 
         return True
 
+    @sync_subprocess('data_push_create')
     def create_update(self, cr, uid, context=None):
         context = context or {}
-        logger = context.get('logger')
         updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
 
         def set_rules(identifier):
@@ -403,6 +440,7 @@ class Entity(osv.osv):
         return updates_count
         #state init => update_send
 
+    @sync_subprocess('data_push_send')
     def send_update(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -508,13 +546,13 @@ class Entity(osv.osv):
 
         return True
 
+    @sync_subprocess('data_pull_receive')
     def retrieve_update(self, cr, uid, max_packet_size, recover=False, context=None):
         context = context or {}
         logger = context.get('logger')
         updates = self.pool.get(context.get('update_received_model', 'sync.client.update_received'))
 
         entity = self.get_entity(cr, uid, context)
-        last = False
         last_seq = entity.update_last
         max_seq = entity.max_update
         offset = entity.update_offset
@@ -546,6 +584,7 @@ class Entity(osv.osv):
 
         return updates_count
 
+    @sync_subprocess('data_pull_execute')
     def execute_updates(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -637,6 +676,7 @@ class Entity(osv.osv):
 
         return True
 
+    @sync_subprocess('msg_push_create')
     def create_message(self, cr, uid, context=None):
         context = context or {}
         messages = self.pool.get(context.get('message_to_send_model', 'sync.client.message_to_send'))
@@ -657,6 +697,7 @@ class Entity(osv.osv):
 
         return messages_count
 
+    @sync_subprocess('msg_push_send')
     def send_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -713,6 +754,7 @@ class Entity(osv.osv):
         self._logger.info("Pull message :: Number of messages pulled: %s" % msg_count)
         return True
 
+    @sync_subprocess('msg_pull_receive')
     def get_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -746,6 +788,7 @@ class Entity(osv.osv):
 
         return messages_count
 
+    @sync_subprocess('msg_pull_execute')
     def execute_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -895,6 +938,15 @@ class Entity(osv.osv):
 
         return "Connected"
 
+    def interrupt_sync(self, cr, uid, context=None):
+        if self.is_syncing():
+            try:
+                self._renew_sync_lock()
+            except StandardError:
+                return False
+            self.sync_cursor.close()
+        return True
+
 Entity()
 
 
@@ -952,6 +1004,9 @@ class Connection(osv.osv):
         'password': fields.function(_get_password, fnct_inv=_set_password, string='Password', type='char', method=True, store=False),
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True, store=False),
         'max_size' : fields.integer("Max Packet Size"),
+        'timeout' : fields.float("Timeout"),
+        'netrpc_retry' : fields.integer("NetRPC retry"),
+        'xmlrpc_retry' : fields.integer("XmlRPC retry"),
     }
 
     _defaults = {
@@ -962,6 +1017,9 @@ class Connection(osv.osv):
         'login' : 'admin',
         'max_size' : 500,
         'database' : 'SYNC_SERVER',
+        'timeout' : 10.0,
+        'netrpc_retry' : 0,
+        'xmlrpc_retry' : 0,
     }
 
     def _get_connection_manager(self, cr, uid, context=None):
@@ -972,17 +1030,17 @@ class Connection(osv.osv):
 
     def connector_factory(self, con):
         if con.protocol == 'xmlrpc':
-            connector = rpc.XmlRPCConnector(con.host, con.port)
+            connector = rpc.XmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
         elif con.protocol == 'gzipxmlrpc':
-            connector = rpc.GzipXmlRPCConnector(con.host, con.port)
+            connector = rpc.GzipXmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
         elif con.protocol == 'gzipxmlrpcs':
-            connector = rpc.GzipXmlRPCSConnector(con.host, con.port)
+            connector = rpc.GzipXmlRPCSConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
         elif con.protocol == 'xmlrpcs':
-            connector = rpc.SecuredXmlRPCConnector(con.host, con.port)
+            connector = rpc.SecuredXmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
         elif con.protocol == 'netrpc':
-            connector = rpc.NetRPCConnector(con.host, con.port)
+            connector = rpc.NetRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.netrpc_retry)
         elif con.protocol == 'netrpc_gzip':
-            connector = rpc.GzipNetRPCConnector(con.host, con.port)
+            connector = rpc.GzipNetRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.netrpc_retry)
         else:
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
@@ -1035,14 +1093,9 @@ class Connection(osv.osv):
             'client_name': cr.dbname,
             'server_name': con.database,
         }
-        entity = self.pool.get('sync.client.entity')
-        if entity.is_syncing():
-            try:
-                entity._renew_sync_lock()
-            except StandardError:
-                self._logger.warning('Error during the disconnection of client \'%(client_name)s\'' % sync_args)
-                return False
-            entity.sync_cursor.close()
+        if not self.pool.get('sync.client.entity').interrupt_sync(cr, uid, context=context):
+            self._logger.warning('Error during the disconnection of client \'%(client_name)s\'' % sync_args)
+            return False
         self._uid = False
         self._logger.info('Client \'%(client_name)s\' succesfully disconnected from the sync. server \'%(server_name)s\'' % sync_args)
         return True

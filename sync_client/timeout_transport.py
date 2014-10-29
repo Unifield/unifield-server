@@ -1,5 +1,6 @@
 import httplib
 import xmlrpclib
+import sys
 
 class TimeoutHTTPConnection(httplib.HTTPConnection):
 
@@ -7,6 +8,9 @@ class TimeoutHTTPConnection(httplib.HTTPConnection):
         httplib.HTTPConnection.connect(self)
         if self.timeout is not None:
             self.sock.settimeout(self.timeout)
+
+    def set_timeout(self, timeout):
+        self.timeout = timeout
 
 class TimeoutHTTP(httplib.HTTP):
 
@@ -22,10 +26,13 @@ class TimeoutTransport(xmlrpclib.Transport):
         self.timeout = timeout
 
     def make_connection(self, host):
-        # TODO: check make_connection for python > 2.6
-        conn = TimeoutHTTP(host)
-        conn.set_timeout(self.timeout)
-        return conn
+        chost, self._extra_headers, _ = self.get_host_info(host)
+        if sys.version_info < (2,7):
+            self._connection = host, TimeoutHTTP(host)
+        else:
+            self._connection = host, TimeoutHTTPConnection(chost)
+        self._connection[1].set_timeout(self.timeout)
+        return self._connection[1]
 
 class TimeoutHTTPSConnection(httplib.HTTPSConnection):
 

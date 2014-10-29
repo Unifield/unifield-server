@@ -48,10 +48,20 @@
                     <field name="start"/>
                     <field name="end"/>
                     <field name="data_pull"/>
+                    <field name="data_pull_receive" string="receive" />
+                    <field name="data_pull_execute" string="execute"/>
                     <field name="msg_pull"/>
+                    <field name="msg_pull_receive" string="receive"/>
+                    <field name="msg_pull_execute" string="execute"/>
                     <field name="data_push"/>
+                    <field name="data_push_create" string="create"/>
+                    <field name="data_push_send" string="send"/>
                     <field name="msg_push"/>
-                    <field name="status"/>
+                    <field name="msg_push_create" string="create"/>
+                    <field name="msg_push_send" string="send"/>
+                    <field name="status" />
+                    <field name="state"  />
+                    <button name="interrupt" type="object" string="Interrupt"  icon="gtk-cancel"  states="syncing" />
                     <field name="error"/>
                 </tree>
             </field>

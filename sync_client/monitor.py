@@ -35,9 +35,21 @@ class MonitorLogger(object):
         self.info = {
             'status' : 'in-progress',
             'data_pull' : 'null',
+            'data_pull_receive' : 'null',
+            'data_pull_execute' : 'null',
+
             'msg_pull' : 'null',
-            'data_push' : 'null',
+            'msg_pull_receive' : 'null',
+            'msg_pull_execute' : 'null',
+
             'msg_push' : 'null',
+            'msg_push_create' : 'null',
+            'msg_push_send' : 'null',
+
+            'data_push' : 'null',
+            'data_push_create' : 'null',
+            'data_push_send' : 'null',
+
         }
         self.info.update(defaults)
         self.final_status = 'ok'
@@ -141,6 +153,18 @@ class sync_monitor(osv.osv):
             (rec.id, "(%d) %s" % (rec.sequence_number, rec.start))
             for rec in self.browse(cr, user, ids, context=context) ]
 
+    def interrupt(self, cr, uid, ids, context=None):
+        return self.pool.get('sync.client.entity').interrupt_sync(cr, uid, context=context)
+
+    def _is_syncing(self, cr, uid, ids, name, arg, context=None):
+        res = dict.fromkeys(ids, "not_syncing")
+        is_syncing = self.pool.get('sync.client.entity').is_syncing()
+        for monitor in self.browse(cr, uid, ids, context=context):
+            if monitor.status == 'in-progress' and is_syncing:
+                res[monitor.id] = "syncing"
+
+        return res
+
     _rec_name = 'start'
 
     _columns = {
@@ -148,11 +172,24 @@ class sync_monitor(osv.osv):
         'start' : fields.datetime("Start Date", readonly=True, required=True),
         'end' : fields.datetime("End Date", readonly=True),
         'data_pull' : fields.selection(status_dict.items(), string="Data Pull", readonly=True),
+        'data_pull_receive' : fields.selection(status_dict.items(), string="DP receive", readonly=True),
+        'data_pull_execute' : fields.selection(status_dict.items(), string="DP execute", readonly=True),
+
         'msg_pull' : fields.selection(status_dict.items(), string="Msg Pull", readonly=True),
+        'msg_pull_receive' : fields.selection(status_dict.items(), string="MP receive", readonly=True),
+        'msg_pull_execute' : fields.selection(status_dict.items(), string="Msg execute", readonly=True),
+
         'data_push' : fields.selection(status_dict.items(), string="Data Push", readonly=True),
+        'data_push_create' : fields.selection(status_dict.items(), string="DP create", readonly=True),
+        'data_push_send' : fields.selection(status_dict.items(), string="DP send", readonly=True),
+
         'msg_push' : fields.selection(status_dict.items(), string="Msg Push", readonly=True),
+        'msg_push_create' : fields.selection(status_dict.items(), string="MP Create", readonly=True),
+        'msg_push_send' : fields.selection(status_dict.items(), string="MP Send", readonly=True),
         'status' : fields.selection(status_dict.items(), string="Status", readonly=True),
         'error' : fields.text("Messages", readonly=True),
+        'state' : fields.function(_is_syncing, method=True, type='selection', string="Is Syncing", selection=[('syncing', 'Syncing'), ('not_syncing', 'Not Syncing')]),
+
     }
 
     _defaults = {
