@@ -1013,7 +1013,7 @@ class tender_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             tender_to_update.add(line.tender_id.id)
-            if line.sale_order_line_id:
+            if line.sale_order_line_id and line.sale_order_line_id.state not in ('cancel', 'done'):
                 so_to_update.add(line.sale_order_line_id.order_id.id)
                 if line.sale_order_line_id.order_id.procurement_request:
                     sol_not_to_delete.append(line.sale_order_line_id.id)
