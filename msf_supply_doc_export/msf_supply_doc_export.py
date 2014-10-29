@@ -350,12 +350,6 @@ class po_follow_up_mixin(object):
         po_header.append('Confirmed del date: ' + obj.delivery_confirmed_date)
         po_header.append('Nb items: ' + str(len(obj.order_line)))
         po_header.append('Estimated amount: ' + str(obj.amount_total))
-        po_header.append('')
-        po_header.append('')
-        po_header.append('')
-        po_header.append('')
-        po_header.append('')
-        po_header.append('')
         return po_header
 
     def getHeaderLine2(self,obj):
@@ -393,6 +387,7 @@ class po_follow_up_mixin(object):
         # TODO it probably should be 1
         multiplier = 1.0000100000000001 
         pol_obj = self.pool.get('purchase.order.line')
+        prod_obj = self.pool.get('product.product')
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)])
         po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
         report_lines = []
@@ -406,7 +401,7 @@ class po_follow_up_mixin(object):
             report_line['description'] = line.product_id.name or ''
             report_line['qty_ordered'] = line.product_qty or ''
             report_line['uom'] = line.product_uom.name or ''
-            report_line['qty_received'] = inline_in.get('product_qty','')
+            report_line['qty_received'] = inline_in.get('state') == 'done' and inline_in.get('product_qty','') or '0.00'
             report_line['in'] = inline_in.get('name','') or ''
             if report_line['in'] == '':
                 report_line['qty_backordered'] = report_line['qty_ordered']
@@ -417,10 +412,12 @@ class po_follow_up_mixin(object):
                 report_line['in_unit_price'] = inline_in.get('price_unit') * line.price_unit
             else:
                 report_line['in_unit_price'] = ''
-            report_line['in_unit_price'] = ''
+#            report_line['in_unit_price'] = ''
             report_line['destination'] = analytic_lines[0].get('destination')
             report_line['cost_centre'] = analytic_lines[0].get('cost_center')
             report_lines.append(report_line)
+            if inline_in.get('state') != 'done':
+                report_line['in_unit_price'] = ''
               
             # if additional analytic lines print them here.
             for (index, analytic_line) in list(enumerate(analytic_lines))[1:]:
@@ -447,27 +444,35 @@ class po_follow_up_mixin(object):
                     report_line = {}
                     backorder = other_in.get('backorder_id')
                     report_line['sort_key'] = line.line_number + (float(other_in.get('id')) / 100)
+
+                    # Product is changed
+                    if other_in.get('product_id') and other_in.get('product_id') != line.product_id.id:
+                        prod_brw = prod_obj.browse(self.cr, self.uid, other_in.get('product_id'))
+                        report_line['code'] = prod_brw.default_code
+                        report_line['description'] = prod_brw.name
+                    else:
+                        report_line['code'] = ''
+                        report_line['description'] = ''
+
                     report_line['item'] = ''
-                    report_line['code'] = ''
-                    report_line['description'] = ''
                     report_line['qty_ordered'] = ''
                     report_line['uom'] = ''
-                    if backorder:
+                    if backorder and other_in.get('state') != 'done':
                         report_line['qty_received'] = ''
-                    else:
-                        report_line['qty_received'] = other_in.get('product_qty','')
-                    report_line['in'] = other_in.get('name','')
-                    if backorder:
                         report_line['qty_backordered'] = other_in.get('product_qty','')
                     else:
+                        report_line['qty_received'] = other_in.get('product_qty','')
                         report_line['qty_backordered'] = ''
+                    report_line['in'] = other_in.get('name','')
                     report_line['unit_price'] = line.price_unit or ''
                     if inline_in.get('price_unit') and inline_in.get('price_unit') <> multiplier:
                         report_line['in_unit_price'] = inline_in.get('price_unit') * line.price_unit
                     else:
                         report_line['in_unit_price'] = ''
-                    report_line['destination'] = ''
-                    report_line['cost_centre'] = ''
+                    report_line['destination'] = analytic_lines[0].get('destination')
+                    report_line['cost_centre'] = analytic_lines[0].get('cost_center')
+                    if other_in.get('state') != 'done':
+                        report_line['in_unit_price'] = ''
                     report_lines.append(report_line)
                        
         # sort the list for presentation in excel
@@ -504,7 +509,7 @@ class po_follow_up_mixin(object):
     
     def getOtherINs(self,po_line_id,exclude_id):
         sm_obj = self.pool.get('stock.move')        
-        self.cr.execute(''' select sm.id, sp.name, sm.product_qty, sm.product_uom, sm.price_unit, sm.state, sp.backorder_id 
+        self.cr.execute(''' select sm.id, sp.name, sm.product_qty, sm.product_id, sm.product_uom, sm.price_unit, sm.state, sp.backorder_id 
                             from stock_move sm, stock_picking sp
                             where sm.purchase_line_id  = %s 
                             and sm.type = 'in' 
