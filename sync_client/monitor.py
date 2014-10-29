@@ -168,7 +168,7 @@ class sync_monitor(osv.osv):
     _rec_name = 'start'
 
     _columns = {
-        'sequence_number' : fields.integer("Sequence",  readonly=True, required=True),
+        'sequence_number' : fields.integer("Seq",  readonly=True, required=True),
         'start' : fields.datetime("Start Date", readonly=True, required=True),
         'end' : fields.datetime("End Date", readonly=True),
         'data_pull' : fields.selection(status_dict.items(), string="Data Pull", readonly=True),
