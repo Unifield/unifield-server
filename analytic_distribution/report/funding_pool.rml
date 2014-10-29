@@ -168,7 +168,7 @@
     <para style="P4">
       <font color="white"> </font>
     </para>
-    <para style="P6">Report edition date: [[ today() ]]</para>
+    <para style="P6">Report edition date: [[ formatLang(today(), date=True) ]]</para>
     <para>
       <br />
     </para>
@@ -186,10 +186,10 @@
     <blockTable colWidths="266.0,269.0" style="Table3">
       <tr>
         <td>
-          <para style="P13"  alignment="LEFT">[[ formatLang(o.date_start,  date=True) ]] </para>
+          <para style="P13"  alignment="LEFT">[[ formatLang(o.date_start, date=True) ]]</para>
         </td>
         <td>
-          <para style="P13" alignment="LEFT">[[ o.date != 'False' and formatLang(o.date,  date=True) or '' ]] </para>
+          <para style="P13" alignment="LEFT">[[ o.date != 'False' and formatLang(o.date, date=True) or '' ]]</para>
         </td>
       </tr>
     </blockTable>

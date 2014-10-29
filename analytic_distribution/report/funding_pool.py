@@ -34,7 +34,7 @@ class funding(report_sxw.rml_parse):
         })
 
     def today(self):
-        return time.strftime('%Y/%m/%d',time.localtime())
+        return time.strftime('%Y-%m-%d',time.localtime())
 
     def getBoolDest(self, line, o):
         pool = pooler.get_pool(self.cr.dbname)
