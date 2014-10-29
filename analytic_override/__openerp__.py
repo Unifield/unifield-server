@@ -29,7 +29,9 @@
       - analytic accounts
       - analytic lines
     """,
-    "init_xml" : [],
+    "init_xml" : [
+        'report.xml',
+    ],
     "update_xml": [
         'security/ir.model.access.csv',
         'report.xml',
