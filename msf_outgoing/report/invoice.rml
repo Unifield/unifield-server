@@ -96,7 +96,7 @@
     </para>
     
     <!-- header: ref fields -->
-    <blockTable colWidths="120.0,120.0,150,150,292" style="HeaderInfos">
+    <blockTable colWidths="100.0,220.0,170,170,172" style="HeaderInfos">
         <tr>
             <td>
                 <para style="HeaderInfosTitle">Our ref:</para>
