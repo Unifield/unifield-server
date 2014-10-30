@@ -134,7 +134,7 @@ class analytic_account(osv.osv):
                     where_date += " AND l.instance_id = %s"
                 else:
                     where_date += " AND l.instance_id in %s"
-                where_clause_args += tuple(instance_ids)
+                where_clause_args.append(tuple(instance_ids))
             # UF-1713: Add currency arg
             if context.get('currency_id', False):
                 where_date += " AND l.currency_id = %s"
