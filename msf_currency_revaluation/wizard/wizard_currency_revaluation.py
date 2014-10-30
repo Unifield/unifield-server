@@ -215,6 +215,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Set values according to the user input
         value['result_period_id'] = period_id
+        period_obj = self.pool.get('account.period')
 
         period = period_obj.browse(cr, uid, period_id, context=None)
         value['posting_date'] = period.date_stop
@@ -227,14 +228,17 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         else:
             value['revaluation_date'] = fiscalyear.date_stop
             value['posting_date'] = fiscalyear.date_stop
-            period_ids = period_obj.search(
-                cr, uid,
-                [('state', '!=', 'created'),
-                 ('fiscalyear_id', '=', fiscalyear.id),
-                 ('number', '=', 13)])
-            if period_ids:
-                value['result_period_id'] = period_ids[0]
-
+            check_period13_res = self._check_period_opened(cr, uid,
+                fiscalyear.id, 13)  # UFTP-385 period 13 for year end
+            if check_period13_res[1]:
+                value['result_period_id'] = check_period13_res[1]
+            else:
+                value['result_period_id'] = False
+            if not check_period13_res[0] and check_period13_res[2]:
+                warning = {
+                    'title': _('Warning!'),
+                    'message': check_period13_res[2]
+                }
         res = {'value': value, 'warning': warning}
         return res
 
@@ -542,6 +546,14 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             ids = [ids]
         form = self.browse(cr, uid, ids[0], context=context)
 
+        if form.revaluation_method in ('liquidity_year', 'other_bs'):
+            # check if period 13 is valid for end year reval
+            # (must exist and must be opened)
+            check_period13_res = self._check_period_opened(cr, uid,
+                form.fiscalyear_id.id, 13)
+            if not check_period13_res[0] and check_period13_res[2]:
+                raise osv.except_osv(_('Warning!'), check_period13_res[2])
+
         # Set the currency table in the context for later computations
         if form.revaluation_method in ['liquidity_year', 'other_bs']:
             context['currency_table_id'] = form.currency_table_id.id
@@ -611,13 +623,15 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 periods_not_field_closed.append(period.name)
 
         # check if revaluation has already been run for this period
-        for period_id in period_ids:
-            if self._is_revaluated(cr, uid, period_id, context=None):
-                period_name = period_obj.browse(cr, uid, period_id, context=context).name
-                raise osv.except_osv(
-                    _(u"Error"),
-                    _(u"%s has already been revaluated" % (period_name)))
-
+        # UFTP-385 not checked for year end as is it over months revaluation
+        if form.revaluation_method == 'liquidity_month':
+            for period_id in period_ids:
+                if self._is_revaluated(cr, uid, period_id, context=None):
+                    period_name = period_obj.browse(cr, uid, period_id, context=context).name
+                    raise osv.except_osv(
+                        _(u"Error"),
+                        _(u"%s has already been revaluated" % (period_name))
+                    )
 
         # Get balance sums
         account_sums = account_obj.compute_revaluations(
@@ -806,6 +820,44 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             line_obj.reconcile_partial(
                 cr, uid, [line_id, rev_line_id], context=context)
         return move_id, rev_line_ids
+
+
+    def _check_period_opened(self, cr, uid, fiscalyear_id, period_number,
+        context=None):
+        """
+        check if given period from number is opened
+        period_id is passed in result for info if not opened
+        :param fiscalyear_id: fiscalyear_id id
+        :param period_number: period number
+        :type period_number: int
+        :return: (ok, period_id, msg)
+        :rtype: tuple(boolean, int/False, str/False)
+        """
+        res = (False, False, False)
+        period_obj = self.pool.get('account.period')
+        domain = [
+            ('state', '=', 'draft'),  # draf <=> open in openerp period
+            ('fiscalyear_id', '=', fiscalyear_id),
+            ('number', '=', period_number),
+        ]
+
+        # search for opened period
+        period_ids = period_obj.search(cr, uid, domain, context=context)
+        if period_ids:
+            # period 13 opened found
+            res = (True, period_ids[0], False)
+        else:
+            # not found, check if exist with any state to get its id
+            domain = [
+                ('fiscalyear_id', '=', fiscalyear_id),
+                ('number', '=', period_number),
+            ]
+            period_ids = period_obj.search(cr, uid, domain, context=context)
+            if not period_ids:
+                res = (False, False, _('Period 13 is not found'))
+            else:
+                res = (False, period_ids[0], _('Period 13 is not opened'))
+        return res
 
 WizardCurrencyrevaluation()
 
