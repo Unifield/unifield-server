@@ -215,7 +215,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Set values according to the user input
         value['result_period_id'] = period_id
-        period_obj = self.pool.get('account.period')
 
         period = period_obj.browse(cr, uid, period_id, context=None)
         value['posting_date'] = period.date_stop
@@ -546,6 +545,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             ids = [ids]
         form = self.browse(cr, uid, ids[0], context=context)
 
+        period_13_id = False
         if form.revaluation_method in ('liquidity_year', 'other_bs'):
             # check if period 13 is valid for end year reval
             # (must exist and must be opened)
@@ -553,6 +553,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 form.fiscalyear_id.id, 13)
             if not check_period13_res[0] and check_period13_res[2]:
                 raise osv.except_osv(_('Warning!'), check_period13_res[2])
+            period_13_id = check_period13_res[1]
 
         # Set the currency table in the context for later computations
         if form.revaluation_method in ['liquidity_year', 'other_bs']:
@@ -566,11 +567,15 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Get posting date (as the field is readonly, its value is not sent
         # to the server by the web client
-        if form.period_id and form.period_id.date_stop:
-            form.posting_date = form.period_id.date_stop
+        if period_13_id:
+            # period_13_id set: end of year revaluation
+            form.period_id.id = period_13_id
+            form.posting_date = form.fiscalyear_id.date_stop
         else:
-            form.posting_date = form.revaluation_date
-
+            if form.period_id and form.period_id.date_stop:
+                form.posting_date = form.period_id.date_stop
+            else:
+                form.posting_date = form.revaluation_date
 
         # Search for accounts Balance Sheet or Liquidity to be eevaluated
         """Determine accounts to be used in the revaluation based on the "included in reval" checkbox.
@@ -624,6 +629,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # check if revaluation has already been run for this period
         # UFTP-385 not checked for year end as is it over months revaluation
+        # in this case to check revaluation year already done we check only period 13
         if form.revaluation_method == 'liquidity_month':
             for period_id in period_ids:
                 if self._is_revaluated(cr, uid, period_id, context=None):
@@ -836,7 +842,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         res = (False, False, False)
         period_obj = self.pool.get('account.period')
         domain = [
-            ('state', '=', 'draft'),  # draf <=> open in openerp period
+            ('state', '=', 'draft'),  # draft <=> open in openerp period
             ('fiscalyear_id', '=', fiscalyear_id),
             ('number', '=', period_number),
         ]
