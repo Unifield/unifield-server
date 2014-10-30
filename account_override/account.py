@@ -102,13 +102,14 @@ class account_account(osv.osv):
         #compute for each account the balance/debit/credit from the move lines
         accounts = {}
         sums = {}
+        query_params = []
         # Add some query/query_params regarding context
         link = " "
         if context.get('currency_id', False):
             if query:
                 link = " AND "
             query += link + 'currency_id = %s'
-            query_params += tuple([context.get('currency_id')])
+            query_params.append(tuple([context.get('currency_id')]))
         link = " "
         if context.get('instance_ids', False):
             if query:
@@ -120,7 +121,7 @@ class account_account(osv.osv):
                 query += link + 'l.instance_id = %s'
             else:
                 query += link + 'l.instance_id in %s'
-            query_params += tuple(instance_ids)
+            query_params.append(tuple(instance_ids))
         # Do normal process
         if children_and_consolidated:
             aml_query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
@@ -154,7 +155,10 @@ class account_account(osv.osv):
                        " WHERE l.account_id IN %s " \
                             + prefilters + filters +
                        " GROUP BY l.account_id")
-            params = (tuple(children_and_consolidated),) + query_params
+            params = [tuple(children_and_consolidated)]
+            if query_params:
+                for qp in query_params:
+                    params.append(qp)
             cr.execute(request, params)
             self.logger.notifyChannel('account_override.'+self._name, netsvc.LOG_DEBUG,
                                       'Status: %s'%cr.statusmessage)
