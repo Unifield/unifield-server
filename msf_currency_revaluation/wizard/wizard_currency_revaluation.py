@@ -611,8 +611,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             if form.period_id.number > 12:
                 raise osv.except_osv(
                     _('Error!'),
-                    _("You can not perform a monthly revaluation on '%s'" % (
-                    form.period_id.name, ))
+                    _("You can not perform a monthly revaluation on '%s'") % (
+                    form.period_id.name, )
                 )
             period_ids = [form.period_id.id]
         else:
@@ -635,13 +635,18 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # UFTP-385 not checked for year end as is it over months revaluation
         # in this case to check revaluation year already done we check only period 13
         if form.revaluation_method == 'liquidity_month':
-            for period_id in period_ids:
-                if self._is_revaluated(cr, uid, period_id, context=None):
-                    period_name = period_obj.browse(cr, uid, period_id, context=context).name
-                    raise osv.except_osv(
-                        _(u"Error"),
-                        _(u"%s has already been revaluated" % (period_name))
-                    )
+            revalcheck_period_id = period_ids
+        else:
+            revalcheck_period_id = [period_13_id]
+        for period_id in revalcheck_period_id:
+            if self._is_revaluated(cr, uid, period_id, context=None):
+                if form.revaluation_method == 'liquidity_month':
+                    period_name = period_obj.browse(cr, uid, period_id,
+                        context=context).name
+                    msg = _(u"%s has already been revaluated") % (period_name, )
+                else:
+                    msg = _(u"End year revaluation already performed")
+                raise osv.except_osv(_(u"Error"), msg)
 
         # Get balance sums
         account_sums = account_obj.compute_revaluations(
