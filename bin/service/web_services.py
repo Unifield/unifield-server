@@ -39,6 +39,7 @@ import tools
 import locale
 import logging
 from cStringIO import StringIO
+from tempfile import NamedTemporaryFile
 
 class db(netsvc.ExportService):
     def __init__(self, name="db"):
@@ -51,8 +52,19 @@ class db(netsvc.ExportService):
         self._pg_psw_env_var_is_set = False # on win32, pg_dump need the PGPASSWORD env var
 
     def dispatch(self, method, auth, params):
-        if method in [ 'create', 'get_progress', 'drop', 'dump',
-            'restore', 'rename',
+        if method == 'drop':
+            passwd = params[0]
+            params = params[1:]
+            security.check_super_dropdb(passwd)
+        elif method == 'dump':
+            passwd = params[0]
+            params = params[1:]
+            security.check_super_bkpdb(passwd)
+        elif method == 'restore':
+            passwd = params[0]
+            params = params[1:]
+            security.check_super_restoredb(passwd)
+        elif method in [ 'create', 'get_progress', 'rename',
             'change_admin_password', 'migrate_databases' ]:
             passwd = params[0]
             params = params[1:]
@@ -68,6 +80,7 @@ class db(netsvc.ExportService):
 
     def new_dispatch(self,method,auth,params):
         pass
+
     def _create_empty_database(self, name):
         db = sql_db.db_connect('template1')
         cr = db.cursor()
@@ -238,19 +251,17 @@ class db(netsvc.ExportService):
         cmd.append('--dbname=' + db_name)
         args2 = tuple(cmd)
 
+
         buf=base64.decodestring(data)
-        if os.name == "nt":
-            tmpfile = (os.environ['TMP'] or 'C:\\') + os.tmpnam()
-            file(tmpfile, 'wb').write(buf)
-            args2=list(args2)
-            args2.append(tmpfile)
-            args2=tuple(args2)
-            res = tools.exec_pg_command(*args2)
-        else:
-            stdin, stdout = tools.exec_pg_command_pipe(*args2)
-            stdin.write(base64.decodestring(data))
-            stdin.close()
-            res = stdout.close()
+        tmpfile = NamedTemporaryFile('w+b', delete=False)
+        tmpfile.write(buf)
+        tmpfile.close()
+
+        args2=list(args2)
+        args2.append(tmpfile.name)
+        args2=tuple(args2)
+        res = tools.exec_pg_command(*args2)
+        os.remove(tmpfile.name)
         if res:
             raise Exception, "Couldn't restore database"
         logger.notifyChannel("web-services", netsvc.LOG_INFO,
@@ -789,4 +800,3 @@ report_spool()
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

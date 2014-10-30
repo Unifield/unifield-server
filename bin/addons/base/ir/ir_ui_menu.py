@@ -59,14 +59,15 @@ class ir_ui_menu(osv.osv):
         for menu in self.browse(cr, uid, ids, context=context):
             # this key works because user access rights are all based on user's groups (cfr ir_model_access.check)
             key = (cr.dbname, menu.id, tuple(user_groups))
-            if key in self._cache:
+            if key in self._cache and uid != 1:
                 if self._cache[key]:
                     result.append(menu.id)
                 #elif not menu.groups_id and not menu.action:
                 #    result.append(menu.id)
                 continue
 
-            self._cache[key] = False
+            if uid != 1:
+                self._cache[key] = False
             if menu.groups_id:
                 restrict_to_groups = [g.id for g in menu.groups_id]
                 if not user_groups.intersection(restrict_to_groups):
@@ -96,7 +97,8 @@ class ir_ui_menu(osv.osv):
                     continue
 
             result.append(menu.id)
-            self._cache[key] = True
+            if uid != 1:
+                self._cache[key] = True
         return result
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):

@@ -32,7 +32,7 @@ def check_ssl():
     try:
         from OpenSSL import SSL
         import socket
-        
+
         return hasattr(socket, 'ssl') and hasattr(SSL, "Connection")
     except:
         return False
@@ -57,6 +57,8 @@ class configmanager(object):
             'netrpc': True,
             'netrpc_gzip': False,
             'xmlrpc': True,
+            'gzipxmlrpc': False,
+            'gzipxmlrpcs': False,
             'xmlrpcs': True,
             'translate_in': None,
             'translate_out': None,
@@ -65,6 +67,9 @@ class configmanager(object):
             'language': None,
             'pg_path': None,
             'admin_passwd': 'admin',
+            'admin_dropdb_passwd': 'dropadmin',
+            'admin_bkpdb_passwd': 'bkpadmin',
+            'admin_restoredb_passwd': 'restoreadmin',
             'csv_internal_sep': ',',
             'addons_path': None,
             'root_path': None,
@@ -100,7 +105,7 @@ class configmanager(object):
             'osv_memory_age_limit': 1, # hours
             'additional_xml': False,
         }
-        
+
         self.blacklist_for_save = set(["publisher_warranty_url", "load_language"])
 
         self.misc = {}
@@ -122,6 +127,8 @@ class configmanager(object):
         group.add_option("--xmlrpc-interface", dest="xmlrpc_interface", help="specify the TCP IP address for the XML-RPC protocol")
         group.add_option("--xmlrpc-port", dest="xmlrpc_port", help="specify the TCP port for the XML-RPC protocol", type="int")
         group.add_option("--no-xmlrpc", dest="xmlrpc", action="store_false", help="disable the XML-RPC protocol")
+        group.add_option("--gzipxmlrpc", dest="gzipxmlrpc", action="store_true", help="enable gzipping XML-RPC protocol (disable standard XMLRPC)")
+        group.add_option("--gzipxmlrpcs", dest="gzipxmlrpcs", action="store_true", help="enable gzipping XML-RPC Secure protocol (disable standard XMLRPC)")
         parser.add_option_group(group)
 
         title = "XML-RPC Secure Configuration"
@@ -299,11 +306,15 @@ class configmanager(object):
             # gzip prevails over standard
             opt.netrpc = False
 
+        if opt.gzipxmlrpc or opt.gzipxmlrpcs:
+            # gzip prevails over standard
+            opt.xmlrpc = False
+
         keys = ['xmlrpc_interface', 'xmlrpc_port', 'db_name', 'db_user', 'db_password', 'db_host',
                 'db_port', 'logfile', 'pidfile', 'smtp_port', 'cache_timeout',
                 'email_from', 'smtp_server', 'smtp_user', 'smtp_password',
                 'netrpc_interface', 'netrpc_port', 'db_maxconn', 'import_partial', 'addons_path',
-                'netrpc', 'netrpc_gzip', 'xmlrpc', 'syslog', 'without_demo', 'timezone',
+                'netrpc', 'netrpc_gzip', 'xmlrpc', 'gzipxmlrpc', 'gzipxmlrpcs', 'syslog', 'without_demo', 'timezone',
                 'xmlrpcs_interface', 'xmlrpcs_port', 'xmlrpcs',
                 'secure_cert_file', 'secure_pkey_file',
                 'static_http_enable', 'static_http_document_root', 'static_http_url_prefix',
@@ -533,4 +544,3 @@ config = configmanager()
 # when it starts, to allow doing 'import tools.config' from
 # other python executables without parsing *their* args.
 config.parse_config()
-

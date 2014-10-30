@@ -191,11 +191,11 @@ class browse_record(object):
             # if the field is a classic one or a many2one, we'll fetch all classic and many2one fields
             if col._prefetch:
                 # gen the list of "local" (ie not inherited) fields which are classic or many2one
-                fields_to_fetch = filter(lambda x: x[1]._classic_write, self._table._columns.items())
+                fields_to_fetch = filter(lambda x: x[1]._classic_write and x[1]._prefetch, self._table._columns.items())
                 # gen the list of inherited fields
                 inherits = map(lambda x: (x[0], x[1][2]), self._table._inherit_fields.items())
                 # complete the field list with the inherited fields which are classic or many2one
-                fields_to_fetch += filter(lambda x: x[1]._classic_write, inherits)
+                fields_to_fetch += filter(lambda x: x[1]._classic_write and x[1]._prefetch, inherits)
             # otherwise we fetch only that field
             else:
                 fields_to_fetch = [(name, col)]
@@ -1191,6 +1191,7 @@ class orm_template(object):
                 if not write_access:
                     res[f]['readonly'] = True
                     res[f]['states'] = {}
+                    res[f]['no_write_access'] = True
                 for arg in ('digits', 'invisible', 'filters', 'computation'):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
