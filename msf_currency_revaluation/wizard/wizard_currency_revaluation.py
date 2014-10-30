@@ -635,10 +635,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # UFTP-385 not checked for year end as is it over months revaluation
         # in this case to check revaluation year already done we check only period 13
         if form.revaluation_method == 'liquidity_month':
-            revalcheck_period_id = period_ids
+            revalcheck_period_ids = period_ids
         else:
-            revalcheck_period_id = [period_13_id]
-        for period_id in revalcheck_period_id:
+            revalcheck_period_ids = [period_13_id]
+        for period_id in revalcheck_period_ids:
             if self._is_revaluated(cr, uid, period_id, context=None):
                 if form.revaluation_method == 'liquidity_month':
                     period_name = period_obj.browse(cr, uid, period_id,
