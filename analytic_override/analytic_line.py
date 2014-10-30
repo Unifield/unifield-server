@@ -131,6 +131,9 @@ class account_analytic_line(osv.osv):
         return view
 
     def create(self, cr, uid, vals, context=None):
+        entry_sequence_sync = None
+        if vals.get('entry_sequence',False):
+            entry_sequence_sync = vals['entry_sequence']
         """
         Check date for given date and given account_id
         Filled in 'document_date' if we come from synchronization
@@ -149,6 +152,10 @@ class account_analytic_line(osv.osv):
         res = super(account_analytic_line, self).create(cr, uid, vals, context=context)
         # Check date
         self._check_date(cr, uid, vals, context=context)
+        br = self.browse(cr, uid, res,context)
+        if entry_sequence_sync is not None:
+            if entry_sequence_sync != br.entry_sequence:
+                cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (entry_sequence_sync,res))
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
