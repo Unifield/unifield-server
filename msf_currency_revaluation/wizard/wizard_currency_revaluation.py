@@ -606,10 +606,14 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                                  _('No special period found for the fiscalyear %s') %
                                    form.fiscalyear_id.code)
 
-
-
         period_ids = []
         if form.revaluation_method == 'liquidity_month':
+            if form.period_id.number > 12:
+                raise osv.except_osv(
+                    _('Error!'),
+                    _("You can not perform a monthly revaluation on '%s'" % (
+                    form.period_id.name, ))
+                )
             period_ids = [form.period_id.id]
         else:
             period_ids = []
