@@ -22,9 +22,11 @@ import time
 import copy
 import cherrypy
 
-from openerp.utils import TinyDict, expr_eval, rpc
+from openerp.utils import TinyDict, expr_eval, rpc, node_attributes
 from openerp.widgets import TinyInputWidget, register_widget
 from openerp.widgets.screen import Screen
+import xml.dom.minidom
+
 
 __all__ = ["O2M", "OneToMany"]
 
@@ -145,6 +147,14 @@ class O2M(TinyInputWidget):
         current.offset = current.offset or 0
         current.limit = current.limit or 50
         current.count = len(ids or [])
+
+        if not current.force_limit:
+            arch = attrs.get('views', {}).get('tree', {}).get('arch')
+            if arch:
+                dom = xml.dom.minidom.parseString(arch.encode('utf-8'))
+                tree_attribute = node_attributes(dom.childNodes[0])
+                if tree_attribute.get('limit'):
+                    current.limit = tree_attribute.get('limit')
 
         if current.limit != -1 and not params.sort_key:
             ids = ids[current.offset: current.offset+current.limit]
