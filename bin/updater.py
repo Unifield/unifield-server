@@ -183,33 +183,98 @@ def do_update():
             os.unlink(new_version_file)
             ## Explore .update directory
             files = find(update_dir)
+
             ## Prepare backup directory
             if not os.path.exists('backup'):
                 os.mkdir('backup')
             else:
                 rmtree('backup')
+
+            if os.name == "nt":
+                import _winreg
+
+                try:
+                    registry_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0", 0,
+                                                   _winreg.KEY_READ)
+                    value, regtype = _winreg.QueryValueEx(registry_key, "EventMessageFile")
+                    _winreg.CloseKey(registry_key)
+                    regval = value
+                    warn("webmode registry key : %s" % regval)
+                except WindowsError:
+                    warn("webmode registry key not found")
+                    regval = "c:\Program Files (x86)\msf\Unifield\Web\service\libs\servicemanager.pyd"
+
+                res = re.match("^(.*)\\service\\libs\\servicemanager.pyd", regval)
+                if res:
+                    webpath = res.group(1)
+                else:
+                    webpath = "c:\\Program Files (x86)\\msf\\Unifield\\Web"
+
+            else:
+                #We're on the runbot
+                webpath = '../../unifield-web/'
+            webbackup = os.path.join(webpath, 'backup')
+            if not os.path.exists(webbackup):
+                os.mkdir(webbackup)
+            else:
+                rmtree(webbackup)
+
+            webupdated = False
             ## Update Files
             warn("Updating...")
             for f in files:
-                target = os.path.join(update_dir, f)
-                bak = os.path.join('backup', f)
-                if os.path.isdir(target):
-                    if os.path.isfile(f) or os.path.islink(f):
-                        os.unlink(f)
-                    if not os.path.exists(f):
-                        os.mkdir(f)
-                    os.mkdir(bak)
+                webfile = re.match("^web[\\\/](.*)", f)
+                warn("Filename : `%s'" % (f))
+                if webfile:
+                    target = os.path.join(update_dir, f)
+                    bak = os.path.join(webbackup, webfile.group(1))
+                    webf = os.path.join(webpath, webfile.group(1))
+                    warn("webmode (webpath, target, bak, webf): %s, %s, %s, %s" % (webpath, target, bak, webf))
+                    if os.path.isdir(target):
+                        if os.path.isfile(webf) or os.path.islink(webf):
+                            os.unlink(webf)
+                        if not os.path.exists(webf):
+                            os.mkdir(webf)
+                        os.mkdir(bak)
+                    else:
+                        if os.path.exists(webf):
+                            warn("`%s' -> `%s'" % (webf, bak))
+                            os.rename(webf, bak)
+                        warn("`%s' -> `%s'" % (target, webf))
+                        os.rename(target, webf)
+                    webupdated = True
                 else:
-                    if os.path.exists(f):
-                        warn("`%s' -> `%s'" % (f, bak))
-                        os.rename(f, bak)
-                    warn("`%s' -> `%s'" % (target, f))
-                    os.rename(target, f)
+                    target = os.path.join(update_dir, f)
+                    bak = os.path.join('backup', f)
+
+                    if os.path.isdir(target):
+                        if os.path.isfile(f) or os.path.islink(f):
+                            os.unlink(f)
+                        if not os.path.exists(f):
+                            os.mkdir(f)
+                        os.mkdir(bak)
+                    else:
+                        if os.path.exists(f):
+                            warn("`%s' -> `%s'" % (f, bak))
+                            os.rename(f, bak)
+                        warn("`%s' -> `%s'" % (target, f))
+                        os.rename(target, f)
             add_versions([(x, application_time) for x in revisions])
             warn("Update successful.")
             warn("Revisions added: ", ", ".join(revisions))
             ## No database update here. I preferred to set modules to update just after the preparation
             ## The reason is, when pool is populated, it will starts by upgrading modules first
+
+            #Restart web server
+            if webupdated and os.name == "nt":
+                try:
+                    import subprocess
+                    retcode = subprocess.call('net stop "OpenERP Web 6.0"')
+                    retcode = subprocess.call('net start "OpenERP Web 6.0"')
+                except OSError, e:
+                    warn("Exception in Web server restart :")
+                    warn(unicode(e))
+
         except BaseException, e:
             warn("Update failure!")
             warn(unicode(e))
