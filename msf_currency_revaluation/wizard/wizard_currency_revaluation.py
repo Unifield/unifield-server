@@ -91,19 +91,58 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         'fiscalyear_id': _get_default_fiscalyear_id,
     }
 
-    def _is_revaluated(self, cr, uid, period_id, context=None):
-        """ check if the revaluation has already been run by checking for a non-zero entry in the REV journal in the current instance """
+    def _is_revaluated(self, cr, uid, period_id, revaluation_method=False,
+        context=None):
+        """
+        check if the revaluation has already been run by checking
+        for a non-zero entry in the REV journal in the current instance
+        and according to reval method filter by account type liquidity or not
+        at line level
+        """
         journal_obj = self.pool.get('account.journal')
-        move_obj = self.pool.get('account.move')
-        instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        comp_id = self.pool.get('res.users').browse(cr, uid, uid,
+            context=context).company_id
+        instance_id = comp_id.instance_id.id
 
-        rev_journal_id = journal_obj.search(cr, uid, [('type','=','revaluation'),('instance_id','=',instance_id)])[0]
-        reval_move_ids = move_obj.search(cr, uid, [('journal_id','=',rev_journal_id),('period_id','=',period_id)])
-        if reval_move_ids:
-            return True
-        else:
-            return False
+        # get rev journal of instance
+        domain = [
+            ('type', '=', 'revaluation'),
+            ('instance_id', '=', instance_id),
+        ]
+        rev_journal_id = journal_obj.search(cr, uid, domain)[0]
 
+        # default domain in term of rev journal and period
+        domain = [
+            ('journal_id', '=', rev_journal_id),
+            ('period_id', '=', period_id),
+        ]
+
+        account_model = 'account.move'
+        account_ids_domain = False
+        if revaluation_method in ('liquidity_year', 'other_bs'):
+            # filter by liquidity account type or not  for end year methods
+            # => to filter by account type we are at line level
+            account_model = 'account.move.line'
+            account_liquidity_ids = self.pool.get('account.account').search(cr,
+                uid, [('type', '=', 'liquidity')], context=context)
+            if comp_id.revaluation_default_account:
+                # do not count rev default account itself
+                account_ids_domain = [
+                    ('account_id', '!=', comp_id.revaluation_default_account.id),
+                ]
+            else:
+                account_ids_domain = []
+            if account_liquidity_ids:
+                op = 'in' if revaluation_method == 'liquidity_year' else 'not in'
+                account_ids_domain += [
+                    ('account_id', op, account_liquidity_ids),
+                ]
+
+        if account_ids_domain:
+            domain += account_ids_domain
+        reval_move_count = self.pool.get(account_model).search(cr, uid, domain,
+            count=True, context=context)
+        return True if reval_move_count and reval_move_count > 0 else False
 
     def default_get(self, cr, uid, fields, context=None):
         """'default_get' method overridden."""
@@ -633,13 +672,15 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # check if revaluation has already been run for this period
         # UFTP-385 not checked for year end as is it over months revaluation
-        # in this case to check revaluation year already done we check only period 13
+        # in this case to check revaluation year already done we check only
+        # period 13
         if form.revaluation_method == 'liquidity_month':
             revalcheck_period_ids = period_ids
         else:
             revalcheck_period_ids = [period_13_id]
         for period_id in revalcheck_period_ids:
-            if self._is_revaluated(cr, uid, period_id, context=None):
+            if self._is_revaluated(cr, uid, period_id, form.revaluation_method,
+                context=None):
                 if form.revaluation_method == 'liquidity_month':
                     period_name = period_obj.browse(cr, uid, period_id,
                         context=context).name
