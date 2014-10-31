@@ -34,7 +34,7 @@ def is_online():
         res = False
     print res
     th_local.is_online = res
-    return res    
+    return res
 
 
 class upgrade(osv.osv_memory):
@@ -200,11 +200,20 @@ class upgrade(osv.osv_memory):
         if not next_revisions:
             return 'up-to-date'
         if not revisions._is_update_available(cr, uid, next_revisions, context=context):
-            if is_online():
-                return 'need-download'
-            else:
+            if self._is_remotewarehouse(cr, uid):
                 return 'need-provide-manually'
+            else:
+                return 'need-download'
         return 'need-install'
+
+    def _is_remotewarehouse(self, cr, uid, context=None):
+        try:
+            entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
+            if entity.usb_instance_type == 'remote_warehouse':
+                return True
+        except Exception, e:
+            pass
+        return False
 
     _columns = {
         'message' : fields.text("Caption", readonly=True),
