@@ -21,7 +21,6 @@
             </field>
         </record>
 
-
         <record id="inherit_view_account_search_pma" model="ir.ui.view">
             <field name="name">inherit.view.account.search.pma</field>
             <field name="model">account.account</field>

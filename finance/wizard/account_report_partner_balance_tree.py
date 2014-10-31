@@ -73,6 +73,11 @@ class account_partner_balance_tree(osv.osv):
                 where += " AND "
             where += "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
 
+        # UFTP-312: take tax exclusion in account if user asked for it
+        TAX_REQUEST = ' '
+        if data['form'].get('tax', False):
+            TAX_REQUEST = "AND at.code != 'tax'"
+
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
@@ -83,9 +88,11 @@ class account_partner_balance_tree(osv.osv):
         " FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id)" \
         " JOIN account_account ac ON (l.account_id = ac.id)" \
         " JOIN account_move am ON (am.id = l.move_id)" \
+        " JOIN account_account_type at ON (ac.user_type = at.id)" \
         " WHERE ac.type IN " + account_type + "" \
         " AND am.state IN " + move_state + "" \
         " AND " + where + "" \
+        " " + TAX_REQUEST + " " \
         " GROUP BY ac.type,p.id,p.ref,p.name" \
         " ORDER BY ac.type,p.name"
         cr.execute(query)
