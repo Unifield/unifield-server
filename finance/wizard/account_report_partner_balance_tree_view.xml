@@ -106,6 +106,7 @@
                     </tree>
                 </field>
                 <newline/>
+                <field name="tax"/>
             </xpath>
             
             <xpath expr="//group[1]" position="replace">
