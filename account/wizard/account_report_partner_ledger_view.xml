@@ -19,6 +19,7 @@
                 <field name="reconcil"/>
                 <field name="amount_currency"/>
                 <field name="page_split"/>
+                <field name="tax"/>
                 <newline/>
             </xpath>
             </data>

@@ -69,12 +69,13 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
         self.period_id = data['form'].get('period_from', False)
         self.date_from = data['form'].get('date_from', False)
+        self.exclude_tax = data['form'].get('tax', False)
         PARTNER_REQUEST = ''
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
 
-        # To have right initial balance, we have to fetch previous lines before a specific date.
+        # UFTP-312, UFTP-63: To have right initial balance, we have to fetch previous lines before a specific date.
         #+ To have right partner balance, we have to take all next lines after a specific date.
         #+ To do that, we need to make requests regarding a date. So first we take date_from
         #+  then period_from (if no date_from)
@@ -98,6 +99,11 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 self.DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
                 self.DATE_FROM = "AND l.date >= '%s'" % fy[0].get('date_start')
 
+        # UFTP-312: Exclude tax if user ask it
+        self.TAX_REQUEST = ' '
+        if self.exclude_tax is True:
+            self.TAX_REQUEST = "AND t.code != 'tax'"
+
         if (data['model'] == 'res.partner'):
             ## Si on imprime depuis les partenaires
             if ids:
@@ -113,8 +119,9 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             "SELECT a.id " \
             "FROM account_account a " \
             "LEFT JOIN account_account_type t " \
-                "ON (a.type=t.code) " \
+                "ON (a.user_type=t.id) " \
                 'WHERE a.type IN %s' \
+                " " + self.TAX_REQUEST + " " \
                 "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
         self.account_ids = [a for (a,) in self.cr.fetchall()]
         partner_to_use = []
