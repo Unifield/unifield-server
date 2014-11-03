@@ -432,7 +432,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             # state_hidden_sale_order
             result[obj.id]['state_hidden_sale_order'] = obj.state
-            if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order':
+            if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order' and not obj.procurement_request:
                 result[obj.id]['state_hidden_sale_order'] = 'split_so'
 
         return result
