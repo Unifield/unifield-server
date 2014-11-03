@@ -206,11 +206,10 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         else:
             purchase_domain.append(('order_type', '!=', 'direct'))
 
-        if procurement.rfq_id:
-            purchase_domain.append(('pricelist_id', '=', procurement.rfq_id.pricelist_id.id))
-
         if procurement.tender_line_id and procurement.tender_line_id.purchase_order_line_id:
             purchase_domain.append(('pricelist_id', '=', procurement.tender_line_id.purchase_order_line_id.order_id.pricelist_id.id))
+        elif procurement.rfq_id:
+            purchase_domain.append(('pricelist_id', '=', procurement.rfq_id.pricelist_id.id))
 
         line = None
         sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)

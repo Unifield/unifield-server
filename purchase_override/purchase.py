@@ -1308,6 +1308,7 @@ stock moves which are already processed : '''
         so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
         move_obj = self.pool.get('stock.move')
+        ad_obj = self.pool.get('analytic.distribution')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1376,6 +1377,20 @@ stock moves which are already processed : '''
                                   'nomen_sub_5': line.nomen_sub_5 and line.nomen_sub_5.id or False,
                                   'confirmed_delivery_date': line_confirmed,
                                   }
+                    """
+                    UFTP-336: Update the analytic distribution at FO line when
+                              PO is confirmed if lines are created at tender
+                              or RfQ because there is no AD on FO line.
+                    """
+                    if sol.created_by_tender or sol.created_by_rfq:
+                        new_distrib = False
+                        if line.analytic_distribution_id:
+                            new_distrib = ad_obj.copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
+                        elif not line.analytic_distribution_id and line.order_id and line.order_id.analytic_distribution_id:
+                            new_distrib = ad_obj.copy(cr, uid, line.order_id.analytic_distribution_id.id, {}, context=context)
+
+                        fields_dic['analytic_distribution_id'] = new_distrib
+
                     # write the line
                     sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
 

@@ -159,6 +159,14 @@ class sale_order(osv.osv):
                 continue
 
             for line in so.order_line:
+                """
+                UFTP-336: Do not check AD on FO lines if the lines are
+                          created on a tender or a RfQ.
+                          The AD must be added on the PO line and update the
+                          AD at FO line at PO confirmation.
+                """
+                if line.created_by_tender or line.created_by_rfq:
+                    continue
                 # Search intermission
                 intermission_cc = data_obj.get_object_reference(
                     cr,
