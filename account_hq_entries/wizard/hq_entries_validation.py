@@ -250,8 +250,13 @@ class hq_entries_validation(osv.osv_memory):
             # create new distribution (only for expense accounts)
             distrib_id = self.create_distribution_id(cr, uid, line.currency_id.id, line, line.account_id_first_value)
             aml_obj.write(cr, uid, counterpart_id, {
-                'reversal': True, 'name': 'REV - ' + original_move.name, 'account_id': original_account_id,
-                'analytic_distribution_id': distrib_id, 'reversal_line_id': original_move.id, 'partner_txt': original_move.partner_txt or ''
+                'reversal': True,
+                'name': 'REV - ' + original_move.name,
+                'account_id': original_account_id,
+                'analytic_distribution_id': distrib_id,
+                'reversal_line_id': original_move.id,
+                'partner_txt': original_move.partner_txt or '',
+                'reference': line.ref or ' ', # UFTP-342: if HQ entry reference is empty, do not display anything. As a field function exists for account_move_line object, so we add a blank char to avoid this problem
                 }, context=context, check=False, update_check=False)
 
             # create the analytic lines as a reversed copy of the original
