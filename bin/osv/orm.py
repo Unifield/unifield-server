@@ -4497,7 +4497,10 @@ class orm(orm_template):
             # can't use dict.fromkeys() as the list would be shared!
             result[id] = []
         for record in data_results:
-            result[record['res_id']].append('%(module)s.%(name)s' % record)
+            if record['module'] == 'sd':
+                result[record['res_id']].insert(0, '%(module)s.%(name)s' % record)
+            else:
+                result[record['res_id']].append('%(module)s.%(name)s' % record)
         return result
 
     def get_xml_id(self, cr, uid, ids, *args, **kwargs):
