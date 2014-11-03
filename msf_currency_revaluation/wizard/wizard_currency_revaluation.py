@@ -715,7 +715,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     created_ids.extend(new_ids)
                     # Create a second journal entry that will offset the first one
                     # if the revaluation method is 'Other B/S'
-                    if form.revaluation_method == 'other_bs':
+                    if form.revaluation_method in ['liquidity_year', 'other_bs']:
                         move_id, rev_line_ids = self._reverse_other_bs_move_lines(
                             cr, uid, form, move_id, new_ids, context=context)
                         created_ids.extend(rev_line_ids)
@@ -761,7 +761,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 _("The next fiscal year does not exist."))
         return next_fiscalyear_ids[0]
 
-    def _get_first_fiscalyear_period_id(self, cr, uid, fiscalyear_id, context=None):
+    def _get_first_fiscalyear_period_id(self, cr, uid, fiscalyear_id,
+            context=None):
         """Return the first period ID of a fiscal year."""
         if context is None:
             context = {}
