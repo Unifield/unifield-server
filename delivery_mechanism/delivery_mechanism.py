@@ -1136,6 +1136,7 @@ class stock_picking(osv.osv):
                             'product_uos_qty': bo_qty,
                             'product_uom': data_back['product_uom'],
                             'product_uos': data_back['product_uom'],
+                            'product_id': data_back['product_id'],
                             'prodlot_id': False,
                             'state': 'assigned',
                             'move_dest_id': False,
