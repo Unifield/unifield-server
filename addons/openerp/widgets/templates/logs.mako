@@ -34,6 +34,7 @@
                                              </a>
                                              % else:
                                              <span>&rarr; ${log['name']}</span>
+                                             % endif
                                          </div>
                                      % endfor
                                      <a id="less" style="color: blue; font-weight: bold;" href="javascript: void(0);"
