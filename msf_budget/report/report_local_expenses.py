@@ -116,8 +116,11 @@ class report_local_expenses(WebKitParser):
             parent_view_id = pool.get('account.account').search(cr, uid, [('parent_id', '=', False)])
             for expense_account in pool.get('account.account').browse(cr, uid, expenses.keys(), context=context):
                 expense_values = expenses[expense_account.id][month_start - 1:month_stop]
+                if expense_account.type != 'view':
+                    total_amount += sum(expense_values)
+                    total_line = [sum(pair) for pair in zip(expense_values, total_line)]
                 # add line to result (code, name)...
-                if expense_account.type == 'view' or data['form']['granularity'] == 'all':
+                if expense_account.type == 'view' or data['form']['granularity'] == 'all': # Add all view lines and only expenses one if user asked for it (granularity == 'by account'
                     # search if this account have a parent view that is not "parent_view_id"
                     is_under_the_big_one = False
                     if expense_account.parent_id and expense_account.parent_id.id in parent_view_id:
@@ -132,10 +135,6 @@ class report_local_expenses(WebKitParser):
                         line += [int(round(sum(expense_values)))]
                         # append to result
                         result_data.append(line)
-                        if expense_account.type != 'view' or data['form']['granularity'] != 'all':
-                            # add to the total
-                            total_line = [sum(pair) for pair in zip(expense_values, total_line)]
-                            total_amount += sum(expense_values)
             # Format total
             total_line = [_('Total'), ''] + map(int, map(round, total_line)) + [int(round(total_amount))]
 
