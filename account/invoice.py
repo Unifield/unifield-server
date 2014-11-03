@@ -856,6 +856,10 @@ class account_invoice(osv.osv):
 
             # one move line per tax line
             iml += ait_obj.move_line_get(cr, uid, inv.id)
+            # UFTP-380: If the name is empty or a space character, by default it is set to '/', otherwise it will cause problem for the sync on destination instance 
+            for il in iml:
+                if not il['name']:
+                    il['name'] = '/'
 
             # UTP-594: Check the Name according to new requests of this ticket
             name = inv['name'] or '/'
