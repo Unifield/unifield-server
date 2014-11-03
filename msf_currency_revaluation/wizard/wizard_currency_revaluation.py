@@ -29,8 +29,7 @@ from tools.translate import _
 class WizardCurrencyrevaluation(osv.osv_memory):
     _name = 'wizard.currency.revaluation'
 
-    _columns = {'revaluation_date': fields.date(
-                    _('Revaluation Date')),
+    _columns = {
                 'revaluation_method': fields.selection(
                     [('liquidity_month', _("Liquidity (Month-end)")),
                      ('liquidity_year', _("Liquidity (Year-end)")),
@@ -164,12 +163,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             limit=1,
             context=context)
         res['fiscalyear_id'] = fiscalyear_ids and fiscalyear_ids[0] or False
-        # Revaluation date
-        res['revaluation_date'] = False
-        if res['fiscalyear_id']:
-            fiscalyear = fiscalyear_obj.browse(
-                cr, uid, res['fiscalyear_id'], context=context)
-            res['revaluation_date'] = fiscalyear.date_stop
 
         # Period
         period_date = datetime.date.today()
@@ -178,6 +171,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         period_ids = period_obj.get_period_from_date(
             cr, uid, period_date.strftime('%Y-%m-%d'))
         res['period_id'] = period_ids and period_ids[0] or False
+        res['result_period_id'] = res['period_id']
 
         # Journal
         # UFTP-44: journal of instance and of type 'revaluation'
@@ -201,15 +195,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if not self.pool.get('res.company').check_revaluation_default_account_has_sup_destination(cr, uid, cp, context=context):
             raise osv.except_osv(_('Settings Error!'),_('The default revaluation account must have a default destination SUP'))
         # Entry period
-        res['result_period_id'] = None
-        if res['fiscalyear_id']:
-            period_ids = period_obj.search(
-                cr, uid,
-                [('number', '=', 13),
-                 ('fiscalyear_id', '=', res['fiscalyear_id']),
-                 ('state', '!=', 'created')],
-                context=context)
-            res['result_period_id'] = period_ids and period_ids[0] or res['period_id']
         # Posting date
         res['posting_date'] = False
         if res['period_id']:
@@ -258,13 +243,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         period = period_obj.browse(cr, uid, period_id, context=None)
         value['posting_date'] = period.date_stop
         value['period_id'] = period_id
-        value['revaluation_date'] = False
-        if method == 'liquidity_month':
-            if period_id:
-                period = period_obj.browse(cr, uid, period_id)
-                value['revaluation_date'] = period.date_stop
-        else:
-            value['revaluation_date'] = fiscalyear.date_stop
+        if method != 'liquidity_month':
             value['posting_date'] = fiscalyear.date_stop
             check_period13_res = self._check_period_opened(cr, uid,
                 fiscalyear.id, 13)  # UFTP-385 period 13 for year end
@@ -311,10 +290,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 value['period_id'] = period_id
                 value['result_period_id'] = period_id
                 period = period_obj.browse(cr, uid, period_id)
-                value['revaluation_date'] = period.date_stop
                 value['posting_date'] = period.date_stop
         elif method == 'other_bs':
-            value['revaluation_date'] = fiscalyear.date_stop
             value['posting_date'] = fiscalyear.date_stop
             period_ids = period_obj.search(
                 cr, uid,
@@ -342,7 +319,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
     def _compute_unrealized_currency_gl(self, cr, uid,
                                         currency_id,
                                         balances,
-                                        form,
+                                        revaluation_date,
                                         context=None):
         """
         Update data dict with the unrealized currency gain and loss
@@ -360,7 +337,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Compute unrealized gain loss
         ctx_rate = context.copy()
-        ctx_rate['date'] = form.revaluation_date
+        ctx_rate['date'] = revaluation_date
         user_obj = self.pool.get('res.users')
         cp_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
 
@@ -606,15 +583,15 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Get posting date (as the field is readonly, its value is not sent
         # to the server by the web client
+        # and get revaluation date
         if period_13_id:
             # period_13_id set: end of year revaluation
             form.period_id.id = period_13_id
             form.posting_date = form.fiscalyear_id.date_stop
+            revaluation_date = form.fiscalyear_id.date_stop  # compute reval for FY
         else:
-            if form.period_id and form.period_id.date_stop:
-                form.posting_date = form.period_id.date_stop
-            else:
-                form.posting_date = form.revaluation_date
+            form.posting_date = form.period_id.date_stop
+            revaluation_date = form.period_id.date_stop
 
         # Search for accounts Balance Sheet or Liquidity to be eevaluated
         """Determine accounts to be used in the revaluation based on the "included in reval" checkbox.
@@ -692,7 +669,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Get balance sums
         account_sums = account_obj.compute_revaluations(
             cr, uid, account_ids, period_ids, form.fiscalyear_id.id,
-            form.revaluation_date, form.revaluation_method, context=context)
+            revaluation_date, form.revaluation_method, context=context)
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
                 new_currency_id = currency_id
@@ -710,7 +687,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     continue
                 # Update sums with compute amount currency balance
                 diff_balances = self._compute_unrealized_currency_gl(
-                    cr, uid, new_currency_id, sums, form, context=context)
+                    cr, uid, new_currency_id, sums, revaluation_date,
+                    context=context)
                 account_sums[account_id][currency_id].update(diff_balances)
         # Create entries only after all computation have been done
         for account_id, account_tree in account_sums.iteritems():
