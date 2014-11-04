@@ -77,7 +77,10 @@ class account_invoice(osv.osv):
     def _get_type(self, cr, uid, context=None):
         if context is None:
             context = {}
-        return context.get('type', 'out_invoice')
+        res = context.get('type', 'out_invoice')
+        if context.get('search_default_supplier', False) and context.get('default_supplier', False):
+            res = 'in_invoice'
+        return res
 
     def _reconciled(self, cr, uid, ids, name, args, context=None):
         res = {}
