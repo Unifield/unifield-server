@@ -292,18 +292,6 @@ header_col_merge_count = col_count - 1
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">Partner</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Journal</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Code</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Move</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Posting Date</Data>
-</Cell>
 <Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">Account</Data>
 </Cell>
@@ -329,18 +317,6 @@ partner_name = (p_obj.name or '')
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${p_obj.debit or 0.}</Data>
 </Cell>
@@ -353,38 +329,21 @@ partner_name = (p_obj.name or '')
 </Row>
 ## account move line row
 % for aml in get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data):
-<%
-debit = currency_conv(aml.debit, aml.date)
-credit = currency_conv(aml.credit, aml.date)
-balance = debit - credit
-%>
 <Row>
 <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${partner_name|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${((aml.journal_id and aml.journal_id.code) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${((aml.move_id and aml.move_id.name) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${formatLang(aml.date, date=True)}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLineWrap">
-    <Data ss:Type="String">${((aml.period_id and aml.period_id.name) or '')|x}</Data>
+    <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineAccountCode">
-    <Data ss:Type="Number">${((aml.account_id and aml.account_id.code) or '')|x}</Data>
+    <Data ss:Type="Number">${aml.get('account', '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${debit}</Data>
+    <Data ss:Type="Number">${aml.get('deb', 0.0)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${credit}</Data>
+    <Data ss:Type="Number">${aml.get('cred', 0.0)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${balance}</Data>
+    <Data ss:Type="Number">${aml.get('total', 0.0)}</Data>
 </Cell>
 </Row>
 % endfor
@@ -397,7 +356,7 @@ debit = currency_conv(debit, False)
 credit = currency_conv(credit, False)
 balance = currency_conv(balance, False)
 %>
-<Cell ss:StyleID="ssCell" ss:MergeAcross="4">
+<Cell ss:StyleID="ssCell">
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssCellRightBold">

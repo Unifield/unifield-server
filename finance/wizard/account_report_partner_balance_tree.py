@@ -297,7 +297,13 @@ class account_partner_balance_tree(osv.osv):
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
-            res = self.pool.get('account.move.line').browse(cr, uid, ids, context=context)
+            sql = """SELECT a.code as account, SUM(aml.debit) as deb, SUM(aml.credit) as cred, ABS(SUM(debit) - SUM(credit)) as total
+                    FROM account_move_line as aml, account_account as a
+                    WHERE aml.id in %s
+                    AND aml.account_id = a.id
+                    GROUP BY a.code"""
+            cr.execute(sql, (tuple(ids), ))
+            res = cr.dictfetchall()
             return res
         return []
 
