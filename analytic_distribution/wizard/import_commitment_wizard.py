@@ -67,20 +67,27 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('Unknown format.'))
 
                     # Dates
-                    if not date or not document_date:
-                        raise osv.except_osv(_('Warning'), _('A date is missing!'))
-                    try:
-                        line_date = time.strftime('%Y-%m-%d', time.strptime(date, '%d/%m/%Y'))
-                    except ValueError, e:
-                        raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (date, e))
+                    now = time.strftime('%Y-%m-%d')
+                    if not date:
+                        line_date = now  # now by default
+                    else:
+                        try:
+                            line_date = time.strftime('%Y-%m-%d', time.strptime(date, '%d/%m/%Y'))
+                        except ValueError, e:
+                            raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (date, e))
                     period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
                     if not period_ids:
                         raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (date,))
-                    try:
-                        line_document_date = time.strftime('%Y-%m-%d', time.strptime(document_date, '%d/%m/%Y'))
-                        vals.update({'document_date': line_document_date})
-                    except ValueError, e:
-                        raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (document_date, e))
+                    vals['date'] = line_date
+                    if not document_date:
+                        line_document_date = now  # now by default
+                    else:
+                        try:
+                            line_document_date = time.strftime('%Y-%m-%d', time.strptime(document_date, '%d/%m/%Y'))
+                        except ValueError, e:
+                            raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (document_date, e))
+                    vals['document_date'] = line_document_date
+
                     # G/L account
                     if account_code:
                         account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
