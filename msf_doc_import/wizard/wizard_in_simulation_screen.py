@@ -1111,6 +1111,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 batch_id = PRODLOT_NAME_ID.get(str(batch_value))
                 batch_ids = prodlot_obj.search(cr, uid, [('product_id', '=', write_vals['imp_product_id'])], context=context)
                 if not batch_id or batch_id not in batch_ids:
+                    batch_id = None # UFTP-386: If the batch number does not belong to the batch_idS of the given product --> set it to None again!
                     batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
                     if batch_ids:
                         batch_id = batch_ids[0]
@@ -1129,6 +1130,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         'imp_batch_id': batch_id,
                         'imp_batch_name': str(batch_value),
                     })
+                else:
+                    # UFTP-386: Add the warning message to this batch not exist 
+                    warnings.append(_('The given batch does not exist for the given product, but will be created automatically during the process.'))
+                    write_vals.update({'imp_batch_name': str(batch_value),})
 
             # Expired date
             exp_value = values[8]
