@@ -189,7 +189,7 @@ class analytic_line(osv.osv):
         'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
             help="Indicates the Journal Type of the Analytic journal item"),
-        'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", store=True),
+        'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
         'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="Commitment?"),
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
@@ -210,7 +210,6 @@ class analytic_line(osv.osv):
             context = {}
         # Default behaviour
         res = super(analytic_line, self).create(cr, uid, vals, context=context)
-        br = self.browse(cr, uid, res, context)
         # Check soft/hard closed contract
         sql = """SELECT fcc.id
         FROM financing_contract_funding_pool_line fcfpl, account_analytic_account a, financing_contract_format fcf, financing_contract_contract fcc
