@@ -892,7 +892,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                and line.move_id.picking_id.purchase_id.pricelist_id.currency_id:
                 curr_id = line.move_id.picking_id.purchase_id.pricelist_id.currency_id.id
             elif line.move_id and line.move_id.price_currency_id:
-                curr_id = line.move_id.price_currency_id
+                curr_id = line.move_id.price_currency_id.id
             elif line.parent_line_id and line.parent_line_id.move_currency_id:
                 curr_id = line.parent_line_id.move_currency_id.id
             else:
