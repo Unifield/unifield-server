@@ -278,7 +278,9 @@ class distribution_line(osv.osv):
                 'currency_id': move_line.currency_id.id,
                 'general_account_id': move_line.account_id.id,
                 'date': date,
-                'source_date': source_date,
+                # UFTP-361: source_date or source date from line or from line posting date if any
+                # for rev line must be the source date of the move line: posting date of reversed line
+                'source_date': source_date or move_line.source_date or move_line.date,
                 'document_date': document_date,
                 'journal_id': move_line.journal_id and move_line.journal_id.analytic_journal_id and move_line.journal_id.analytic_journal_id.id or False,
                 'move_id': move_line.id,

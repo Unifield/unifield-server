@@ -62,11 +62,15 @@ class res_currency_rate_functional(osv.osv):
         eng_obj = self.pool.get('account.analytic.line')
         # Search all engagement journal lines that don't come from a move and which date is superior to the rate
         search_params = [('move_id', '=', '')]
-        if date:
-            search_params.append(('source_date', '>=', date))
         if currency:
             search_params.append(('currency_id', '=', currency))
-        eng_ids = eng_obj.search(cr, uid, [('move_id', '=', ''), ('source_date', '>=', date)])
+        if date:
+            search_params.append('|')
+            search_params.append(('source_date', '>=', date))
+            search_params.append('&')  # UFTP-361 in case source_date no set
+            search_params.append(('source_date', '=', False))
+            search_params.append(('date', '>=', date))
+        eng_ids = eng_obj.search(cr, uid, search_params, context=context)
         if eng_ids:
             eng_obj.update_amounts(cr, uid, eng_ids, context=context)
         return True

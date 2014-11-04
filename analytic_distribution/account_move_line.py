@@ -188,6 +188,7 @@ class account_move_line(osv.osv):
                                      'currency_id': obj_line.get('currency_id', [False])[0],
                                      'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
                                      'document_date': obj_line.get('document_date', False),
+                                     'source_date': obj_line.get('source_date', False) or obj_line.get('date', False),  # UFTP-361 source_date from date if not any (posting date)
                         }
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':
