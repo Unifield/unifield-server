@@ -70,22 +70,22 @@
                 <form string="Journal Entries" position="replace">
                     <form string="Journal Entries" hide_delete_button="1">
                         <group colspan="4" col="6">
-                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
+                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
                             <field name="name" readonly="1"/>
-                            <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
-                            <field name="document_date" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
-                            <field name="date" string="Posting Date" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
+                            <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
+                            <field name="document_date" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
+                            <field name="date" string="Posting Date" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
 
                             <group col="6" colspan="6">
                                 <group col="2" colspan="2">
                                     <group  attrs="{'invisible': [('status', '!=', 'sys')]}">
                                       <label string=""/>
                                     </group>
-                                    <field name="manual_name" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')], 'invisible': [('status', '=', 'sys')]}"/>
+                                    <field name="manual_name" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)], 'invisible': [('status', '=', 'sys')]}"/>
                                 </group>
-                                <field name="ref" attrs="{'readonly': [('status', '=', 'sys')]}"/>
+                                <field name="ref" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}"/>
                                 <group colspan="2" col="2">
-                                    <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', '|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True), ('state', '=', 'posted')], 'invisible': [('status', '=', 'sys')]}"/>
+                                    <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', '|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True), ('state', '=', 'posted')], 'invisible': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}"/>
                                     <field name="currency_id" readonly="True" attrs="{'invisible': [('status', '=', 'manu')]}"/>
                                 </group>
                           </group>
@@ -93,9 +93,10 @@
                         <field name="partner_id" invisible="1"/>
                         <field name="block_manual_currency_id" invisible="1"/>
                         <field name="amount" invisible="1"/>
+                        <field name="imported" invisible="1"/>
                         <notebook colspan="4">
                             <page string="Journal Items">
-                                <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id, 'move_reference': ref}" attrs="{'readonly': [('status', '=', 'sys')]}">
+                                <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id, 'move_reference': ref}" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}">
                                     <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="name"/>
@@ -116,7 +117,7 @@
                         </notebook>
                         <group colspan="4" col="4">
                             <field name="state" colspan="2"/>
-                            <field name="status" invisible="0" readonly="1" colspan="2"/>
+                            <field name="status" readonly="1" colspan="2"/>
                         </group>
                         <group colspan="6" col="4">
                             <!--button name="button_cancel" states="posted" string="Cancel" type="object" icon="gtk-cancel"/-->

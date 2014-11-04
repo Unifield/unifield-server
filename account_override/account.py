@@ -482,6 +482,7 @@ class account_move(osv.osv):
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
             help="This field contains the information related to the numbering of the lines of this journal entry."),
         'manual_name': fields.char('Description', size=64, required=True),
+        'imported': fields.boolean('Imported', help="Is this Journal Entry imported?", required=False, readonly=True),
     }
 
     _defaults = {
@@ -490,6 +491,7 @@ class account_move(osv.osv):
         'date': lambda *a: False,
         'period_id': lambda *a: '',
         'manual_name': lambda *a: '',
+        'imported': lambda *a: False,
    }
 
     def _check_document_date(self, cr, uid, ids, context=None):
