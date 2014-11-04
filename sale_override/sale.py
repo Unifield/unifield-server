@@ -2290,9 +2290,9 @@ class sale_order_line(osv.osv):
             elif line.order_id.procurement_request:
                 # UFTP-82: flagging SO is an IR and its PO is cancelled
                 self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
-#            if proc:
-#                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
-#                proc_obj.action_cancel(cr, uid, [proc])
+            if proc and context.get('cancel_type'):
+                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
+                proc_obj.action_cancel(cr, uid, [proc])
         else:
             minus_qty = line.product_uom_qty - qty_diff
             proc = line.procurement_id and line.procurement_id.id
