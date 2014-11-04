@@ -215,6 +215,30 @@ class financing_contract_contract(osv.osv):
                 res[budget.id] = round(budget.grant_amount * budget.overhead_percentage / 100.0)
         return res
 
+    def __get_instance_level(self, cr, uid, context=None):
+        """
+        get instance level (from connected user)
+        @return (instance id, instance level) or (False, False)
+        @rtype tuple(id, str)
+        """
+        # get company instance
+        user = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0]
+        if user and user.company_id and user.company_id.instance_id:
+            instance_level = (user.company_id.instance_id.id,
+                user.company_id.instance_id.level, )
+        else:
+            instance_level = (False, False, )
+        return instance_level
+
+    def _get_instance_level(self, cr, uid, ids, field_name=None, arg=None,
+        context=None):
+        """ get instance level (from connected user) """
+        if not ids:
+            return {}
+        instance_level = self.__get_instance_level(cr, uid, context=context)[1]
+        return dict((id, instance_level) for id in ids)
+
     _columns = {
         'name': fields.char('Financing contract name', size=64, required=True),
         'code': fields.char('Financing contract code', size=16, required=True),
@@ -236,7 +260,8 @@ class financing_contract_contract(osv.osv):
         'instance_id': fields.many2one('msf.instance','Proprietary Instance', required=True),
         # Define for _inherits
         'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
-        'fp_added_flag': fields.boolean('Flag when new FP is added')
+        'fp_added_flag': fields.boolean('Flag when new FP is added'),
+        'instance_level': fields.function(_get_instance_level, method=True, string="Current instance level", type="char", readonly=True),  # UFTP-343
     }
 
     _defaults = {
@@ -507,11 +532,30 @@ class financing_contract_contract(osv.osv):
             'context': context,
         }
 
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(financing_contract_contract, self).default_get(cr, uid,
+            fields, context=context)
+
+        instance_id, instance_level = self.__get_instance_level(cr, uid,
+            context=context)
+        res['instance_level'] = instance_level
+        if instance_level and instance_level == 'coordo':
+            """
+            UFTP-343
+            - coordo level: we can only pick 'this' instance so instance
+                is set in create and instance is readonly
+            - hq: instance can be modified and picked from coordo instances
+            - project: no right to create a financial contract at all,
+                so keep instance readonly and empty to prevent any creation
+                (in case of right issue)
+            """
+            res['instance_id'] = instance_id
+        return res
+
     def create(self, cr, uid, vals, context=None):
         # Do not copy lines from the Donor on create if coming from the sync server
         if context is None:
             context = {}
-
 
         result = super(financing_contract_contract, self).create(cr, uid, vals, context=context)
         if not context.get('sync_update_execution'):
