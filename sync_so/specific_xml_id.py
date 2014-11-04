@@ -336,6 +336,9 @@ class account_analytic_line(osv.osv):
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 res[line_data.id] = current_instance.parent_id.instance
+            # UFTP-382: sync down the distrib line associated to a register line no matter of the CC used
+            if line_data and line_data.move_id and line_data.move_id.statement_id and line_data.move_id.statement_id.instance_id.id != current_instance.id:
+                res[line_data.id] = line_data.move_id.statement_id.instance_id.instance
         return res
 
     # Generate delete message for AJI at Project
@@ -513,6 +516,17 @@ class funding_pool_distribution_line(osv.osv):
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 res[line_id] = current_instance.parent_id.instance
+            # UFTP-382: sync down the distrib line associated to the register line
+            if line_data.distribution_id and line_data.distribution_id.register_line_ids:
+                for stat_line in line_data.distribution_id.register_line_ids:
+                    if current_instance.id != stat_line.statement_id.instance_id.id:
+                        res[line_id] = stat_line.statement_id.instance_id.instance
+            # UFTP-382: sync down the distrib line associated to the project register move line
+            elif line_data.distribution_id and line_data.distribution_id.move_line_ids:
+                for move_line in line_data.distribution_id.move_line_ids:
+                    if move_line.statement_id and move_line.statement_id.instance_id.id != current_instance.id:
+                        res[line_id] = move_line.statement_id.instance_id.instance
+
         return res
 
 funding_pool_distribution_line()
