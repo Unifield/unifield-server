@@ -79,6 +79,7 @@ class enter_reason(osv.osv_memory):
             picking_obj.cancel_and_update_out(cr, uid, [obj.id], context=context)
             if cancel_type != 'update_out':
                 context['pol_qty'] = pol_qty
+                context['from_in_cancel'] = True
                 pol_obj.write(cr, uid, pol_ids, {'has_to_be_resourced': True}, context=context)
                 pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
             

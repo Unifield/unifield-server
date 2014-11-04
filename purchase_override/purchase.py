@@ -2878,11 +2878,13 @@ class purchase_order_line(osv.osv):
                         ir_to_potentialy_cancel_ids.append(sol.order_id.id)
 
         context['pol_ids'] = ids
-        for sol in sol_to_update:
-            context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
-            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
-            if so_to_cancel_id:
-                so_to_cancel_ids.append(so_to_cancel_id)
+        # In case of cancelation and resourcing from IN cancelation
+        if not context.get('from_in_cancel', False):
+            for sol in sol_to_update:
+                context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
+                so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+                if so_to_cancel_id:
+                    so_to_cancel_ids.append(so_to_cancel_id)
 
         del context['pol_ids']
 

@@ -1306,6 +1306,8 @@ class stock_picking(osv.osv):
                             move_id = move_obj.search(cr, uid, [('picking_id.type', '=', 'out'),
                                                                 ('picking_id.subtype', 'in', ('standard', 'picking')),
                                                                 ('picking_id.sale_id', '=', sale_id),
+                                                                ('product_id', '=', out_move.product_id.id),
+                                                                ('id', '!=', out_move_id),
                                                                 ('state', 'not in', ('done', 'cancel')),
                                                                 ('processed_stock_move', '=', True), ], context=context)
                             if move_id:
@@ -1337,12 +1339,12 @@ class stock_picking(osv.osv):
                         self.pool.get('stock.move').action_cancel(cr, uid, [move.purchase_line_id.procurement_id.move_id.id])
                         wf_service.trg_validate(uid, 'procurement.order', move.purchase_line_id.procurement_id.id, 'button_cancel', cr)
 
-                        
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
                 msg_log = _('The Purchase Order %s is %s%% received.') % (obj.purchase_id.name, round(obj.purchase_id.shipped_rate, 2))
                 purchase_obj.log(cr, uid, obj.purchase_id.id, msg_log)
+
             # correct the corresponding so
             for sale_id in sale_ids:
                 wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)
