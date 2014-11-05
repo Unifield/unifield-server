@@ -27,6 +27,7 @@ from osv import osv
 from report_webkit.webkit_report import WebKitParser as OldWebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
+from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 import pooler
 import time
@@ -339,13 +340,18 @@ def get_back_browse(self, cr, uid, context):
 
 
 class po_follow_up_mixin(object):
+
+    def _get_states(self):
+        states = {}
+        for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
+            states[state_val] = state_string
+        return states
      
     def getHeaderLine(self,obj):
         ''' format the header line for each PO object '''
-        states = {'sourced': 'Sourced', 'confirmed': 'Validated', 'confirmed_wait': 'Confirmed (waiting)', 'approved': 'Confirmed' }
         po_header = []
         po_header.append('Order ref: ' + obj.name)
-        po_header.append('Status: ' + states[obj.state])
+        po_header.append('Status: ' + self._get_states().get(obj.state, ''))
         po_header.append('Created: ' + obj.date_order)
         po_header.append('Confirmed del date: ' + obj.delivery_confirmed_date)
         po_header.append('Nb items: ' + str(len(obj.order_line)))
@@ -354,10 +360,9 @@ class po_follow_up_mixin(object):
 
     def getHeaderLine2(self,obj):
         ''' format the header line for each PO object '''
-        states = {'sourced': 'Sourced', 'confirmed': 'Validated', 'confirmed_wait': 'Confirmed (waiting)', 'approved': 'Confirmed' }
         po_header = {}
         po_header['ref'] = 'Order ref: ' + obj.name
-        po_header['status'] = 'Status: ' + states[obj.state]
+        po_header['status'] = 'Status: ' + self._get_states().get(obj.state, '')
         po_header['created'] = 'Created: ' + obj.date_order
         po_header['deldate'] = 'Confirmed del date: ' + obj.delivery_confirmed_date
         po_header['items'] = 'Nb items: ' + str(len(obj.order_line))
