@@ -36,7 +36,7 @@ class SpreadsheetCell(SpreadsheetTools):
                 elif dtype == 'Boolean':
                     self.data = self.data in ('1', 'T', 't', 'True', 'true')
                     self.type = 'bool'
-                elif dtype == 'DateTime':
+                elif dtype == 'DateTime' and self.data:
                     self.data = DateTime.ISO.ParseDateTime(self.data)
                     self.type = 'datetime'
                 elif dtype == 'String':
