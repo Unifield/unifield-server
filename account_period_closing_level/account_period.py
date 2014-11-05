@@ -222,7 +222,7 @@ class account_period(osv.osv):
                 sql_res = cr.fetchall()
                 count_moves = sql_res and sql_res[0] and sql_res[0][0] or 0
                 if count_moves > 0:
-                    raise osv.except_osv(_('Warning'), _('Close this period is not possible because some Journal Entries remain unposted.'))
+                    raise osv.except_osv(_('Warning'), _('Period closing is denied: some Journal Entries remain unposted in this period.'))
 
         # check if unposted move lines are linked to this period
         move_line_obj = self.pool.get('account.move.line')
