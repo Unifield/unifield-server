@@ -35,6 +35,22 @@ class import_commitment_wizard(osv.osv_memory):
     }
 
     def import_csv_commitment_lines(self, cr, uid, ids, context=None):
+        def check_date_not_in_hq_closed_period(pool, cr, uid, dt, line_index,
+                context=None):
+            domain = [
+                ('date_start', '<=', dt),
+                ('date_stop', '>=', dt),
+                ('state', '=', 'done'),  # hq-closed
+            ]
+            count = pool.get('account.period').search(cr, uid, domain,
+                count=True, context=context)
+            if count and count > 0:
+                msg_tpl = _("line %d has no posting and/or document date set." \
+                    " So today date should be used by default. But today is" \
+                    " in a HQ-Closed period. Import aborted.")
+                raise osv.except_osv(_('Error'), msg_tpl % (line_index, ))
+            return True
+
         if context is None:
             context = {}
         analytic_obj = self.pool.get('account.analytic.line')
@@ -43,6 +59,7 @@ class import_commitment_wizard(osv.osv_memory):
         to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
         functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
 
+        now = False
         if len(journal_ids) > 0:
             # read file
             for wizard in self.browse(cr, uid, ids, context=context):
@@ -67,8 +84,12 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('Unknown format.'))
 
                     # Dates
-                    now = time.strftime('%Y-%m-%d')
                     if not date:
+                        if not now:
+                            # 1st use of default posting/doc date from now
+                            now = time.strftime('%Y-%m-%d')
+                            check_date_not_in_hq_closed_period(self.pool, cr,
+                                uid, now, sequence_number, context=context)
                         line_date = now  # now by default
                     else:
                         try:
@@ -80,6 +101,11 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (date,))
                     vals['date'] = line_date
                     if not document_date:
+                        if not now:
+                            # 1st use of default posting/doc date from now
+                            now = time.strftime('%Y-%m-%d')
+                            check_date_not_in_hq_closed_period(self.pool, cr,
+                                uid, now, sequence_number, context=context)
                         line_document_date = now  # now by default
                     else:
                         try:
