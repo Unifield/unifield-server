@@ -56,7 +56,6 @@ class po_follow_up(osv.osv_memory):
         states = {}
         for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
             states[state_val] = state_string
-        print states
         report_parms =  {'title':'MULTIPLE PURCHASE ORDER FOLLOW-UP','run_date': time.strftime("%d/%m/%Y"), 'date_from': '', 'date_thru': '','state': '', 'supplier':'' }
          
         # PO number
