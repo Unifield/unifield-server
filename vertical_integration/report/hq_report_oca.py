@@ -167,7 +167,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 if cr.rowcount:
                     curr_rate = cr.fetchall()[0][0]
                 if func_rate != 0.00:
-                    rate = round(curr_rate / func_rate, 5)
+                    rate = round(1 / curr_rate / func_rate, 5)
             # For first report: as if
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
@@ -235,7 +235,7 @@ class hq_report_oca(report_sxw.report_sxw):
             if func_currency:
                 cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, analytic_line.date))
                 if cr.rowcount:
-                    rate = cr.fetchall()[0][0]
+                    rate = round(1 / cr.fetchall()[0][0], 5)
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
