@@ -379,7 +379,7 @@ class po_follow_up_mixin(object):
         return self.datas['report_parms'][key]
 
     def getPOLineHeaders(self):
-        return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
+        return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty to deliver','Unit Price','IN unit price','Destination','Cost Center']
        
     def getPOLines(self, po_id):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
@@ -529,7 +529,7 @@ class po_follow_up_mixin(object):
         return self.datas.get('report_header')[1]
 
     def getPOLineHeaders(self):
-        return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
+        return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty to deliver','Unit Price','IN unit price','Destination','Cost Center']
       
 
 
