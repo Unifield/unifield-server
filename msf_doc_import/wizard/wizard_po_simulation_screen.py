@@ -1361,10 +1361,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Project Ref.
             write_vals['imp_project_ref'] = values[16]
-            if line.simu_id.order_id.po_from_fo and not values[16]:
-                err_msg = _('The \'Project Ref.\' field is mandatory for PO coming from a FO.')
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
 
             # Message ESC1
             write_vals['imp_esc1'] = values[17]
