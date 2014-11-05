@@ -1823,7 +1823,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             proc_data.update({
                 'is_tender_done': True,
                 'po_cft': 'cft',
-                'tender_line_id': line.created_by_tender_line and line.created_by_tender.id or False,
+                'tender_line_id': line.created_by_tender_line and line.created_by_tender_line.id or False,
                 'tender_id': line.created_by_tender and line.created_by_tender.id or False,
             })
 
