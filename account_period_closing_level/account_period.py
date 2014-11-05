@@ -47,8 +47,8 @@ class account_period(osv.osv):
         cr.execute(sql)
         sql_res = cr.fetchall()
         count_moves = sql_res and sql_res[0] and sql_res[0][0] or 0
-            if count_moves > 0:
-                raise osv.except_osv(_('Warning'), _('Period closing is denied: some Journal Entries remain unposted in this period.'))
+        if count_moves > 0:
+            raise osv.except_osv(_('Warning'), _('Period closing is denied: some Journal Entries remain unposted in this period.'))
         return True
 
     def action_set_state(self, cr, uid, ids, context):
