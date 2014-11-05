@@ -45,7 +45,7 @@ class import_commitment_wizard(osv.osv_memory):
             count = pool.get('account.period').search(cr, uid, domain,
                 count=True, context=context)
             if count and count > 0:
-                msg_tpl = _("line %d has no posting and/or document date set." \
+                msg_tpl = _("Line %d: No posting and/or document date set." \
                     " So today date should be used by default. But today is" \
                     " in a HQ-Closed period. Import aborted.")
                 raise osv.except_osv(_('Error'), msg_tpl % (line_index, ))
@@ -75,13 +75,14 @@ class import_commitment_wizard(osv.osv_memory):
                             'instance_id': instance_id,
                             'journal_id': journal_ids[0],
                             'imported_entry_sequence': 'ENGI-' + str(sequence_number).zfill(6)}
+                    raise_msg_prefix = "Line %d: " % (sequence_number, )
 
                     # retrieve values
                     try:
                         description, reference, document_date, date, account_code, destination, \
                         cost_center, funding_pool, third_party,  booking_amount, booking_currency = line
                     except ValueError, e:
-                        raise osv.except_osv(_('Error'), _('Unknown format.'))
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('Unknown format.'))
 
                     # Dates
                     if not date:
@@ -95,10 +96,10 @@ class import_commitment_wizard(osv.osv_memory):
                         try:
                             line_date = time.strftime('%Y-%m-%d', time.strptime(date, '%d/%m/%Y'))
                         except ValueError, e:
-                            raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (date, e))
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Posting date wrong format for date: %s: %s') % (date, e)))
                     period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
                     if not period_ids:
-                        raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (date,))
+                        raise osv.except_osv(_('Warning'), raise_msg_prefix + (_('No open period found for given date: %s') % (date,)))
                     vals['date'] = line_date
                     if not document_date:
                         if not now:
@@ -111,44 +112,44 @@ class import_commitment_wizard(osv.osv_memory):
                         try:
                             line_document_date = time.strftime('%Y-%m-%d', time.strptime(document_date, '%d/%m/%Y'))
                         except ValueError, e:
-                            raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (document_date, e))
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Document date wrong format for date: %s: %s') % (document_date, e)))
                     vals['document_date'] = line_document_date
 
                     # G/L account
                     if account_code:
                         account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
                         if not account_ids:
-                            raise osv.except_osv(_('Error'), _('Account code %s doesn\'t exist!') % (account_code,))
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Account code %s doesn\'t exist!') % (account_code,)))
                         vals.update({'general_account_id': account_ids[0]})
                     else:
-                        raise osv.except_osv(_('Error'), _('No account code found!'))
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No account code found!'))
                     # Destination
                     if destination:
                         dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination)])
                         if dest_id:
                             vals.update({'destination_id': dest_id[0]})
                         else:
-                            raise osv.except_osv(_('Error'), _('Destination "%s" doesn\'t exist!') % (destination,))
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Destination "%s" doesn\'t exist!') % (destination,)))
                     else:
-                        raise osv.except_osv(_('Error'), _('No destination code found!'))
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No destination code found!'))
                     # Cost Center
                     if cost_center:
                         cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
                         if cc_id:
                             vals.update({'cost_center_id': cc_id[0]})
                         else:
-                            raise osv.except_osv(_('Error'), _('Cost Center "%s" doesn\'t exist!') % (cost_center,))
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Cost Center "%s" doesn\'t exist!') % (cost_center,)))
                     else:
-                        raise osv.except_osv(_('Error'), _('No cost center code found!'))
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No cost center code found!'))
                     # Funding Pool
                     if funding_pool:
                         fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool)])
                         if fp_id:
                             vals.update({'account_id': fp_id[0]})
                         else:
-                            raise osv.except_osv(_('Error'), _('Funding Pool "%s" doesn\'t exist!') % (funding_pool,))
+                            raise osv.except_osv(_('Error'), raise_msg_prefix +_(('Funding Pool "%s" doesn\'t exist!') % (funding_pool,)))
                     else:
-                        raise osv.except_osv(_('Error'), _('No funding pool code found!'))
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No funding pool code found!'))
                     # description
                     if description:
                         vals.update({'name': description})
@@ -161,7 +162,7 @@ class import_commitment_wizard(osv.osv_memory):
                         # Search if 3RD party exists as partner
                         partner_ids = self.pool.get('res.partner').search(cr, uid, [('&'), ('name', '=', third_party), ('partner_type', '=', 'esc')])
                         if not len(partner_ids) > 0:
-                            raise osv.except_osv(_('Error'), _('No ESC partner found for code %s !') % (third_party))
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('No ESC partner found for code %s !') % (third_party)))
                     # UFTP-60: Third party is not mandatory
 #                    else:
 #                        raise osv.except_osv(_('Error'), _('No third party found!'))
@@ -169,7 +170,7 @@ class import_commitment_wizard(osv.osv_memory):
                     if booking_currency:
                         currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency), ('active', 'in', [False, True])])
                         if not currency_ids:
-                            raise osv.except_osv(_('Error'), _('This currency was not found or is not active: %s') % (booking_currency,))
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('This currency was not found or is not active: %s') % (booking_currency,)))
                         if currency_ids and currency_ids[0]:
                             vals.update({'currency_id': currency_ids[0]})
                             # Functional currency
@@ -190,12 +191,12 @@ class import_commitment_wizard(osv.osv_memory):
                                 )
                                 vals.update({'amount': converted_amount})
                     else:
-                        raise osv.except_osv(_('Error'), _('No booking currency found!'))
+                        raise osv.except_osv(_('Error'), raise_msg_prefix +_('No booking currency found!'))
                     # Fetch amount
                     if booking_amount:
                         vals.update({'amount_currency': -float(booking_amount)})
                     else:
-                        raise osv.except_osv(_('Error'), _('No booking amount found!'))
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No booking amount found!'))
 
                     analytic_obj.create(cr, uid, vals, context=context)
                     sequence_number += 1
