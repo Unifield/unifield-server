@@ -18,7 +18,7 @@
         <field name="delivery_requested_date"></field>
         % endif
         <field name="transport_type">${getSel(o, 'transport_type') or ''|x}</field>
-        % if o.ready_to_ship_date:
+        % if o.ready_to_ship_date and o.ready_to_ship_date not in (False, 'False'):
         <field name="ready_to_ship_date">${o.ready_to_ship_date|n}</field>
         % else:
         <field name="ready_to_ship_date"></field>
