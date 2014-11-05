@@ -2134,6 +2134,11 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
+    _sql_constraints = [
+        ('product_uom_qty', 'CHECK (product_uom_qty > 0)',
+         'You can not have an order line with a negative or zero quantity'),
+    ]
+
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return True if the system configuration VAT management is set to True
