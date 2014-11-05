@@ -51,12 +51,19 @@ class po_follow_up(osv.osv_memory):
     
     def button_validate(self, cr, uid, ids, context=None):
         wiz = self.browse(cr,uid,ids)[0]
-        
+
         domain = []
         states = {}
         for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
             states[state_val] = state_string
-        report_parms =  {'title':'MULTIPLE PURCHASE ORDER FOLLOW-UP','run_date': time.strftime("%d/%m/%Y"), 'date_from': '', 'date_thru': '','state': '', 'supplier':'' }
+        report_parms =  {
+            'title': 'PO Follow Up per Supplier',
+            'run_date': time.strftime("%d/%m/%Y"),
+            'date_from': '',
+            'date_thru': '',
+            'state': '',
+            'supplier':''
+        }
          
         # PO number
         if wiz.po_id:
@@ -98,7 +105,7 @@ class po_follow_up(osv.osv_memory):
             return True
         
         report_header = []
-        report_header.append('MULTIPLE PURCHASE ORDER FOLLOW-UP')
+        report_header.append(report_parms['title'])
         
         report_header_line2 = ''
         if wiz.partner_id:
