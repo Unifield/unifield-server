@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from lxml import etree
+from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 import time
 from datetime import datetime
@@ -31,20 +32,10 @@ from datetime import datetime
 class po_follow_up(osv.osv_memory):
     _name = 'po.follow.up'
     _description = 'PO Follow up report wizard'
-    
-    STATE_SELECTION = [
-         ('sourced', 'Sourced'),
-         ('confirmed', 'Validated'),
-         ('confirmed_wait', 'Confirmed (waiting)'),
-         ('approved', 'Confirmed'),               
-    ]
 
-    STATES = {'sourced': 'Sourced','confirmed': 'Validated','confirmed_wait': 'Confirmed waiting','approved':'Confirmed'}
-
-    
     _columns = {
          'po_id':fields.many2one('purchase.order',string="Order Reference", help="Unique number of the Purchase Order. Optional", required=False),
-         'state': fields.selection(STATE_SELECTION, 'State', help="The state of the purchase order. Optional", select=True, required=False),
+         'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', help="The state of the purchase order. Optional", select=True, required=False),
          'po_date_from':fields.date("PO date from", required="False"),
          'po_date_thru':fields.date("PO date to", required="False"),
          'partner_id':fields.many2one('res.partner', 'Supplier', required=False),
@@ -52,7 +43,6 @@ class po_follow_up(osv.osv_memory):
          'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),    
          'background_time': fields.integer('Number of second before background processing'),
     }
-    
     
     _defaults = {
         'export_format': lambda *a: 'xls',
@@ -63,7 +53,10 @@ class po_follow_up(osv.osv_memory):
         wiz = self.browse(cr,uid,ids)[0]
         
         domain = []
-        states = {'sourced': 'Sourced','confirmed': 'Validated','confirmed_wait': 'Confirmed waiting','approved':'Confirmed'}
+        states = {}
+        for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
+            states[state_val] = state_string
+        print states
         report_parms =  {'title':'MULTIPLE PURCHASE ORDER FOLLOW-UP','run_date': time.strftime("%d/%m/%Y"), 'date_from': '', 'date_thru': '','state': '', 'supplier':'' }
          
         # PO number
