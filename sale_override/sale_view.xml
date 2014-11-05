@@ -548,7 +548,8 @@
                 <search string="Sourcing progress">
                     <filter string="Done" name="done" domain="[('end_date', '!=', False)]" icon="terp-check" />
                     <filter string="In Progress" name="progress" domain="[('end_date', '=', False), ('start_date', '!=', False)]" icon="gtk-execute" />
-                    <field name="order_id" context="{'procurement_order': True}" />
+                    <field name="order_id" context="{'procurement_order': True, 'active_test': False}"
+                           domain="[('state', '!=', 'draft'), '|', ('procurement_request', '=', True), ('split_type_sale_order', '=', 'original_sale_order')]"/>
                     <field name="start_date" />
                 </search>
             </field>
