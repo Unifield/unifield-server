@@ -221,9 +221,11 @@ class hq_report_oca(report_sxw.report_sxw):
                 account_lines_debit[(account.code, currency.name, period_name)] += (move_line.debit_currency - move_line.credit_currency)
                 account_lines_functional_debit[(account.code, currency.name, period_name)] += (move_line.debit - move_line.credit)
 
+        # UFTP-375: Do not include FREE1 and FREE2 analytic lines
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
-                                                                               ('journal_id.type', 'not in', ['hq', 'engagement', 'migration'])], context=context)
+                                                                               ('journal_id.type', 'not in', ['hq', 'engagement', 'migration']),
+                                                                               ('account_id.category', 'not in', ['FREE1', 'FREE2'])], context=context)
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
