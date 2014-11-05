@@ -168,7 +168,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
         ## Packing
         <Column ss:AutoFitWidth="1" ss:Width="60.25" />
-        ## Qty backorder
+        ## Qty to deliver
         <Column ss:AutoFitWidth="1" ss:Width="50.5" />
         ## Transport
         <Column ss:AutoFitWidth="1" ss:Width="53.5" />
@@ -250,7 +250,7 @@
                 _('Qty delivered'),
                 _('UoM delivered'),
                 _('Packing'),
-                _('Qty backorder'),
+                _('Qty to deliver'),
                 _('Transport'),
                 _('Transport file'),
                 _('ETA'),
