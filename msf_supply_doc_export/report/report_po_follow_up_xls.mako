@@ -95,7 +95,7 @@
     <Column ss:AutoFitWidth="1" ss:Width="80" />
     # IN
     <Column ss:AutoFitWidth="1" ss:Width="60" />
-    # Qty to deliver
+    # Qty backorder
     <Column ss:AutoFitWidth="1" ss:Width="58" />
     # Unit Price
     <Column ss:AutoFitWidth="1" ss:Width="95" />
