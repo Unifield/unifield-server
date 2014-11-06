@@ -152,7 +152,28 @@
  % endfor   
     
 </Table>
-<x:WorksheetOptions/>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Layout x:Orientation="Landscape"/>
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14${getRunParms()['title'] or '' |x}"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+   </PageSetup>
+   <Print>
+    <ValidPrinterInfo/>
+    <PaperSizeIndex>9</PaperSizeIndex>
+    <HorizontalResolution>600</HorizontalResolution>
+    <VerticalResolution>600</VerticalResolution>
+   </Print>
+   <Selected/>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+     <ActiveRow>17</ActiveRow>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+</WorksheetOptions>
 </ss:Worksheet>
 
 </Workbook>
