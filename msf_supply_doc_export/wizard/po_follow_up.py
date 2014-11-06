@@ -73,8 +73,6 @@ class po_follow_up(osv.osv_memory):
         if wiz.state:
             domain.append(('state','=', wiz.state))
             report_parms['state'] = states[wiz.state]
-        else:
-            domain.append(('state','in',['sourced','confirmed','confirmed_wait','approved']))
             
         # Dates
         if wiz.po_date_from:
