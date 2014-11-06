@@ -379,6 +379,8 @@ class account_bank_statement(osv.osv):
                 'active_id': ids[0],
                 'active_ids': ids,
                 'from_cheque': from_cheque,
+                'st_id': st.id,
+                'st_period_id': st.period_id and st.period_id.id or False,
             }
         }
 
