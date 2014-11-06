@@ -1131,9 +1131,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         'imp_batch_name': str(batch_value),
                     })
                 else:
-                    # UFTP-386: Add the warning message to this batch not exist 
-                    warnings.append(_('The given batch does not exist for the given product, but will be created automatically during the process.'))
-                    write_vals.update({'imp_batch_name': str(batch_value),})
+                    # UFTP-386: Add the warning message indicating that the batch does not exist for THIS product (but for others!)
+                    # If the batch is a completely new, no need to warn.   
+                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value))], context=context)
+                    if batch_ids:
+                        warnings.append(_('The given batch does not exist for the given product, but will be created automatically during the process.'))
+                        write_vals.update({'imp_batch_name': str(batch_value),})
 
             # Expired date
             exp_value = values[8]
