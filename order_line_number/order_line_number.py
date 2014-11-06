@@ -449,9 +449,14 @@ class ir_sequence(osv.osv):
 
     def _get_hqcode(self, cr, uid):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        parent_id = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.parent_id
+        parent_id = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.parent_id or False
         code = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.po_fo_cost_center_id and company.instance_id.po_fo_cost_center_id.code or ''
         parent_seen = []
+        
+        # UFTP-341: If it's an HQ instance, then also take the code of prop instance as the prefix of FO PO
+        if parent_id is False:
+            code = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.code
+        
         while parent_id:
             code = parent_id.po_fo_cost_center_id and parent_id.po_fo_cost_center_id.code or ''
             
@@ -460,9 +465,7 @@ class ir_sequence(osv.osv):
             if parent_id in parent_seen:
                 raise osv.except_osv(_('Error'), _('Loop detected in Proprietary Instance tree, you should have a top level instance without any parent.'))
 
-            ########### UFTP-341            
-            ########### THIS IS A TRY FOR THE TICKET UFTP-341, AS IT COULD MAKE A GREAT IMPACT ON SYNC, REPORT AND OTHERS!
-            ## When it come to the HQ code, just take the instance code instead of the cost center code, to avoid having same code for different OC 
+            # UFTP-341: When it come to HQ code, just take the prop instance code instead of the cost center code, to avoid having same code for different HQs 
             if parent_id is False:
                 code = hq_instance_code
                 
