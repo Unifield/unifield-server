@@ -892,7 +892,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                and line.move_id.picking_id.purchase_id.pricelist_id.currency_id:
                 curr_id = line.move_id.picking_id.purchase_id.pricelist_id.currency_id.id
             elif line.move_id and line.move_id.price_currency_id:
-                curr_id = line.move_id.price_currency_id
+                curr_id = line.move_id.price_currency_id.id
             elif line.parent_line_id and line.parent_line_id.move_currency_id:
                 curr_id = line.parent_line_id.move_currency_id.id
             else:
@@ -1048,8 +1048,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     write_vals['imp_product_id'] = prod_id
 
             product = False
-            if prod_id:
-                product = prod_obj.browse(cr, uid, prod_id, context=context)
+            if write_vals.get('imp_product_id'):
+                product = prod_obj.browse(cr, uid, write_vals.get('imp_product_id'), context=context)
 
 
             # Product Qty
@@ -1075,6 +1075,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         errors.append(_('UoM not found in database'))
                 else:
                     write_vals['imp_uom_id'] = uom_id
+
+            # Check UoM consistency
+            if write_vals.get('imp_uom_id') and product:
+                prod_uom_c_id = product.uom_id.category_id.id
+                uom_c_id = uom_obj.browse(cr, uid, write_vals['imp_uom_id']).category_id.id
+                if prod_uom_c_id != uom_c_id:
+                    errors.append(_("Given UoM is not compatible with the product UoM"))
 
             # Unit price
             err_msg = _('Incorrect float value for field \'Price Unit\'')
