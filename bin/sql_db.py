@@ -117,6 +117,24 @@ class Cursor(object):
             self.__logger.warn(msg)
             self._close(True)
 
+    def recursiveCastUid(self, params):
+        if params and isinstance(params, (tuple, list)):
+            param_type = isinstance(params, tuple) and 'tuple' or 'list'
+            new_params = []
+            for param in params:
+                if param and isinstance(param, (tuple, list)):
+                    new_params.append(self.recursiveCastUid(param))
+                else:
+                    if hasattr(param, 'realUid'):
+                        new_params.append(int(param))
+                    else:
+                        new_params.append(param)
+            return param_type == 'tuple' and tuple(new_params) or new_params
+        elif hasattr(params, 'realUid'):
+            return int(params)
+        else:
+            return params
+
     @check
     def execute(self, query, params=None, log_exceptions=True):
         if '%d' in query or '%f' in query:
@@ -129,6 +147,7 @@ class Cursor(object):
 
         try:
             params = params or None
+            params = self.recursiveCastUid(params)
             res = self._obj.execute(query, params)
         except psycopg2.ProgrammingError, pe:
             if log_exceptions:

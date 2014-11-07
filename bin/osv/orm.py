@@ -3629,7 +3629,9 @@ class orm(orm_template):
         if self._log_access:
             upd0.append('write_uid=%s')
             upd0.append('write_date=now()')
-            upd1.append(user)
+            
+            # if user is fakeUid object, use realId, otherwise use user
+            upd1.append(hasattr(user, 'realUid') and user.realUid or user)
 
         if len(upd0):
             self.check_access_rule(cr, user, ids, 'write', context=context)
@@ -3886,7 +3888,8 @@ class orm(orm_template):
         if self._log_access:
             upd0 += ',create_uid,create_date'
             upd1 += ',%s,now()'
-            upd2.append(user)
+            # if user is fakeUid object, use realId, otherwise use user
+            upd2.append(hasattr(user, 'realUid') and user.realUid or user)
         cr.execute('insert into "'+self._table+'" (id'+upd0+") values ("+str(id_new)+upd1+')', tuple(upd2))
         self.check_access_rule(cr, user, [id_new], 'create', context=context)
         upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
