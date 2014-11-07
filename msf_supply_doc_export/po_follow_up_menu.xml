@@ -3,7 +3,7 @@
     <data>
   
       <record id="po_follow_up_menu" model="ir.actions.act_window">
-         <field name="name">PO Follow Up</field>
+         <field name="name">PO Follow Up per Supplier</field>
          <field name="res_model">po.follow.up</field>
          <field name="view_type">form</field>
          <field name="view_mode">tree,graph</field>
