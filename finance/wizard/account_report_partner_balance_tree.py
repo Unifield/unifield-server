@@ -227,7 +227,7 @@ class account_partner_balance_tree(osv.osv):
                             # output currency in action context
                             new_context['output_currency_id'] = output_currency_id
                     view_id = self.pool.get('ir.model.data').get_object_reference(
-                                cr, uid, 'account_override',
+                                cr, uid, 'finance',
                                 'view_account_partner_balance_tree_move_line_tree')[1]
                     res = {
                         'name': 'Journal Items',
