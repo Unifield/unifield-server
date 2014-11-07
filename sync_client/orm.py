@@ -524,7 +524,9 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
                 to_be_synchronized, current_values=current_values, context=context)
             if hasattr(self, 'on_change'):
                 self.on_change(cr, uid, changes, context=context)
-            if from_orm_write:
+
+            # UFTP-367 Add a double check to make sure that the del statement works safely.
+            if from_orm_write and 'from_orm_write' in context:
                 del context['from_orm_write']
         return result
 
