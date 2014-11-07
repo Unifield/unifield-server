@@ -232,7 +232,11 @@
     </para>
     <para style="P6">Accounts:</para>
 
-    <blockTable colWidths="40.0,260.0,55.0,55.0,55.0,55.0" repeatRows="1" style="Table4">
+    <!-- Seems that its not possible to change colWidths regarding a condition.
+         Cf. https://www.odoo.com/forum/help-1/question/reportlab-conditional-table-header-15143
+         Previous colWidths: colWidths="40.0,260.0,55.0,55.0,55.0,55.0"
+    -->
+    <blockTable repeatRows="1" style="Table4">
       <tr>
         <td>
         [[repeatIn(getDest(),'dest_data','td')]]
