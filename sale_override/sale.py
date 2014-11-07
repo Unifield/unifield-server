@@ -107,7 +107,7 @@ class sale_order_sourcing_progress(osv.osv):
                         'line_completed': _('Error'),
                         'split_order': _('Error'),
                         'check_data': _('Error'),
-                        'prepare_picking': _('Error − Please try again to confirm the %s by clicking on \'Confirmed\' button on form view') % (sp.order_id.procurement_request and _('IR') or _('FO')),
+                        'prepare_picking': _('An error occurred during the sourcing '), #UFTP-367 Use a general error message
                     }
                 else:
                     res[sp.id] = {
