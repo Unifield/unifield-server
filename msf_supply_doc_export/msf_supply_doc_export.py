@@ -353,7 +353,7 @@ class po_follow_up_mixin(object):
         po_header.append('Order ref: ' + obj.name)
         po_header.append('Status: ' + self._get_states().get(obj.state, ''))
         po_header.append('Created: ' + obj.date_order)
-        po_header.append('Confirmed del date: ' + obj.delivery_confirmed_date)
+        po_header.append('Confirmed delivery date: ' + obj.delivery_confirmed_date)
         po_header.append('Nb items: ' + str(len(obj.order_line)))
         po_header.append('Estimated amount: ' + str(obj.amount_total))
         return po_header
@@ -364,7 +364,7 @@ class po_follow_up_mixin(object):
         po_header['ref'] = 'Order ref: ' + obj.name
         po_header['status'] = 'Status: ' + self._get_states().get(obj.state, '')
         po_header['created'] = 'Created: ' + obj.date_order
-        po_header['deldate'] = 'Confirmed del date: ' + obj.delivery_confirmed_date
+        po_header['deldate'] = 'Confirmed delivery date: ' + obj.delivery_confirmed_date
         po_header['items'] = 'Nb items: ' + str(len(obj.order_line))
         po_header['amount'] = 'Estimated amount: ' + str(obj.amount_total)
         line = po_header['ref'] + po_header['status'] + po_header['created'] + po_header['deldate'] + po_header['items'] + po_header['amount'] 

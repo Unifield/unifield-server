@@ -121,13 +121,13 @@
 
 % for o in objects:
     
-    <Row ss:AutoFitHeight="1" > 
+    <Row ss:AutoFitHeight="0" ss:Height="36">
        % for header in getHeaderLine(o):
     	  <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${header |x}</Data></Cell>
        % endfor
     </Row>
 
-    <Row ss:AutoFitHeight="1">
+    <Row ss:AutoFitHeight="1" > 
       % for header in getPOLineHeaders():
     	    <Cell ss:StyleID="header"><Data ss:Type="String">${header}</Data></Cell>
        % endfor       
