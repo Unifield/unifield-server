@@ -234,7 +234,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             if not opening_move_ids or not special_period_ids:
                 warning = {
                     'title': _('Warning!'),
-                    'message': _('No opening entries in opening period for this fiscal year')
+                    'message': _('No entries concerned by revaluation for this fiscal year')
                 }
 
         # Set values according to the user input
