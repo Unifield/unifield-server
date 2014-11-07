@@ -8,9 +8,13 @@
                         % for log in logs[:5]:
                             <tr>
                                 <td class="logActions">
+                                    % if log['read_ok']:
                                     <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'])}">
                                         &rarr; ${log['name']}
                                     </a>
+                                    % else:
+                                    <span>&rarr; ${log['name']}</span>
+                                    % endif
                                 </td>
                             </tr>
                         % endfor
@@ -24,9 +28,13 @@
                                 <div id="more_logs">
                                      % for log in logs[5:]:
                                          <div>
+                                             % if log['read_ok']:
                                              <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'])}">
                                                 &rarr; ${log['name']}
                                              </a>
+                                             % else:
+                                             <span>&rarr; ${log['name']}</span>
+                                             % endif
                                          </div>
                                      % endfor
                                      <a id="less" style="color: blue; font-weight: bold;" href="javascript: void(0);"
@@ -42,9 +50,13 @@
                         % for log in logs:
                             <tr>
                                 <td class="logActions">
+                                    % if log['read_ok']:
                                     <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'])}">
                                         &rarr; ${log['name']}
                                     </a>
+                                    % else:
+                                    <span>&rarr; ${log['name']}</span>
+                                    % endif
                                 </td>
                             </tr>
                         % endfor
