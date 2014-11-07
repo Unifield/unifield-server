@@ -720,6 +720,8 @@ class stock_picking(osv.osv):
         """
         # Objects
         uom_obj = self.pool.get('product.uom')
+        pol_obj = self.pool.get('purchase.order.line')
+        sol_obj = self.pool.get('sale.order.line')
 
         if context is None:
             context = {}
@@ -763,8 +765,15 @@ class stock_picking(osv.osv):
             new_price = uom_obj._compute_price(cr, uid, move.product_uom.id, move.price_unit, line.uom_id.id)
             values['price_unit'] = new_price
 
+        service_non_stock_ok = False
+        if move.purchase_line_id and line.product_id.type in ('consu', 'service_recept'):
+            sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
+            for sol_brw in sol_obj.browse(cr, uid, sol_ids, context=context):
+                if sol_brw.order_id.procurement_request:
+                    service_non_stock_ok = True
+
         # We check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
-        if wizard.dest_type == 'to_cross_docking':
+        if wizard.dest_type == 'to_cross_docking' and not service_non_stock_ok:
             if db_data.get('setup').allocation_setup == 'unallocated':
                 raise osv.except_osv(
                     _('Error'),
@@ -777,7 +786,7 @@ class stock_picking(osv.osv):
                 'location_dest_id': db_data.get('cd_loc'),
                 'cd_from_bo': True,
             })
-        elif wizard.dest_type == 'to_stock':
+        elif wizard.dest_type == 'to_stock' or service_non_stock_ok:
             # Below, "source_type" is only used for the outgoing shipment. We set it to "None because by default it is
             # "default" and we do not want that info on INCOMING shipment
             if line.product_id.type == 'consu':
