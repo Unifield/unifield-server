@@ -1323,7 +1323,7 @@ stock moves which are already processed : '''
         ctx = context.copy()
         ctx['no_store_function'] = ['sale.order.line']
         store_to_call = []
-        picks_to_check = set()
+        picks_to_check = {}
         if so_ids:
             # date values
             ship_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
@@ -1396,9 +1396,11 @@ stock moves which are already processed : '''
                                 'move_id': line.move_dest_id.id,
                             }, context=context)
                             move_obj.write(cr, uid, [out_move_id.id], {'state': 'draft'})
-                            move_obj.unlink(cr, uid, out_move_id.id)
                             if out_pick_id:
-                                picks_to_check.add(out_pick_id)
+                                picks_to_check.setdefault(out_pick_id, [])
+                                picks_to_check[out_pick_id].append(out_move_id.id)
+                            else:
+                                move_obj.unlink(cr, uid, [out_move_id.id], context=context)
 
                             continue
 
@@ -1444,10 +1446,19 @@ stock moves which are already processed : '''
                                                    'ready_to_ship_date': so_rts}, context=context)
                     wf_service.trg_write(uid, 'sale.order', so.id, cr)
 
-        for out_pick_id in picks_to_check:
+        for out_pick_id, out_move_ids in picks_to_check.iteritems():
             full_out = pick_obj.read(cr, uid, out_pick_id, ['move_lines'])['move_lines']
+            for om_id in out_move_ids:
+                if om_id in full_out:
+                    full_out.remove(om_id)
+
             if out_pick_id and not full_out:
+                pick_obj.write(cr, uid, [out_pick_id], {'state': 'draft'}, context=context)
+                move_obj.unlink(cr, uid, out_move_ids)
                 pick_obj.unlink(cr, uid, out_pick_id)
+            else:
+                move_obj.unlink(cr, uid, out_move_ids)
+
         return True
 
     def check_if_product(self, cr, uid, ids, context=None):
