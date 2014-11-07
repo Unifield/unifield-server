@@ -817,7 +817,8 @@ class purchase_order(osv.osv):
                 distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
                 # Raise an error if no analytic distribution found
                 if not distrib:
-                    if not po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind'):
+                    # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
+                    if not po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') and not po.push_fo:
                         raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
                     # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
@@ -1312,6 +1313,7 @@ stock moves which are already processed : '''
         move_obj = self.pool.get('stock.move')
         proc_obj = self.pool.get('procurement.order')
         pick_obj = self.pool.get('stock.picking')
+        ad_obj = self.pool.get('analytic.distribution')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1381,6 +1383,20 @@ stock moves which are already processed : '''
                                   'nomen_sub_5': line.nomen_sub_5 and line.nomen_sub_5.id or False,
                                   'confirmed_delivery_date': line_confirmed,
                                   }
+                    """
+                    UFTP-336: Update the analytic distribution at FO line when
+                              PO is confirmed if lines are created at tender
+                              or RfQ because there is no AD on FO line.
+                    """
+                    if sol.created_by_tender or sol.created_by_rfq:
+                        new_distrib = False
+                        if line.analytic_distribution_id:
+                            new_distrib = ad_obj.copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
+                        elif not line.analytic_distribution_id and line.order_id and line.order_id.analytic_distribution_id:
+                            new_distrib = ad_obj.copy(cr, uid, line.order_id.analytic_distribution_id.id, {}, context=context)
+
+                        fields_dic['analytic_distribution_id'] = new_distrib
+
                     # write the line
                     sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
 

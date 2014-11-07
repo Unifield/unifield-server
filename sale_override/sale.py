@@ -1817,12 +1817,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'is_rfq': True,
                 'is_rfq_done': True,
                 'po_cft': 'rfq',
+                'rfq_id': line.created_by_rfq and line.created_by_rfq.id,
             })
 
         if line.created_by_tender:
             proc_data.update({
                 'is_tender_done': True,
                 'po_cft': 'cft',
+                'tender_line_id': line.created_by_tender_line and line.created_by_tender.id or False,
+                'tender_id': line.created_by_tender and line.created_by_tender.id or False,
             })
 
         if line.product_id:
