@@ -401,6 +401,9 @@ class po_follow_up_mixin(object):
             report_line = {}
             inline_in = self.getInlineIN(line.id)
             analytic_lines = self.getAnalyticLines(line)
+            other_ins = []
+            if inline_in:
+                other_ins = self.getOtherINs(line.id, inline_in.get('id')) 
             report_line['sort_key'] = sort_key
             report_line['item'] = line.line_number or ''
             report_line['code'] = line.product_id.default_code or ''
@@ -409,8 +412,8 @@ class po_follow_up_mixin(object):
             report_line['uom'] = line.product_uom.name or ''
             report_line['qty_received'] = inline_in.get('state') == 'done' and inline_in.get('product_qty','') or '0.00'
             report_line['in'] = inline_in.get('name','') or ''
-            if report_line['in'] == '':
-                report_line['qty_backordered'] = report_line['qty_ordered']
+            if inline_in.get('backorder_id') and inline_in.get('state') != 'done':
+                report_line['qty_backordered'] = inline_in.get('product_qty', '')
             else:
                 report_line['qty_backordered'] = ''
             report_line['unit_price'] = line.price_unit or ''
@@ -445,8 +448,7 @@ class po_follow_up_mixin(object):
                 report_lines.append(report_line)
 
             # check if there are additional INs for this line
-            if inline_in:
-                other_ins = self.getOtherINs(line.id, inline_in.get('id')) 
+            if other_ins:
                 for other_in in other_ins:
                     report_line = {}
                     backorder = inline_in.get('backorder_id') and other_in.get('picking_id') == inline_in.get('backorder_id')
@@ -465,12 +467,12 @@ class po_follow_up_mixin(object):
                     report_line['item'] = ''
                     report_line['qty_ordered'] = ''
                     report_line['uom'] = ''
-                    if backorder and inline_in.get('state') != 'done':
-                        report_line['qty_received'] = other_in.get('product_qty', '')
-                        report_line['qty_backordered'] = inline_in.get('product_qty', '')
-                    else:
-                        report_line['qty_received'] = other_in.get('product_qty','')
-                        report_line['qty_backordered'] = ''
+#                    if backorder and inline_in.get('state') != 'done':
+#                        report_line['qty_received'] = other_in.get('product_qty', '')
+#                        report_line['qty_backordered'] = inline_in.get('product_qty', '')
+#                    else:
+                    report_line['qty_received'] = other_in.get('product_qty','')
+                    report_line['qty_backordered'] = ''
                     report_line['in'] = other_in.get('name','')
                     report_line['unit_price'] = line.price_unit or ''
                     if other_in.get('price_unit') and other_in.get('price_unit') <> multiplier:
