@@ -244,7 +244,9 @@ class product_product(osv.osv):
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
         # we can't write the default_code required because it is used in the product addons
-        'default_code' : fields.char('CODE', size=14, select=True),
+        # UFTP-327 default_code passed from size 14 to 18
+        # http://jira.unifield.org/browse/UFTP-327?focusedCommentId=36173&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-36173
+        'default_code' : fields.char('CODE', size=18, select=True),
         'xmlid_code' : fields.char('Hidden xmlid code', size=64), # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
     }
 
