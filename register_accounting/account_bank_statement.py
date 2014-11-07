@@ -2074,7 +2074,8 @@ class account_bank_statement_line(osv.osv):
                     # statement line
                     # Optimization on write() for this field
                     self.write(cr, uid, [absl.id], {'direct_state': 'hard'}, context=context)
-                    # invoice
+                    # invoice. UFTP-312: in case we develop some changes next, we update context to inform we come from hard post
+                    context.update({'from_hard_post': True})
                     self.pool.get('account.invoice').write(cr, uid, [absl.invoice_id.id], {'state':'paid'}, context=context)
                     # reconcile lines
                     self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, absl.invoice_id, context=context)
