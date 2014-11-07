@@ -2305,7 +2305,7 @@ class sale_order_line(osv.osv):
                 proc_obj.write(cr, uid, [proc], {'product_qty': minus_qty}, context=context)
 
         so_to_cancel_id = False
-        if so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
+        if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
             so_to_cancel_id = order
         else:
             wf_service.trg_write(uid, 'sale.order', order, cr)

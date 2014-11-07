@@ -4151,9 +4151,11 @@ class stock_move(osv.osv):
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
 
-            if pick_type == 'in' and move.purchase_line_id and not pick_cancel:
+            if pick_type == 'in' and move.purchase_line_id:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                    if sol.order_id.procurement_request:
+                        continue
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)

@@ -29,6 +29,8 @@ class UFTP326Test(ResourcingTest):
         self.c_partner_obj = self.c1.get('res.partner')
         self.c_lc_obj = self.c1.get('sale.order.leave.close')
         self.c_so_cancel_obj = self.c1.get('sale.order.cancelation.wizard')
+        self.c_pick_obj = self.c1.get('stock.picking')
+        self.c_enter_reason_obj = self.c1.get('enter.reason')
 
         # Prepare values for the field order
         prod_log1_id = self.get_record(self.c1, 'prod_log_1')
@@ -134,7 +136,7 @@ class UFTP326Test(ResourcingTest):
         for p_po_id in p_po_ids:
             self.assert_(
                 self.p_po_obj.read(p_po_id, ['state'])['state'] == 'sourced',
-                "The PO at Project is not 'Sourced'.",
+                "The PO at Project is '%s' - Should be 'sourced'." % self.p_po_obj.read(p_po_id, ['state'])['state'],
             )
             self.p_po_id = p_po_id
 
@@ -180,6 +182,85 @@ class UFTP326Test(ResourcingTest):
             "There is always lines in PO at project side"
         )
 
+    def cancel_or_resource_in_at_coordo(self, resource=False):
+        """
+        Cancel or Cancel & Resource the IN at coordo side.
+        Check if the PO and the FO at coordo side are canceled.
+        Check if the PO at project side is canceled.
+        :return:
+        """
+        # Validate and confirm the PO
+        self._validate_po(self.c1, [self.c_po_id])
+        self._confirm_po(self.c1, [self.c_po_id])
+
+        # Get the IN associated to this PO
+        c_in_ids = self.c_pick_obj.search([('purchase_id', '=', self.c_po_id), ('type', '=', 'in')])
+        c_out_ids = self.c_pick_obj.search([('sale_id', '=', self.c_so_id), ('type', '=', 'out')])
+        self.assert_(
+            len(c_in_ids) == 1,
+            "There are %s IN associated to PO - Should be 1" % len(c_in_ids),
+        )
+        self.assert_(
+            len(c_out_ids) == 1,
+            "There are %s OUT/PICK associated to FO - Should be 1" % len(c_out_ids),
+        )
+
+        # Cancel the IN
+        wiz_id = self.c_enter_reason_obj.create({
+            'picking_id': c_in_ids[0],
+            'change_reason': 'test_cancel_in_at_coordo',
+        })
+        ctx = {
+            'active_ids': c_in_ids,
+        }
+        if not resource:
+            ctx['cancel_type'] = 'update_out'
+
+        self.c_enter_reason_obj.do_cancel([wiz_id], ctx)
+
+        # Check IN and OUT states
+        in_state = self.c_pick_obj.read(c_in_ids, ['state'])
+        out_state = self.c_pick_obj.read(c_out_ids, ['state'])
+        self.assert_(
+            all([x['state'] == 'cancel' for x in in_state]),
+            "All IN are not canceled",
+        )
+        self.assert_(
+            all([x['state'] == 'cancel' for x in out_state]),
+            "All OUT/PICK are not canceled",
+        )
+
+        # Check PO state
+        po_state = self.c_po_obj.read(self.c_po_id, ['state'])['state']
+        self.assert_(
+            po_state == 'done',
+            "The PO state is '%s' - Should be 'done'" % po_state,
+        )
+
+        # Check FO state
+        fo_state = self.c_so_obj.read(self.c_so_id, ['state'])['state']
+        self.assert_(
+            fo_state == 'done',
+            "The FO state is '%s' - Should be 'done'" % fo_state,
+        )
+
+    def test_cancel_in_at_coordo(self):
+        """
+        Cancel the IN at coordo side.
+        Check if the PO and the FO at coordo side are canceled.
+        Check if the PO at project side is canceled.
+        :return:
+        """
+        self.cancel_or_resource_in_at_coordo()
+
+    def test_resource_in_at_coordo(self):
+        """
+        Cancel & Resource the IN at coordo side.
+        Check if the PO and the FO at coordo side are canceled.
+        Check if the PO at project side is canceled.
+        :return:
+        """
+        self.cancel_or_resource_in_at_coordo(resource=True)
 
 def get_test_class():
     return UFTP326Test
