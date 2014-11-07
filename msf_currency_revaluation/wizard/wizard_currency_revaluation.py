@@ -218,25 +218,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         move_obj = self.pool.get('account.move')
         fiscalyear = fiscalyear_obj.browse(cr, uid, fiscalyear_id)
 
-        # Check
-        previous_fiscalyear_ids = fiscalyear_obj.search(
-            cr, uid,
-            [('date_stop', '<', fiscalyear.date_start),
-             ('company_id', '=', fiscalyear.company_id.id)],
-            limit=1)
-        if previous_fiscalyear_ids:
-            special_period_ids = [p.id for p in fiscalyear.period_ids
-                                  if p.special == True]
-            opening_move_ids = []
-            if special_period_ids:
-                opening_move_ids = move_obj.search(
-                    cr, uid, [('period_id', '=', special_period_ids[0])])
-            if not opening_move_ids or not special_period_ids:
-                warning = {
-                    'title': _('Warning!'),
-                    'message': _('No entries concerned by revaluation for this fiscal year')
-                }
-
         # Set values according to the user input
         value['result_period_id'] = period_id
 
