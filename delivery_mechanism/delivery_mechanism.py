@@ -1322,11 +1322,22 @@ class stock_picking(osv.osv):
                             if out_move.picking_id.sale_id.id not in sale_ids:
                                 sale_ids.append(out_move.picking_id.sale_id.id)
 
+                    # UFTP-345: Check if all lines from the original pick are either closed or cancel and qty is 0, then close this PICK
+                    mirror_pick = out_move.picking_id
+                    if mirror_pick and mirror_pick.id:
+                        ptc = self.browse(cr, uid, mirror_pick.id, context=context)
+                        if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
+                            ptc.action_done(context=context)
+                        else:
+                            # If there are still some lines available with qty 0, then check if any in progress PICK, if all complete, then close the PICK
+                            self.validate(cr, uid, [mirror_pick.id], context=context)
+
                 if move.purchase_line_id and move.purchase_line_id.procurement_id:
                     procurement = move.purchase_line_id.procurement_id
                     if not procurement.sale_id and procurement.move_id:
                         self.pool.get('stock.move').action_cancel(cr, uid, [move.purchase_line_id.procurement_id.move_id.id])
                         wf_service.trg_validate(uid, 'procurement.order', move.purchase_line_id.procurement_id.id, 'button_cancel', cr)
+
 
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
