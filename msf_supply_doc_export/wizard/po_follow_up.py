@@ -52,7 +52,7 @@ class po_follow_up(osv.osv_memory):
     def button_validate(self, cr, uid, ids, context=None):
         wiz = self.browse(cr,uid,ids)[0]
 
-        domain = []
+        domain = [('rfq_ok', '=', False)]
         states = {}
         for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
             states[state_val] = state_string
