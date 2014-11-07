@@ -66,7 +66,7 @@ class one2many_register(fields.one2many):
                     WHERE stl.id IN (
                         SELECT abslmr.move_id FROM account_bank_statement_line_move_rel as abslmr, account_move as m
                         WHERE abslmr.statement_id = m.id
-                        AND m.state == 'posted'
+                        AND m.state = 'posted'
                         AND abslmr.move_id IN (
                             SELECT absl.id as id FROM account_bank_statement_line as absl
                             WHERE absl.from_import_cheque_id in %s
