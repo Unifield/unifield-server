@@ -164,7 +164,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                         # so tolerate with a source date to end of previous FY
                         account_model = 'account.move.line'
                         domain += [
+                            '|',
                             ('source_date', '!=', fy_r['date_stop']),
+                            ('source_date', '=', False),
                         ]
 
         if account_ids_domain:
