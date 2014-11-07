@@ -1097,7 +1097,7 @@ stock moves which are already processed : '''
             is_regular = po.order_type == 'regular' # True if order_type is regular, else False
             line_error = []
             # msf_order_date checks
-            if not po.delivery_confirmed_date:
+            if po.state == 'approved' and not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
             if is_regular:
@@ -2325,6 +2325,11 @@ purchase_order_merged_line()
 class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
+
+    _sql_constraints = [
+        ('product_qty', 'CHECK (product_qty > 0)',
+         'You can not have an order line with a negative or zero quantity'),
+    ]
 
     def link_merged_line(self, cr, uid, vals, product_id, order_id, product_qty, uom_id, price_unit=0.00, context=None):
         '''
