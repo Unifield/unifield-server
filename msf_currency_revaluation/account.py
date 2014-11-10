@@ -68,9 +68,27 @@ class account_account(osv.osv):
             'credit': "COALESCE(SUM(l.credit), 0) as credit",
             'foreign_balance': "COALESCE(SUM(l.amount_currency), 0) as foreign_balance"}
 
-    def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
-        lines_where_clause = self.pool.get('account.move.line').\
-            _query_get(cr, uid, context=context)
+    def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None,
+        initial_bal_before_period_id=False):
+        if initial_bal_before_period_id:
+            lines_where_clause = "l.state <> 'draft'"
+
+            # get all periods SINCE beginning BEFORE given one
+            period_obj = self.pool.get('account.period')
+            period_r = period_obj.read(cr, uid, [initial_bal_before_period_id],
+                ['date_start'], context=context)[0]
+            domain = [
+                ('date_start', '<', period_r['date_start']),
+                ('special', '!=', True),
+            ]
+            period_ids = period_obj.search(cr, uid, domain, order='date_start',
+                context=context)
+            if period_ids:
+                lines_where_clause += " AND l.period_id IN (%s)" % (
+                    ','.join(map(lambda x: str(x), period_ids)), )
+        else:
+            lines_where_clause = self.pool.get('account.move.line')._query_get(
+                cr, uid, context=context)
         query = ("SELECT l.account_id as id, l.currency_id, " +
                    ', '.join(self._sql_mapping.values()) +
                    " FROM account_move_line l "
@@ -115,13 +133,17 @@ class account_account(osv.osv):
         # move lines and add it to the previous result
         if revaluation_method == 'liquidity_month':
             ctx_query = context.copy()
-            ctx_query['periods'] = period_ids
-            ctx_query['fiscalyear'] = fiscalyear_id
-            ctx_query['initial_bal'] = True
             query, params = self._revaluation_query(
                 cr, uid, ids,
                 revaluation_date,
-                context=ctx_query)
+                context=ctx_query,
+                # UFTP-385: we do not use 'initial_bal' context anymore and
+                # 'periods' context as it forces a FY in where criteria
+                # and we want initial balance from the start of the accounting
+                # example: l.period_id IN (SELECT id FROM account_period WHERE
+                # fiscalyear_id IN (1) AND id IN (1,2,3,4,5,6,7,8,9)
+                initial_bal_before_period_id=period_ids[0]
+            )
             cr.execute(query, params)
             lines = cr.dictfetchall()
             for line in lines:
