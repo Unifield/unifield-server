@@ -152,6 +152,9 @@ class stock_incoming_processor(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         data_obj = self.pool.get('ir.model.data')
 
+        if context is None:
+            context = {}
+
         if not ids:
             raise osv.except_osv(
                 _('Error'),

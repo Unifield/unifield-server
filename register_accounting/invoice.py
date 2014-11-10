@@ -337,7 +337,7 @@ class account_invoice(osv.osv):
                 aml_obj.write(cr, uid, move_line.id, {'reference': reference}, context=context)
                 aal_ids = aal_obj.search(cr, uid, [('move_id','=',move_line.id)], context=context)
                 aal_obj.write(cr, uid, aal_ids, {'reference': reference}, context=context)
-
+        return True
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
@@ -374,6 +374,40 @@ class account_invoice(osv.osv):
         if context.get('from_register', False):
             return {'type': 'ir.actions.act_window_close'}
         return True
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check that all register lines are updated if this invoice is a direct invoice.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
+        # UFTP-312: Update register line after any changes on the direct invoice
+        authorized_list_for_update = ['ref', 'account_id', 'partner_id', 'document_date', 'amount_out']
+        do_changes = False
+        for field in authorized_list_for_update:
+            if field in vals and vals.get(field, False):
+                do_changes = True
+                break
+        if do_changes:
+            absl_obj = self.pool.get('account.bank.statement.line')
+            for inv in self.read(cr, uid, ids, ['is_direct_invoice', 'reference', 'account_id', 'partner_id', 'document_date', 'invoice_amount', 'check_total', 'st_lines'], context=context):
+                if inv.get('is_direct_invoice', False):
+                    # search the statement line
+                    if inv.get('st_lines', False):
+                        # update it with some values: reference, document date, account and partner
+                        vals = {
+                            'ref': inv.get('reference', ''),
+                            'account_id': inv.get('account_id', False) and inv.get('account_id')[0] or False,
+                            'partner_id': inv.get('partner_id', False) and inv.get('partner_id')[0] or False,
+                            'document_date': inv.get('document_date', False),
+                            'amount_out': inv.get('check_total', False),
+                        }
+                        # add specific context to avoid problem from
+                        absl_obj.write(cr, uid, inv.get('st_lines'), vals, context=context)
+        return res
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

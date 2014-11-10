@@ -892,7 +892,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                and line.move_id.picking_id.purchase_id.pricelist_id.currency_id:
                 curr_id = line.move_id.picking_id.purchase_id.pricelist_id.currency_id.id
             elif line.move_id and line.move_id.price_currency_id:
-                curr_id = line.move_id.price_currency_id
+                curr_id = line.move_id.price_currency_id.id
             elif line.parent_line_id and line.parent_line_id.move_currency_id:
                 curr_id = line.parent_line_id.move_currency_id.id
             else:
@@ -1048,8 +1048,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     write_vals['imp_product_id'] = prod_id
 
             product = False
-            if prod_id:
-                product = prod_obj.browse(cr, uid, prod_id, context=context)
+            if write_vals.get('imp_product_id'):
+                product = prod_obj.browse(cr, uid, write_vals.get('imp_product_id'), context=context)
 
 
             # Product Qty
@@ -1075,6 +1075,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         errors.append(_('UoM not found in database'))
                 else:
                     write_vals['imp_uom_id'] = uom_id
+
+            # Check UoM consistency
+            if write_vals.get('imp_uom_id') and product:
+                prod_uom_c_id = product.uom_id.category_id.id
+                uom_c_id = uom_obj.browse(cr, uid, write_vals['imp_uom_id']).category_id.id
+                if prod_uom_c_id != uom_c_id:
+                    errors.append(_("Given UoM is not compatible with the product UoM"))
 
             # Unit price
             err_msg = _('Incorrect float value for field \'Price Unit\'')
@@ -1111,6 +1118,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 batch_id = PRODLOT_NAME_ID.get(str(batch_value))
                 batch_ids = prodlot_obj.search(cr, uid, [('product_id', '=', write_vals['imp_product_id'])], context=context)
                 if not batch_id or batch_id not in batch_ids:
+                    batch_id = None # UFTP-386: If the batch number does not belong to the batch_idS of the given product --> set it to None again!
                     batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
                     if batch_ids:
                         batch_id = batch_ids[0]
@@ -1129,6 +1137,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         'imp_batch_id': batch_id,
                         'imp_batch_name': str(batch_value),
                     })
+                else:
+                    # UFTP-386: Add the warning message indicating that the batch does not exist for THIS product (but for others!)
+                    # If the batch is a completely new, no need to warn.
+                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value))], context=context)
+                    if batch_ids:
+                        warnings.append(_('The given batch does not exist for the given product, but will be created automatically during the process.'))
+                        write_vals.update({'imp_batch_name': str(batch_value),})
 
             # Expired date
             exp_value = values[8]

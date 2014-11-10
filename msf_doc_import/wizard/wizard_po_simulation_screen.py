@@ -709,8 +709,9 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     file_line_error = []
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
-                            if manda_field[1] == 'Delivery Confirmed Date':
-                                continue  # field not really mandatory, can be empty in export model
+# Removed by QT on UFTP-370
+#                            if manda_field[1] == 'Delivery Confirmed Date':
+#                                continue  # field not really mandatory, can be empty in export model
                             not_ok = True
                             err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
                             err = _('Line %s of the file: %s') % (x, err1)
@@ -920,19 +921,25 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 screen. This message is a merge between all errors.
                 '''
                 # Generate the message
+                import_error_ok = False
                 if len(values_header_errors):
+                    import_error_ok = True
                     message += '\n## Error on header values ##\n\n'
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
+                    import_error_ok = True
                     message += '\n## Error on line values ##\n\n'
                     for err in values_line_errors:
                         message += '%s\n' % err
 
-                header_values['message'] = message
-                header_values['state'] = 'simu_done'
-                header_values['percent_completed'] = 100.0
+                header_values.update({
+                    'message': message,
+                    'state': 'simu_done',
+                    'percent_completed': 100.0,
+                    'import_error_ok': import_error_ok,
+                })
                 self.write(cr, uid, [wiz.id], header_values, context=context)
 
     #            res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
@@ -1361,10 +1368,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Project Ref.
             write_vals['imp_project_ref'] = values[16]
-            if line.simu_id.order_id.po_from_fo and not values[16]:
-                err_msg = _('The \'Project Ref.\' field is mandatory for PO coming from a FO.')
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
 
             # Message ESC1
             write_vals['imp_esc1'] = values[17]
@@ -1435,6 +1438,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                  'product_id': line.imp_product_id.id,
                                  'price_unit': line.imp_price,
                                 }
+                    if line.imp_drd:
+                        line_vals['date_planned'] = line.imp_drd
                     if line.imp_dcd:
                         line_vals['confirmed_delivery_date'] = line.imp_dcd
                     if line.imp_project_ref:
@@ -1452,7 +1457,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
                              'line_number': line.in_line_number,
-                             'date_planned': line.imp_drd or line.imp_dcd,
+                             'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
                             }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
@@ -1468,8 +1473,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'product_uom': line.imp_uom.id,
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
-                             'date_planned': line.imp_drd,
                             }
+                if line.imp_drd:
+                    line_vals['date_planned'] = line.imp_drd
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
                 if line.imp_project_ref:

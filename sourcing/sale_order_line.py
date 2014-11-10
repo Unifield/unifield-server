@@ -49,18 +49,30 @@ class sale_order_line(osv.osv):
     _description = 'Sales Order Line'
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        if not context:
+        if context is None:
             context = {}
 
         '''
             !!!!! ATTENTION ATTENTION!!!!!!
-            UTP-1021: This solution is NOT stable and could be dangerous!!!! need to have a proper fix for this, currently we have only 3 tree views for sale.order.line
-            so I use the value in the context to identify that it is not the view of wizard, but this assumption could be totally WRONG!
+            UTP-1021: This solution is NOT stable and could be dangerous!!!!
+            need to have a proper fix for this,
+            currently we have only 3 tree views for sale.order.line
+            so I use the value in the context to identify that it is not the
+            view of wizard, but this assumption could be totally WRONG!
             But in this current version, it works!
         '''
-        if not context.get('search_default_need_sourcing', False) and view_type == 'tree':
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sourcing', 'sourcing_line_special_tree_view')[1]
-        return super(sale_order_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if not context.get('search_default_need_sourcing', False) and \
+            view_type == 'tree':
+            if '_terp_view_name' in context:
+                '''
+                UFTP-346: HACK ON HACK UTP-1021
+                '_terp_view_name' not set if grouping
+                and we do not want special view when grouping
+                '''
+                view_id = self.pool.get('ir.model.data').get_object_reference(
+                    cr, uid, 'sourcing', 'sourcing_line_special_tree_view')[1]
+        return super(sale_order_line, self).fields_view_get(cr, uid, view_id,
+            view_type, context, toolbar, submenu)
 
     """
     Other methods
@@ -1503,6 +1515,28 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 return result
 
         return result
+
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None,
+        context=None, orderby=False):
+        res = super(sale_order_line, self).read_group(cr, uid, domain, fields,
+            groupby, offset=offset, limit=limit, context=context,
+            orderby=orderby)
+
+        if 'line_number' in fields:
+            """
+            UFTP-346 'order sourcing tool search view'
+            (and all SO line search views with line_number field)
+            replace the sum of 'line_number' by count of so lines
+            """
+            for g in res:
+                # for each group line, compute so lines count by domain,
+                # then replace sum('line_number') value by the count
+                if '__domain' in g:
+                    # aware to manage all group levels chain with __domain
+                    line_count = self.search(cr, uid, g.get('__domain', []),
+                        context={}, count=True)  # search with 'new' context
+                    g['line_number'] = line_count
+        return res
 
 sale_order_line()
 

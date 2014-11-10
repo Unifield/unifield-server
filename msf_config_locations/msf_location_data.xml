@@ -426,7 +426,6 @@
         <field name="property_stock_customer" ref="stock.stock_location_internal_customers" />
         <field name="property_stock_supplier" ref="stock.stock_location_internal_suppliers" />
     </record>
-    
-    
+
     </data>
 </openerp>

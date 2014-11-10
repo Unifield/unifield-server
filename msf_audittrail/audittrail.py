@@ -413,7 +413,7 @@ class audittrail_rule(osv.osv):
 
 
     def audit_log(self, cr, uid, ids, obj, objids, method, previous_value=None, current=None, context=None):
-        uid_orig = uid
+        uid_orig = hasattr(uid, 'realUid') and uid.realUid or uid
         uid = 1
         log_line_obj = self.pool.get('audittrail.log.line')
 

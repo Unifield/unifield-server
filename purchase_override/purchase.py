@@ -817,7 +817,8 @@ class purchase_order(osv.osv):
                 distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
                 # Raise an error if no analytic distribution found
                 if not distrib:
-                    if not po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind'):
+                    # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
+                    if not po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') and not po.push_fo:
                         raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
                     # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
@@ -1097,7 +1098,7 @@ stock moves which are already processed : '''
             is_regular = po.order_type == 'regular' # True if order_type is regular, else False
             line_error = []
             # msf_order_date checks
-            if not po.delivery_confirmed_date:
+            if po.state == 'approved' and not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
             if is_regular:
@@ -1192,7 +1193,7 @@ stock moves which are already processed : '''
             # If the order is an Internal request with External location, create a new
             # stock move on the picking ticket (if not closed)
             # Get move data and create the move
-            if l.link_so_id.procurement_request and l.link_so_id.location_requestor_id.usage == 'customer':
+            if l.link_so_id.procurement_request and l.link_so_id.location_requestor_id.usage == 'customer' and l.product_id.type == 'product':
                 # Get OUT linked to IR
                 pick_to_confirm = None
                 out_ids = pick_obj.search(cr, uid, [
@@ -1271,7 +1272,9 @@ stock moves which are already processed : '''
         # !!BEWARE!! we must update the So lines before any writing to So objects
         for po in self.browse(cr, uid, ids, context=context):
             # hook for corresponding Fo update
+            context['wait_order'] = True
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po, so_ids=so_ids)
+            del context['wait_order']
 
         return True
 
@@ -1308,6 +1311,9 @@ stock moves which are already processed : '''
         so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
         move_obj = self.pool.get('stock.move')
+        proc_obj = self.pool.get('procurement.order')
+        pick_obj = self.pool.get('stock.picking')
+        ad_obj = self.pool.get('analytic.distribution')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1319,6 +1325,7 @@ stock moves which are already processed : '''
         ctx = context.copy()
         ctx['no_store_function'] = ['sale.order.line']
         store_to_call = []
+        picks_to_check = {}
         if so_ids:
             # date values
             ship_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
@@ -1376,6 +1383,20 @@ stock moves which are already processed : '''
                                   'nomen_sub_5': line.nomen_sub_5 and line.nomen_sub_5.id or False,
                                   'confirmed_delivery_date': line_confirmed,
                                   }
+                    """
+                    UFTP-336: Update the analytic distribution at FO line when
+                              PO is confirmed if lines are created at tender
+                              or RfQ because there is no AD on FO line.
+                    """
+                    if sol.created_by_tender or sol.created_by_rfq:
+                        new_distrib = False
+                        if line.analytic_distribution_id:
+                            new_distrib = ad_obj.copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
+                        elif not line.analytic_distribution_id and line.order_id and line.order_id.analytic_distribution_id:
+                            new_distrib = ad_obj.copy(cr, uid, line.order_id.analytic_distribution_id.id, {}, context=context)
+
+                        fields_dic['analytic_distribution_id'] = new_distrib
+
                     # write the line
                     sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
 
@@ -1383,6 +1404,22 @@ stock moves which are already processed : '''
                                               and line.procurement_id.move_id \
                                               and not line.procurement_id.move_id.processed_stock_move:
                         out_move_id = line.procurement_id.move_id
+                        # If there is a non-stockable or service product, remove the OUT
+                        # stock move and update the stock move on the procurement
+                        if context.get('wait_order') and line.product_id.type in ('service', 'service_recep', 'consu') and out_move_id.picking_id:
+                            out_pick_id = out_move_id.picking_id.id
+                            proc_obj.write(cr, uid, [line.procurement_id.id], {
+                                'move_id': line.move_dest_id.id,
+                            }, context=context)
+                            move_obj.write(cr, uid, [out_move_id.id], {'state': 'draft'})
+                            if out_pick_id:
+                                picks_to_check.setdefault(out_pick_id, [])
+                                picks_to_check[out_pick_id].append(out_move_id.id)
+                            else:
+                                move_obj.unlink(cr, uid, [out_move_id.id], context=context)
+
+                            continue
+
                         if out_move_id.state == 'assigned':
                             move_obj.cancel_assign(cr, uid, [out_move_id.id])
                         elif out_move_id.state in ('cancel', 'done'):
@@ -1424,6 +1461,20 @@ stock moves which are already processed : '''
                     so_obj.write(cr, uid, [so.id], {'delivery_confirmed_date': so_confirmed,
                                                    'ready_to_ship_date': so_rts}, context=context)
                     wf_service.trg_write(uid, 'sale.order', so.id, cr)
+
+        for out_pick_id, out_move_ids in picks_to_check.iteritems():
+            full_out = pick_obj.read(cr, uid, out_pick_id, ['move_lines'])['move_lines']
+            for om_id in out_move_ids:
+                if om_id in full_out:
+                    full_out.remove(om_id)
+
+            if out_pick_id and not full_out:
+                pick_obj.write(cr, uid, [out_pick_id], {'state': 'draft'}, context=context)
+                move_obj.unlink(cr, uid, out_move_ids)
+                pick_obj.unlink(cr, uid, out_pick_id)
+            else:
+                move_obj.unlink(cr, uid, out_move_ids)
+
         return True
 
     def check_if_product(self, cr, uid, ids, context=None):
@@ -1848,8 +1899,16 @@ stock moves which are already processed : '''
                 else:
                     sol_ids = line_obj.get_sol_ids_from_pol_ids(cr, uid, [order_line.id], context=context)
                     for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
-                        if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
-                            dest = input_loc
+                        if sol.order_id and sol.order_id.procurement_request:
+                            if order_line.product_id.type == 'service_recep':
+                                dest = self.pool.get('stock.location').get_service_location(cr, uid)
+                                break
+                            elif order_line.product_id.type == 'consu':
+                                dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+                                break
+                            elif sol.order_id.location_requestor_id.usage != 'customer':
+                                dest = input_loc
+                                break
 
                 move_values = {
                     'name': order.name + ': ' +(order_line.name or ''),
@@ -2325,6 +2384,11 @@ purchase_order_merged_line()
 class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
+
+    _sql_constraints = [
+        ('product_qty', 'CHECK (product_qty > 0)',
+         'You can not have an order line with a negative or zero quantity'),
+    ]
 
     def link_merged_line(self, cr, uid, vals, product_id, order_id, product_qty, uom_id, price_unit=0.00, context=None):
         '''

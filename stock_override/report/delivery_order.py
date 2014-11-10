@@ -30,6 +30,7 @@ class delivery_order(report_sxw.rml_parse):
             'time': time,
             'get_selec': self.get_selection,
             'get_address': self.get_address,
+            'get_state': self.get_state,
         })
 
     def get_selection(self, o, field):
@@ -50,6 +51,21 @@ class delivery_order(report_sxw.rml_parse):
         Return the name_get of the address
         '''
         return self.pool.get('res.partner.address').name_get(self.cr, self.uid, [addr_id])[0][1]
+
+    def get_state(self, state):
+        if not state:
+            return ''
+        states = {
+            'draft': 'Draft',
+            'auto': 'Waiting',
+            'confirmed': 'Confirmed',
+            'assigned': 'Available',
+            'shipped': 'Available Shipped',
+            'done': 'Closed',
+            'cancel': 'Cancelled',
+            'import': 'Import in progress',
+        }
+        return states.get(state, '')
 
 report_sxw.report_sxw('report.delivery.order','stock.picking','addons/stock_override/report/delivery_order.rml',parser=delivery_order, header=False)
 

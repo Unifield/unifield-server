@@ -47,6 +47,7 @@ class finance_archive(finance_export.finance_archive):
             p_id = line[0]
             tmp_line[0] = self.get_hash(cr, uid, [p_id], 'res.partner')
             new_data.append(self.line_to_utf8(tmp_line))
+
         return self.postprocess_selection_columns(cr, uid, new_data, [('res.partner', 'partner_type', 3)], column_deletion=column_deletion)
 
     def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
@@ -96,10 +97,15 @@ class finance_archive(finance_export.finance_archive):
             # Complete last column with partner_hash
             if not partner_id_present:
                 tmp_line.append('')
+            emplid = tmp_line[partner_id_column_number - 2]
+
+            if emplid:
+                partner_hash = ''
             tmp_line[partner_id_column_number - 1] = partner_hash
             # Add result to new_data
             new_data.append(self.line_to_utf8(tmp_line))
-        return self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
+        res = self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
+        return res
 
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
@@ -254,8 +260,9 @@ class hq_report_ocb(report_sxw.report_sxw):
         sqlrequests = {
             'partner': """
                 SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
-                FROM res_partner
-                WHERE partner_type != 'internal';
+                FROM res_partner 
+                WHERE partner_type != 'internal'
+                  and name != 'To be defined';
                 """,
             'employee': """
                 SELECT r.name, e.identification_id, r.active, e.employee_type
@@ -263,7 +270,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE e.resource_id = r.id;
                 """,
             'journal': """
-                SELECT i.name, j.code, j.name, j.type, c.name
+                SELECT i.code, j.code, j.name, j.type, c.name
                 FROM account_journal AS j LEFT JOIN res_currency c ON j.currency = c.id, msf_instance AS i
                 WHERE j.instance_id = i.id
                 AND j.instance_id in %s;
@@ -291,10 +298,10 @@ class hq_report_ocb(report_sxw.report_sxw):
                     FROM account_target_costcenter
                     WHERE instance_id in %s)
                 AND NOT EXISTS (select 'X' 
-				from ir_translation tr 
-				WHERE tr.res_id = aa.id 
-				and tr.lang = 'en_MF' 
-				and tr.name = 'account.analytic.account,name');
+                    from ir_translation tr 
+                    WHERE tr.res_id = aa.id 
+                    and tr.lang = 'en_MF' 
+                    and tr.name = 'account.analytic.account,name');
                 """, 
             'fxrate': """
                 SELECT req.name, req.code, req.rate, req.period
@@ -306,6 +313,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     AND r.currency_id IS NOT NULL
                     AND rc.active = 't'
                     AND p.number NOT IN (13, 14, 15)
+                    and rc.reference_currency_id is null
                     ORDER BY rc.name
                 ) AS req
                 WHERE req.date >= %s
@@ -404,6 +412,10 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND e.currency_id = cc.id
                 AND al.journal_id = j.id
                 AND al.move_id = aml.id
+                AND aml.id in (select aml2.id 
+                               from account_move_line aml2, account_move am
+                               where am.id = aml2.move_id 
+                                and am.state = 'posted')
                 AND al.instance_id = i.id
                 AND aml.journal_id = aj.id
                 AND al.date >= %s
@@ -458,6 +470,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND j.type not in %s
                 AND aml.exported in %s
                 AND aml.instance_id in %s
+                AND m.state = 'posted'
                 ORDER BY aml.id;
                 """,
         }
