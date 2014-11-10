@@ -100,14 +100,21 @@ class account_journal(osv.osv):
             return periods[0]
         return False
     
-    def name_get(self, cr, user, ids, context=None):
+    def name_get(self, cr, uid, ids, context=None):
         """
         Get code for journals
         """
-        result = self.read(cr, user, ids, ['code'])
+        result = self.read(cr, uid, ids, ['code', 'instance_id'])
         res = []
+        is_manual_view = context.get('from_manual_entry', False)
         for rs in result:
             txt = rs.get('code', '')
+            if is_manual_view:
+                if rs.get('instance_id', False):
+                    instance = self.pool.get('msf.instance').read(cr, uid, [rs.get('instance_id')[0]], ['code'])
+                    if instance and instance[0] and instance[0].get('code', False):
+                        instance_code = instance[0].get('code')
+                        txt += ' - ' + str(instance_code)
             res += [(rs.get('id'), txt)]
         return res
     

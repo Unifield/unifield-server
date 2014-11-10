@@ -95,10 +95,13 @@ class report_project_expenses2(report_sxw.rml_parse):
         return temp
 
     def getSub2(self,):
-        temp = self.len2
+        """
+        len2 gives the number of previous line for a given CC.
+        Return number of lines then intialize to 0
+        """
+        res = self.len2
         self.len2 = 0
-        return temp
-
+        return res
 
     def getBookAm(self,contract,analytic_line):
         date_context = {'date': analytic_line.document_date,'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}

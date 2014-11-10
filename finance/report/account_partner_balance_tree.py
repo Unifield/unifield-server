@@ -202,7 +202,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
                                                 self.output_currency_id,
                                                 date)
 
-
 class account_partner_balance_tree_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_partner_balance_tree_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
@@ -210,6 +209,6 @@ class account_partner_balance_tree_xls(SpreadsheetReport):
     def create(self, cr, uid, ids, data, context=None):
         a = super(account_partner_balance_tree_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
-account_partner_balance_tree_xls('report.account.partner.balance.tree_xls', 'account.partner.balance.tree', 'finance/report/account_partner_balance_tree_xls.mako', parser=account_partner_balance_tree, header='internal')
 
+account_partner_balance_tree_xls('report.account.partner.balance.tree_xls', 'account.partner.balance.tree', 'finance/report/account_partner_balance_tree_xls.mako', parser=account_partner_balance_tree, header='internal')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

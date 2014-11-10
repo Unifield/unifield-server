@@ -29,12 +29,27 @@ class funding(report_sxw.rml_parse):
         super(funding, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'locale': locale,
+            'getDest': self.getDestinations,
             'getBoolDest': self.getBoolDest,
             'today': self.today,
         })
 
     def today(self):
-        return time.strftime('%Y/%m/%d',time.localtime())
+        return time.strftime('%Y-%m-%d',time.localtime())
+
+    def getDestinations(self):
+        """
+        Fetch destination analytic account:
+          * ID
+          * code
+        Then sort by code
+        """
+        res = [('Code', False), ('Name', False)] # We need the 2 first column header name
+        pool = pooler.get_pool(self.cr.dbname)
+        destination_ids = pool.get('account.analytic.account').search(self.cr, self.uid, [('category', '=', 'DEST'), ('type', '!=', 'view')], order='id')
+        data = pool.get('account.analytic.account').read(self.cr, self.uid, destination_ids, ['code'])
+        res += [(x.get('code'), x.get('id')) for x in data]
+        return res
 
     def getBoolDest(self, line, o):
         pool = pooler.get_pool(self.cr.dbname)

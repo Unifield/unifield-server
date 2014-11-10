@@ -168,7 +168,7 @@
     <para style="P4">
       <font color="white"> </font>
     </para>
-    <para style="P6">Report edition date: [[ today() ]]</para>
+    <para style="P6">Report edition date: [[ formatLang(today(), date=True) ]]</para>
     <para>
       <br />
     </para>
@@ -186,10 +186,10 @@
     <blockTable colWidths="266.0,269.0" style="Table3">
       <tr>
         <td>
-          <para style="P13"  alignment="LEFT">[[ formatLang(o.date_start,  date=True) ]] </para>
+          <para style="P13"  alignment="LEFT">[[ formatLang(o.date_start, date=True) ]]</para>
         </td>
         <td>
-          <para style="P13" alignment="LEFT">[[ o.date != 'False' and formatLang(o.date,  date=True) or '' ]] </para>
+          <para style="P13" alignment="LEFT">[[ o.date != 'False' and formatLang(o.date, date=True) or '' ]]</para>
         </td>
       </tr>
     </blockTable>
@@ -232,50 +232,32 @@
     </para>
     <para style="P6">Accounts:</para>
 
-    <blockTable colWidths="40.0,260.0,55.0,55.0,55.0,55.0" repeatRows="1" style="Table4">
+    <!-- Seems that its not possible to change colWidths regarding a condition.
+         Cf. https://www.odoo.com/forum/help-1/question/reportlab-conditional-table-header-15143
+         Previous colWidths: colWidths="40.0,260.0,55.0,55.0,55.0,55.0"
+    -->
+    <blockTable repeatRows="1" style="Table4">
       <tr>
         <td>
-          <para style="P14" alignment="LEFT">Code</para>
-        </td>
-        <td>
-          <para style="P15" alignment="LEFT">Name</para>
-        </td>
-        <td>
-          <para style="P25" alignment="CENTER">EXP</para>
-        </td>
-        <td>
-          <para style="P24" alignment="CENTER">NST</para>
-        </td>
-        <td>
-          <para style="P24" alignment="CENTER">OPS</para>
-        </td>
-        <td>
-          <para style="P24" alignment="CENTER">SUP</para>
+        [[repeatIn(getDest(),'dest_data','td')]]
+          <para style="P24" alignment="CENTER">[[ dest_data[0] ]]</para>
         </td>
       </tr>
 
-        <tr>
+      <tr>
       [[repeatIn(o.tuple_destination_summary,'line')]]
-          <td>
-            <para style="P16" alignment="LEFT">[[ line.account_id and line.account_id.code ]]</para>
-          </td>
-          <td>
-            <para style="P11" alignment="LEFT">[[ line.account_id and line.account_id.name ]]</para>
-          </td>
-          <td>
-            <para style="P29" alignment="CENTER">[[ getBoolDest(line,'dest_11') ]]</para>
-          </td>
-          <td>
-            <para style="P28" alignment="CENTER">[[ getBoolDest(line,'dest_10') ]]</para>
-          </td>
-          <td>
-            <para style="P28" alignment="CENTER">[[ getBoolDest(line,'dest_8') ]]</para>
-          </td>
-          <td>
-            <para style="P28" alignment="CENTER">[[ getBoolDest(line,'dest_9') ]]</para>
-          </td>
-        </tr>
-      </blockTable>
+        <td>
+          <para style="P16" alignment="LEFT">[[ line.account_id and line.account_id.code ]]</para>
+        </td>
+        <td>
+          <para style="P11" alignment="LEFT">[[ line.account_id and line.account_id.name ]]</para>
+        </td>
+        <td>
+        [[repeatIn(getDest()[2:],'dest_data','td')]]
+          <para style="P28" alignment="CENTER">[[ getBoolDest(line,'dest_'+ str(dest_data[1])) ]]</para>
+        </td>
+      </tr>
+    </blockTable>
 
     <para style="P5">
       <font color="white"> </font>

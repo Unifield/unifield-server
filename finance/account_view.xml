@@ -21,7 +21,6 @@
             </field>
         </record>
 
-
         <record id="inherit_view_account_search_pma" model="ir.ui.view">
             <field name="name">inherit.view.account.search.pma</field>
             <field name="model">account.account</field>
@@ -70,7 +69,7 @@
                 <form string="Journal Entries" position="replace">
                     <form string="Journal Entries" hide_delete_button="1">
                         <group colspan="4" col="6">
-                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
+                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}" context="{'from_manual_entry': True}"/>
                             <field name="name" readonly="1"/>
                             <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
                             <field name="document_date" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
