@@ -62,19 +62,25 @@ class one2many_register(fields.one2many):
                     # Note that account_bank_statement_line_move_rel invert columns. move_id = register line and
                     #+ statement_id = journal entry (OpenERP bug)
                     sql = """
-                    SELECT stl.id FROM account_bank_statement_line as stl
-                    WHERE stl.id IN (
-                        SELECT abslmr.move_id FROM account_bank_statement_line_move_rel as abslmr, account_move as m
-                        WHERE abslmr.statement_id = m.id
-                        AND m.state = 'posted'
-                        AND abslmr.move_id IN (
-                            SELECT absl.id as id FROM account_bank_statement_line as absl
-                            WHERE absl.from_import_cheque_id in %s
+                        SELECT move_rel.move_id
+                        FROM account_bank_statement_line_move_rel as move_rel
+                        WHERE move_rel.statement_id IN (
+                            SELECT move_id
+                            FROM account_move_line
+                            WHERE id IN (
+                                SELECT absl.from_import_cheque_id
+                                FROM account_bank_statement_line as absl, account_bank_statement_line_move_rel as abslmr, account_move as m
+                                WHERE absl.from_import_cheque_id is not NULL
+                                AND abslmr.move_id = absl.id
+                                AND abslmr.statement_id = m.id
+                                AND m.state = 'posted'
                             )
                         )
+                        AND move_rel.move_id IN %s
                     """
                     cr.execute(sql, (tuple(res[statement_id]),))
-                    excluded_line_ids = [x and x[0] for x in cr.fetchall()]
+                    tmp_res = cr.fetchall()
+                    excluded_line_ids = [x and x[0] for x in tmp_res]
                     current_ids = res[statement_id]
                     res[statement_id] = [stl_id for stl_id in current_ids if stl_id not in excluded_line_ids]
         return res
