@@ -79,7 +79,6 @@ class account_account(osv.osv):
                 ['date_start'], context=context)[0]
             domain = [
                 ('date_start', '<', period_r['date_start']),
-                ('special', '!=', True),
             ]
             period_ids = period_obj.search(cr, uid, domain, order='date_start',
                 context=context)
