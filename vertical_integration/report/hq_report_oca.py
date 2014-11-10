@@ -148,11 +148,24 @@ class hq_report_oca(report_sxw.report_sxw):
                     integration_ref = parent_instance.code[:2] + period.date_start[5:7]
                     move_prefix = parent_instance.move_prefix[:2]
 
+        # UFTP-375: Add export all/previous functionality
+        selection = data['form'].get('selection', False)
+        to_export = ['f'] # Default export value for exported field on analytic/move lines
+        if not selection:
+            raise osv.except_osv(_('Error'), _('No selection value for lines to select.'))
+        if selection == 'all':
+            to_export = ['f', 't']
+        elif selection == 'unexported':
+            to_export = ['f']
+        else:
+            raise osv.except_osv(_('Error'), _('Wrong value for selection: %s.') % (selection,))
+
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
                                                                        ('account_id.is_analytic_addicted', '=', False),
                                                                        ('analytic_distribution_id', '=', False),
-                                                                       ('journal_id.type', 'not in', ['hq', 'migration'])], context=context)
+                                                                       ('journal_id.type', 'not in', ['hq', 'migration']),
+                                                                       ('exported', 'in', to_export)], context=context)
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             journal = move_line.journal_id
             account = move_line.account_id
@@ -167,7 +180,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 if cr.rowcount:
                     curr_rate = cr.fetchall()[0][0]
                 if func_rate != 0.00:
-                    rate = round(curr_rate / func_rate, 5)
+                    rate = round(1 / curr_rate / func_rate, 5)
             # For first report: as if
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
@@ -221,9 +234,12 @@ class hq_report_oca(report_sxw.report_sxw):
                 account_lines_debit[(account.code, currency.name, period_name)] += (move_line.debit_currency - move_line.credit_currency)
                 account_lines_functional_debit[(account.code, currency.name, period_name)] += (move_line.debit - move_line.credit)
 
+        # UFTP-375: Do not include FREE1 and FREE2 analytic lines
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
-                                                                               ('journal_id.type', 'not in', ['hq', 'engagement', 'migration'])], context=context)
+                                                                               ('journal_id.type', 'not in', ['hq', 'engagement', 'migration']),
+                                                                               ('account_id.category', 'not in', ['FREE1', 'FREE2']),
+                                                                               ('exported', 'in', to_export)], context=context)
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
@@ -233,7 +249,7 @@ class hq_report_oca(report_sxw.report_sxw):
             if func_currency:
                 cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, analytic_line.date))
                 if cr.rowcount:
-                    rate = cr.fetchall()[0][0]
+                    rate = round(1 / cr.fetchall()[0][0], 5)
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
@@ -278,7 +294,10 @@ class hq_report_oca(report_sxw.report_sxw):
             second_result_lines.append(other_formatted_data)
 
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
-        first_report = [first_header] + first_result_lines
+        if not move_line_ids and not analytic_line_ids:
+            first_report = []
+        else:
+            first_report = [first_header] + first_result_lines
 
         second_report = sorted(second_result_lines, key=lambda line: line[12])
 
@@ -304,6 +323,7 @@ class hq_report_oca(report_sxw.report_sxw):
             if subtotal_lines:
                 third_report += subtotal_lines
 
+        # Write result to the final content
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
@@ -323,14 +343,22 @@ class hq_report_oca(report_sxw.report_sxw):
             writer.writerow(map(self._enc,line))
         third_fileobj.close()
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")
-        out_zipfile.write(first_fileobj.name, "Raw_Data.csv", zipfile.ZIP_DEFLATED)
-        out_zipfile.write(second_fileobj.name, "Up_Expenses.csv", zipfile.ZIP_DEFLATED)
-        out_zipfile.write(third_fileobj.name, "Up_Balances.csv", zipfile.ZIP_DEFLATED)
+        out_zipfile.write(first_fileobj.name, "%sRaw_Data.csv" % (integration_ref and integration_ref+'_' or ''), zipfile.ZIP_DEFLATED)
+        out_zipfile.write(second_fileobj.name, "%sUp_Expenses.csv" % (integration_ref and integration_ref+'_' or ''), zipfile.ZIP_DEFLATED)
+        out_zipfile.write(third_fileobj.name, "%sUp_Balances.csv" % (integration_ref and integration_ref+'_' or ''), zipfile.ZIP_DEFLATED)
         out_zipfile.close()
         out = zip_buffer.getvalue()
         os.unlink(first_fileobj.name)
         os.unlink(second_fileobj.name)
         os.unlink(third_fileobj.name)
+
+        # Mark lines as exported
+        if move_line_ids:
+            sql = """UPDATE account_move_line SET exported = 't' WHERE id in %s;"""
+            cr.execute(sql, (tuple(move_line_ids),))
+        if analytic_line_ids:
+            sqltwo = """UPDATE account_analytic_line SET exported = 't' WHERE id in %s;"""
+            cr.execute(sqltwo, (tuple(analytic_line_ids),))
         return (out, 'zip')
 
 hq_report_oca('report.hq.oca', 'account.move.line', False, parser=False)
