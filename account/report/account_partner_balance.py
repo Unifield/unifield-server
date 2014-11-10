@@ -62,11 +62,18 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         else:
             self.ACCOUNT_TYPE = ('payable', 'receivable')
 
+        # UFTP-312: Permit to exclude tax accounts from the report
+        self.exclude_tax = data['form'].get('tax', False)
+        self.TAX_REQUEST = ''
+        if self.exclude_tax is True:
+            self.TAX_REQUEST = "AND t.code != 'tax'"
+
         self.cr.execute("SELECT a.id " \
                 "FROM account_account a " \
                 "LEFT JOIN account_account_type t " \
-                    "ON (a.type = t.code) " \
+                    "ON (a.user_type = t.id) " \
                     "WHERE a.type IN %s " \
+                    " " + self.TAX_REQUEST + " " \
                     "AND a.active", (self.ACCOUNT_TYPE,))
         self.account_ids = [a for (a,) in self.cr.fetchall()]
         res = super(partner_balance, self).set_context(objects, data, ids, report_type=report_type)
@@ -98,14 +105,13 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             "FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id) " \
             "JOIN account_account ac ON (l.account_id = ac.id)" \
             "JOIN account_move am ON (am.id = l.move_id)" \
-            "WHERE ac.type IN %s " \
+            "WHERE ac.id IN %s " \
             "AND am.state IN %s " \
             "AND " + self.query + "" \
             "GROUP BY p.id, p.ref, p.name,l.account_id,ac.name,ac.code " \
             "ORDER BY l.account_id,p.name",
-            (self.ACCOUNT_TYPE, tuple(move_state)))
+            (tuple(self.account_ids), tuple(move_state)))
         res = self.cr.dictfetchall()
-
 
         if self.display_partner == 'non-zero_balance':
             full_account = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]

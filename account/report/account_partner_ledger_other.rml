@@ -339,7 +339,7 @@
           <blockTable colWidths="58.0,58.0" style="Table7">
             <tr>
               <td>
-                <para style="terp_tblheader_General_Centre">[[ get_filter(data)=='Date' or removeParentNode('blockTable') ]] Start Date</para>
+                <para style="terp_tblheader_General_Centre">[[ get_filter(data)=='Date' and "Start Date" or removeParentNode('blockTable') ]]</para>
               </td>
               <td>
                 <para style="terp_tblheader_General_Centre">End Date</para>
@@ -349,7 +349,7 @@
           <blockTable colWidths="58.0,58.0" style="Table9">
             <tr>
               <td>
-                <para style="terp_default_Centre_8">[[ get_filter(data)=='Date' or removeParentNode('blockTable') ]] [[ formatLang(get_start_date(data),date=True) ]]</para>
+                <para style="terp_default_Centre_8">[[ get_filter(data)=='Date' and ' ' or removeParentNode('blockTable') ]] [[ formatLang(get_start_date(data),date=True) ]]</para>
               </td>
               <td>
                 <para style="terp_default_Centre_8">[[ formatLang(get_end_date(data),date=True) ]]</para>
@@ -359,7 +359,7 @@
           <blockTable colWidths="58.0,58.0" style="Table10">
             <tr>
               <td>
-                <para style="terp_tblheader_General_Centre">[[ get_filter(data)=='Periods' or removeParentNode('blockTable') ]] Start Period</para>
+                <para style="terp_tblheader_General_Centre">[[ get_filter(data)=='Periods' and "Start Period" or removeParentNode('blockTable') ]]</para>
               </td>
               <td>
                 <para style="terp_tblheader_General_Centre">End Period</para>
@@ -369,7 +369,7 @@
           <blockTable colWidths="58.0,58.0" style="Table11">
             <tr>
               <td>
-                <para style="terp_default_Centre_8">[[ get_filter(data)=='Periods' or removeParentNode('blockTable') ]] [[ get_start_period(data) or removeParentNode('para') ]]</para>
+                <para style="terp_default_Centre_8">[[ get_filter(data)=='Periods' and ' ' or removeParentNode('blockTable') ]] [[ get_start_period(data) or removeParentNode('para') ]]</para>
               </td>
               <td>
                 <para style="terp_default_Centre_8">[[ get_end_period(data) or removeParentNode('para') ]]</para>
@@ -397,7 +397,7 @@
     <blockTable colWidths="59.0,24.0,91.0,56.0,103.0,64.0,64.0,79.0" style="Table15">
       <tr>
         <td>
-          <para style="terp_tblheader_Details">[[ display_currency(data) == False or removeParentNode('blockTable') ]] Date</para>
+          <para style="terp_tblheader_Details">[[ display_currency(data) == False and "Date" or removeParentNode('blockTable') ]]</para>
         </td>
         <td>
           <para style="terp_tblheader_Details">JNRL</para>
@@ -422,9 +422,40 @@
         </td>
       </tr>
     </blockTable>
+    <blockTable colWidths="59.0,35.0,62.0,43.0,62.0,64.0,64.0,79.0,71.0" style="Table2">
+      <tr>
+        <td>
+          <para style="terp_tblheader_Details">[[ display_currency(data) == True and "Date" or removeParentNode('blockTable') ]]</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details">JNRL</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Centre">Ref</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Centre">Account</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details">Entry Label</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Right">Debit</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Right">Credit</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Right">Balance</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Right">Func. Cur.</para>
+        </td>
+      </tr>
+    </blockTable>
     <section>
       <para style="terp_default_2">
-        <font face="Helvetica">[[ display_currency(data) == False or removeParentNode('section') ]]</font>
+        <font face="Helvetica">[[ display_currency(data) == False and ' ' or removeParentNode('section') ]]</font>
       </para>
       <para style="terp_default_8">[[ repeatIn(objects, 'p') ]]</para>
       <para style="terp_default_8">[[ setLang(p.lang) ]]</para>
@@ -446,7 +477,7 @@
       </blockTable>
       <section>
         <para style="terp_default_2">
-          <font face="Helvetica">[[data['form']['initial_balance']==True or removeParentNode('section') ]]</font>
+          <font face="Helvetica">[[data['form']['initial_balance'] == True and ' ' or removeParentNode('section') ]]</font>
         </para>
         <blockTable colWidths="332.0,64.0,64.0,79.0" style="Table5">
           <tr>
@@ -508,7 +539,7 @@
       <blockTable colWidths="59.0,35.0,62.0,43.0,62.0,64.0,64.0,79.0,71.0" style="Table2">
         <tr>
           <td>
-            <para style="terp_tblheader_Details">[[ display_currency(data) == True or removeParentNode('blockTable') ]]Date</para>
+            <para style="terp_tblheader_Details">[[ display_currency(data) == True and Date or removeParentNode('blockTable') ]]</para>
           </td>
           <td>
             <para style="terp_tblheader_Details">JNRL</para>
@@ -539,7 +570,7 @@
     </section>
     <section>
       <para style="terp_default_2">
-        <font face="Helvetica">[[ display_currency(data) == True or removeParentNode('section') ]]</font>
+        <font face="Helvetica">[[ display_currency(data) == True and ' ' or removeParentNode('section') ]]</font>
       </para>
       <para style="terp_default_8">[[ repeatIn(objects, 'p') ]]</para>
       <para style="terp_default_8">[[ setLang(p.lang) ]]</para>
@@ -614,7 +645,7 @@
         </tr>
       </blockTable>
       <section>
-        <para style="terp_default_2">[[ data['form']['initial_balance']==True or removeParentNode('section') ]] </para>
+        <para style="terp_default_2">[[ data['form']['initial_balance'] == True and ' ' or removeParentNode('section') ]]</para>
         <blockTable colWidths="261.0,64.0,64.0,79.0,71.0" style="Table13">
           <tr>
             <td>
@@ -666,7 +697,7 @@
               <para style="P9">[[ formatLang((line['progress'])) ]] [[ company.currency_id.symbol ]]</para>
             </td>
             <td>
-              <para style="P1">[[ (line['currency_id']==None or line['amount_currency']==None) and removeParentNode('font') ]] [[ formatLang(line['amount_currency'] ) ]] [[ line['currency_code'] or '' ]] </para>
+              <para style="P1">[[ (line['currency_id'] == None or line['amount_currency']==None) and removeParentNode('font') ]] [[ formatLang(line['amount_currency'] ) ]] [[ line['currency_code'] or '' ]] </para>
             </td>
           </tr>
         </blockTable>

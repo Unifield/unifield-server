@@ -239,29 +239,6 @@
           </td>
         </tr>
       </blockTable>
-    <blockTable colWidths="80.0,210.16,100.32,80.0,210.16,100.32" style="Table_Net_Profit_Loss">
-      <tr>
-        <td>
-          <para style="terp_default_Bold_9"></para>
-        </td>
-        <td>
-          <para style="terp_default_Bold_9">[[ final_result()['type'] == 'Net Profit' and final_result()['type'] or '' ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Right_9_Bold">[[ final_result()['balance'] and final_result()['type'] == 'Net Profit' and  formatLang(abs(final_result()['balance'])) ]] [[ company.currency_id.symbol ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Bold_9"></para>
-        </td>
-        <td>
-          <para style="terp_default_Bold_9">[[ final_result()['type'] == 'Net Loss' and final_result()['type'] or '' ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Right_9_Bold">[[ final_result()['balance'] and final_result()['type'] == 'Net Loss' and  formatLang(abs(final_result()['balance'])) ]] [[ final_result()['balance'] and final_result()['type'] == 'Net Loss' and company.currency_id.symbol ]]</para>
-        </td>
-      </tr>
-    </blockTable>
-
     <blockTable colWidths="290.16,100.32,290.16,100.32" style="Table_Net_Profit_Loss">
       <tr>
         <td>
@@ -278,6 +255,30 @@
         </td>
       </tr>
     </blockTable>
+
+    <blockTable colWidths="80.0,210.16,100.32,80.0,210.16,100.32" style="Table_Net_Profit_Loss">
+      <tr>
+        <td>
+          <para style="terp_default_Bold_9"></para>
+        </td>
+        <td>
+          <para style="terp_default_Bold_9">[[ final_result()['type'] == 'Net Profit' and final_result()['type'] or '' ]]</para>
+        </td>
+        <td>
+          <para style="terp_default_Right_9_Bold">[[ final_result()['balance'] and final_result()['type'] == 'Net Profit' and  formatLang(abs(final_result()['balance'])) ]] [[ final_result()['balance'] and final_result()['type'] == 'Net Profit' and company.currency_id.symbol ]]</para>
+        </td>
+        <td>
+          <para style="terp_default_Bold_9"></para>
+        </td>
+        <td>
+          <para style="terp_default_Bold_9">[[ final_result()['type'] == 'Net Loss' and final_result()['type'] or '' ]]</para>
+        </td>
+        <td>
+          <para style="terp_default_Right_9_Bold">[[ final_result()['balance'] and final_result()['type'] == 'Net Loss' and  formatLang(abs(final_result()['balance'])) ]] [[ final_result()['balance'] and final_result()['type'] == 'Net Loss' and company.currency_id.symbol ]]</para>
+        </td>
+      </tr>
+    </blockTable>
+
   </story>
 </document>
 

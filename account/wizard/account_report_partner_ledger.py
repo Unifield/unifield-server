@@ -35,20 +35,21 @@ class account_partner_ledger(osv.osv_memory):
         'reconcil': fields.boolean('Include Reconciled Entries', help='Consider reconciled entries'),
         'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page'),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
-
+        'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
     }
     _defaults = {
        'reconcil': True,
-       'initial_balance': True,
+       'initial_balance': False,
        'page_split': False,
        'result_selection': 'supplier',  # UF-1715: 'Payable Accounts' by default instead of 'Receivable'
+       'tax': False, # UFTP-312: Add an exclude tax account possibility
     }
 
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'amount_currency'])[0])
+        data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'amount_currency', 'tax'])[0])
         if data['form']['page_split']:
             return {
                 'type': 'ir.actions.report.xml',
@@ -62,5 +63,4 @@ class account_partner_ledger(osv.osv_memory):
         }
 
 account_partner_ledger()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

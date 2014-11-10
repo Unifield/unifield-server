@@ -72,13 +72,11 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         return self.res_pl
 
     def sum_dr(self):
-        if self.res_pl['type'] == _('Net Profit'):
-            self.result_sum_dr += self.res_pl['balance']
+        # UFTP-312: If this fucking method is "sum_dr", we except it returns the sum of debit. That's all
         return self.result_sum_dr
 
     def sum_cr(self):
-        if self.res_pl['type'] == _('Net Loss'):
-            self.result_sum_cr += self.res_pl['balance']
+        # UFTP-312: If this fucking method is "sum_cr", we except it returns the sum of credit. That's all
         return self.result_sum_cr
 
     def get_data(self, data):
