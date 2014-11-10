@@ -848,6 +848,8 @@ MochiKit.Base.update(ListView.prototype, {
             _terp_group_by_ctx: openobject.dom.get('_terp_group_by_ctx').value
         });
 
+        var prefix = this.name == '_terp_list' ? '' : this.name + '/';
+        args[prefix+'_terp_force_limit'] = 1;
         if (this.name == '_terp_list') {
             jQuery.extend(args, {
                 _terp_search_domain: openobject.dom.get('_terp_search_domain').value,
