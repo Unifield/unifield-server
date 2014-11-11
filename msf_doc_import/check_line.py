@@ -545,7 +545,8 @@ def compute_currency_value(cr, uid, **kwargs):
                         if browse_sale.procurement_request:
                             order_cur_id = browse_sale.functional_currency_id.id
                         else:
-                            order_cur_id = brows_sale.pricelist_id.currency_id.id
+                            # UFTP-395: just a small typo bug
+                            order_cur_id = browse_sale.pricelist_id.currency_id.id
                         if currency_ids[0] == order_cur_id:
                             fc_id = currency_ids[0]
                         else:
