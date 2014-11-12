@@ -282,7 +282,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         fiscalyear_obj = self.pool.get('account.fiscalyear')
         period_obj = self.pool.get('account.period')
         fiscalyear = fiscalyear_obj.browse(cr, uid, fiscalyear_id)
-        if method in ['liquidity_month', 'liquidity_year']:
+        if method in ['liquidity_month']:
             if fiscalyear_id:
                 # If the current fiscal year is the actual one, we get the
                 # previous month as the right period (except for january)
@@ -304,7 +304,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 value['result_period_id'] = period_id
                 period = period_obj.browse(cr, uid, period_id)
                 value['posting_date'] = period.date_stop
-        elif method == 'other_bs':
+        elif method in ('other_bs', 'liquidity_year'):
             value['posting_date'] = fiscalyear.date_stop
             period_ids = period_obj.search(
                 cr, uid,
