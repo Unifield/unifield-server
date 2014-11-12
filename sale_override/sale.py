@@ -1824,7 +1824,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             proc_data.update({
                 'is_tender_done': True,
                 'po_cft': 'cft',
-                'tender_line_id': line.created_by_tender_line and line.created_by_tender.id or False,
+                'tender_line_id': line.created_by_tender_line and line.created_by_tender_line.id or False,
                 'tender_id': line.created_by_tender and line.created_by_tender.id or False,
             })
 
@@ -2074,7 +2074,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             remain_lines = line_obj.search(cr, uid, [
                 ('order_id', '=', fo.id),
                 ('id', 'not in', line_ids),
-                ('state', '!=', 'cancel'),
+                ('state', 'not in', ['cancel', 'done']),
             ], context=context)
             if remain_lines:
                 res[fo.id] = False
@@ -2296,9 +2296,9 @@ class sale_order_line(osv.osv):
             elif line.order_id.procurement_request:
                 # UFTP-82: flagging SO is an IR and its PO is cancelled
                 self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
-#            if proc:
-#                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
-#                proc_obj.action_cancel(cr, uid, [proc])
+            if proc and context.get('cancel_type'):
+                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
+                proc_obj.action_cancel(cr, uid, [proc])
         else:
             minus_qty = line.product_uom_qty - qty_diff
             proc = line.procurement_id and line.procurement_id.id
