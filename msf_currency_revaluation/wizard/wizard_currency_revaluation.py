@@ -291,10 +291,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     if period_date.month > 1:
                         period_date = period_date - relativedelta(months=1)
                 # If the selected fiscal year is not the actual one, we get its
-                # last period
+                # start period
                 else:
                     period_date = datetime.datetime.strptime(
-                        fiscalyear.date_stop, '%Y-%m-%d')
+                        fiscalyear.date_start, '%Y-%m-%d')
                 # NOTE: the method 'get_period_from_date()' supplied by the
                 #       'account_tools' module is used here
                 period_ids = period_obj.get_period_from_date(
