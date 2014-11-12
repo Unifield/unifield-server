@@ -412,6 +412,12 @@ class po_follow_up_mixin(object):
             report_line['uom'] = line.product_uom.name or ''
             report_line['qty_received'] = inline_in.get('state') == 'done' and inline_in.get('product_qty','') or '0.00'
             report_line['in'] = inline_in.get('name','') or ''
+            if inline_in.get('product_uom') and inline_in.get('product_uom') != line.product_uom.id:
+                report_line['uom'] = uom_obj.read(cr, uid, inline_in.get('product_uom'), ['name'])['name']
+            if inline_in.get('product_id') and inline_in.get('product_id') != line.product_id.id:
+                prod_brw = prod_obj.browse(self.cr, self.uid, inline_in.get('product_id'))
+                report_line['code'] = prod_brw.default_code
+                report_line['description'] = prod_brw.name
             if inline_in.get('backorder_id') and inline_in.get('state') != 'done':
                 report_line['qty_backordered'] = inline_in.get('product_qty', '')
             else:
@@ -504,7 +510,7 @@ class po_follow_up_mixin(object):
              
     def getInlineIN(self,po_line_id):
         sm_obj = self.pool.get('stock.move')        
-        self.cr.execute(''' select sm.id, sp.name, sm.product_qty, sm.product_uom, sm.price_unit, sm.state, sp.backorder_id
+        self.cr.execute(''' select sm.id, sp.name, sm.product_id, sm.product_qty, sm.product_uom, sm.price_unit, sm.state, sp.backorder_id
                             from stock_move sm, stock_picking sp
                             where sm.purchase_line_id = %s 
                             and sm.type = 'in' 
