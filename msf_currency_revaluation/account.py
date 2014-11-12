@@ -130,35 +130,37 @@ class account_account(osv.osv):
 
         # Compute for each account the initial balance/debit/credit from the
         # move lines and add it to the previous result
-        if revaluation_method == 'liquidity_month':
-            ctx_query = context.copy()
-            query, params = self._revaluation_query(
-                cr, uid, ids,
-                revaluation_date,
-                context=ctx_query,
-                # UFTP-385: we do not use 'initial_bal' context anymore and
-                # 'periods' context as it forces a FY in where criteria
-                # and we want initial balance from the start of the accounting
-                # example: l.period_id IN (SELECT id FROM account_period WHERE
-                # fiscalyear_id IN (1) AND id IN (1,2,3,4,5,6,7,8,9)
-                initial_bal_before_period_id=period_ids[0]
-            )
-            cr.execute(query, params)
-            lines = cr.dictfetchall()
-            for line in lines:
-                # generate a tree
-                # - account_id
-                # -- currency_id
-                # ----- balances
-                account_id, currency_id = line['id'], line['currency_id']
-                accounts.setdefault(account_id, {})
-                accounts[account_id].setdefault(
-                    currency_id,
-                    {'balance': 0, 'foreign_balance': 0, 'credit': 0, 'debit': 0})
-                accounts[account_id][currency_id]['balance'] += line['balance']
-                accounts[account_id][currency_id]['foreign_balance'] += line['foreign_balance']
-                accounts[account_id][currency_id]['credit'] += line['credit']
-                accounts[account_id][currency_id]['debit'] += line['debit']
+        # UFTP-385: was done previously only for month liquidity, now we 
+        # integrate all balance history for all modes
+        # (year liquidity, other/bs too)
+        ctx_query = context.copy()
+        query, params = self._revaluation_query(
+            cr, uid, ids,
+            revaluation_date,
+            context=ctx_query,
+            # UFTP-385: we do not use 'initial_bal' context anymore and
+            # 'periods' context as it forces a FY in where criteria
+            # and we want initial balance from the start of the accounting
+            # example: l.period_id IN (SELECT id FROM account_period WHERE
+            # fiscalyear_id IN (1) AND id IN (1,2,3,4,5,6,7,8,9)
+            initial_bal_before_period_id=period_ids[0]
+        )
+        cr.execute(query, params)
+        lines = cr.dictfetchall()
+        for line in lines:
+            # generate a tree
+            # - account_id
+            # -- currency_id
+            # ----- balances
+            account_id, currency_id = line['id'], line['currency_id']
+            accounts.setdefault(account_id, {})
+            accounts[account_id].setdefault(
+                currency_id,
+                {'balance': 0, 'foreign_balance': 0, 'credit': 0, 'debit': 0})
+            accounts[account_id][currency_id]['balance'] += line['balance']
+            accounts[account_id][currency_id]['foreign_balance'] += line['foreign_balance']
+            accounts[account_id][currency_id]['credit'] += line['credit']
+            accounts[account_id][currency_id]['debit'] += line['debit']
 
         return accounts
 
