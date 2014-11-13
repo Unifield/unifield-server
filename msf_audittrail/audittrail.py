@@ -544,13 +544,13 @@ class audittrail_rule(osv.osv):
             seq_pool = self.pool.get('ir.sequence')
             seq_typ_pool = self.pool.get('ir.sequence.type')
             types = {
-                'name': obj_name,
-                'code': obj_name,
+                'name': '%s_auditrail' % obj_name,
+                'code': '%s_auditrail' % obj_name,
             }
             seq_typ_pool.create(cr, uid, types)
             seq = {
-                'name': obj_name,
-                'code': obj_name,
+                'name': '%s_auditrail' % obj_name,
+                'code': '%s_auditrail' % obj_name,
                 'prefix': '',
                 'padding': 1,
             }
