@@ -402,7 +402,7 @@ class po_follow_up_mixin(object):
             inline_in = self.getInlineIN(line.id)
             analytic_lines = self.getAnalyticLines(line)
             other_ins = []
-            change_product = False
+            in_change_product = False
             if inline_in:
                 other_ins = self.getOtherINs(line.id, inline_in.get('id')) 
             report_line['sort_key'] = sort_key
@@ -419,7 +419,7 @@ class po_follow_up_mixin(object):
                 prod_brw = prod_obj.browse(self.cr, self.uid, inline_in.get('product_id'))
                 report_line['code'] = prod_brw.default_code
                 report_line['description'] = prod_brw.name
-                change_product = True
+                in_change_product = True
             if inline_in.get('backorder_id') and inline_in.get('state') != 'done':
                 report_line['qty_backordered'] = inline_in.get('product_qty', '')
             else:
@@ -464,11 +464,13 @@ class po_follow_up_mixin(object):
                     report_line['sort_key'] = sort_key
 
                     # Product is changed
-                    if change_product or (other_in.get('product_id') and other_in.get('product_id') != line.product_id.id):
+                    product_changed = other_in.get('product_id') and other_in.get('product_id') != line.product_id.id
+                    if in_change_product or product_changed:
                         prod_brw = prod_obj.browse(self.cr, self.uid, other_in.get('product_id'))
                         report_line['code'] = prod_brw.default_code
                         report_line['description'] = prod_brw.name
-                        change_product = False
+                        if in_change_product and not product_changed:
+                            in_change_product = False
                     else:
                         report_line['code'] = ''
                         report_line['description'] = ''
