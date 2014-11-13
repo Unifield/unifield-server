@@ -39,6 +39,17 @@ class account_period(osv.osv):
         # 3 =
         # 3 = state reopened at HQ -> reopen at all levels
 
+    def check_unposted_entries(self, cr, uid, period_id, context=None):
+        """
+        Check that no oustanding unposted entries remain
+        """
+        sql = """SELECT COUNT(id) FROM account_move WHERE period_id = %s AND state != 'posted'""" % period_id
+        cr.execute(sql)
+        sql_res = cr.fetchall()
+        count_moves = sql_res and sql_res[0] and sql_res[0][0] or 0
+        if count_moves > 0:
+            raise osv.except_osv(_('Warning'), _('Period closing is denied: some Journal Entries remain unposted in this period.'))
+        return True
 
     def action_set_state(self, cr, uid, ids, context):
         """
@@ -166,6 +177,8 @@ class account_period(osv.osv):
                     payroll_rows = hr_payroll_msf_obj.search(cr, uid, [('period_id','=', period.id),('state','=','draft')])
                     if payroll_rows:
                         raise osv.except_osv(_('Error !'), _('There are outstanding payroll entries in this period; you must validate them to field-close this period.'))
+                    # UFTP-351: Check that no Journal Entries are Unposted for this period
+                    self.check_unposted_entries(cr, uid, period.id, context=context)
 
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
@@ -214,6 +227,10 @@ class account_period(osv.osv):
                 for p_id in ids:
                     self.write(cr, uid, p_id, {'state':'field-closed', 'field_process': False}, context=context)
                 return True
+
+            # UFTP-351: Check that no Journal Entries are Unposted for this period
+            if period.state == 'field-closed' and context['state'] == 'mission-closed':
+                self.check_unposted_entries(cr, uid, period.id, context=context)
 
         # check if unposted move lines are linked to this period
         move_line_obj = self.pool.get('account.move.line')

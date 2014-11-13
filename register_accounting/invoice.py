@@ -248,7 +248,7 @@ class account_invoice(osv.osv):
     def _direct_invoice_updated(self, cr, uid, ids, context=None):
         """
         User has updated the direct invoice. The (parent) statement line needs to be updated, and then
-        the move lines deleted and re-created. Ticket utp917. Sheer madness.
+        the move lines deleted and re-created. Ticket utp917.
         """
         # get object handles
         account_bank_statement_line = self.pool.get('account.bank.statement.line')  #absl
@@ -277,9 +277,15 @@ class account_invoice(osv.osv):
         return True
 
     def fix_aal_aml_reference(self, cr, uid, id, context=None):
-        # fix the reference UFTP-167
+        # fix the reference UFTP-167, uftp331 and utp-1041
+
         aml_obj = self.pool.get('account.move.line')
         aal_obj = self.pool.get('account.analytic.line')
+        absl_obj = self.pool.get('account.bank.statement.line')
+
+        inv_header = self.browse(cr, uid, id, context=context)
+        inv_number = inv_header.number
+        inv_header_ref = inv_header.reference
 
         # 1. find the moves associated with the invoice - account_invoice.move_id
         move_id = self.browse(cr, uid, id, context=context).move_id.id
@@ -288,19 +294,50 @@ class account_invoice(osv.osv):
         aml_ids = aml_obj.search(cr, uid, [('move_id', '=', move_id),('invoice_line_id','!=',False)], context=context)
         move_lines = aml_obj.browse(cr, uid, aml_ids, context=context)
 
-        # 3. get the corresponding invoice_line
-        # 4. if the ref is not blank than update it
+        # 3. get the bank statement line
+        absl_ids = absl_obj.search(cr, uid, [('invoice_id','=',inv_header.id)],context=context)
+        absl = absl_obj.browse(cr, uid, absl_ids,context=context)[0]
+        move_lines.extend(absl.move_ids[0].line_id)
 
+        # 4. get the corresponding invoice_line
         for move_line in move_lines:
             ail = move_line.invoice_line_id
-            if ail.reference:
+
+            if ail.reference in (False,None) and inv_header_ref in (False,None):
+                # all lines are populated with the invoice number
                 # must write to 'reference' to have 'ref' update: very confusing.
-                aml_obj.write(cr, uid, move_line.id, {'reference': ail.reference}, context=context)
+                aml_obj.write(cr, uid, move_line.id, {'reference': inv_number}, context=context)
                 # update analytic lines. move_id is actually move_line_id
                 aal_ids = aal_obj.search(cr, uid, [('move_id','=',move_line.id)], context=context)
-                aal_obj.write(cr, uid, aal_ids, {'reference': ail.reference}, context=context)
+                aal_obj.write(cr, uid, aal_ids, {'reference': inv_number}, context=context)
 
+            if ail.reference in (None,False) and inv_header_ref:
+                # all lines are populated with the header ref
+                aml_obj.write(cr, uid, move_line.id, {'reference': inv_header_ref}, context=context)
+                aal_ids = aal_obj.search(cr, uid, [('move_id','=',move_line.id)], context=context)
+                aal_obj.write(cr, uid, aal_ids, {'reference': inv_header_ref}, context=context)
 
+            if ail.reference and inv_header_ref in (None,False):
+                # move_line.account_id.type == other is the actually the 'expense' account
+                if move_line.account_id.type == 'other' and move_line.journal_id.type == 'purchase':
+                    reference = ail.reference
+                else:
+                    reference = inv_number
+                # all lines are populated with the header ref
+                aml_obj.write(cr, uid, move_line.id, {'reference': reference}, context=context)
+                aal_ids = aal_obj.search(cr, uid, [('move_id','=',move_line.id)], context=context)
+
+            if ail.reference and inv_header_ref:
+                # move_line.account_id.type == other is the actually the 'expense' account
+                if move_line.account_id.type == 'other' and move_line.journal_id.type == 'purchase':
+                    reference = ail.reference
+                else:
+                    reference = inv_header_ref
+                # all lines are populated with the header ref
+                aml_obj.write(cr, uid, move_line.id, {'reference': reference}, context=context)
+                aal_ids = aal_obj.search(cr, uid, [('move_id','=',move_line.id)], context=context)
+                aal_obj.write(cr, uid, aal_ids, {'reference': reference}, context=context)
+        return True
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
@@ -337,6 +374,40 @@ class account_invoice(osv.osv):
         if context.get('from_register', False):
             return {'type': 'ir.actions.act_window_close'}
         return True
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check that all register lines are updated if this invoice is a direct invoice.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
+        # UFTP-312: Update register line after any changes on the direct invoice
+        authorized_list_for_update = ['ref', 'account_id', 'partner_id', 'document_date', 'amount_out']
+        do_changes = False
+        for field in authorized_list_for_update:
+            if field in vals and vals.get(field, False):
+                do_changes = True
+                break
+        if do_changes:
+            absl_obj = self.pool.get('account.bank.statement.line')
+            for inv in self.read(cr, uid, ids, ['is_direct_invoice', 'reference', 'account_id', 'partner_id', 'document_date', 'invoice_amount', 'check_total', 'st_lines'], context=context):
+                if inv.get('is_direct_invoice', False):
+                    # search the statement line
+                    if inv.get('st_lines', False):
+                        # update it with some values: reference, document date, account and partner
+                        vals = {
+                            'ref': inv.get('reference', ''),
+                            'account_id': inv.get('account_id', False) and inv.get('account_id')[0] or False,
+                            'partner_id': inv.get('partner_id', False) and inv.get('partner_id')[0] or False,
+                            'document_date': inv.get('document_date', False),
+                            'amount_out': inv.get('check_total', False),
+                        }
+                        # add specific context to avoid problem from
+                        absl_obj.write(cr, uid, inv.get('st_lines'), vals, context=context)
+        return res
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -93,8 +93,8 @@ class account_move_line(osv.osv):
             # Do level check only if we don't know if more than 1 different level exists between lines
             if not different_level:
                 if not previous_level:
-                    previous_level = line.instance_id.level
-                if previous_level != line.instance_id.level:
+                    previous_level = line.instance_id.id
+                if previous_level != line.instance_id.id:
                     different_level = True
             company_currency_id = line.company_id.currency_id
             if line.reconcile_id:
@@ -143,7 +143,9 @@ class account_move_line(osv.osv):
         unrec_lines = filter(lambda x: not x['reconcile_id'], lines)
         credit = debit = func_debit = func_credit = currency = 0.0
         account_id = partner_id = employee_id = functional_currency_id = False
-        currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        current_company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        currency_id = current_company.currency_id.id
+        current_instance_level = current_company.instance_id.level
         if context is None:
             context = {}
         company_list = []
@@ -151,6 +153,9 @@ class account_move_line(osv.osv):
         # UTP-752: Check if lines comes from the same instance level
         previous_level = False
         different_level = False
+        multi_instance_level_creation = False
+        has_project_line = False
+        has_section_line = False
         for line in self.browse(cr, uid, ids, context=context):
             if company_list and not line.company_id.id in company_list:
                 raise osv.except_osv(_('Warning !'), _('To reconcile the entries company should be the same for all entries'))
@@ -158,9 +163,17 @@ class account_move_line(osv.osv):
             # instance level
             if not different_level:
                 if not previous_level:
-                    previous_level = line.instance_id.level
-                if previous_level != line.instance_id.level:
+                    previous_level = line.instance_id.id
+                if previous_level != line.instance_id.id:
                     different_level = True
+            if current_instance_level == 'section':
+                if line.instance_id.level == 'section':
+                    has_section_line = True
+                elif line.instance_id.level == 'project':
+                    has_project_line = True
+        if different_level and has_project_line and not has_section_line:
+            different_level = False
+            multi_instance_level_creation = 'coordo'
         for line in unrec_lines:
             if line.state <> 'valid':
                 raise osv.except_osv(_('Error'),
@@ -202,15 +215,16 @@ class account_move_line(osv.osv):
         
         if abs(func_balance) > 10**-3: # FIX UF-1903 problem
             partner_line_id = self.create_addendum_line(cr, uid, [x.id for x in unrec_lines], func_balance)
-
-            # Add partner_line to do total reconciliation
-            ids.append(partner_line_id)
+            if partner_line_id:
+                # Add partner_line to do total reconciliation
+                ids.append(partner_line_id)
 
         r_id = move_rec_obj.create(cr, uid, {
             'type': type,
             'line_id': map(lambda x: (4, x, False), ids),
             'line_partial_ids': map(lambda x: (3, x, False), ids),
             'is_multi_instance': different_level,
+            'multi_instance_level_creation': multi_instance_level_creation,
         })
         
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
@@ -304,10 +318,14 @@ class account_move_reconcile(osv.osv):
 
     _columns = {
         'is_multi_instance': fields.boolean(string="Reconcile at least 2 lines that comes from different instance levels."),
+        'multi_instance_level_creation': fields.selection([('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')],
+            string='Where the adjustement line should be created'
+        )
     }
 
     _defaults = {
         'is_multi_instance': lambda *a: False,
+        'multi_instance_level_creation': False,
     }
 
     def create(self, cr, uid, vals, context=None):

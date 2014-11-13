@@ -211,6 +211,7 @@
 </Borders>
 <NumberFormat ss:Format="0.0%"/>
 </Style>
+
 <Style ss:ID="s42">
 <Borders>
 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -220,6 +221,15 @@
 <Font  ss:Bold="1"/>
 <Interior  ss:Pattern="Solid"/>
 </Style>
+
+<Style ss:ID="s42a">
+<Borders>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Font  ss:Bold="1"/>
+</Style>
+
 <Style ss:ID="s43">
 <Borders>
 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
@@ -409,7 +419,7 @@
 <Data ss:Type="DateTime">${ o.eligibility_to_date |n}T00:00:00.000</Data>
 </Cell>
 </Row>
-<Row>
+<Row ss:AutoFitHeight="0" ss:Height="30.0">
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${_('Reporting type:')}</Data>
 </Cell>
@@ -417,7 +427,7 @@
 <Data ss:Type="String">${( o.reporting_type and getSel(o, 'reporting_type') or '')|x}</Data>
 </Cell>
 </Row>
-<Row>
+<Row ss:AutoFitHeight="0" ss:Height="40.0">
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${_('Cost centers:')}</Data>
 </Cell>
@@ -450,7 +460,7 @@
 	<Data ss:Type="String">${_('Earmarked - Actuals')}</Data>
 	</Cell>
 	<Cell ss:StyleID="s27">
-	<Data ss:Type="String">${_('Earmarked - Balanc')}e</Data>
+	<Data ss:Type="String">${_('Earmarked - Balance')}</Data>
 	</Cell>
 	<Cell ss:StyleID="s27">
 	<Data ss:Type="String">${_('Earmarked - %used')}</Data>
@@ -519,7 +529,7 @@
 % endfor
 
 <Row ss:AutoFitHeight="0" ss:Height="13.5">
-<Cell ss:StyleID="s42"/>
+<Cell ss:StyleID="s42a"/>
 <Cell ss:StyleID="s43">
 <Data ss:Type="String">${_('TOTAL')}</Data>
 </Cell>

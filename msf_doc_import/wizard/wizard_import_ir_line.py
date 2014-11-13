@@ -110,8 +110,14 @@ class wizard_import_ir_line(osv.osv_memory):
             currency_index = 5
             rows = file_obj.getRows()
             rows.next()  # skip header line
-            lines_to_correct = check_line.check_lines_currency(rows,
-                currency_index, order_currency_code)
+            try:
+                lines_to_correct = check_line.check_lines_currency(rows,
+                    currency_index, order_currency_code)
+            except Exception as e:
+                lines_to_correct = -1
+                msg = "An error occured when the system was checking the "\
+                      "currency value of data. Error raised: %s" % str(e)
+                error_list.append(msg)
             if lines_to_correct > 0:
                 msg = "You can not import this file because it contains" \
                     " line(s) with currency not of the order currency (%s)" % (
@@ -258,7 +264,7 @@ class wizard_import_ir_line(osv.osv_memory):
                 sale_obj._check_service(cr, uid, ids, vals, context=context)
             error_log += '\n'.join(error_list)
             if error_log:
-                error_log = _("Reported errors for ignored lines : \n") + error_log
+                error_log = _("Reported errors for ignored lines : \n") + error_log.decode('utf-8')
             end_time = time.time()
             total_time = str(round(end_time-start_time)) + _(' second(s)')
             final_message = _(''' 

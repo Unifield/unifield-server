@@ -27,24 +27,23 @@ from lxml import etree
 import time
 from datetime import datetime
 
+PURCHASE_ORDER_STATE_SELECTION = [
+    ('draft', 'Draft'),
+    ('sourced', 'Sourced'),
+    ('confirmed', 'Validated'),
+    ('confirmed_wait', 'Confirmed (waiting)'),
+    ('approved', 'Confirmed'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled'),
+]
 
 class po_follow_up(osv.osv_memory):
     _name = 'po.follow.up'
     _description = 'PO Follow up report wizard'
-    
-    STATE_SELECTION = [
-         ('sourced', 'Sourced'),
-         ('confirmed', 'Validated'),
-         ('confirmed_wait', 'Confirmed (waiting)'),
-         ('approved', 'Confirmed'),               
-    ]
 
-    STATES = {'sourced': 'Sourced','confirmed': 'Validated','confirmed_wait': 'Confirmed waiting','approved':'Confirmed'}
-
-    
     _columns = {
          'po_id':fields.many2one('purchase.order',string="Order Reference", help="Unique number of the Purchase Order. Optional", required=False),
-         'state': fields.selection(STATE_SELECTION, 'State', help="The state of the purchase order. Optional", select=True, required=False),
+         'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', help="The state of the purchase order. Optional", select=True, required=False),
          'po_date_from':fields.date("PO date from", required="False"),
          'po_date_thru':fields.date("PO date to", required="False"),
          'partner_id':fields.many2one('res.partner', 'Supplier', required=False),
@@ -53,7 +52,6 @@ class po_follow_up(osv.osv_memory):
          'background_time': fields.integer('Number of second before background processing'),
     }
     
-    
     _defaults = {
         'export_format': lambda *a: 'xls',
         'background_time': lambda *a: 200,
@@ -61,10 +59,19 @@ class po_follow_up(osv.osv_memory):
     
     def button_validate(self, cr, uid, ids, context=None):
         wiz = self.browse(cr,uid,ids)[0]
-        
-        domain = []
-        states = {'sourced': 'Sourced','confirmed': 'Validated','confirmed_wait': 'Confirmed waiting','approved':'Confirmed'}
-        report_parms =  {'title':'MULTIPLE PURCHASE ORDER FOLLOW-UP','run_date': time.strftime("%d/%m/%Y"), 'date_from': '', 'date_thru': '','state': '', 'supplier':'' }
+
+        domain = [('rfq_ok', '=', False)]
+        states = {}
+        for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
+            states[state_val] = state_string
+        report_parms =  {
+            'title': 'PO Follow Up per Supplier',
+            'run_date': time.strftime("%d/%m/%Y"),
+            'date_from': '',
+            'date_thru': '',
+            'state': '',
+            'supplier':''
+        }
          
         # PO number
         if wiz.po_id:
@@ -74,8 +81,6 @@ class po_follow_up(osv.osv_memory):
         if wiz.state:
             domain.append(('state','=', wiz.state))
             report_parms['state'] = states[wiz.state]
-        else:
-            domain.append(('state','in',['sourced','confirmed','confirmed_wait','approved']))
             
         # Dates
         if wiz.po_date_from:
@@ -106,7 +111,7 @@ class po_follow_up(osv.osv_memory):
             return True
         
         report_header = []
-        report_header.append('MULTIPLE PURCHASE ORDER FOLLOW-UP')
+        report_header.append(report_parms['title'])
         
         report_header_line2 = ''
         if wiz.partner_id:

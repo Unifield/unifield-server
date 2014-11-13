@@ -27,7 +27,7 @@ class SpreadsheetCell(SpreadsheetTools):
                 dtype = self.get(data, 'Type')
                 self.data = data.text
                 if dtype == 'Number':
-                    if not self.data or '.' in self.data:
+                    if not self.data or '.' in self.data or 'E-' in self.data or 'e-' in self.data:
                         self.type = 'float'
                         self.data = float(self.data or 0.0)
                     else:
@@ -36,7 +36,7 @@ class SpreadsheetCell(SpreadsheetTools):
                 elif dtype == 'Boolean':
                     self.data = self.data in ('1', 'T', 't', 'True', 'true')
                     self.type = 'bool'
-                elif dtype == 'DateTime':
+                elif dtype == 'DateTime' and self.data:
                     self.data = DateTime.ISO.ParseDateTime(self.data)
                     self.type = 'datetime'
                 elif dtype == 'String':

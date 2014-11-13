@@ -81,46 +81,60 @@
 ## definition of the columns' size
 <% nb_of_columns = 12 %>
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="300" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+    # Item
+    <Column ss:AutoFitWidth="1" ss:Width="40" />
+    # Code
+    <Column ss:AutoFitWidth="1" ss:Width="81" />
+    # Description
+    <Column ss:AutoFitWidth="1" ss:Width="161" />
+    # Qty ordered
+    <Column ss:AutoFitWidth="1" ss:Width="57" />
+    # UoM
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
+    # Qty received
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    # IN
+    <Column ss:AutoFitWidth="1" ss:Width="60" />
+    # Qty backorder
+    <Column ss:AutoFitWidth="1" ss:Width="58" />
+    # Unit Price
+    <Column ss:AutoFitWidth="1" ss:Width="95" />
+    # IN Unit Price
+    <Column ss:AutoFitWidth="1" ss:Width="95" />
+    # Destination
+    <Column ss:AutoFitWidth="1" ss:Width="95" />
+    # Cost Center
+    <Column ss:AutoFitWidth="1" ss:Width="95" />
 
 <Row>
-   <Cell ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
-   <Cell ss:StyleID="mainheader"><Data ss:Type="String">Report run date: ${getRunParms()['run_date'] or '' |x}</Data></Cell>
-   <Cell ss:StyleID="mainheader"><Data ss:Type="String">PO date from: ${getRunParms()['date_from'] or ''|x}</Data></Cell>
-   <Cell ss:StyleID="mainheader"><Data ss:Type="String">PO date to: ${getRunParms()['date_thru'] or '' |x}</Data></Cell>
-   <Cell ss:StyleID="mainheader"><Data ss:Type="String">Supplier: ${getRunParms()['supplier'] or '' |x}</Data></Cell>
-   <Cell ss:StyleID="mainheader"><Data ss:Type="String">PO State: ${getRunParms()['state'] or '' | x}</Data></Cell>
+    <Cell ss:MergeAcross="11" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
+</Row>
+<Row ss:AutoFitHeight="1">
+   <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">Report run date: ${getRunParms()['run_date'] or '' |x}</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">PO date from: ${getRunParms()['date_from'] or ''|x}</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">PO date to: ${getRunParms()['date_thru'] or '' |x}</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Supplier: ${getRunParms()['supplier'] or '' |x}</Data></Cell>
+   <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">PO State: ${getRunParms()['state'] or '' | x}</Data></Cell>
 </Row>
 <Row></Row>
 <Row></Row>
 
 % for o in objects:
     
-    <Row> 
+    <Row ss:AutoFitHeight="0" ss:Height="36">
        % for header in getHeaderLine(o):
-    	  <Cell ss:StyleID="poheader"><Data ss:Type="String">${header |x}</Data></Cell>
+    	  <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${header |x}</Data></Cell>
        % endfor
     </Row>
 
-    <Row>
+    <Row ss:AutoFitHeight="1" > 
       % for header in getPOLineHeaders():
     	    <Cell ss:StyleID="header"><Data ss:Type="String">${header}</Data></Cell>
        % endfor       
     </Row>
     
     % for line in getPOLines(o.id):
-    <Row>
+    <Row ss:AutoFitHeight="1">
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
@@ -135,14 +149,31 @@
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
     </Row>
     % endfor
-     <Row>
-    	<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-    	<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-    </Row>
  % endfor   
     
 </Table>
-<x:WorksheetOptions/>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Layout x:Orientation="Landscape"/>
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14${getRunParms()['title'] or '' |x}"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+   </PageSetup>
+   <Print>
+    <ValidPrinterInfo/>
+    <PaperSizeIndex>9</PaperSizeIndex>
+    <HorizontalResolution>600</HorizontalResolution>
+    <VerticalResolution>600</VerticalResolution>
+   </Print>
+   <Selected/>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+     <ActiveRow>17</ActiveRow>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+</WorksheetOptions>
 </ss:Worksheet>
 
 </Workbook>

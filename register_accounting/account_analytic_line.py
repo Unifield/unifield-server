@@ -39,7 +39,11 @@ class account_analytic_line(osv.osv):
         # Prepare some values
         res = {}
         for l in self.browse(cr, uid, ids, context=context):
-            res[l.id] = ''
+            # UTP-1182:
+            if context.get('sync_update_execution', False):
+                continue
+            else:
+                res[l.id] = ''
             if l.move_id:
                 if l.move_id.partner_type and l.move_id.partner_type.name:
                     res[l.id] = l.move_id.partner_type.name or ''
@@ -52,8 +56,22 @@ class account_analytic_line(osv.osv):
                 res[l.id] = l.imported_partner_txt
         return res
 
+    def _set_partner(self, cr, uid, ids, name, value, arg, context=None):
+        """
+        Set the partner_txt field if a value given
+        """
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        sql = "UPDATE " + self._table + " SET partner_txt = '" + value + "' WHERE id in %s"
+        cr.execute(sql, (tuple(ids),))
+        return True
+
     _columns = {
-        'partner_txt': fields.function(_get_partner, method=True, string="Third Party", readonly=True, type="text", store=True),
+        'partner_txt': fields.function(_get_partner, fnct_inv=_set_partner, method=True, string="Third Party", readonly=True, type="text", store=True),
         'imported_partner_txt': fields.text("Imported Third Party"),
     }
 

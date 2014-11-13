@@ -509,9 +509,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'validated']:
                 res[el.id] = False
             # verify move state
+            # UFTP-363: Do not edit any element of JI or JE if the JE is imported
             if el.move_id and el.move_id.state not in ['draft']:
                 res[el.id] = False
+            if el.move_id and el.move_id.imported is True:
+                res[el.id] = False
             if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.state not in ['draft'] and not context.get('from_correction', False):
+                res[el.id] = False
+            if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.imported is True:
                 res[el.id] = False
         return res
 

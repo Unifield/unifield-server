@@ -226,6 +226,9 @@ class tender(osv.osv):
         """
         Check consistency between lines and categ of tender
         """
+        # UFTP-317: Make sure ids is a list
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         exp_sol_obj = self.pool.get('expected.sale.order.line')
 
         self._check_service(cr, uid, ids, vals, context=context)
@@ -672,17 +675,28 @@ class tender(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        tender = self.read(cr, uid, ids[0], ['state'], context=context)
-        wiz_id = wiz_obj.create(cr, uid, {'tender_id': tender['id'], 'not_draft': tender['state'] != 'draft'}, context=context)
+        for tender_id in ids:
+            tender = self.read(cr, uid, ids[0], ['state', 'sale_order_id'], context=context)
 
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'tender.cancel.wizard',
-                'res_id': wiz_id,
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                'context': context}
-    
+            wiz_id = wiz_obj.create(cr, uid, {
+                'tender_id': tender['id'],
+                'not_draft': tender['state'] != 'draft',
+                'no_need': not tender['sale_order_id'],
+            }, context=context)
+
+            if tender['sale_order_id'] or tender['state'] != 'draft':
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'tender.cancel.wizard',
+                        'res_id': wiz_id,
+                        'view_mode': 'form',
+                        'view_type': 'form',
+                        'target': 'new',
+                        'context': context}
+            else:
+                wiz_obj.just_cancel(cr, uid, [wiz_id], context=context)
+
+        return {}
+
     def wkf_action_cancel(self, cr, uid, ids, context=None):
         '''
         cancel all corresponding rfqs
@@ -999,7 +1013,7 @@ class tender_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             tender_to_update.add(line.tender_id.id)
-            if line.sale_order_line_id:
+            if line.sale_order_line_id and line.sale_order_line_id.state not in ('cancel', 'done'):
                 so_to_update.add(line.sale_order_line_id.order_id.id)
                 if line.sale_order_line_id.order_id.procurement_request:
                     sol_not_to_delete.append(line.sale_order_line_id.id)
@@ -1092,6 +1106,7 @@ class tender_line(osv.osv):
             tender_id = line.tender_id.id
             wiz_id = False
             last_line = False
+            exp_sol_ids = None
 
             if line.tender_id.sale_order_id:
                 exp_sol_ids = exp_sol_obj.search(cr, uid, [
@@ -1128,7 +1143,9 @@ class tender_line(osv.osv):
                         'context': context}
 
         for line_id in ids:
-            wiz_id = wiz_obj.create(cr, uid, {'tender_line_id': line_id}, context=context)
+            wiz_id = wiz_obj.create(cr, uid, {
+                'tender_line_id': line_id,
+            }, context=context)
 
         if wiz_id:
             return wiz_obj.just_cancel(cr, uid, wiz_id, context=context)
@@ -1140,7 +1157,7 @@ class tender_line(osv.osv):
                 'res_id': tender_id,
                 'target': 'crush',
                 'context': context}
-    
+
 tender_line()
 
 
@@ -1918,6 +1935,7 @@ class tender_cancel_wizard(osv.osv_memory):
     _columns = {
         'tender_id': fields.many2one('tender', string='Tender', required=True),
         'not_draft': fields.boolean(string='Tender not draft'),
+        'no_need': fields.boolean(string='No need'),
     }
 
     def just_cancel(self, cr, uid, ids, context=None):

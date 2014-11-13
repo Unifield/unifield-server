@@ -18,10 +18,10 @@
 #
 ##############################################################################
 
+from mx import DateTime
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta, relativedelta
 import logging
-from mx import DateTime
 import operator
 import time
 
@@ -33,7 +33,6 @@ import tools
 from tools.translate import _
 
 import decimal_precision as dp
-from mx.DateTime import *
 
 
 # warning messages
@@ -1486,7 +1485,8 @@ class stock_inventory_line(osv.osv):
         #uom = uom or product_obj.uom_id.id
         # UF-2427: Add one little minute to make sure that all inventories created in the same minute will be included
         if to_date:
-            to_date = (DateTimeFrom( to_date ) + RelativeDateTime(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')
+            # UFTP-321: Adapt the call to use full namespace
+            to_date = (DateTime.DateTimeFrom(to_date ) + DateTime.RelativeDateTime(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')
         stock_context = {'uom': product_uom, 'to_date': to_date,
                          'prodlot_id':prod_lot_id,}
         if location_id:

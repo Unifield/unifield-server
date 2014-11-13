@@ -187,9 +187,9 @@ class shipment(osv.osv):
             values['backshipment_id'] = backshipment_id
 
             pack_fam_ids = [x.id for x in shipment.pack_family_memory_ids]
-            for memory_family in self.pool.get('pack.family.memory').read(cr, uid, pack_fam_ids, ['state', 'num_of_packs', 'total_weight', 'total_volume', 'total_amount', 'currency_id']):
+            for memory_family in self.pool.get('pack.family.memory').read(cr, uid, pack_fam_ids, ['not_shipped', 'state', 'num_of_packs', 'total_weight', 'total_volume', 'total_amount', 'currency_id']):
                 # taken only into account if not done (done means returned packs)
-                if shipment.state in ('delivered', 'done') or memory_family['state'] not in ('done',) :
+                if not memory_family['not_shipped'] and (shipment.state in ('delivered', 'done') or memory_family['state'] not in ('done',)):
                     # num of packs
                     num_of_packs = memory_family['num_of_packs']
                     values['num_of_packs'] += int(num_of_packs)
@@ -835,6 +835,7 @@ class shipment(osv.osv):
                         'product_qty': new_qty,
                         'location_id': move.picking_id.warehouse_id.lot_distribution_id.id,
                         'location_dest_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
+                        'not_shipped': True,
                         'state': 'done',
                     }
 
@@ -854,6 +855,7 @@ class shipment(osv.osv):
                         'location_dest_id': move.picking_id.warehouse_id.lot_distribution_id.id,
                         'picking_id': draft_packing.id,
                         'state': 'assigned',
+                        'not_shipped': False,
                     })
 
                     context['non_stock_noupdate'] = True
@@ -4103,6 +4105,7 @@ class stock_move(osv.osv):
                 'location_output_id': fields.many2one('stock.location', string='Output location'),
                 'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
                 'pt_created': fields.boolean(string='PT created'),
+                'not_shipped': fields.boolean(string='Not shipped'),
                 }
 
     def copy(self, cr, uid, copy_id, values=None, context=None):
@@ -4151,18 +4154,21 @@ class stock_move(osv.osv):
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
 
-            if pick_type == 'in' and move.purchase_line_id and not pick_cancel:
+            if pick_type == 'in' and move.purchase_line_id:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                    if sol.order_id.procurement_request:
+                        continue
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
                     sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, context=context)
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
-                if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
-                    sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
-                sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
+                if diff_qty:
+                    if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
+                        sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
+                    sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
 
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 
@@ -4241,7 +4247,8 @@ class pack_family_memory(osv.osv):
                 p.description_ppl as description_ppl,
                 '_name'::varchar(5) as name,
                 min(pl.currency_id) as currency_id,
-                sum(sol.price_unit * m.product_qty) as total_amount
+                sum(sol.price_unit * m.product_qty) as total_amount,
+                bool_and(m.not_shipped) as not_shipped
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id
@@ -4314,6 +4321,7 @@ class pack_family_memory(osv.osv):
         'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
         'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
         'description_ppl': fields.char('Description', size=256),
+        'not_shipped': fields.boolean(string='Not shipped'),
     }
 
     _defaults = {

@@ -76,10 +76,10 @@ class enter_reason(osv.osv_memory):
                     pol_qty[move.purchase_line_id.id] += move.product_qty
 
             # if full cancel (no resource), we updated corresponding out and correct po state
-            if cancel_type == 'update_out':
-                picking_obj.cancel_and_update_out(cr, uid, [obj.id], context=context)
-            else:
+            picking_obj.cancel_and_update_out(cr, uid, [obj.id], context=context)
+            if cancel_type != 'update_out':
                 context['pol_qty'] = pol_qty
+                context['from_in_cancel'] = True
                 pol_obj.write(cr, uid, pol_ids, {'has_to_be_resourced': True}, context=context)
                 pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
             

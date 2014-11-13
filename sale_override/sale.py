@@ -107,7 +107,7 @@ class sale_order_sourcing_progress(osv.osv):
                         'line_completed': _('Error'),
                         'split_order': _('Error'),
                         'check_data': _('Error'),
-                        'prepare_picking': _('Error − Please try again to confirm the %s by clicking on \'Confirmed\' button on form view') % (sp.order_id.procurement_request and _('IR') or _('FO')),
+                        'prepare_picking': _('An error occurred during the sourcing '), #UFTP-367 Use a general error message
                     }
                 else:
                     res[sp.id] = {
@@ -432,7 +432,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             # state_hidden_sale_order
             result[obj.id]['state_hidden_sale_order'] = obj.state
-            if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order':
+            if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order' and not obj.procurement_request:
                 result[obj.id]['state_hidden_sale_order'] = 'split_so'
 
         return result
@@ -1277,17 +1277,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Check type of parameter
         self._check_browse_param(line, '_get_new_picking')
 
-        res = line.product_id and line.product_id.type in ['product', 'consu', 'service']
+        res = line.product_id and line.product_id.type in ['product', 'consu']
 
         if line.order_id.manually_corrected:
             return False
 
         if line.order_id.procurement_request and line.type == 'make_to_order':
             # Create OUT lines for MTO lines with an external CU as requestor location
-            if line.order_id.location_requestor_id.usage != 'customer':
-                res = False
-            elif line.order_id.location_requestor_id.usage == 'customer':
+            if line.order_id.location_requestor_id.usage == 'customer' and\
+               (not line.product_id or line.product_id.type == 'product'):
                 res = True
+            else:
+                res = False
 
         return res
 
@@ -1816,12 +1817,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'is_rfq': True,
                 'is_rfq_done': True,
                 'po_cft': 'rfq',
+                'rfq_id': line.created_by_rfq and line.created_by_rfq.id,
             })
 
         if line.created_by_tender:
             proc_data.update({
                 'is_tender_done': True,
                 'po_cft': 'cft',
+                'tender_line_id': line.created_by_tender_line and line.created_by_tender_line.id or False,
+                'tender_id': line.created_by_tender and line.created_by_tender.id or False,
             })
 
         if line.product_id:
@@ -2070,7 +2074,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             remain_lines = line_obj.search(cr, uid, [
                 ('order_id', '=', fo.id),
                 ('id', 'not in', line_ids),
-                ('state', '!=', 'cancel'),
+                ('state', 'not in', ['cancel', 'done']),
             ], context=context)
             if remain_lines:
                 res[fo.id] = False
@@ -2115,6 +2119,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if context.get('view_id'):
             del context['view_id']
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'sale.order.cancelation.wizard',
@@ -2132,6 +2137,11 @@ sale_order()
 class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
+
+    _sql_constraints = [
+        ('product_uom_qty', 'CHECK (product_uom_qty > 0)',
+         'You can not have an order line with a negative or zero quantity'),
+    ]
 
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -2286,9 +2296,9 @@ class sale_order_line(osv.osv):
             elif line.order_id.procurement_request:
                 # UFTP-82: flagging SO is an IR and its PO is cancelled
                 self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
-#            if proc:
-#                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
-#                proc_obj.action_cancel(cr, uid, [proc])
+            if proc and context.get('cancel_type'):
+                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
+                proc_obj.action_cancel(cr, uid, [proc])
         else:
             minus_qty = line.product_uom_qty - qty_diff
             proc = line.procurement_id and line.procurement_id.id
@@ -2299,7 +2309,7 @@ class sale_order_line(osv.osv):
                 proc_obj.write(cr, uid, [proc], {'product_qty': minus_qty}, context=context)
 
         so_to_cancel_id = False
-        if so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
+        if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
             so_to_cancel_id = order
         else:
             wf_service.trg_write(uid, 'sale.order', order, cr)
@@ -2800,6 +2810,9 @@ class sale_order_cancelation_wizard(osv.osv_memory):
 
         if context is None:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
 

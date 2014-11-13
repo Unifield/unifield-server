@@ -47,13 +47,42 @@ class one2many_register(fields.one2many):
         st_obj = obj.pool.get('account.bank.statement.line')
         st_ids = st_obj.search(cr, uid, [('statement_id', 'in', ids)])
         if st_ids:
-            for st in  st_obj.read(cr, uid, st_ids, ['statement_id', 'reconciled'], context=context):
-                if display_type[st['statement_id'][0]] == 'reconciled' and st['reconciled']:
-                    res[st['statement_id'][0]].append(st['id'])
-                elif display_type[st['statement_id'][0]] == 'not_reconciled' and st['reconciled'] is False:
-                    res[st['statement_id'][0]].append(st['id'])
-                elif display_type[st['statement_id'][0]] == 'all':
-                    res[st['statement_id'][0]].append(st['id'])
+            for st in st_obj.read(cr, uid, st_ids, ['statement_id', 'reconciled'], context=context):
+                res[st['statement_id'][0]].append(st['id'])
+
+            if display_type[st['statement_id'][0]] == 'not_reconciled':
+                for statement_id in ids:
+                    if not res[statement_id]:
+                        continue
+                    # UFTP-348: We take all register lines IDs and we delete those that are hard-posted, imported in another register and hard posted
+                    # List of hard posted linked register lines
+                    # We omit to search on bank registers as the import cheque wizard is only available on bank register 
+                    #+ and this is the only wizard that add "from_import_cheque_id". So if a register line have
+                    #+ this field filled in, so it comes from a cheque import.
+                    # Note that account_bank_statement_line_move_rel invert columns. move_id = register line and
+                    #+ statement_id = journal entry (OpenERP bug)
+                    sql = """
+                        SELECT move_rel.move_id
+                        FROM account_bank_statement_line_move_rel as move_rel
+                        WHERE move_rel.statement_id IN (
+                            SELECT move_id
+                            FROM account_move_line
+                            WHERE id IN (
+                                SELECT absl.from_import_cheque_id
+                                FROM account_bank_statement_line as absl, account_bank_statement_line_move_rel as abslmr, account_move as m
+                                WHERE absl.from_import_cheque_id is not NULL
+                                AND abslmr.move_id = absl.id
+                                AND abslmr.statement_id = m.id
+                                AND m.state = 'posted'
+                            )
+                        )
+                        AND move_rel.move_id IN %s
+                    """
+                    cr.execute(sql, (tuple(res[statement_id]),))
+                    tmp_res = cr.fetchall()
+                    excluded_line_ids = [x and x[0] for x in tmp_res]
+                    current_ids = res[statement_id]
+                    res[statement_id] = [stl_id for stl_id in current_ids if stl_id not in excluded_line_ids]
         return res
 
 class account_cheque_register(osv.osv):

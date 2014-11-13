@@ -581,6 +581,13 @@ class stock_picking(osv.osv):
         # Variables
         wf_service = netsvc.LocalService("workflow")
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context = {}
+
+        context['cancel_type'] = 'update_out'
         res = super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
 
         # Re-source the sale.order.line
@@ -593,6 +600,25 @@ class stock_picking(osv.osv):
             for move in pick.move_lines:
                 if move.sale_line_id and move.product_qty > 0.00:
                     fo_ids.add(move.sale_line_id.order_id.id)
+
+            # If the IN is linked to a PO and has a backorder not closed, change the subflow
+            # of the PO to the backorder
+            if pick.type == 'in' and pick.purchase_id:
+                po_id = pick.purchase_id.id
+                bo_id = False
+                if pick.backorder_id and pick.backorder_id.state not in ('done', 'cancel'):
+                    bo_id = pick.backorder_id.id
+                else:
+                    picking_ids = self.search(cr, uid, [
+                        ('purchase_id', '=', po_id),
+                        ('id', '!=', pick.id),
+                        ('state', 'not in', ['done', 'cancel']),
+                    ], limit=1, context=context)
+                    if picking_ids:
+                        bo_id = picking_ids[0]
+
+                if bo_id:
+                    netsvc.LocalService("workflow").trg_change_subflow(uid, 'purchase.order', [po_id], 'stock.picking', [pick.id], bo_id, cr)
 
         # Run the signal 'ship_corrected' to the FO
         for fo in fo_ids:

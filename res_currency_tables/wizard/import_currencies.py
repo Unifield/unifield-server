@@ -27,18 +27,19 @@ import base64
 import StringIO
 import csv
 
+
 class import_currencies(osv.osv_memory):
     _name = "import.currencies"
-    
+
     _columns = {
         'rate_date': fields.date('Date for the uploaded rates', required=True),
         'import_file': fields.binary("CSV File", required=True),
     }
-    
+
     _defaults = {
         'rate_date': lambda *a: datetime.datetime.today().strftime('%Y-%m-%d')
     }
-    
+
     def _check_periods(self, cr, uid, rate_date, context=None):
         period_obj = self.pool.get('account.period')
         period_ids = period_obj.search(cr, uid, [('date_start','<=',rate_date),('date_stop','>=',rate_date)])
@@ -97,29 +98,44 @@ class import_currencies(osv.osv_memory):
         currency_list = []
         date = None
         for wizard in self.browse(cr, uid, ids, context=context):
+            if not wizard.import_file:
+                raise osv.except_osv(_('Warning'), _('Please browse a csv file.'))
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
             if not import_data:
                 raise osv.except_osv(_('Warning'), _('File is empty.'))
-        
+
             self._check_periods(cr, uid, wizard.rate_date, context=context)
             date = wizard.rate_date
+            idx = 0
             for line in import_data:
-                if len(line) > 0 and len(line[0]) == 3:
-                    # update context with active_test = False; otherwise, non-set currencies
-                    context.update({'active_test': False})
-                    line_res, line_problem, line_problem_description = self.check_currency(cr, uid, line, wizard.rate_date, context)
-                    currency_ids = currency_obj.search(cr, uid, [('name', '=', line[0])], context=context)
-                    if line_res:
-                        # No rate for this date: create it
-                        currency_rate_obj.create(cr, uid, {
-                            'name': wizard.rate_date,
-                            'rate': float(line[1]),
-                            'currency_id': currency_ids[0]
-                        })
-                    if not line_res:
-                        currency_list.append([line, "%s (%s)" % (line[0], line_problem_description)])
+                if idx == 0:
+                    if line[0] != 'Currency Code' and line[0] != 'Rate':
+                        raise osv.except_osv(_('Warning'), _('File header is not in the correct format and cannot be imported.'))
+                    else:
+                        idx = idx + 1
+                        continue
+                if len(line) != 2:
+                    raise osv.except_osv(_('Warning'), _('File is not in the correct format and cannot be imported.'))
+                else:
+                    if len(line[0]) > 0 and len(line[0]) == 3:
+                        # update context with active_test = False; otherwise, non-set currencies
+                        context.update({'active_test': False})
+                        line_res, line_problem, line_problem_description = self.check_currency(cr, uid, line, wizard.rate_date, context)
+                        currency_ids = currency_obj.search(cr, uid, [('name', '=', line[0])], context=context)
+                        if line_res:
+                            # No rate for this date: create it
+                            currency_rate_obj.create(cr, uid, {
+                                'name': wizard.rate_date,
+                                'rate': float(line[1]),
+                                'currency_id': currency_ids[0]
+                            })
+                        if not line_res:
+                            currency_list.append([line, "%s (%s)" % (line[0], line_problem_description)])
+                    else:
+                        raise osv.except_osv(_('Warning'), _('File is not in the correct format and cannot be imported.'))
+
 
         # Prepare some info
         model = 'confirm.import.currencies'
@@ -147,6 +163,6 @@ class import_currencies(osv.osv_memory):
             res.update(complementary_data)
         # return right wizard
         return res
-    
+
 import_currencies()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

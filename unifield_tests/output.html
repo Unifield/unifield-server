@@ -189,9 +189,9 @@ function showOutput(id, name) {
 
 <div class='heading'>
 <h1>Example tests</h1>
-<p class='attribute'><strong>Start Time:</strong> 2014-10-10 09:53:34</p>
-<p class='attribute'><strong>Duration:</strong> 0:01:56.900900</p>
-<p class='attribute'><strong>Status:</strong> Pass 8</p>
+<p class='attribute'><strong>Start Time:</strong> 2014-10-15 10:51:09</p>
+<p class='attribute'><strong>Duration:</strong> 0:05:32.134378</p>
+<p class='attribute'><strong>Status:</strong> Pass 34 Failure 10 Error 2</p>
 
 <p class='description'>A suite of tests that permit to test PyUnit class</p>
 </div>
@@ -269,49 +269,603 @@ function showOutput(id, name) {
 </tr>
 
 <tr class='passClass'>
-    <td>test_0201_resourcing_fo.ResourcingFOTest</td>
-    <td>2</td>
-    <td>2</td>
+    <td>test_uf_2490_one_po.UF2490FOOnePO</td>
+    <td>8</td>
+    <td>8</td>
     <td>0</td>
     <td>0</td>
-    <td><a href="javascript:showClassDetail('c4',2)">Detail</a></td>
+    <td><a href="javascript:showClassDetail('c4',8)">Detail</a></td>
 </tr>
 
 <tr id='pt4.1' class='hiddenRow'>
-    <td class='none'><div class='testcase'>test_uf_2505</div></td>
+    <td class='none'><div class='testcase'>test_cancel_empty_po_from_scratch</div></td>
     <td colspan='5' align='center'>pass</td>
 </tr>
 
 <tr id='pt4.2' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_line_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt4.3' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_line_validated_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt4.4' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_non_empty_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt4.5' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_validated_po_from_scracth</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt4.6' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_create_order_cancel_line</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt4.7' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_create_order_cancel_po_close_order</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt4.8' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_create_order_cancel_po_leave_order</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr class='failClass'>
+    <td>test_uf_2490_one_po.UF2490IROnePO</td>
+    <td>8</td>
+    <td>5</td>
+    <td>3</td>
+    <td>0</td>
+    <td><a href="javascript:showClassDetail('c5',8)">Detail</a></td>
+</tr>
+
+<tr id='pt5.1' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_empty_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt5.2' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_line_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt5.3' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_line_validated_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt5.4' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_non_empty_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt5.5' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_validated_po_from_scracth</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='ft5.6' class='none'>
+    <td class='failCase'><div class='testcase'>test_create_order_cancel_line</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft5.6')" >
+        fail</a>
+
+    <div id='div_ft5.6' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft5.6').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft5.6: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_po.py", line 374, in test_create_order_cancel_line
+    "The wizard to choose what should be done on the FO/IR is not displayed",
+AssertionError: The wizard to choose what should be done on the FO/IR is not displayed
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr id='ft5.7' class='none'>
+    <td class='failCase'><div class='testcase'>test_create_order_cancel_po_close_order</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft5.7')" >
+        fail</a>
+
+    <div id='div_ft5.7' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft5.7').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft5.7: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_po.py", line 327, in test_create_order_cancel_po_close_order
+    w_res = self.create_order_cancel_po()
+  File "tests/test_uf_2490_one_po.py", line 147, in create_order_cancel_po
+    "The wizard to choose what must be done on the FO/IR is not well displayed."
+AssertionError: The wizard to choose what must be done on the FO/IR is not well displayed.
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr id='ft5.8' class='none'>
+    <td class='failCase'><div class='testcase'>test_create_order_cancel_po_leave_order</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft5.8')" >
+        fail</a>
+
+    <div id='div_ft5.8' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft5.8').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft5.8: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_po.py", line 295, in test_create_order_cancel_po_leave_order
+    w_res = self.create_order_cancel_po()
+  File "tests/test_uf_2490_one_po.py", line 147, in create_order_cancel_po
+    "The wizard to choose what must be done on the FO/IR is not well displayed."
+AssertionError: The wizard to choose what must be done on the FO/IR is not well displayed.
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr class='passClass'>
+    <td>test_uf_2490_one_rfq.UF2490FOOneRfQ</td>
+    <td>8</td>
+    <td>8</td>
+    <td>0</td>
+    <td>0</td>
+    <td><a href="javascript:showClassDetail('c6',8)">Detail</a></td>
+</tr>
+
+<tr id='pt6.1' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_empty_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt6.2' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_line_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt6.3' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_line_validated_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt6.4' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_non_empty_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt6.5' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_validated_po_from_scracth</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt6.6' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_create_order_cancel_line</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt6.7' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_create_order_cancel_po_close_order</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt6.8' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_create_order_cancel_po_leave_order</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr class='failClass'>
+    <td>test_uf_2490_one_rfq.UF2490IROneRfQ</td>
+    <td>8</td>
+    <td>5</td>
+    <td>3</td>
+    <td>0</td>
+    <td><a href="javascript:showClassDetail('c7',8)">Detail</a></td>
+</tr>
+
+<tr id='pt7.1' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_empty_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt7.2' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_line_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt7.3' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_line_validated_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt7.4' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_non_empty_po_from_scratch</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='pt7.5' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_cancel_validated_po_from_scracth</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr id='ft7.6' class='none'>
+    <td class='failCase'><div class='testcase'>test_create_order_cancel_line</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft7.6')" >
+        fail</a>
+
+    <div id='div_ft7.6' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft7.6').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft7.6: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_po.py", line 374, in test_create_order_cancel_line
+    "The wizard to choose what should be done on the FO/IR is not displayed",
+AssertionError: The wizard to choose what should be done on the FO/IR is not displayed
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr id='ft7.7' class='none'>
+    <td class='failCase'><div class='testcase'>test_create_order_cancel_po_close_order</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft7.7')" >
+        fail</a>
+
+    <div id='div_ft7.7' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft7.7').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft7.7: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_po.py", line 327, in test_create_order_cancel_po_close_order
+    w_res = self.create_order_cancel_po()
+  File "tests/test_uf_2490_one_po.py", line 147, in create_order_cancel_po
+    "The wizard to choose what must be done on the FO/IR is not well displayed."
+AssertionError: The wizard to choose what must be done on the FO/IR is not well displayed.
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr id='ft7.8' class='none'>
+    <td class='failCase'><div class='testcase'>test_create_order_cancel_po_leave_order</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft7.8')" >
+        fail</a>
+
+    <div id='div_ft7.8' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft7.8').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft7.8: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_po.py", line 295, in test_create_order_cancel_po_leave_order
+    w_res = self.create_order_cancel_po()
+  File "tests/test_uf_2490_one_po.py", line 147, in create_order_cancel_po
+    "The wizard to choose what must be done on the FO/IR is not well displayed."
+AssertionError: The wizard to choose what must be done on the FO/IR is not well displayed.
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr class='errorClass'>
+    <td>test_uf_2490_one_tender.UF2490IROneTender</td>
+    <td>3</td>
+    <td>0</td>
+    <td>2</td>
+    <td>1</td>
+    <td><a href="javascript:showClassDetail('c8',3)">Detail</a></td>
+</tr>
+
+<tr id='ft8.1' class='none'>
+    <td class='failCase'><div class='testcase'>test_cancel_empty_tender_from_scratch</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft8.1')" >
+        fail</a>
+
+    <div id='div_ft8.1' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft8.1').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft8.1: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_tender.py", line 50, in test_cancel_empty_tender_from_scratch
+    "A wizard that asks user to re-source need is displayed and shouldn't",
+AssertionError: A wizard that asks user to re-source need is displayed and shouldn't
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr id='ft8.2' class='none'>
+    <td class='failCase'><div class='testcase'>test_cancel_tender_from_scratch</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft8.2')" >
+        fail</a>
+
+    <div id='div_ft8.2' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft8.2').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft8.2: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_tender.py", line 73, in test_cancel_tender_from_scratch
+    "A wizard that asks user to re-source need is displayed and shouldn't",
+AssertionError: A wizard that asks user to re-source need is displayed and shouldn't
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr id='ft8.3' class='none'>
+    <td class='errorCase'><div class='testcase'>test_cancel_tender_line_from_scratch</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft8.3')" >
+        error</a>
+
+    <div id='div_ft8.3' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft8.3').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft8.3: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_tender.py", line 92, in test_cancel_tender_line_from_scratch
+    res = self.tender_line_obj.ask_unlink(self.tender_line_id)
+  File "/home/qt/.virtualenvs/unifield/local/lib/python2.7/site-packages/oerplib/service/osv/osv.py", line 236, in rpc_method
+    self._browse_class.__osv__['name'], method, *args)
+  File "/home/qt/.virtualenvs/unifield/local/lib/python2.7/site-packages/oerplib/oerp.py", line 250, in execute
+    raise error.RPCError(exc.message, exc.oerp_traceback)
+RPCError: local variable 'exp_sol_ids' referenced before assignment
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr class='errorClass'>
+    <td>test_uf_2490_one_tender.UF2490FOOneTender</td>
+    <td>3</td>
+    <td>0</td>
+    <td>2</td>
+    <td>1</td>
+    <td><a href="javascript:showClassDetail('c9',3)">Detail</a></td>
+</tr>
+
+<tr id='ft9.1' class='none'>
+    <td class='failCase'><div class='testcase'>test_cancel_empty_tender_from_scratch</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft9.1')" >
+        fail</a>
+
+    <div id='div_ft9.1' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft9.1').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft9.1: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_tender.py", line 50, in test_cancel_empty_tender_from_scratch
+    "A wizard that asks user to re-source need is displayed and shouldn't",
+AssertionError: A wizard that asks user to re-source need is displayed and shouldn't
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr id='ft9.2' class='none'>
+    <td class='failCase'><div class='testcase'>test_cancel_tender_from_scratch</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft9.2')" >
+        fail</a>
+
+    <div id='div_ft9.2' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft9.2').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft9.2: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_tender.py", line 73, in test_cancel_tender_from_scratch
+    "A wizard that asks user to re-source need is displayed and shouldn't",
+AssertionError: A wizard that asks user to re-source need is displayed and shouldn't
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr id='ft9.3' class='none'>
+    <td class='errorCase'><div class='testcase'>test_cancel_tender_line_from_scratch</div></td>
+    <td colspan='5' align='center'>
+
+    <!--css div popup start-->
+    <a class="popup_link" onfocus='this.blur();' href="javascript:showTestDetail('div_ft9.3')" >
+        error</a>
+
+    <div id='div_ft9.3' class="popup_window">
+        <div style='text-align: right; color:red;cursor:pointer'>
+        <a onfocus='this.blur();' onclick="document.getElementById('div_ft9.3').style.display = 'none' " >
+           [x]</a>
+        </div>
+        <pre>
+        
+ft9.3: Traceback (most recent call last):
+  File "tests/test_uf_2490_one_tender.py", line 92, in test_cancel_tender_line_from_scratch
+    res = self.tender_line_obj.ask_unlink(self.tender_line_id)
+  File "/home/qt/.virtualenvs/unifield/local/lib/python2.7/site-packages/oerplib/service/osv/osv.py", line 236, in rpc_method
+    self._browse_class.__osv__['name'], method, *args)
+  File "/home/qt/.virtualenvs/unifield/local/lib/python2.7/site-packages/oerplib/oerp.py", line 250, in execute
+    raise error.RPCError(exc.message, exc.oerp_traceback)
+RPCError: local variable 'exp_sol_ids' referenced before assignment
+
+
+        </pre>
+    </div>
+    <!--css div popup end-->
+
+    </td>
+</tr>
+
+<tr class='passClass'>
+    <td>test_uf_2505.UF2505FOResourcingTest</td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td><a href="javascript:showClassDetail('c10',1)">Detail</a></td>
+</tr>
+
+<tr id='pt10.1' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_uf_2505</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr class='passClass'>
+    <td>test_uf_2505.UF2505IRResourcingTest</td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td><a href="javascript:showClassDetail('c11',1)">Detail</a></td>
+</tr>
+
+<tr id='pt11.1' class='hiddenRow'>
+    <td class='none'><div class='testcase'>test_uf_2505</div></td>
+    <td colspan='5' align='center'>pass</td>
+</tr>
+
+<tr class='passClass'>
+    <td>test_uf_2507.UF2507FOResourcingTest</td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td><a href="javascript:showClassDetail('c12',1)">Detail</a></td>
+</tr>
+
+<tr id='pt12.1' class='hiddenRow'>
     <td class='none'><div class='testcase'>test_uf_2507</div></td>
     <td colspan='5' align='center'>pass</td>
 </tr>
 
 <tr class='passClass'>
-    <td>test_0202_resourcing_ir.ResourcingIRTest</td>
-    <td>2</td>
-    <td>2</td>
+    <td>test_uf_2507.UF2507IRResourcingTest</td>
+    <td>1</td>
+    <td>1</td>
     <td>0</td>
     <td>0</td>
-    <td><a href="javascript:showClassDetail('c5',2)">Detail</a></td>
+    <td><a href="javascript:showClassDetail('c13',1)">Detail</a></td>
 </tr>
 
-<tr id='pt5.1' class='hiddenRow'>
-    <td class='none'><div class='testcase'>test_uf_2505</div></td>
-    <td colspan='5' align='center'>pass</td>
-</tr>
-
-<tr id='pt5.2' class='hiddenRow'>
+<tr id='pt13.1' class='hiddenRow'>
     <td class='none'><div class='testcase'>test_uf_2507</div></td>
     <td colspan='5' align='center'>pass</td>
 </tr>
 
 <tr id='total_row'>
     <td>Total</td>
-    <td>8</td>
-    <td>8</td>
-    <td>0</td>
-    <td>0</td>
+    <td>46</td>
+    <td>34</td>
+    <td>10</td>
+    <td>2</td>
     <td>&nbsp;</td>
 </tr>
 </table>

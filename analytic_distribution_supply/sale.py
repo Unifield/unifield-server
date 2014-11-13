@@ -112,6 +112,15 @@ class sale_order(osv.osv):
         if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
             default['analytic_distribution_id'] = False
         new_data = super(sale_order, self).copy_data(cr, uid, s_id, default=default, context=context)
+
+        # UFTP-322: After the copy_data above, if successfully, the name should be exactly the same as of the original document, so it must be increased
+        # in the next statements. ::::::: One of the case that failed the copy_data call above is due to user right  
+        seq_obj = self.pool.get('ir.sequence')
+        order = self.browse(cr, uid, s_id)
+        if new_data and not 'name' in new_data or new_data.get('name', False) == order.name:
+            name = (order.procurement_request or context.get('procurement_request', False)) and seq_obj.get(cr, uid, 'procurement.request') or seq_obj.get(cr, uid, 'sale.order')
+            new_data.update({'name': name})
+
         if new_data and new_data.get('analytic_distribution_id'):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data
@@ -150,6 +159,14 @@ class sale_order(osv.osv):
                 continue
 
             for line in so.order_line:
+                """
+                UFTP-336: Do not check AD on FO lines if the lines are
+                          created on a tender or a RfQ.
+                          The AD must be added on the PO line and update the
+                          AD at FO line at PO confirmation.
+                """
+                if line.created_by_tender or line.created_by_rfq:
+                    continue
                 # Search intermission
                 intermission_cc = data_obj.get_object_reference(
                     cr,

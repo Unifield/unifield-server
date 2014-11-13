@@ -313,11 +313,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'document_date': orig_document_date,
                 })
             # UTP-1118: Fix problem of entry_sequence that is not the right one regarding the journal
-            for ana_line in self.pool.get('account.analytic.line').browse(cr, uid, to_override_ids, context=context):
-                prefix = ana_line.instance_id.move_prefix
-                seqnum = ana_line.entry_sequence.split('-')[2]
-                entry_seq = "%s-%s-%s" % (prefix, ana_line.journal_id.code, seqnum)
-                cr.execute('UPDATE account_analytic_line SET entry_sequence = %s WHERE id = %s', (entry_seq, ana_line.id))
+
+            # UFTP-373: The block below is commented out, as there is no reason to replace the Seq in here
+#             for ana_line in self.pool.get('account.analytic.line').browse(cr, uid, to_override_ids, context=context):
+#                 prefix = ana_line.instance_id.move_prefix
+#                 seqnum = ana_line.entry_sequence.split('-')[2]
+#                 entry_seq = "%s-%s-%s" % (prefix, ana_line.journal_id.code, seqnum)
+#                 cr.execute('UPDATE account_analytic_line SET entry_sequence = %s WHERE id = %s', (entry_seq, ana_line.id))
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
                     'analytic_id': line.analytic_id.id,

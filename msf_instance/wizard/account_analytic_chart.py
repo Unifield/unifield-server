@@ -30,17 +30,17 @@ class account_analytic_chart(osv.osv_memory):
         'instance_ids': fields.many2many('msf.instance', 'account_chart_instance_rel', 'wizard_id', 'instance_id', 'Instance'),
     }
 
-def account_chart_open_window(self, cr, uid, ids, context=None):
-    """
-    Add instance_ids information to only display analytic journal items linked to the given instance
-    """
-    result = super(account_analytic_chart, self).account_chart_open_window(cr, uid, ids, context=context)
-    data = self.read(cr, uid, ids, ['instance_ids'], context=context)[0]
-    if data['instance_ids']:
-        context = eval(result['context'])
-        context.update({'instance_ids': data['instance_ids']})
-        result['context'] = unicode(context)
-    return result
+    def analytic_account_chart_open_window(self, cr, uid, ids, context=None):
+        """
+        Add instance_ids information to only display analytic journal items linked to the given instance
+        """
+        result = super(account_analytic_chart, self).analytic_account_chart_open_window(cr, uid, ids, context=context)
+        data = self.read(cr, uid, ids, ['instance_ids'], context=context)[0]
+        if data['instance_ids']:
+            context = eval(result['context'])
+            context.update({'instance_ids': data['instance_ids']})
+            result['context'] = unicode(context)
+        return result
 
 account_analytic_chart()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

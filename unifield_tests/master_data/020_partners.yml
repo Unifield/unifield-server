@@ -53,6 +53,8 @@
     supplier: 1
     customer: 0
     partner_type: 'external'
+    property_account_receivable: account_account_receivable_supplier0
+    property_account_payable: account_account_payable_supplier0
 -
   Create an address for external supplier 1
 -
@@ -67,6 +69,8 @@
     supplier: 1
     customer: 0
     partner_type: 'external'
+    property_account_receivable: account_account_receivable_supplier0
+    property_account_payable: account_account_payable_supplier0
 -
   Create an address for external supplier 2
 -
@@ -81,6 +85,8 @@
     supplier: 1
     customer: 0
     partner_type: 'external'
+    property_account_receivable: account_account_receivable_supplier0
+    property_account_payable: account_account_payable_supplier0
 -
   Create an address for external supplier 3
 -
@@ -97,6 +103,8 @@
     customer: 1
     supplier: 0
     partner_type: 'external'
+    property_account_receivable: account_account_receivable_supplier0
+    property_account_payable: account_account_payable_supplier0
 -
   Create an address for external customer 1
 -
@@ -111,6 +119,8 @@
     customer: 1
     supplier: 0
     partner_type: 'external'
+    property_account_receivable: account_account_receivable_supplier0
+    property_account_payable: account_account_payable_supplier0
 -
   Create an address for external customer 2
 -
@@ -125,6 +135,8 @@
     customer: 1
     supplier: 0
     partner_type: 'external'
+    property_account_receivable: account_account_receivable_supplier0
+    property_account_payable: account_account_payable_supplier0
 -
   Create an address for external customer 3
 -

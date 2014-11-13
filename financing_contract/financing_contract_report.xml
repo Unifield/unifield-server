@@ -48,7 +48,7 @@
         string="Financing interactive"
         model="financing.contract.contract"
         name="financing.interactive.2"
-        target_filename="Interactive Report_%(instance_code)s_%(year)s%(month)s%(day)s"
+        target_filename="Financing Contract Budget vs Actuals_%(instance_code)s_%(year)s%(month)s%(day)s"
         file="financing_contract/report/financing_interactive_xls.mako"
         report_type="webkit"
         header="False"

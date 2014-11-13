@@ -67,6 +67,8 @@ class account_move_line(osv.osv):
         Only permit to import invoice regarding some criteria (Cf. dom1 variable content).
         Add debit note default account filter for search (if this account have been selected)
         """
+        if context is None:
+            context = {}
         if not args:
             return []
         dom1 = [
@@ -80,6 +82,17 @@ class account_move_line(osv.osv):
             ('corrected_line_id', '=', False),  # is a correction line if has a corrected line
             ('reversal_line_id', '=', False),  # is a reversal line if a reversed line
         ]
+
+        # UFTP-358: do not allow to import an entry from November in an October
+        # entry (from a future period)
+        st_period_id = context.get('st_period_id', False)  # register period id
+        if st_period_id:
+            period_r = self.pool.get('account.period').read(cr, uid,
+                [st_period_id], ['date_stop'], context=context)[0]
+            if period_r:
+                # exclude future periods
+                dom1.append(('date', '<=', period_r['date_stop']))
+
         # verify debit note default account configuration
         default_account = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.import_invoice_default_account
         if default_account:

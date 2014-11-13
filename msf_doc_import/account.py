@@ -97,6 +97,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     'date': w.date,
                     'period_id': p_id,
                     'status': 'manu',
+                    'imported': True,
                 }
                 move_id = self.pool.get('account.move').create(cr, uid, move_vals, context)
                 for l_num, l in enumerate(available_currencies[(c_id, p_id)]):

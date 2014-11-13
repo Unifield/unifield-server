@@ -73,6 +73,11 @@ class account_partner_balance_tree(osv.osv):
                 where += " AND "
             where += "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
 
+        # UFTP-312: take tax exclusion in account if user asked for it
+        TAX_REQUEST = ' '
+        if data['form'].get('tax', False):
+            TAX_REQUEST = "AND at.code != 'tax'"
+
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
@@ -83,9 +88,11 @@ class account_partner_balance_tree(osv.osv):
         " FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id)" \
         " JOIN account_account ac ON (l.account_id = ac.id)" \
         " JOIN account_move am ON (am.id = l.move_id)" \
+        " JOIN account_account_type at ON (ac.user_type = at.id)" \
         " WHERE ac.type IN " + account_type + "" \
         " AND am.state IN " + move_state + "" \
         " AND " + where + "" \
+        " " + TAX_REQUEST + " " \
         " GROUP BY ac.type,p.id,p.ref,p.name" \
         " ORDER BY ac.type,p.name"
         cr.execute(query)
@@ -106,7 +113,8 @@ class account_partner_balance_tree(osv.osv):
 
         query = "SELECT l.id FROM account_move_line l" \
         " JOIN account_account ac ON (l.account_id = ac.id)" \
-        " JOIN account_move am ON (am.id = l.move_id) WHERE "
+        " JOIN account_move am ON (am.id = l.move_id)" \
+        " JOIN account_account_type at ON (ac.user_type = at.id) WHERE "
         if partner_id:
             query += "l.partner_id = " + str(partner_id) + "" \
             " AND ac.type = '" + account_type + "'" \
@@ -114,8 +122,13 @@ class account_partner_balance_tree(osv.osv):
         else:
             query += "ac.type = '" + account_type + "'" \
             " AND am.state IN " + move_state + ""
+        # UFTP-312: Filtering regarding tax account (if user asked it)
+        if data['form'].get('tax', False):
+            query += " AND at.code != 'tax' "
+
         if where:
             query += " AND " + where + ""
+
         cr.execute(query)
         res = cr.fetchall()
         if res:
@@ -214,7 +227,7 @@ class account_partner_balance_tree(osv.osv):
                             # output currency in action context
                             new_context['output_currency_id'] = output_currency_id
                     view_id = self.pool.get('ir.model.data').get_object_reference(
-                                cr, uid, 'account_override',
+                                cr, uid, 'finance',
                                 'view_account_partner_balance_tree_move_line_tree')[1]
                     res = {
                         'name': 'Journal Items',
@@ -284,7 +297,13 @@ class account_partner_balance_tree(osv.osv):
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
-            res = self.pool.get('account.move.line').browse(cr, uid, ids, context=context)
+            sql = """SELECT a.code as account, SUM(aml.debit) as deb, SUM(aml.credit) as cred, ABS(SUM(debit) - SUM(credit)) as total
+                    FROM account_move_line as aml, account_account as a
+                    WHERE aml.id in %s
+                    AND aml.account_id = a.id
+                    GROUP BY a.code"""
+            cr.execute(sql, (tuple(ids), ))
+            res = cr.dictfetchall()
             return res
         return []
 
@@ -319,6 +338,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
                                             ,'Display Partners'),
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
+        'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -330,6 +350,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'display_partner': 'non-zero_balance',
         'result_selection': 'supplier',
         'journal_ids': _get_journals,
+        'tax': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -349,7 +370,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
-        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner', 'output_currency', 'instance_ids'])[0]
+        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner', 'output_currency', 'instance_ids', 'tax'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:

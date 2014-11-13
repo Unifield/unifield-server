@@ -12,7 +12,8 @@
                         <field name="name" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"
                             attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                        <field name="instance_id" colspan="1" domain="[('level','=','coordo')]" attrs="{'readonly': [('state','in',('soft_closed','hard_closed'))]}" /> 
+                        <field name="instance_level" invisible="1" />
+                        <field name="instance_id" colspan="1" domain="[('level','=','coordo')]" attrs="{'readonly': ['|', ('state','in',('soft_closed','hard_closed')), ('instance_level', '!=', 'section')]}" />
                         <field name="reporting_type" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <separator string="Dates"/>
                         <field name="eligibility_from_date" on_change="onchange_date(eligibility_from_date, eligibility_to_date)"

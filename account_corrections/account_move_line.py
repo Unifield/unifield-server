@@ -270,6 +270,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Change wizard state in order to change date requirement on wizard
         wiz_obj.write(cr, uid, [wizard], {'state': 'open'}, context=context)
         # Update context
+        # UFTP-354: Delete "from_web_menu" to avoid conflict with UFTP-262
+        if 'from_web_menu' in context:
+            del(context['from_web_menu'])
         context.update({
             'active_id': ids[0],
             'active_ids': ids,

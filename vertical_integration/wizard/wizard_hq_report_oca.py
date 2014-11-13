@@ -33,11 +33,13 @@ class wizard_hq_report_oca(osv.osv_memory):
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
-        'period_id': fields.many2one('account.period', 'Period', required=True)
+        'period_id': fields.many2one('account.period', 'Period', required=True),
+        'selection': fields.selection([('unexported', 'Not yet exported'), ('all', 'All lines')], string="Select", required=True),
     }
     
     _defaults = {
-        'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, time.strftime('%Y-%m-%d'), context=c)
+        'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, time.strftime('%Y-%m-%d'), context=c),
+        'selection': lambda *a: 'unexported',
     }
     
     def button_create_report(self, cr, uid, ids, context=None):
@@ -50,6 +52,8 @@ class wizard_hq_report_oca(osv.osv_memory):
             data['form'].update({'instance_ids': [wizard.instance_id.id] + [x.id for x in wizard.instance_id.child_ids]})
         if wizard.period_id:
             data['form'].update({'period_id': wizard.period_id.id})
+        # UFTP-375: Permit user to select all lines or only previous ones
+        data['form'].update({'selection': wizard.selection})
         data['target_filename'] = '%s_%s_%s' % (_('Export to HQ System'), wizard.instance_id and wizard.instance_id.code or '', time.strftime('%Y%m%d'))
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.oca', 'datas': data}
     

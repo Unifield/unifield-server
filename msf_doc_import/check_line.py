@@ -542,11 +542,19 @@ def compute_currency_value(cr, uid, **kwargs):
                     curr_name = curr.strip().upper()
                     currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)], context=context)
                     if currency_ids and browse_sale:
-                        if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
+                        if browse_sale.procurement_request:
+                            order_cur_id = browse_sale.functional_currency_id.id
+                        else:
+                            # UFTP-395: just a small typo bug
+                            order_cur_id = browse_sale.pricelist_id.currency_id.id
+                        if currency_ids[0] == order_cur_id:
                             fc_id = currency_ids[0]
                         else:
                             imported_curr_name = currency_obj.browse(cr, uid, currency_ids)[0].name
-                            default_curr_name = browse_sale.pricelist_id.currency_id.name
+                            if browse_sale.procurement_request:
+                                default_curr_name = browse_sale.functional_currency_id.name
+                            else:
+                                default_curr_name = browse_sale.pricelist_id.currency_id.name
                             msg = _("The imported currency '%s' was not consistent and has been replaced by the \
                                 currency '%s' of the order, please check the price.") % (imported_curr_name, default_curr_name)
                     elif currency_ids and browse_purchase:
