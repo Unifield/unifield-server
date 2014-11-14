@@ -626,7 +626,7 @@ class update_received(osv.osv):
                 self.write(cr, uid, toSetRun_ids, {
                     'editable' : False,
                     'run' : True,
-                    'log' : '',
+                    'log' : 'Manually set to run by the system. Due to a delete',
                 }, context=context)
 
 
