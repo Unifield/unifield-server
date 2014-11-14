@@ -1045,6 +1045,7 @@ class account_bank_statement_line(osv.osv):
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
         'red_on_supplier': fields.function(_check_red_on_supplier, method=True, type="boolean", string="Supplier flag", store=False, readonly=True, multi="m"),
         'journal_id': fields.related('statement_id','journal_id', string="Journal", type='many2one', relation='account.journal', readonly=True),
+        'direct_invoice_move_id': fields.many2one('account.move', 'Direct Invoice Move', readonly=True, help="This field have been added to get the move that comes from the direct invoice because after synchronization some lines lost the direct invoice link. And so we can't see which move have been linked to the invoice in case the register line is temp posted."),
     }
 
     _defaults = {
@@ -2026,7 +2027,7 @@ class account_bank_statement_line(osv.osv):
                 # Optimizations: Do check=False and update_check=False because it would be done for the same move lines at the end of this loop
 
                 # UTP-1039: Update also the statement_id = absl.statement_id to the new account_move_lines
-                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft', 'statement_id': absl.statement_id.id}, context=context, check=False, update_check=False)
+                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft', 'statement_id': absl.statement_id.id, 'direct_invoice_move_id': absl.invoice_id.move_id.id}, context=context, check=False, update_check=False)
                 # link to account_move_reconcile on account_move_line
                 account_move_reconcile = self.pool.get('account.move.reconcile')
                 for line in account_move_line.read(cr, uid, account_move_line_ids, ['reconcile_id'], context=context):

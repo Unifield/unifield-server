@@ -556,6 +556,8 @@
 % endif
 % endfor
 <% invoice_lines = getInvoiceLines(invoices) %>
+% elif line.direct_invoice_move_id:
+<% invoice_lines = getDirectInvoiceLines(line.direct_invoice_move_id) %>
 % endif
 
 % for inv_line in invoice_lines:

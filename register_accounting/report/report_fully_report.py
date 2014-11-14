@@ -28,6 +28,7 @@ class report_fully_report(report_sxw.rml_parse):
         super(report_fully_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'getInvoiceLines': self.getLines,
+            'getDirectInvoiceLines': self.getDirectInvoiceLines,
         })
         return
 
@@ -47,6 +48,21 @@ class report_fully_report(report_sxw.rml_parse):
                 res += [x for x in invoice.invoice_line]
             if invoice.tax_line:
                 res += [x for x in invoice.tax_line]
+        return res
+
+    def getDirectInvoiceLines(self, move_id):
+        """
+        Fetch all lines except the partner counterpart one
+        """
+        res = []
+        if not move_id:
+            return res
+        # We need move lines linked to the given move ID. Except the invoice counterpart.
+        #+ Lines that have is_counterpart to True is the invoice counterpart. We do not need it.
+        aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
+        aml_ids = aml_obj.search(self.cr, self.uid, [('move_id', '=', move_id), ('is_counterpart', '=', False)])
+        if aml_ids:
+            res = aml_obj.browse(self.cr, self.uid, aml_ids)
         return res
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
