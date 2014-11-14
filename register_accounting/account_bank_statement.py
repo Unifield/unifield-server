@@ -2027,7 +2027,9 @@ class account_bank_statement_line(osv.osv):
                 # Optimizations: Do check=False and update_check=False because it would be done for the same move lines at the end of this loop
 
                 # UTP-1039: Update also the statement_id = absl.statement_id to the new account_move_lines
-                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft', 'statement_id': absl.statement_id.id, 'direct_invoice_move_id': absl.invoice_id.move_id.id}, context=context, check=False, update_check=False)
+                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft', 'statement_id': absl.statement_id.id}, context=context, check=False, update_check=False)
+                # UFTP-376 Make the link between move that correspond to the invoice to the register line
+                self.write(cr, uid, [absl.id], {'direct_invoice_move_id': absl.invoice_id.move_id.id})
                 # link to account_move_reconcile on account_move_line
                 account_move_reconcile = self.pool.get('account.move.reconcile')
                 for line in account_move_line.read(cr, uid, account_move_line_ids, ['reconcile_id'], context=context):
