@@ -386,6 +386,27 @@ class po_follow_up_mixin(object):
     def getPOLineHeaders(self):
         return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
        
+    def printAnalyticLines(self, analytic_lines):
+        res = []
+        # if additional analytic lines print them here.
+        for (index, analytic_line) in list(enumerate(analytic_lines))[1:]:
+            report_line = {}
+            report_line['item'] = ''
+            report_line['code'] = ''
+            report_line['description'] = ''
+            report_line['qty_ordered'] = ''
+            report_line['uom'] = ''
+            report_line['qty_received'] = ''
+            report_line['in'] = ''
+            report_line['qty_backordered'] = ''
+            report_line['unit_price'] = ''
+            report_line['in_unit_price'] = ''
+            report_line['destination'] = analytic_line.get('destination')
+            report_line['cost_centre'] = analytic_line.get('cost_center')
+            res.append(report_line)
+
+        return res
+
     def getPOLines(self, po_id):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         # TODO the multiplier is the value populated for no change in stock_move.price_unit
@@ -393,113 +414,114 @@ class po_follow_up_mixin(object):
         multiplier = 1.0000100000000001 
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)], order='line_number')
         po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
         report_lines = []
         for line in po_lines:
-            sort_key = float(line.line_number*1000)
-            report_line = {}
-            inline_in = self.getInlineIN(line.id)
+            in_lines = self.getAllLineIN(line.id)
             analytic_lines = self.getAnalyticLines(line)
-            other_ins = []
-            in_change_product = False
-            if inline_in:
-                other_ins = self.getOtherINs(line.id, inline_in.get('id')) 
-            report_line['sort_key'] = sort_key
-            report_line['item'] = line.line_number or ''
-            report_line['code'] = line.product_id.default_code or ''
-            report_line['description'] = line.product_id.name or ''
-            report_line['qty_ordered'] = line.product_qty or ''
-            report_line['uom'] = line.product_uom.name or ''
-            report_line['qty_received'] = inline_in.get('state') == 'done' and inline_in.get('product_qty','') or '0.00'
-            report_line['in'] = inline_in.get('name','') or ''
-            if inline_in.get('product_uom') and inline_in.get('product_uom') != line.product_uom.id:
-                report_line['uom'] = uom_obj.read(cr, uid, inline_in.get('product_uom'), ['name'])['name']
-            if inline_in.get('product_id') and inline_in.get('product_id') != line.product_id.id:
-                prod_brw = prod_obj.browse(self.cr, self.uid, inline_in.get('product_id'))
-                report_line['code'] = prod_brw.default_code
-                report_line['description'] = prod_brw.name
-                in_change_product = True
-            if inline_in.get('backorder_id') and inline_in.get('state') != 'done':
-                report_line['qty_backordered'] = inline_in.get('product_qty', '')
-            else:
-                report_line['qty_backordered'] = ''
-            report_line['unit_price'] = line.price_unit or ''
-            if inline_in.get('price_unit') and inline_in.get('price_unit') <> multiplier:
-                report_line['in_unit_price'] = inline_in.get('price_unit')
-            else:
-                report_line['in_unit_price'] = ''
-#            report_line['in_unit_price'] = ''
-            report_line['destination'] = analytic_lines[0].get('destination')
-            report_line['cost_centre'] = analytic_lines[0].get('cost_center')
-            report_lines.append(report_line)
-            if inline_in.get('state') != 'done':
-                report_line['in_unit_price'] = ''
-              
-            # if additional analytic lines print them here.
-            for (index, analytic_line) in list(enumerate(analytic_lines))[1:]:
-                report_line = {}
-                sort_key += 1
-                report_line['sort_key'] = sort_key
-                report_line['item'] = ''
-                report_line['code'] = ''
-                report_line['description'] = ''
-                report_line['qty_ordered'] = ''
-                report_line['uom'] = ''
-                report_line['qty_received'] = ''
-                report_line['in'] = ''
-                report_line['qty_backordered'] = ''
-                report_line['unit_price'] = ''
-                report_line['in_unit_price'] = ''
-                report_line['destination'] = analytic_line.get('destination')
-                report_line['cost_centre'] = analytic_line.get('cost_center')
+            same_product_same_uom = []
+            same_product = []
+            other_product = []
+
+            for inl in in_lines:
+                if inl.get('product_id') and inl.get('product_id') == line.product_id.id:
+                    if inl.get('product_uom') and inl.get('product_uom') == line.product_uom.id:
+                        same_product_same_uom.append(inl)
+                    else:
+                        same_product.append(inl)
+                else:
+                    other_product.append(inl)
+
+            first_line = True
+            # Display information of the initial reception
+            if not same_product_same_uom:
+                report_line = {
+                    'item': line.line_number or '',
+                    'code': line.product_id.default_code or '',
+                    'description': line.product_id.name or '',
+                    'qty_ordered': line.product_qty or '',
+                    'uom': line.product_uom.name or '',
+                    'qty_received': '0.00',
+                    'in': '',
+                    'qty_backordered': '',
+                    'destination': analytic_lines[0].get('destination'),
+                    'cost_centre': analytic_lines[0].get('cost_center'),
+                    'unit_price': line.price_unit or '',
+                    'in_unit_price': '',
+                }
+                report_lines.append(report_line)
+                report_lines.extend(self.printAnalyticLines(analytic_lines))
+                first_line = False
+
+            for spsul in same_product_same_uom:
+                report_line = {
+                    'item': first_line and line.line_number or '',
+                    'code': first_line and line.product_id.default_code or '',
+                    'description': first_line and line.product_id.name or '',
+                    'qty_ordered': first_line and line.product_qty or '',
+                    'uom': line.product_uom.name or '',
+                    'qty_received': spsul.get('state') == 'done' and spsul.get('product_qty', '') or '0.00',
+                    'in': spsul.get('name', '') or '',
+                    'qty_backordered': '',
+                    'destination': analytic_lines[0].get('destination'),
+                    'cost_centre': analytic_lines[0].get('cost_center'),
+                    'unit_price': line.price_unit or '',
+                    'in_unit_price': spsul.get('price_unit'),
+                }
+
                 report_lines.append(report_line)
 
-            # check if there are additional INs for this line
-            if other_ins:
-                for other_in in other_ins:
-                    report_line = {}
-                    backorder = inline_in.get('backorder_id') and other_in.get('picking_id') == inline_in.get('backorder_id')
-                    sort_key += 1
-                    report_line['sort_key'] = sort_key
+                if first_line:
+                    if spsul.get('backorder_id') and spsul.get('state') != 'done':
+                        report_line['qty_backordered'] = spsul.get('product_qty', '')
+                    report_lines.extend(self.printAnalyticLines(analytic_lines))
+                    first_line = False
 
-                    # Product is changed
-                    product_changed = other_in.get('product_id') and other_in.get('product_id') != line.product_id.id
-                    if in_change_product or product_changed:
-                        prod_brw = prod_obj.browse(self.cr, self.uid, other_in.get('product_id'))
-                        report_line['code'] = prod_brw.default_code
-                        report_line['description'] = prod_brw.name
-                        if in_change_product and not product_changed:
-                            in_change_product = False
-                    else:
-                        report_line['code'] = ''
-                        report_line['description'] = ''
+            for spl in same_product:
+                report_line = {
+                    'item': first_line and line.line_number or '',
+                    'code': first_line and line.product_id.default_code or '',
+                    'description': first_line and line.product_id.name or '',
+                    'qty_ordered': first_line and line.product_qty or '',
+                    'uom': uom_obj.read(self.cr, self.uid, spl.get('product_uom'), ['name'])['name'],
+                    'qty_received': spl.get('state') == 'done' and spl.get('product_qty', '') or '0.00',
+                    'in': spl.get('name', '') or '',
+                    'qty_backordered': '',
+                    'destination': analytic_lines[0].get('destination'),
+                    'cost_centre': analytic_lines[0].get('cost_center'),
+                    'unit_price': line.price_unit or '',
+                    'in_unit_price': spl.get('price_unit'),
+                }
+                report_lines.append(report_line)
 
-                    report_line['item'] = ''
-                    report_line['qty_ordered'] = ''
-                    report_line['uom'] = ''
-#                    if backorder and inline_in.get('state') != 'done':
-#                        report_line['qty_received'] = other_in.get('product_qty', '')
-#                        report_line['qty_backordered'] = inline_in.get('product_qty', '')
-#                    else:
-                    report_line['qty_received'] = other_in.get('product_qty','')
-                    report_line['qty_backordered'] = ''
-                    report_line['in'] = other_in.get('name','')
-                    report_line['unit_price'] = line.price_unit or ''
-                    if other_in.get('price_unit') and other_in.get('price_unit') <> multiplier:
-                        report_line['in_unit_price'] = other_in.get('price_unit')
-                    else:
-                        report_line['in_unit_price'] = ''
-                    report_line['destination'] = analytic_lines[0].get('destination')
-                    report_line['cost_centre'] = analytic_lines[0].get('cost_center')
-                    if other_in.get('state') != 'done':
-                        report_line['in_unit_price'] = ''
-                    report_lines.append(report_line)
-                       
-        # sort the list for presentation in excel
-        sorted_lines = sorted(report_lines, key=lambda k: k['sort_key'])
-        return sorted_lines
-    
+                if first_line:
+                    if spl.get('backorder_id') and spl.get('state') != 'done':
+                        report_line['qty_backordered'] = spl.get('product_qty', '')
+                    report_lines.extend(self.printAnalyticLines(analytic_lines))
+                    first_line = False
+
+            for ol in other_product:
+                prod_brw = prod_obj.browse(self.cr, self.uid, ol.get('product_id'))
+                report_line = {
+                    'item': first_line and line.line_number or '',
+                    'code': prod_brw.default_code or '',
+                    'description': prod_brw.name or '',
+                    'qty_ordered': '',
+                    'uom': uom_obj.read(self.cr, self.uid, ol.get('product_uom'), ['name'])['name'],
+                    'qty_received': ol.get('state') == 'done' and ol.get('product_qty', '') or '0.00',
+                    'in': ol.get('name', '') or '',
+                    'qty_backordered': '',
+                    'destination': analytic_lines[0].get('destination'),
+                    'cost_centre': analytic_lines[0].get('cost_center'),
+                    'unit_price': line.price_unit or '',
+                    'in_unit_price': ol.get('price_unit'),
+                }
+                report_lines.append(report_line)
+
+        return report_lines
+
     def getAnalyticLines(self,po_line):
         ccdl_obj = self.pool.get('cost.center.distribution.line')
         if po_line.analytic_distribution_id.id:
@@ -512,37 +534,25 @@ class po_follow_up_mixin(object):
         if not dist_lines:
             dist_lines = [{'cost_center': '','destination': ''}]
         return dist_lines
-             
-    def getInlineIN(self,po_line_id):
-        sm_obj = self.pool.get('stock.move')        
-        self.cr.execute(''' select sm.id, sp.name, sm.product_id, sm.product_qty, sm.product_uom, sm.price_unit, sm.state, sp.backorder_id
-                            from stock_move sm, stock_picking sp
-                            where sm.purchase_line_id = %s 
-                            and sm.type = 'in' 
-                            and sm.picking_id = sp.id
-                            order by sp.name, sm.id asc limit 1''' % (po_line_id))
-        row = self.cr.dictfetchall()                
-        if row:
-            return row[0]
-        else:
-            return {}
-        
-    
-    def getOtherINs(self,po_line_id,exclude_id):
-        sm_obj = self.pool.get('stock.move')        
-        self.cr.execute(''' select sm.id, sp.name, sm.product_qty, sm.product_id, sm.product_uom, sm.price_unit, sm.state, sm.picking_id
-                            from stock_move sm, stock_picking sp
-                            where sm.purchase_line_id  = %s 
-                            and sm.type = 'in' 
-                            and sm.picking_id = sp.id
-                            and sm.id <> %s 
-                            order by sp.name, sm.id asc''' % (po_line_id,exclude_id))
-        rows = self.cr.dictfetchall()   
-        if rows:
-            return rows
-        else:
-            return []
-        
+
+    def getAllLineIN(self, po_line_id):
+        self.cr.execute('''
+            SELECT
+                sm.id, sp.name, sm.product_id, sm.product_qty,
+                sm.product_uom, sm.price_unit, sm.state,
+                sp.backorder_id, sm.picking_id
+            FROM
+                stock_move sm, stock_picking sp
+            WHERE
+                sm.purchase_line_id = %s
+              AND
+                sm.type = 'in'
+              AND
+                sm.picking_id = sp.id
+            ORDER BY
+                sp.name, sm.id asc''', tuple([po_line_id]))
+        return self.cr.dictfetchall()
+
     def getReportHeaderLine1(self):
         return self.datas.get('report_header')[0]
     
@@ -564,8 +574,7 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
             'getHeaderLine2': self.getHeaderLine2,
             'getReportHeaderLine1': self.getReportHeaderLine1,
             'getReportHeaderLine2': self.getReportHeaderLine2,
-            'getInlineIN': self.getInlineIN,
-            'getOtherINs': self.getOtherINs,
+            'getAllLineIN': self.getAllLineIN,
             'getPOLines': self.getPOLines,
             'getPOLineHeaders': self.getPOLineHeaders,
             'getRunParms': self.getRunParms,
