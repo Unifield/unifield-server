@@ -50,17 +50,19 @@ class report_fully_report(report_sxw.rml_parse):
                 res += [x for x in invoice.tax_line]
         return res
 
-    def getDirectInvoiceLines(self, move_id):
+    def getDirectInvoiceLines(self, move_ids):
         """
         Fetch all lines except the partner counterpart one
         """
         res = []
-        if not move_id:
+        if not move_ids:
             return res
+        if isinstance(move_ids, (int, long)):
+            move_ids = [move_ids]
         # We need move lines linked to the given move ID. Except the invoice counterpart.
         #+ Lines that have is_counterpart to True is the invoice counterpart. We do not need it.
         aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
-        aml_ids = aml_obj.search(self.cr, self.uid, [('move_id', '=', move_id), ('is_counterpart', '=', False)])
+        aml_ids = aml_obj.search(self.cr, self.uid, [('move_id', 'in', move_ids), ('is_counterpart', '=', False)])
         if aml_ids:
             res = aml_obj.browse(self.cr, self.uid, aml_ids)
         return res
