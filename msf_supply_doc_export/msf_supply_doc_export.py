@@ -505,7 +505,7 @@ class po_follow_up_mixin(object):
             for ol in other_product:
                 prod_brw = prod_obj.browse(self.cr, self.uid, ol.get('product_id'))
                 report_line = {
-                    'item': first_line and line.line_number or '',
+                    'item': line.line_number or '',
                     'code': prod_brw.default_code or '',
                     'description': prod_brw.name or '',
                     'qty_ordered': '',
