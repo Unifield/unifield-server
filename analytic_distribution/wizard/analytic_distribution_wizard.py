@@ -516,7 +516,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[el.id] = False
             if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.state not in ['draft'] and not context.get('from_correction', False):
                 res[el.id] = False
-            if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.imported is True:
+            if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.imported is True and not context.get('from_correction', False):
                 res[el.id] = False
         return res
 
