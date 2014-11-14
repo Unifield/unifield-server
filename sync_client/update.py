@@ -555,8 +555,12 @@ class update_received(osv.osv):
                 try:
                     secure_unlink_data(obj, [id])
                 except BaseException, e:
+                    if isinstance(e, osv.except_osv):
+                        error = '%s: %s' % (e.name, e.value)
+                    else:
+                        error = e
                     e = "Error during unlink on model %s!\nUpdate ids: %s\nReason: %s\nSD ref:\n%s\n" \
-                        % (obj._name, update_ids, tools.ustr(e), update.sdref)
+                        % (obj._name, update_ids, tools.ustr(error), update.sdref)
                     self.write(cr, uid, [update_id], {
                         'run' : False,
                         'log' : tools.ustr(e)

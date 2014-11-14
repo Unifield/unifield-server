@@ -188,7 +188,7 @@ class sync_monitor(osv.osv):
         'msg_push_send' : fields.selection(status_dict.items(), string="MP Send", readonly=True),
         'status' : fields.selection(status_dict.items(), string="Status", readonly=True),
         'error' : fields.text("Messages", readonly=True),
-        'state' : fields.function(_is_syncing, method=True, type='selection', string="Is Syncing", selection=[('syncing', 'Syncing'), ('not_syncing', 'Not Syncing')]),
+        'state' : fields.function(_is_syncing, method=True, type='selection', string="Is Syncing", selection=[('syncing', 'Syncing'), ('not_syncing', 'Done')]),
 
     }
 
