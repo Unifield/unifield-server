@@ -552,7 +552,7 @@
 <% moves = [x.move_id.id for x in line.imported_invoice_line_ids] %>
 <% invoice_lines = getDirectInvoiceLines(moves) %>
 % elif line.direct_invoice_move_id:
-<% invoice_lines = getDirectInvoiceLines([line.direct_invoice_move_id]) %>
+<% invoice_lines = getDirectInvoiceLines([line.direct_invoice_move_id.id]) %>
 % endif
 
 % for inv_line in invoice_lines:
