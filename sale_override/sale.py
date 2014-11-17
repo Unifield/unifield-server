@@ -2283,8 +2283,10 @@ class sale_order_line(osv.osv):
                 move_obj.action_cancel(cr, uid, move_ids, context=context)
 
             for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
-                if not len(pick.move_lines):
+                if not len(pick.move_lines) or (pick.subtype == 'standard' and all(m.state == 'cancel' for m in pick.move_lines)):
                     pick_obj.action_cancel(cr, uid, [pick.id])
+                elif pick.subtype == 'picking':
+                    pick_obj.validate(cr, uid, [pick.id])
 
             if line.original_line_id:
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': True}, context=context)
