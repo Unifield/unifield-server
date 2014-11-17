@@ -2692,7 +2692,7 @@ class stock_picking(osv.osv):
             if pick_to_check:
                 for ptc_id in pick_to_check:
                     ptc = self.browse(cr, uid, ptc_id, context=context)
-                    if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
+                    if all(m.state == 'cancel' or (m.product_qty == 0.00 and m.state in ('done', 'cancel')) for m in ptc.move_lines):
                         ptc.action_done(context=context)
 
             # trigger workflow (confirm picking)
