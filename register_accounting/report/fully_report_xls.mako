@@ -545,20 +545,17 @@
       </Row>
 
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
-<% invoice_lines = [] %>
+<% move_lines = [] %>
 % if line.invoice_id:
-<% invoice_lines = getInvoiceLines([line.invoice_id.id]) %>
+<% move_lines = getMoveLines([line.invoice_id.move_id.id]) %>
 % elif line.imported_invoice_line_ids:
-<% invoices = [] %>
-% for ji in line.imported_invoice_line_ids:
-% if ji.invoice:
-<% invoices.append(ji.invoice.id) %>
-% endif
-% endfor
-<% invoice_lines = getInvoiceLines(invoices) %>
+<% moves = [x.move_id.id for x in line.imported_invoice_line_ids] %>
+<% move_lines = getMoveLines(moves) %>
+% elif line.direct_invoice_move_id:
+<% move_lines = getMoveLines([line.direct_invoice_move_id.id]) %>
 % endif
 
-% for inv_line in invoice_lines:
+% for inv_line in move_lines:
       <Row>
         <Cell ss:Index="4" ss:StyleID="text_center">
           <Data ss:Type="String">${hasattr(inv_line, 'line_number') and inv_line.line_number or ''|x}</Data>
@@ -583,7 +580,7 @@
         </Cell>
       </Row>
 % if hasattr(inv_line, 'analytic_lines'):
-% for ana_line in sorted(inv_line.analytic_lines, key=lambda x: x.id):
+% for ana_line in sorted(getAnalyticLines([x.id for x in inv_line.analytic_lines]), key=lambda x: x.id):
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
