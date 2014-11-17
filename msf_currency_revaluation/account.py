@@ -69,8 +69,6 @@ class account_account(osv.osv):
             'foreign_balance': "COALESCE(SUM(l.amount_currency), 0) as foreign_balance"}
 
     def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
-        lines_where_clause = self.pool.get('account.move.line').\
-            _query_get(cr, uid, context=context)
         query = ("SELECT l.account_id as id, l.currency_id, " +
                    ', '.join(self._sql_mapping.values()) +
                    " FROM account_move_line l "
@@ -78,7 +76,7 @@ class account_account(osv.osv):
                    " l.date <= %(revaluation_date)s AND "
                    " l.currency_id IS NOT NULL AND "
                    " l.reconcile_id IS NULL AND "
-                        + lines_where_clause +
+                   " l.state <> 'draft' "
                    " GROUP BY l.account_id, l.currency_id")
         params = {'revaluation_date': revaluation_date,
                   'account_ids': tuple(ids)}
@@ -110,34 +108,6 @@ class account_account(osv.osv):
             accounts.setdefault(account_id, {})
             accounts[account_id].setdefault(currency_id, {})
             accounts[account_id][currency_id] = line
-
-        # Compute for each account the initial balance/debit/credit from the
-        # move lines and add it to the previous result
-        if revaluation_method == 'liquidity_month':
-            ctx_query = context.copy()
-            ctx_query['periods'] = period_ids
-            ctx_query['fiscalyear'] = fiscalyear_id
-            ctx_query['initial_bal'] = True
-            query, params = self._revaluation_query(
-                cr, uid, ids,
-                revaluation_date,
-                context=ctx_query)
-            cr.execute(query, params)
-            lines = cr.dictfetchall()
-            for line in lines:
-                # generate a tree
-                # - account_id
-                # -- currency_id
-                # ----- balances
-                account_id, currency_id = line['id'], line['currency_id']
-                accounts.setdefault(account_id, {})
-                accounts[account_id].setdefault(
-                    currency_id,
-                    {'balance': 0, 'foreign_balance': 0, 'credit': 0, 'debit': 0})
-                accounts[account_id][currency_id]['balance'] += line['balance']
-                accounts[account_id][currency_id]['foreign_balance'] += line['foreign_balance']
-                accounts[account_id][currency_id]['credit'] += line['credit']
-                accounts[account_id][currency_id]['debit'] += line['debit']
 
         return accounts
 
