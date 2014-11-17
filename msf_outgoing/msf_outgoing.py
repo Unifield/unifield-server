@@ -1881,7 +1881,7 @@ class stock_picking(osv.osv):
             processed = True
             empty = len(pick.move_lines)
             for move in pick.move_lines:
-                if move.product_qty == 0.00:
+                if move.product_qty == 0.00 or move.state == 'cancel':
                     continue
 
                 processed = False
