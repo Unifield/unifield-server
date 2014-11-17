@@ -2271,16 +2271,22 @@ class sale_order_line(osv.osv):
 
             # UF-2401: Remove OUT line when IR line has been canceled
             picking_ids = set()
+            move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel']), ('in_out_updated', '=', False)], context=context)
+            for move in move_obj.read(cr, uid, move_ids, ['picking_id'], context=context):
+                picking_ids.add(move['picking_id'][0])
+
             if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
-                move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel'])], context=context)
-                for move in move_obj.read(cr, uid, move_ids, ['picking_id'], context=context):
-                    picking_ids.add(move['picking_id'][0])
                 move_obj.write(cr, uid, move_ids, {'state': 'draft'}, context=context)
                 move_obj.unlink(cr, uid, move_ids, context=context)
+            else:
+                move_obj.write(cr, uid, move_ids, {'state': 'cancel'}, context=context)
+                move_obj.action_cancel(cr, uid, move_ids, context=context)
 
             for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
-                if not len(pick.move_lines):
+                if not len(pick.move_lines) or (pick.subtype == 'standard' and all(m.state == 'cancel' for m in pick.move_lines)):
                     pick_obj.action_cancel(cr, uid, [pick.id])
+                elif pick.subtype == 'picking' and pick.state == 'draft':
+                    pick_obj.validate(cr, uid, [pick.id])
 
             if line.original_line_id:
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': True}, context=context)

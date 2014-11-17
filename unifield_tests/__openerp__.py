@@ -36,6 +36,7 @@
         'master_data/050_product_nomenclatures.yml',
         'master_data/060_product_categories.yml',
         'master_data/070_products.yml',
+        'master_data/080_locations.yml',
     ],
     "update_xml" : [],
     "demo_xml" : [],

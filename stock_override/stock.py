@@ -2095,7 +2095,7 @@ class stock_move(osv.osv):
             'invoice_state': 'none',
             'date': picking.date,
             'sale_id': picking.sale_id and picking.sale_id.id or False,
-            'auto_picking': picking.type == 'in' and picking.move_lines[0]['direct_incoming'],
+            'auto_picking': picking.type == 'in' and any(m.direct_incoming for m in picking.move_lines),
             'reason_type_id': reason_type_id,
             'previous_chained_pick_id': picking.id,
         }

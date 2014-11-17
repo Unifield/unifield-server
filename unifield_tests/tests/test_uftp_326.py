@@ -18,6 +18,9 @@ class UFTP326Test(ResourcingTest):
         """
         super(UFTP326Test, self).setUp()
 
+        if not hasattr(self, 'procurement_request'):
+            self.procurement_request = False
+
         self.synchronize(self.c1)
         self.synchronize(self.p1)
 
@@ -36,6 +39,7 @@ class UFTP326Test(ResourcingTest):
         prod_log1_id = self.get_record(self.c1, 'prod_log_1')
         prod_log2_id = self.get_record(self.c1, 'prod_log_2')
         uom_pce_id = self.get_record(self.c1, 'product_uom_unit', module='product')
+        ext_cu = self.get_record(self.c1, 'external_cu')
 
         partner_name = self.get_db_partner_name(self.p1)
         partner_ids = self.c_partner_obj.search([('name', '=', partner_name)])
@@ -49,8 +53,9 @@ class UFTP326Test(ResourcingTest):
         order_values = {
             'order_type': 'regular',
             'partner_id': partner_ids[0],
-            'procurement_request': False,
+            'procurement_request': self.procurement_request,
             'analytic_distribution_id': distrib_id,
+            'location_requestor_id': self.procurement_request and ext_cu or False,
         }
 
         change_vals = self.c_so_obj.\
@@ -58,6 +63,8 @@ class UFTP326Test(ResourcingTest):
         order_values.update(change_vals)
 
         order_values['ready_to_ship_date'] = time.strftime('%Y-%m-%d')
+        if self.procurement_request:
+            order_values['delivery_requested_date'] = time.strftime('%Y-%m-%d')
 
         self.c_so_id = self.c_so_obj.create(order_values)
 
@@ -80,7 +87,10 @@ class UFTP326Test(ResourcingTest):
         self.c_sol_obj.create(line_values)
 
         # Validate the sale order
-        self.c1.exec_workflow('sale.order', 'order_validated', self.c_so_id)
+        if self.procurement_request:
+            self.c1.exec_workflow('sale.order', 'procurement_validate', self.c_so_id)
+        else:
+            self.c1.exec_workflow('sale.order', 'order_validated', self.c_so_id)
 
         # Source all lines on a Purchase Order to ext_supplier_1
         line_ids = self.c_sol_obj.search([('order_id', '=', self.c_so_id)])
