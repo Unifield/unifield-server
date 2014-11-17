@@ -547,7 +547,7 @@
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
 <% invoice_lines = [] %>
 % if line.invoice_id:
-<% invoice_lines = getInvoiceLines([line.invoice_id.id]) %>
+<% invoice_lines = getDirectInvoiceLines([line.invoice_id.move_id.id]) %>
 % elif line.imported_invoice_line_ids:
 <% moves = [x.move_id.id for x in line.imported_invoice_line_ids] %>
 <% invoice_lines = getDirectInvoiceLines(moves) %>
@@ -580,7 +580,7 @@
         </Cell>
       </Row>
 % if hasattr(inv_line, 'analytic_lines'):
-% for ana_line in sorted(inv_line.analytic_lines, key=lambda x: x.id):
+% for ana_line in sorted(getAnalyticLines([x.id for x in inv_line.analytic_lines]), key=lambda x: x.id):
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:

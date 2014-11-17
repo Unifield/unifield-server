@@ -29,6 +29,7 @@ class report_fully_report(report_sxw.rml_parse):
         self.localcontext.update({
             'getInvoiceLines': self.getLines,
             'getDirectInvoiceLines': self.getDirectInvoiceLines,
+            'getAnalyticLines': self.getAnalyticLines,
         })
         return
 
@@ -66,6 +67,21 @@ class report_fully_report(report_sxw.rml_parse):
         if aml_ids:
             res = aml_obj.browse(self.cr, self.uid, aml_ids)
         return sorted(res, key=lambda x: x.line_number)
+
+    def getAnalyticLines(self, analytic_ids):
+        """
+        Get anlytic lines history from given analytic lines
+        """
+        res = []
+        if not analytic_ids:
+            return res
+        if isinstance(analytic_ids, (int, long)):
+            analytic_ids = [analytic_ids]
+        al_obj = pooler.get_pool(self.cr.dbname).get('account.analytic.line')
+        al_ids = al_obj.get_corrections_history(self.cr, self.uid, analytic_ids)
+        if al_ids:
+            res = al_obj.browse(self.cr, self.uid, al_ids)
+        return res
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
