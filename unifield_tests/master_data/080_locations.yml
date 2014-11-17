@@ -1,0 +1,9 @@
+-
+  Create External CU
+-
+  !record {model: stock.location, id: external_cu}:
+    name: External CU
+    location_category: consumption_unit
+    usage: customer
+    location_id: stock.stock_location_internal_customers
+    optional_loc: True

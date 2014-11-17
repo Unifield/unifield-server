@@ -2125,7 +2125,8 @@ stock moves which are already processed : '''
         # Cancel all procurement ordes which have generated one of these PO
         proc_ids = self.pool.get('procurement.order').search(cr, uid, [('purchase_id', 'in', ids)], context=context)
         for proc in self.pool.get('procurement.order').browse(cr, uid, proc_ids, context=context):
-            self.pool.get('stock.move').write(cr, uid, [proc.move_id.id], {'state': 'cancel'}, context=context)
+            if proc.move_id and proc.move_id.id:
+                self.pool.get('stock.move').write(cr, uid, [proc.move_id.id], {'state': 'cancel'}, context=context)
             wf_service.trg_validate(uid, 'procurement.order', proc.id, 'subflow.cancel', cr)
 
         if all_doc:
