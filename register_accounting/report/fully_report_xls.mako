@@ -545,17 +545,17 @@
       </Row>
 
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
-<% invoice_lines = [] %>
+<% move_lines = [] %>
 % if line.invoice_id:
-<% invoice_lines = getDirectInvoiceLines([line.invoice_id.move_id.id]) %>
+<% move_lines = getMoveLines([line.invoice_id.move_id.id]) %>
 % elif line.imported_invoice_line_ids:
 <% moves = [x.move_id.id for x in line.imported_invoice_line_ids] %>
-<% invoice_lines = getDirectInvoiceLines(moves) %>
+<% move_lines = getMoveLines(moves) %>
 % elif line.direct_invoice_move_id:
-<% invoice_lines = getDirectInvoiceLines([line.direct_invoice_move_id.id]) %>
+<% move_lines = getMoveLines([line.direct_invoice_move_id.id]) %>
 % endif
 
-% for inv_line in invoice_lines:
+% for inv_line in move_lines:
       <Row>
         <Cell ss:Index="4" ss:StyleID="text_center">
           <Data ss:Type="String">${hasattr(inv_line, 'line_number') and inv_line.line_number or ''|x}</Data>

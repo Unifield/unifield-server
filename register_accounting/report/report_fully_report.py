@@ -27,31 +27,12 @@ class report_fully_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(report_fully_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
-            'getInvoiceLines': self.getLines,
-            'getDirectInvoiceLines': self.getDirectInvoiceLines,
+            'getMoveLines': self.getMoveLines,
             'getAnalyticLines': self.getAnalyticLines,
         })
         return
 
-    def getLines(self, invoice_ids):
-        """
-        Fetch invoice lines and tax lines (if exists)
-        """
-        # Prepare some value
-        res = []
-        # Do not check lines if no invoice given
-        if not invoice_ids:
-            return res
-        if isinstance(invoice_ids, (int, long)):
-            invoice_ids = [invoice_ids]
-        for invoice in pooler.get_pool(self.cr.dbname).get('account.invoice').browse(self.cr, self.uid, invoice_ids):
-            if invoice.invoice_line:
-                res += [x for x in invoice.invoice_line]
-            if invoice.tax_line:
-                res += [x for x in invoice.tax_line]
-        return res
-
-    def getDirectInvoiceLines(self, move_ids):
+    def getMoveLines(self, move_ids):
         """
         Fetch all lines except the partner counterpart one
         """
