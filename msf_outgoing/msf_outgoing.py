@@ -4125,6 +4125,7 @@ class stock_move(osv.osv):
             Confirm or check the procurement order associated to the stock move
         '''
         pol_obj = self.pool.get('purchase.order.line')
+        proc_obj = self.pool.get('procurement.order')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
 
@@ -4163,13 +4164,32 @@ class stock_move(osv.osv):
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
                     sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, context=context)
+
+                    # Cancel the remaining OUT line
+                    if diff_qty < sol.product_uom_qty:
+                        data_back = self.create_data_back(move)
+                        out_move = self.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
+                        self.action_cancel(cr, uid, [out_move['move_id']], context=context)
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
                     sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
+                if move.sale_line_id.order_id.procurement_request and move.sale_line_id.procurement_id:
+                    # Search OUT moves that have the same source and there are done
+                    other_out_move_ids = self.search(cr, uid, [
+                        ('sale_line_id', '=', move.sale_line_id.id),
+                        ('state', '=', 'done'),
+                    ], context=context)
+                    if other_out_move_ids:
+                        proc_obj.write(cr, uid,
+                            [move.sale_line_id.procurement_id.id],
+                            {'move_id': other_out_move_ids[0]},
+                            context=context)
 
+        # Search only non unlink move
+        ids = self.search(cr, uid, [('id', 'in', ids)])
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 
         wf_service = netsvc.LocalService("workflow")
