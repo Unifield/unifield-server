@@ -65,7 +65,7 @@ class report_fully_report(report_sxw.rml_parse):
         aml_ids = aml_obj.search(self.cr, self.uid, [('move_id', 'in', move_ids), ('is_counterpart', '=', False)])
         if aml_ids:
             res = aml_obj.browse(self.cr, self.uid, aml_ids)
-        return res
+        return sorted(res, key=lambda x: x.line_number)
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
