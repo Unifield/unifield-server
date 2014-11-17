@@ -26,6 +26,8 @@ import pooler
 import zipfile
 from tempfile import NamedTemporaryFile
 import os
+from osv import osv
+from tools.translate import _
 
 from report import report_sxw
 
