@@ -3287,13 +3287,14 @@ class stock_picking(osv.osv):
                 diff_qty = move_vals['initial_qty'] - move_vals['processed_qty']
                 if diff_qty != 0.00:
                     # Original move from the draft picking ticket which will be updated
-                    original_move_id = move_vals['move'].backmove_id.id
-                    original_vals = move_obj.browse(cr, uid, original_move_id, context=context)
-                    if original_vals.product_uom.id != move_vals['move'].product_uom.id:
-                        diff_qty = uom_obj._compute_qty(cr, uid, move_vals['move'].product_uom.id, diff_qty, original_vals.product_uom.id)
-                    backorder_qty = max(original_vals.product_qty + diff_qty, 0)
-                    if backorder_qty != 0.00:
-                        move_obj.write(cr, uid, [original_move_id], {'product_qty': backorder_qty}, context=context)
+                    if move_vals['move'].backmove_id: #2531: Added a check to make sure the following code can be run correctly
+                        original_move_id = move_vals['move'].backmove_id.id
+                        original_vals = move_obj.browse(cr, uid, original_move_id, context=context)
+                        if original_vals.product_uom.id != move_vals['move'].product_uom.id:
+                            diff_qty = uom_obj._compute_qty(cr, uid, move_vals['move'].product_uom.id, diff_qty, original_vals.product_uom.id)
+                        backorder_qty = max(original_vals.product_qty + diff_qty, 0)
+                        if backorder_qty != 0.00:
+                            move_obj.write(cr, uid, [original_move_id], {'product_qty': backorder_qty}, context=context)
 
                 if move_vals['processed_qty'] == 0.00:
                     move_obj.write(cr, uid, [move_vals['move'].id], {'product_qty': 0.00}, context=context)
