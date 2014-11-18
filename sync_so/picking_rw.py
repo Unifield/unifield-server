@@ -180,7 +180,8 @@ class shipment(osv.osv):
         for family in wizard.family_ids:
             ppl_name = family.ppl_id and family.ppl_id.name or False
             for line in pack_families:
-                if ppl_name == line['ppl_id']['name']:
+                #UF-2531, point 4): Added more check from the pack info to make sure to pick the right line
+                if ppl_name == line['ppl_id']['name'] and line['from_pack'] >= family.from_pack and line['to_pack'] <= family.to_pack:
                     selected_number = line['to_pack'] - line['from_pack'] + 1
                     wizard_line_obj.write(cr, uid, [family.id], {'selected_number': selected_number}, context=context)
                     break        
@@ -939,7 +940,8 @@ class stock_picking(osv.osv):
                     continue
                 
                 for move in wizard.picking_id.move_lines:
-                    if move.line_number == line_number:
+                    #UF-2531, point 3): Added a check to help getting the right line from the wizard, maybe we need to check also with the original_qty?
+                    if move.line_number == line_number and move.product_qty >= sline['product_qty']:
                         if move.id not in move_already_checked:
                             move_id = move.id
                             move_already_checked.append(move.id) # this move id will not be picked in the next search when creating lines
@@ -1050,6 +1052,14 @@ class stock_picking(osv.osv):
             line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
             line_data['product_qty'] = move.product_qty
             line_data['quantity'] = move.product_qty
+            # UF-2531, point 3): We need to set the quantity received from the other instance, not the whole qty from the move!
+            # but need to check the line number to make sure to get the correct line
+            for line in picking_lines:
+                sline = line[2]
+                if sline['line_number'] == move.line_number and move.product_qty >= sline['product_qty']: 
+                    line_data['product_qty'] = sline['product_qty']
+                    line_data['quantity'] = sline['product_qty']
+                    break
             ret = line_obj.create(cr, uid, line_data, context=context)
 
         self.do_validate_picking(cr, uid, [proc_id], context=context)
