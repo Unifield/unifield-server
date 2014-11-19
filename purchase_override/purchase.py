@@ -2756,8 +2756,9 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             new_vals = vals.copy()
-            if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok and not context.get('noraise'):
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+            # check qty
+            if vals.get('product_qty', line.product_qty) < 0.0 and not context.get('noraise'):
+                raise osv.except_osv(_('Error'), _('You can not have an order line with a negative or zero quantity'))
 
             if vals.get('origin', line.origin):
                 proc = False
