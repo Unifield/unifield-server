@@ -158,7 +158,6 @@ class expiry_quantity_report(osv.osv_memory):
                     context.update({'location': location, 'compute_child': False})
                     real_qty = lot_obj.browse(cr, uid, lot_location, context=context).product_id.qty_available
                     self.pool.get('expiry.quantity.report.line').create(cr, uid, {'product_id': lot_brw.product_id.id,
-                                                                                  'uom_id': lot_brw.product_id.uom_id.id,
                                                                                   'real_stock': real_qty,
                                                                                   'expired_qty': lots[lot_location][location],
                                                                                   'batch_number': lot_brw.name,
