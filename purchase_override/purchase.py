@@ -2385,11 +2385,10 @@ purchase_order_merged_line()
 class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
-
-    _sql_constraints = [
-        ('product_qty', 'CHECK (product_qty > 0)',
-         'You can not have an order line with a negative or zero quantity'),
-    ]
+    
+    def init(self, cr):
+        self.pool.get('fields.tools').remove_sql_constraint(cr,
+            'purchase_order_line', 'product_qty')
 
     def link_merged_line(self, cr, uid, vals, product_id, order_id, product_qty, uom_id, price_unit=0.00, context=None):
         '''
@@ -2572,7 +2571,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-
+            
         po_obj = self.pool.get('purchase.order')
         seq_pool = self.pool.get('ir.sequence')
         so_obj = self.pool.get('sale.order')
@@ -2591,7 +2590,7 @@ class purchase_order_line(osv.osv):
             if not vals.get('price_unit', False):
                 vals['price_unit'] = 1.00
             # [/]
-
+        
         # Update the name attribute if a product is selected
         self._update_name_attr(cr, uid, vals, context=context)
 

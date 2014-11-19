@@ -36,6 +36,7 @@
         "purchase_double_validation",
         "reason_types_moves",
         "unifield_setup",
+        "msf_tools",
     ],
     "update_xml": [
         "purchase_view.xml",
