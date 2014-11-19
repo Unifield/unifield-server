@@ -2138,10 +2138,9 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
-    _sql_constraints = [
-        ('product_uom_qty', 'CHECK (product_uom_qty > 0)',
-         'You can not have an order line with a negative or zero quantity'),
-    ]
+    def init(self, cr):
+        self.pool.get('fields.tools').remove_sql_constraint(cr,
+            'sale_order_line', 'product_uom_qty')
 
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''

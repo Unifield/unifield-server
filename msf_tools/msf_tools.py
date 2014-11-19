@@ -200,7 +200,7 @@ class fields_tools(osv.osv):
         cr.execute(tpl_has_const, sql_params)
         res_record = cr.fetchone()
         if res_record and res_record[0]:
-            # drop existing contraint
+            # drop existing constraint
             tpl_drop_const = "alter table %s drop constraint %s" % sql_params
             cr.execute(tpl_drop_const)
     
