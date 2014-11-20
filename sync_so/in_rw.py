@@ -267,7 +267,9 @@ class stock_picking(osv.osv):
         return message
 
 
-    def usb_replicate_int_ir(self, cr, uid, source, out_info, context=None):
+    #UF-2531: Allow also the INT to be synced between CP and RW
+    # If INT from sratch from RW ---> tolerate no partner when replicating the INT in the other instance
+    def usb_replicate_int(self, cr, uid, source, out_info, context=None):
         '''
         '''
         if context is None:
@@ -277,40 +279,34 @@ class stock_picking(osv.osv):
         pick_name = pick_dict['name']
         origin = pick_dict['origin']
         self._logger.info("+++ RW: Replicate the INT from an IR: %s from %s to %s" % (pick_name, source, cr.dbname))
-
-        rw_type = self._get_usb_entity_type(cr, uid)
-        if rw_type == self.REMOTE_WAREHOUSE:
-            if origin:
-                header_result = {}
-                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
-                header_result['move_lines'] = picking_lines
-                header_result['already_replicated'] = True
-                state = pick_dict['state']
-                
-                # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
-                existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'internal'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
-                if existing_pick:
-                    message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
-                    self._logger.info(message)
-                    return message
-                pick_id = self.create(cr, uid, header_result , context=context)
-                if state != 'draft': # if draft, do nothing
-                    wf_service = netsvc.LocalService("workflow")
-                    wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-                    if header_result.get('date_done', False):
-                        context['rw_date'] = header_result.get('date_done')
-                    self.action_assign(cr, uid, [pick_id], context=context)
-                    if header_result.get('date_done', False):
-                        context['rw_date'] = False
-                
-                message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
-            else:
-                message = "Sorry, the case without the origin FO or IR is not yet available!"
-                self._logger.info(message)
-                raise Exception, message
-        else:
-            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+        search_condition = [('type', '=', 'internal'), ('subtype', '=', 'standard'), ('name', '=', pick_name)]
+        if origin:
+            search_condition.append(('origin', '=', origin))
+            
+        header_result = {}
+        self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context, pick_dict['partner_id'])
+        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+        header_result['move_lines'] = picking_lines
+        header_result['already_replicated'] = True
+        state = pick_dict['state']
+        
+        # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
+        existing_pick = self.search(cr, uid, search_condition, context=context)
+        if existing_pick:
+            message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
+            self._logger.info(message)
+            return message
+        pick_id = self.create(cr, uid, header_result , context=context)
+        if state != 'draft': # if draft, do nothing
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+            if header_result.get('date_done', False):
+                context['rw_date'] = header_result.get('date_done')
+            self.action_assign(cr, uid, [pick_id], context=context)
+            if header_result.get('date_done', False):
+                context['rw_date'] = False
+        
+        message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
             
         self._logger.info(message)
         return message

@@ -275,7 +275,8 @@ class stock_picking(osv.osv):
     
         return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
-    def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
+    #UF-2531: The last param for the case no need to check for partner, such as the case of INT from scratch created at RW
+    def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context, need_partner_check=True):
         so_po_common = self.pool.get('so.po.common')
         
         if 'name' in pick_dict:
@@ -329,16 +330,19 @@ class stock_picking(osv.osv):
         if 'date_done' in pick_dict:
             header_result['date_done'] = pick_dict.get('date_done')
 
-        partner_id = so_po_common.get_partner_id(cr, uid, source, context)
-        if 'partner_id' in pick_dict:
-            partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)
+        partner_id = False
+        # UF-2531: If no partner is needed for checking, then do not perform the following check -- INT from scratch from RW to CP
+        if need_partner_check:
+            partner_id = so_po_common.get_partner_id(cr, uid, source, context)
+            if 'partner_id' in pick_dict:
+                partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)
+            header_result['partner_id'] = partner_id
+            header_result['partner_id2'] = partner_id
+            address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
+            header_result['address_id'] = address_id
         
         location_id = so_po_common.get_location(cr, uid, partner_id, context)
-        address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
         header_result['partner_ref'] = source + "." + pick_dict.get('name')
-        header_result['partner_id'] = partner_id
-        header_result['partner_id2'] = partner_id
-        header_result['address_id'] = address_id
         header_result['location_id'] = location_id
         
         # For RW instances, order line ids need to be retrieved and store in the IN and OUT to keep references (via procurement) when making the INcoming via cross docking
