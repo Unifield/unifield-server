@@ -2591,11 +2591,16 @@ class sale_order_line(osv.osv):
             if ids and not 'product_uom_qty' in vals:
                 empty_lines = self.search(cr, uid, [
                     ('id', 'in', ids),
-                    ('order_id.state', 'not in', ['draft', 'cancel']),
+                    ('order_id.state', '!=', ['cancel']),
                     ('product_uom_qty', '<=', 0.00),
                 ], count=True, context=context)
-                if empty_lines:
-                        raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
+            else:
+                empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
+            if empty_lines:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You can not have an order line with a negative or zero quantity')
+                )
 
         return True
 

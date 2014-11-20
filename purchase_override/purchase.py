@@ -2601,7 +2601,10 @@ class purchase_order_line(osv.osv):
             if order.po_from_fo or order.po_from_ir:
                 vals['from_fo'] = True
             if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You can not have an order line with a negative or zero quantity')
+                )
 
         other_lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
@@ -2757,8 +2760,12 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             new_vals = vals.copy()
             # check qty
-            if vals.get('product_qty', line.product_qty) < 0.0 and not context.get('noraise'):
-                raise osv.except_osv(_('Error'), _('You can not have an order line with a negative or zero quantity'))
+            if vals.get('product_qty', line.product_qty) < 0.0 and \
+                not context.get('noraise') and line.state != 'cancel':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You can not have an order line with a negative or zero quantity')
+                )
 
             if vals.get('origin', line.origin):
                 proc = False
