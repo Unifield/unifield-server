@@ -849,6 +849,38 @@ class stock_picking(osv.osv):
         self.do_partial(cr, uid, [proc_id], 'outgoing.delivery.processor', context=context)
         return True
 
+    #UF-2531: Allow to cancel the PICK/OUT from CP to RW
+    def usb_cancel_pick_out(self, cr, uid, source, in_info, context=None):
+        if context is None:
+            context = {}
+
+        pick_dict = in_info.to_dict()
+        pick_name = pick_dict['name']
+        origin = pick_dict['origin']
+            
+        self._logger.info("+++ RW: Cancel the Picking/OUT: %s from %s to %s" % (pick_name, source, cr.dbname))
+
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.REMOTE_WAREHOUSE:
+            if origin:
+                existing_pick = self.search(cr, uid, [('origin', '=', origin), ('name', '=', pick_name), ('type', '=', 'out'), ('state', '!=', 'done')], context=context)
+                if not existing_pick:
+                    message = "Sorry, the IN: " + pick_name + " does not exist in " + cr.dbname
+                    self._logger.info(message)
+                    raise Exception, message
+                
+                self.action_cancel(cr, uid, existing_pick, context=context)
+                message = "Cancelled successfully the Picking/OUT: " + pick_name
+            else:
+                message = "Sorry, the case without the origin PO is not yet available!"
+                self._logger.info(message)
+                raise Exception, message
+        else:
+            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+        
+        self._logger.info(message)
+        return message
+
     def usb_create_picking(self, cr, uid, source, out_info, context=None):
         '''
         This is the PICK with format PICK00x-y, meaning the PICK00x-y got closed making the backorder PICK got updated (return products
