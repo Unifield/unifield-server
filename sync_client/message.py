@@ -171,8 +171,11 @@ class message_to_send(osv.osv):
 
         for id in obj_ids:
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
+                # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
+                if destination is False:
+                    destination = 'fake'
                 # UF-2483: By default the "sent" parameter is False
-                self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], dest[id], initial, context)
+                self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context)
         return len(obj_ids)
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
