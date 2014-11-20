@@ -2272,6 +2272,8 @@ class stock_picking(osv.osv):
         '''
         # Objects
         ship_proc_obj = self.pool.get('shipment.processor')
+        # For Remote Warehouse: If the instance is CP, and if the type=out, subtype=PICK and name does not contain "-", then set the flag to ask syncing this PICK
+        usb_type = self._get_usb_entity_type(cr, uid, context)
 
         # For picking ticket from scratch, invoice it !
         if not vals.get('sale_id') and not vals.get('purchase_id') and not vals.get('invoice_state') and 'type' in vals and vals['type'] == 'out':
@@ -2292,7 +2294,10 @@ class stock_picking(osv.osv):
             vals['shipment_id'] = vals.get('shipment_id', False)
         else: # if it is a CONSO-OUT --_> set the state for replicating back to CP
             if 'name' in vals and 'OUT-CONSO' in vals['name']:
-               vals.update(already_replicated=False,)
+                vals.update(already_replicated=False,)
+            #UF-2531: When the INT from scratch created in RW, just set it for sync to CP
+            if usb_type == self.REMOTE_WAREHOUSE and 'type' in vals and vals['type']=='internal':
+                vals.update(already_replicated=False,)
 
         # the action adds subtype in the context depending from which screen it is created
         if context.get('picking_screen', False) and not vals.get('name', False):
@@ -2343,9 +2348,6 @@ class stock_picking(osv.osv):
 
         # create packing object
         new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
-
-        # For Remote Warehouse: If the instance is CP, and if the type=out, subtype=PICK and name does not contain "-", then set the flag to ask syncing this PICK
-        usb_type = self._get_usb_entity_type(cr, uid, context)
         if not context.get('sync_message_execution', False) and usb_type == self.CENTRAL_PLATFORM:
             # read the new object
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
