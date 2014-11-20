@@ -2763,6 +2763,7 @@ class purchase_order_line(osv.osv):
             new_vals = vals.copy()
             # check qty
             if vals.get('product_qty', line.product_qty) <= 0.0 and \
+                not line.order_id.rfq_ok and \
                 'noraise' not in context and line.state != 'cancel':
                 raise osv.except_osv(
                     _('Error'),
