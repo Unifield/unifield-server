@@ -2389,6 +2389,8 @@ class purchase_order_line(osv.osv):
     def init(self, cr):
         self.pool.get('fields.tools').remove_sql_constraint(cr,
             'purchase_order_line', 'product_qty')
+        if hasattr(super(purchase_order_line, self), 'init'):
+            super(purchase_order_line, self).init(cr)
 
     def link_merged_line(self, cr, uid, vals, product_id, order_id, product_qty, uom_id, price_unit=0.00, context=None):
         '''
