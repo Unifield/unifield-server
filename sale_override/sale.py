@@ -2591,7 +2591,7 @@ class sale_order_line(osv.osv):
             if ids and not 'product_uom_qty' in vals:
                 empty_lines = self.search(cr, uid, [
                     ('id', 'in', ids),
-                    ('order_id.state', '!=', ['cancel']),
+                    ('order_id.state', '!=', 'cancel'),
                     ('product_uom_qty', '<=', 0.00),
                 ], count=True, context=context)
             else:
