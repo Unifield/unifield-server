@@ -51,6 +51,13 @@ class ir_actions_act_window(osv.osv):
         origin_xmlid = model_data_obj.read(cr, uid, sdref_ids[0], ['module', 'name'])
         return get_valid_xml_name(origin_xmlid['module'], origin_xmlid['name'])
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and 'groups_id/id' in context.get('fields', []) and 'groups_id' not in vals:
+            vals['groups_id'] = [(6, 0, [])]
+        return super(ir_actions_act_window, self).write(cr, uid, ids, vals, context)
+
 ir_actions_act_window()
 
 class bank_statement(osv.osv):
