@@ -40,6 +40,26 @@ class account_journal(osv.osv):
 
 account_journal()
 
+class ir_actions_act_window(osv.osv):
+    _inherit = 'ir.actions.act_window'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        model_data_obj = self.pool.get('ir.model.data')
+        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','=',res_id),('module','!=','sd')])
+        if not sdref_ids:
+            return super(ir_actions_act_window, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
+        origin_xmlid = model_data_obj.read(cr, uid, sdref_ids[0], ['module', 'name'])
+        return get_valid_xml_name(origin_xmlid['module'], origin_xmlid['name'])
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and 'groups_id/id' in context.get('fields', []) and 'groups_id' not in vals:
+            vals['groups_id'] = [(6, 0, [])]
+        return super(ir_actions_act_window, self).write(cr, uid, ids, vals, context)
+
+ir_actions_act_window()
+
 class bank_statement(osv.osv):
 
     _inherit = 'account.bank.statement'

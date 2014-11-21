@@ -28,7 +28,7 @@ MODELS_TO_IGNORE = [
                     'ir.property',
                     'ir.actions.todo',
                     'ir.sequence.type',
-                    'ir.actions.act_window',
+                    #'ir.actions.act_window',
                     'ir.module.module',
                     'ir.ui.view',
                     'ir.module.repository',
