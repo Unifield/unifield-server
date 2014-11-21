@@ -823,8 +823,8 @@ class orm_template(object):
             done = {}
             for i in range(len(fields)):
                 res = False
-                if not line[i]:
-                    continue
+                #if not line[i]:
+                #    continue
                 if i >= len(line):
                     raise Exception(_('Please check that all your lines have %d columns.') % (len(fields),))
 
@@ -837,7 +837,7 @@ class orm_template(object):
                 # ID of the record using a XML ID
                 if field[len(prefix)]=='id':
                     try:
-                        data_res_id = _get_id(model_name, line[i], current_module, 'id')
+                        data_res_id = line[i] and _get_id(model_name, line[i], current_module, 'id')
                     except ValueError, e:
                         pass
                     xml_id = line[i]
@@ -845,7 +845,7 @@ class orm_template(object):
 
                 # ID of the record using a database ID
                 elif field[len(prefix)]=='.id':
-                    data_res_id = _get_id(model_name, line[i], current_module, '.id')
+                    data_res_id = line[i] and _get_id(model_name, line[i], current_module, '.id')
                     continue
 
                 # recursive call for getting children and returning [(0,0,{})] or [(1,ID,{})]
@@ -876,7 +876,7 @@ class orm_template(object):
                         mode = False
                     else:
                         mode = field[len(prefix)+1]
-                    res = _get_id(relation, line[i], current_module, mode)
+                    res = line[i] and _get_id(relation, line[i], current_module, mode)
 
                 elif fields_def[field[len(prefix)]]['type']=='many2many':
                     relation = fields_def[field[len(prefix)]]['relation']
@@ -887,14 +887,14 @@ class orm_template(object):
 
                     # TODO: improve this by using csv.csv_reader
                     res = []
-                    for db_id in line[i].split(config.get('csv_internal_sep')):
+                    for db_id in line[i] and line[i].split(config.get('csv_internal_sep')) or []:
                         res.append( _get_id(relation, db_id, current_module, mode) )
                     res = [(6,0,res)]
 
                 elif fields_def[field[len(prefix)]]['type'] == 'integer':
                     res = line[i] and int(line[i]) or 0
                 elif fields_def[field[len(prefix)]]['type'] == 'boolean':
-                    res = line[i].lower() not in ('0', 'false', 'off')
+                    res = line[i] and line[i].lower() not in ('0', 'false', 'off') or False
                 elif fields_def[field[len(prefix)]]['type'] == 'float':
                     res = line[i] and float(line[i].replace(',','.')) or 0.0
                 elif fields_def[field[len(prefix)]]['type'] == 'selection':
@@ -902,6 +902,8 @@ class orm_template(object):
                         if line[i] in [tools.ustr(key), tools.ustr(val)]:
                             res = key
                             break
+                    if not line[i]:
+                        res = False
                     if line[i] and not res:
                         model_obj = self.pool.get(model_name)
                         if model_obj:
