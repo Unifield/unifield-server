@@ -86,8 +86,9 @@ class MasterDataSyncTest(UnifieldTest):
         """
         for model, domain in check_batch:
             ids = db.get(model).search(domain)
+            count = len(ids) if ids else 0
             if ids:
-                self._set_ids(db, model, ids)
+                self._set_ids(db, model, ids)  # log ids to remove in tearDown
                 count = len(ids)
             else:
                 count = 0
@@ -166,7 +167,7 @@ class MasterDataSyncTest(UnifieldTest):
         """
         python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_21
 
-        - create a new country and country state on HQ database
+        - create a new country and country state in hq
         - synchronize down from hq to coordo and project
         - check if the country and the country state have been well sync down
         """
@@ -194,12 +195,11 @@ class MasterDataSyncTest(UnifieldTest):
         ]
         self._sync_down_check(check_batch)
 
-
     def test_s1_tec_22(self):
         """
         python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_22
 
-        - create an uom category and an uom on hq
+        - create an uom category and an uom in hq
         - synchronize down from hq to coordo and project
         - check if the uom categ and the uom have been well sync down
         """
@@ -232,11 +232,11 @@ class MasterDataSyncTest(UnifieldTest):
         """
         python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_23
 
-        - create a product nomenclature
+        - create a product nomenclature in hq
         - synchronize down from hq to coordo and project and check
         """
         vals = {
-            'name': 'UF Nomenclature Test',
+            'name': 'Unifield Nomenclature Test',
         }
         id, domain = self._create_data_record(self.hq1,
             'product.nomenclature', vals)
@@ -250,11 +250,11 @@ class MasterDataSyncTest(UnifieldTest):
         """
         python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_24
 
-        - create a product category
+        - create a product category in hq
         - synchronize down from hq to coordo and project and check
         """
         vals = {
-            'name': 'UF Product Category Test',
+            'name': 'Unifield Product Category Test',
             'type': 'normal',
         }
         id, domain = self._create_data_record(self.hq1,
@@ -262,6 +262,35 @@ class MasterDataSyncTest(UnifieldTest):
 
         check_batch = [
             ('product.category', domain),
+        ]
+        self._sync_down_check(check_batch)
+
+    def test_s1_tec_25(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_25
+
+        - create a product justification code in hq
+        - create a product asset type in hq
+        - synchronize down from hq to coordo and project and check
+        """
+        # product justication code
+        vals = {
+            'code': 'UF',
+            'description': 'Unifield Justification Code Test',
+        }
+        id, just_code_domain = self._create_data_record(self.hq1,
+            'product.justification.code', vals)
+
+        # product asset type
+        vals = {
+            'name': 'Unifield Asset Type Test',
+        }
+        id, asset_type_domain = self._create_data_record(self.hq1,
+            'product.asset.type', vals)
+
+        check_batch = [
+            ('product.justification.code', just_code_domain),
+            ('product.asset.type', asset_type_domain),
         ]
         self._sync_down_check(check_batch)
 
