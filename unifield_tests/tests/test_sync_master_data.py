@@ -27,6 +27,8 @@ def dfv(vals, include=None, exclude=[]):
         exclude = [exclude]
     return [(x[0], '=', x[1]) for x in vals.iteritems() if x[0] not in exclude]
 
+def are_same_db(db1, db2):
+    return db1.db_name == db2.db_name or False
 
 class MasterDataSyncTestException(Exception):
     pass
@@ -100,6 +102,62 @@ class MasterDataSyncTest(UnifieldTest):
                     db.colored_name, count, )
             )
 
+    def _create_data_record(self, db, model_name, vals, domain_include=None,
+        domain_exclude=[]):
+        """
+        for a model create a record in hq using vals and create domain
+        :param db: db
+        :type db: object
+        :type model_name: str
+        :param vals: vals
+        :type vals: dict
+        :param domain_include: see dfv() include param
+        :param domain_exclude: ee dfv() exclude param
+        :return: (id, domain)
+        :rtype: tuple
+        """
+        """
+        :param model_name:
+        :param vals:
+        :param domain_include:
+        :param domain_exclude:
+        :return:
+        """
+        # uom category
+        hq_obj = db.get(model_name)
+        domain = dfv(vals, include=domain_include, exclude=domain_exclude)
+        if hq_obj.search(domain):
+            id = hq_obj.search(domain)[0]
+        else:
+            id = hq_obj.create(vals)
+        self._set_ids(self.hq1, model_name, id)
+        return (id, domain, )
+
+    def _sync_down_check(self, check_batch, db=None):
+        """
+        from hq sync down check batch to c1 then p1
+        :param check_batch: see _check_data_set_on_db() check_batch param
+        :type check_batch: list
+        :param db: db
+        :type db: object
+        """
+        if db is None:
+            db = self.hq1
+        if are_same_db(self.p1, db):
+            raise MasterDataSyncTestException('can not sync down from project')
+
+        # sync down and check
+        self.synchronize(db)
+
+        if are_same_db(self.hq1, db):
+            # c1 sync down and check check
+            self.synchronize(self.c1)
+            self._check_data_set_on_db(self.c1, check_batch)
+
+        # p1 sync down and check check (from hq or c1 sync down)
+        self.synchronize(self.p1)
+        self._check_data_set_on_db(self.p1, check_batch)
+
     def tearDown(self):
         self._unlink_model_ids('res.country.state')
         self._unlink_model_ids('res.country')
@@ -113,17 +171,12 @@ class MasterDataSyncTest(UnifieldTest):
         - check if the country and the country state have been well sync down
         """
         # country
-        hq_country_obj = self.hq1.get('res.country')
         vals = {
             'code': 'UF',
-            'name': 'Unifield Country Test',
+            'name': 'Unifield Country State Test',
         }
-        country_domain = dfv(vals)
-        if hq_country_obj.search(country_domain):
-            country_id = hq_country_obj.search(country_domain)[0]
-        else:
-            country_id = hq_country_obj.create(vals)
-        self._set_ids(self.hq1, 'res.country', country_id)
+        country_id, country_domain = self._create_data_record(self.hq1,
+            'res.country', vals)
 
         # country state
         hq_state_obj = self.hq1.get('res.country.state')
@@ -132,28 +185,15 @@ class MasterDataSyncTest(UnifieldTest):
             'name': 'Unifield Country State Test',
             'country_id': country_id,
         }
-        state_domain = dfv(vals, exclude='country_id')
-        if hq_state_obj.search(state_domain):
-            pass
-        else:
-            state_id = hq_state_obj.create(vals)
-            self._set_ids(self.hq1, 'res.country.state', state_id)
-
-        # sync down and check
-        self.synchronize(self.hq1)
+        id, state_domain = self._create_data_record(self.hq1,
+            'res.country.state', vals, domain_exclude=['country_id', ])
 
         check_batch = [
             ('res.country', country_domain),
             ('res.country.state', state_domain),
         ]
+        self._sync_down_check(check_batch)
 
-        # c1 check
-        self.synchronize(self.c1)
-        self._check_data_set_on_db(self.c1, check_batch)
-
-        # p1 check
-        self.synchronize(self.p1)
-        self._check_data_set_on_db(self.p1, check_batch)
 
     def test_s1_tec_22(self):
         """
@@ -164,19 +204,13 @@ class MasterDataSyncTest(UnifieldTest):
         - check if the uom categ and the uom have been well sync down
         """
         # uom category
-        hg_puomc_obj = self.hq1.get('product.uom.categ')
         vals = {
             'name': 'Unifield Uom Category Test'
         }
-        uom_categ_domain = dfv(vals)
-        if hg_puomc_obj.search(uom_categ_domain):
-            categ_id = hg_puomc_obj.search(uom_categ_domain)[0]
-        else:
-            categ_id = hg_puomc_obj.create(vals)
-        self._set_ids(self.hq1, 'product.uom.categ', categ_id)
+        categ_id, uom_categ_domain = self._create_data_record(self.hq1,
+            'product.uom.categ', vals)
 
         # uom
-        hg_puom_obj = self.hq1.get('product.uom')
         vals = {
             'category_id': categ_id,
             'factor': 1.,
@@ -185,28 +219,32 @@ class MasterDataSyncTest(UnifieldTest):
             'rounding': 1.,
             'uom_type': 'reference',
         }
-        uom_domain = dfv(vals, include=['name', 'uom_type', ])
-        if hg_puom_obj.search(uom_domain):
-            uom_id = hg_puom_obj.search(uom_domain)[0]
-        else:
-            uom_id = hg_puom_obj.create(vals)
-        self._set_ids(self.hq1, 'product.uom', uom_id)
-
-        # sync down and check
-        self.synchronize(self.hq1)
+        id, uom_domain = self._create_data_record(self.hq1, 'product.uom', vals,
+            domain_include=['name', 'uom_type', ])
 
         check_batch = [
             ('product.uom.categ', uom_categ_domain),
             ('product.uom', uom_domain),
         ]
+        self._sync_down_check(check_batch)
 
-        # c1 check
-        self.synchronize(self.c1)
-        self._check_data_set_on_db(self.c1, check_batch)
+    def test_s1_tec_23(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_23
 
-        # p1 check
-        self.synchronize(self.p1)
-        self._check_data_set_on_db(self.p1, check_batch)
+        - create a product nomenclature
+        - synchronize down from hq to coordo and project and check
+        """
+        vals = {
+            'name': 'UF Nomenclature Test',
+        }
+        id, product_nomen_domain = self._create_data_record(self.hq1,
+            'product.nomenclature', vals)
+
+        check_batch = [
+            ('product.nomenclature', product_nomen_domain),
+        ]
+        self._sync_down_check(check_batch)
 
 def get_test_class():
     return MasterDataSyncTest
