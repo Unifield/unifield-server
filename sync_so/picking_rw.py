@@ -598,14 +598,37 @@ class stock_picking(osv.osv):
             remote_call = "stock.picking.usb_convert_out_to_pick"
         rule = rule_obj.get_rule_by_remote_call(cr, uid, remote_call, context)
         
+        # If the PICK got successfully converted to OUT, then reupdate the value already_replicated, for sync purpose
+        self.write(cr, uid, ids, {'already_replicated': already_replicated}, context=context)
+        self.usb_push_create_message(cr, uid, context=context)
+        
         so_po_common = self.pool.get('so.po.common')
         super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
             so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner.name, context, True)
-        
-        # If the PICK got successfully converted to OUT, then reupdate the value already_replicated, for sync purpose
-        self.write(cr, uid, ids, {'already_replicated': already_replicated}, context=context)
+
+
+    def usb_push_create_message(self, cr, uid, context=None):
+        context = context or {}
+        message_pool = self.pool.get('sync_remote_warehouse.message_to_send')
+        rule_pool = self.pool.get("sync.client.message_rule")
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
+
+        messages_count = 0
+        message_direction = entity.usb_instance_type == 'central_platform' and \
+            ['|', ('direction_usb', '=', 'cp_to_rw'), ('direction_usb', '=', 'bidirectional')] or \
+            ['|', ('direction_usb', '=', 'rw_to_cp'), ('direction_usb', '=', 'bidirectional')]
+        rule_ids = rule_pool.search(cr, uid, [('type','=','USB')] + message_direction, order='sequence_number',  context=context)
+        if rule_ids:
+            for rule in rule_pool.browse(cr, uid, rule_ids, context=context):
+                order = "id asc"
+                if 'usb_create_partial_int_moves' in rule.remote_call or 'usb_create_partial_in' in rule.remote_call:
+                    # For this INT sync, create messages ordered by the date_done to make sure that the first INTs will be synced first
+                    order = 'date_done asc'
+                messages_count += message_pool.create_from_rule(cr, uid, rule, order, context=context)
+            if messages_count:
+                cr.commit()
         
 
     # WORK IN PROGRESS
@@ -650,7 +673,11 @@ class stock_picking(osv.osv):
         if rw_type == self.CENTRAL_PLATFORM:
             if origin:
                 # look for FO if it is a CP instance
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)  
+                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', 'in', ['draft', '"assigned"'])], context=context)
+                
+                # UF-2531: CHECK HERE IF THERE IS ALREADY A PICKXXX-1 JUST CREATED FROM AN IN CLOSED ---> PICK THIS ONE, AND NOT THE ORIGINAL PICK
+                
+                  
                 if pick_ids: # This is a real pick in draft, then convert it to OUT
                     old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
                     context['rw_backorder_name'] = pick_name
