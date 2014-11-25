@@ -24,6 +24,8 @@ from tools.translate import _
 import netsvc
 from datetime import datetime, date
 
+from order_types.stock import check_cp_rw
+
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
 import logging
@@ -2969,6 +2971,7 @@ class stock_picking(osv.osv):
 
         return res
 
+    @check_cp_rw
     def create_picking(self, cr, uid, ids, context=None):
         '''
         Open the wizard to create (partial) picking tickets

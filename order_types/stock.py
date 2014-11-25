@@ -24,6 +24,49 @@ from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 
 
+def check_cp_rw(func):
+    def decorated(*args, **kwargs):
+        if kwargs.get('context', {}).get('callback', False):
+            return func(*args, **kwargs)
+        self = args[0]
+        cr = args[1]
+        uid = args[2]
+        ids = args[3]
+        args = args[4:]
+        rw_type = hasattr(self, '_get_usb_entity_type') and \
+                  self._get_usb_entity_type(cr, uid) or False
+
+        if rw_type == self.pool.get('stock.picking').CENTRAL_PLATFORM:
+            name = """This action should only be performed at the Remote
+Warehouse instance! Are you sure to proceed it at this main instance?"""
+            model = 'confirm'
+            step = 'default'
+            question = name
+            clazz = self._name
+            args = [ids]
+            kwargs = {}
+            wiz_obj = self.pool.get('wizard')
+            # open the selected wizard
+            callback = {
+                'clazz': clazz,
+                'func': func.__name__,
+                'args': args,
+                'kwargs': kwargs,
+            }
+            tmp_context = dict(kwargs.get('context', {}),
+                               question=question,
+                               callback=callback,)
+
+            res = wiz_obj.open_wizard(cr, uid, ids,
+                                      name=name,
+                                      model=model,
+                                      step=step,
+                                      context=tmp_context)
+            return res
+        return func(*args, **kwargs)
+    return decorated
+
+
 class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
@@ -187,22 +230,8 @@ class stock_picking(osv.osv):
     def _hook_check_cp_instance(self, cr, uid, ids, context=None):
         return False
 
-
+    @check_cp_rw
     def action_process(self, cr, uid, ids, context=None):
-        '''
-        Override the method to display a message to attach
-        a certificate of donation
-        '''
-        if context is None:
-            context = {}
-
-        hook_cp_check = self._hook_check_cp_instance(cr, uid, ids, context)
-        if hook_cp_check:
-            return hook_cp_check
-
-        return self.original_action_process(cr, uid, ids, context)
-
-    def original_action_process(self, cr, uid, ids, context=None):
         '''
         Override the method to display a message to attach
         a certificate of donation
