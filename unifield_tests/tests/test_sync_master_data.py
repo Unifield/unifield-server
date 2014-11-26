@@ -5,6 +5,10 @@ from unifield_test import UnifieldTest
 
 import time
 
+# set it to True to simulate a sync P1 sync down failure for any test
+#TEST_THE_TEST = True
+TEST_THE_TEST = False
+
 
 def dfv(vals, include=None, exclude=[]):
     """
@@ -93,16 +97,17 @@ class MasterDataSyncTest(UnifieldTest):
 
             self.assertNotEquals(
                 count, 0,
-                "'UF' '%s' entry not found on %s" % (model, db.colored_name, )
+                "'UF' '%s' entry not found on %s :: %s" % (model,
+                    db.colored_name, domain, )
             )
             self.assertEqual(
                 count, 1,
-                "There is more than 1 'UF' '%s' entry on %s :: %s" % (model,
-                    db.colored_name, count, )
+                "There is more than 1 'UF' '%s' entry on %s :: %s :: %s" % (
+                    model, db.colored_name, count, domain, )
             )
 
     def _create_data_record(self, db, model_name, vals, domain_include=None,
-        domain_exclude=[], check_batch=None):
+        domain_exclude=[], check_batch=None, tear_down_log=True):
         """
         for a model create a record in hq using vals and create domain
         :param db: db
@@ -115,6 +120,9 @@ class MasterDataSyncTest(UnifieldTest):
         :param check_batch: [(model, domain), ] if provided auto check batch is
             generated here (see _sync_check_data_set_on_db())
         :type check_batch: list
+        :param tear_down_log: True to log 'generated record is to delete in
+            tearDown()' (default True)
+        :type tear_down_nolog: bool
         :return: (id, domain)
         :rtype: tuple
         """
@@ -132,7 +140,8 @@ class MasterDataSyncTest(UnifieldTest):
             id = hq_obj.search(domain)[0]
         else:
             id = hq_obj.create(vals)
-        self._set_ids(self.hq1, model_name, id)
+        if tear_down_log:
+            self._set_ids(self.hq1, model_name, id)
         if check_batch is not None:
             check_batch.append((model_name, domain))
         return (id, domain, )
@@ -159,7 +168,10 @@ class MasterDataSyncTest(UnifieldTest):
             self._sync_check_data_set_on_db(self.c1, check_batch)
 
         # p1 sync down and check check (from hq or c1 sync down)
-        self.synchronize(self.p1)
+        global TEST_THE_TEST
+        if not TEST_THE_TEST:  # volontary miss the sync to test the test
+            self.synchronize(self.p1)
+        # will volontary fail if above P1 sync not done
         self._sync_check_data_set_on_db(self.p1, check_batch)
 
     def tearDown(self):
@@ -212,7 +224,7 @@ class MasterDataSyncTest(UnifieldTest):
         vals = {
             'name': 'Unifield Uom Category Test'
         }
-        categ_id, uom_categ_domain = self._create_data_record(self.hq1,
+        categ_id, domain = self._create_data_record(self.hq1,
             'product.uom.categ', vals, check_batch=check_batch)
 
         # uom
@@ -224,7 +236,7 @@ class MasterDataSyncTest(UnifieldTest):
             'rounding': 1.,
             'uom_type': 'reference',
         }
-        id, uom_domain = self._create_data_record(self.hq1, 'product.uom', vals,
+        self._create_data_record(self.hq1, 'product.uom', vals,
             domain_include=['name', 'uom_type', ], check_batch=check_batch)
 
         self._sync_down_check(check_batch)
@@ -241,8 +253,8 @@ class MasterDataSyncTest(UnifieldTest):
         vals = {
             'name': 'Unifield Nomenclature Test',
         }
-        id, domain = self._create_data_record(self.hq1,
-            'product.nomenclature', vals, check_batch=check_batch)
+        self._create_data_record(self.hq1, 'product.nomenclature', vals,
+            check_batch=check_batch)
 
         self._sync_down_check(check_batch)
 
@@ -259,8 +271,8 @@ class MasterDataSyncTest(UnifieldTest):
             'name': 'Unifield Product Category Test',
             'type': 'normal',
         }
-        id, domain = self._create_data_record(self.hq1,
-            'product.category', vals, check_batch=check_batch)
+        self._create_data_record(self.hq1, 'product.category', vals,
+            check_batch=check_batch)
 
         self._sync_down_check(check_batch)
 
@@ -279,15 +291,56 @@ class MasterDataSyncTest(UnifieldTest):
             'code': 'UF',
             'description': 'Unifield Justification Code Test',
         }
-        id, just_code_domain = self._create_data_record(self.hq1,
-            'product.justification.code', vals, check_batch=check_batch)
+        self._create_data_record(self.hq1, 'product.justification.code', vals,
+            check_batch=check_batch)
 
         # product asset type
         vals = {
             'name': 'Unifield Asset Type Test',
         }
-        id, asset_type_domain = self._create_data_record(self.hq1,
-            'product.asset.type', vals, check_batch=check_batch)
+        self._create_data_record(self.hq1, 'product.asset.type', vals,
+            check_batch=check_batch)
+
+        self._sync_down_check(check_batch)
+
+    def test_s1_tec_26(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_26
+
+        - create a standard product list in hq
+        - synchronize down from hq to coordo and project and check
+        """
+        check_batch = []
+
+        # product list
+        vals = {
+            'name': 'Unifield Product List Test',
+            'ref': 'UF PLIST',
+            'type': 'list',
+            'standard_list_ok': True,  # do not miss it for sync test
+        }
+        plist_id, plist_domain = self._create_data_record(self.hq1,
+            'product.list', vals, check_batch=check_batch)
+
+        # product list line
+        product_test_code = 'ADAPCART02-'
+        domain = [('default_code', '=', product_test_code)]
+        product_ids = self.hq1.get('product.product').search(domain)
+        if not product_ids:
+            msg = "can not found test product '%s'" % (product_test_code, )
+            raise MasterDataSyncTestException(msg)
+
+        # unique comment per list id/lineid/product code (for search)
+        comment = "%d/%d/%s UF Product List Line Test" % (plist_id,
+            product_ids[0], product_test_code, )
+        vals = {
+            'name': product_ids[0],
+            'list_id': plist_id,
+            'comment': comment,
+        }
+        self._create_data_record(self.hq1, 'product.list.line', vals,
+            domain_include=['comment'], check_batch=check_batch,
+            tear_down_log=False)  # will be deleted by product list (header)
 
         self._sync_down_check(check_batch)
 
