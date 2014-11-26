@@ -107,7 +107,7 @@ class MasterDataSyncTest(UnifieldTest):
             )
 
     def _create_data_record(self, db, model_name, vals, domain_include=None,
-        domain_exclude=[], check_batch=None, tear_down_log=True):
+        domain_exclude=[], check_batch=None, teardown_log=True):
         """
         for a model create a record in hq using vals and create domain
         :param db: db
@@ -120,9 +120,9 @@ class MasterDataSyncTest(UnifieldTest):
         :param check_batch: [(model, domain), ] if provided auto check batch is
             generated here (see _sync_check_data_set_on_db())
         :type check_batch: list
-        :param tear_down_log: True to log 'generated record is to delete in
+        :param teardown_log: True to log 'generated record is to delete in
             tearDown()' (default True)
-        :type tear_down_nolog: bool
+        :type teardown_log: bool
         :return: (id, domain)
         :rtype: tuple
         """
@@ -140,8 +140,8 @@ class MasterDataSyncTest(UnifieldTest):
             id = hq_obj.search(domain)[0]
         else:
             id = hq_obj.create(vals)
-        if tear_down_log:
-            self._set_ids(self.hq1, model_name, id)
+        if teardown_log:
+            self._set_ids(db, model_name, id)
         if check_batch is not None:
             check_batch.append((model_name, domain))
         return (id, domain, )
@@ -320,7 +320,8 @@ class MasterDataSyncTest(UnifieldTest):
             'standard_list_ok': True,  # do not miss it for sync test
         }
         plist_id, plist_domain = self._create_data_record(self.hq1,
-            'product.list', vals, check_batch=check_batch)
+            'product.list', vals, domain_exclude=['standard_list_ok'],
+            check_batch=check_batch)
 
         # product list line
         product_test_code = 'ADAPCART02-'
@@ -340,7 +341,7 @@ class MasterDataSyncTest(UnifieldTest):
         }
         self._create_data_record(self.hq1, 'product.list.line', vals,
             domain_include=['comment'], check_batch=check_batch,
-            tear_down_log=False)  # will be deleted by product list (header)
+            teardown_log=False)  # will be deleted by product list (header)
 
         self._sync_down_check(check_batch)
 
