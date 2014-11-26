@@ -57,7 +57,7 @@ class MasterDataSyncTestException(Exception):
 class MasterDataSyncTest(UnifieldTest):
     def setUp(self):
         # meta of generated test records
-        self._ids = {}  # {'db_name': {'model': ids, }, }
+        self._ids = {}  # {'db_name': [(model, ids), ], }
 
     def _get_db_from_name(self, db_name):
         if self.hq1.db_name == db_name:
@@ -79,15 +79,8 @@ class MasterDataSyncTest(UnifieldTest):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self._ids.setdefault(db.db_name, {})[model_name] = ids
-
-    def _get_ids(self, db, model_name):
-        """
-        get logged added data test records (to delete in tearDown)
-        :type db: object
-        :type model_name: str
-        """
-        return self._ids.get(db.db_name, {}).get(model_name, False)
+        # insert in log order to delete from the last (cascade dependancies)
+        self._ids.setdefault(db.db_name, []).insert(0, (model_name, ids))
 
     def _unlink_db_generated_ids(self, db_name):
         """
@@ -95,14 +88,13 @@ class MasterDataSyncTest(UnifieldTest):
         :type db_name: target db name
         """
         db = self._get_db_from_name(db_name)
-        for model_name in self._ids.get(db_name, {}):
-            ids = self._get_ids(db, model_name)
+        for model_name, ids in self._ids.get(db_name, []):
             if ids:
                 db.get(model_name).unlink(ids)
 
     def _unlink_all_generated_ids(self):
         # delete auto generated test records
-        for db_name in self._ids:  # {'db_name': {'model': ids, }, }
+        for db_name in self._ids:  # {'db_name': [(model, ids), ], }
             self._unlink_db_generated_ids(db_name)
         self._ids = {}
 
@@ -169,7 +161,9 @@ class MasterDataSyncTest(UnifieldTest):
         if teardown_log:
             self._set_ids(db, model_name, id)
         if check_batch is not None:
-            check_batch.append((model_name, domain))
+            # insert to keep record cascade dependencies when auto deleting
+            # tests records
+            check_batch.insert(0, (model_name, domain))
         return (id, domain, )
 
     def _sync_down_check(self, check_batch, db=None):
@@ -399,6 +393,18 @@ class MasterDataSyncTest(UnifieldTest):
             domain_include=['default_code', 'name', ], check_batch=check_batch)
 
         self._sync_down_check(check_batch)
+
+    def test_s1_tec_45(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_45
+
+        - create a supplier catalogue and version in coord
+        - check sync in proj (unless ESC)
+
+        2 cases:
+        1) 1 catalogue not ESC should sync in coord
+        2) 1 catalogue ESC should NOT sync in coord
+        """
 
 def get_test_class():
     return MasterDataSyncTest
