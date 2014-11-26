@@ -90,9 +90,6 @@ class MasterDataSyncTest(UnifieldTest):
             count = len(ids) if ids else 0
             if ids:
                 self._set_ids(db, model, ids)  # log ids to remove in tearDown
-                count = len(ids)
-            else:
-                count = 0
 
             self.assertNotEquals(
                 count, 0,
