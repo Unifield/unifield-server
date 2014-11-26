@@ -78,7 +78,7 @@ class MasterDataSyncTest(UnifieldTest):
             if ids:
                 db.get(model_name).unlink(ids)
 
-    def _check_data_set_on_db(self, db, check_batch):
+    def _sync_check_data_set_on_db(self, db, check_batch):
         """
         check in db that for model/domain entries there is one data set entry
         :type db: object
@@ -137,7 +137,7 @@ class MasterDataSyncTest(UnifieldTest):
     def _sync_down_check(self, check_batch, db=None):
         """
         from hq sync down check batch to c1 then p1
-        :param check_batch: see _check_data_set_on_db() check_batch param
+        :param check_batch: see _sync_check_data_set_on_db() check_batch param
         :type check_batch: list
         :param db: db
         :type db: object
@@ -153,15 +153,21 @@ class MasterDataSyncTest(UnifieldTest):
         if are_same_db(self.hq1, db):
             # c1 sync down and check check
             self.synchronize(self.c1)
-            self._check_data_set_on_db(self.c1, check_batch)
+            self._sync_check_data_set_on_db(self.c1, check_batch)
 
         # p1 sync down and check check (from hq or c1 sync down)
         self.synchronize(self.p1)
-        self._check_data_set_on_db(self.p1, check_batch)
+        self._sync_sync_check_data_set_on_db(self.p1, check_batch)
 
     def tearDown(self):
         self._unlink_model_ids('res.country.state')
         self._unlink_model_ids('res.country')
+        self._unlink_model_ids('product.uom.categ')
+        self._unlink_model_ids('product.uom')
+        self._unlink_model_ids('product.nomenclature')
+        self._unlink_model_ids('product.category')
+        self._unlink_model_ids('product.justification.code')
+        self._unlink_model_ids('product.asset.type')
 
     def test_s1_tec_21(self):
         """
