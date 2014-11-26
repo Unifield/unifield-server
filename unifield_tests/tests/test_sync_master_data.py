@@ -118,7 +118,8 @@ class MasterDataSyncTest(UnifieldTest):
             if ids:
                 self._set_ids(db, model, ids)  # log ids to remove in tearDown
             else:
-                self._unlink_all_generated_ids()  # assert will be raised
+                # assert will be raised so delete test records
+                self._unlink_all_generated_ids()
 
             self.assertNotEquals(
                 count, 0,
@@ -378,7 +379,7 @@ class MasterDataSyncTest(UnifieldTest):
         - so here we create it from HQ
         - synchronize down from hq to coordo and project and check
         """
-        def get_pnomanclature_id(nomen_name):
+        def get_pnomenclature_id(nomen_name):
             """get product nomenclature id from name"""
             return get_id_from_name(self.hq1, 'product.nomenclature',
                 nomen_name)
@@ -389,10 +390,10 @@ class MasterDataSyncTest(UnifieldTest):
         vals = {
             'default_code': 'UF_PRODUCT_TEST',
             'name': 'Unifield Product Test',
-            'nomen_manda_0': get_pnomanclature_id('LOG'),
-            'nomen_manda_1': get_pnomanclature_id('K - Log Kits'),
-            'nomen_manda_2': get_pnomanclature_id('KCAM - Camps Kits'),
-            'nomen_manda_3': get_pnomanclature_id('MISC - Miscellaneous'),
+            'nomen_manda_0': get_pnomenclature_id('LOG'),
+            'nomen_manda_1': get_pnomenclature_id('K - Log Kits'),
+            'nomen_manda_2': get_pnomenclature_id('KCAM - Camps Kits'),
+            'nomen_manda_3': get_pnomenclature_id('MISC - Miscellaneous'),
         }
         self._create_data_record(self.hq1, 'product.product', vals,
             domain_include=['default_code', 'name', ], check_batch=check_batch)
