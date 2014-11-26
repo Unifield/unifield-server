@@ -36,6 +36,7 @@ class MasterDataSyncTestException(Exception):
 
 class MasterDataSyncTest(UnifieldTest):
     def setUp(self):
+        # meta of generated test records
         self._ids = {}  # {'db_name': {'model': ids, }, }
 
     def _get_db_from_name(self, db_name):
@@ -67,13 +68,13 @@ class MasterDataSyncTest(UnifieldTest):
         """
         return self._ids.get(db.db_name, {}).get(model_name, False)
 
-    def _unlink_model_ids(self, model_name):
+    def _unlink_generated_ids(self, db_name):
         """
-        unlink in h1/c1/p1 for model logged added data test records
-        :type model_name: str
+        unlink all test data generated records in target db
+        :type db_name: target db name
         """
-        for db_name in self._ids:
-            db = self._get_db_from_name(db_name)
+        db = self._get_db_from_name(db_name)
+        for model_name in self._ids.get(db_name, {}):
             ids = self._get_ids(db, model_name)
             if ids:
                 db.get(model_name).unlink(ids)
@@ -162,17 +163,12 @@ class MasterDataSyncTest(UnifieldTest):
 
         # p1 sync down and check check (from hq or c1 sync down)
         self.synchronize(self.p1)
-        self._sync_sync_check_data_set_on_db(self.p1, check_batch)
+        self._sync_check_data_set_on_db(self.p1, check_batch)
 
     def tearDown(self):
-        self._unlink_model_ids('res.country.state')
-        self._unlink_model_ids('res.country')
-        self._unlink_model_ids('product.uom.categ')
-        self._unlink_model_ids('product.uom')
-        self._unlink_model_ids('product.nomenclature')
-        self._unlink_model_ids('product.category')
-        self._unlink_model_ids('product.justification.code')
-        self._unlink_model_ids('product.asset.type')
+        # delete auto generated test records
+        for db_name in self._ids:  # {'db_name': {'model': ids, }, }
+            self._unlink_generated_ids(db_name)
 
     def test_s1_tec_21(self):
         """
@@ -279,7 +275,6 @@ class MasterDataSyncTest(UnifieldTest):
         - create a product asset type in hq
         - synchronize down from hq to coordo and project and check
         """
-        # TODO remove
         check_batch = []
 
         # product justication code
