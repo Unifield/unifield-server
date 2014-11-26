@@ -34,6 +34,22 @@ def dfv(vals, include=None, exclude=[]):
 def are_same_db(db1, db2):
     return db1.db_name == db2.db_name or False
 
+def get_id_from_name(db, model_name, res_name, name_field='name'):
+    """
+    :param db: db
+    :param model_name: model name to search in
+    :param res_name: name value to search in
+    :param name_field: name field name (field for criteria)
+    :return: id
+    :rtype: int/long
+    """
+    ids = db.get(model_name).search([(name_field, '=', res_name)])
+    if ids:
+        return ids[0]
+    msg = "'%s' not found in '%s' :: %s" % (res_name, model_name,
+        db.colored_name, )
+    raise MasterDataSyncTestException(msg)
+
 class MasterDataSyncTestException(Exception):
     pass
 
@@ -50,7 +66,8 @@ class MasterDataSyncTest(UnifieldTest):
             return self.c1
         elif self.p1.db_name == db_name:
             return self.p1
-        raise MasterDataSyncTestException('database not found')
+        raise MasterDataSyncTestException("'%s' database not found" % (
+            db_name, ))
 
     def _set_ids(self, db, model_name, ids):
         """
@@ -72,7 +89,7 @@ class MasterDataSyncTest(UnifieldTest):
         """
         return self._ids.get(db.db_name, {}).get(model_name, False)
 
-    def _unlink_generated_ids(self, db_name):
+    def _unlink_db_generated_ids(self, db_name):
         """
         unlink all test data generated records in target db
         :type db_name: target db name
@@ -82,6 +99,12 @@ class MasterDataSyncTest(UnifieldTest):
             ids = self._get_ids(db, model_name)
             if ids:
                 db.get(model_name).unlink(ids)
+
+    def _unlink_all_generated_ids(self):
+        # delete auto generated test records
+        for db_name in self._ids:  # {'db_name': {'model': ids, }, }
+            self._unlink_db_generated_ids(db_name)
+        self._ids = {}
 
     def _sync_check_data_set_on_db(self, db, check_batch):
         """
@@ -94,6 +117,8 @@ class MasterDataSyncTest(UnifieldTest):
             count = len(ids) if ids else 0
             if ids:
                 self._set_ids(db, model, ids)  # log ids to remove in tearDown
+            else:
+                self._unlink_all_generated_ids()  # assert will be raised
 
             self.assertNotEquals(
                 count, 0,
@@ -176,8 +201,7 @@ class MasterDataSyncTest(UnifieldTest):
 
     def tearDown(self):
         # delete auto generated test records
-        for db_name in self._ids:  # {'db_name': {'model': ids, }, }
-            self._unlink_generated_ids(db_name)
+        self._unlink_all_generated_ids()
 
     def test_s1_tec_21(self):
         """
@@ -320,7 +344,7 @@ class MasterDataSyncTest(UnifieldTest):
             'standard_list_ok': True,  # do not miss it for sync test
         }
         plist_id, plist_domain = self._create_data_record(self.hq1,
-            'product.list', vals, domain_exclude=['standard_list_ok'],
+            'product.list', vals, domain_exclude=['standard_list_ok', ],
             check_batch=check_batch)
 
         # product list line
@@ -328,7 +352,8 @@ class MasterDataSyncTest(UnifieldTest):
         domain = [('default_code', '=', product_test_code)]
         product_ids = self.hq1.get('product.product').search(domain)
         if not product_ids:
-            msg = "can not found test product '%s'" % (product_test_code, )
+            msg = "can not found test product '%s' :: %s" % (product_test_code,
+                self.hq1.colored_name, )
             raise MasterDataSyncTestException(msg)
 
         # unique comment per list id/lineid/product code (for search)
@@ -340,8 +365,37 @@ class MasterDataSyncTest(UnifieldTest):
             'comment': comment,
         }
         self._create_data_record(self.hq1, 'product.list.line', vals,
-            domain_include=['comment'], check_batch=check_batch,
+            domain_include=['comment', ], check_batch=check_batch,
             teardown_log=False)  # will be deleted by product list (header)
+
+        self._sync_down_check(check_batch)
+
+    def test_s1_tec_27(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_27
+
+        - create an OC product (OC Product (Creator = ITC, ESC or HQ))
+        - so here we create it from HQ
+        - synchronize down from hq to coordo and project and check
+        """
+        def get_pnomanclature_id(nomen_name):
+            """get product nomenclature id from name"""
+            return get_id_from_name(self.hq1, 'product.nomenclature',
+                nomen_name)
+
+        check_batch = []
+
+        # product list
+        vals = {
+            'default_code': 'UF_PRODUCT_TEST',
+            'name': 'Unifield Product Test',
+            'nomen_manda_0': get_pnomanclature_id('LOG'),
+            'nomen_manda_1': get_pnomanclature_id('K - Log Kits'),
+            'nomen_manda_2': get_pnomanclature_id('KCAM - Camps Kits'),
+            'nomen_manda_3': get_pnomanclature_id('MISC - Miscellaneous'),
+        }
+        self._create_data_record(self.hq1, 'product.product', vals,
+            domain_include=['default_code', 'name', ], check_batch=check_batch)
 
         self._sync_down_check(check_batch)
 
