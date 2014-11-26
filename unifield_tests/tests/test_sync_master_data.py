@@ -37,7 +37,7 @@ def are_same_db(db1, db2):
     return db1.db_name == db2.db_name or False
 
 def date_now_field_val():
-    return time.strftime("%Y-%d-%M")
+    return time.strftime("%Y-%m-%d")
 
 
 class MasterDataSyncTestException(Exception):
@@ -99,7 +99,9 @@ class MasterDataSyncTest(UnifieldTest):
     def _record_create(self, db, model_name, vals, domain_include=None,
         domain_exclude=[], check_batch=None, teardown_log=True):
         """
-        for a model create a record in hq using vals and create domain
+        for a model create a record in hq using vals
+        do never use in domain fields that are changed by sync (that are not
+        const values sync speaking)
         :param db: db
         :type db: object
         :type model_name: str
@@ -143,6 +145,8 @@ class MasterDataSyncTest(UnifieldTest):
     def _sync_check_data_set_on_db(self, db, check_batch):
         """
         check in db that for model/domain entries there is one data set entry
+        do never use in domain fields that are changed by sync (that are not
+        const values sync speaking)
         :type db: object
         :param check_batch: [(model, domain), ]
         """
@@ -415,18 +419,31 @@ class MasterDataSyncTest(UnifieldTest):
         1) 1 catalogue not ESC should sync in proj
         2) 1 catalogue ESC should NOT sync in proj
         """
-        comp_ccy = self.c1.browse('res.users', 1).company_id.currency_id.id
+        comp_ccy_id = self.c1.browse('res.users', 1).company_id.currency_id.id
 
         product_id = self._data_get_id_from_name(self.c1, 'product.product',
             PRODUCT_TEST_CODE, name_field='default_code')
 
         # 1) Local market supplier case: not ESC should sync in coord
+        check_batch = []
+
         partner_id = self._data_get_id_from_name(self.c1, 'res.partner',
             'Local Market')
         vals = {
             'name': 'Unifield Supplier Catalog TEST',
-            'from': date_now_field_val(),
+            'partner_id': partner_id,
+            'period_from': date_now_field_val(),
+            'currency_id': comp_ccy_id,
         }
+        self._record_create(self.c1, 'supplier.catalogue', vals,
+            domain_include=['name', 'from', ], check_batch=check_batch)
+
+        # TODO catalog line
+
+        self._sync_down_check(check_batch, db=self.c1)
+
+        # 2) ESC supplier case: should NOT sync in proj
+        # TODO
 
 def get_test_class():
     return MasterDataSyncTest
