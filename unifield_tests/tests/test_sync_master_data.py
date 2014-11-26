@@ -104,7 +104,7 @@ class MasterDataSyncTest(UnifieldTest):
             )
 
     def _create_data_record(self, db, model_name, vals, domain_include=None,
-        domain_exclude=[]):
+        domain_exclude=[], check_batch=None):
         """
         for a model create a record in hq using vals and create domain
         :param db: db
@@ -114,6 +114,9 @@ class MasterDataSyncTest(UnifieldTest):
         :type vals: dict
         :param domain_include: see dfv() include param
         :param domain_exclude: ee dfv() exclude param
+        :param check_batch: [(model, domain), ] if provided auto check batch is
+            generated here (see _sync_check_data_set_on_db())
+        :type check_batch: list
         :return: (id, domain)
         :rtype: tuple
         """
@@ -132,6 +135,8 @@ class MasterDataSyncTest(UnifieldTest):
         else:
             id = hq_obj.create(vals)
         self._set_ids(self.hq1, model_name, id)
+        if check_batch is not None:
+            check_batch.append((model_name, domain))
         return (id, domain, )
 
     def _sync_down_check(self, check_batch, db=None):
@@ -177,13 +182,15 @@ class MasterDataSyncTest(UnifieldTest):
         - synchronize down from hq to coordo and project
         - check if the country and the country state have been well sync down
         """
+        check_batch = []
+
         # country
         vals = {
             'code': 'UF',
             'name': 'Unifield Country Test',
         }
         country_id, country_domain = self._create_data_record(self.hq1,
-            'res.country', vals)
+            'res.country', vals, check_batch=check_batch)
 
         # country state
         hq_state_obj = self.hq1.get('res.country.state')
@@ -193,12 +200,9 @@ class MasterDataSyncTest(UnifieldTest):
             'country_id': country_id,
         }
         id, state_domain = self._create_data_record(self.hq1,
-            'res.country.state', vals, domain_exclude=['country_id', ])
+            'res.country.state', vals, domain_exclude=['country_id', ],
+            check_batch=check_batch)
 
-        check_batch = [
-            ('res.country', country_domain),
-            ('res.country.state', state_domain),
-        ]
         self._sync_down_check(check_batch)
 
     def test_s1_tec_22(self):
@@ -209,12 +213,14 @@ class MasterDataSyncTest(UnifieldTest):
         - synchronize down from hq to coordo and project
         - check if the uom categ and the uom have been well sync down
         """
+        check_batch = []
+
         # uom category
         vals = {
             'name': 'Unifield Uom Category Test'
         }
         categ_id, uom_categ_domain = self._create_data_record(self.hq1,
-            'product.uom.categ', vals)
+            'product.uom.categ', vals, check_batch=check_batch)
 
         # uom
         vals = {
@@ -226,12 +232,8 @@ class MasterDataSyncTest(UnifieldTest):
             'uom_type': 'reference',
         }
         id, uom_domain = self._create_data_record(self.hq1, 'product.uom', vals,
-            domain_include=['name', 'uom_type', ])
+            domain_include=['name', 'uom_type', ], check_batch=check_batch)
 
-        check_batch = [
-            ('product.uom.categ', uom_categ_domain),
-            ('product.uom', uom_domain),
-        ]
         self._sync_down_check(check_batch)
 
     def test_s1_tec_23(self):
@@ -241,15 +243,14 @@ class MasterDataSyncTest(UnifieldTest):
         - create a product nomenclature in hq
         - synchronize down from hq to coordo and project and check
         """
+        check_batch = []
+
         vals = {
             'name': 'Unifield Nomenclature Test',
         }
         id, domain = self._create_data_record(self.hq1,
-            'product.nomenclature', vals)
+            'product.nomenclature', vals, check_batch=check_batch)
 
-        check_batch = [
-            ('product.nomenclature', domain),
-        ]
         self._sync_down_check(check_batch)
 
     def test_s1_tec_24(self):
@@ -259,16 +260,15 @@ class MasterDataSyncTest(UnifieldTest):
         - create a product category in hq
         - synchronize down from hq to coordo and project and check
         """
+        check_batch = []
+
         vals = {
             'name': 'Unifield Product Category Test',
             'type': 'normal',
         }
         id, domain = self._create_data_record(self.hq1,
-            'product.category', vals)
+            'product.category', vals, check_batch=check_batch)
 
-        check_batch = [
-            ('product.category', domain),
-        ]
         self._sync_down_check(check_batch)
 
     def test_s1_tec_25(self):
@@ -279,25 +279,24 @@ class MasterDataSyncTest(UnifieldTest):
         - create a product asset type in hq
         - synchronize down from hq to coordo and project and check
         """
+        # TODO remove
+        check_batch = []
+
         # product justication code
         vals = {
             'code': 'UF',
             'description': 'Unifield Justification Code Test',
         }
         id, just_code_domain = self._create_data_record(self.hq1,
-            'product.justification.code', vals)
+            'product.justification.code', vals, check_batch=check_batch)
 
         # product asset type
         vals = {
             'name': 'Unifield Asset Type Test',
         }
         id, asset_type_domain = self._create_data_record(self.hq1,
-            'product.asset.type', vals)
+            'product.asset.type', vals, check_batch=check_batch)
 
-        check_batch = [
-            ('product.justification.code', just_code_domain),
-            ('product.asset.type', asset_type_domain),
-        ]
         self._sync_down_check(check_batch)
 
 def get_test_class():
