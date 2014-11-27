@@ -13,7 +13,7 @@ TEST_THE_TEST = False
 PRODUCT_TEST_CODE = 'ADAPCART02-'
 
 
-def dfv(vals, include=None, exclude=[]):
+def dfv(vals, include=None, exclude=None):
     """
     domain from vals (all vals with implicite &)
 
@@ -32,6 +32,8 @@ def dfv(vals, include=None, exclude=[]):
         return [(x[0], '=', x[1]) for x in vals.iteritems() if x[0] in include]
     if isinstance(exclude, str):
         exclude = [exclude]
+    if exclude is None:
+        exclude = []
     return [(x[0], '=', x[1]) for x in vals.iteritems() if x[0] not in exclude]
 
 def are_same_db(db1, db2):
@@ -104,7 +106,8 @@ class MasterDataSyncTest(UnifieldTest):
         self._ids = {}
 
     def _record_create(self, db, model_name, vals, domain_include=None,
-        domain_exclude=[], check_batch=None, teardown_log=True):
+        domain_exclude=None, domain_extra=None, check_batch=None,
+        teardown_log=True):
         """
         for a model create a record in hq using vals
         do never use in domain fields that are changed by sync (that are not
@@ -116,6 +119,8 @@ class MasterDataSyncTest(UnifieldTest):
         :type vals: dict
         :param domain_include: see dfv() include param
         :param domain_exclude: ee dfv() exclude param
+        :param domain_extra: an additional domain to add to the build domain
+        :param domain_extra: list
         :param check_batch: [(model, domain), ] if provided auto check batch is
             generated here (see _sync_check_data_set_on_db())
         :type check_batch: list
@@ -133,22 +138,24 @@ class MasterDataSyncTest(UnifieldTest):
         if domain_include:
             domain_type = 'domain_include'
             map(check_field_in_vals, domain_include)
-        if domain_exclude:
+        if domain_exclude is not None:
             domain_type = 'domain_exclude'
             map(check_field_in_vals, domain_exclude)
 
         # uom category
-        hq_obj = db.get(model_name)
+        model_obj = db.get(model_name)
         domain = dfv(vals, include=domain_include, exclude=domain_exclude)
-        if hq_obj.search(domain):
-            id = hq_obj.search(domain)[0]
+        if model_obj.search(domain):
+            id = model_obj.search(domain)[0]
         else:
-            id = hq_obj.create(vals)
+            id = model_obj.create(vals)
         if teardown_log:
             self._record_set_ids(db, model_name, id)
         if check_batch is not None:
             # insert to keep record cascade dependencies when auto deleting
             # tests records
+            if domain_extra is not None:
+                domain += domain_extra
             check_batch.insert(0, (model_name, domain))
         return (id, domain, )
 
@@ -478,23 +485,21 @@ class MasterDataSyncTest(UnifieldTest):
         1) 1 catalogue not ESC should sync in proj
         2) 1 catalogue ESC should NOT sync in proj
         """
-        def create_catalogue_line(db, catalogue_id, partner_id, comment_prefix,
-            check_batch=None):
-            vals = {
+        def create_catalogue_line(comment_prefix, line_check_batch):
+            line_vals = {
                 'catalogue_id': catalogue_id,
-                'partner_id': partner_id,
                 'line_number': 1,
                 'product_id': product_id,
-                'line_uom_id': self._data_get_id_from_name(db, 'product.uom',
-                    'PCE'),
+                'line_uom_id': self._data_get_id_from_name(self.c1,
+                    'product.uom', 'PCE'),
                 'min_qty': 10.,
                 'unit_price': 1.,
-                'comment': "%d/%s %s Unifield Supplier Catalog Line TEST" % (
-                    catalogue_id, partner_id, comment_prefix, ),
+                'comment': "%d/1 %s Unifield Supplier Catalog Line TEST" % (
+                    catalogue_id, comment_prefix, ),
             }
-            return self._record_create(db, 'supplier.catalogue.line', vals,
-                domain_include=['line_number', 'comment', ],
-                check_batch=check_batch)[0]
+            return self._record_create(self.c1, 'supplier.catalogue.line',
+                line_vals, domain_include=['line_number', 'comment', ],
+                check_batch=line_check_batch)[0]
 
         comp_ccy_id = self.c1.browse('res.users', 1).company_id.currency_id.id
 
@@ -517,16 +522,16 @@ class MasterDataSyncTest(UnifieldTest):
         }
         catalogue_id = self._record_create(self.c1, 'supplier.catalogue', vals,
             domain_include=['name', 'state', 'period_from', ],
+            domain_extra=[('active', '!=', True)],  # synced in P1 as not active (by sync rule)
             check_batch=check_batch)[0]
 
         # create catalog line
-        """create_catalogue_line(self.c1, catalogue_id, partner_id, 'NO ESC',
-            check_batch=check_batch)"""
+        # FIXME: RPCError: 'NoneType' object has no attribute 'copy'
+        #create_catalogue_line('NO ESC', check_batch)
 
         self._sync_down_check(check_batch, db=self.c1)
 
         # 2) 1 catalogue ESC should NOT sync in proj
-        """
         check_batch = []
 
         # create ESC partner (from 'Local Market' market copy)
@@ -554,12 +559,11 @@ class MasterDataSyncTest(UnifieldTest):
             check_batch=check_batch)
 
         # create catalog line
-        create_catalogue_line(self.c1, catalogue_id, partner_id, 'ESC',
-            check_batch=check_batch)
+        # FIXME: RPCError: 'NoneType' object has no attribute 'copy'
+        #create_catalogue_line('ESC', check_batch)
 
         # inverse=True: should not be sync down check!
         self._sync_down_check(check_batch, db=self.c1, inverse=True)
-        """
 
 def get_test_class():
     return MasterDataSyncTest
