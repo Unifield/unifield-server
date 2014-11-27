@@ -156,7 +156,7 @@
 					<field name="min_date" string="Expected Pick Date" />
                     <field name="state"/>
                     <field name="line_state" />
-					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add"/>
+					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" context="{'from_button': True}"/>
 					<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
 				</tree>
 			</field>
@@ -237,9 +237,9 @@
 									<field name="date" string="Actual Pick Date" />
 									<field name="state"/>
 									<field name="fake_state" invisible="1"/>
-								    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
-                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
+								    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" context="{'from_button': True}" />
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply" context="{'from_button': True}" />
 
 									<field name="lot_check" />
 									<field name="exp_check" />
@@ -325,8 +325,8 @@
 									<label string="" colspan="4"/>
 									<field name="state"/>
 									<group col="4" colspan="2">
-										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
+										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" context="{'from_button': True}" />
 									</group>
 								</form>
 							</field>
@@ -340,11 +340,11 @@
                                 </group>
                                 <field name="has_draft_moves" invisible="1" />
                                 <button name="action_confirm_moves" states="draft" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': [('has_draft_moves', '=', False)]}"/>
-								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
-								<button name="convert_to_standard" states="draft,assigned" string="Convert to Simple Out" type="object" icon="gtk-convert" />
-								<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available" />
-								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-								<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
+								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
+								<button name="convert_to_standard" states="draft,assigned" string="Convert to Simple Out" type="object" icon="gtk-convert" context="{'from_button': True}" />
+								<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available" context="{'from_button': True}" />
+								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+								<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply" />
 								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
 							</group>
 						</page>
@@ -687,8 +687,8 @@
 									<label string="" colspan="4"/>
 									<field name="state"/>
 									<group col="4" colspan="2">
-										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
+										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
+										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" />
 									</group>
 								</form>
 							</field>
@@ -697,7 +697,7 @@
 								<field name="flow_type" />
 								<button name="ppl_return" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo"/>
 								<button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
-								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
 								<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
 							</group>

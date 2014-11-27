@@ -2569,6 +2569,7 @@ class stock_picking(osv.osv):
 
         return pick_moves
 
+    @check_cp_rw
     def convert_to_standard(self, cr, uid, ids, context=None):
         '''
         check of back orders exists, if not, convert to standard: change subtype to standard, and trigger workflow
@@ -2739,6 +2740,7 @@ class stock_picking(osv.osv):
     def _hook_delete_rw_out_sync_messages(self, cr, uid, ids, context=None, out=True):
         return True
 
+    @check_cp_rw
     def convert_to_pick(self, cr, uid, ids, context=None):
         '''
         Change simple OUTs to draft Picking Tickets

@@ -33,6 +33,7 @@ from tools.translate import _
 
 import decimal_precision as dp
 from msf_partner import PARTNER_TYPE
+from order_types.stock import check_cp_rw
 
 
 #----------------------------------------------------------
@@ -546,6 +547,18 @@ class stock_picking(osv.osv):
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
 
         return True
+
+    @check_cp_rw
+    def force_assign(self, cr, uid, ids, context=None):
+        return super(stock_picking, self).force_assign(cr, uid, ids)
+
+    @check_cp_rw
+    def action_assign(self, cr, uid, ids, context=None):
+        return super(stock_picking, self).action_assign(cr, uid, ids, context=context)
+
+    @check_cp_rw
+    def cancel_assign(self, cr, uid, ids):
+        return super(stock_picking, self).cancel_assign(cr, uid, ids)
 
     def call_cancel_wizard(self, cr, uid, ids, context=None):
         '''
@@ -1306,6 +1319,7 @@ class stock_move(osv.osv):
 
         return self.unlink(cr, uid, ids, context=context)
 
+    @check_cp_rw
     def force_assign(self, cr, uid, ids, context=None):
         product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
 
@@ -1757,6 +1771,7 @@ class stock_move(osv.osv):
                 self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
         return True
 
+    @check_cp_rw
     def cancel_assign(self, cr, uid, ids, context=None):
         res = super(stock_move, self).cancel_assign(cr, uid, ids, context=context)
         res = []
