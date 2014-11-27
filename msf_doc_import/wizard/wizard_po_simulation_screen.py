@@ -48,6 +48,10 @@ CURRENCY_NAME_ID = {}
 
 SIMU_LINES = {}
 
+"""
+UF-2538 optional 4nd tuple item: list of states for mandatory check)
+('==', ['state1', ]) / ('!=', ['state1', ])
+"""
 LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (1, _('External ref'), 'optionnal'),
                  (2, _('Product Code'), 'mandatory'),
@@ -57,7 +61,7 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (6, _('Price Unit'), 'mandatory'),
                  (7, _('Currency'), 'mandatory'),
                  (8, _('Origin'), 'optionnal'),
-                 (10, _('Delivery Confirmed Date'), 'mandatory'),
+                 (10, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['confirmed'])),
                  (16, _('Project Ref.'), 'optionnal'),
                  (17, _('Message ESC 1'), 'optionnal'),
                  (18, _('Message ESC 2'), 'optionnal'),
@@ -712,11 +716,23 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 # Removed by QT on UFTP-370
 #                            if manda_field[1] == 'Delivery Confirmed Date':
 #                                continue  # field not really mandatory, can be empty in export model
-                            not_ok = True
-                            err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
-                            err = _('Line %s of the file: %s') % (x, err1)
-                            values_line_errors.append(err)
-                            file_line_error.append(err1)
+                            # UF-2538
+                            required_field = True
+                            if wiz.order_id and len(manda_field) > 3 and \
+                                isinstance(manda_field[3], (tuple, list, )) and \
+                                len(manda_field[3]) == 2:
+                                # 4nd item: list of mandatory states
+                                op, states = manda_field[3]
+                                if op == '!=':
+                                    required_field = wiz.order_id.state not in states or False
+                                else:
+                                    required_field = wiz.order_id.state in states or False
+                            if required_field:
+                                not_ok = True
+                                err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
+                                err = _('Line %s of the file: %s') % (x, err1)
+                                values_line_errors.append(err)
+                                file_line_error.append(err1)
 
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                     ext_ref = values.get(x, ['', ''])[1]
