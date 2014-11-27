@@ -2019,7 +2019,7 @@ class stock_move(osv.osv):
                     picking_obj.write(cr, uid, [picking.id], {'name': old_pick_name}, context=context)
 
                 if ptype == 'internal':
-                     picking_obj.write(cr, uid, [picking.id], {'associate_int_name': new_pick_name}, context=context) # save the INT name into this original IN
+                     picking_obj.write(cr, uid, [picking.id], {'associate_pick_name': new_pick_name}, context=context) # save the INT name into this original IN
             else:
                 pickid = False
             for move, (loc, dummy, delay, dummy, company_id, ptype) in todo:
