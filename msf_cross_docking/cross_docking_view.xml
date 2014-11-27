@@ -9,7 +9,7 @@
             <field name="type">form</field>
             <field name="priority">16</field>
             <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
-            <field name="arch" type="xml">button_cross
+            <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/field[@name='categ']" position="replace" >
                         <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" />
