@@ -428,14 +428,14 @@ class stock_picking(osv.osv):
         # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as pick_id
         new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
         # we should also get the newly created INT object for this new picking, the force the name of it as what received from the RW
-        if 'associate_int_name' in header_result:
-            associate_int_name = header_result.get('associate_int_name')
+        if 'associate_pick_name' in header_result:
+            associate_pick_name = header_result.get('associate_pick_name')
             origin = header_result.get('origin')
-            old_ref_name = self.browse(cr, uid, new_picking, context=context)['associate_int_name']
+            old_ref_name = self.browse(cr, uid, new_picking, context=context)['associate_pick_name']
             int_ids = self.search(cr, uid, [('origin', '=', origin),('name', '=', old_ref_name), ('type', '=', 'internal'), ('subtype', '=', 'standard')], context=context)
             if int_ids:
-                self.write(cr, uid, int_ids[0], {'name': associate_int_name}, context)
-                self.write(cr, uid, new_picking, {'associate_int_name': associate_int_name}, context)
+                self.write(cr, uid, int_ids[0], {'name': associate_pick_name}, context)
+                self.write(cr, uid, new_picking, {'associate_pick_name': associate_pick_name}, context)
         
         # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
         in_name = self.browse(cr, uid, new_picking, context=context)['name']
@@ -473,8 +473,8 @@ class stock_picking(osv.osv):
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
                 search_condition = [('origin', '=', origin), ('type', '=', 'internal'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'confirmed'])]
-                if header_result.get('associate_int_name', False):
-                    search_condition.append(('name', '=', header_result.get('associate_int_name')))
+                if header_result.get('associate_pick_name', False):
+                    search_condition.append(('name', '=', header_result.get('associate_pick_name')))
                 else: # if this is not a partial reception of INT, then just take the given INT itself
                     search_condition.append(('name', '=', pick_name))
                 pick_ids = self.search(cr, uid, search_condition, context=context)
