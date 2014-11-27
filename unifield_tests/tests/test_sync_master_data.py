@@ -118,13 +118,18 @@ class MasterDataSyncTest(UnifieldTest):
         :return: (id, domain)
         :rtype: tuple
         """
-        """
-        :param model_name:
-        :param vals:
-        :param domain_include:
-        :param domain_exclude:
-        :return:
-        """
+        def check_field_in_vals(field_name):
+            if not field_name in vals:
+                msg = "%s :: '%s' :: '%s' :: field '%s' not in vals :: %s" % (
+                    db.colored_name, model_name, domain_type, field_name, vals, )
+                raise MasterDataSyncTestException(msg)
+        if domain_include:
+            domain_type = 'domain_include'
+            map(check_field_in_vals, domain_include)
+        if domain_exclude:
+            domain_type = 'domain_exclude'
+            map(check_field_in_vals, domain_exclude)
+
         # uom category
         hq_obj = db.get(model_name)
         domain = dfv(vals, include=domain_include, exclude=domain_exclude)
@@ -140,42 +145,89 @@ class MasterDataSyncTest(UnifieldTest):
             check_batch.insert(0, (model_name, domain))
         return (id, domain, )
 
+    def _record_copy(self, db, model_name, id, domain_include,
+            defaults=None, check_batch=None, teardown_log=True):
+        """
+        copy a record in db
+        :param db: db
+        :type db: object
+        :type model_name: str
+        :param defaults: defaults
+        :type defaults: dict
+        :param domain_include: fields from defaults to include in domain for
+            check battch (see dfv() include param)
+        :param check_batch: [(model, domain), ] if provided auto check batch is
+            generated here (see _sync_check_data_set_on_db())
+        :type check_batch: list
+        :param teardown_log: True to log 'generated record is to delete in
+            tearDown()' (default True)
+        :type teardown_log: bool
+        :return: (id, domain)
+        :rtype: tuple
+        """
+        new_id = self.db.get(model_name).copy(id, defaults=defaults)
+        if teardown_log:
+            self._record_set_ids(db, model_name, new_id)
+        domain = dfv(defaults, include=domain_include)
+        if check_batch is not None:
+            # insert to keep record cascade dependencies when auto deleting
+            # tests records
+            check_batch.insert(0, (model_name, domain))
+        return (new_id, domain, )
     # SYNC TOOLS
 
-    def _sync_check_data_set_on_db(self, db, check_batch):
+    def _sync_check_data_set_on_db(self, db, check_batch, inverse=False):
         """
         check in db that for model/domain entries there is one data set entry
         do never use in domain fields that are changed by sync (that are not
         const values sync speaking)
         :type db: object
         :param check_batch: [(model, domain), ]
+        :param inverse: if True the record should not be sync down!
+        :type inverse: bool
         """
         for model, domain in check_batch:
             ids = db.get(model).search(domain)
             count = len(ids) if ids else 0
             if ids:
-                self._record_set_ids(db, model, ids)  # log ids to remove in tearDown
+                # log ids to remove in tearDown
+                self._record_set_ids(db, model, ids)
+                if inverse:
+                    # assert will be raised so delete test records
+                    self._record_unlink_all_generated_ids()
             else:
-                # assert will be raised so delete test records
-                self._record_unlink_all_generated_ids()
+                if not inverse:
+                    # assert will be raised so delete previous test records
+                    self._record_unlink_all_generated_ids()
 
-            self.assertNotEquals(
-                count, 0,
-                "'UF' '%s' entry not found on %s :: %s" % (model,
-                    db.colored_name, domain, )
-            )
-            self.assertEqual(
-                count, 1,
-                "There is more than 1 'UF' '%s' entry on %s :: %s :: %s" % (
-                    model, db.colored_name, count, domain, )
-            )
+            if not inverse:
+                self.assertNotEquals(
+                    count, 0,
+                    "'UF' '%s' entry not found on %s :: %s" % (model,
+                        db.colored_name, domain, )
+                )
+                self.assertEqual(
+                    count, 1,
+                    "There is more than 1 'UF' '%s' entry on %s :: %s :: %s" % (
+                        model, db.colored_name, count, domain, )
+                )
+            else:
+                # record should not be sync down
+                msg = "Should not be synced ::" \
+                    " 'UF' '%s' entry found on %s :: %s"
+                self.assertNotEquals(
+                    count, 0,
+                    msg % (model, db.colored_name, domain, )
+                )
 
-    def _sync_down_check(self, check_batch, db=None):
+    def _sync_down_check(self, check_batch, db=None, inverse=False):
         """
         from hq sync down check batch to c1 then p1
         :param check_batch: see _sync_check_data_set_on_db() check_batch param
         :type check_batch: list
         :param db: db
+        :param inverse: if True the record should not be sync down!
+        :type inverse: bool
         :type db: object
         """
         if db is None:
@@ -189,14 +241,15 @@ class MasterDataSyncTest(UnifieldTest):
         if are_same_db(self.hq1, db):
             # c1 sync down and check check
             self.synchronize(self.c1)
-            self._sync_check_data_set_on_db(self.c1, check_batch)
+            self._sync_check_data_set_on_db(self.c1, check_batch,
+                inverse=inverse)
 
         # p1 sync down and check check (from hq or c1 sync down)
         global TEST_THE_TEST
         if not TEST_THE_TEST:  # volontary miss the sync to test the test
             self.synchronize(self.p1)
         # will volontary fail if above P1 sync not done
-        self._sync_check_data_set_on_db(self.p1, check_batch)
+        self._sync_check_data_set_on_db(self.p1, check_batch, inverse=inverse)
 
     # DATA TOOLS
 
@@ -424,9 +477,10 @@ class MasterDataSyncTest(UnifieldTest):
         product_id = self._data_get_id_from_name(self.c1, 'product.product',
             PRODUCT_TEST_CODE, name_field='default_code')
 
-        # 1) Local market supplier case: not ESC should sync in coord
+        # 1) 1 catalogue not ESC should sync in proj (with 'Local Market')
         check_batch = []
 
+        # create catalog
         partner_id = self._data_get_id_from_name(self.c1, 'res.partner',
             'Local Market')
         vals = {
@@ -436,14 +490,40 @@ class MasterDataSyncTest(UnifieldTest):
             'currency_id': comp_ccy_id,
         }
         self._record_create(self.c1, 'supplier.catalogue', vals,
-            domain_include=['name', 'from', ], check_batch=check_batch)
+            domain_include=['name', 'period_from', ], check_batch=check_batch)
 
         # TODO catalog line
 
         self._sync_down_check(check_batch, db=self.c1)
 
-        # 2) ESC supplier case: should NOT sync in proj
-        # TODO
+        # 2) 1 catalogue ESC should NOT sync in proj
+        check_batch = []
+
+        # create ESC partner (from 'Local Market' market copy)
+        defaults = {
+            'name': 'Unifield ESC Supplier Test',
+            'ref': 'UF_ESC_SUPPLIER',
+            'partner_type': 'esc',
+            'zone': 'international',
+        }
+        esc_partner_id = self._record_copy(self.c1, 'res.partner', partner_id,
+            domain_include=defaults.keys(), defaults=defaults,
+            check_batch=check_batch)[0]
+
+        # create catalog
+        vals = {
+            'name': 'Unifield ESC Supplier Catalog TEST',
+            'partner_id': esc_partner_id,
+            'period_from': date_now_field_val(),
+            'currency_id': comp_ccy_id,
+        }
+        self._record_create(self.c1, 'supplier.catalogue', vals,
+            domain_include=['name', 'period_from', ], check_batch=check_batch)
+
+        # TODO catalog line
+
+        # inverse=True: should not be sync down check!
+        self._sync_down_check(check_batch, db=self.c1, inverse=True)
 
 def get_test_class():
     return MasterDataSyncTest
