@@ -328,12 +328,16 @@ class Entity(osv.osv):
         'update_offset' : fields.integer('Update Offset', required=True, readonly=True),
         'message_last': fields.integer('Last message', required=True),
         'email' : fields.char('Contact Email', size=512, readonly=True),
-
+        
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True),
         'session_id' : fields.char('Push Session Id', size=128),
         'max_update' : fields.integer('Max Update Sequence', readonly=True),
         'message_to_send' : fields.function(_get_nb_message_send, method=True, string='Nb message to send', type='integer', readonly=True),
         'update_to_send' : fields.function(_get_nb_update_send, method=True, string='Nb update to send', type='integer', readonly=True),
+
+        # used to determine which sync rules to use 
+        # UF-2531: moved this from the RW module to the general sync module
+        'usb_instance_type': fields.selection((('',''),('central_platform','Central Platform'),('remote_warehouse','Remote Warehouse')), string='USB Instance Type'),
     }
 
     _constraints = [
