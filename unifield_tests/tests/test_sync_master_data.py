@@ -67,7 +67,7 @@ class MasterDataSyncTest(UnifieldTest):
 
     # AUTO GENERATED RECORD LOG
 
-    def _record_set_ids(self, db, model_name, ids):
+    def _record_set_ids(self, db, model_name, ids, _insert=True):
         """
         log an added data test records (to delete in tearDown)
         by db and by model name
@@ -78,7 +78,10 @@ class MasterDataSyncTest(UnifieldTest):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # insert in log order to delete from the last (cascade dependancies)
-        self._ids.setdefault(db.db_name, []).insert(0, (model_name, ids))
+        if _insert:
+            self._ids.setdefault(db.db_name, []).insert(0, (model_name, ids))
+        else:
+            self._ids.setdefault(db.db_name, []).append((model_name, ids))
 
     def _record_unlink_db_generated_ids(self, db_name):
         """
@@ -191,7 +194,7 @@ class MasterDataSyncTest(UnifieldTest):
             count = len(ids) if ids else 0
             if ids:
                 # log ids to remove in tearDown
-                self._record_set_ids(db, model, ids)
+                self._record_set_ids(db, model, ids, _insert=False)  # _insert=False check batch sorted by most child records
                 if inverse:
                     # assert will be raised so delete test records
                     self._record_unlink_all_generated_ids()
@@ -286,8 +289,8 @@ class MasterDataSyncTest(UnifieldTest):
             'code': 'UF',
             'name': 'Unifield Country Test',
         }
-        country_id, country_domain = self._record_create(self.hq1,
-            'res.country', vals, check_batch=check_batch)
+        country_id = self._record_create(self.hq1,
+            'res.country', vals, check_batch=check_batch)[0]
 
         # country state
         hq_state_obj = self.hq1.get('res.country.state')
@@ -296,9 +299,8 @@ class MasterDataSyncTest(UnifieldTest):
             'name': 'Unifield Country State Test',
             'country_id': country_id,
         }
-        id, state_domain = self._record_create(self.hq1,
-            'res.country.state', vals, domain_exclude=['country_id', ],
-            check_batch=check_batch)
+        self._record_create(self.hq1, 'res.country.state', vals,
+            domain_exclude=['country_id', ], check_batch=check_batch)
 
         self._sync_down_check(check_batch)
 
@@ -411,9 +413,9 @@ class MasterDataSyncTest(UnifieldTest):
             'type': 'list',
             'standard_list_ok': True,  # do not miss it for sync test
         }
-        plist_id, plist_domain = self._record_create(self.hq1,
+        plist_id = self._record_create(self.hq1,
             'product.list', vals, domain_exclude=['standard_list_ok', ],
-            check_batch=check_batch)
+            check_batch=check_batch)[0]
 
         # product list line
         # unique comment per list id/lineid/product code (for search)
