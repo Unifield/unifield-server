@@ -76,8 +76,6 @@ def check_cp_rw(func):
                                           context=tmp_context)
                 return res
 
-        import pdb
-        pdb.set_trace()
         new_kwargs = {}
         for kwk in kw_keys:
             if kwk in wargs:
