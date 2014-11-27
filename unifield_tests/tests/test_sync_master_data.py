@@ -4,6 +4,7 @@ from __future__ import print_function
 from unifield_test import UnifieldTest
 
 import time
+from datetime import datetime
 
 # set it to True to simulate a sync P1 sync down failure for any test
 #TEST_THE_TEST = True
@@ -38,6 +39,9 @@ def are_same_db(db1, db2):
 
 def date_now_field_val():
     return time.strftime("%Y-%m-%d")
+
+def date_end_fy_val():
+    return "%d-12-31" % (datetime.now().year, )
 
 
 class MasterDataSyncTestException(Exception):
@@ -168,7 +172,7 @@ class MasterDataSyncTest(UnifieldTest):
         :return: (id, domain)
         :rtype: tuple
         """
-        new_id = self.db.get(model_name).copy(id, defaults=defaults)
+        new_id = self.db.get(model_name).copy(id, defaults)
         if teardown_log:
             self._record_set_ids(db, model_name, new_id)
         domain = dfv(defaults, include=domain_include)
@@ -474,6 +478,24 @@ class MasterDataSyncTest(UnifieldTest):
         1) 1 catalogue not ESC should sync in proj
         2) 1 catalogue ESC should NOT sync in proj
         """
+        def create_catalogue_line(db, catalogue_id, partner_id, comment_prefix,
+            check_batch=None):
+            vals = {
+                'catalogue_id': catalogue_id,
+                'partner_id': partner_id,
+                'line_number': 1,
+                'product_id': product_id,
+                'line_uom_id': self._data_get_id_from_name(db, 'product.uom',
+                    'PCE'),
+                'min_qty': 10.,
+                'unit_price': 1.,
+                'comment': "%d/%s %s Unifield Supplier Catalog Line TEST" % (
+                    catalogue_id, partner_id, comment_prefix, ),
+            }
+            return self._record_create(db, 'supplier.catalogue.line', vals,
+                domain_include=['line_number', 'comment', ],
+                check_batch=check_batch)[0]
+
         comp_ccy_id = self.c1.browse('res.users', 1).company_id.currency_id.id
 
         product_id = self._data_get_id_from_name(self.c1, 'product.product',
@@ -487,18 +509,24 @@ class MasterDataSyncTest(UnifieldTest):
             'Local Market')
         vals = {
             'name': 'Unifield Supplier Catalog TEST',
+            'state': 'confirmed',
             'partner_id': partner_id,
             'period_from': date_now_field_val(),
+            #'period_to': date_end_fy_val(),
             'currency_id': comp_ccy_id,
         }
-        self._record_create(self.c1, 'supplier.catalogue', vals,
-            domain_include=['name', 'period_from', ], check_batch=check_batch)
+        catalogue_id = self._record_create(self.c1, 'supplier.catalogue', vals,
+            domain_include=['name', 'state', 'period_from', ],
+            check_batch=check_batch)[0]
 
-        # TODO catalog line
+        # create catalog line
+        """create_catalogue_line(self.c1, catalogue_id, partner_id, 'NO ESC',
+            check_batch=check_batch)"""
 
         self._sync_down_check(check_batch, db=self.c1)
 
         # 2) 1 catalogue ESC should NOT sync in proj
+        """
         check_batch = []
 
         # create ESC partner (from 'Local Market' market copy)
@@ -515,17 +543,23 @@ class MasterDataSyncTest(UnifieldTest):
         # create catalog
         vals = {
             'name': 'Unifield ESC Supplier Catalog TEST',
+            'state': 'confirmed',
             'partner_id': esc_partner_id,
             'period_from': date_now_field_val(),
+            #'period_to': date_end_fy_val(),
             'currency_id': comp_ccy_id,
         }
         self._record_create(self.c1, 'supplier.catalogue', vals,
-            domain_include=['name', 'period_from', ], check_batch=check_batch)
+            domain_include=['name', 'state', 'period_from', ],
+            check_batch=check_batch)
 
-        # TODO catalog line
+        # create catalog line
+        create_catalogue_line(self.c1, catalogue_id, partner_id, 'ESC',
+            check_batch=check_batch)
 
         # inverse=True: should not be sync down check!
         self._sync_down_check(check_batch, db=self.c1, inverse=True)
+        """
 
 def get_test_class():
     return MasterDataSyncTest
