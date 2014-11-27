@@ -23,9 +23,6 @@ class Entity(osv.osv):
     _inherit = 'sync.client.entity'
 
     _columns = {
-        # used to determine which sync rules to use 
-        'usb_instance_type': fields.selection((('',''),('central_platform','Central Platform'),('remote_warehouse','Remote Warehouse')), string='USB Instance Type'),
-        
         # used to ignore all data older than this date when syncing as it is already in the db
         'clone_date': fields.datetime('Backup Date And Time', help='The date that the Central Platform database was backed up to provide the seed data for the Remote Warehouse'),
         
