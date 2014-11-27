@@ -2712,6 +2712,8 @@ class stock_picking(osv.osv):
 
             # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
             if not context.get('sync_message_execution', False):
+                # UF-2531: Added this name into the context for keeping the original name of the PICK when making the convert to OUT
+                context.update({'original_name': obj.name})
                 self._hook_create_rw_out_sync_messages(cr, uid, [new_pick_id or obj.id], context, True)
 
             # TODO which behavior
@@ -2925,7 +2927,7 @@ class stock_picking(osv.osv):
                     del context['rw_backorder_name']
 
                 if picking.type == 'internal':
-                    update_vals.update({'associate_int_name': picking.name})
+                    update_vals.update({'associate_pick_name': picking.name})
                 if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                     update_vals.update({'already_replicated': False})
 
