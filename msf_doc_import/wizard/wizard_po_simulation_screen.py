@@ -49,7 +49,7 @@ CURRENCY_NAME_ID = {}
 SIMU_LINES = {}
 
 """
-UF-2538 optional 4nd tuple item: list of states for mandatory check)
+UF-2538 optional 4nd tuple item: list of states for mandatory check
 ('==', ['state1', ]) / ('!=', ['state1', ])
 """
 LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
@@ -1464,7 +1464,24 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         line_vals['origin'] = line.imp_origin
                     if line.imp_external_ref:
                         line_vals['external_ref'] = line.imp_external_ref
-                    line_obj.write(cr, uid, [new_po_line_id], line_vals, context=context)
+
+                    # UF-2537 after split reinject import qty computed in simu
+                    # for import consistency versus simu
+                    line_vals['product_qty'] = line.imp_qty
+
+                    line_obj.write(cr, uid, [new_po_line_id], line_vals,
+                        context=context)
+
+                    # UF-2537 after split reinject ORIGINAL line import qty
+                    # computed in simu for import consistency versus simu
+                    # note: if total qty of splited lines is > to original qty
+                    # the original line qty was truncated in term of qty
+                    # (never be greater than line.parent_line_id.in_qty)
+                    line_vals = {
+                        'product_qty': line.parent_line_id.imp_qty,
+                    }
+                    line_obj.write(cr, uid, [line.parent_line_id.po_line_id.id],
+                        line_vals, context=context)
 
             elif line.type_change == 'new':
                 line_vals = {'order_id': line.simu_id.order_id.id,
