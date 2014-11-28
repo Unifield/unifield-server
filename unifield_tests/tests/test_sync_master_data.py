@@ -356,14 +356,15 @@ class MasterDataSyncTest(UnifieldTest):
         - synchronize down from hq to coordo and project
         - check if the uom categ and the uom have been well sync down
         """
+        db = self.hq1
         check_batch = []
 
         # uom category
         vals = {
             'name': 'Unifield Uom Category Test'
         }
-        categ_id, domain = self._record_create(self.hq1,
-            'product.uom.categ', vals, check_batch=check_batch)
+        categ_id, domain = self._record_create(db, 'product.uom.categ', vals,
+            check_batch=check_batch)
 
         # uom
         vals = {
@@ -374,7 +375,7 @@ class MasterDataSyncTest(UnifieldTest):
             'rounding': 1.,
             'uom_type': 'reference',
         }
-        self._record_create(self.hq1, 'product.uom', vals,
+        self._record_create(db, 'product.uom', vals,
             domain_include=['name', 'uom_type', ], check_batch=check_batch)
 
         self._sync_down_check(check_batch)
@@ -386,12 +387,13 @@ class MasterDataSyncTest(UnifieldTest):
         - create a product nomenclature in hq
         - synchronize down from hq to coordo and project and check
         """
+        db = self.hq1
         check_batch = []
 
         vals = {
             'name': 'Unifield Nomenclature Test',
         }
-        self._record_create(self.hq1, 'product.nomenclature', vals,
+        self._record_create(db, 'product.nomenclature', vals,
             check_batch=check_batch)
 
         self._sync_down_check(check_batch)
@@ -403,13 +405,14 @@ class MasterDataSyncTest(UnifieldTest):
         - create a product category in hq
         - synchronize down from hq to coordo and project and check
         """
+        db = self.hq1
         check_batch = []
 
         vals = {
             'name': 'Unifield Product Category Test',
             'type': 'normal',
         }
-        self._record_create(self.hq1, 'product.category', vals,
+        self._record_create(db, 'product.category', vals,
             check_batch=check_batch)
 
         self._sync_down_check(check_batch)
@@ -422,6 +425,7 @@ class MasterDataSyncTest(UnifieldTest):
         - create a product asset type in hq
         - synchronize down from hq to coordo and project and check
         """
+        db = self.hq1
         check_batch = []
 
         # product justication code
@@ -429,14 +433,14 @@ class MasterDataSyncTest(UnifieldTest):
             'code': 'UF',
             'description': 'Unifield Justification Code Test',
         }
-        self._record_create(self.hq1, 'product.justification.code', vals,
+        self._record_create(db, 'product.justification.code', vals,
             check_batch=check_batch)
 
         # product asset type
         vals = {
             'name': 'Unifield Asset Type Test',
         }
-        self._record_create(self.hq1, 'product.asset.type', vals,
+        self._record_create(db, 'product.asset.type', vals,
             check_batch=check_batch)
 
         self._sync_down_check(check_batch)
@@ -448,6 +452,7 @@ class MasterDataSyncTest(UnifieldTest):
         - create a standard product list in hq
         - synchronize down from hq to coordo and project and check
         """
+        db = self.hq1
         check_batch = []
 
         # product list
@@ -457,13 +462,13 @@ class MasterDataSyncTest(UnifieldTest):
             'type': 'list',
             'standard_list_ok': True,  # do not miss it for sync test
         }
-        plist_id = self._record_create(self.hq1,
+        plist_id = self._record_create(db,
             'product.list', vals, domain_exclude=['standard_list_ok', ],
             check_batch=check_batch)[0]
 
         # product list line
         # unique comment per list id/lineid/product code (for search)
-        product_id = self._data_get_id_from_name(self.hq1, 'product.product',
+        product_id = self._data_get_id_from_name(db, 'product.product',
             PRODUCT_TEST_CODE, name_field='default_code')
         comment = "%d/%d/%s UF Product List Line Test" % (plist_id,
             product_id, PRODUCT_TEST_CODE, )
@@ -472,7 +477,7 @@ class MasterDataSyncTest(UnifieldTest):
             'list_id': plist_id,
             'comment': comment,
         }
-        self._record_create(self.hq1, 'product.list.line', vals,
+        self._record_create(db, 'product.list.line', vals,
             domain_include=['comment', ], check_batch=check_batch,
             teardown_log=False)  # will be deleted by product list (header)
 
@@ -486,10 +491,11 @@ class MasterDataSyncTest(UnifieldTest):
         - so here we create it from HQ
         - synchronize down from hq to coordo and project and check
         """
+        db = self.hq1
         check_batch = []
 
         # product
-        self._data_create_product(self.hq1, 'UF_PRODUCT_TEST',
+        self._data_create_product(db, 'UF_PRODUCT_TEST',
             'Unifield Product Test', check_batch=check_batch)
 
         self._sync_down_check(check_batch)
@@ -505,32 +511,33 @@ class MasterDataSyncTest(UnifieldTest):
         1) 1 catalogue not ESC should sync in proj
         2) 1 catalogue ESC should NOT sync in proj
         """
+        db = self.c1
         def create_catalogue_line(comment_prefix, line_check_batch):
             line_vals = {
                 'catalogue_id': catalogue_id,
                 'line_number': 1,
                 'product_id': product_id,
-                'line_uom_id': self._data_get_id_from_name(self.c1,
-                    'product.uom', 'PCE'),
+                'line_uom_id': self._data_get_id_from_name(db, 'product.uom',
+                    'PCE'),
                 'min_qty': 10.,
                 'unit_price': 1.,
                 'comment': "%d/1 %s Unifield Supplier Catalog Line TEST" % (
                     catalogue_id, comment_prefix, ),
             }
-            return self._record_create(self.c1, 'supplier.catalogue.line',
+            return self._record_create(db, 'supplier.catalogue.line',
                 line_vals, domain_include=['line_number', 'comment', ],
                 check_batch=line_check_batch)[0]
 
-        comp_ccy_id = self.c1.browse('res.users', 1).company_id.currency_id.id
+        comp_ccy_id = db.browse('res.users', 1).company_id.currency_id.id
 
-        product_id = self._data_get_id_from_name(self.c1, 'product.product',
+        product_id = self._data_get_id_from_name(db, 'product.product',
             PRODUCT_TEST_CODE, name_field='default_code')
 
         # 1) 1 catalogue not ESC should sync in proj (with 'Local Market')
         check_batch = []
 
         # create catalog
-        partner_id = self._data_get_id_from_name(self.c1, 'res.partner',
+        partner_id = self._data_get_id_from_name(db, 'res.partner',
             'Local Market')
         vals = {
             'name': 'Unifield Supplier Catalog TEST',
@@ -545,7 +552,7 @@ class MasterDataSyncTest(UnifieldTest):
         import pdb
         pdb.set_trace()
         # (checked by desactivate _record_unlink_all_generated
-        catalogue_id = self._record_create(self.c1, 'supplier.catalogue', vals,
+        catalogue_id = self._record_create(db, 'supplier.catalogue', vals,
             domain_include=['name', 'state', 'period_from', ],
             domain_extra=[('active', '!=', True)],  # synced in P1 as not active (by sync rule)
             check_batch=check_batch)[0]
@@ -554,7 +561,7 @@ class MasterDataSyncTest(UnifieldTest):
         # FIXME: RPCError: 'NoneType' object has no attribute 'copy'
         #create_catalogue_line('NO ESC', check_batch)
 
-        self._sync_down_check(check_batch, db=self.c1)
+        self._sync_down_check(check_batch, db=db)
 
         # 2) 1 catalogue ESC should NOT sync in proj
         check_batch = []
@@ -566,7 +573,7 @@ class MasterDataSyncTest(UnifieldTest):
             'partner_type': 'esc',
             'zone': 'international',
         }
-        esc_partner_id = self._record_copy(self.c1, 'res.partner', partner_id,
+        esc_partner_id = self._record_copy(db, 'res.partner', partner_id,
             domain_include=defaults.keys(), defaults=defaults,
             check_batch=check_batch)[0]
 
@@ -579,7 +586,7 @@ class MasterDataSyncTest(UnifieldTest):
             #'period_to': date_end_fy_val(),
             'currency_id': comp_ccy_id,
         }
-        self._record_create(self.c1, 'supplier.catalogue', vals,
+        self._record_create(db, 'supplier.catalogue', vals,
             domain_include=['name', 'state', 'period_from', ],
             check_batch=check_batch)
 
@@ -588,7 +595,7 @@ class MasterDataSyncTest(UnifieldTest):
         #create_catalogue_line('ESC', check_batch)
 
         # inverse=True: should not be sync down check!
-        self._sync_down_check(check_batch, db=self.c1, inverse=True)
+        self._sync_down_check(check_batch, db=db, inverse=True)
 
     def test_s1_tec_46(self):
         """
