@@ -283,6 +283,39 @@ class MasterDataSyncTest(UnifieldTest):
             db.colored_name, )
         raise MasterDataSyncTestException(msg)
 
+    def _data_create_product(self, db, code, name, vals=None,
+            domain_extra=None, check_batch=None):
+        """
+        create a product
+        :param db: db
+        :param code: product code
+        :param name: product name
+        :param vals: optional additional vals to set
+        :type vals: dict
+        :type domain_extra: see _record_create
+        :type check_batch: see _record_create
+        :return: (id, domain)
+        :rtype: tuple
+        """
+        def get_pnomenclature_id(nomen_name):
+            """get product nomenclature id from name"""
+            return self._data_get_id_from_name(db, 'product.nomenclature',
+                nomen_name)
+
+        product_vals = {
+            'default_code': code,
+            'name': name,
+            'nomen_manda_0': get_pnomenclature_id('LOG'),
+            'nomen_manda_1': get_pnomenclature_id('K - Log Kits'),
+            'nomen_manda_2': get_pnomenclature_id('KCAM - Camps Kits'),
+            'nomen_manda_3': get_pnomenclature_id('MISC - Miscellaneous'),
+        }
+        if vals is not None:
+            product_vals.update(vals)
+        return self._record_create(db, 'product.product', product_vals,
+            domain_include=['default_code', 'name', ],
+            domain_extra=domain_extra, check_batch=check_batch)
+
     # TEST FUNCTIONS
 
     def test_s1_tec_21(self):
@@ -453,24 +486,11 @@ class MasterDataSyncTest(UnifieldTest):
         - so here we create it from HQ
         - synchronize down from hq to coordo and project and check
         """
-        def get_pnomenclature_id(nomen_name):
-            """get product nomenclature id from name"""
-            return self._data_get_id_from_name(self.hq1, 'product.nomenclature',
-                nomen_name)
-
         check_batch = []
 
-        # product list
-        vals = {
-            'default_code': 'UF_PRODUCT_TEST',
-            'name': 'Unifield Product Test',
-            'nomen_manda_0': get_pnomenclature_id('LOG'),
-            'nomen_manda_1': get_pnomenclature_id('K - Log Kits'),
-            'nomen_manda_2': get_pnomenclature_id('KCAM - Camps Kits'),
-            'nomen_manda_3': get_pnomenclature_id('MISC - Miscellaneous'),
-        }
-        self._record_create(self.hq1, 'product.product', vals,
-            domain_include=['default_code', 'name', ], check_batch=check_batch)
+        # product
+        self._data_create_product(self.hq1, 'UF_PRODUCT_TEST',
+            'Unifield Product Test', check_batch=check_batch)
 
         self._sync_down_check(check_batch)
 
@@ -520,6 +540,11 @@ class MasterDataSyncTest(UnifieldTest):
             #'period_to': date_end_fy_val(),
             'currency_id': comp_ccy_id,
         }
+        # FIXME Catalog not found but correctly synced (as unactive)
+        # FIXME Check domain extra
+        import pdb
+        pdb.set_trace()
+        # (checked by desactivate _record_unlink_all_generated
         catalogue_id = self._record_create(self.c1, 'supplier.catalogue', vals,
             domain_include=['name', 'state', 'period_from', ],
             domain_extra=[('active', '!=', True)],  # synced in P1 as not active (by sync rule)
@@ -564,6 +589,34 @@ class MasterDataSyncTest(UnifieldTest):
 
         # inverse=True: should not be sync down check!
         self._sync_down_check(check_batch, db=self.c1, inverse=True)
+
+    def test_s1_tec_46(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_46
+
+        - create a product with a country restriction from coord
+        - check sync in proj
+        - update an existing product with a country restriction
+        - check sync in proj
+        """
+        db = self.c1
+
+        check_batch = []
+
+        # product
+        vals = {
+            'country_restriction': self._data_get_id_from_name(db,
+                'res.country', 'FR', name_field='code'),
+            'restricted_country': True,
+        }
+        domain_extra=[
+            ('restricted_country', '=', 'True'),
+            ('country_restriction', '!=', False),  # TODO really check same country in proj than in coord ('FR')
+        ]
+        self._data_create_product(db, 'UF_PRODUCT_TEST',
+            'Unifield Product Test', vals=vals, domain_extra=domain_extra)
+
+        self._sync_down_check(check_batch, db=db)
 
 def get_test_class():
     return MasterDataSyncTest
