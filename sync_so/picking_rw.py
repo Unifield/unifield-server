@@ -605,7 +605,7 @@ class stock_picking(osv.osv):
         
         # If the PICK got successfully converted to OUT, then reupdate the value already_replicated, for sync purpose
         self.write(cr, uid, ids, {'already_replicated': already_replicated, 'associate_pick_name': original_name}, context=context)
-        self.usb_push_create_message(cr, uid, context=context)
+        self.usb_push_create_message_rw(cr, uid, context=context)
         
         so_po_common = self.pool.get('so.po.common')
         super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
@@ -613,13 +613,17 @@ class stock_picking(osv.osv):
             partner = pick.partner_id
             so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner.name, context, True)
 
-
-    def usb_push_create_message(self, cr, uid, context=None):
+    # UF-2531: Create RW messages manually to keep the content of these messages correctly -- avoid the values have been changed by the return pack, convert PICK/OUT
+    def usb_push_create_message_rw(self, cr, uid, context=None):
         context = context or {}
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
+        
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.CENTRAL_PLATFORM:
+            return
+
         message_pool = self.pool.get('sync_remote_warehouse.message_to_send')
         rule_pool = self.pool.get("sync.client.message_rule")
-        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
-
         messages_count = 0
         message_direction = entity.usb_instance_type == 'central_platform' and \
             ['|', ('direction_usb', '=', 'cp_to_rw'), ('direction_usb', '=', 'bidirectional')] or \
