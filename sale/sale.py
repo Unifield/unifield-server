@@ -194,7 +194,7 @@ class sale_order(osv.osv):
         'name': fields.char('Order Reference', size=64, required=True,
             readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'origin': fields.char('Source Document', size=64, help="Reference of the document that generated this sales order request."),
+        'origin': fields.char('Source Document', size=128, help="Reference of the document that generated this sales order request."),
         'client_order_ref': fields.char('Customer Reference', size=64),
         'state': fields.selection([
             ('draft', 'Quotation'),
