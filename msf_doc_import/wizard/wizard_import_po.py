@@ -90,7 +90,7 @@ class purchase_line_import_xml_line(osv.osv_memory):
         'price_unit': fields.float(digits=(16,2), string='Price'),
         'price_unit_defined': fields.boolean('Price Unit Defined?'),
         'confirmed_delivery_date': fields.date('Confirmed Delivery Date'),
-        'origin': fields.char(size=64, string='Origin'),
+        'origin': fields.char(size=128, string='Origin'),
         'notes': fields.text('Notes'),
         'comment': fields.text('Comment'),
         'to_correct_ok': fields.boolean('To correct?'),
