@@ -2275,7 +2275,7 @@ class stock_picking(osv.osv):
         # Objects
         ship_proc_obj = self.pool.get('shipment.processor')
         # For Remote Warehouse: If the instance is CP, and if the type=out, subtype=PICK and name does not contain "-", then set the flag to ask syncing this PICK
-        usb_type = self._get_usb_entity_type(cr, uid, context)
+        usb_entity = self._get_usb_entity_type(cr, uid, context)
 
         # For picking ticket from scratch, invoice it !
         if not vals.get('sale_id') and not vals.get('purchase_id') and not vals.get('invoice_state') and 'type' in vals and vals['type'] == 'out':
@@ -2298,7 +2298,7 @@ class stock_picking(osv.osv):
             if 'name' in vals and 'OUT-CONSO' in vals['name']:
                 vals.update(already_replicated=False,)
             #UF-2531: When the INT from scratch created in RW, just set it for sync to CP
-            if usb_type == self.REMOTE_WAREHOUSE and 'type' in vals and vals['type']=='internal':
+            if usb_entity == self.REMOTE_WAREHOUSE and 'type' in vals and vals['type']=='internal':
                 vals.update(already_replicated=False,)
 
         # the action adds subtype in the context depending from which screen it is created
@@ -2350,7 +2350,7 @@ class stock_picking(osv.osv):
 
         # create packing object
         new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
-        if not context.get('sync_message_execution', False) and usb_type == self.CENTRAL_PLATFORM:
+        if not context.get('sync_message_execution', False) and usb_entity == self.CENTRAL_PLATFORM:
             # read the new object
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
             if new_packing and ((new_packing.type == 'out' and new_packing.subtype == 'picking' and new_packing.name.find('-') == -1) or
@@ -2459,7 +2459,7 @@ class stock_picking(osv.osv):
 
                 # UF-2427: If the shipment came from USB sync, and if it is shipped in different ship name, then do not merge them!
                 if shipment_ids and shipment_ids[0]:
-                    if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False) and usb_type == self.CENTRAL_PLATFORM:
+                    if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False) and usb_entity == self.CENTRAL_PLATFORM:
                         new_name = context.get('rw_shipment_name')
                         names = shipment_obj.read(cr, uid, shipment_ids, ['name'], context=context)
                         found = False
@@ -2827,6 +2827,7 @@ class stock_picking(osv.osv):
         uom_obj = self.pool.get('product.uom')
         move_obj = self.pool.get('stock.move')
         wf_service = netsvc.LocalService("workflow")
+        usb_entity = self._get_usb_entity_type(cr, uid)
 
         res = {}
 
@@ -2932,7 +2933,7 @@ class stock_picking(osv.osv):
 
                 if picking.type == 'internal':
                     update_vals.update({'associate_pick_name': picking.name})
-                if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+                if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                     update_vals.update({'already_replicated': False})
 
                 if len(update_vals) > 0:
@@ -2958,7 +2959,7 @@ class stock_picking(osv.osv):
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
                     update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}
-                    if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+                    if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                         update_vals.update({'already_replicated': False})
                     self.write(cr, uid, picking.id, update_vals)
 
@@ -3009,6 +3010,7 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
         cp_proc_obj = self.pool.get('create.picking.processor')
+        usb_entity = self._get_usb_entity_type(cr, uid)
 
         if context is None:
             context = {}
@@ -3043,7 +3045,7 @@ class stock_picking(osv.osv):
                 'allow_copy': True,
             })
             new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
-            if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+            if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                 self.write(cr, uid, new_picking_id, {'already_replicated': False}, context=context)
 
             context['allow_copy'] = tmp_allow_copy
@@ -3477,7 +3479,7 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         wf_service = netsvc.LocalService("workflow")
 
-
+        usb_entity = self._get_usb_entity_type(cr, uid)
         date_tools = self.pool.get('date.tools')
         db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
         today = time.strftime(db_datetime_format)
@@ -3525,7 +3527,7 @@ class stock_picking(osv.osv):
             context['offline_synchronization'] = False
             # Create the packing with pack_values and the updated context
             new_packing_id = self.copy(cr, uid, picking.id, pack_values, context=context)
-            if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+            if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                 self.write(cr, uid, new_packing_id, {'already_replicated': False}, context=context)
 
             # Reset context values
@@ -3629,6 +3631,10 @@ class stock_picking(osv.osv):
             else:
                 raise Exception, "For some reason, there is no shipment created for the Packing list: " + obj.name
 
+        # UF-2531: Run the creation of message at RW at some important points
+        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+            self.usb_push_create_message_rw(cr, uid, context=context)
+            
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
         return {'name':_("Shipment"),
@@ -3641,6 +3647,9 @@ class stock_picking(osv.osv):
                 'target': 'crush',
                 'context': context,
                 }
+
+    def usb_push_create_message_rw(self, cr, uid, context=None):
+        return
 
     def ppl_return(self, cr, uid, ids, context=None):
         """
