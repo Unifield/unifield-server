@@ -115,7 +115,7 @@ class MasterDataSyncTest(UnifieldTest):
 
     def _record_create(self, db, model_name, vals, domain_include=None,
         domain_exclude=None, domain_extra=None, check_batch=None,
-        teardown_log=True):
+        teardown_log=True, search_unit_test=False):
         """
         for a model create a record in hq using vals
         do never use in domain fields that are changed by sync (that are not
@@ -135,6 +135,9 @@ class MasterDataSyncTest(UnifieldTest):
         :param teardown_log: True to log 'generated record is to delete in
             tearDown()' (default True)
         :type teardown_log: bool
+        :param search_unit_test: True if specific search_unit_tests on server
+            for sync data check in _sync_check_data_set_on_db()
+        :type search_unit_test: bool
         :return: (id, domain)
         :rtype: tuple
         """
@@ -150,11 +153,11 @@ class MasterDataSyncTest(UnifieldTest):
             domain_type = 'domain_exclude'
             map(check_field_in_vals, domain_exclude)
 
-        # uom category
         model_obj = db.get(model_name)
         domain = dfv(vals, include=domain_include, exclude=domain_exclude)
-        if model_obj.search(domain):
-            id = model_obj.search(domain)[0]
+        ids = model_obj.search(domain)
+        if ids:
+            id = ids[0]
         else:
             id = model_obj.create(vals)
         if teardown_log:
@@ -164,7 +167,7 @@ class MasterDataSyncTest(UnifieldTest):
             # tests records
             if domain_extra is not None:
                 domain += domain_extra
-            check_batch.insert(0, (model_name, domain))
+            check_batch.insert(0, (model_name, domain, search_unit_test))
         return (id, domain, )
 
     def _record_copy(self, db, model_name, id, domain_include,
@@ -208,8 +211,11 @@ class MasterDataSyncTest(UnifieldTest):
         :param inverse: if True the record should not be sync down!
         :type inverse: bool
         """
-        for model, domain in check_batch:
-            ids = db.get(model).search(domain)
+        for model, domain, specific_search in check_batch:
+            if specific_search:
+                ids = db.get(model).search_unit_test(domain)
+            else:
+                ids = db.get(model).search(domain)
             count = len(ids) if ids else 0
             if ids:
                 # log ids to remove in tearDown
@@ -539,7 +545,7 @@ class MasterDataSyncTest(UnifieldTest):
                     'PCE'),
                 'min_qty': 10.,
                 'unit_price': 1.,
-                'comment': "%d/1 %s Unifield Supplier Catalog Line TEST" % (
+                'comment': "%d/1 %s Unifield Supplier Catalogue Line TEST" % (
                     catalogue_id, comment_prefix, ),
             }
             return self._record_create(db, 'supplier.catalogue.line',
@@ -558,7 +564,7 @@ class MasterDataSyncTest(UnifieldTest):
         partner_id = self._data_get_id_from_name(db, 'res.partner',
             'Local Market')
         vals = {
-            'name': 'Unifield Supplier Catalog TEST',
+            'name': 'Unifield Supplier Catalogue TEST',
             'state': 'confirmed',
             'partner_id': partner_id,
             'period_from': date_now_field_val(),
@@ -567,12 +573,10 @@ class MasterDataSyncTest(UnifieldTest):
         }
         # FIXME Catalog not found but correctly synced (as unactive)
         # FIXME Check domain extra
-        import pdb
-        pdb.set_trace()
         # (checked by desactivate _record_unlink_all_generated
         catalogue_id = self._record_create(db, 'supplier.catalogue', vals,
             domain_include=['name', 'state', 'period_from', ],
-            domain_extra=[('active', '!=', True)],  # synced in P1 as not active (by sync rule)
+            domain_extra=[('active', '=', 'f')],
             check_batch=check_batch)[0]
 
         # create catalog line
@@ -597,7 +601,7 @@ class MasterDataSyncTest(UnifieldTest):
 
         # create catalog
         vals = {
-            'name': 'Unifield ESC Supplier Catalog TEST',
+            'name': 'Unifield ESC Supplier Catalogue TEST',
             'state': 'confirmed',
             'partner_id': esc_partner_id,
             'period_from': date_now_field_val(),
@@ -606,6 +610,7 @@ class MasterDataSyncTest(UnifieldTest):
         }
         self._record_create(db, 'supplier.catalogue', vals,
             domain_include=['name', 'state', 'period_from', ],
+            domain_extra=[('active', '=', 'f')],
             check_batch=check_batch)
 
         # create catalog line
