@@ -248,15 +248,18 @@ class MasterDataSyncTest(UnifieldTest):
                     msg % (model, db.colored_name, domain, )
                 )
 
-    def _sync_down_check(self, check_batch, db=None, inverse=False):
+    def _sync_down_check(self, check_batch, db=None, last_db=None,
+        inverse=False):
         """
         from hq sync down check batch to c1 then p1
         :param check_batch: see _sync_check_data_set_on_db() check_batch param
         :type check_batch: list
         :param db: db
+        :type db: object
+        :param last_db: optional last db to sync (c1 not to sync p1)
+        :type last_db: object/None
         :param inverse: if True the record should not be sync down!
         :type inverse: bool
-        :type db: object
         """
         if db is None:
             db = self.hq1
@@ -267,17 +270,54 @@ class MasterDataSyncTest(UnifieldTest):
         self.synchronize(db)
 
         if are_same_db(self.hq1, db):
-            # c1 sync down and check check
-            self.synchronize(self.c1)
+            # c1 sync down and check
+            global TEST_THE_TEST
+            if not TEST_THE_TEST:  # volontary miss the sync to test the test
+                self.synchronize(self.c1)
+            # will volontary fail if above sync not done
             self._sync_check_data_set_on_db(self.c1, check_batch,
                 inverse=inverse)
+            if last_db is not None and are_same_db(last_db, self.c1):
+                return
 
-        # p1 sync down and check check (from hq or c1 sync down)
-        global TEST_THE_TEST
-        if not TEST_THE_TEST:  # volontary miss the sync to test the test
-            self.synchronize(self.p1)
-        # will volontary fail if above P1 sync not done
+        # p1 sync down and check (from hq or c1 sync down)
+        self.synchronize(self.p1)
         self._sync_check_data_set_on_db(self.p1, check_batch, inverse=inverse)
+
+    def _sync_up_check(self, check_batch, db=None, last_db=None, inverse=False):
+        """
+        from hq sync down check batch to c1 then p1
+        :param check_batch: see _sync_check_data_set_on_db() check_batch param
+        :type check_batch: list
+        :param db: db
+        :type db: object
+        :param last_db: optional last db to sync (c1 not to sync hq1)
+        :type last_db: object/None
+        :param inverse: if True the record should not be sync down!
+        :type inverse: bool
+        """
+        if db is None:
+            db = self.p1
+        if are_same_db(self.hq1, db):
+            raise MasterDataSyncTestException('can not sync up from hq')
+
+        # sync down and check
+        self.synchronize(db)
+
+        if are_same_db(self.p1, db):
+            # c1 sync up and check
+            global TEST_THE_TEST
+            if not TEST_THE_TEST:  # volontary miss the sync to test the test
+                self.synchronize(self.c1)
+            # will volontary fail if above sync not done
+            self._sync_check_data_set_on_db(self.c1, check_batch,
+                inverse=inverse)
+            if last_db is not None and are_same_db(last_db, self.c1):
+                return
+
+        # hq1 sync up and check (from hq or c1 sync down)
+        self.synchronize(self.hq1)
+        self._sync_check_data_set_on_db(self.hq1, check_batch, inverse=inverse)
 
     # DATA TOOLS
 
@@ -667,6 +707,46 @@ class MasterDataSyncTest(UnifieldTest):
         - synchronize down in project and check
         """
         self._test_standard_product_list(self.c1)
+
+    def test_s1_tec_76(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_76
+
+        - create a product with a country restriction from project
+        - check synced up in coord
+        """
+        def test_s1_tec_76_test_case(intermediate_sync):
+            check_batch = []
+
+            suffix = '_2' if intermediate_sync else ''
+
+            # product
+            product_id = self._data_create_product(db,
+                'UF_PRODUCT_TEST' + suffix,
+                'Unifield Product Test' + suffix, check_batch=check_batch)[0]
+            if intermediate_sync:
+                self._sync_up_check([], last_db=last_db)
+
+            # country restriction
+            prestrict_id = self._record_create(db, 'res.country.restriction',
+                { 'name': "Unifield Product Restriction Test" + suffix, },
+                domain_include=['name', ], check_batch=check_batch)[0]
+            vals = {
+                'country_restriction': prestrict_id,
+                'restricted_country': True,
+            }
+            db.get('product.product').write([product_id], vals)
+
+            self._sync_up_check(check_batch, last_db=last_db)
+
+        db = self.p1
+        last_db = self.c1
+
+        # case 1 create the product, do the country restriction then sync
+        test_s1_tec_76_test_case(False)
+
+        # case 2 create the product, sync, do the country restriction sync again
+        #test_s1_tec_76_test_case(True)
 
 
 def get_test_class():
