@@ -53,6 +53,7 @@ class MasterDataSyncTestException(Exception):
 class MasterDataSyncTest(UnifieldTest):
     def setUp(self):
         # meta of generated test records
+        self._ids_unlink_off = False
         self._ids = {}  # {'db_name': [(model, ids), ], }
 
     def tearDown(self):
@@ -94,12 +95,16 @@ class MasterDataSyncTest(UnifieldTest):
         unlink all test data generated records in target db
         :type db_name: target db name
         """
+        if self._ids_unlink_off:
+            return
         db = self._get_db_from_name(db_name)
         for model_name, ids in self._ids.get(db_name, []):
             if ids:
                 db.get(model_name).unlink(ids)
 
     def _record_unlink_all_generated_ids(self):
+        if self._ids_unlink_off:
+            return
         # delete auto generated test records
         for db_name in self._ids:  # {'db_name': [(model, ids), ], }
             self._record_unlink_db_generated_ids(db_name)
@@ -313,7 +318,7 @@ class MasterDataSyncTest(UnifieldTest):
         if vals is not None:
             product_vals.update(vals)
         return self._record_create(db, 'product.product', product_vals,
-            domain_include=['default_code', 'name', ],
+            domain_include=['default_code', ],
             domain_extra=domain_extra, check_batch=check_batch)
 
     # TEST FUNCTIONS
@@ -603,27 +608,41 @@ class MasterDataSyncTest(UnifieldTest):
 
         - create a product with a country restriction from coord
         - check sync in proj
-        - update an existing product with a country restriction
-        - check sync in proj
         """
+        def test_s1_tec_46_test_case(db, intermediate_sync):
+            check_batch = []
+
+            suffix = '_2' if intermediate_sync else ''
+
+            # product
+            product_id = self._data_create_product(db,
+                'UF_PRODUCT_TEST' + suffix,
+                'Unifield Product Test' + suffix, check_batch=check_batch)[0]
+            if intermediate_sync:
+                self._sync_down_check([], db=db)
+
+            # country restriction
+            prestrict_id = self._record_create(db, 'res.country.restriction',
+                { 'name': "Unifield Product Restriction Test" + suffix, },
+                domain_include=['name', ], check_batch=check_batch)[0]
+            vals = {
+                'country_restriction': prestrict_id,
+                'restricted_country': True,
+            }
+            db.get('product.product').write([product_id], vals)
+
+            self._sync_down_check(check_batch, db=db)
+
         db = self.c1
 
         check_batch = []
 
-        # product
-        vals = {
-            'country_restriction': self._data_get_id_from_name(db,
-                'res.country', 'FR', name_field='code'),
-            'restricted_country': True,
-        }
-        domain_extra=[
-            ('restricted_country', '=', 'True'),
-            ('country_restriction', '!=', False),  # TODO really check same country in proj than in coord ('FR')
-        ]
-        self._data_create_product(db, 'UF_PRODUCT_TEST',
-            'Unifield Product Test', vals=vals, domain_extra=domain_extra)
+        # case 1 create the product, do the country restriction then sync
+        test_s1_tec_46_test_case(db, False)
 
-        self._sync_down_check(check_batch, db=db)
+        # case 2 create the product, sync, do the country restriction sync again
+        test_s1_tec_46_test_case(db, True)
+
 
 def get_test_class():
     return MasterDataSyncTest
