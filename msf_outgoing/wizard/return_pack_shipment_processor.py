@@ -117,6 +117,12 @@ class return_pack_shipment_processor(osv.osv):
         if context is None:
             context = {}
 
+        # UF-2531: Run the creation of message if it's at RW at some important point
+        picking_obj = self.pool.get('stock.picking')
+        usb_entity = picking_obj._get_usb_entity_type(cr, uid)
+        if usb_entity == picking_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+            picking_obj.usb_push_create_message_rw(cr, uid, context=context)
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
