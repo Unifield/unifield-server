@@ -243,7 +243,7 @@ class MasterDataSyncTest(UnifieldTest):
                 # record should not be sync down
                 msg = "Should not be synced ::" \
                     " 'UF' '%s' entry found on %s :: %s"
-                self.assertNotEquals(
+                self.assertEquals(
                     count, 0,
                     msg % (model, db.colored_name, domain, )
                 )
@@ -372,14 +372,19 @@ class MasterDataSyncTest(UnifieldTest):
 
     # TEST FUNCTIONS
 
-    def _test_standard_product_list(self, db):
+    def _test_standard_product_list(self, db, sync_up=False, inverse=False):
         """
         - create a standard product list in db
-        - synchronize down and check
+        - synchronize down/up and check
         """
-        if are_same_db(db, self.p1):
-            raise MasterDataSyncTestException(
-                'can not test sync down product list from project')
+        if sync_up:
+            if are_same_db(db, self.hq1):
+                raise MasterDataSyncTestException(
+                    'can not test sync up product list from hq')
+        else:
+            if are_same_db(db, self.p1):
+                raise MasterDataSyncTestException(
+                    'can not test sync down product list from project')
 
         check_batch = []
 
@@ -409,7 +414,10 @@ class MasterDataSyncTest(UnifieldTest):
             domain_include=['comment', ], check_batch=check_batch,
             teardown_log=False)  # will be deleted by product list (header)
 
-        self._sync_down_check(check_batch, db=db)
+        if sync_up:
+            self._sync_up_check(check_batch, db=db, inverse=inverse)
+        else:
+            self._sync_down_check(check_batch, db=db, inverse=inverse)
 
     def test_s1_tec_21(self):
         """
@@ -747,6 +755,15 @@ class MasterDataSyncTest(UnifieldTest):
 
         # case 2 create the product, sync, do the country restriction sync again
         #test_s1_tec_76_test_case(True)
+
+    def test_s1_tec_77(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_77
+
+        - create a standard product list in prof
+        - synchronize up in project, hq and check SHOULD NOT BE SYNCED in both
+        """
+        self._test_standard_product_list(self.p1, sync_up=True, inverse=True)
 
 
 def get_test_class():
