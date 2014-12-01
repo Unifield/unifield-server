@@ -1132,11 +1132,11 @@ class stock_picking(osv.osv):
             # but need to check the line number to make sure to get the correct line
             for line in picking_lines:
                 sline = line[2]
-                if sline['line_number'] == move.line_number and move.product_qty >= sline['product_qty']: 
+                # UF-2531: If the PICK got split then all lines need to be created in here
+                if sline['line_number'] == move.line_number and move.original_qty_partial == sline['original_qty_partial']: 
                     line_data['product_qty'] = sline['product_qty']
                     line_data['quantity'] = sline['product_qty']
-                    break
-            ret = line_obj.create(cr, uid, line_data, context=context)
+                    ret = line_obj.create(cr, uid, line_data, context=context)
 
         self.do_validate_picking(cr, uid, [proc_id], context=context)
         return True

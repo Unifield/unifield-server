@@ -335,6 +335,11 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         move_proc = self.pool.get('stock.move.in.processor')
         
+        # UF-2531: Get the associate name for the case of creating PICK or INT
+        associate_pick_name = False
+        if 'associate_pick_name' in header_result:
+            associate_pick_name = header_result.get('associate_pick_name', False)
+        
         for l in pack_data:
             data = l[2]
 
@@ -425,10 +430,14 @@ class stock_picking(osv.osv):
                     data['ordered_quantity'] = data['product_qty']
                     move_proc.create(cr, uid, data, context=context)
 
+        # UF-2531: if creating PICK, check if the associated name is well a PICK 
+        if associate_pick_name and 'PICK' in associate_pick_name:
+            context['associate_pick_name'] = associate_pick_name
+
         # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as pick_id
         new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
         # we should also get the newly created INT object for this new picking, the force the name of it as what received from the RW
-        if 'associate_pick_name' in header_result:
+        if associate_pick_name and 'INT' in associate_pick_name:
             associate_pick_name = header_result.get('associate_pick_name')
             origin = header_result.get('origin')
             old_ref_name = self.browse(cr, uid, new_picking, context=context)['associate_pick_name']
@@ -455,7 +464,6 @@ class stock_picking(osv.osv):
         '''
         Create the partial Internal Moves in the CP instance
         '''
-        
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
             
