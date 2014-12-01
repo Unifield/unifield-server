@@ -3031,13 +3031,26 @@ class stock_picking(osv.osv):
 
             # Create the new picking object
             # A sequence for each draft picking ticket is used for the picking ticket
-            sequence = picking.sequence_id
-            ticket_number = sequence.get_id(code_or_id='id', context=context)
-
+            
+            #UF-2531: Use the name of the PICK sent from the RW sync if it's the case
+            pick_name = False 
+            already_replicated = False
+            if 'associate_pick_name' in context:
+                pick_name = context.get('associate_pick_name', False)
+                del context['associate_pick_name']
+                already_replicated = True
+                
+            # UF-2531: if not exist, then calculate the name as before
+            if not pick_name:
+                sequence = picking.sequence_id
+                ticket_number = sequence.get_id(code_or_id='id', context=context)
+                pick_name = '%s-%s' % (picking.name or 'NoName/000', ticket_number)
+            
             copy_data = {
-                'name': '%s-%s' % (picking.name or 'NoName/000', ticket_number),
+                'name': pick_name,
                 'backorder_id': picking.id,
                 'move_lines': [],
+                'already_replicated': already_replicated,
             }
             tmp_allow_copy = context.get('allow_copy')
             context.update({

@@ -1232,8 +1232,18 @@ class stock_picking(osv.osv):
             if nb_lines:
                 # We copy all data in lines
                 wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz_context)
+                
+                #UF-2531: Pass the name of PICKxxx-y when creating a Pick from crossdocking from an IN partial
+                if context.get('associate_pick_name', False) and context.get('sync_message_execution', False):
+                    wiz_context['associate_pick_name'] = context.get('associate_pick_name')
+                    del context['associate_pick_name']                
                 # We process the creation of the picking
-                wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
+                res_wiz = wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
+                if 'res_id' in res_wiz:
+                    new_pick_id = res_wiz['res_id']
+                    if backorder_id and new_pick_id:
+                        new_pick_name = self.read(cr, uid, new_pick_id, ['name'], context=context)['name']
+                        self.write(cr, uid, backorder_id, {'associate_pick_name': new_pick_name,}, context=context)
 
             prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                 'prepare_pick': _('Done'),
@@ -1244,6 +1254,10 @@ class stock_picking(osv.osv):
                 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
             }, context=context)
 
+        # UF-2531: Run the creation of message if it's at RW at some important point
+        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+            self.usb_push_create_message_rw(cr, uid, context=context)
+
         if context.get('rw_sync', False):
             prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
@@ -1251,10 +1265,6 @@ class stock_picking(osv.osv):
             if backorder_id:
                 return backorder_id
             return wizard.picking_id.id
-
-        # UF-2531: Run the creation of message if it's at RW at some important point
-        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-            self.usb_push_create_message_rw(cr, uid, context=context)
 
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
