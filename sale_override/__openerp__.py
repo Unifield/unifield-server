@@ -38,7 +38,6 @@
         "wizard/split_order_line_view.xml",
         "wizard/order_change_currency_view.xml",
         "sale_sequence.xml",
-        "sale_data.yml",
         "report/sale_report_view.xml",
     ],
     "demo_xml": [
