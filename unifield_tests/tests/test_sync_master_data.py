@@ -100,7 +100,10 @@ class MasterDataSyncTest(UnifieldTest):
         db = self._get_db_from_name(db_name)
         for model_name, ids in self._ids.get(db_name, []):
             if ids:
-                db.get(model_name).unlink(ids)
+                model = db.get(model_name)
+                ids = model.search([('id', 'in', ids)])
+                if ids and isinstance(ids, list) and len(ids) > 0:
+                    model.unlink(ids)
 
     def _record_unlink_all_generated_ids(self):
         if self._ids_unlink_off:
@@ -323,6 +326,45 @@ class MasterDataSyncTest(UnifieldTest):
 
     # TEST FUNCTIONS
 
+    def _test_standard_product_list(self, db):
+        """
+        - create a standard product list in db
+        - synchronize down and check
+        """
+        if are_same_db(db, self.p1):
+            raise MasterDataSyncTestException(
+                'can not test sync down product list from project')
+
+        check_batch = []
+
+        # product list
+        vals = {
+            'name': 'Unifield Product List Test',
+            'ref': 'UF PLIST',
+            'type': 'list',
+            'standard_list_ok': True,  # do not miss it for sync test
+        }
+        plist_id = self._record_create(db,
+            'product.list', vals, domain_exclude=['standard_list_ok', ],
+            check_batch=check_batch)[0]
+
+        # product list line
+        # unique comment per list id/lineid/product code (for search)
+        product_id = self._data_get_id_from_name(db, 'product.product',
+            PRODUCT_TEST_CODE, name_field='default_code')
+        comment = "%d/%d/%s UF Product List Line Test" % (plist_id,
+            product_id, PRODUCT_TEST_CODE, )
+        vals = {
+            'name': product_id,
+            'list_id': plist_id,
+            'comment': comment,
+        }
+        self._record_create(db, 'product.list.line', vals,
+            domain_include=['comment', ], check_batch=check_batch,
+            teardown_log=False)  # will be deleted by product list (header)
+
+        self._sync_down_check(check_batch, db=db)
+
     def test_s1_tec_21(self):
         """
         python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_21
@@ -457,36 +499,7 @@ class MasterDataSyncTest(UnifieldTest):
         - create a standard product list in hq
         - synchronize down from hq to coordo and project and check
         """
-        db = self.hq1
-        check_batch = []
-
-        # product list
-        vals = {
-            'name': 'Unifield Product List Test',
-            'ref': 'UF PLIST',
-            'type': 'list',
-            'standard_list_ok': True,  # do not miss it for sync test
-        }
-        plist_id = self._record_create(db,
-            'product.list', vals, domain_exclude=['standard_list_ok', ],
-            check_batch=check_batch)[0]
-
-        # product list line
-        # unique comment per list id/lineid/product code (for search)
-        product_id = self._data_get_id_from_name(db, 'product.product',
-            PRODUCT_TEST_CODE, name_field='default_code')
-        comment = "%d/%d/%s UF Product List Line Test" % (plist_id,
-            product_id, PRODUCT_TEST_CODE, )
-        vals = {
-            'name': product_id,
-            'list_id': plist_id,
-            'comment': comment,
-        }
-        self._record_create(db, 'product.list.line', vals,
-            domain_include=['comment', ], check_batch=check_batch,
-            teardown_log=False)  # will be deleted by product list (header)
-
-        self._sync_down_check(check_batch)
+        self._test_standard_product_list(self.hq1)
 
     def test_s1_tec_27(self):
         """
@@ -609,7 +622,7 @@ class MasterDataSyncTest(UnifieldTest):
         - create a product with a country restriction from coord
         - check sync in proj
         """
-        def test_s1_tec_46_test_case(db, intermediate_sync):
+        def test_s1_tec_46_test_case(intermediate_sync):
             check_batch = []
 
             suffix = '_2' if intermediate_sync else ''
@@ -635,13 +648,20 @@ class MasterDataSyncTest(UnifieldTest):
 
         db = self.c1
 
-        check_batch = []
-
         # case 1 create the product, do the country restriction then sync
-        test_s1_tec_46_test_case(db, False)
+        test_s1_tec_46_test_case(False)
 
         # case 2 create the product, sync, do the country restriction sync again
-        test_s1_tec_46_test_case(db, True)
+        test_s1_tec_46_test_case(True)
+
+    def test_s1_tec_47(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_47
+
+        - create a standard product list in coord
+        - synchronize down in project and check
+        """
+        self._test_standard_product_list(self.c1)
 
 
 def get_test_class():
