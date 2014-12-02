@@ -87,6 +87,60 @@ class shipment(osv.osv):
         self._logger.info(message)
         return message
 
+    def usb_shipment_return_packs(self, cr, uid, source, out_info, context=None):
+        '''
+        Method to return packs from a shipped Shipment from RW
+        '''
+        if context is None:
+            context = {}
+            
+        pick_obj = self.pool.get('stock.picking')
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type != pick_obj.CENTRAL_PLATFORM:
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+            self._logger.info(message)
+            return message
+
+        state='shipped'
+        ship_dict = out_info.to_dict()
+        ship_name = ship_dict['name']
+        ppl = ship_dict['ppl']
+
+        self._logger.info("+++ RW: The Ship %s has packs returned" % (ship_name))
+        ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
+        if not ship_ids or not ppl:
+            message = "Sorry, no Ship %s in state shipped available or invalid packing list, for making the return packs!" % (ship_name)
+            self._logger.info(message)
+            return message
+
+        message = 'The following packing list of the Ship %s: ' % (ship_name)
+        # UF-2531: Create processor for return packs in Shipment
+        proc_obj = self.pool.get('return.pack.shipment.processor')
+        processor_id = proc_obj.create(cr, uid, {'shipment_id': ship_ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        family_obj = self.pool.get('return.pack.shipment.family.processor')
+        return_pack_obj = self.pool.get('return.pack.shipment.processor')
+        
+        for wizard in proc_obj.browse(cr, uid, [processor_id], context=context):
+            for family in wizard.family_ids:
+                # check the family with ppl_id, pack_from and pack_to to find the correct line
+                for pack in ppl:
+                    pack_fam_sync = ppl[pack]
+                    if pack == family.ppl_id.name and family.from_pack == pack_fam_sync['from_pack'] and family.to_pack == pack_fam_sync['to_pack']:
+                        message += pack + " "
+                        # This is the correct pack family --> update the return from and to packs
+                        family_obj.write(cr, uid, [family.id], {
+                            'return_from': pack_fam_sync['return_from'],
+                            'return_to': pack_fam_sync['return_to'],
+                        }, context=context)
+
+        # Now process this return by call the method
+        return_pack_obj.do_return_pack_from_shipment(cr, uid, processor_id, context=context)
+
+        message += " has packs returned. Operation successfully executed"
+        self._logger.info(message)
+        return message
+    
     def usb_set_delivered_shipment(self, cr, uid, source, out_info, context=None):
         '''
         Set the shipment as delivered at CP when it is flagged as delivered on RW
@@ -100,8 +154,6 @@ class shipment(osv.osv):
         return self.usb_set_state_shipment(cr, uid, source, out_info, state='shipped', context=context)
 
     def retrieve_shipment_header_data(self, cr, uid, source, header_result, pick_dict, context):
-        so_po_common = self.pool.get('so.po.common')
-
         '''
         Need to get all header values for the Ship!
         '''
@@ -158,7 +210,6 @@ class shipment(osv.osv):
         ship = self.browse(cr, uid, ship_id, context=context)
         
         # Objects
-        order_line_obj = self.pool.get('sale.order.line')
         ship_proc_obj = self.pool.get('shipment.processor')
         ship_proc_vals = {
             'shipment_id': ship.id,
@@ -605,7 +656,7 @@ class stock_picking(osv.osv):
         
         # If the PICK got successfully converted to OUT, then reupdate the value already_replicated, for sync purpose
         self.write(cr, uid, ids, {'already_replicated': already_replicated, 'associate_pick_name': original_name}, context=context)
-        self.usb_push_create_message_rw(cr, uid, context=context)
+        self._manual_create_rw_messages(cr, uid, context=context)
         
         so_po_common = self.pool.get('so.po.common')
         super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
@@ -614,7 +665,7 @@ class stock_picking(osv.osv):
             so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner.name, context, True)
 
     # UF-2531: Create RW messages manually to keep the content of these messages correctly -- avoid the values have been changed by the return pack, convert PICK/OUT
-    def usb_push_create_message_rw(self, cr, uid, context=None):
+    def _manual_create_rw_messages(self, cr, uid, context=None):
         context = context or {}
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
         
