@@ -321,7 +321,8 @@ class MasterDataSyncTest(UnifieldTest):
 
     # DATA TOOLS
 
-    def _data_get_id_from_name(self, db, model_name, res_name, name_field='name'):
+    def _data_get_id_from_name(self, db, model_name, res_name,
+        name_field='name'):
         """
         :param db: db
         :param model_name: model name to search in
@@ -338,7 +339,7 @@ class MasterDataSyncTest(UnifieldTest):
         raise MasterDataSyncTestException(msg)
 
     def _data_create_product(self, db, code, name, vals=None,
-            domain_extra=None, check_batch=None):
+        domain_extra=None, check_batch=None):
         """
         create a product
         :param db: db
@@ -764,6 +765,26 @@ class MasterDataSyncTest(UnifieldTest):
         - synchronize up in project, hq and check SHOULD NOT BE SYNCED in both
         """
         self._test_standard_product_list(self.p1, sync_up=True, inverse=True)
+
+    def test_s1_tec_78(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_78
+
+        - create mission product in coordo (mission <=> creator = 'local')
+        - synchronize SHOULD NOT BE SYNCED
+        """
+        db = self.c1
+        check_batch = []
+
+        vals = {
+            'international_status': self._data_get_id_from_name(db,
+                'product.international.status', 'Local'),
+        }
+        self._data_create_product(db, 'UF_PRODUCT_TEST',
+            'Unifield Product Test', vals=vals, check_batch=check_batch)
+
+        self._sync_down_check(check_batch, db=db)  # should sync (mission = coord + projects)
+        self._sync_up_check(check_batch, db=db, inverse=True)  # shoud not sync (hq not in mission sector)
 
 
 def get_test_class():
