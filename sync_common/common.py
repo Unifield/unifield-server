@@ -81,7 +81,7 @@ MODELS_TO_IGNORE_DOMAIN = [
         'base%',
         'board%',
         'audittrail%',
-        #'workflow%',
+        'workflow%',
     ]
 
 def __compile_models_to_ignore():
