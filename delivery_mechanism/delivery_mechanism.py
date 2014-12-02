@@ -1256,7 +1256,7 @@ class stock_picking(osv.osv):
 
         # UF-2531: Run the creation of message if it's at RW at some important point
         if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-            self.usb_push_create_message_rw(cr, uid, context=context)
+            self._manual_create_rw_messages(cr, uid, context=context)
 
         if context.get('rw_sync', False):
             prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
@@ -1280,7 +1280,7 @@ class stock_picking(osv.osv):
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def usb_push_create_message_rw(self, cr, uid, context=None):
+    def _manual_create_rw_messages(self, cr, uid, context=None):
         return
 
     def enter_reason(self, cr, uid, ids, context=None):

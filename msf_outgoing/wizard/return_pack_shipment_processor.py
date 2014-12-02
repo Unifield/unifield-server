@@ -121,7 +121,7 @@ class return_pack_shipment_processor(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         usb_entity = picking_obj._get_usb_entity_type(cr, uid)
         if usb_entity == picking_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-            picking_obj.usb_push_create_message_rw(cr, uid, context=context)
+            picking_obj._manual_create_rw_messages(cr, uid, context=context)
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -186,7 +186,6 @@ class return_pack_shipment_processor(osv.osv):
                     _('Processing Error'),
                     _('You must enter the number of packs you want to return before performing the return.'),
                 )
-
         return shipment_obj.do_return_packs_from_shipment(cr, uid, ids, context=context)
 
 return_pack_shipment_processor()
