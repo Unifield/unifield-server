@@ -323,6 +323,7 @@ class shipment(osv.osv):
     }
     _order = 'name desc'
 
+    @check_cp_rw
     def create_shipment(self, cr, uid, ids, context=None):
         """
         Open the wizard to process the shipment
@@ -496,6 +497,7 @@ class shipment(osv.osv):
             'context': context,
         }
 
+    @check_cp_rw
     def return_packs(self, cr, uid, ids, context=None):
         """
         Open the wizard to return packs from draft shipment
@@ -655,6 +657,7 @@ class shipment(osv.osv):
             'context': context
         }
 
+    @check_cp_rw
     def return_packs_from_shipment(self, cr, uid, ids, context=None):
         """
         Open the wizard to return packs from draft shipment
@@ -1274,6 +1277,7 @@ class shipment(osv.osv):
 
         return True
 
+    @check_cp_rw
     def validate(self, cr, uid, ids, context=None):
         '''
         validate the shipment
@@ -3150,6 +3154,7 @@ class stock_picking(osv.osv):
                 'context': context,
                 }
 
+    @check_cp_rw
     def validate_picking(self, cr, uid, ids, context=None):
         '''
         Open the wizard to validate the picking ticket
@@ -3391,6 +3396,7 @@ class stock_picking(osv.osv):
         proc_obj.do_ppl_step1(cr, uid, wizard_id, context=context)
         return proc_obj.do_ppl_step2(cr, uid, wizard_id, context=context)
 
+    @check_cp_rw
     def ppl(self, cr, uid, ids, context=None):
         """
         Open the wizard to process the step 1 of the PPL
@@ -3676,6 +3682,7 @@ class stock_picking(osv.osv):
     def _manual_create_rw_messages(self, cr, uid, context=None):
         return
 
+    @check_cp_rw
     def ppl_return(self, cr, uid, ids, context=None):
         """
         Open wizard to return products from a PPL

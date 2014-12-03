@@ -157,7 +157,7 @@
                     <field name="state"/>
                     <field name="line_state" />
 					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" context="{'from_button': True}"/>
-					<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
+                    <button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply" context="{'from_button': True}" />
 				</tree>
 			</field>
 		</record>
@@ -695,10 +695,10 @@
 							<group col="12" colspan="4">
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
-								<button name="ppl_return" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo"/>
+                                <button name="ppl_return" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo" context="{'from_button': True}" />
 								<button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
-								<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
+                                <button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver" context="{'from_button': True}" />
 								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
 							</group>
 						</page>
@@ -1261,12 +1261,12 @@
 							</field>
 							<group col="12" colspan="4">
 								<field name="state" readonly="1"/>
-								<button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo"/>
-								<button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add" />
+                                <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
+                                <button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add" context="{'from_button': True}" />
 								<button name="action_cancel" states="packed" string="Cancel Shipment" type="object" icon="gtk-cancel" />
 								<button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo" />
-								<button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo"/>
-								<button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" />
+                                <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
+                                <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
 								<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': [('state', '!=', 'done')]}" 
 								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
 							</group>
