@@ -87,6 +87,7 @@ class shipment(osv.osv):
         self._logger.info(message)
         return message
 
+    #UF-2531: Create packs return for the shipment 
     def usb_shipment_return_packs(self, cr, uid, source, out_info, context=None):
         '''
         Method to return packs from a shipped Shipment from RW
@@ -133,13 +134,54 @@ class shipment(osv.osv):
                             'return_from': pack_fam_sync['return_from'],
                             'return_to': pack_fam_sync['return_to'],
                         }, context=context)
-
         # Now process this return by call the method
         return_pack_obj.do_return_pack_from_shipment(cr, uid, processor_id, context=context)
 
         message += " has packs returned. Operation successfully executed"
         self._logger.info(message)
         return message
+    
+    #UF-2531: Create manually the message for the return pack of the ship 
+    def _manual_shipment_create_rw_messages(self, cr, uid, shipment, return_info, context=None):
+        pick_obj = self.pool.get('stock.picking')
+        usb_entity = pick_obj._get_usb_entity_type(cr, uid)
+        if usb_entity == pick_obj.REMOTE_WAREHOUSE:
+            partner_name = 'fake'
+            rule_sequence = 2051
+            rule_obj = self.pool.get("sync.client.message_rule")
+            rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
+    
+            if not rule or not shipment:
+                return
+            shipment_id = shipment.id
+    
+            model_obj = self.pool.get(rule.model)
+            msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
+    
+            arguments = model_obj.get_message_arguments(cr, uid, shipment_id, rule, context=context)
+            temp = arguments[0] 
+            temp['ppl'] = return_info
+            arguments = [temp]
+            
+            identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [shipment_id], rule.server_id, context=context)
+            if not identifiers:
+                return
+    
+            xml_id = identifiers[shipment_id]
+            existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+            if existing_message_id: # if similar message does not exist in the system, then do nothing
+                return
+    
+            # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
+            data = {
+                    'identifier' : xml_id,
+                    'remote_call': rule.remote_call,
+                    'arguments': arguments,
+                    'destination_name': partner_name,
+                    'sent' : False,
+                    'generate_message' : True,
+            }
+            msg_to_send_obj.create(cr, uid, data, context=context)
     
     def usb_set_delivered_shipment(self, cr, uid, source, out_info, context=None):
         '''
