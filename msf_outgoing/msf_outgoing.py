@@ -764,11 +764,8 @@ class shipment(osv.osv):
                 _('Processing Error'),
                 _('No data to process !'),
             )
-
         shipment_ids = []
         return_info = {}
-        
-
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             shipment = wizard.shipment_id
             shipment_ids.append(shipment.id)
@@ -780,6 +777,7 @@ class shipment(osv.osv):
                 if family.return_from == 0 and family.return_to == 0:
                     continue
 
+                # UF-2531: Store some important info for the return pack messages
                 return_info.setdefault(family.ppl_id.name, {
                         'from_pack': family.from_pack,
                         'to_pack': family.to_pack,
@@ -795,7 +793,6 @@ class shipment(osv.osv):
                 ], context=context)
 
                 stay = []
-
                 if family.to_pack >= family.return_to:
                     if family.return_from == family.from_pack:
                         if family.return_to != family.to_pack:
@@ -898,57 +895,10 @@ class shipment(osv.osv):
         # call complete_finished on the shipment object
         # if everything is allright (all draft packing are finished) the shipment is done also
         self.complete_finished(cr, uid, shipment_ids, context=context)
-
-
-        pick_obj = self.pool.get('stock.picking')
-        usb_entity = pick_obj._get_usb_entity_type(cr, uid)
-        if usb_entity == pick_obj.REMOTE_WAREHOUSE:
         
-            ################### TEMP
-            partner_name = 'faked'
-            rule_sequence = 2051
-            rule_obj = self.pool.get("sync.client.message_rule")
-            rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
-    
-    
-            if not rule or not shipment:
-                return
-            shipment_id = shipment.id 
-    
-            model_obj = self.pool.get(rule.model)
-            msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
-    
-            arguments = model_obj.get_message_arguments(cr, uid, shipment_id, rule, context=context)
-            ttt = arguments[0] 
-            ttt['ppl'] = return_info
-            arguments = [ttt]
-            
-            identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [shipment_id], rule.server_id, context=context)
-            if not identifiers:
-                return
-    
-            xml_id = identifiers[shipment_id]
-            existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
-            if existing_message_id: # if similar message does not exist in the system, then do nothing
-                return
-    
-            # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
-            data = {
-                    'identifier' : xml_id,
-                    'remote_call': rule.remote_call,
-                    'arguments': arguments,
-                    'destination_name': partner_name,
-                    'sent' : False,
-                    'generate_message' : True,
-            }
-            msg_to_send_obj.create(cr, uid, data, context=context)
-    
-            ##################################################
-            # CREATE MESSAGE FROM HERE, FROM FAMILY!!!!! NAME OF PPL, SHIP
-            ##################################################
-    
-
-
+        #UF-2531: Create manually the message for the return pack of the ship 
+        self._manual_shipment_create_rw_messages(cr, uid, shipment, return_info, context=context)
+        
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         return {
             'name':_("Shipment"),
@@ -960,6 +910,9 @@ class shipment(osv.osv):
             'type': 'ir.actions.act_window',
             'target': 'crush',
         }
+        
+    def _manual_shipment_create_rw_messages(self, cr, uid, shipment, return_info, context=None):
+        return
 
     def action_cancel(self, cr, uid, ids, context=None):
         '''
