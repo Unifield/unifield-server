@@ -557,7 +557,7 @@ class stock_picking(osv.osv):
         return super(stock_picking, self).action_assign(cr, uid, ids, context=context)
 
     @check_cp_rw
-    def cancel_assign(self, cr, uid, ids):
+    def cancel_assign(self, cr, uid, ids, *args, **kwargs):
         return super(stock_picking, self).cancel_assign(cr, uid, ids)
 
     def call_cancel_wizard(self, cr, uid, ids, context=None):
