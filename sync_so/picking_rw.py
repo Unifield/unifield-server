@@ -114,7 +114,7 @@ class shipment(osv.osv):
             self._logger.info(message)
             return message
 
-        message = 'The following packing list of the Ship %s: ' % (ship_name)
+        message = 'The Ship %s has the following packs returned: ' % (ship_name)
         # UF-2531: Create processor for return packs in Shipment
         proc_obj = self.pool.get('return.pack.shipment.processor')
         processor_id = proc_obj.create(cr, uid, {'shipment_id': ship_ids[0]}, context=context)
@@ -127,17 +127,20 @@ class shipment(osv.osv):
                 # check the family with ppl_id, pack_from and pack_to to find the correct line
                 for pack in ppl:
                     pack_fam_sync = ppl[pack]
-                    if pack == family.ppl_id.name and family.from_pack == pack_fam_sync['from_pack'] and family.to_pack == pack_fam_sync['to_pack']:
-                        message += pack + " "
+                    ppl_name = pack_fam_sync['name']
+                    if ppl_name == family.ppl_id.name and family.from_pack == pack_fam_sync['from_pack'] and family.to_pack == pack_fam_sync['to_pack']:
+                        message += "%s (return: %s --> %s), " % (ppl_name, pack_fam_sync['return_from'], pack_fam_sync['return_to'])
                         # This is the correct pack family --> update the return from and to packs
                         family_obj.write(cr, uid, [family.id], {
                             'return_from': pack_fam_sync['return_from'],
                             'return_to': pack_fam_sync['return_to'],
                         }, context=context)
+                        break
+                    
         # Now process this return by call the method
         return_pack_obj.do_return_pack_from_shipment(cr, uid, processor_id, context=context)
 
-        message += " has packs returned. Operation successfully executed"
+        message += ". The operation has successfully executed"
         self._logger.info(message)
         return message
     
@@ -169,8 +172,8 @@ class shipment(osv.osv):
     
             xml_id = identifiers[shipment_id]
             existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
-            if existing_message_id: # if similar message does not exist in the system, then do nothing
-                return
+#            if existing_message_id: # if similar message does not exist in the system, then do nothing
+#                return
     
             # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
             data = {
