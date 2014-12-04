@@ -769,6 +769,9 @@ class shipment(osv.osv):
             )
         shipment_ids = []
         return_info = {}
+        
+        counter = 0
+        
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             shipment = wizard.shipment_id
             shipment_ids.append(shipment.id)
@@ -781,12 +784,14 @@ class shipment(osv.osv):
                     continue
 
                 # UF-2531: Store some important info for the return pack messages
-                return_info.setdefault(family.ppl_id.name, {
+                return_info.setdefault(str(counter), {
+                        'name': family.ppl_id.name,
                         'from_pack': family.from_pack,
                         'to_pack': family.to_pack,
                         'return_from': family.return_from,
                         'return_to': family.return_to,
                     })
+                counter = counter + 1 
                 
                 # Search the corresponding moves
                 move_ids = move_obj.search(cr, uid, [
