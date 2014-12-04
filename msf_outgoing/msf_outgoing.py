@@ -1588,6 +1588,27 @@ class stock_picking(osv.osv):
 #                else:
 #                    default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'ppl'))
 
+        if context.get('picking_type') == 'delivery_order' and obj.partner_id2:
+            # UF-2539: do not allow to duplicate (validated by Skype 04/12/2014)
+            # - as since UF-2539 it is not allowed to select other internal
+            # - instances partner, but it was previously in UF 1.0
+            # case of a FO, pick generated, then converted to an OUT
+            if obj.partner_id2.partner_type == 'internal' and \
+                obj.partner_id2.customer != True:
+                # no customer <=> partner instance (as delivery order filters
+                # customer (and allows instance itself))
+                instance_partner_id = False
+                user = self.pool.get('res.users').browse(cr, uid, [uid],
+                    context=context)[0]
+                if user and user.company_id and user.company_id.partner_id:
+                    instance_partner_id = user.company_id.partner_id.id
+                if obj.partner_id2.id != instance_partner_id:
+                    msg_format = "You can not duplicate from an other partner" \
+                        " instance of current one '%s'"
+                    msg_intl = _(msg_format)
+                    raise osv.except_osv(_('Error !'), msg_intl % (
+                        user.company_id.name or '', ))
+
         result = super(stock_picking, self).copy(cr, uid, copy_id, default=default, context=context)
         if not context.get('allow_copy', False):
             if obj.subtype == 'picking' and obj.backorder_id:
