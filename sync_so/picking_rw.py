@@ -1229,7 +1229,7 @@ class stock_picking(osv.osv):
             for line in picking_lines:
                 sline = line[2]
                 # UF-2531: If the PICK got split then all lines need to be created in here
-                if sline['line_number'] == move.line_number and move.original_qty_partial == sline['original_qty_partial']: 
+                if sline['line_number'] == move.line_number and (move.original_qty_partial == -1 or (move.original_qty_partial == sline['original_qty_partial'])):
                     line_data['product_qty'] = sline['product_qty']
                     line_data['quantity'] = sline['product_qty']
                     ret = line_obj.create(cr, uid, line_data, context=context)
