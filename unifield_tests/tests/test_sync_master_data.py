@@ -320,10 +320,19 @@ class MasterDataSyncTest(UnifieldTest):
         self._sync_check_data_set_on_db(self.hq1, check_batch, inverse=inverse)
 
     # DATA TOOLS
+    def _data_get_company_id(self, db):
+        """
+        :param db: db
+        :return: company id
+        :rtype: int
+        """
+        user = db.get('res.users').browse(1)
+        return user.company_id.id if user else False
 
     def _data_get_id_from_name(self, db, model_name, res_name,
         name_field='name'):
         """
+        get record id from model and record name
         :param db: db
         :param model_name: model name to search in
         :param res_name: name value to search in
@@ -786,6 +795,42 @@ class MasterDataSyncTest(UnifieldTest):
         self._sync_down_check(check_batch, db=db)  # should sync (mission = coord + projects)
         self._sync_up_check(check_batch, db=db, inverse=True)  # shoud not sync (hq not in mission sector)
 
+    def test_s1_tec_79(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_79
+
+        - create a tax code and an account tax in COORD
+        - synchronize SHOULD NOT BE SYNCED
+        """
+        db = self.c1
+        check_batch = []
+        cpy_id = self._data_get_company_id(db)
+
+        vals = {
+            'name': 'Unifield Tax Code Test',
+            'company_id': cpy_id,
+            'sign': 1.,
+        }
+        tax_code_id = self._record_create(db, 'account.tax.code', vals,
+            domain_include=['name', ], check_batch=check_batch)[0]
+
+        vals = {
+            'name': 'Unifield Tax Test',
+            'company_id': cpy_id,
+            'tax_code_id': tax_code_id,
+            'amount': 0.2,
+            'applicable_type': 'true',
+            'sequence': 0,
+            'type': 'percent',
+            'type_tax_use': 'sale',
+        }
+        self._record_create(db, 'account.tax', vals,
+            domain_exclude=['company_id', 'tax_code_id', ],
+            check_batch=check_batch)
+
+        # should not sync
+        self._sync_down_check(check_batch, db=db, inverse=True)
+        self._sync_up_check(check_batch, db=db, inverse=True)
 
 def get_test_class():
     return MasterDataSyncTest
