@@ -115,7 +115,7 @@ class MasterDataSyncTest(UnifieldTest):
 
     def _record_create(self, db, model_name, vals, domain_include=None,
         domain_exclude=None, domain_extra=None, check_batch=None,
-        teardown_log=True, search_unit_test=False):
+        teardown_log=True):
         """
         for a model create a record in hq using vals
         do never use in domain fields that are changed by sync (that are not
@@ -135,9 +135,6 @@ class MasterDataSyncTest(UnifieldTest):
         :param teardown_log: True to log 'generated record is to delete in
             tearDown()' (default True)
         :type teardown_log: bool
-        :param search_unit_test: True if specific search_unit_tests on server
-            for sync data check in _sync_check_data_set_on_db()
-        :type search_unit_test: bool
         :return: (id, domain)
         :rtype: tuple
         """
@@ -167,7 +164,7 @@ class MasterDataSyncTest(UnifieldTest):
             # tests records
             if domain_extra is not None:
                 domain += domain_extra
-            check_batch.insert(0, (model_name, domain, search_unit_test))
+            check_batch.insert(0, (model_name, domain, ))
         return (id, domain, )
 
     def _record_copy(self, db, model_name, id, domain_include,
@@ -190,14 +187,14 @@ class MasterDataSyncTest(UnifieldTest):
         :return: (id, domain)
         :rtype: tuple
         """
-        new_id = self.db.get(model_name).copy(id, defaults)
+        new_id = db.get(model_name).copy(id, defaults)
         if teardown_log:
             self._record_set_ids(db, model_name, new_id)
         domain = dfv(defaults, include=domain_include)
         if check_batch is not None:
             # insert to keep record cascade dependencies when auto deleting
             # tests records
-            check_batch.insert(0, (model_name, domain))
+            check_batch.insert(0, (model_name, domain, ))
         return (new_id, domain, )
     # SYNC TOOLS
 
@@ -211,11 +208,8 @@ class MasterDataSyncTest(UnifieldTest):
         :param inverse: if True the record should not be sync down!
         :type inverse: bool
         """
-        for model, domain, specific_search in check_batch:
-            if specific_search:
-                ids = db.get(model).search_unit_test(domain)
-            else:
-                ids = db.get(model).search(domain)
+        for model, domain in check_batch:
+            ids = db.get(model).search(domain)
             count = len(ids) if ids else 0
             if ids:
                 # log ids to remove in tearDown
@@ -629,12 +623,15 @@ class MasterDataSyncTest(UnifieldTest):
             #'period_to': date_end_fy_val(),
             'currency_id': comp_ccy_id,
         }
-        # FIXME Catalog not found but correctly synced (as unactive)
-        # FIXME Check domain extra
-        # (checked by desactivate _record_unlink_all_generated
+        # NOTE: catalogue synced in P1 as inactive and draft
+        catalogue_domain_include = ['name', 'period_from', ]
+        catalogue_domain_extra = [
+            ('state', '=', 'draft'),
+            ('active', '!=', True),
+        ]
         catalogue_id = self._record_create(db, 'supplier.catalogue', vals,
-            domain_include=['name', 'state', 'period_from', ],
-            domain_extra=[('active', 'in', ('f', 't'))],
+            domain_include=['name', 'period_from', ],
+            domain_extra=catalogue_domain_extra,
             check_batch=check_batch)[0]
 
         # create catalog line
@@ -667,8 +664,8 @@ class MasterDataSyncTest(UnifieldTest):
             'currency_id': comp_ccy_id,
         }
         self._record_create(db, 'supplier.catalogue', vals,
-            domain_include=['name', 'state', 'period_from', ],
-            domain_extra=[('active', '=', 'f')],
+            domain_include=catalogue_domain_include,
+            domain_extra=catalogue_domain_extra,
             check_batch=check_batch)
 
         # create catalog line
