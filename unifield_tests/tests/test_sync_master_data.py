@@ -634,7 +634,7 @@ class MasterDataSyncTest(UnifieldTest):
         # (checked by desactivate _record_unlink_all_generated
         catalogue_id = self._record_create(db, 'supplier.catalogue', vals,
             domain_include=['name', 'state', 'period_from', ],
-            domain_extra=[('active', '=', 'f')],
+            domain_extra=[('active', 'in', ('f', 't'))],
             check_batch=check_batch)[0]
 
         # create catalog line
@@ -725,6 +725,22 @@ class MasterDataSyncTest(UnifieldTest):
         - synchronize down in project and check
         """
         self._test_standard_product_list(self.c1)
+
+    def test_s1_tec_48(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_48
+
+        - create a product in coord (product in coord <=> mission product)
+        - synchronize down in project and check
+        """
+        db = self.c1
+        check_batch = []
+
+        # product
+        self._data_create_product(db, 'UF_PRODUCT_TEST',
+            'Unifield Product Test', check_batch=check_batch)
+
+        self._sync_down_check(check_batch)
 
     def test_s1_tec_76(self):
         """
