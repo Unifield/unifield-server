@@ -105,7 +105,7 @@ class shipment(osv.osv):
         state='shipped'
         ship_dict = out_info.to_dict()
         ship_name = ship_dict['name']
-        ppl = ship_dict['ppl']
+        ppl = ship_dict['picking']
 
         self._logger.info("+++ RW: The Ship %s has packs returned" % (ship_name))
         ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
@@ -120,7 +120,6 @@ class shipment(osv.osv):
         processor_id = proc_obj.create(cr, uid, {'shipment_id': ship_ids[0]}, context=context)
         proc_obj.create_lines(cr, uid, processor_id, context=context)
         family_obj = self.pool.get('return.pack.shipment.family.processor')
-        return_pack_obj = self.pool.get('return.pack.shipment.processor')
         
         for wizard in proc_obj.browse(cr, uid, [processor_id], context=context):
             for family in wizard.family_ids:
@@ -138,21 +137,80 @@ class shipment(osv.osv):
                         break
                     
         # Now process this return by call the method
-        return_pack_obj.do_return_pack_from_shipment(cr, uid, processor_id, context=context)
+        proc_obj.do_return_pack_from_shipment(cr, uid, processor_id, context=context)
+
+        message += ". The operation has successfully executed"
+        self._logger.info(message)
+        return message
+
+    #UF-2531: Create packs return for the shipment in draft state --> packs will be put back into the PICK object 
+    def usb_shipment_return_packs_shipment_draft(self, cr, uid, source, out_info, context=None):
+        '''
+        Method to return packs from a shipped Shipment from RW
+        '''
+        if context is None:
+            context = {}
+            
+        pick_obj = self.pool.get('stock.picking')
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type != pick_obj.CENTRAL_PLATFORM:
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+            self._logger.info(message)
+            return message
+
+        state='draft'
+        ship_dict = out_info.to_dict()
+        ship_name = ship_dict['name']
+        draft_pack = ship_dict['picking']
+
+        self._logger.info("+++ RW: The Ship %s has packs returned to picking objects" % (ship_name))
+        ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
+        if not ship_ids or not draft_pack:
+            message = "Sorry, no Ship %s in state draft available or invalid pick document for making the return packs!" % (ship_name)
+            self._logger.info(message)
+            return message
+
+        message = 'The Ship %s has the following packs returned: ' % (ship_name)
+        # UF-2531: Create processor for return packs in Shipment
+        proc_obj = self.pool.get('return.shipment.processor')
+        processor_id = proc_obj.create(cr, uid, {'shipment_id': ship_ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        family_obj = self.pool.get('return.shipment.family.processor')
+        #return.shipment.family.processor
+        #pack.family.memory
+        
+        for wizard in proc_obj.browse(cr, uid, [processor_id], context=context):
+            for family in wizard.family_ids:
+                draft_picking = family.ppl_id and family.ppl_id.previous_step_id and family.ppl_id.previous_step_id.backorder_id or False
+                
+                # check the family with ppl_id, pack_from and pack_to to find the correct line
+                for pack in draft_pack:
+                    pack_fam_sync = draft_pack[pack]
+                    ppl_name = pack_fam_sync['name']
+                    
+                    if ppl_name == draft_picking.name and family.from_pack == pack_fam_sync['from_pack'] and family.to_pack == pack_fam_sync['to_pack']:
+                        message += "%s (number of packs returned: %s), " % (ppl_name, pack_fam_sync['selected_number'])
+                        # This is the correct pack family --> update the return from and to packs
+                        family_obj.write(cr, uid, [family.id], {
+                            'selected_number': pack_fam_sync['selected_number'],
+                        }, context=context)
+                        break
+                    
+        # Now process this return by call the method
+        proc_obj.do_return_packs(cr, uid, processor_id, context=context)
 
         message += ". The operation has successfully executed"
         self._logger.info(message)
         return message
     
     #UF-2531: Create manually the message for the return pack of the ship 
-    def _manual_shipment_create_rw_messages(self, cr, uid, shipment, return_info, context=None):
+    def _manual_shipment_create_rw_messages(self, cr, uid, shipment, return_info, rule_method = False, context=None):
         pick_obj = self.pool.get('stock.picking')
         usb_entity = pick_obj._get_usb_entity_type(cr, uid)
-        if usb_entity == pick_obj.REMOTE_WAREHOUSE:
+        if usb_entity == pick_obj.REMOTE_WAREHOUSE or  rule_method is False:
             partner_name = 'fake'
-            rule_sequence = 2051
             rule_obj = self.pool.get("sync.client.message_rule")
-            rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
+            rule = rule_obj.get_rule_by_remote_call(cr, uid, 'shipment.' + rule_method, context)
     
             if not rule or not shipment:
                 return
@@ -163,19 +221,15 @@ class shipment(osv.osv):
     
             arguments = model_obj.get_message_arguments(cr, uid, shipment_id, rule, context=context)
             temp = arguments[0] 
-            temp['ppl'] = return_info
+            temp['picking'] = return_info
             arguments = [temp]
             
             identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [shipment_id], rule.server_id, context=context)
             if not identifiers:
                 return
-    
+
+            # UF-2531: Manually create the message for return packs and place it into the queue for next USB sync
             xml_id = identifiers[shipment_id]
-            existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
-#            if existing_message_id: # if similar message does not exist in the system, then do nothing
-#                return
-    
-            # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
             data = {
                     'identifier' : xml_id,
                     'remote_call': rule.remote_call,
@@ -1137,6 +1191,93 @@ class stock_picking(osv.osv):
 
         self.do_create_picking(cr, uid, [proc_id], context=context)
         return True
+
+
+
+
+
+
+
+
+
+    #UF-2531: Create packs return for the shipment 
+    def usb_picking_return_products(self, cr, uid, source, out_info, context=None):
+        '''
+        Method to return packs from a shipped Shipment from RW
+        '''
+        if context is None:
+            context = {}
+            
+        pick_obj = self.pool.get('stock.picking')
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type != pick_obj.CENTRAL_PLATFORM:
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+            self._logger.info(message)
+            return message
+
+        state='assigned'
+        ship_dict = out_info.to_dict()
+        ship_name = ship_dict['name']
+        ppl = ship_dict['picking']
+
+        self._logger.info("+++ RW: The Ship %s has packs returned" % (ship_name))
+        pick_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
+        if not pick_ids or not ppl:
+            message = "Sorry, no Ship %s in state shipped available or invalid packing list, for making the return packs!" % (ship_name)
+            self._logger.info(message)
+            return message
+
+        message = 'The Ship %s has the following packs returned: ' % (ship_name)
+        # UF-2531: Create processor for return packs in Shipment
+        proc_obj = self.pool.get('return.ppl.processor')
+        processor_id = proc_obj.create(cr, uid, {'picking_id': pick_ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        wizard = proc_obj.browse(cr, uid, processor_id, context=context)
+
+        line_obj = self.pool.get(wizard._columns['move_ids']._obj)        
+        
+        
+        for wizard in proc_obj.browse(cr, uid, [processor_id], context=context):
+            for family in wizard.family_ids:
+                # check the family with ppl_id, pack_from and pack_to to find the correct line
+                for pack in ppl:
+                    pack_fam_sync = ppl[pack]
+                    ppl_name = pack_fam_sync['name']
+                    if ppl_name == family.ppl_id.name and family.from_pack == pack_fam_sync['from_pack'] and family.to_pack == pack_fam_sync['to_pack']:
+                        message += "%s (return: %s --> %s), " % (ppl_name, pack_fam_sync['return_from'], pack_fam_sync['return_to'])
+                        # This is the correct pack family --> update the return from and to packs
+                        break
+                    
+        # Make the full quantity process for this PICK to PPL
+        for move in wizard.picking_id.move_lines:
+            if move.state in ('draft', 'done', 'cancel', 'confirmed') or  move.product_qty == 0.00 :
+                continue
+
+            line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
+            line_data['product_qty'] = move.product_qty
+            line_data['quantity'] = move.product_qty
+            # UF-2531, point 3): We need to set the quantity received from the other instance, not the whole qty from the move!
+            # but need to check the line number to make sure to get the correct line
+            for line in out_info:
+                sline = line[2]
+                # UF-2531: If the PICK got split then all lines need to be created in here
+                if sline['line_number'] == move.line_number and (move.original_qty_partial == -1 or (move.original_qty_partial == sline['original_qty_partial'])):
+                    line_data['product_qty'] = sline['product_qty']
+                    line_data['quantity'] = sline['product_qty']
+                    ret = line_obj.create(cr, uid, line_data, context=context)
+
+        # Now process this return by call the method
+        proc_obj.do_return_ppl(cr, uid, processor_id, context=context)
+
+
+        raise Exception, message
+
+        message += ". The operation has successfully executed"
+        self._logger.info(message)
+        return message
+
+
+
 
     def usb_replicate_ppl(self, cr, uid, source, out_info, context=None):
         pick_dict = out_info.to_dict()
