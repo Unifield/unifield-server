@@ -65,7 +65,7 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  ]
 
 HEADER_COLUMNS = [(1, _('Freight'), 'optionnal'),
-                  (2, _('Picking Reference'), 'mandatory'),
+                  (2, _('Picking Reference'), 'optionnal'),
                   (3, _('Origin'), 'optionnal'),
                   (4, _('Supplier'), 'optionnal'),
                   (5, _('Transport mode'), 'optionnal'),
@@ -509,19 +509,6 @@ class wizard_import_in_simulation_screen(osv.osv):
 
                 # Line 2: Picking Reference
                 picking_ref = values.get(2, ['', ''])[1]
-                if picking_ref != wiz.picking_id.name:
-                    message = _('''## IMPORT STOPPED ##
-
-    LINE 1 OF THE IMPORTED FILE: THE PICKING REFERENCE \
-    IN THE FILE IS NOT THE SAME AS THE ORDER REFERENCE OF THE SIMULATION SCREEN.\
-
-    YOU SHOULD IMPORT A FILE THAT HAS THE SAME PICKING REFERENCE THAT THE SIMULATION\
-    SCREEN!''')
-                    self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
-                    res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                    cr.commit()
-                    cr.close()
-                    return res
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
