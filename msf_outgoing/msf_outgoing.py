@@ -479,6 +479,11 @@ class shipment(osv.osv):
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
 
+        # UF-2531: Run the creation of message if it's at RW at some important point
+        usb_entity = picking_obj._get_usb_entity_type(cr, uid)
+        if usb_entity == picking_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+            picking_obj._manual_create_rw_messages(cr, uid, context=context)
+
         # Remove unneeded data in context
         context.update({
             'partial_datas_ppl1': {},
@@ -655,8 +660,9 @@ class shipment(osv.osv):
         # If everything is allright (all draft packing are finished) the shipment is done also
         self.complete_finished(cr, uid, shipment_ids, context=context)
 
-        #UF-2531: Create manually the message for the return pack of the ship 
-        self._manual_shipment_create_rw_messages(cr, uid, shipment, return_info, 'shipment.usb_shipment_return_packs_shipment_draft', context=context)
+        #UF-2531: Create manually the message for the return pack of the ship
+        if shipment and shipment.id: 
+            self._manual_create_rw_shipment_message(cr, uid, shipment.id, return_info, 'usb_shipment_return_packs_shipment_draft', context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         return {
@@ -919,7 +925,8 @@ class shipment(osv.osv):
         self.complete_finished(cr, uid, shipment_ids, context=context)
         
         #UF-2531: Create manually the message for the return pack of the ship 
-        self._manual_shipment_create_rw_messages(cr, uid, shipment, return_info, 'shipment.usb_shipment_return_packs', context=context)
+        if shipment and shipment.id:
+            self._manual_create_rw_shipment_message(cr, uid, shipment.id, return_info, 'usb_shipment_return_packs', context=context)
         
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         return {
@@ -933,7 +940,7 @@ class shipment(osv.osv):
             'target': 'crush',
         }
         
-    def _manual_shipment_create_rw_messages(self, cr, uid, shipment, return_info, rule_method=False, context=None):
+    def _manual_create_rw_shipment_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         return
 
     def action_cancel(self, cr, uid, ids, context=None):
@@ -3767,9 +3774,9 @@ class stock_picking(osv.osv):
                 # UF-2531: Store some important info for the return pack messages
                 return_info.setdefault(str(counter), {
                         'name': picking.previous_step_id.backorder_id.name,
-                        'quantity': return_qty,
-                        'line_number': line.number,
-                        'to_pack': line,
+                        'returned_quantity': return_qty,
+                        'line_number': line.line_number,
+                        'ordered_quantity': line.ordered_quantity,
                     })
                 counter = counter + 1 
 
@@ -3842,8 +3849,7 @@ class stock_picking(osv.osv):
         context['picking_type'] = 'picking_ticket'
 
         #UF-2531: Create manually the message for the return pack of the ship
-        shipment_obj = self.pool.get('shipment')
-        shipment_obj._manual_shipment_create_rw_messages(cr, uid, shipment, return_info, 'picking.usb_picking_return_products', context=context)
+        self._manual_create_rw_picking_message(cr, uid, picking.id, return_info, 'usb_picking_return_products', context=context)
 
         context.update({'picking_type': 'picking_ticket'})
         return {
@@ -3857,6 +3863,9 @@ class stock_picking(osv.osv):
             'target': 'crush',
             'context': context,
         }
+
+    def _manual_create_rw_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
+        return
 
     def action_cancel(self, cr, uid, ids, context=None):
         '''
