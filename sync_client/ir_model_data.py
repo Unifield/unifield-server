@@ -110,6 +110,10 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
                (hasattr(obj._inherit, '__iter__') or self.pool.get(obj._inherit)._table == obj._table):
                 continue
 
+            # Ignore SQL view records UF-2542
+            if not getattr(obj, '_auto', True):
+                continue
+
             # get all records for the object
             cr.execute("""\
                 SELECT distinct r.id
