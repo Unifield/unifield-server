@@ -55,6 +55,11 @@ class purchase_order(osv.osv):
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'product', file, {}, mode='init', noupdate=False)
 
+        logging.getLogger('init').info('HOOK: module product_attributes: loading data/sale_data.yml')
+        pathname = path.join('product_attributes', 'data', 'sale_data.yml')
+        file = tools.file_open(pathname)
+        tools.convert_yaml_import(cr, 'product_attributes', file, {}, mode='init', noupdate=False)
+
     def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
         '''
         Please copy this to your module's method also.
