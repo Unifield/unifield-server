@@ -891,6 +891,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             new_wl_id = wl_obj.copy(cr, uid, po_line,
                                                              {'type_change': 'split',
                                                               'parent_line_id': po_line,
+                                                              'imp_dcd': False,
                                                               'po_line_id': False}, context=context)
                             err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
                             if file_line[0] in not_ok_file_lines:
@@ -1470,8 +1471,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                 }
                     if line.imp_drd:
                         line_vals['date_planned'] = line.imp_drd
-                    if line.imp_dcd:
-                        line_vals['confirmed_delivery_date'] = line.imp_dcd
                     if line.imp_project_ref:
                         line_vals['project_ref'] = line.imp_project_ref
                     if line.imp_origin:
@@ -1492,6 +1491,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         })
                         line_obj.create(cr, uid, line_vals, context=context)
                     else:
+                        if line.imp_dcd:
+                            line_vals['confirmed_delivery_date'] = line.imp_dcd
                         line_obj.write(cr, uid, [new_po_line_id], line_vals,
                             context=context)
 
