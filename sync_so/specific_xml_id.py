@@ -698,3 +698,14 @@ class button_access_rule(osv.osv):
         return get_valid_xml_name('BAR', view_xml_id[bar.view_id.id], bar.name)
 
 button_access_rule()
+
+class res_groups(osv.osv):
+    _inherit = 'res.groups'
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and 'menu_access/id' in context.get('fields', []) and 'menu_access' not in vals:
+            vals['groups_id'] = [(6, 0, [])]
+        return super(ir_actions_act_window, self).write(cr, uid, ids, vals, context)
+res_groups()
