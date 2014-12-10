@@ -48,6 +48,10 @@ CURRENCY_NAME_ID = {}
 
 SIMU_LINES = {}
 
+"""
+UF-2538 optional 4nd tuple item: list of states for mandatory check
+('==', ['state1', ]) / ('!=', ['state1', ])
+"""
 LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (1, _('External ref'), 'optionnal'),
                  (2, _('Product Code'), 'mandatory'),
@@ -57,7 +61,7 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (6, _('Price Unit'), 'mandatory'),
                  (7, _('Currency'), 'mandatory'),
                  (8, _('Origin'), 'optionnal'),
-                 (10, _('Delivery Confirmed Date'), 'mandatory'),
+                 (10, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['confirmed'])),
                  (16, _('Project Ref.'), 'optionnal'),
                  (17, _('Message ESC 1'), 'optionnal'),
                  (18, _('Message ESC 2'), 'optionnal'),
@@ -712,11 +716,23 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 # Removed by QT on UFTP-370
 #                            if manda_field[1] == 'Delivery Confirmed Date':
 #                                continue  # field not really mandatory, can be empty in export model
-                            not_ok = True
-                            err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
-                            err = _('Line %s of the file: %s') % (x, err1)
-                            values_line_errors.append(err)
-                            file_line_error.append(err1)
+                            # UF-2538
+                            required_field = True
+                            if wiz.order_id and len(manda_field) > 3 and \
+                                isinstance(manda_field[3], (tuple, list, )) and \
+                                len(manda_field[3]) == 2:
+                                # 4nd item: list of mandatory states
+                                op, states = manda_field[3]
+                                if op == '!=':
+                                    required_field = wiz.order_id.state not in states or False
+                                else:
+                                    required_field = wiz.order_id.state in states or False
+                            if required_field:
+                                not_ok = True
+                                err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
+                                err = _('Line %s of the file: %s') % (x, err1)
+                                values_line_errors.append(err)
+                                file_line_error.append(err1)
 
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                     ext_ref = values.get(x, ['', ''])[1]
@@ -875,6 +891,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             new_wl_id = wl_obj.copy(cr, uid, po_line,
                                                              {'type_change': 'split',
                                                               'parent_line_id': po_line,
+                                                              'imp_dcd': False,
                                                               'po_line_id': False}, context=context)
                             err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
                             if file_line[0] in not_ok_file_lines:
@@ -1423,16 +1440,30 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 if line.parent_line_id and line.parent_line_id.po_line_id:
                     po_line_id = line.parent_line_id.po_line_id.id
 
-                    # REF-97: Fixed the wrong quantity for the original line which got split
-                    context['from_simu_screen'] = True
-                    split_id = split_obj.create(cr, uid, {'purchase_line_id': po_line_id,
-                                                          'original_qty': line.parent_line_id.in_qty,
-                                                          'new_line_qty': line.imp_qty}, context=context)
+                    new_product_split = False
+                    if line.in_qty == 0 and \
+                        not line.in_product_id and line.imp_product_id and \
+                        line.imp_product_id.id != line.in_product_id.id:
 
-                    new_po_line_id = split_obj.split_line(cr, uid, split_id, context=context)
-                    context['from_simu_screen'] = False
-                    if not new_po_line_id:
-                        continue
+                        # UF-2337: we could enter a case where the import file
+                        # slit with a new product (like if we manually split
+                        # then after change product of the splited line)
+                        new_product_split = True
+                    else:
+                        # REF-97: Fixed the wrong quantity for the original line
+                        # which got split
+                        context['from_simu_screen'] = True
+                        split_id = split_obj.create(cr, uid, {
+                                'purchase_line_id': po_line_id,
+                                'original_qty': line.parent_line_id.in_qty,
+                                'new_line_qty': line.imp_qty
+                            }, context=context)
+
+                        new_po_line_id = split_obj.split_line(cr, uid, split_id,
+                            context=context)
+                        context['from_simu_screen'] = False
+                    if not new_product_split and not new_po_line_id:
+                        continue  # split line has failed or case not to be done
 
                     line_vals = {'product_uom': line.imp_uom.id,
                                  'product_id': line.imp_product_id.id,
@@ -1440,16 +1471,41 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                 }
                     if line.imp_drd:
                         line_vals['date_planned'] = line.imp_drd
-                    if line.imp_dcd:
-                        line_vals['confirmed_delivery_date'] = line.imp_dcd
                     if line.imp_project_ref:
                         line_vals['project_ref'] = line.imp_project_ref
                     if line.imp_origin:
                         line_vals['origin'] = line.imp_origin
                     if line.imp_external_ref:
                         line_vals['external_ref'] = line.imp_external_ref
-                    line_obj.write(cr, uid, [new_po_line_id], line_vals, context=context)
 
+                    # UF-2537 after split reinject import qty computed in
+                    # simu for import consistency versus simu
+                    # (or set qty of a new product split line)
+                    line_vals['product_qty'] = line.imp_qty
+
+                    if new_product_split:
+                        line_vals.update({
+                            'order_id': line.simu_id.order_id.id,
+                            'line_number': line.in_line_number,
+                            'confirmed_delivery_date': line.imp_dcd or False,
+                        })
+                        line_obj.create(cr, uid, line_vals, context=context)
+                    else:
+                        if line.imp_dcd:
+                            line_vals['confirmed_delivery_date'] = line.imp_dcd
+                        line_obj.write(cr, uid, [new_po_line_id], line_vals,
+                            context=context)
+
+                    # UF-2537 after split reinject ORIGINAL line import qty
+                    # computed in simu for import consistency versus simu
+                    # note: if total qty of splited lines is > to original qty
+                    # the original line qty was truncated in term of qty
+                    # (never be greater than line.parent_line_id.in_qty)
+                    line_vals = {
+                        'product_qty': line.parent_line_id.imp_qty,
+                    }
+                    line_obj.write(cr, uid, [line.parent_line_id.po_line_id.id],
+                        line_vals, context=context)
             elif line.type_change == 'new':
                 line_vals = {'order_id': line.simu_id.order_id.id,
                              'product_id': line.imp_product_id.id,
