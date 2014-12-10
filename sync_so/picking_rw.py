@@ -91,7 +91,7 @@ class shipment(osv.osv):
         
     def _manual_create_rw_shipment_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         rule_obj = self.pool.get("sync.client.message_rule")
-        rule_obj._manual_create_rw_message(cr, uid, self._name, res_id, return_info, rule_method, _logger, context=context)
+        rule_obj._manual_create_rw_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
 
     #UF-2531: Create packs return for the shipment 
     def usb_shipment_return_packs(self, cr, uid, source, out_info, context=None):
@@ -734,7 +734,7 @@ class stock_picking(osv.osv):
 
     def _manual_create_rw_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         rule_obj = self.pool.get("sync.client.message_rule")
-        rule_obj._manual_create_rw_message(cr, uid, self._name, res_id, return_info, rule_method, _logger, context=context)
+        rule_obj._manual_create_rw_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
 
     # UF-2531: Create RW messages manually to keep the content of these messages correctly -- avoid the values have been changed by the return pack, convert PICK/OUT
     def _manual_create_rw_messages(self, cr, uid, context=None):
