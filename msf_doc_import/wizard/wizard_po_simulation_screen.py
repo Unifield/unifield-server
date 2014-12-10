@@ -1488,6 +1488,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         line_vals.update({
                             'order_id': line.simu_id.order_id.id,
                             'line_number': line.in_line_number,
+                            'confirmed_delivery_date': line.imp_dcd or False,
                         })
                         line_obj.create(cr, uid, line_vals, context=context)
                     else:
