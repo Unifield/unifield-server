@@ -707,5 +707,5 @@ class res_groups(osv.osv):
             context = {}
         if context.get('sync_update_execution') and 'menu_access/id' in context.get('fields', []) and 'menu_access' not in vals:
             vals['groups_id'] = [(6, 0, [])]
-        return super(ir_actions_act_window, self).write(cr, uid, ids, vals, context)
+        return super(res_groups, self).write(cr, uid, ids, vals, context)
 res_groups()
