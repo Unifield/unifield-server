@@ -115,10 +115,11 @@ class local_message_rule(osv.osv):
         usb_entity = pick_obj._get_usb_entity_type(cr, uid)
         if usb_entity == pick_obj.REMOTE_WAREHOUSE or not rule_method or not res_id:
             partner_name = 'fake'
+            
             full_method = model_name + "." + rule_method
             rule = self.get_rule_by_remote_call(cr, uid, full_method, context)
             if not rule:
-                _logger.info("Sorry there is no RW rule found for the message: " + full_method)
+                logger.info("Sorry, there is no RW message rule found for the method %s." % (full_method)) 
                 return
     
             model_obj = self.pool.get(model_name)
@@ -128,6 +129,10 @@ class local_message_rule(osv.osv):
             temp = arguments[0] 
             temp['picking'] = return_info
             arguments = [temp]
+            
+            pick_name = ''
+            if 'name' in arguments[0]:
+                pick_name = arguments[0]['name']
             
             identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [res_id], rule.server_id, context=context)
             if not identifiers:
@@ -143,6 +148,7 @@ class local_message_rule(osv.osv):
                     'generate_message' : True,
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
+            logger.info("A manual RW message for the method: %s, created for the object: %s " % (full_method, pick_name)) 
 
     _order = 'sequence_number asc'
 local_message_rule()

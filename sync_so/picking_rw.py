@@ -1212,11 +1212,8 @@ class stock_picking(osv.osv):
             for pick in picking_dict:
                 pick_line = picking_dict[pick]
                 pick_name = pick_line['name']
-                
                 if pick_name == move_pick_name and move.ordered_quantity == pick_line['ordered_quantity'] and move.line_number == pick_line['line_number']:
-                    message += "%s (return: %s --> %s), " % (pick_name, pick_line['line_number'], pick_line['line_number'])
-                    # This is the correct pack family --> update the return from and to packs
-                    
+                    message += "%s (line number: %s, quantity returned: %s), " % (pick_name, pick_line['line_number'], pick_line['returned_quantity'])
                     line_obj.write(cr, uid, [move.id], {
                         'quantity': pick_line['returned_quantity'],
                     }, context=context)
