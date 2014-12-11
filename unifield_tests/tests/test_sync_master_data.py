@@ -423,6 +423,114 @@ class MasterDataSyncTest(UnifieldTest):
         else:
             self._sync_down_check(check_batch, db=db, inverse=inverse)
 
+    def _test_supplier_catalogue_chain(self, db, sync_down):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_45
+
+        - create a supplier catalogue and version in db
+        - check sync up or down
+
+        2 cases:
+        1) 1 catalogue not ESC should sync
+        2) 1 catalogue ESC should NOT sync
+        :param db: db
+        :param sync_down: True to sync down, else sync up
+        :type sync_down: boolean
+        """
+        check_batch = []
+
+        def create_catalogue_line(comment_prefix):
+            product_uom_id = self._data_get_id_from_name(db, 'product.uom',
+                'PCE')
+
+            line_vals = {
+                'catalogue_id': catalogue_id,
+                'line_number': 1,
+                'product_id': product_id,
+                'line_uom_id': product_uom_id,
+                'min_qty': 10.,
+                'unit_price': 1.,
+                'comment': "%d/1 %s Unifield SCL TEST" % (
+                    catalogue_id, comment_prefix, ),
+            }
+            self._record_create(db, 'supplier.catalogue.line',
+                line_vals, domain_include=['line_number', 'comment', ],
+                check_batch=check_batch)
+
+        comp_ccy_id = db.browse('res.users', 1).company_id.currency_id.id
+
+        product_id = self._data_get_id_from_name(db, 'product.product',
+            PRODUCT_TEST_CODE, name_field='default_code')
+
+        # 1) 1 catalogue not ESC should sync
+
+        # create catalog
+        partner_id = self._data_get_id_from_name(db, 'res.partner',
+            'Local Market')
+        vals = {
+            'name': 'Unifield Supplier Catalogue TEST',
+            'state': 'confirmed',
+            'partner_id': partner_id,
+            'period_from': date_now_field_val(),
+            #'period_to': date_end_fy_val(),
+            'currency_id': comp_ccy_id,
+        }
+        # NOTE: catalogue synced as inactive and draft
+        catalogue_domain_include = ['name', 'period_from', ]
+        catalogue_domain_extra = [
+            ('state', '=', 'draft'),
+            ('active', '!=', True),
+        ]
+        catalogue_id = self._record_create(db, 'supplier.catalogue', vals,
+            domain_include=['name', 'period_from', ],
+            domain_extra=catalogue_domain_extra,
+            check_batch=check_batch)[0]
+
+        # create catalog line
+        create_catalogue_line('NO ESC')
+
+        if sync_down:
+            self._sync_down_check(check_batch, db=db)
+        else:
+            self._sync_up_check(check_batch, db=db)
+
+        # 2) 1 catalogue ESC should NOT sync in proj
+        check_batch = []
+
+        # create ESC partner (from 'Local Market' market copy)
+        defaults = {
+            'name': 'Unifield ESC Supplier Test',
+            'ref': 'UF_ESC_SUPPLIER',
+            'partner_type': 'esc',
+            'zone': 'international',
+        }
+        esc_partner_id = self._record_copy(db, 'res.partner', partner_id,
+            domain_include=defaults.keys(), defaults=defaults,
+            check_batch=check_batch)[0]
+
+        # create catalog
+        vals = {
+            'name': 'Unifield ESC Supplier Catalogue TEST',
+            'state': 'confirmed',
+            'partner_id': esc_partner_id,
+            'period_from': date_now_field_val(),
+            #'period_to': date_end_fy_val(),
+            'currency_id': comp_ccy_id,
+        }
+        self._record_create(db, 'supplier.catalogue', vals,
+            domain_include=catalogue_domain_include,
+            domain_extra=catalogue_domain_extra,
+            check_batch=check_batch)
+
+        # create catalog line
+        create_catalogue_line('ESC')
+
+        # inverse=True: should not be sync down check!
+        if sync_down:
+            self._sync_down_check(check_batch, db=db, inverse=True)
+        else:
+            self._sync_up_check(check_batch, db=db, inverse=True)
+
     def test_s1_tec_21(self):
         """
         python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_21
@@ -587,94 +695,7 @@ class MasterDataSyncTest(UnifieldTest):
         1) 1 catalogue not ESC should sync in proj
         2) 1 catalogue ESC should NOT sync in proj
         """
-        db = self.c1
-        check_batch = []
-
-        def create_catalogue_line(comment_prefix):
-            product_uom_id = self._data_get_id_from_name(db, 'product.uom',
-                'PCE')
-
-            line_vals = {
-                'catalogue_id': catalogue_id,
-                'line_number': 1,
-                'product_id': product_id,
-                'line_uom_id': product_uom_id,
-                'min_qty': 10.,
-                'unit_price': 1.,
-                'comment': "%d/1 %s Unifield SCL TEST" % (
-                    catalogue_id, comment_prefix, ),
-            }
-            self._record_create(db, 'supplier.catalogue.line',
-                line_vals, domain_include=['line_number', 'comment', ],
-                check_batch=check_batch)
-
-        comp_ccy_id = db.browse('res.users', 1).company_id.currency_id.id
-
-        product_id = self._data_get_id_from_name(db, 'product.product',
-            PRODUCT_TEST_CODE, name_field='default_code')
-
-        # 1) 1 catalogue not ESC should sync in proj (with 'Local Market')
-
-        # create catalog
-        partner_id = self._data_get_id_from_name(db, 'res.partner',
-            'Local Market')
-        vals = {
-            'name': 'Unifield Supplier Catalogue TEST',
-            'state': 'confirmed',
-            'partner_id': partner_id,
-            'period_from': date_now_field_val(),
-            #'period_to': date_end_fy_val(),
-            'currency_id': comp_ccy_id,
-        }
-        # NOTE: catalogue synced in P1 as inactive and draft
-        catalogue_domain_include = ['name', 'period_from', ]
-        catalogue_domain_extra = [
-            ('state', '=', 'draft'),
-            ('active', '!=', True),
-        ]
-        catalogue_id = self._record_create(db, 'supplier.catalogue', vals,
-            domain_include=['name', 'period_from', ],
-            domain_extra=catalogue_domain_extra,
-            check_batch=check_batch)[0]
-
-        # create catalog line
-        create_catalogue_line('NO ESC')
-
-        self._sync_down_check(check_batch, db=db)
-
-        # 2) 1 catalogue ESC should NOT sync in proj
-        check_batch = []
-
-        # create ESC partner (from 'Local Market' market copy)
-        defaults = {
-            'name': 'Unifield ESC Supplier Test',
-            'ref': 'UF_ESC_SUPPLIER',
-            'partner_type': 'esc',
-            'zone': 'international',
-        }
-        esc_partner_id = self._record_copy(db, 'res.partner', partner_id,
-            domain_include=defaults.keys(), defaults=defaults,
-            check_batch=check_batch)[0]
-
-        # create catalog
-        vals = {
-            'name': 'Unifield ESC Supplier Catalogue TEST',
-            'state': 'confirmed',
-            'partner_id': esc_partner_id,
-            'period_from': date_now_field_val(),
-            #'period_to': date_end_fy_val(),
-            'currency_id': comp_ccy_id,
-        }
-        self._record_create(db, 'supplier.catalogue', vals,
-            domain_include=catalogue_domain_include,
-            domain_extra=catalogue_domain_extra,
-            check_batch=check_batch)
-
-        # create catalog line
-        create_catalogue_line('ESC')
-
-        # inverse=True: should not be sync down check!
-        self._sync_down_check(check_batch, db=db, inverse=True)
+        self._test_supplier_catalogue_chain(self.c1, True)
 
     def test_s1_tec_46(self):
         """
@@ -739,6 +760,18 @@ class MasterDataSyncTest(UnifieldTest):
             'Unifield Product Test', check_batch=check_batch)
 
         self._sync_down_check(check_batch)
+
+    def test_s1_tec_75(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_75
+
+        - create a supplier catalogue and version in proj
+        - catalogue and version should sync in coord
+        2 cases:
+        1) 1 catalogue not ESC should sync in proj
+        2) 1 catalogue ESC should NOT sync in proj
+        """
+        self._test_supplier_catalogue_chain(self.p1, False)
 
     def test_s1_tec_76(self):
         """
