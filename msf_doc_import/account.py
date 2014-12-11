@@ -162,6 +162,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         from_yml = False
         if context.get('from_yml', False):
             from_yml = context.get('from_yml')
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id or False
         # Do changes because of YAML tests
         if from_yml:
             cr = dbname
@@ -309,7 +310,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     else:
                         # check for a valid journal code
-                        aj_ids = aj_obj.search(cr, uid, [('code', '=', line[cols['Journal Code']])])
+                        aj_ids = aj_obj.search(cr, uid, [('code', '=', line[cols['Journal Code']]), ('instance_id', '=', current_instance)])
                         if not aj_ids:
                             errors.append(_('Line %s. Journal Code not found: %s.') % (current_line_num, line[cols['Journal Code']]))
                             continue
@@ -355,7 +356,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         else:
                             r_employee = tp_ids[0]
                     if line[cols['Journal']]:
-                        tp_ids = self.pool.get('account.journal').search(cr, uid, ['|', ('name', '=', line[cols['Journal']]), ('code', '=', line[cols['Journal']])])
+                        tp_ids = self.pool.get('account.journal').search(cr, uid, ['|', ('name', '=', line[cols['Journal']]), ('code', '=', line[cols['Journal']]), ('instance_id', '=', current_instance)])
                         if not tp_ids:
                             tp_label = _('Journal')
                             tp_content = line[cols['Journal']]
