@@ -588,21 +588,25 @@ class MasterDataSyncTest(UnifieldTest):
         2) 1 catalogue ESC should NOT sync in proj
         """
         db = self.c1
-        def create_catalogue_line(comment_prefix, line_check_batch):
+        check_batch = []
+
+        def create_catalogue_line(comment_prefix):
+            product_uom_id = self._data_get_id_from_name(db, 'product.uom',
+                'PCE')
+
             line_vals = {
                 'catalogue_id': catalogue_id,
                 'line_number': 1,
                 'product_id': product_id,
-                'line_uom_id': self._data_get_id_from_name(db, 'product.uom',
-                    'PCE'),
+                'line_uom_id': product_uom_id,
                 'min_qty': 10.,
                 'unit_price': 1.,
-                'comment': "%d/1 %s Unifield Supplier Catalogue Line TEST" % (
+                'comment': "%d/1 %s Unifield SCL TEST" % (
                     catalogue_id, comment_prefix, ),
             }
-            return self._record_create(db, 'supplier.catalogue.line',
+            self._record_create(db, 'supplier.catalogue.line',
                 line_vals, domain_include=['line_number', 'comment', ],
-                check_batch=line_check_batch)[0]
+                check_batch=check_batch)
 
         comp_ccy_id = db.browse('res.users', 1).company_id.currency_id.id
 
@@ -610,7 +614,6 @@ class MasterDataSyncTest(UnifieldTest):
             PRODUCT_TEST_CODE, name_field='default_code')
 
         # 1) 1 catalogue not ESC should sync in proj (with 'Local Market')
-        check_batch = []
 
         # create catalog
         partner_id = self._data_get_id_from_name(db, 'res.partner',
@@ -635,8 +638,7 @@ class MasterDataSyncTest(UnifieldTest):
             check_batch=check_batch)[0]
 
         # create catalog line
-        # FIXME: RPCError: 'NoneType' object has no attribute 'copy'
-        #create_catalogue_line('NO ESC', check_batch)
+        create_catalogue_line('NO ESC')
 
         self._sync_down_check(check_batch, db=db)
 
@@ -669,8 +671,7 @@ class MasterDataSyncTest(UnifieldTest):
             check_batch=check_batch)
 
         # create catalog line
-        # FIXME: RPCError: 'NoneType' object has no attribute 'copy'
-        #create_catalogue_line('ESC', check_batch)
+        create_catalogue_line('ESC')
 
         # inverse=True: should not be sync down check!
         self._sync_down_check(check_batch, db=db, inverse=True)
