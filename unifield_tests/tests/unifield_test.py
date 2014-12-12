@@ -195,7 +195,7 @@ class UnifieldTest(unittest.TestCase):
         return user.company_id.id if user else False
 
     def get_id_from_key(self, db, model_name, search_val, key_field='name',
-        count=False, raise_if_no_ids=False):
+        raise_if_no_ids=False):
         """
         get record id from model and record name
         :param db: db
