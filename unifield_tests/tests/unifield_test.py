@@ -12,6 +12,10 @@ from connection import XMLRPCConnection as XMLConn
 from connection import UnifieldTestConfigParser
 from colors import TerminalColors
 
+
+class UnifieldTestException(Exception):
+    pass
+
 class UnifieldTest(unittest.TestCase):
     '''
     Main test class for Unifield tests using TestCase and Openerplib as main inheritance
@@ -181,5 +185,37 @@ class UnifieldTest(unittest.TestCase):
         company_ids = company_obj.search([])
         return company_obj.browse(company_ids[0]).partner_id.name
 
+    def get_company_id(self, db):
+        """
+        :param db: db
+        :return: company id
+        :rtype: int
+        """
+        user = db.get('res.users').browse(1)
+        return user.company_id.id if user else False
+
+    def get_id_from_key(self, db, model_name, search_val, key_field='name',
+        count=False, raise_if_no_ids=False):
+        """
+        get record id from model and record name
+        :param db: db
+        :param model_name: model name to search in
+        :param search_val: value to search in
+        :param key_field: field for criteria name (default name)
+        :type key_field: str
+        :param raise_if_no_ids: raise a test error if not found (Failed Test)
+        :type raise_if_no_ids: boolan
+        :return: id
+        :rtype: int/long
+        """
+        ids = db.get(model_name).search([(key_field, '=', search_val)])
+        if ids:
+            return ids if count else ids[0]
+        else:
+            if raise_if_no_ids:
+                msg = "'%s' not found in '%s' :: %s" % (search_val, model_name,
+                db.colored_name, )
+                raise UnifieldTestException(msg)
+            return False
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

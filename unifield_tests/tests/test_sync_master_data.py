@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 from __future__ import print_function
+from unifield_test import UnifieldTestException
 from unifield_test import UnifieldTest
 
 import time
@@ -46,7 +47,7 @@ def date_end_fy_val():
     return "%d-12-31" % (datetime.now().year, )
 
 
-class MasterDataSyncTestException(Exception):
+class MasterDataSyncTestException(UnifieldTestException):
     pass
 
 
@@ -313,34 +314,6 @@ class MasterDataSyncTest(UnifieldTest):
         self.synchronize(self.hq1)
         self._sync_check_data_set_on_db(self.hq1, check_batch, inverse=inverse)
 
-    # DATA TOOLS
-    def _data_get_company_id(self, db):
-        """
-        :param db: db
-        :return: company id
-        :rtype: int
-        """
-        user = db.get('res.users').browse(1)
-        return user.company_id.id if user else False
-
-    def _data_get_id_from_name(self, db, model_name, res_name,
-        name_field='name'):
-        """
-        get record id from model and record name
-        :param db: db
-        :param model_name: model name to search in
-        :param res_name: name value to search in
-        :param name_field: name field name (field for criteria)
-        :return: id
-        :rtype: int/long
-        """
-        ids = db.get(model_name).search([(name_field, '=', res_name)])
-        if ids:
-            return ids[0]
-        msg = "'%s' not found in '%s' :: %s" % (res_name, model_name,
-            db.colored_name, )
-        raise MasterDataSyncTestException(msg)
-
     def _data_create_product(self, db, code, name, vals=None,
         domain_extra=None, check_batch=None):
         """
@@ -357,8 +330,8 @@ class MasterDataSyncTest(UnifieldTest):
         """
         def get_pnomenclature_id(nomen_name):
             """get product nomenclature id from name"""
-            return self._data_get_id_from_name(db, 'product.nomenclature',
-                nomen_name)
+            return self.get_id_from_key(db, 'product.nomenclature', nomen_name,
+                raise_if_no_ids=True)
 
         product_vals = {
             'default_code': code,
@@ -405,8 +378,9 @@ class MasterDataSyncTest(UnifieldTest):
 
         # product list line
         # unique comment per list id/lineid/product code (for search)
-        product_id = self._data_get_id_from_name(db, 'product.product',
-            PRODUCT_TEST_CODE, name_field='default_code')
+        product_id = self.get_id_from_key(db, 'product.product',
+            PRODUCT_TEST_CODE, key_field='default_code',
+            raise_if_no_ids=True)
         comment = "%d/%d/%s UF Product List Line Test" % (plist_id,
             product_id, PRODUCT_TEST_CODE, )
         vals = {
@@ -440,8 +414,8 @@ class MasterDataSyncTest(UnifieldTest):
         check_batch = []
 
         def create_catalogue_line(comment_prefix):
-            product_uom_id = self._data_get_id_from_name(db, 'product.uom',
-                'PCE')
+            product_uom_id = self.get_id_from_key(db, 'product.uom', 'PCE',
+                raise_if_no_ids=True)
 
             line_vals = {
                 'catalogue_id': catalogue_id,
@@ -459,14 +433,14 @@ class MasterDataSyncTest(UnifieldTest):
 
         comp_ccy_id = db.browse('res.users', 1).company_id.currency_id.id
 
-        product_id = self._data_get_id_from_name(db, 'product.product',
-            PRODUCT_TEST_CODE, name_field='default_code')
+        product_id = self.get_id_from_key(db, 'product.product',
+            PRODUCT_TEST_CODE, key_field='default_code', raise_if_no_ids=True)
 
         # 1) 1 catalogue not ESC should sync
 
         # create catalog
-        partner_id = self._data_get_id_from_name(db, 'res.partner',
-            'Local Market')
+        partner_id = self.get_id_from_key(db, 'res.partner', 'Local Market',
+            raise_if_no_ids=True)
         vals = {
             'name': 'Unifield Supplier Catalogue TEST',
             'state': 'confirmed',
@@ -833,8 +807,8 @@ class MasterDataSyncTest(UnifieldTest):
         check_batch = []
 
         vals = {
-            'international_status': self._data_get_id_from_name(db,
-                'product.international.status', 'Local'),
+            'international_status': self.get_id_from_key(db,
+                'product.international.status', 'Local', raise_if_no_ids=True),
         }
         self._data_create_product(db, 'UF_PRODUCT_TEST',
             'Unifield Product Test', vals=vals, check_batch=check_batch)
@@ -851,7 +825,7 @@ class MasterDataSyncTest(UnifieldTest):
         """
         db = self.c1
         check_batch = []
-        cpy_id = self._data_get_company_id(db)
+        cpy_id = self.get_company_id(db)
 
         vals = {
             'name': 'Unifield Tax Code Test',
