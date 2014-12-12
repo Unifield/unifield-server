@@ -162,7 +162,6 @@ class msf_doc_import_accounting(osv.osv_memory):
         from_yml = False
         if context.get('from_yml', False):
             from_yml = context.get('from_yml')
-        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id or False
         # Do changes because of YAML tests
         if from_yml:
             cr = dbname
@@ -175,6 +174,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         created = 0
         processed = 0
         errors = []
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id or False
 
         try:
             # Update wizard
