@@ -158,9 +158,17 @@ class account_move_line(osv.osv):
                     if typ == 'float' and l[f] and vals[f]:
                         diff_val = abs(vals[f] - l[f]) > 10**-4
                     if diff_val and l.move_id.state <> 'draft' and l.state <> 'draft' and (not l.journal_id.entry_posted):
-                        raise osv.except_osv(_('Error !'), _('You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !'))
-                    if diff_val and l.reconcile_id:
-                        raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
+                        # US-14: do not raised but remove the data
+                        if f in ('debit', 'credit'):
+                            del vals[f]
+                        else:
+                            raise osv.except_osv(_('Error !'), _('You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !'))
+                    elif diff_val and l.reconcile_id:
+                        # US-14
+                        if f in ('debit', 'credit'):
+                            del vals[f]
+                        else:
+                            raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
                 t = (l.journal_id.id, l.period_id.id)
                 if t not in done:
                     self._update_journal_check(cr, uid, l.journal_id.id, l.period_id.id, context)
