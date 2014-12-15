@@ -247,7 +247,7 @@ class sync_monitor(osv.osv):
     }
 
     #must be sequence!
-    _order = "sequence_number desc"
+    _order = "sequence_number desc, start desc, id desc"
 
 sync_monitor()
 
