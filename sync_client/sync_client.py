@@ -383,7 +383,7 @@ class Entity(osv.osv):
     @sync_process('data_push')
     def push_update(self, cr, uid, context=None):
         context = context or {}
-
+        logger = context.get('logger')
         entity = self.get_entity(cr, uid, context)
 
         if entity.state not in ('init', 'update_send', 'update_validate'):
@@ -400,6 +400,8 @@ class Entity(osv.osv):
             cr.commit()
             cont = True
             self._logger.info("Push data :: Updates sent: %d" % updates_count)
+            if logger:
+                logger.info['nb_data_push'] = updates_count
         if cont or entity.state == 'update_validate':
             server_sequence = self.validate_update(cr, uid, context=context)
             cr.commit()
@@ -510,6 +512,7 @@ class Entity(osv.osv):
     def pull_update(self, cr, uid, recover=False, context=None):
         context = context or {}
 
+        logger = context.get('logger')
         entity = self.get_entity(cr, uid, context=context)
         if entity.state not in ('init', 'update_pull'):
             raise SkipStep
@@ -531,6 +534,8 @@ class Entity(osv.osv):
             self._logger.warning("No update to execute, this case should never occurs.")
 
         self._logger.info("Pull data :: Number of data pull: %s" % updates_count)
+        if logger:
+            logger.info['nb_data_pull'] = updates_count
         return True
 
     def set_last_sequence(self, cr, uid, context=None):
@@ -661,7 +666,7 @@ class Entity(osv.osv):
     def push_message(self, cr, uid, context=None):
         context = context or {}
         entity = self.get_entity(cr, uid, context)
-
+        logger = context.get('logger')
         if entity.state not in ['init', 'msg_push']:
             raise SkipStep
 
@@ -673,7 +678,8 @@ class Entity(osv.osv):
         cr.commit()
 
         self._logger.info("Push messages :: Number of messages pushed: %d" % nb_msg)
-
+        if logger:
+            logger.info['nb_msg_push'] = nb_msg
         return True
 
     @sync_subprocess('msg_push_create')
@@ -752,6 +758,8 @@ class Entity(osv.osv):
         proxy.reset_message_ids(entity.identifier, self._hardware_id)
         msg_count = self.execute_message(cr, uid, context=context)
         self._logger.info("Pull message :: Number of messages pulled: %s" % msg_count)
+        if logger:
+            logger.info['nb_msg_pull'] = msg_count
         return True
 
     @sync_subprocess('msg_pull_receive')
@@ -878,12 +886,20 @@ class Entity(osv.osv):
 
     @sync_process()
     def sync(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        logger = context.get('logger')
         self._logger.info("Start synchronization")
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
         self._logger.info("Synchronization succesfully done")
+        if logger:
+            logger.info['nb_msg_not_run'] = self.pool.get('sync.client.message_received').search(cr, uid, [('run', '=', False)], count=True)
+            logger.info['nb_data_not_run'] = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False)], count=True)
+
+
         return True
 
     @sync_process()

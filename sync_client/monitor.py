@@ -22,6 +22,7 @@
 from osv import osv, fields
 import pooler
 import tools
+from tools.translate import _
 
 
 class MonitorLogger(object):
@@ -49,6 +50,13 @@ class MonitorLogger(object):
             'data_push' : 'null',
             'data_push_create' : 'null',
             'data_push_send' : 'null',
+
+            'nb_msg_pull': 0,
+            'nb_msg_push': 0,
+            'nb_data_pull': 0,
+            'nb_data_push': 0,
+            'nb_msg_not_run': 0,
+            'nb_data_not_run': 0,
 
         }
         self.info.update(defaults)
@@ -145,6 +153,37 @@ class sync_monitor(osv.osv):
     def _get_default_sequence_number(self, cr, uid, context=None):
         return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.monitor'))
 
+    def _get_default_instance_id(self, cr, uid, context=None):
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        return instance and instance.id
+
+    def _get_my_instance(self, cr, uid, ids, field_name, args, context=None):
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        if not instance:
+            return dict.fromkeys(ids, False)
+        ret = {}
+        for msg in self.read(cr, uid, ids, ['instance']):
+            ret[msg['id']] = msg['instance'] and msg['instance'][0] == instance.id
+
+        return ret
+
+    def _search_my_instance(self, cr, uid, obj, name, args, context=None):
+        res = []
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        if not instance:
+            return []
+
+        for arg in args:
+            if arg[1] not in ('=', '!='):
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s' % name))
+            cond = arg[2] in ('True', 't', '1', 1, True)
+            if arg[1] == '!=':
+                cond = not cond
+            res.append(('instance_id', cond and '=' or '!=', instance.id))
+
+        return res
+
+
     def get_logger(self, cr, uid, defaults={}, context=None):
         return MonitorLogger(cr, uid, defaults=defaults, context=context)
 
@@ -190,11 +229,21 @@ class sync_monitor(osv.osv):
         'error' : fields.text("Messages", readonly=True),
         'state' : fields.function(_is_syncing, method=True, type='selection', string="Is Syncing", selection=[('syncing', 'Syncing'), ('not_syncing', 'Done')]),
 
+        'instance_id': fields.many2one('msf.instance', 'Instance', select=1),
+        'my_instance': fields.function(_get_my_instance, method=True, type='boolean', fnct_search=_search_my_instance, string="My Instance"),
+        'nb_msg_pull': fields.integer('# pull msg'),
+        'nb_msg_push': fields.integer('# push msg'),
+        'nb_data_pull': fields.integer('# pull data'),
+        'nb_data_push': fields.integer('# push data'),
+        'nb_msg_not_run': fields.integer('# msg not run'),
+        'nb_data_not_run': fields.integer('# data not run'),
+
     }
 
     _defaults = {
         'start' : fields.datetime.now,
         'sequence_number' : _get_default_sequence_number,
+        'instance_id': _get_default_instance_id,
     }
 
     #must be sequence!
