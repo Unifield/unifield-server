@@ -116,7 +116,7 @@ class MasterDataSyncTest(UnifieldTest):
 
     def _record_create(self, db, model_name, vals, domain_include=None,
         domain_exclude=None, domain_extra=None, check_batch=None,
-        teardown_log=True):
+        teardown_log=True, o2m=None):
         """
         for a model create a record in hq using vals
         do never use in domain fields that are changed by sync (that are not
@@ -136,6 +136,9 @@ class MasterDataSyncTest(UnifieldTest):
         :param teardown_log: True to log 'generated record is to delete in
             tearDown()' (default True)
         :type teardown_log: bool
+        :param o2m: check and auto delete related o2m
+        :type o2m: dict {'model': '', foreign_key: ''}
+            foreign_key name of parent id field
         :return: (id, domain)
         :rtype: tuple
         """
@@ -163,9 +166,12 @@ class MasterDataSyncTest(UnifieldTest):
         if check_batch is not None:
             # insert to keep record cascade dependencies when auto deleting
             # tests records
+            options = {}
             if domain_extra is not None:
                 domain += domain_extra
-            check_batch.insert(0, (model_name, domain, ))
+            if o2m is not None:
+                options['o2m'] = o2m
+            check_batch.insert(0, (model_name, domain, options, ))
         return (id, domain, )
 
     def _record_copy(self, db, model_name, id, domain_include,
@@ -195,7 +201,7 @@ class MasterDataSyncTest(UnifieldTest):
         if check_batch is not None:
             # insert to keep record cascade dependencies when auto deleting
             # tests records
-            check_batch.insert(0, (model_name, domain, ))
+            check_batch.insert(0, (model_name, domain, {}, ))
         return (new_id, domain, )
     # SYNC TOOLS
 
@@ -209,17 +215,55 @@ class MasterDataSyncTest(UnifieldTest):
         :param inverse: if True the record should not be sync down!
         :type inverse: bool
         """
-        for model, domain in check_batch:
+        for model, domain, options in check_batch:
             ids = db.get(model).search(domain)
+
+            if 'o2m' in options:
+                child_model = options['o2m']['model']
+                child_domain = [(options['o2m']['foreign_key'], 'in', ids)]
+                child_ids = db.get(child_model).search(child_domain)
+                count = len(child_ids) if child_ids else 0
+
+                if child_ids:
+                    # log ids to remove in tearDown
+                    self._record_set_ids(db, child_model, child_ids)
+                    if inverse:
+                        # records found and should not
+                        # assert will be raised so delete test records
+                        self._record_unlink_all_generated_ids()
+                else:
+                    if not inverse:
+                        # records not found
+                        # assert will be raised so delete previous test records
+                        self._record_unlink_all_generated_ids()
+
+                if not inverse:
+                    self.assertNotEquals(
+                        count, 0,
+                        "'UF' o2m '%s' entry not found :: %s" % (
+                            child_model, db.colored_name, )
+                    )
+                else:
+                    # record should not be sync down
+                    msg = "Should not be synced ::" \
+                        " 'UF' o2m '%s' entry found :: %s"
+                    self.assertEquals(
+                        count, 0,
+                        msg % (child_model, db.colored_name, )
+                    )
+
             count = len(ids) if ids else 0
+
             if ids:
                 # log ids to remove in tearDown
                 self._record_set_ids(db, model, ids, _insert=False)  # _insert=False check batch sorted by most child records
                 if inverse:
+                    # records found and should not
                     # assert will be raised so delete test records
                     self._record_unlink_all_generated_ids()
             else:
                 if not inverse:
+                    # records not found
                     # assert will be raised so delete previous test records
                     self._record_unlink_all_generated_ids()
 
@@ -265,7 +309,7 @@ class MasterDataSyncTest(UnifieldTest):
         self.synchronize(db)
 
         if are_same_db(self.hq1, db):
-            # c1 sync down and check
+            # hq1 to c1 sync down and check
             global TEST_THE_TEST
             if not TEST_THE_TEST:  # volontary miss the sync to test the test
                 self.synchronize(self.c1)
@@ -276,12 +320,14 @@ class MasterDataSyncTest(UnifieldTest):
                 return
 
         # p1 sync down and check (from hq or c1 sync down)
-        self.synchronize(self.p1)
+        if not are_same_db(self.p1, db):
+            self.synchronize(self.p1)
+
         self._sync_check_data_set_on_db(self.p1, check_batch, inverse=inverse)
 
     def _sync_up_check(self, check_batch, db=None, last_db=None, inverse=False):
         """
-        from hq sync down check batch to c1 then p1
+        from hq sync up check batch to c1 then p1
         :param check_batch: see _sync_check_data_set_on_db() check_batch param
         :type check_batch: list
         :param db: db
@@ -296,7 +342,7 @@ class MasterDataSyncTest(UnifieldTest):
         if are_same_db(self.hq1, db):
             raise MasterDataSyncTestException('can not sync up from hq')
 
-        # sync down and check
+        # sync up and check
         self.synchronize(db)
 
         if are_same_db(self.p1, db):
@@ -310,8 +356,9 @@ class MasterDataSyncTest(UnifieldTest):
             if last_db is not None and are_same_db(last_db, self.c1):
                 return
 
-        # hq1 sync up and check (from hq or c1 sync down)
-        self.synchronize(self.hq1)
+        # hq1 sync up and check (from p1 or c1 sync up)
+        if not are_same_db(self.hq1, db):
+            self.synchronize(self.hq1)
         self._sync_check_data_set_on_db(self.hq1, check_batch, inverse=inverse)
 
     def _data_create_product(self, db, code, name, vals=None,
@@ -397,7 +444,7 @@ class MasterDataSyncTest(UnifieldTest):
         else:
             self._sync_down_check(check_batch, db=db, inverse=inverse)
 
-    def _test_supplier_catalogue_chain(self, db, sync_down):
+    def _test_supplier_catalogue_chain(self, db, sync_down, last_db=None):
         """
         python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_45
 
@@ -464,9 +511,9 @@ class MasterDataSyncTest(UnifieldTest):
         create_catalogue_line('NO ESC')
 
         if sync_down:
-            self._sync_down_check(check_batch, db=db)
+            self._sync_down_check(check_batch, db=db, last_db=last_db)
         else:
-            self._sync_up_check(check_batch, db=db)
+            self._sync_up_check(check_batch, db=db, last_db=last_db)
 
         # 2) 1 catalogue ESC should NOT sync in proj
         check_batch = []
@@ -501,9 +548,11 @@ class MasterDataSyncTest(UnifieldTest):
 
         # inverse=True: should not be sync down check!
         if sync_down:
-            self._sync_down_check(check_batch, db=db, inverse=True)
+            self._sync_down_check(check_batch, db=db, inverse=True,
+                last_db=last_db)
         else:
-            self._sync_up_check(check_batch, db=db, inverse=True)
+            self._sync_up_check(check_batch, db=db, inverse=True,
+                last_db=last_db)
 
     def test_s1_tec_21(self):
         """
@@ -735,6 +784,35 @@ class MasterDataSyncTest(UnifieldTest):
 
         self._sync_down_check(check_batch)
 
+    def test_s1_tec_72(self):
+        """
+        python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_72
+
+        - create a mission stock report in proj
+        - should sync in coord
+        """
+        db = self.p1
+        check_batch = []
+        report_name = 'se_HQ1C1P1'
+
+        vals = {
+            'name': report_name,
+            'instance_id': self.get_instance_id(db),
+            'full_view': False,
+        }
+        """o2m = {
+            'model': 'stock.mission.report.line',
+            'foreign_key': 'mission_report_id',
+        }"""
+        o2m=None
+
+        """report_id = self._record_create(db, 'stock.mission.report', vals,
+            domain_include=['name', ], check_batch=check_batch,
+            teardown_log=False, o2m=o2m)[0]
+        db.get('stock.mission.report').update([report_id])
+
+        self._sync_up_check(check_batch, db=db, last_db=self.c1)"""
+
     def test_s1_tec_75(self):
         """
         python -m unittest tests.test_sync_master_data.MasterDataSyncTest.test_s1_tec_75
@@ -745,7 +823,7 @@ class MasterDataSyncTest(UnifieldTest):
         1) 1 catalogue not ESC should sync in proj
         2) 1 catalogue ESC should NOT sync in proj
         """
-        self._test_supplier_catalogue_chain(self.p1, False)
+        self._test_supplier_catalogue_chain(self.p1, False, last_db=self.c1)
 
     def test_s1_tec_76(self):
         """

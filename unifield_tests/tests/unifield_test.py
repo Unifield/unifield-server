@@ -194,6 +194,17 @@ class UnifieldTest(unittest.TestCase):
         user = db.get('res.users').browse(1)
         return user.company_id.id if user else False
 
+    def get_instance_id(self, db):
+        """
+        :param db: db
+        :return: instance id
+        :rtype: int
+        """
+        user = db.get('res.users').browse(1)
+        if user and user.company_id and user.company_id.instance_id:
+            return user.company_id.instance_id.id
+        return False
+
     def get_id_from_key(self, db, model_name, search_val, key_field='name',
         raise_if_no_ids=False):
         """
@@ -210,12 +221,11 @@ class UnifieldTest(unittest.TestCase):
         """
         ids = db.get(model_name).search([(key_field, '=', search_val)])
         if ids:
-            return ids if count else ids[0]
-        else:
-            if raise_if_no_ids:
-                msg = "'%s' not found in '%s' :: %s" % (search_val, model_name,
+            return ids[0]
+        if raise_if_no_ids:
+            msg = "'%s' not found in '%s' :: %s" % (search_val, model_name,
                 db.colored_name, )
-                raise UnifieldTestException(msg)
-            return False
+            raise UnifieldTestException(msg)
+        return False
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
