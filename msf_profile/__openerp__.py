@@ -121,6 +121,7 @@
         "user_access_configurator_view.xml",
         "unifield_version_view.xml",
         'view/group_view.xml',
+        'view/email_configuration_view.xml',
     ],
     "demo_xml": [
     ],

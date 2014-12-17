@@ -80,6 +80,9 @@
         <field name="lang">en_MF</field>
     </record>
 
-    
+    <record id="smtp_config" model="email.configuration">
+        <field name="smtp_server">127.0.0.1</field>
+        <field name="email_from">no-reply@unifield.org</field>
+    </record>
 </data>
 </openerp>
