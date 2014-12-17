@@ -36,6 +36,7 @@ Synchronization Engine - Client Module
         'backup_view.xml',
         'update_view.xml',
         'message_view.xml',
+        'hq_monitor_view.xml',
         'log_sale_purchase_view.xml',
         'wizard/sync_wiz_view.xml',
         'wizard/monitoring_view.xml',
@@ -43,6 +44,7 @@ Synchronization Engine - Client Module
         'monitor_view.xml',
         'data/cron.xml',
         'data/backupconfig.xml',
+        'data/hq_monitor.xml',
         'security/ir.model.access.csv'
     ],
     'demo_xml': [

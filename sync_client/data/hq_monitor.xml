@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="hq_monitor_not_run" model="hq.monitor">
+            <field name="title">Not Run Email Alert</field>
+            <field name="nb_not_run">1</field>
+        </record>
+
+    </data>
+</openerp>
