@@ -224,7 +224,7 @@
         % if l.imp_exp_date not in (False, 'False'):
         <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_exp_date)|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ></Cell>
         % endif
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.message_esc1 or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.message_esc2 or '')|x}</Data></Cell>

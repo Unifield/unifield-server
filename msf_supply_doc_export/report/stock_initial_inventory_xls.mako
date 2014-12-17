@@ -75,7 +75,7 @@
         % if line.expiry_date != 'False'.replace(' ', ''):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.expiry_date|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ></Cell>
         % endif
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or 0.00)|x}</Data></Cell>
     </Row>
