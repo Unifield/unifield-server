@@ -80,7 +80,7 @@
 
     <record id="ir_actions_server_open_hq_monitor" model="ir.actions.server">
         <field name="code">
-res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'hq_monitor', 'hq_monitor_not_run')
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'hq_monitor_not_run')
 action = {
     'res_model' : 'hq.monitor',
     'view_type' : 'form',
