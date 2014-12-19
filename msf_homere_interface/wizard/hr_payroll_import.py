@@ -57,7 +57,7 @@ class hr_payroll_import(osv.osv_memory):
     _columns = {
         'file': fields.binary(string="File", filters="*.zip", required=True),
         'filename': fields.char(string="Imported filename", size=256),
-        'date_format': fields.selection([('%d/%m/%Y', 'dd/mm/yyyy'), ('%m-%d-%Y', 'mm-dd-yyyy'), ('%d-%m-%y', 'dd-mm-yy'), ('%d-%m-%Y', 'dd-mm-yyyy'), ('%d/%m/%y', 'dd/mm/yy')], "Date format", required=True, help="This is the date format used in the Homère file in order to recognize them."),
+        'date_format': fields.selection([('%d/%m/%Y', 'dd/mm/yyyy'), ('%m-%d-%Y', 'mm-dd-yyyy'), ('%d-%m-%y', 'dd-mm-yy'), ('%d-%m-%Y', 'dd-mm-yyyy'), ('%d/%m/%y', 'dd/mm/yy'), ('%d.%m.%Y', 'dd.mm.yyyy')], "Date format", required=True, help="This is the date format used in the Homère file in order to recognize them."),
     }
 
     def update_payroll_entries(self, cr, uid, data='', field='', date_format='%d/%m/%Y', context=None):
