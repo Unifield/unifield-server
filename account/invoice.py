@@ -1728,6 +1728,7 @@ class account_invoice_tax(osv.osv):
         'manual': 1,
         'base_amount': 0.0,
         'tax_amount': 0.0,
+        'sequence': 0,
     }
     def compute(self, cr, uid, invoice_id, context=None):
         tax_grouped = {}
