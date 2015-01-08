@@ -68,6 +68,7 @@ class hq_report_oca(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
         if len(line_key) > 2 and line_debit != 0.0 and line_functional_debit != 0.0:
+            rate = round(1 / (line_debit / line_functional_debit), 8)
             return [["01",
                      country_code,
                      line_key[0],
@@ -75,7 +76,7 @@ class hq_report_oca(report_sxw.report_sxw):
                      "0",
                      counterpart_date,
                      line_key[1],
-                     round(line_debit / line_functional_debit, 8),
+                     rate,
                      line_debit > 0 and round(line_debit, 2) or "",
                      line_debit < 0 and round(-line_debit, 2) or "",
                      sequence_number,
@@ -91,7 +92,7 @@ class hq_report_oca(report_sxw.report_sxw):
                       "0",
                       counterpart_date,
                       line_key[1],
-                      round(line_debit / line_functional_debit, 8),
+                      rate,
                       line_debit < 0 and round(-line_debit, 2) or "",
                       line_debit > 0 and round(line_debit, 2) or "",
                       sequence_number,
