@@ -73,7 +73,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Reference*')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Reference')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
     </Row>
     <Row>

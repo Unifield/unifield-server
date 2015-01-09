@@ -68,6 +68,8 @@
                             <separator string="Description" colspan="2"/>
                             <field name="name" string="Description"/>
                             <field name="new_code"/>
+                            <field name="sale_ok" invisible="1" />
+                            <field name="purchase_ok" invisible="1" />
                         </group>
                     </group>
 
