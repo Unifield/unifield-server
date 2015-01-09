@@ -1593,10 +1593,7 @@ class stock_picking(osv.osv):
             # as since UF-2539 it is not allowed to select other internal
             # instances partner, but it was previously in UF 1.0.
             # case of a FO, pick generated, then converted to an OUT.
-            if obj.partner_id2.partner_type == 'internal' and \
-                obj.partner_id2.customer != True:
-                # no customer <=> partner instance (as delivery order filters
-                # customer (and allows instance itself))
+            if obj.partner_id2.partner_type == 'internal':
                 instance_partner_id = False
                 user = self.pool.get('res.users').browse(cr, uid, [uid],
                     context=context)[0]
