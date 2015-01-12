@@ -119,6 +119,67 @@
     <menuitem id="update_menu_id" name="Data Monitor"
               parent="mon_menu" action="update_action"/>
 
+
+    <record model="ir.ui.view" id="sync_server_monitor_email_tree_view">
+        <field name="name">sync.server.monitor.email.tree</field>
+        <field name="model">sync.server.monitor.email</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Sync Alert Configuration" hide_new_button="1" hide_delete_button="1" >
+            <field name="title"/>
+            <field name="name"/>
+            <field name="nb_days"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="sync_server_monitor_email_form_view">
+        <field name="name">sync.server.monitor.email.form</field>
+        <field name="model">sync.server.monitor.email</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Sync Alert Configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                <separator colspan="4" string="Alert on instances with no activity" />
+                <field name="name" colspan="4"/>
+                <field name="nb_days" colspan="1"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="ir_actions_server_open_monitor_email" model="ir.actions.server">
+        <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_server', 'sync_server_monitor_email')
+action = {
+    'res_model' : 'sync.server.monitor.email',
+    'view_type' : 'form',
+    'view_mode' : 'form,tree',
+    'type': 'ir.actions.act_window',
+    'res_id' : res[1],
+}</field>
+        <field eval="5" name="sequence"/>
+        <field name="state">code</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_sync_server_monitor_email"/>
+        <field name="condition">True</field>
+        <field name="name">Open Sync Email Alert</field>
+    </record>
+
+
+    <record id="ir_ui_menu_sync_server_monitor_email_configuration" model="ir.ui.menu">
+        <field name="name">Sync Email Alert</field>
+        <field name="parent_id" ref="mon_menu"/>
+        <field name="sequence">100</field>
+    </record>
+
+    <record id="ir_values_menuitem_sync_server_monitor_email_configuration" model="ir.values">
+        <field name="name">Sync Email Alert</field>
+        <field name="key2">tree_but_open</field>
+        <field eval="1" name="object"/>
+        <field name="value" eval="'ir.actions.server,%s' % ref('sync_server.ir_actions_server_open_monitor_email')" />
+        <field name="key">action</field>
+        <field name="model">ir.ui.menu</field>
+        <field eval="ref('ir_ui_menu_sync_server_monitor_email_configuration')" name="res_id"/>
+    </record>
   </data>
 </openerp>
 <!--

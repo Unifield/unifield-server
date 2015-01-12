@@ -761,3 +761,42 @@ class sync_manager(osv.osv):
         return (True, self.pool.get('sync.server.message').recovery(cr, 1, entity, start_seq, context=context))
 
 sync_manager()
+
+class sync_server_monitor_email(osv.osv):
+    _name = 'sync.server.monitor.email'
+    _description = 'Email alert'
+
+    _columns = {
+        'name': fields.char('Destination emails', size=1024, help='comma separated list of email addresses', required=1),
+        'title': fields.char('Title', size=1024, required=1),
+        'nb_days': fields.integer('Notification threshold in days', required=1),
+    }
+
+    def check_not_sync(self, cr, uid, context=None):
+        entity_obj = self.pool.get('sync.server.entity')
+        date_tools = self.pool.get('date.tools')
+
+        ids = self.search(cr, uid, [('name', '!=', False)])
+        if not ids:
+            return False
+        template = self.browse(cr, uid, ids[0])
+        thresold_date = (datetime.now() + timedelta(days=-template.nb_days)).strftime('%Y-%m-%d %H:%M:%S')
+        warn_ids = entity_obj.search(cr, uid, ['|', ('last_activity', '<=', thresold_date), '&', ('last_activity', '=', False), ('create_date', '<=', thresold_date), ('state', 'in', ['validated', 'updated'])])
+        if not warn_ids:
+            return False
+
+        emails = template.name.split(',')
+        subject = _('SYNC_SERVER: instances did not perform any sync')
+        body = _('''Hello,
+The sync server detected that the following instances did not perform any sync since %d days:
+''') % template.nb_days
+
+        for entity in entity_obj.browse(cr, uid, warn_ids):
+            body += _("  - %s last sync: %s\n") % (entity.name, entity.last_activity and date_tools.get_date_formatted(cr, uid, 'datetime', entity.last_activity) or _('never'))
+
+        body += _("\n\nThis is an automatically generated email, please do not reply.\n")
+
+        tools.email_send(False, emails, subject, body)
+        return True
+
+sync_server_monitor_email()

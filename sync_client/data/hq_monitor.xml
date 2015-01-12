@@ -2,7 +2,7 @@
 <openerp>
     <data noupdate="1">
 
-        <record id="hq_monitor_not_run" model="hq.monitor">
+        <record forcecreate="True" id="hq_monitor_not_run" model="hq.monitor">
             <field name="title">Not Run Email Alert</field>
             <field name="nb_not_run">1</field>
         </record>
