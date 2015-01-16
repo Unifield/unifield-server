@@ -640,7 +640,7 @@
             <tr>
                 <td>
                   <para style="TextInformation" alignment="LEFT">REMARKS :</para>
-
+                  <para style="TextInformation" alignment="LEFT">[[ objects[0].note ]]</para>
                 </td>
             </tr>
         </blockTable>
