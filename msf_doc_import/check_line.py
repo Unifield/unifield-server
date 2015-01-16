@@ -609,10 +609,13 @@ def check_lines_currency(rows, ccy_col_index, ccy_expected_code):
     res = 0
     for row in rows:
         if row.cells:
-            cell = row.cells[ccy_col_index]
-            if cell.type == 'str':
-                if str(cell) != ccy_expected_code:
-                    res += 1
-            else:
+            if len(row.cells) != ccy_col_index + 1:
                 res += 1
+            else:
+                cell = row.cells[ccy_col_index]
+                if cell.type == 'str':
+                    if str(cell).upper() != ccy_expected_code.upper():
+                        res += 1
+                else:
+                    res += 1
     return res
