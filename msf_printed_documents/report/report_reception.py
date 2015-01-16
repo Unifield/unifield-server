@@ -164,18 +164,18 @@ class report_reception(report_sxw.rml_parse):
         return len(o.move_lines)
 
     def check(self,line,opt):
-        if opt == 'kc':
-            if line.kc_check:
-                return 'X'
-            return ' '
-        elif opt == 'dg':
-            if line.dg_check:
-                return 'X'
-            return ' '
-        elif opt == 'np':
-            if line.np_check:
-                return 'X'
-            return ' '
+        options = {
+            'kc': 'kc_check',
+            'dg': 'dg_check',
+            'np': 'np_check',
+            'bm': 'lot_check',
+            'ed': 'exp_check',
+        }
+
+        if opt in options and hasattr(line, options[opt]) and getattr(line, options[opt]) == True:
+            return 'X'
+
+        return ' '
 
     def getNbItem(self, ):
         self.item += 1
