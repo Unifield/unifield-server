@@ -24,7 +24,7 @@
             <field name="model">res.currency</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Currency">
+                <form string="Currency" hide_duplicate_button="1">
                     <group col="6" colspan="6">
                         <field name="name" select="1"/>
                         <field name="rate"/>
