@@ -212,16 +212,6 @@ class account_bank_statement(osv.osv):
                     _('The expected balance (%.2f) is different than the computed one. (%.2f)') % (st.balance_end_real, st.balance_end))
         return True
 
-    def write(self, cr, uid, ids, values, context=None):
-        """
-        Bypass disgusting default account_bank_statement write function.
-        """
-        if values.get('open_advance_amount', False):
-            values.update({'open_advance_amount': abs(values.get('open_advance_amount'))})
-        if values.get('unrecorded_expenses_amount', False):
-            values.update({'unrecorded_expenses_amount': abs(values.get('unrecorded_expenses_amount'))})
-        return osv.osv.write(self, cr, uid, ids, values, context=context)
-
     def unlink(self, cr, uid, ids, context=None):
         """
         Delete a bank statement is forbidden!
