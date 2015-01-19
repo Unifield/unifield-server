@@ -103,6 +103,7 @@ class UF2490OnePO(ResourcingTest):
         fo_id, fo_line_ids, po_ids, pol_ids = self.order_source_all_one_po(self.used_db)
         self.order_id = fo_id
         self.po_id = po_ids[0]
+        self.pol_ids = pol_ids
 
     def create_order_cancel_po(self):
         """
@@ -399,6 +400,37 @@ class UF2490OnePO(ResourcingTest):
             order_nb_lines == 0,
             "There is %s lines on the FO/IR - Should be %s" % (order_nb_lines, 0),
         )
+
+    def test_cancel_whole_in(self):
+        """
+        Create a FO/IR with 4 lines. Source all lines on
+        a PO, then validate and confirm the PO.
+        Cancel the whole IN
+        :return:
+        """
+        db = self.used_db
+
+        pick_obj = db.get('stock.picking')
+        wiz_obj = db.get('enter.reason')
+
+        self.create_order_and_source()
+        self.pol_obj.write(self.pol_ids, {'price_unit': 2.00})
+
+        self._validate_po(db, [self.po_id])
+        self._confirm_po(db, [self.po_id])
+
+        in_ids = pick_obj.search([
+            ('purchase_id', '=', self.po_id),
+        ])
+        wiz_res = pick_obj.enter_reason(in_ids)
+        wiz_id = wiz_res.get('res_id')
+
+        ctx = {
+            'active_ids': in_ids,
+        }
+        wiz_obj.write([wiz_id], {'change_reason': 'US 6 test'})
+        wiz_obj.do_cancel([wiz_id], ctx)
+
 
 
 class UF2490FOOnePO(UF2490OnePO):
