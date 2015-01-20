@@ -75,6 +75,10 @@ class account_analytic_chart(osv.osv_memory):
             context['from_date'] = wiz.period_from.date_start
         if wiz.period_to:
             context['to_date'] = wiz.period_to.date_stop
+        if wiz.period_from and wiz.period_to and \
+            wiz.period_from.date_start > wiz.period_to.date_start:
+            raise osv.except_osv(_("Warning"),
+                _("'From' period can not be after 'To' period"))
         context['filter_inactive'] = not wiz.show_inactive
         if wiz.currency_id:
             context['currency_id'] = wiz.currency_id.id
@@ -109,6 +113,11 @@ class account_analytic_chart(osv.osv_memory):
             args = [('filter_active', '=', True)]
             if wiz.show_inactive == True:
                 args += [('filter_active', 'in', [True, False])]
+            if wiz.period_from and wiz.period_to and \
+                wiz.period_from.date_start > wiz.period_to.date_start:
+                raise osv.except_osv(_("Warning"),
+                    _("'From' period can not be after 'To' period"))
+
             if wiz.currency_id:
                 context.update({'currency_id': wiz.currency_id.id,})
             if wiz.instance_ids:
