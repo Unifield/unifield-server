@@ -10,6 +10,10 @@ import time
 
 class UF2490OnePO(ResourcingTest):
 
+    def setUp(self):
+        super(UF2490OnePO, self).setUp()
+        self.need_ext_loc = False
+
     def create_po_from_scratch(self):
         """
         Create a PO from scratch, then cancel it.
@@ -94,6 +98,32 @@ class UF2490OnePO(ResourcingTest):
             order_state == order_to_check,
             "The %s state is '%s' - Should be '%s'" % (self.pr and 'IR' or 'FO', order_state, order_to_check),
         )
+
+    def _get_ir_values(self, db, values=None):
+        values = super(UF2490OnePO, self)._get_ir_values(db, values=values)
+
+        if not values:
+            values = {}
+
+        if self.pr and self.need_ext_loc:
+            ext_loc_ids = db.get('stock.location').search([
+                ('usage', '=', 'customer'),
+                ('location_category', '=', 'consumption_unit'),
+            ])
+            if not ext_loc_ids:
+                ext_loc_id = db.get('stock.location').create({
+                    'name': 'External CU for test',
+                    'location_category': 'consumption_unit',
+                    'usage': 'customer',
+                    'location_id': self.get_record(db, 'stock', 'stock_location_internal_customers'),
+                    'optional_loc': True,
+                })
+            else:
+                ext_loc_id = ext_loc_ids[0]
+
+            values.update({'location_requestor_id': ext_loc_id})
+
+        return values
 
     def create_order_and_source(self):
         """
@@ -408,7 +438,18 @@ class UF2490OnePO(ResourcingTest):
         Cancel the whole IN
         :return:
         """
-        db = self.used_db
+        db = self.p1
+        self.used_db = db
+        self.po_obj = db.get('purchase.order')
+        self.order_obj = db.get('sale.order')
+        self.order_line_obj = db.get('sale.order.line')
+        self.po_obj = db.get('purchase.order')
+        self.pol_obj = db.get('purchase.order.line')
+        self.proc_obj = db.get('procurement.order')
+        self.data_obj = db.get('ir.model.data')
+        self.tender_obj = db.get('tender')
+        self.tender_line_obj = db.get('tender.line')
+        self.need_ext_loc = True
 
         pick_obj = db.get('stock.picking')
         wiz_obj = db.get('enter.reason')
@@ -430,7 +471,6 @@ class UF2490OnePO(ResourcingTest):
         }
         wiz_obj.write([wiz_id], {'change_reason': 'US 6 test'})
         wiz_obj.do_cancel([wiz_id], ctx)
-
 
 
 class UF2490FOOnePO(UF2490OnePO):
