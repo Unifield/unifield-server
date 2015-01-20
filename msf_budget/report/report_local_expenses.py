@@ -105,7 +105,6 @@ class report_local_expenses(WebKitParser):
             # we only save the main accounts, not the destinations (new key: account id only)
             expenses = dict([(item[0], expenses[item]) for item in expenses.keys() if item[1] is False])
 
-
             # make the total row
             if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
                 total_line = [0] * (month_stop - month_start + 1)
@@ -130,13 +129,13 @@ class report_local_expenses(WebKitParser):
                         line = [expense_account.type, expense_account.code, xml.sax.saxutils.escape(expense_account.name)]
                         # ...monthly amounts, ...
                         if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
-                            line += map(int, map(round, expense_values))
+                            line += expense_values
                         # ...and the total.
-                        line += [int(round(sum(expense_values)))]
+                        line += [sum(expense_values)]
                         # append to result
                         result_data.append(line)
             # Format total
-            total_line = [_('Total'), ''] + map(int, map(round, total_line)) + [int(round(total_amount))]
+            total_line = [_('Total'), ''] + total_line + [total_amount]
 
             data['form']['header'] = header_data
             data['form']['report_lines'] = result_data
