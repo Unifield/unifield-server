@@ -95,7 +95,7 @@
     </Cell>
   </Row>
 -->
-% for t in [(_('Fiscalyear'), 'fy'), (_('From'), 'from_date'), (_('To'), 'to_date'), (_('Instances'), 'instances'), (_('Show inactive accounts?'), 'show_inactive'), (_('Filtering on currency'), 'currency_filtering')]:
+% for t in [(_('Fiscalyear'), 'fy'), (_('From'), 'from_period_header'), (_('To'), 'to_period_header'), (_('Instances'), 'instances'), (_('Show inactive accounts?'), 'show_inactive'), (_('Filtering on currency'), 'currency_filtering')]:
   <Row ss:Height="12.6425">
     <Cell ss:StyleID="header_part">
       <Data ss:Type="String">${ t[0] or ''|x }</Data>
