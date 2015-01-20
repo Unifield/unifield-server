@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: openobject-client-web\n"
 "Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2011-03-18 11:53+0100\n"
-"PO-Revision-Date: 2011-12-18 16:39+0000\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2015-01-19 06:04+0000\n"
+"Last-Translator: amini <amini.m@neginmail.ir>\n"
 "Language-Team: Persian <fa@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2013-04-02 05:26+0000\n"
-"X-Generator: Launchpad (build 16546)\n"
+"X-Launchpad-Export-Date: 2015-01-20 06:38+0000\n"
+"X-Generator: Launchpad (build 17304)\n"
 
 #: static/javascript/form.js:92
 #, python-format
@@ -36,11 +36,11 @@ msgstr ""
 
 #: static/javascript/form.js:995
 msgid "You must save this record to perform the action !"
-msgstr ""
+msgstr "شما برای انجام این فعالیت باید رکورد را ذخیره کنید!"
 
 #: static/javascript/form.js:1127
 msgid "Do you really want to delete the attachment"
-msgstr ""
+msgstr "آیا واقعاْ قصد  حذف این پیوست را دارید؟"
 
 #: static/javascript/form.js:1161
 msgid "No record selected ! You can only attach to existing record."
@@ -54,11 +54,11 @@ msgstr ""
 msgid ""
 "Warning, the record has been modified,\n"
 "your changes will be discarded."
-msgstr ""
+msgstr "اخطار،این رکورد ویرایش شده است،از تغییرات شما چشم پوشی خواهد شد."
 
 #: static/javascript/listgrid.js:542 static/javascript/o2m.js:123
 msgid "To edit Record, please first save it."
-msgstr ""
+msgstr "برای ویرایش رکورد،ابتدا آن را ذخیره کنید."
 
 #: static/javascript/listgrid.js:650
 msgid "Do you really want to delete selected record(s) ?"
