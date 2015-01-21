@@ -562,8 +562,11 @@ function parse_filters(src, id) {
                     fld_value = 'selection_' + $fld.val();
                 }
                 if ($fld.attr('search_context')) {
-                    search_context['context'] = $fld.attr('search_context');
-                    search_context['value'] = fld_value;
+                    if (!search_context[fld_name]) {
+                        search_context[fld_name] = {};
+                    }
+                    search_context[fld_name]['context'] = $fld.attr('search_context');
+                    search_context[fld_name]['value'] = fld_value;
                 }
             }
         } else if(kind == 'many2one') {
@@ -575,9 +578,12 @@ function parse_filters(src, id) {
             	fld_value = parseInt(jQuery(idSelector(fld_name)).val()) || fld_value;
             }
             fld_context = jQuery(idSelector(fld_name)).attr('context');
-            if (fld_context) {
-                search_context['context'] = fld_context;
-                search_context['value'] = fld_value;
+            if (fld_context && fld_context != "{}") {
+                if (!search_context[fld_name]) {
+                    search_context[fld_name] = {};
+                }
+                search_context[fld_name]['context'] = fld_context;
+                search_context[fld_name]['value'] = fld_value;
             }
         }
         
