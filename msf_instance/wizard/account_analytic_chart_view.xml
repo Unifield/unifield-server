@@ -8,7 +8,7 @@
             <field name="inherit_id" ref="account.account_analytic_chart_view"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form//field[@name='period_to']" position="after">
+                    <xpath expr="/form//field[@name='to_date']" position="after">
                         <newline/>
                         <separator string="Instance" colspan="4"/>
                         <field name="instance_ids">
