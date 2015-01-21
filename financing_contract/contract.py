@@ -104,11 +104,21 @@ class financing_contract_contract(osv.osv):
     _trace = True
 
     def contract_open(self, cr, uid, ids, *args):
+        # get previous states and deduce previous 'draft' ids
+        prev_states = self.read(cr, uid, ids, ['state'])
+        draft_ids = [ps['id'] for ps in prev_states if ps['state'] == 'draft']
+
         self.write(cr, uid, ids, {
             'state': 'open',
             'open_date': datetime.date.today().strftime('%Y-%m-%d'),
-            'soft_closed_date': None
+            'soft_closed_date': None,
+            'is_show_grant_warn': False,
         })
+
+        # utp-1030/7: only check grant amount when going on in workflow
+        # so from 'draft' as with repopen we come from 'soft-closed'
+        if draft_ids:
+            self._check_grant_amount(cr, uid, draft_ids)
         return True
 
     def search_draft_or_temp_posted(self, cr, uid, ids, context=None):
@@ -160,15 +170,19 @@ class financing_contract_contract(osv.osv):
         # Normal behaviour (change contract ' state)
         self.write(cr, uid, ids, {
             'state': 'soft_closed',
-            'soft_closed_date': datetime.date.today().strftime('%Y-%m-%d')
+            'soft_closed_date': datetime.date.today().strftime('%Y-%m-%d'),
+            'is_show_grant_warn': False,
         })
+        self._check_grant_amount(cr, uid, ids)
         return True
 
     def contract_hard_closed(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
             'state': 'hard_closed',
-            'hard_closed_date': datetime.date.today().strftime('%Y-%m-%d')
+            'hard_closed_date': datetime.date.today().strftime('%Y-%m-%d'),
+            'is_show_grant_warn': False,
         })
+        self._check_grant_amount(cr, uid, ids)
         return True
 
     def get_contract_domain(self, cr, uid, browse_contract, reporting_type=None, context=None):
@@ -262,12 +276,14 @@ class financing_contract_contract(osv.osv):
         'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
         'fp_added_flag': fields.boolean('Flag when new FP is added'),
         'instance_level': fields.function(_get_instance_level, method=True, string="Current instance level", type="char", readonly=True),  # UFTP-343
+        'is_show_grant_warn': fields.boolean('Show grant warning ?', readonly=True),  # UTP-1030/7
     }
 
     _defaults = {
         'state': 'draft',
         'fp_added_flag': False,
         'reporting_currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'is_show_grant_warn': False,
     }
 
     def _check_unicity(self, cr, uid, ids, context=None):
@@ -622,8 +638,22 @@ class financing_contract_contract(osv.osv):
                 ret = format_line_obj.write(cr, uid, format_line.id, {'account_quadruplet_ids': [(6, 0, filtered_quads)]}, context=context)
         return res
 
+    def _check_grant_amount(self, cr, uid, ids, context=None):
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        marked_ids = []
 
+        for self_br in self.browse(cr, uid, ids, context=context):
+            funded_budget = 0.0
+            for rl in self_br.actual_line_ids:
+                funded_budget += rl.allocated_budget
+            if funded_budget != self_br.grant_amount:
+                # UTP-1030/7: mark it as funded budget <> grant amount
+                marked_ids.append(self_br.id)
 
+        if marked_ids:
+            self.write(cr, uid, marked_ids, {'is_show_grant_warn': True},
+                context=context)
 
 financing_contract_contract()
 

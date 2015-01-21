@@ -8,6 +8,22 @@
                 <field name="type">form</field>
                 <field name="arch" type="xml">
                     <form string="Financing Contract">
+                        <field name="is_show_grant_warn" invisible="1"/>
+                        <group colspan="6">
+                            <html>
+                                <p id="view_financing_contract_contract_form_grant_warning"
+                                style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                                WARNING: At last stage grant amount was not equal to "Funded - Budget"
+                                </p>
+                                <script language="javascript">
+                                    var show_warn = $('#is_show_grant_warn').val();
+                                    if (show_warn === "1") {
+                                        msg_dom = $('#view_financing_contract_contract_form_grant_warning')
+                                        msg_dom.show();
+                                    }
+                                </script>
+                            </html>
+                        </group>
                         <field name="code" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="name" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"
