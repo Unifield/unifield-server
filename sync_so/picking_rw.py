@@ -456,7 +456,7 @@ class stock_picking(osv.osv):
 
         partner_id = False
         # UF-2531: If no partner is needed for checking, then do not perform the following check -- INT from scratch from RW to CP
-        if need_partner_check:
+        if need_partner_check and pick_dict.get('partner_id', False):
             partner_id = so_po_common.get_partner_id(cr, uid, source, context)
             if 'partner_id' in pick_dict:
                 partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)

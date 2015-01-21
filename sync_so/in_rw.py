@@ -472,54 +472,53 @@ class stock_picking(osv.osv):
             context = {}
 
         message = "Unknown error, please check the log file."
-        
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.CENTRAL_PLATFORM:
+            header_result = {}
+            self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+            search_condition = [('type', '=', 'internal'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'confirmed'])]
+            if header_result.get('associate_pick_name', False):
+                search_condition.append(('name', '=', header_result.get('associate_pick_name')))
+            else: # if this is not a partial reception of INT, then just take the given INT itself
+                search_condition.append(('name', '=', pick_name))
+                
+            #US-24: Now allow also the INT without origin nor partner
             if origin:
-                header_result = {}
-                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                search_condition = [('origin', '=', origin), ('type', '=', 'internal'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'confirmed'])]
-                if header_result.get('associate_pick_name', False):
-                    search_condition.append(('name', '=', header_result.get('associate_pick_name')))
-                else: # if this is not a partial reception of INT, then just take the given INT itself
-                    search_condition.append(('name', '=', pick_name))
-                pick_ids = self.search(cr, uid, search_condition, context=context)
-                if pick_ids:
-                    pick_id = pick_ids[0]
-                    state = pick_dict['state']
-                    if state in ('done', 'assigned'):
-                        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
-                        header_result['move_lines'] = picking_lines
+                search_condition.append(('origin', '=', origin))
+            
+            pick_ids = self.search(cr, uid, search_condition, context=context)
+            if pick_ids:
+                pick_id = pick_ids[0]
+                state = pick_dict['state']
+                if state in ('done', 'assigned'):
+                    picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                    header_result['move_lines'] = picking_lines
 
-                        self.cancel_moves_before_process(cr, uid, [pick_id], context=context)
-                        #UF-2426: Inform the do_partial that this is a full process if there is no back order
-                        if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
-                            context['rw_backorder_name'] = pick_name
-                        else:
-                            context['rw_full_process'] = True
+                    self.cancel_moves_before_process(cr, uid, [pick_id], context=context)
+                    #UF-2426: Inform the do_partial that this is a full process if there is no back order
+                    if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+                        context['rw_backorder_name'] = pick_name
+                    else:
+                        context['rw_full_process'] = True
 
-                        if header_result.get('date_done', False):
-                            context['rw_date'] = header_result.get('date_done')
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = header_result.get('date_done')
 
-                        # try to perform a check available after cancel all moves? not really sure!
-                        self.action_assign(cr, uid, [pick_id], context=context)
+                    # try to perform a check available after cancel all moves? not really sure!
+                    self.action_assign(cr, uid, [pick_id], context=context)
 
-                        if header_result.get('date_done', False):
-                            context['rw_date'] = False
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = False
 
-                        self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
-                        
-                        message = "The Internal Moves: " + pick_name + " has been successfully created in " + cr.dbname
-                        self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
-        
-                else:
-                    message = "The IN: " + pick_name + " not found in " + cr.dbname
-                    self._logger.info(message)
-                    raise Exception, message
+                    self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
+                    
+                    message = "The Internal Moves: " + pick_name + " has been successfully created in " + cr.dbname
+                    self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
+    
             else:
-                message = "Sorry, the case without the origin PO is not yet available!"
+                message = "The IN: " + pick_name + " not found in " + cr.dbname
                 self._logger.info(message)
                 raise Exception, message
                 
