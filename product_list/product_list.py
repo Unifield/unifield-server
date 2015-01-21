@@ -247,7 +247,7 @@ class product_product(osv.osv):
         # UFTP-327 default_code passed from size 14 to 18
         # http://jira.unifield.org/browse/UFTP-327?focusedCommentId=36173&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-36173
         'default_code' : fields.char('CODE', size=18, select=True),
-        'xmlid_code' : fields.char('Hidden xmlid code', size=64), # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
+        'xmlid_code' : fields.char('Hidden xmlid code', size=18), # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
     }
 
     _sql_constraints = [

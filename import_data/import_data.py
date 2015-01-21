@@ -470,6 +470,7 @@ class import_product(osv.osv_memory):
         if fg and 'default_code' in fg and 'size' in fg['default_code']:
             context['import_data_field_max_size'] = {
                 'default_code': fg['default_code']['size'],
+                'xmlid_code': fg['xmlid_code']['size'],
             }
 
         super(import_product, self).import_csv(cr, uid, ids, context=context)
