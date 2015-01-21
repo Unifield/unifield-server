@@ -514,7 +514,7 @@ class stock_picking(osv.osv):
 
                     self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
                     
-                    message = "The Internal Moves: " + pick_name + " has been successfully created in " + cr.dbname
+                    message = "The Internal Moves: " + pick_name + " has been successfully received in " + cr.dbname
                     self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
     
             else:
