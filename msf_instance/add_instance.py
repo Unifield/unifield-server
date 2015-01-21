@@ -392,7 +392,7 @@ class account_bank_statement_line(osv.osv):
 
         # UTP-1100: Add explicit the value of partner/employee if they are sent by sync with False but removed by the sync engine!
         # THIS IS A BUG OF SYNC CORE!
-        if context.get('sync_update_execution', False) and context.get('fields', False):
+        if context and context.get('sync_update_execution', False) and context.get('fields', False):
             fields =  context.get('fields')
             if 'partner_txt' in fields and 'partner_txt' not in vals:
                 vals['partner_txt'] = False

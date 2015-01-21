@@ -2539,6 +2539,16 @@ class account_bank_statement_line(osv.osv):
 #                    res['value'] = {'account_id': account_id}
         return res
 
+    def delete_button(self, cr, uid, ids, context=None):
+        """
+        delete button (except for hard posted state)
+        """
+        if not ids:
+            return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.unlink(cr, uid, ids, context=context)
+
 account_bank_statement_line()
 
 class ir_values(osv.osv):
