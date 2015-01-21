@@ -212,6 +212,12 @@ class account_bank_statement(osv.osv):
                     _('The expected balance (%.2f) is different than the computed one. (%.2f)') % (st.balance_end_real, st.balance_end))
         return True
 
+    def write(self, cr, uid, ids, values, context=None):
+        """
+        Bypass disgusting default account_bank_statement write function.
+        """
+        return osv.osv.write(self, cr, uid, ids, values, context=context)
+
     def unlink(self, cr, uid, ids, context=None):
         """
         Delete a bank statement is forbidden!
