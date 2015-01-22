@@ -466,7 +466,7 @@ class import_product(osv.osv_memory):
     def import_csv(self, cr, uid, ids, context=None):
         # UFTP-327
         fg = self.pool.get('product.product').fields_get(cr, uid,
-            fields=['default_code'], context=context)
+            fields=['default_code', 'xmlid_code'], context=context)
         if fg and 'default_code' in fg and 'size' in fg['default_code']:
             context['import_data_field_max_size'] = {
                 'default_code': fg['default_code']['size'],
