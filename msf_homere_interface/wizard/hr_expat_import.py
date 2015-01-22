@@ -41,6 +41,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
         """
         Import XLS file
         """
+        hr_emp_obj = self.pool.get('hr.employee')
         # Some verifications
         if not context:
             context = {}
@@ -65,11 +66,21 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                 name = line.cells and line.cells[0] and line.cells[0].data or False
                 if not name:
                     continue
-                processed += 1
                 code = line.cells and line.cells[1] and line.cells[1].data or False
-                # Create Expat employee
-                self.pool.get('hr.employee').create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex', 'identification_id': code})
-                created += 1
+                if not code:
+                    continue
+                processed += 1
+
+                ids = hr_emp_obj.search(cr, uid,
+                    [('identification_id', '=', code)])
+                if ids:
+                    # Update name of Expat employee
+                    hr_emp_obj.write(cr, uid, [ids[0]], {'name': name})
+                    updated += 1
+                else:
+                    # Create Expat employee
+                    hr_emp_obj.create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex', 'identification_id': code})
+                    created += 1
             
             context.update({'message': ' '})
             
