@@ -698,3 +698,19 @@ class button_access_rule(osv.osv):
         return get_valid_xml_name('BAR', view_xml_id[bar.view_id.id], bar.name)
 
 button_access_rule()
+
+
+class hr_employee(osv.osv):
+    _inherit = 'hr.employee'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        r = self.read(cr, uid, [res_id],
+            ['employee_type', 'identification_id'])[0]
+        if r['employee_type'] and r['employee_type'] == 'ex' and \
+            r['identification_id']:
+            return get_valid_xml_name('employee', r['identification_id'])
+        else:
+            super(hr_employee, self).get_unique_xml_name(cr, uid, uuid,
+                table_name, res_id)
+
+hr_employee()
