@@ -38,7 +38,7 @@
                             <separator colspan="2" string="Social IDs"/>
                             <field name="ssnid" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                             <field name="sinid" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
-                            <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)], 'required': [('employee_type', 'in', ('local', 'ex'))]}"/>
+                            <field name="identification_id" attrs="{'readonly': ['|', '&amp;', ('employee_type', '=', 'local'), ('allow_edition', '=', False), '&amp;', ('employee_type', '=', 'ex'), ('identification_id', '!=', False)], 'required': [('employee_type', 'in', ('local', 'ex'))]}"/>
                             <field name="passport_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                         </group>
                         <group col="2" colspan="2">
