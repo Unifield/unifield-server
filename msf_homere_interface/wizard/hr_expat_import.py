@@ -62,10 +62,10 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             reader = fileobj.getRows()
             reader.next()
             for line in reader:
-                processed += 1
                 name = line.cells and line.cells[0] and line.cells[0].data or False
                 if not name:
                     continue
+                processed += 1
                 code = line.cells and line.cells[1] and line.cells[1].data or False
                 # Create Expat employee
                 self.pool.get('hr.employee').create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex', 'identification_id': code})
