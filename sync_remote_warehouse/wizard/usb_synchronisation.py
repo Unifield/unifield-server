@@ -1,4 +1,6 @@
 import zipfile
+import datetime
+import dateutil.parser
 
 from osv import osv, fields
 from tools.translate import _
@@ -71,13 +73,32 @@ class usb_synchronisation(osv.osv_memory):
         if not wizard.pull_data:
             raise osv.except_osv(_('No Data to Pull'), _('You have not specified a file that contains the data you want to Pull'))
         
+        
+        #US-26: Added a check if the zip file has already been imported before
+        syncusb = self.pool.get('sync.usb.files')
+        md5 = syncusb.md5(wizard.pull_data)
+        zipfile_ids = syncusb.search(cr, uid, [('sum', '=', md5)], context=context)
+        if zipfile_ids:
+            zipfiles = syncusb.browse(cr, uid, zipfile_ids, context=context)
+            zipfile = zipfiles[0]
+            imported_date = zipfile.date 
+            if imported_date:
+                imported_date = dateutil.parser.parse(imported_date).strftime("%H:%M on %A, %d.%m.%Y")
+            raise osv.except_osv( _('Import couldn\'t be done twice.'), _('The zip file has already been uploaded at %s') % imported_date)
+            
         updates_pulled = update_pull_error = updates_ran = update_run_error = \
         messages_pulled = message_pull_error = messages_ran = message_run_error = 0
         try:
             updates_pulled, update_pull_error, updates_ran, update_run_error, \
             messages_pulled, message_pull_error, messages_ran, message_run_error = self.pool.get('sync.client.entity').usb_pull(cr, uid, wizard.pull_data, context=context)
         except zipfile.BadZipfile:
-            raise osv.except_osv(_('Not a Zip File'), _('The file you uploaded was not a .zip file'))
+            raise osv.except_osv(_('Not a Zip File'), _('The file you uploaded was not a valid .zip file'))
+        
+        #Update list of pulled files
+        syncusb.create(cr, uid, {
+            'sum': md5,
+            'date': datetime.datetime.now().isoformat(),
+        }, context=context)
         
         # handle returned values
         pull_result = ''
