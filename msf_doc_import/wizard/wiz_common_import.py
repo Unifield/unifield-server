@@ -125,6 +125,7 @@ class wizard_common_import_line(osv.osv_memory):
             'search_default_not_restricted': 1 if 'search_default_not_restricted' in context else 0,
         }
         wiz_id = self.create(cr, uid, vals, context=context)
+        context['wizard_id'] = wiz_id
 
         return {'type': 'ir.actions.act_window',
                 'res_model': self._name,
@@ -134,6 +135,14 @@ class wizard_common_import_line(osv.osv_memory):
                 'target': 'new',
                 'context': context}
 
+    def _get_current_id(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        for i in ids:
+            res[i] = i
+
+        return res
+
     _columns = {
         'parent_id': fields.integer(string='ID of the parent document'),
         'parent_model': fields.char(size=128, string='Model of the parent document'),
@@ -141,6 +150,7 @@ class wizard_common_import_line(osv.osv_memory):
         'product_ids': fields.many2many('product.product', 'product_add_in_line_rel',
                                         'wiz_id', 'product_id', string='Products'),
         'search_default_not_restricted': fields.integer('Search default not restricted', invisible=True),  # UFTP-15 (for context reinject in product_ids m2m for 'add multiple lines' button)
+        'current_id': fields.function(_get_current_id, method=True, type='integer', string='ID'),
     }
 
     _defaults = {
@@ -165,11 +175,83 @@ class wizard_common_import_line(osv.osv_memory):
             line_obj = self.pool.get(wiz['line_model'])
             product_ids = wiz['product_ids']
 
+            context['wizard_id'] = wiz['id']
+
             line_obj.create_multiple_lines(cr, uid, parent_id, product_ids, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
 wizard_common_import_line()
+
+
+class product_product_import_line_qty(osv.osv_memory):
+    _name = 'product.product.import.line.qty'
+
+    _columns = {
+        'wizard_id': fields.many2one(
+            'wizard.common.import.line',
+            string='Wizard',
+        ),
+        'product_id': fields.many2one(
+            'product.product',
+            string='Product',
+        ),
+        'qty': fields.float(
+            string='Qty',
+        ),
+    }
+
+product_product_import_line_qty()
+
+
+class product_product(osv.osv):
+    _inherit = 'product.product'
+
+    def _get_import_product_qty(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        pplq_obj = self.pool.get('product.product.import.line.qty')
+
+        wiz_id = context.get('wizard_id', None)
+        for i in ids:
+            res[i] = 0.00
+            if wiz_id:
+                pplq_ids = pplq_obj.search(cr, uid, [
+                    ('wizard_id', '=', wiz_id),
+                    ('product_id', '=', i),
+                ], context=context)
+                if pplq_ids:
+                    res[i] = pplq_obj.read(cr, uid, pplq_ids, ['qty'])[0]['qty']
+
+        return res
+
+    def _write_imp_product_qty(self, cr, uid, ids, field_name, values, args, context=None):
+        """
+        Create a product.product.import.line.qty for each product/wizard and put the 
+        quantity.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if field_name == 'import_product_qty' and context.get('wizard_id', None):
+            for prod_id in ids:
+                self.pool.get('product.product.import.line.qty').create(cr, uid, {
+                    'wizard_id': context.get('wizard_id'),
+                    'product_id': prod_id,
+                    'qty': values,
+                }, context=context)
+
+    _columns = {
+        'import_product_qty': fields.function(
+            _get_import_product_qty,
+            fnct_inv=_write_imp_product_qty,
+            method=True,
+            type='float',
+            string='Qty',
+            store=False,
+        ),
+    }
+
+product_product()
 
 
 class purchase_order_line(osv.osv):
@@ -325,7 +407,7 @@ class sale_order_line(osv.osv):
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
             order_data = order_obj.read(cr, uid, parent_id, ['pricelist_id',
                                                              'partner_id',
                                                              'date_order',
@@ -337,7 +419,7 @@ class sale_order_line(osv.osv):
 
             values.update(self.product_id_change(cr, uid, False, order_data['pricelist_id'][0],
                                                                  p_data['id'],
-                                                                 1.00,
+                                                                 p_data['import_product_qty'],
                                                                  p_data['uom_id'][0],
                                                                  p_data['uom_id'][0],
                                                                  '',
@@ -350,7 +432,7 @@ class sale_order_line(osv.osv):
                                                                  False).get('value', {}))
 
             # Set the quantity to 0.00
-            values.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
+            values.update({'product_uom_qty': p_data['import_product_qty'], 'product_uos_qty': p_data['import_product_qty']})
 
             self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
 
