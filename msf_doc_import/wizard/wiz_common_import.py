@@ -26,6 +26,14 @@ import base64
 from tools.translate import _
 
 
+NO_QTY_MODELS = [
+    'monthly.review.consumption',
+    'stock.warehouse.orderpoint',
+    'threshold.value',
+    'stock.warehouse.order.cycle',
+]
+
+
 class wiz_common_import(osv.osv_memory):
     '''
     Special methods for the import wizards
@@ -115,6 +123,8 @@ class wizard_common_import_line(osv.osv_memory):
         '''
         Open the wizard
         '''
+        data_obj = self.pool.get('ir.model.data')
+
         if context is None:
             context = {}
 
@@ -127,9 +137,16 @@ class wizard_common_import_line(osv.osv_memory):
         wiz_id = self.create(cr, uid, vals, context=context)
         context['wizard_id'] = wiz_id
 
+        if parent_model in NO_QTY_MODELS:
+            view_id = data_obj.get_object_reference(cr, uid, 'msf_doc_import', 'wizard_common_import_line_form_view_no_qty')[1]
+        else:
+            view_id = data_obj.get_object_reference(cr, uid, 'msf_doc_import', 'wizard_common_import_line_form_view')[1]
+
+
         return {'type': 'ir.actions.act_window',
                 'res_model': self._name,
                 'res_id': wiz_id,
+                'view_id': [view_id],
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
@@ -267,7 +284,7 @@ class purchase_order_line(osv.osv):
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price', 'import_product_qty'], context=context):
             po_data = po_obj.read(cr, uid, parent_id, ['pricelist_id', 'partner_id', 'date_order',
                                                        'fiscal_position', 'state'], context=context)
 
@@ -275,12 +292,13 @@ class purchase_order_line(osv.osv):
                       'product_id': p_data['id'],
                       'product_uom': p_data['uom_id'][0],
                       'price_unit': p_data['standard_price'],
+                      'product_qty': p_data['import_product_qty'],
                       'old_price_unit': p_data['standard_price'],}
 
             values.update(self.product_id_on_change(cr, uid, False,
                                                     po_data['pricelist_id'][0], # Pricelist
                                                     values['product_id'], # Product
-                                                    1.00, # Product Qty - Use 1.00 to compute the price according to supplier catalogue
+                                                    p_data['import_product_qty'], # Product Qty - Use 1.00 to compute the price according to supplier catalogue
                                                     values['product_uom'], # UoM
                                                     po_data['partner_id'][0], # Supplier
                                                     po_data['date_order'], # Date order
@@ -295,7 +313,7 @@ class purchase_order_line(osv.osv):
                                                     '', # Comment
                                                     context=context).get('value', {}))
             # Set the quantity to 0.00
-            values.update({'product_qty': 0.00})
+            values.update({'product_qty': p_data['import_product_qty']})
 
             self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
 
@@ -351,15 +369,15 @@ class tender_line(osv.osv):
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
             values = {'tender_id': parent_id,
                       'product_id': p_data['id'],
                       'product_uom': p_data['uom_id'][0]}
 
-            values.update(self.on_product_change(cr, uid, False, p_data['id'], p_data['uom_id'][0], 1.00, context=context).get('value', {}))
+            values.update(self.on_product_change(cr, uid, False, p_data['id'], p_data['uom_id'][0], p_data['import_product_qty'], context=context).get('value', {}))
 
             # Set the quantity to 0.00
-            values.update({'qty': 0.00})
+            values.update({'qty': p_data['import_product_qty']})
 
             self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
 
@@ -411,25 +429,31 @@ class sale_order_line(osv.osv):
             order_data = order_obj.read(cr, uid, parent_id, ['pricelist_id',
                                                              'partner_id',
                                                              'date_order',
+                                                             'procurement_request',
                                                              'fiscal_position'], context=context)
 
             values = {'order_id': parent_id,
                       'product_id': p_data['id'],
                       'product_uom': p_data['uom_id'][0]}
 
-            values.update(self.product_id_change(cr, uid, False, order_data['pricelist_id'][0],
-                                                                 p_data['id'],
-                                                                 p_data['import_product_qty'],
-                                                                 p_data['uom_id'][0],
-                                                                 p_data['uom_id'][0],
-                                                                 '',
-                                                                 order_data['partner_id'][0],
-                                                                 context.get('lang'),
-                                                                 True,
-                                                                 order_data['date_order'],
-                                                                 False,
-                                                                 order_data['fiscal_position'] and order_data['fiscal_position'][0] or False,
-                                                                 False).get('value', {}))
+            if order_data['procurement_request']:
+                values.update(self.requested_product_id_change(cr, uid, False,
+                                                               p_data['id'],
+                                                               '').get('value', {}))
+            else:
+                values.update(self.product_id_change(cr, uid, False, order_data['pricelist_id'][0],
+                                                                     p_data['id'],
+                                                                     p_data['import_product_qty'],
+                                                                     p_data['uom_id'][0],
+                                                                     p_data['uom_id'][0],
+                                                                     '',
+                                                                     order_data['partner_id'][0],
+                                                                     context.get('lang'),
+                                                                     True,
+                                                                     order_data['date_order'],
+                                                                     False,
+                                                                     order_data['fiscal_position'] and order_data['fiscal_position'][0] or False,
+                                                                     False).get('value', {}))
 
             # Set the quantity to 0.00
             values.update({'product_uom_qty': p_data['import_product_qty'], 'product_uos_qty': p_data['import_product_qty']})
@@ -498,14 +522,14 @@ class composition_item(osv.osv):
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price', 'import_product_qty'], context=context):
             values = {'item_kit_id': parent_id,
                       'item_product_id': p_data['id'],
                       'item_uom_id': p_data['uom_id'][0],}
 
             values.update(self.on_product_change(cr, uid, False, values['item_product_id'], context=context).get('value', {}))
             # Set the quantity to 0.00
-            values.update({'product_qty': 0.00})
+            values.update({'item_qty': p_data['import_product_qty']})
 
             self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
 
@@ -542,7 +566,7 @@ class supplier_catalogue_line(osv.osv):
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price', 'import_product_qty'], context=context):
             values = {'product_id': p_data['id'],
                       'catalogue_id': parent_id,
                       'unit_price': p_data['standard_price'],
@@ -552,7 +576,7 @@ class supplier_catalogue_line(osv.osv):
             values.update(self.product_change(cr, uid, False, p_data['id'], 1.00, 1.00).get('value', {}))
 
             # Set the quantity to 0.00
-            values.update({'min_qty': 0.00})
+            values.update({'min_qty': p_data['import_product_qty']})
 
             self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
 
@@ -603,7 +627,7 @@ class stock_move(osv.osv):
         else:
             location_id = get_ref(cr, uid, 'stock', 'stock_location_stock')[1]
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'name', 'nomen_manda_0'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'name', 'nomen_manda_0', 'import_product_qty'], context=context):
             # Set the location dest id
             if picking.type == 'internal':
                 location_dest_id = get_ref(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
@@ -626,7 +650,7 @@ class stock_move(osv.osv):
 
             values.update(self.onchange_product_id(cr, uid, False, p_data['id'], location_id, location_dest_id, picking.address_id and picking.address_id.id or False, picking.type, False).get('value', {}))
 
-            values.update({'product_qty': 0.00})
+            values.update({'product_qty': p_data['import_product_qty']})
 
             self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
 
@@ -687,7 +711,7 @@ class stock_warehouse_orderpoint_line(osv.osv):
                     parent_vals[f] = parent_r[f] or 0.
 
         # set line vals
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'],
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'],
             context=context):
             values = {
                 'product_id': p_data['id'],
@@ -746,14 +770,14 @@ class stock_warehouse_auto_supply_line(osv.osv):
         '''
         p_obj = self.pool.get('product.product')
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
             values = {'product_id': p_data['id'],
                       'product_uom_id': p_data['uom_id'][0],
                       'supply_id': parent_id}
 
-            values.update(self.onchange_product_id(cr, uid, False, p_data['id'], p_data['uom_id'][0], 1.00, context=context).get('value', {}))
+            values.update(self.onchange_product_id(cr, uid, False, p_data['id'], p_data['uom_id'][0], p_data['import_product_qty'], context=context).get('value', {}))
             # Set the quantity to 0.00
-            values.update({'product_qty': 0.00})
+            values.update({'product_qty': p_data['import_product_qty']})
 
             if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('supply_id', '=', parent_id)], context=context):
                 self.create(cr, uid, values, context=dict(context, noraise=True))
@@ -788,14 +812,14 @@ class stock_warehouse_order_cycle_line(osv.osv):
         '''
         p_obj = self.pool.get('product.product')
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
             values = {'product_id': p_data['id'],
                       'uom_id': p_data['uom_id'][0],
                       'order_cycle_id': parent_id}
 
             values.update(self.product_change(cr, uid, False, p_data['id'], context=context).get('value', {}))
             # Set the quantity to 0.00
-            values.update({'safety_stock': 0.00})
+            values.update({'safety_stock': p_data['import_product_qty']})
 
             if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('order_cycle_id', '=', parent_id)], context=context):
                 self.create(cr, uid, values, context=dict(context, noraise=True))
@@ -832,7 +856,7 @@ class threshold_value_line(osv.osv):
 
         t_data = self.pool.get('threshold.value').browse(cr, uid, parent_id, context=context)
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
             values = {'product_id': p_data['id'],
                       'product_uom_id': p_data['uom_id'],
                       'threshold_value_id': parent_id}
@@ -850,7 +874,7 @@ class threshold_value_line(osv.osv):
                                                    t_data.lead_time,
                                                    t_data.supplier_lt,).get('value', {}))
             # Set the quantity to 0.00
-            values.update({'fixed_product_qty': 0.00, 'fixed_threshold_value': 0.00})
+            values.update({'fixed_product_qty': p_data['import_product_qty'], 'fixed_threshold_value': 0.00})
 
             if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('threshold_value_id', '=', parent_id)], context=context):
                 self.create(cr, uid, values, context=dict(context, noraise=True))
@@ -889,7 +913,7 @@ class stock_inventory_line(osv.osv):
         location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
             values = {'product_id': p_data['id'],
                       'product_uom': p_data['uom_id'][0],
                       'location_id': location_id,
@@ -899,7 +923,7 @@ class stock_inventory_line(osv.osv):
             values.update(self.on_change_product_id(cr, uid, False, location_id, p_data['id'], p_data['uom_id'][0], False).get('value', {}))
 
             # Set the quantity to 0.00
-            values.update({'product_qty': 0.00})
+            values.update({'product_qty': p_data['import_product_qty']})
 
             self.create(cr, uid, values, context=dict(context, noraise=True))
 
@@ -938,7 +962,7 @@ class initial_stock_inventory_line(osv.osv):
         location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'perishable', 'batch_management'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'perishable', 'batch_management', 'import_product_qty'], context=context):
             values = {'product_id': p_data['id'],
                       'product_uom': p_data['uom_id'][0],
                       'location_id': location_id,
@@ -950,7 +974,7 @@ class initial_stock_inventory_line(osv.osv):
             values.update(self.on_change_product_id(cr, uid, False, location_id, p_data['id'], p_data['uom_id'][0], False).get('value', {}))
 
             # Set the quantity to 0.00
-            values.update({'product_qty': 0.00})
+            values.update({'product_qty': p_data['import_product_qty']})
 
             self.create(cr, uid, values, context=dict(context, noraise=True))
 
@@ -988,7 +1012,7 @@ class real_average_consumption_line(osv.osv):
 
         c_data = self.pool.get('real.average.consumption').read(cr, uid, parent_id, ['cons_location_id'], context=context)
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
             values = {'product_id': p_data['id'],
                       'uom_id': p_data['uom_id'],
                       'rac_id': parent_id}
@@ -996,7 +1020,7 @@ class real_average_consumption_line(osv.osv):
             values.update(self.product_onchange(cr, uid, False, p_data['id'], c_data['cons_location_id'][0], p_data['uom_id'][0], False).get('value', {}))
 
             # Set the quantity to 0.00
-            values.update({'consumed_qty': 0.00})
+            values.update({'consumed_qty': p_data['import_product_qty']})
 
             self.create(cr, uid, values, context=dict(context, noraise=True))
 

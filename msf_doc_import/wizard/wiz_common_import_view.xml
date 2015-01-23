@@ -26,5 +26,28 @@
             </field>
         </record>
 
+        <record id="wizard_common_import_line_form_view_no_qty" model="ir.ui.view">
+            <field name="name">wizard.common.import.line.form.view.no.qty</field>
+            <field name="model">wizard.common.import.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Add multiple products">
+                    <field name="parent_id" invisible="1" />
+                    <field name="parent_model" invisible="1" />
+                    <field name="search_default_not_restricted" invisible="1" />
+                    <field name="current_id" invisible="1" />
+                    <field name="product_ids" nolabel="1" colspan="4" mode="tree" domain="context.get('product_ids_domain', [])" context="{'search_default_not_restricted': search_default_not_restricted, 'wizard_id': current_id}">
+                        <tree string="Products" editable="top">
+                            <field name="default_code" readonly="True" />
+                            <field name="name" readonly="True" />
+                        </tree>
+                    </field>
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                    <button name="fill_lines" string="Add products" icon="terp-check" colspan="3" type="object" />
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>
