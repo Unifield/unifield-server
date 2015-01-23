@@ -70,26 +70,25 @@ class Entity(osv.osv):
         return self.write(cr, uid, entity.id, {'usb_sync_step': step})
         
     @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
-    def usb_push(self, cr, uid, context):
+    def usb_push(self, cr, uid, push_file_name, context):
         """
         Create updates, create message, package into zip, attach to entity and increment entity usb sync step
         """
         context = context or {}
         context.update({'offline_synchronization' : True})
         logger = context.get('logger')
-        updates_count = deletions_count = messages_count = 0
         
         session = str(uuid.uuid1())
         entity = self.get_entity(cr, uid, context=context)
         self.write(cr, uid, [entity.id], {'session_id' : session}) 
         
         # get update and message data
-        updates = self.usb_push_create_update(cr, uid, session, context=context)
+        self.usb_push_create_update(cr, uid, session, context=context)
         logger.switch('msg_push', 'in-progress')
-        messages = self.usb_push_create_message(cr, uid, context=context)
+        self.usb_push_create_message(cr, uid, context=context)
         
         # compress into zip
-        updates_count, deletions_count, messages_count, update_ids, message_ids = self.usb_push_create_zip(cr, uid, context=context)
+        updates_count, deletions_count, messages_count, update_ids, message_ids = self.usb_push_create_zip(cr, uid, push_file_name, context=context)
         
         # cleanup
         self.usb_push_validate(cr, uid, update_ids, context=context)
@@ -101,7 +100,7 @@ class Entity(osv.osv):
         # return 
         return (updates_count, deletions_count, messages_count)
     
-    def usb_push_create_zip(self, cr, uid, context=None):
+    def usb_push_create_zip(self, cr, uid, push_file_name, context=None):
         """
         Create packages out of all total_updates marked as "to send", format as CSV, zip and attach to entity record 
         """
@@ -117,8 +116,8 @@ class Entity(osv.osv):
         logger = context.get('logger', None)
         logger_index = logger.append()
         
-        def generate_header():
-            header = {'release':release.version[:-16] or release.version}
+        def generate_header(push_file_name):
+            header = {'release':release.version[:-16] or release.version, 'file_name': push_file_name}
             revisions = self.pool.get('sync_client.version')
             if revisions:
                 entity = self.get_entity(cr, uid, context=context)
@@ -339,7 +338,7 @@ class Entity(osv.osv):
             zip_base64_output = StringIO()
             zip_file = ZipFile(zip_file_string_io, 'w')
             
-            header_data = generate_header()
+            header_data = generate_header(push_file_name)
             md5_data = "header: %s\n" % get_md5(header_data)
             zip_file.writestr('header', header_data)
 
@@ -560,7 +559,7 @@ class Entity(osv.osv):
                 file_names = file_names + self.usb_pull_files_rw
             if not all([(file_name in zip_file.namelist()) for file_name in self.usb_pull_files]):
                 raise osv.except_osv(_('Invalid USB Synchronisation Data'), _('The zip file you uploaded does not have all the data required for a pull. Please re-download the data from the other server.'))
-                
+            
             # import rules if RW 
             if entity.usb_instance_type == 'remote_warehouse':
                 self.usb_pull_import_rules(cr, uid, zip_file, md5_data, context)

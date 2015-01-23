@@ -1,6 +1,8 @@
 import zipfile
 import datetime
 import dateutil.parser
+import base64
+from cStringIO import StringIO
 
 from osv import osv, fields
 from tools.translate import _
@@ -19,8 +21,11 @@ class usb_synchronisation(osv.osv_memory):
         return dict.fromkeys(ids, self._get_entity(cr, uid, context).usb_last_push_file)
     
     def _get_entity_last_push_file_name(self, cr, uid, ids=None, field_name=None, arg=None, context=None):
-        last_push_date = self._get_entity(cr, uid, context).usb_last_push_date
-        last_push_file_name = '%s.zip' % last_push_date[:16].replace(' ','_') if last_push_date else False
+        entity = self._get_entity(cr, uid, context)
+        last_push_date = entity.usb_last_push_date
+        # US-26: Adding the database name in order to be checked at the importing side. Only files from the correct instance can
+        # be imported -- the instance that have the names in this pair (X, X-RW)
+        last_push_file_name = '%s-%s.zip' % (cr.dbname, last_push_date[:16].replace(' ','_') if last_push_date else False)
         return dict.fromkeys(ids, last_push_file_name)
 
     def _get_entity_last_tarball_patches(self, cr, uid, ids, field_name, arg, context=None):
@@ -61,6 +66,55 @@ class usb_synchronisation(osv.osv_memory):
         if not self._get_entity(cr, uid, context).usb_instance_type:
             raise osv.except_osv(_('Set USB Instance Type First'), _('You have not yet set a USB Instance Type for this instance. Please do this first by going to Synchronization > Registration > Setup USB Synchronisation'))
     
+    def check_valid_pull_file_name(self, cr, wizard, context):
+        ''' 
+        !!!!!!! 
+        US-26: Check if the given zip file is valid for this instance by using the file name stored in the header file
+        Normally the file name should have this format: dvo-uf2531_HQ1C1_RW-2015-01-22_14_52, dvo-uf2531_HQ1C1-2015-01-22_14_52
+        This name appeared in the file name, of course, but it also appeared in THE HEADER FILE inside the Zip. SO BECAREFUL
+            
+        If the name contains RW, the zip file must be used in the CP instance, and the one without RW in the name must be used for the RW instance
+            
+        Another element that MUST to be taken into account: the name of instance must appear in the file name, for example the case above
+        both zip files are only used for the instance dvo-uf2531_HQ1C1 and dvo-uf2531_HQ1C1_RW!!!!!!
+        
+        If the condition above is not respected, the pulling RW will stop with an exception!
+        !!!!!!! 
+        '''
+        # get file name here!!!!
+        uploaded_file = base64.decodestring(wizard.pull_data)
+        zip_stream = StringIO(uploaded_file)
+        from zipfile import ZipFile
+        zip_file = ZipFile(zip_stream, 'r')
+        # read the header if possible
+        try:
+            pull_file_name = zip_file.read("header")
+        except KeyError:
+            raise osv.except_osv(_('Wrong File'), _("Warning: the zip-file does not contain a header"))
+            
+        # Check if the zip file name contains the correct instance name
+        # example of file names: dvo-uf2531_HQ1C1_RW-2015-01-22_14:24.zip, or dvo-uf2531_HQ1C1-2015-01-22_14:24.zip
+        instance_name_type = cr.dbname[len(cr.dbname) - 3:]
+        
+        # First case: if the current instance is a RW instance, then the import zip file must contain the instanceName_RW
+        error = False
+        if instance_name_type == '_RW': 
+            other_name = cr.dbname[:len(cr.dbname) - 3]
+            if pull_file_name.find(cr.dbname) > 0:
+                raise osv.except_osv(_('Wrong File'), _('Sorry, the file name in the header file is not valid for this RW instance - must not have the prefix: %s') % cr.dbname)
+            # If the current instance is a RW instance, then the zip file must contain the CP instance name, exact as dbname without RW
+            found = pull_file_name.find(other_name)
+            if found < 0 or pull_file_name[found:found + len(other_name)] != other_name:
+                error = True
+        else:
+            # ELSE, then the file name must contain: instanceName, and NOT instanceName_RW
+            other_name = cr.dbname + "_RW"
+            found = pull_file_name.find(other_name)
+            if found < 0 or pull_file_name[found:found + len(other_name)] != other_name:
+                error = True
+        if error:
+            raise osv.except_osv(_('Wrong File'), _('Sorry, the file name in the header file is not valid for this instance - must have the prefix: %s') % other_name)
+     
     def pull(self, cr, uid, ids, context=None):
         
         self._check_usb_instance_type(cr, uid, context)
@@ -69,19 +123,19 @@ class usb_synchronisation(osv.osv_memory):
         context.update({'offline_synchronization' : True})
         
         wizard = self.browse(cr, uid, ids[0])
-        
         if not wizard.pull_data:
             raise osv.except_osv(_('No Data to Pull'), _('You have not specified a file that contains the data you want to Pull'))
-        
-        
+
+        # US-26: Check if the pull file name has a valid format and the file is the correct one for this instance!
+        self.check_valid_pull_file_name(cr, wizard, context)
+
         #US-26: Added a check if the zip file has already been imported before
         syncusb = self.pool.get('sync.usb.files')
         md5 = syncusb.md5(wizard.pull_data)
         zipfile_ids = syncusb.search(cr, uid, [('sum', '=', md5)], context=context)
         if zipfile_ids:
             zipfiles = syncusb.browse(cr, uid, zipfile_ids, context=context)
-            zipfile = zipfiles[0]
-            imported_date = zipfile.date 
+            imported_date = zipfiles[0].date 
             if imported_date:
                 imported_date = dateutil.parser.parse(imported_date).strftime("%H:%M on %A, %d.%m.%Y")
             raise osv.except_osv( _('Import couldn\'t be done twice.'), _('The zip file has already been uploaded at %s') % imported_date)
@@ -93,7 +147,7 @@ class usb_synchronisation(osv.osv_memory):
             messages_pulled, message_pull_error, messages_ran, message_run_error = self.pool.get('sync.client.entity').usb_pull(cr, uid, wizard.pull_data, context=context)
         except zipfile.BadZipfile:
             raise osv.except_osv(_('Not a Zip File'), _('The file you uploaded was not a valid .zip file'))
-        
+
         #Update list of pulled files
         syncusb.create(cr, uid, {
             'sum': md5,
@@ -146,7 +200,8 @@ class usb_synchronisation(osv.osv_memory):
             raise osv.except_osv(_('Cannot Push'), _('We cannot perform a Push until we have Validated the last Pull'))
         
         # start push
-        updates, deletions, messages = self.pool.get('sync.client.entity').usb_push(cr, uid, context=context)
+        push_file_name = self.read(cr, uid, ids, ['push_file_name'], context=context)[0]['push_file_name']
+        updates, deletions, messages = self.pool.get('sync.client.entity').usb_push(cr, uid, push_file_name, context=context)
         
         # send results to wizard
         vals = {
