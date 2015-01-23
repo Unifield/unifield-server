@@ -296,6 +296,13 @@
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
             <field name="arch" type="xml">
+                <xpath expr="/search/group[1]/filter[@name='others']" position="before">
+                    <filter name="intl_engagements" string="ENGI"
+                            domain="[('imported_commitment', '=', True), ('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
+                            icon="terp-folder-violet"
+                            help="Analytic Journal Items related to an ENGI journal."
+                            />
+                </xpath>
                 <xpath expr="/search/group[1]/field[@name='date']" position='after'>
                     <field name="document_date" select="1"/>
                     <newline/>

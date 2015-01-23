@@ -127,6 +127,17 @@ class account_analytic_line(osv.osv):
             for field in fields:
                 field.set('string', _("Funding Pool"))
                 field.set('domain', "[('category', '=', 'FUNDING'), ('type', '<>', 'view')]")
+            if view_type == 'tree' and "engagement_line_tree" in context:
+                # BKLG-4: comming from commitments list, allow delete of
+                # international commitments line (journal ENGI)
+                etree.SubElement(tree, 'button',
+                    name='unlink',
+                    type='object',
+                    icon='gtk-del',
+                    context='context',
+                    attrs="{'invisible': ['|', ('journal_id.code', '!=', 'ENGI'), ('journal_id.type', '!=', 'engagement')]}",
+                    confirm='Do you really want to delete selected record(s) ?'
+                )
             view['arch'] = etree.tostring(tree)
         return view
 

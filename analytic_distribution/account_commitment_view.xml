@@ -141,7 +141,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('account_id.category', '=', 'FUNDING')]</field>
-            <field name="context">{'search_default_engagements': 1, 'display_fp': True, 'target_filename_prefix': 'Commitment Lines'}</field>
+            <field name="context">{'search_default_engagements': 1, 'display_fp': True, 'target_filename_prefix': 'Commitment Lines', 'engagement_line_tree': True}</field>
         </record>
 
         <record id="action_commitment_voucher_engagement_lines_search" model="ir.actions.server">
