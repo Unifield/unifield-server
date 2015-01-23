@@ -126,6 +126,26 @@
             </field>
         </record>
 
+        <record id="intl_commitment_clear_wizard_view" model="ir.ui.view">
+            <field name="name">Clear Intl Commitments</field>
+            <field name="model">int.commitment.clear.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Clear Intl Commitments">
+                    <html><p>Are you sure to delete ALL international commitments entries ?</p></html>
+                    <new_line />
+                    <field name="entries_count"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="mass_delete" type="object" icon="gtk-ok"
+                                string="Delete ALL"
+                                confirm="Please confirm again to proceed delete of ALL international commitments entries. Continue ?"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
     <!-- Commitment Voucher Actions -->
         <record model="ir.actions.act_window" id="action_account_commitment_tree">
             <field name="res_model">account.commitment</field>
@@ -168,6 +188,17 @@
             <field name="view_id" ref="import_commitment_wizard_view"/>
             <field name="target">new</field>
         </record>
+
+        <act_window id="action_intl_commitment_clear_wizard"
+            name="Clear intl commitments"
+            res_model="int.commitment.clear.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="context"
+            target="new"
+            />
 
     <!-- Menu -->
         <menuitem id="menu_commitment" name="Commitments" parent="account.menu_finance" sequence="4"/>

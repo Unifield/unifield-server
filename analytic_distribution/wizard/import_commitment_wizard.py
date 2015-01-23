@@ -209,4 +209,52 @@ class import_commitment_wizard(osv.osv_memory):
         return {'type' : 'ir.actions.act_window_close'}
 
 import_commitment_wizard()
+
+
+class int_commitment_clear_wizard(osv.osv_memory):
+    _name = 'int.commitment.clear.wizard'
+    _description = 'Clear Intl Commitments Wizard'
+
+    def _get_to_del_ids(self, cr, uid, context=None, count=False):
+        domain = [
+            ('type', '=', 'engagement'),
+            ('code', '=', 'ENGI'),
+        ]
+        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid,
+            domain, context=context)
+        if not journal_ids:
+            return False
+
+        domain = [
+            ('imported_commitment', '=', True),
+            ('journal_id', 'in', journal_ids),
+        ]
+        res_ids = self.pool.get('account.analytic.line').search(cr, uid, domain,
+            context=context, count=count)
+        return res_ids
+
+    def _get_entries_count(self, cr, uid, ids, field_names, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        count = self._get_to_del_ids(cr, uid, context=context, count=True)
+        for id in ids:
+            res[id] = count
+        return res
+
+    _columns = {
+        'entries_count': fields.function(_get_entries_count, type='integer',
+            method=True, string='Count of cleared Intl Commitments'),
+    }
+
+    def mass_delete(self, cr, uid, ids, context=None):
+        to_del_ids = self._get_to_del_ids(cr, uid, context=context, count=False)
+        if to_del_ids:
+            self.pool.get('account.analytic.line').unlink(cr, uid, to_del_ids,
+                context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+int_commitment_clear_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
