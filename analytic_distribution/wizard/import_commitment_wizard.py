@@ -58,6 +58,11 @@ class import_commitment_wizard(osv.osv_memory):
         journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')], context=context)
         to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
         functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
+        default_founding_pool_id = self.pool.get('account.analytic.account').search(
+            cr, uid,  [('category', '=', 'FUNDING'), ('code', '=', 'PF')], context=context)
+        if not default_founding_pool_id:
+            raise osv.except_osv(_('Error'), _('Default PF Funding Pool not found'))
+        default_founding_pool_id = default_founding_pool_id[0]
 
         now = False
         if len(journal_ids) > 0:
@@ -149,7 +154,7 @@ class import_commitment_wizard(osv.osv_memory):
                         else:
                             raise osv.except_osv(_('Error'), raise_msg_prefix +_(('Funding Pool "%s" doesn\'t exist!') % (funding_pool,)))
                     else:
-                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No funding pool code found!'))
+                        vals.update({'account_id': default_founding_pool_id})
                     # description
                     if description:
                         vals.update({'name': description})
