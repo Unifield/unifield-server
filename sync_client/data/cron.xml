@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
-    <data>
+    <data noupdate="1">
 
 		<record id="ir_cron_automaticsynchronization0" model="ir.cron">
 			<field name="function">sync_threaded</field>
@@ -23,10 +23,9 @@
             <field eval="-1" name="numbercall"/>
             <field eval="5" name="priority"/>
             <field eval="0" name="doall"/>
-            <field eval="0" name="active"/>
+            <field eval="1" name="active"/>
             <field eval="1" name="interval_number"/>
             <field name="model">backup.config</field>
-            <field name="active">1</field>
         </record>
 
 	</data>
