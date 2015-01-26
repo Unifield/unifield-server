@@ -245,20 +245,12 @@ class int_commitment_clear_wizard(osv.osv_memory):
             context=context, count=count)
         return res_ids
 
-    def _get_entries_count(self, cr, uid, ids, field_names, args, context=None):
-        res = {}
-        if not ids:
-            return res
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        count = self._get_to_del_ids(cr, uid, context=context, count=True)
-        for id in ids:
-            res[id] = count
-        return res
-
     _columns = {
-        'entries_count': fields.function(_get_entries_count, type='integer',
-            method=True, string='Count of cleared Intl Commitments'),
+        'entries_count': fields.integer('Count Intl Commitments to delete'),
+    }
+
+    _defaults = {
+        'entries_count': lambda s, cr, uid, context: s._get_to_del_ids(cr, uid, context=context, count=True),
     }
 
     def mass_delete(self, cr, uid, ids, context=None):
