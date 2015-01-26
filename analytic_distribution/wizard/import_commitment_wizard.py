@@ -136,7 +136,14 @@ class import_commitment_wizard(osv.osv_memory):
                         else:
                             raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Destination "%s" doesn\'t exist!') % (destination,)))
                     else:
-                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No destination code found!'))
+                        # try to get default account destination by default
+                        account_br = self.pool.get('account.account').browse(cr,
+                            uid, account_ids[0])
+                        if account_br.default_destination_id:
+                            vals['destination_id'] = account_br.default_destination_id.id
+                        else:
+                            msg = _("No destination code found and no default destination for account %s !") % account_code
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + msg)
                     # Cost Center
                     if cost_center:
                         cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
@@ -154,7 +161,7 @@ class import_commitment_wizard(osv.osv_memory):
                         else:
                             raise osv.except_osv(_('Error'), raise_msg_prefix +_(('Funding Pool "%s" doesn\'t exist!') % (funding_pool,)))
                     else:
-                        vals.update({'account_id': default_founding_pool_id})
+                        vals['account_id'] = default_founding_pool_id
                     # description
                     if description:
                         vals.update({'name': description})
