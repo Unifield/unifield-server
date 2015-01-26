@@ -489,6 +489,8 @@ class user_access_configurator(osv.osv_memory):
                     access_not_in_file = [x.id for x in group.menu_access if x.id not in all_menu_in_file]
                     if access_not_in_file:
                         groups_to_write[group.id] += access_not_in_file
+                if group.name in data_structure[obj.id]['group_name_list'] and group.id not in groups_to_write:
+                     groups_obj.write(cr, uid, [group.id], {'menu_access': [(6, 0, [])]}, context=context)
 
             for gp_id in groups_to_write:
                 groups_obj.write(cr, uid, [gp_id], {'menu_access': [(6, 0, groups_to_write[gp_id])]}, context=context)
