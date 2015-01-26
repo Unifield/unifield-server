@@ -2386,10 +2386,11 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
-    _sql_constraints = [
-        ('product_qty', 'CHECK (product_qty > 0)',
-         'You can not have an order line with a negative or zero quantity'),
-    ]
+    def init(self, cr):
+        self.pool.get('fields.tools').remove_sql_constraint(cr,
+            'purchase_order_line', 'product_qty')
+        if hasattr(super(purchase_order_line, self), 'init'):
+            super(purchase_order_line, self).init(cr)
 
     def link_merged_line(self, cr, uid, vals, product_id, order_id, product_qty, uom_id, price_unit=0.00, context=None):
         '''
@@ -2602,7 +2603,10 @@ class purchase_order_line(osv.osv):
             if order.po_from_fo or order.po_from_ir:
                 vals['from_fo'] = True
             if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You can not have an order line with a negative or zero quantity')
+                )
 
         other_lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
@@ -2757,8 +2761,14 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             new_vals = vals.copy()
-            if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok and not context.get('noraise'):
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+            # check qty
+            if vals.get('product_qty', line.product_qty) <= 0.0 and \
+                not line.order_id.rfq_ok and \
+                'noraise' not in context and line.state != 'cancel':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You can not have an order line with a negative or zero quantity')
+                )
 
             if vals.get('origin', line.origin):
                 proc = False

@@ -31,6 +31,7 @@
     "depends" : [
         "sale",
         "stock_override",
+        "msf_tools",
     ],
     "update_xml": [
         "sale_view.xml",
