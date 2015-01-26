@@ -261,4 +261,73 @@ class int_commitment_clear_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 int_commitment_clear_wizard()
+
+
+class int_commitment_export_wizard(osv.osv_memory):
+    _name = 'int.commitment.export.wizard'
+    _description = 'Export Intl Commitments'
+    
+    _csv_filename_pattern = 'Intl_Commitments_%s.csv'
+    _csv_delimiter = ','
+    _csv_header = ('Description', 'Ref', 'Document Date', 'Posting Date',
+        'General Account', 'Destination', 'Cost Center' , 'Funding Pool',
+        'Third Party', 'Booking Amount', 'Booking Currency',)
+
+    _columns = {
+        'data': fields.binary('File', readonly=True),
+        'name': fields.char('File Name', 128, readonly=True),
+        'state': fields.selection((('choose','choose'), ('get','get'), ),
+            readonly=True, invisible=True),
+    }
+
+    _defaults = {
+        'state': lambda *a: 'choose',
+    }
+    
+    def button_export(self, cr, uid, ids, context=None):
+        aal_obj = self.pool.get('account.analytic.line')
+        
+        instance_name = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id.name or ''
+        file_name = self._csv_filename_pattern % (instance_name, )
+        
+        data = self._csv_delimiter.join(self._csv_header)
+        
+        vals = {
+            'state': 'get',
+            'data': base64.encodestring(data),
+            'name': file_name,
+        }
+        return self.write(cr, uid, ids, vals, context=context)
+        
+    def __export_entry(item_br):
+        cells = []
+        
+        # Description
+        
+        # Ref
+        
+        # Document Date
+        
+        # Posting Date
+        
+        # General Account
+        
+        # Destination
+        
+        # Cost Center
+        
+        # Funding Pool
+        
+        # Third Party
+        
+        # Booking Amount
+        
+        # Booking Currency
+        
+        return self._csv_delimiter.join(cells)
+        
+        
+    
+int_commitment_export_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

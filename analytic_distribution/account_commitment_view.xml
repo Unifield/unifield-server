@@ -145,6 +145,26 @@
                 </form>
             </field>
         </record>
+        
+        <record id="intl_commitment_export_wizard_view" model="ir.ui.view">
+            <field name="name">Export Intl Commitments</field>
+            <field name="model">int.commitment.export.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export Intl Commitments as CSV">
+                    <group col="4" colspan="4" states="choose">
+                        <field name="state" invisible="1" />
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1"/>
+                        <button name="button_export" type="object" string="Export" icon="gtk-ok" colspan="1"/>
+                    </group>
+                    <group col="3" fill="0" states="get">
+                        <separator colspan="3" string="Export done"/>
+                        <field name="name" invisible="1" />
+                        <field name="data" nolabel="1" readonly="1" fieldname="name"/>
+                    </group>
+                </form>
+            </field>
+        </record>
 
     <!-- Commitment Voucher Actions -->
         <record model="ir.actions.act_window" id="action_account_commitment_tree">
@@ -192,6 +212,17 @@
         <act_window id="action_intl_commitment_clear_wizard"
             name="Clear intl commitments"
             res_model="int.commitment.clear.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="context"
+            target="new"
+            />
+            
+        <act_window id="action_intl_commitment_export_wizard"
+            name="Export intl commitments"
+            res_model="int.commitment.export.wizard"
             src_model="account.analytic.line"
             key2="client_action_multi"
             view_mode="form"
