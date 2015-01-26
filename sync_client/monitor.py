@@ -157,6 +157,16 @@ class sync_monitor(osv.osv):
         instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
         return instance and instance.id
 
+    def _get_default_destination_instance_id(self, cr, uid, context=None):
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        if instance:
+            if instance.parent_id:
+                if instance.parent_id.parent_id:
+                    return instance.parent_id.parent_id.id
+                return instance.parent_id.id
+        return False
+
+
     def _get_my_instance(self, cr, uid, ids, field_name, args, context=None):
         instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
         if not instance:
@@ -237,13 +247,14 @@ class sync_monitor(osv.osv):
         'nb_data_push': fields.integer('# push data'),
         'nb_msg_not_run': fields.integer('# msg not run'),
         'nb_data_not_run': fields.integer('# data not run'),
-
+        'destination_instance_id': fields.many2one('msf.instance', 'HQ Instance'),
     }
 
     _defaults = {
         'start' : fields.datetime.now,
         'sequence_number' : _get_default_sequence_number,
         'instance_id': _get_default_instance_id,
+        'destination_instance_id':  _get_default_destination_instance_id,
     }
 
     #must be sequence!
