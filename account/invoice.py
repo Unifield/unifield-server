@@ -1215,7 +1215,6 @@ class account_invoice(osv.osv):
             invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines)
 
             tax_lines = obj_invoice_tax.read(cr, uid, invoice['tax_line'])
-            tax_lines = filter(lambda l: l['manual'], tax_lines)
             tax_lines = self._refund_cleanup_lines(cr, uid, tax_lines)
             if journal_id:
                 refund_journal_ids = [journal_id]
@@ -1729,6 +1728,7 @@ class account_invoice_tax(osv.osv):
         'manual': 1,
         'base_amount': 0.0,
         'tax_amount': 0.0,
+        'sequence': 0,
     }
     def compute(self, cr, uid, invoice_id, context=None):
         tax_grouped = {}

@@ -177,7 +177,6 @@ class account_invoice_refund(osv.osv_memory):
                 refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
                 inv_obj.write(cr, uid, [refund.id], {'date_due': date,
                                                 'check_total': inv.check_total})
-                inv_obj.button_compute(cr, uid, refund_id)
 
                 created_inv.append(refund_id[0])
                 if mode in ('cancel', 'modify'):
