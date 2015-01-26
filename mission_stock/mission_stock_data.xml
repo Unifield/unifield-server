@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
-	<data>
+	<data noupdate="1">
 		
 	<!--	<record id="stock_mission_full_view" model="stock.mission.report">
 			<field name="name">Mission's full view</field>
