@@ -142,7 +142,7 @@ class purchase_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'purchase.order', ids[0], 'rfq_done', cr)
 
-        return True
+        return new_po_id
 
     def copy(self, cr, uid, p_id, default=None, context=None):
         '''
