@@ -291,7 +291,15 @@ class int_commitment_export_wizard(osv.osv_memory):
             context=context)[0].company_id.instance_id.name or ''
         file_name = self._csv_filename_pattern % (instance_name, )
         
-        data = self._csv_delimiter.join(self._csv_header)
+        data = self._csv_delimiter.join(self._csv_header) + "\n"
+        
+        domain = [
+            ('journal_id.type', '=', 'engagement'),
+            ('journal_id.code', '=', 'ENGI'),
+        ]
+        export_ids = aal_obj.search(cr, uid, domain, context=context)
+        for export_br in aal_obj.browse(cr, uid, export_ids, context=context):
+            data += self._export_entry(export_br)
         
         vals = {
             'state': 'get',
@@ -300,34 +308,54 @@ class int_commitment_export_wizard(osv.osv_memory):
         }
         return self.write(cr, uid, ids, vals, context=context)
         
-    def __export_entry(item_br):
-        cells = []
+    def _export_entry(self, item_br):
+        def decode_m2o(m2o, want_code=False):
+            if not m2o:
+                return ''
+            res = m2o.code if want_code else m2o.name
+            return res or ''
+            
+        def decode_date(dt):
+            # '%Y-%m-%d' orm -> '%d/%m/%Y' of import csv format
+            return dt and time.strftime('%d/%m/%Y', time.strptime(dt, '%Y-%m-%d')) or ''
         
-        # Description
+        cells = [
+            # Description
+            decode_m2o(item_br),
+            
+            # Ref
+            item_br.ref or '',
+            
+            # Document Date
+            decode_date(item_br.document_date),
+            
+            # Posting Date
+            decode_date(item_br.date),
+            
+            # General Account
+            decode_m2o(item_br.general_account_id, want_code=True),
+            
+            # Destination
+            decode_m2o(item_br.destination_id, want_code=True),
         
-        # Ref
+            # Cost Center
+            decode_m2o(item_br.cost_center_id, want_code=True),
         
-        # Document Date
+            # Funding Pool
+            decode_m2o(item_br.account_id, want_code=True),
         
-        # Posting Date
+            # Third Party
+            item_br.partner_txt or '',
         
-        # General Account
+            # Booking Amount
+            str(-1. * item_br.amount_currency),
         
-        # Destination
+            # Booking Currency
+            decode_m2o(item_br.currency_id),
+        ]
         
-        # Cost Center
-        
-        # Funding Pool
-        
-        # Third Party
-        
-        # Booking Amount
-        
-        # Booking Currency
-        
-        return self._csv_delimiter.join(cells)
+        return self._csv_delimiter.join(cells) + "\n"
         
         
-    
 int_commitment_export_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
