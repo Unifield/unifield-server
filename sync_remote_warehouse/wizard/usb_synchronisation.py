@@ -1,5 +1,6 @@
 import zipfile
 import datetime
+import time
 import dateutil.parser
 import base64
 from cStringIO import StringIO
@@ -66,7 +67,7 @@ class usb_synchronisation(osv.osv_memory):
         if not self._get_entity(cr, uid, context).usb_instance_type:
             raise osv.except_osv(_('Set USB Instance Type First'), _('You have not yet set a USB Instance Type for this instance. Please do this first by going to Synchronization > Registration > Setup USB Synchronisation'))
     
-    def check_valid_pull_file_name(self, cr, wizard, context):
+    def check_valid_pull_file_name(self, cr, uid, ids, wizard, context):
         ''' 
         !!!!!!! 
         US-26: Check if the given zip file is valid for this instance by using the file name stored in the header file
@@ -88,7 +89,7 @@ class usb_synchronisation(osv.osv_memory):
         zip_file = ZipFile(zip_stream, 'r')
         # read the header if possible
         try:
-            pull_file_name = zip_file.read("header")
+            header = zip_file.read("header")
         except KeyError:
             raise osv.except_osv(_('Wrong File'), _("Warning: the zip-file does not contain a header"))
             
@@ -100,21 +101,41 @@ class usb_synchronisation(osv.osv_memory):
         error = False
         if instance_name_type == '_RW': 
             other_name = cr.dbname[:len(cr.dbname) - 3]
-            if pull_file_name.find(cr.dbname) > 0:
+            pos = header.find(cr.dbname) 
+            if pos > 0:
                 raise osv.except_osv(_('Wrong File'), _('Sorry, the file name in the header file is not valid for this RW instance - must not have the prefix: %s') % cr.dbname)
-            # If the current instance is a RW instance, then the zip file must contain the CP instance name, exact as dbname without RW
-            found = pull_file_name.find(other_name)
-            if found < 0 or pull_file_name[found:found + len(other_name)] != other_name:
-                error = True
         else:
             # ELSE, then the file name must contain: instanceName, and NOT instanceName_RW
             other_name = cr.dbname + "_RW"
-            found = pull_file_name.find(other_name)
-            if found < 0 or pull_file_name[found:found + len(other_name)] != other_name:
-                error = True
+                
+        # If the current instance is a RW instance, then the zip file must contain the CP instance name, exact as dbname without RW
+        found = header.find(other_name)
+        if found < 0 or header[found:found + len(other_name)] != other_name:
+            error = True
+                
         if error:
             raise osv.except_osv(_('Wrong File'), _('Sorry, the file name in the header file is not valid for this instance - must have the prefix: %s') % other_name)
-     
+        
+        # Check from the header if the pull sequence is correct with the value stored in this instance, for any reason there should be
+        # no error raise, just raise a warning. The sequence found in header must be equal to the one stored + 1
+        try:
+            new_sequence = 0        
+            list_temp = header[1:len(header) -1].split(',')
+            for elem in list_temp:
+                if elem.find('rw_pull_sequence') > 0:
+                    new_sequence = int(elem.split(':')[1])
+                    break
+        except:
+            # for any exception, just set it to 0, meaning problem with the sequence
+            new_sequence = 0
+            
+        entity = self._get_entity(cr, uid, context)
+        if new_sequence != entity.rw_pull_sequence + 1:
+            if new_sequence < entity.rw_pull_sequence + 1:
+                new_sequence = -1 # If the old file is imported, do not update the sequence!
+            return new_sequence, False
+        return new_sequence, True
+
     def pull(self, cr, uid, ids, context=None):
         
         self._check_usb_instance_type(cr, uid, context)
@@ -126,9 +147,6 @@ class usb_synchronisation(osv.osv_memory):
         if not wizard.pull_data:
             raise osv.except_osv(_('No Data to Pull'), _('You have not specified a file that contains the data you want to Pull'))
 
-        # US-26: Check if the pull file name has a valid format and the file is the correct one for this instance!
-        self.check_valid_pull_file_name(cr, wizard, context)
-
         #US-26: Added a check if the zip file has already been imported before
         syncusb = self.pool.get('sync.usb.files')
         md5 = syncusb.md5(wizard.pull_data)
@@ -139,7 +157,44 @@ class usb_synchronisation(osv.osv_memory):
             if imported_date:
                 imported_date = dateutil.parser.parse(imported_date).strftime("%H:%M on %A, %d.%m.%Y")
             raise osv.except_osv( _('Import couldn\'t be done twice.'), _('The zip file has already been uploaded at %s') % imported_date)
-            
+
+        # US-26: Check if the pull file name has a valid format and the file is the correct one for this instance!
+        new_sequence, diff = self.check_valid_pull_file_name(cr, uid, ids, wizard, context)
+        if not diff:
+            name = "The given zip file has a wrong sequence of import - maybe missing a file! Do you want to continue?"
+            model = 'confirm'
+            step = 'default'
+            question = name
+            clazz = 'usb_synchronisation'
+            func = 'pull_continue'
+            args = [ids]
+            context.update({'rw_pull_sequence' : new_sequence})
+            kwargs = {}            
+            wiz_obj = self.pool.get('wizard')
+            # open the selected wizard
+            res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
+                                                                                                    callback={'clazz': clazz,
+                                                                                                              'func': func,
+                                                                                                              'args': args,
+                                                                                                              'kwargs': kwargs}))
+            return res
+        if new_sequence != -1:
+            context.update({'rw_pull_sequence' : new_sequence})
+        
+        self.pull_continue(cr, uid, ids, context)
+     
+    def pull_continue(self, cr, uid, ids, context=None):
+        context = context or {}
+        context.update({'offline_synchronization' : True})
+        
+        wizard = self.browse(cr, uid, ids[0])
+        if not wizard.pull_data:
+            raise osv.except_osv(_('No Data to Pull'), _('You have not specified a file that contains the data you want to Pull'))
+
+        #US-26: Added a check if the zip file has already been imported before
+        syncusb = self.pool.get('sync.usb.files')
+        md5 = syncusb.md5(wizard.pull_data)
+
         updates_pulled = update_pull_error = updates_ran = update_run_error = \
         messages_pulled = message_pull_error = messages_ran = message_run_error = 0
         try:
@@ -174,6 +229,13 @@ class usb_synchronisation(osv.osv_memory):
         else:
             pull_result += '\nGot an error while pulling %d message(s): %s' % (messages_pulled, message_pull_error)
         
+        # If the correct sequence is received, then update this value into the DB for this instance, and inform in the RW sync dialog  
+        rw_pull_sequence = context.get('rw_pull_sequence', -1)
+        if rw_pull_sequence != -1:
+            entity = self._get_entity(cr, uid, context)
+            self.pool.get('sync.client.entity').write(cr, uid, entity.id, {'rw_pull_sequence': rw_pull_sequence}, context)        
+            pull_result += '\n\nThe pulling file sequence is updated. The next expected sequence is %d' % (rw_pull_sequence + 1)
+
         # write results to wizard object to update ui
         vals = {
             'pull_result': pull_result,
@@ -181,7 +243,17 @@ class usb_synchronisation(osv.osv_memory):
             'push_file_visible': False,
         }
         
-        return self.write(cr, uid, ids, vals, context=context)
+        self.write(cr, uid, ids, vals, context=context)
+        return {
+                        'name': "Warning Message For RW",
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'usb_synchronisation',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'res_id': [wizard.id],
+                        'context': context,
+                }        
         
     def push(self, cr, uid, ids, context=None):
         """
@@ -228,8 +300,6 @@ class usb_synchronisation(osv.osv_memory):
         res = self.write(cr, uid, ids, vals, context=context)
         # UF-2397: Change the result into an attachment so that the user can use again an export
         attachment_obj = self.pool.get('ir.attachment')
-        import base64
-        import time
         for synchro in self.read(cr, uid, ids, ['push_file', 'push_file_name'], context=context):
             # Create the attachment
             name = synchro.get('push_file_name', 'noname')
