@@ -103,6 +103,7 @@
                             attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
                         <field name="is_reallocated" invisible="1"/>
                         <field name="last_corrected_id" invisible="1"/>
+                        <field name="is_engi" invisible="1"/>
                         <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False), ('last_corrected_id', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
                    </xpath>
                 </data>

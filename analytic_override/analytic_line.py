@@ -30,7 +30,27 @@ import logging
 class account_analytic_line(osv.osv):
     _name = "account.analytic.line"
     _inherit = "account.analytic.line"
-
+    
+    def _is_engi(self, cr, uid, ids, name, args, context=None):
+        # BKLK-4: is line an intl commitment ? (of engagement ENGI journal)
+        # (allowed to have a delete button)
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        aaj_obj = self.pool.get('account.analytic.journal')
+            
+        for r in self.read(cr, uid, ids, ['journal_id'], context=context):
+            res[r['id']] = False
+            if r['journal_id']:
+                rj = aaj_obj.read(cr, uid, [r['journal_id'][0]],
+                    ['type', 'code', ], context=context)[0]
+                if rj:
+                    res[r['id']]  = rj['type'] =='engagement' and \
+                        rj['code'] == 'ENGI' or False
+        return res
+ 
     def _get_is_free(self, cr, uid, ids, field_names, args, context=None):
         """
         Check if the line comes from a Free 1 or Free 2 analytic account category.
@@ -63,6 +83,8 @@ class account_analytic_line(osv.osv):
         'amount': fields.float('Func. Amount', required=True, digits_compute=dp.get_precision('Account'),
             help='Calculated by multiplying the quantity and the price given in the Product\'s cost price. Always expressed in the company main currency.', readonly=True),
         'exported': fields.boolean("Exported"),
+        'is_engi': fields.function(_is_engi, type='boolean', method=True,
+            string='Is intl engagement'),
     }
 
     _defaults = {
@@ -70,6 +92,7 @@ class account_analytic_line(osv.osv):
         'is_reversal': lambda *a: False,
         'is_reallocated': lambda *a: False,
         'exported': lambda *a: False,
+        'is_engi': lambda *a: False,
     }
 
     def _check_date(self, cr, uid, vals, context=None):
@@ -129,13 +152,14 @@ class account_analytic_line(osv.osv):
                 field.set('domain', "[('category', '=', 'FUNDING'), ('type', '<>', 'view')]")
             if view_type == 'tree' and "engagement_line_tree" in context:
                 # BKLG-4: comming from commitments list, allow delete of
-                # international commitments line (journal ENGI)
+                # international commitments line (journal ENGI) but not allow
+                # delete of other engagements line
                 etree.SubElement(tree, 'button',
                     name='unlink',
                     type='object',
                     icon='gtk-del',
                     context='context',
-                    attrs="{'invisible': ['|', ('journal_id.code', '!=', 'ENGI'), ('journal_id.type', '!=', 'engagement')]}",
+                    attrs="{'invisible': [('is_engi', '!=', True)]}",
                     confirm='Do you really want to delete selected record(s) ?'
                 )
             view['arch'] = etree.tostring(tree)
