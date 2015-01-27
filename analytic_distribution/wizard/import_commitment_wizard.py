@@ -269,9 +269,9 @@ class int_commitment_export_wizard(osv.osv_memory):
     
     _csv_filename_pattern = 'Intl_Commitments_%s.csv'
     _csv_delimiter = ','
-    _csv_header = ('Description', 'Ref', 'Document Date', 'Posting Date',
+    _csv_header = ['Description', 'Ref', 'Document Date', 'Posting Date',
         'General Account', 'Destination', 'Cost Center' , 'Funding Pool',
-        'Third Party', 'Booking Amount', 'Booking Currency',)
+        'Third Party', 'Booking Amount', 'Booking Currency', ]
 
     _columns = {
         'data': fields.binary('File', readonly=True),
@@ -291,21 +291,28 @@ class int_commitment_export_wizard(osv.osv_memory):
             context=context)[0].company_id.instance_id.name or ''
         file_name = self._csv_filename_pattern % (instance_name, )
         
-        data = self._csv_delimiter.join(self._csv_header) + "\n"
+        # csv prepare and header
+        csv_buffer = StringIO.StringIO()
+        csv_writer = csv.writer(csv_buffer, delimiter=self._csv_delimiter,
+            quoting=csv.QUOTE_MINIMAL)
+        csv_writer.writerow(self._csv_header)
         
+        # data lines
         domain = [
             ('journal_id.type', '=', 'engagement'),
             ('journal_id.code', '=', 'ENGI'),
         ]
         export_ids = aal_obj.search(cr, uid, domain, context=context)
         for export_br in aal_obj.browse(cr, uid, export_ids, context=context):
-            data += self._export_entry(export_br)
-        
+            csv_writer.writerow(self._export_entry(export_br))
+            
+        # download csv
         vals = {
             'state': 'get',
-            'data': base64.encodestring(data),
+            'data': base64.encodestring(csv_buffer.getvalue()),
             'name': file_name,
         }
+        csv_buffer.close()
         return self.write(cr, uid, ids, vals, context=context)
         
     def _export_entry(self, item_br):
@@ -319,7 +326,7 @@ class int_commitment_export_wizard(osv.osv_memory):
             # '%Y-%m-%d' orm -> '%d/%m/%Y' of import csv format
             return dt and time.strftime('%d/%m/%Y', time.strptime(dt, '%Y-%m-%d')) or ''
         
-        cells = [
+        return [
             # Description
             decode_m2o(item_br),
             
@@ -353,8 +360,6 @@ class int_commitment_export_wizard(osv.osv_memory):
             # Booking Currency
             decode_m2o(item_br.currency_id),
         ]
-        
-        return self._csv_delimiter.join(cells) + "\n"
         
         
 int_commitment_export_wizard()
