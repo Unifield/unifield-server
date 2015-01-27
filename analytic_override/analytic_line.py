@@ -40,10 +40,11 @@ class account_analytic_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         aaj_obj = self.pool.get('account.analytic.journal')
-            
-        for r in self.read(cr, uid, ids, ['journal_id'], context=context):
+        
+        fields = ['imported_commitment', 'journal_id']
+        for r in self.read(cr, uid, ids, fields, context=context):
             res[r['id']] = False
-            if r['journal_id']:
+            if r['imported_commitment'] and r['journal_id']:
                 rj = aaj_obj.read(cr, uid, [r['journal_id'][0]],
                     ['type', 'code', ], context=context)[0]
                 if rj:
