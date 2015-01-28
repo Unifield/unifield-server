@@ -267,7 +267,9 @@ class stock_picking(osv.osv):
         return message
 
 
-    def usb_replicate_int_ir(self, cr, uid, source, out_info, context=None):
+    #UF-2531: Allow also the INT to be synced between CP and RW
+    # If INT from sratch from RW ---> tolerate no partner when replicating the INT in the other instance
+    def usb_replicate_int(self, cr, uid, source, out_info, context=None):
         '''
         '''
         if context is None:
@@ -277,40 +279,34 @@ class stock_picking(osv.osv):
         pick_name = pick_dict['name']
         origin = pick_dict['origin']
         self._logger.info("+++ RW: Replicate the INT from an IR: %s from %s to %s" % (pick_name, source, cr.dbname))
-
-        rw_type = self._get_usb_entity_type(cr, uid)
-        if rw_type == self.REMOTE_WAREHOUSE:
-            if origin:
-                header_result = {}
-                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
-                header_result['move_lines'] = picking_lines
-                header_result['already_replicated'] = True
-                state = pick_dict['state']
-                
-                # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
-                existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'internal'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
-                if existing_pick:
-                    message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
-                    self._logger.info(message)
-                    return message
-                pick_id = self.create(cr, uid, header_result , context=context)
-                if state != 'draft': # if draft, do nothing
-                    wf_service = netsvc.LocalService("workflow")
-                    wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-                    if header_result.get('date_done', False):
-                        context['rw_date'] = header_result.get('date_done')
-                    self.action_assign(cr, uid, [pick_id], context=context)
-                    if header_result.get('date_done', False):
-                        context['rw_date'] = False
-                
-                message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
-            else:
-                message = "Sorry, the case without the origin FO or IR is not yet available!"
-                self._logger.info(message)
-                raise Exception, message
-        else:
-            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+        search_condition = [('type', '=', 'internal'), ('subtype', '=', 'standard'), ('name', '=', pick_name)]
+        if origin:
+            search_condition.append(('origin', '=', origin))
+            
+        header_result = {}
+        self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context, pick_dict['partner_id'])
+        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+        header_result['move_lines'] = picking_lines
+        header_result['already_replicated'] = True
+        state = pick_dict['state']
+        
+        # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
+        existing_pick = self.search(cr, uid, search_condition, context=context)
+        if existing_pick:
+            message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
+            self._logger.info(message)
+            return message
+        pick_id = self.create(cr, uid, header_result , context=context)
+        if state != 'draft': # if draft, do nothing
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+            if header_result.get('date_done', False):
+                context['rw_date'] = header_result.get('date_done')
+            self.action_assign(cr, uid, [pick_id], context=context)
+            if header_result.get('date_done', False):
+                context['rw_date'] = False
+        
+        message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
             
         self._logger.info(message)
         return message
@@ -338,6 +334,11 @@ class stock_picking(osv.osv):
         
         move_obj = self.pool.get('stock.move')
         move_proc = self.pool.get('stock.move.in.processor')
+        
+        # UF-2531: Get the associate name for the case of creating PICK or INT
+        associate_pick_name = False
+        if 'associate_pick_name' in header_result:
+            associate_pick_name = header_result.get('associate_pick_name', False)
         
         for l in pack_data:
             data = l[2]
@@ -429,17 +430,21 @@ class stock_picking(osv.osv):
                     data['ordered_quantity'] = data['product_qty']
                     move_proc.create(cr, uid, data, context=context)
 
+        # UF-2531: if creating PICK, check if the associated name is well a PICK 
+        if associate_pick_name and 'PICK' in associate_pick_name:
+            context['associate_pick_name'] = associate_pick_name
+
         # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as pick_id
         new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
         # we should also get the newly created INT object for this new picking, the force the name of it as what received from the RW
-        if 'associate_int_name' in header_result:
-            associate_int_name = header_result.get('associate_int_name')
+        if associate_pick_name and 'INT' in associate_pick_name:
+            associate_pick_name = header_result.get('associate_pick_name')
             origin = header_result.get('origin')
-            old_ref_name = self.browse(cr, uid, new_picking, context=context)['associate_int_name']
+            old_ref_name = self.browse(cr, uid, new_picking, context=context)['associate_pick_name']
             int_ids = self.search(cr, uid, [('origin', '=', origin),('name', '=', old_ref_name), ('type', '=', 'internal'), ('subtype', '=', 'standard')], context=context)
             if int_ids:
-                self.write(cr, uid, int_ids[0], {'name': associate_int_name}, context)
-                self.write(cr, uid, new_picking, {'associate_int_name': associate_int_name}, context)
+                self.write(cr, uid, int_ids[0], {'name': associate_pick_name}, context)
+                self.write(cr, uid, new_picking, {'associate_pick_name': associate_pick_name}, context)
         
         # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
         in_name = self.browse(cr, uid, new_picking, context=context)['name']
@@ -459,7 +464,6 @@ class stock_picking(osv.osv):
         '''
         Create the partial Internal Moves in the CP instance
         '''
-        
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
             
@@ -468,54 +472,53 @@ class stock_picking(osv.osv):
             context = {}
 
         message = "Unknown error, please check the log file."
-        
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.CENTRAL_PLATFORM:
+            header_result = {}
+            self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+            search_condition = [('type', '=', 'internal'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'confirmed'])]
+            if header_result.get('associate_pick_name', False):
+                search_condition.append(('name', '=', header_result.get('associate_pick_name')))
+            else: # if this is not a partial reception of INT, then just take the given INT itself
+                search_condition.append(('name', '=', pick_name))
+                
+            #US-24: Now allow also the INT without origin nor partner
             if origin:
-                header_result = {}
-                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                search_condition = [('origin', '=', origin), ('type', '=', 'internal'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'confirmed'])]
-                if header_result.get('associate_int_name', False):
-                    search_condition.append(('name', '=', header_result.get('associate_int_name')))
-                else: # if this is not a partial reception of INT, then just take the given INT itself
-                    search_condition.append(('name', '=', pick_name))
-                pick_ids = self.search(cr, uid, search_condition, context=context)
-                if pick_ids:
-                    pick_id = pick_ids[0]
-                    state = pick_dict['state']
-                    if state in ('done', 'assigned'):
-                        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
-                        header_result['move_lines'] = picking_lines
+                search_condition.append(('origin', '=', origin))
+            
+            pick_ids = self.search(cr, uid, search_condition, context=context)
+            if pick_ids:
+                pick_id = pick_ids[0]
+                state = pick_dict['state']
+                if state in ('done', 'assigned'):
+                    picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                    header_result['move_lines'] = picking_lines
 
-                        self.cancel_moves_before_process(cr, uid, [pick_id], context=context)
-                        #UF-2426: Inform the do_partial that this is a full process if there is no back order
-                        if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
-                            context['rw_backorder_name'] = pick_name
-                        else:
-                            context['rw_full_process'] = True
+                    self.cancel_moves_before_process(cr, uid, [pick_id], context=context)
+                    #UF-2426: Inform the do_partial that this is a full process if there is no back order
+                    if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+                        context['rw_backorder_name'] = pick_name
+                    else:
+                        context['rw_full_process'] = True
 
-                        if header_result.get('date_done', False):
-                            context['rw_date'] = header_result.get('date_done')
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = header_result.get('date_done')
 
-                        # try to perform a check available after cancel all moves? not really sure!
-                        self.action_assign(cr, uid, [pick_id], context=context)
+                    # try to perform a check available after cancel all moves? not really sure!
+                    self.action_assign(cr, uid, [pick_id], context=context)
 
-                        if header_result.get('date_done', False):
-                            context['rw_date'] = False
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = False
 
-                        self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
-                        
-                        message = "The Internal Moves: " + pick_name + " has been successfully created in " + cr.dbname
-                        self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
-        
-                else:
-                    message = "The IN: " + pick_name + " not found in " + cr.dbname
-                    self._logger.info(message)
-                    raise Exception, message
+                    self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
+                    
+                    message = "The Internal Moves: " + pick_name + " has been successfully received in " + cr.dbname
+                    self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
+    
             else:
-                message = "Sorry, the case without the origin PO is not yet available!"
+                message = "The IN: " + pick_name + " not found in " + cr.dbname
                 self._logger.info(message)
                 raise Exception, message
                 

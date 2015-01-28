@@ -74,19 +74,146 @@ class shipment(osv.osv):
             if ship_ids:
                 message = _("The Shipment %s is already in delivered state!") % (ship_name)
             else:
-                message = _("Sorry, no Shipment with the name %s in state %s found !") % (ship_name, state)
-                raise Exception, message # keep this message to not run, because other previous messages in the flow are also not run
+                # UF-2531: Check if this Ship is already in closed state --> just inform and ignore
+                ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', "done")], context=context)
+                if ship_ids:
+                    message = _("The Shipment %s is already in closed state!") % (ship_name)
+                else:
+                    message = _("Sorry, no Shipment with the name %s in state %s found !") % (ship_name, state)
+                    raise Exception, message # keep this message to not run, because other previous messages in the flow are also not run
         else:
             if state == 'done':
                 self.set_delivered(cr, uid, ship_ids, context=context)
                 self.write(cr, uid, ship_ids, {'already_rw_delivered': True}, context=context)
+                message = _("The Shipment %s is set to delivered!") % (ship_name)
             elif state == 'shipped':
                 self.validate(cr, uid, ship_ids, context=context)
                 self.write(cr, uid, ship_ids, {'already_rw_validated': True}, context=context)
+                message = _("The Shipment %s is set to closed!") % (ship_name)
             
         self._logger.info(message)
         return message
+        
+    def _manual_create_rw_shipment_message(self, cr, uid, res_id, return_info, rule_method, context=None):
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule_obj._manual_create_rw_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
 
+    #UF-2531: Create packs return for the shipment 
+    def usb_shipment_return_packs(self, cr, uid, source, out_info, context=None):
+        '''
+        Method to return packs from a shipped Shipment from RW
+        '''
+        if context is None:
+            context = {}
+            
+        pick_obj = self.pool.get('stock.picking')
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type != pick_obj.CENTRAL_PLATFORM:
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+            self._logger.info(message)
+            return message
+
+        state='shipped'
+        ship_dict = out_info.to_dict()
+        ship_name = ship_dict['name']
+        ppl = ship_dict['picking']
+
+        self._logger.info("+++ RW: The Ship %s has packs returned" % (ship_name))
+        ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
+        if not ship_ids or not ppl:
+            message = "Sorry, no Ship %s in state shipped available or invalid packing list for making the return packs!" % (ship_name)
+            self._logger.info(message)
+            return message
+
+        message = 'The Ship %s has the following packs returned: ' % (ship_name)
+        # UF-2531: Create processor for return packs in Shipment
+        proc_obj = self.pool.get('return.pack.shipment.processor')
+        processor_id = proc_obj.create(cr, uid, {'shipment_id': ship_ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        family_obj = self.pool.get('return.pack.shipment.family.processor')
+        
+        for wizard in proc_obj.browse(cr, uid, [processor_id], context=context):
+            for family in wizard.family_ids:
+                # check the family with ppl_id, pack_from and pack_to to find the correct line
+                for pack in ppl:
+                    pack_fam_sync = ppl[pack]
+                    ppl_name = pack_fam_sync['name']
+                    if ppl_name == family.ppl_id.name and family.from_pack == pack_fam_sync['from_pack'] and family.to_pack == pack_fam_sync['to_pack']:
+                        message += "%s (return: %s --> %s), " % (ppl_name, pack_fam_sync['return_from'], pack_fam_sync['return_to'])
+                        # This is the correct pack family --> update the return from and to packs
+                        family_obj.write(cr, uid, [family.id], {
+                            'return_from': pack_fam_sync['return_from'],
+                            'return_to': pack_fam_sync['return_to'],
+                        }, context=context)
+                        break
+                    
+        # Now process this return by call the method
+        proc_obj.do_return_pack_from_shipment(cr, uid, processor_id, context=context)
+
+        message += ". The operation has successfully executed"
+        self._logger.info(message)
+        return message
+
+    #UF-2531: Create packs return for the shipment in draft state --> packs will be put back into the PICK object 
+    def usb_shipment_return_packs_shipment_draft(self, cr, uid, source, out_info, context=None):
+        '''
+        Method to return packs from a shipped Shipment from RW
+        '''
+        if context is None:
+            context = {}
+            
+        pick_obj = self.pool.get('stock.picking')
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type != pick_obj.CENTRAL_PLATFORM:
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+            self._logger.info(message)
+            return message
+
+        state='draft'
+        ship_dict = out_info.to_dict()
+        ship_name = ship_dict['name']
+        draft_pack = ship_dict['picking']
+
+        self._logger.info("+++ RW: The Ship %s has packs returned to picking objects" % (ship_name))
+        ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
+        if not ship_ids or not draft_pack:
+            message = "Sorry, no Ship %s in state draft available or invalid pick document for making the return packs!" % (ship_name)
+            self._logger.info(message)
+            return message
+
+        message = 'The Ship %s has the following packs returned: ' % (ship_name)
+        # UF-2531: Create processor for return packs in Shipment
+        proc_obj = self.pool.get('return.shipment.processor')
+        processor_id = proc_obj.create(cr, uid, {'shipment_id': ship_ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        family_obj = self.pool.get('return.shipment.family.processor')
+        #return.shipment.family.processor
+        #pack.family.memory
+        
+        for wizard in proc_obj.browse(cr, uid, [processor_id], context=context):
+            for family in wizard.family_ids:
+                draft_picking = family.ppl_id and family.ppl_id.previous_step_id and family.ppl_id.previous_step_id.backorder_id or False
+                
+                # check the family with ppl_id, pack_from and pack_to to find the correct line
+                for pack in draft_pack:
+                    pack_fam_sync = draft_pack[pack]
+                    ppl_name = pack_fam_sync['name']
+                    
+                    if ppl_name == draft_picking.name and family.from_pack == pack_fam_sync['from_pack'] and family.to_pack == pack_fam_sync['to_pack']:
+                        message += "%s (number of packs returned: %s), " % (ppl_name, pack_fam_sync['selected_number'])
+                        # This is the correct pack family --> update the return from and to packs
+                        family_obj.write(cr, uid, [family.id], {
+                            'selected_number': pack_fam_sync['selected_number'],
+                        }, context=context)
+                        break
+                    
+        # Now process this return by call the method
+        proc_obj.do_return_packs(cr, uid, processor_id, context=context)
+
+        message += ". The operation has successfully executed"
+        self._logger.info(message)
+        return message
+    
     def usb_set_delivered_shipment(self, cr, uid, source, out_info, context=None):
         '''
         Set the shipment as delivered at CP when it is flagged as delivered on RW
@@ -100,8 +227,6 @@ class shipment(osv.osv):
         return self.usb_set_state_shipment(cr, uid, source, out_info, state='shipped', context=context)
 
     def retrieve_shipment_header_data(self, cr, uid, source, header_result, pick_dict, context):
-        so_po_common = self.pool.get('so.po.common')
-
         '''
         Need to get all header values for the Ship!
         '''
@@ -158,7 +283,6 @@ class shipment(osv.osv):
         ship = self.browse(cr, uid, ship_id, context=context)
         
         # Objects
-        order_line_obj = self.pool.get('sale.order.line')
         ship_proc_obj = self.pool.get('shipment.processor')
         ship_proc_vals = {
             'shipment_id': ship.id,
@@ -180,7 +304,8 @@ class shipment(osv.osv):
         for family in wizard.family_ids:
             ppl_name = family.ppl_id and family.ppl_id.name or False
             for line in pack_families:
-                if ppl_name == line['ppl_id']['name']:
+                #UF-2531, point 4): Added more check from the pack info to make sure to pick the right line
+                if ppl_name == line['ppl_id']['name'] and line['from_pack'] >= family.from_pack and line['to_pack'] <= family.to_pack:
                     selected_number = line['to_pack'] - line['from_pack'] + 1
                     wizard_line_obj.write(cr, uid, [family.id], {'selected_number': selected_number}, context=context)
                     break        
@@ -239,7 +364,7 @@ class stock_picking(osv.osv):
 
     _columns = {'already_replicated': fields.boolean(string='Already replicated - for sync only'),
                 'for_shipment_replicate': fields.boolean(string='To be synced for RW for Shipment - for sync only'),
-                'associate_int_name': fields.char('Name of INT associated with the IN', size=256),
+                'associate_pick_name': fields.char('Name of INT associated with the IN', size=256),
                 'rw_sdref_counterpart': fields.char('SDRef of the stock picking at the other instance', size=256),
                 'rw_force_seq': fields.integer('Force sequence on stock picking in Remote warehouse'),
                 }
@@ -274,7 +399,8 @@ class stock_picking(osv.osv):
     
         return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
-    def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
+    #UF-2531: The last param for the case no need to check for partner, such as the case of INT from scratch created at RW
+    def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context, need_partner_check=True):
         so_po_common = self.pool.get('so.po.common')
         
         if 'name' in pick_dict:
@@ -322,22 +448,25 @@ class stock_picking(osv.osv):
         if 'transport_order_id' in pick_dict:
             header_result['transport_order_id'] = pick_dict.get('transport_order_id')
 
-        if 'associate_int_name' in pick_dict:
-            header_result['associate_int_name'] = pick_dict.get('associate_int_name')
+        if 'associate_pick_name' in pick_dict:
+            header_result['associate_pick_name'] = pick_dict.get('associate_pick_name')
 
         if 'date_done' in pick_dict:
             header_result['date_done'] = pick_dict.get('date_done')
 
-        partner_id = so_po_common.get_partner_id(cr, uid, source, context)
-        if 'partner_id' in pick_dict:
-            partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)
+        partner_id = False
+        # UF-2531: If no partner is needed for checking, then do not perform the following check -- INT from scratch from RW to CP
+        if need_partner_check and pick_dict.get('partner_id', False):
+            partner_id = so_po_common.get_partner_id(cr, uid, source, context)
+            if 'partner_id' in pick_dict:
+                partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)
+            header_result['partner_id'] = partner_id
+            header_result['partner_id2'] = partner_id
+            address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
+            header_result['address_id'] = address_id
         
         location_id = so_po_common.get_location(cr, uid, partner_id, context)
-        address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
         header_result['partner_ref'] = source + "." + pick_dict.get('name')
-        header_result['partner_id'] = partner_id
-        header_result['partner_id2'] = partner_id
-        header_result['address_id'] = address_id
         header_result['location_id'] = location_id
         
         # For RW instances, order line ids need to be retrieved and store in the IN and OUT to keep references (via procurement) when making the INcoming via cross docking
@@ -583,6 +712,7 @@ class stock_picking(osv.osv):
             return
         if isinstance(ids, (int, long)):
             ids = [ids]
+        context = context or {}
         
         rule_obj = self.pool.get("sync.client.message_rule")
         # Default it's an OUT message
@@ -593,14 +723,49 @@ class stock_picking(osv.osv):
             remote_call = "stock.picking.usb_convert_out_to_pick"
         rule = rule_obj.get_rule_by_remote_call(cr, uid, remote_call, context)
         
+        original_name = ''
+        if 'original_name' in context:
+            original_name = context.get('original_name', '')
+        
+        # If the PICK got successfully converted to OUT, then reupdate the value already_replicated, for sync purpose
+        self.write(cr, uid, ids, {'already_replicated': already_replicated, 'associate_pick_name': original_name}, context=context)
+        self._manual_create_rw_messages(cr, uid, context=context)
+        
         so_po_common = self.pool.get('so.po.common')
         super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
             so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner.name, context, True)
+
+    def _manual_create_rw_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule_obj._manual_create_rw_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
+
+    # UF-2531: Create RW messages manually to keep the content of these messages correctly -- avoid the values have been changed by the return pack, convert PICK/OUT
+    def _manual_create_rw_messages(self, cr, uid, context=None):
+        context = context or {}
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
         
-        # If the PICK got successfully converted to OUT, then reupdate the value already_replicated, for sync purpose
-        self.write(cr, uid, ids, {'already_replicated': already_replicated}, context=context)
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.CENTRAL_PLATFORM:
+            return
+
+        message_pool = self.pool.get('sync_remote_warehouse.message_to_send')
+        rule_pool = self.pool.get("sync.client.message_rule")
+        messages_count = 0
+        message_direction = entity.usb_instance_type == 'central_platform' and \
+            ['|', ('direction_usb', '=', 'cp_to_rw'), ('direction_usb', '=', 'bidirectional')] or \
+            ['|', ('direction_usb', '=', 'rw_to_cp'), ('direction_usb', '=', 'bidirectional')]
+        rule_ids = rule_pool.search(cr, uid, [('type','=','USB')] + message_direction, order='sequence_number',  context=context)
+        if rule_ids:
+            for rule in rule_pool.browse(cr, uid, rule_ids, context=context):
+                order = "id asc"
+                if 'usb_create_partial_int_moves' in rule.remote_call or 'usb_create_partial_in' in rule.remote_call:
+                    # For this INT sync, create messages ordered by the date_done to make sure that the first INTs will be synced first
+                    order = 'date_done asc'
+                messages_count += message_pool.create_from_rule(cr, uid, rule, order, context=context)
+            if messages_count:
+                cr.commit()
         
 
     # WORK IN PROGRESS
@@ -640,12 +805,19 @@ class stock_picking(osv.osv):
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         message = "Unknown error, please check the log file"
         origin = pick_dict['origin']
+        ori_pick = pick_dict['associate_pick_name']         
         
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.CENTRAL_PLATFORM:
             if origin:
+                search_name = [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', 'in', ['draft', 'assigned'])]
+                # UF-2531: When we have an OUT converted from a Pick, get the PickName for the search to make sure to retrieve the correct PICK
+                # otherwise we could have several picks matched the search condition! 
+                if ori_pick:
+                    search_name.append(('name', '=', ori_pick))                
+                
                 # look for FO if it is a CP instance
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)  
+                pick_ids = self.search(cr, uid, search_name, context=context)
                 if pick_ids: # This is a real pick in draft, then convert it to OUT
                     old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
                     context['rw_backorder_name'] = pick_name
@@ -670,6 +842,7 @@ class stock_picking(osv.osv):
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
+        
         return message
 
     def usb_convert_out_to_pick(self, cr, uid, source, out_info, context=None):
@@ -844,6 +1017,38 @@ class stock_picking(osv.osv):
         self.do_partial(cr, uid, [proc_id], 'outgoing.delivery.processor', context=context)
         return True
 
+    #UF-2531: Allow to cancel the PICK/OUT from CP to RW
+    def usb_cancel_pick_out(self, cr, uid, source, in_info, context=None):
+        if context is None:
+            context = {}
+
+        pick_dict = in_info.to_dict()
+        pick_name = pick_dict['name']
+        origin = pick_dict['origin']
+            
+        self._logger.info("+++ RW: Cancel the Picking/OUT: %s from %s to %s" % (pick_name, source, cr.dbname))
+
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.REMOTE_WAREHOUSE:
+            if origin:
+                existing_pick = self.search(cr, uid, [('origin', '=', origin), ('name', '=', pick_name), ('type', '=', 'out'), ('state', '!=', 'done')], context=context)
+                if not existing_pick:
+                    message = "Sorry, the IN: " + pick_name + " does not exist in " + cr.dbname
+                    self._logger.info(message)
+                    raise Exception, message
+                
+                self.action_cancel(cr, uid, existing_pick, context=context)
+                message = "Cancelled successfully the Picking/OUT: " + pick_name
+            else:
+                message = "Sorry, the case without the origin PO is not yet available!"
+                self._logger.info(message)
+                raise Exception, message
+        else:
+            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+        
+        self._logger.info(message)
+        return message
+
     def usb_create_picking(self, cr, uid, source, out_info, context=None):
         '''
         This is the PICK with format PICK00x-y, meaning the PICK00x-y got closed making the backorder PICK got updated (return products
@@ -939,7 +1144,8 @@ class stock_picking(osv.osv):
                     continue
                 
                 for move in wizard.picking_id.move_lines:
-                    if move.line_number == line_number:
+                    #UF-2531, point 3): Added a check to help getting the right line from the wizard, maybe we need to check also with the original_qty?
+                    if move.line_number == line_number and move.product_qty >= sline['product_qty']:
                         if move.id not in move_already_checked:
                             move_id = move.id
                             move_already_checked.append(move.id) # this move id will not be picked in the next search when creating lines
@@ -963,6 +1169,71 @@ class stock_picking(osv.osv):
 
         self.do_create_picking(cr, uid, [proc_id], context=context)
         return True
+
+
+    #UF-2531: Create packs return for the shipment 
+    def usb_picking_return_products(self, cr, uid, source, out_info, context=None):
+        '''
+        Method to return packs from a shipped Shipment from RW
+        '''
+        if context is None:
+            context = {}
+            
+        pick_obj = self.pool.get('stock.picking')
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type != pick_obj.CENTRAL_PLATFORM:
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+            self._logger.info(message)
+            return message
+
+        state='assigned'
+        picking_dict = out_info.to_dict()
+        ppl_name = picking_dict['name']
+        picking_dict = picking_dict['picking']
+
+        self._logger.info("+++ RW: The Packing List %s has products returned" % (ppl_name))
+        pick_ids = self.search(cr, uid, [('name', '=', ppl_name), ('state', '=', state)], context=context)
+        if not pick_ids or not ppl_name:
+            message = "Sorry, no Packing List %s in correct state available or invalid Pick, for making the return products!" % (ppl_name)
+            self._logger.info(message)
+            return message
+
+        message = 'The Packing List %s has the following products returned: ' % (ppl_name)
+        # UF-2531: Create processor for return packs in Shipment
+        proc_obj = self.pool.get('return.ppl.processor')
+        processor_id = proc_obj.create(cr, uid, {'picking_id': pick_ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        wizard = proc_obj.browse(cr, uid, processor_id, context=context)
+
+        line_obj = self.pool.get(wizard._columns['move_ids']._obj)        
+        
+        draft_picking_id = wizard.picking_id.previous_step_id.backorder_id
+        move_pick_name = draft_picking_id.name
+        
+        # Make the full quantity process for this PICK to PPL
+        for move in wizard.move_ids:
+            ori_qty = move.ordered_quantity 
+            
+            for pick in picking_dict:
+                pick_line = picking_dict[pick]
+                pick_name = pick_line['name']
+                if pick_name == move_pick_name and move.ordered_quantity == pick_line['ordered_quantity'] and move.line_number == pick_line['line_number']:
+                    message += "%s (line number: %s, quantity returned: %s), " % (pick_name, pick_line['line_number'], pick_line['returned_quantity'])
+                    line_obj.write(cr, uid, [move.id], {
+                        'quantity': pick_line['returned_quantity'],
+                    }, context=context)
+                    
+                    break
+            
+        # Now process this return by call the method
+        proc_obj.do_return_ppl(cr, uid, processor_id, context=context)
+
+        message += ". The operation has successfully executed"
+        self._logger.info(message)
+        return message
+
+
+
 
     def usb_replicate_ppl(self, cr, uid, source, out_info, context=None):
         pick_dict = out_info.to_dict()
@@ -1008,12 +1279,8 @@ class stock_picking(osv.osv):
                             pick_id = pick
                             break
                     if pick_id:
-                        state = pick_dict['state']
-                        if state in ('done','draft','assigned'):   
-                            self.rw_create_ppl_step_1_only(cr, uid, pick_id, picking_lines, context)
-                            
-                            message = "The pre-packing list: " + pick_name + " has been replicated in " + cr.dbname
-                            self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
+                        message = "The pre-packing list: " + pick_name + " has been replicated in " + cr.dbname
+                        self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
             
                     else:
                         message = "Cannot replicate the packing " + pick_name + " because no relevant document found at " + cr.dbname
@@ -1050,7 +1317,15 @@ class stock_picking(osv.osv):
             line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
             line_data['product_qty'] = move.product_qty
             line_data['quantity'] = move.product_qty
-            ret = line_obj.create(cr, uid, line_data, context=context)
+            # UF-2531, point 3): We need to set the quantity received from the other instance, not the whole qty from the move!
+            # but need to check the line number to make sure to get the correct line
+            for line in picking_lines:
+                sline = line[2]
+                # UF-2531: If the PICK got split then all lines need to be created in here
+                if sline['line_number'] == move.line_number and (move.original_qty_partial == -1 or (move.original_qty_partial == sline['original_qty_partial'])):
+                    line_data['product_qty'] = sline['product_qty']
+                    line_data['quantity'] = sline['product_qty']
+                    ret = line_obj.create(cr, uid, line_data, context=context)
 
         self.do_validate_picking(cr, uid, [proc_id], context=context)
         return True
@@ -1084,6 +1359,7 @@ class stock_picking(osv.osv):
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
                         context['rw_shipment_name'] = shipment_name
+                        self.rw_create_ppl_step_1_only(cr, uid, pick_ids[0], picking_lines, context)
                         self.rw_ppl_step_2_only(cr, uid, pick_ids[0], picking_lines, context)
                         
                         message = "The pre-packing list: " + pick_name + " has been replicated in " + cr.dbname
@@ -1100,7 +1376,7 @@ class stock_picking(osv.osv):
                 
         elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
-                
+            
         self._logger.info(message)
         return message
 

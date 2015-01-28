@@ -109,6 +109,46 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
+    #UF-2531: This method is to create manually a RW message for the return pack, of ship or ppl and put into the queue for the next USB sync
+    def _manual_create_rw_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, context=None):
+        pick_obj = self.pool.get('stock.picking')
+        usb_entity = pick_obj._get_usb_entity_type(cr, uid)
+        if usb_entity == pick_obj.REMOTE_WAREHOUSE or not rule_method or not res_id:
+            partner_name = 'fake'
+            
+            full_method = model_name + "." + rule_method
+            rule = self.get_rule_by_remote_call(cr, uid, full_method, context)
+            if not rule:
+                logger.info("Sorry, there is no RW message rule found for the method %s." % (full_method)) 
+                return
+    
+            model_obj = self.pool.get(model_name)
+            msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
+    
+            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, context=context)
+            temp = arguments[0] 
+            temp['picking'] = return_info
+            arguments = [temp]
+            
+            pick_name = ''
+            if 'name' in arguments[0]:
+                pick_name = arguments[0]['name']
+            
+            identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [res_id], rule.server_id, context=context)
+            if not identifiers:
+                return
+            # Still create the message if an existing message was already in the system, as the return action could be repeat
+            xml_id = identifiers[res_id]
+            data = {
+                    'identifier' : xml_id,
+                    'remote_call': rule.remote_call,
+                    'arguments': arguments,
+                    'destination_name': partner_name,
+                    'sent' : False,
+                    'generate_message' : True,
+            }
+            msg_to_send_obj.create(cr, uid, data, context=context)
+            logger.info("A manual RW message for the method: %s, created for the object: %s " % (full_method, pick_name)) 
 
     _order = 'sequence_number asc'
 local_message_rule()
@@ -171,8 +211,11 @@ class message_to_send(osv.osv):
 
         for id in obj_ids:
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
+                # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
+                if destination is False:
+                    destination = 'fake'
                 # UF-2483: By default the "sent" parameter is False
-                self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], dest[id], initial, context)
+                self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context)
         return len(obj_ids)
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):

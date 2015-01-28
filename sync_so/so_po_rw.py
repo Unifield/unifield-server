@@ -49,7 +49,11 @@ class sale_order_rw(osv.osv):
         so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
         header_result['name'] = fo_name
         header_result['state'] = 'rw'
-        header_result['procurement_request'] = True
+        
+        # UF-2531: Only set the procurement request if it's a IR
+        if 'IR' in fo_name:     
+            context['procurement_request'] = True        
+            header_result['procurement_request'] = True
         
         if po_dict.get('partner_id'):
             rec_id = self.pool.get('res.partner').find_sd_ref(cr, uid, xmlid_to_sdref(po_dict.get('partner_id')['id']), context=context)
