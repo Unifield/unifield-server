@@ -2588,13 +2588,14 @@ class sale_order_line(osv.osv):
         context = context is None and {} or context
 
         if not context.get('noraise') and not context.get('import_in_progress'):
+            empty_lines = False
             if ids and not 'product_uom_qty' in vals:
                 empty_lines = self.search(cr, uid, [
                     ('id', 'in', ids),
                     ('order_id.state', '!=', 'cancel'),
                     ('product_uom_qty', '<=', 0.00),
                 ], count=True, context=context)
-            else:
+            elif 'product_uom_qty' in vals:
                 empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
             if empty_lines:
                 raise osv.except_osv(
