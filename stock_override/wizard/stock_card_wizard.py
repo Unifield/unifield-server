@@ -248,7 +248,7 @@ class stock_card_wizard_line(osv.osv_memory):
                                    required=True),
         'date_done': fields.datetime(string='Date'),
         'doc_ref': fields.char(size=64, string='Doc. Ref.'),
-        'origin': fields.char(size=64, string='Origin'),
+        'origin': fields.char(size=256, string='Origin'),
         'qty_in': fields.float(digits=(16,2), string='Qty IN'),
         'qty_out': fields.float(digits=(16,2), string='Qty OUT'),
         'balance': fields.float(digits=(16,2), string='Balance'),

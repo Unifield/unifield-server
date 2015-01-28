@@ -26,6 +26,8 @@ import logging
 import tools
 from os import path
 
+from order_types.stock import check_cp_rw
+
 
 class purchase_order(osv.osv):
     '''
@@ -348,6 +350,7 @@ class stock_picking(osv.osv):
 
         return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
 
+    @check_cp_rw
     def button_cross_docking_all(self, cr, uid, ids, context=None):
         """
         set all stock moves with the source location to 'cross docking'
@@ -378,10 +381,11 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
             else:
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
         # we check availability : cancel then check
-        self.cancel_assign(cr, uid, ids, context)
+        self.cancel_assign(cr, uid, ids)
         self.action_assign(cr, uid, ids, context)
         return False
 
+    @check_cp_rw
     def button_stock_all(self, cr, uid, ids, context=None):
         """
         set all stock move with the source location to 'stock'
@@ -420,7 +424,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
             else:
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
         # we check availability : cancel then check
-        self.cancel_assign(cr, uid, ids, context)
+        self.cancel_assign(cr, uid, ids)
         self.action_assign(cr, uid, ids, context)
         return False
 
@@ -596,6 +600,7 @@ class stock_move(osv.osv):
             default_data.update({'location_dest_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return default_data
 
+    @check_cp_rw
     def button_cross_docking(self, cr, uid, ids, context=None):
         """
         for each stock move we enable to change the source location to cross docking
@@ -622,7 +627,7 @@ class stock_move(osv.osv):
             # we cancel availability
             todo = self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
-            self.action_assign(cr, uid, todo)
+            self.action_assign(cr, uid, todo, context)
             #FEFO
             self.fefo_update(cr, uid, todo, context)
             # below we cancel availability to recheck it
@@ -636,6 +641,7 @@ class stock_move(osv.osv):
 #            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
         return ret
 
+    @check_cp_rw
     def button_stock(self, cr, uid, ids, context=None):
         """
         for each stock move we enable to change the source location to stock

@@ -892,6 +892,7 @@ class stock_picking(osv.osv):
         sequence_obj = self.pool.get('ir.sequence')
         cur_obj = self.pool.get('res.currency')
         wf_service = netsvc.LocalService("workflow")
+        usb_entity = self._get_usb_entity_type(cr, uid)
 
         if context is None:
             context = {}
@@ -1125,13 +1126,13 @@ class stock_picking(osv.osv):
                     'move_lines':[],
                     'state':'draft'}
 
-                if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                     initial_vals_copy.update({
                         'already_replicated': False,
                     })
 
                 backorder_id = self.copy(cr, uid, picking.id, initial_vals_copy, context=context)
-                if self._get_usb_entity_type(cr, uid) == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
+                if usb_entity == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
                     new_name = context.get('rw_backorder_name')
                     del context['rw_backorder_name']
                     self.write(cr, uid, backorder_id, {'name': new_name}, context=context)
@@ -1150,10 +1151,12 @@ class stock_picking(osv.osv):
                             'state': 'assigned',
                             'move_dest_id': False,
                             'change_reason': False,
-                            'processed_stock_move': True,
+                            'processed_stock_move': True, 
+                            'purchase_line_id': bo_move.purchase_line_id and bo_move.purchase_line_id.id or False,
                         }
                         bo_values.update(av_values)
                         context['keepLineNumber'] = True
+                        context['from_button'] = False
                         move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
                         context['keepLineNumber'] = False
 
@@ -1196,7 +1199,7 @@ class stock_picking(osv.osv):
                         so_ids = self.pool.get('purchase.order').get_so_ids_from_po_ids(cr, uid, picking.purchase_id.id, context=context)
                         for so_id in so_ids:
                             wf_service.trg_write(uid, 'sale.order', so_id, cr)
-                    if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE:
+                    if usb_entity == self.REMOTE_WAREHOUSE:
                         self.write(cr, uid, [picking.id], {'already_replicated': False}, context=context)
                 prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                     'close_in': _('Done'),
@@ -1229,8 +1232,18 @@ class stock_picking(osv.osv):
             if nb_lines:
                 # We copy all data in lines
                 wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz_context)
+
+                #UF-2531: Pass the name of PICKxxx-y when creating a Pick from crossdocking from an IN partial
+                if context.get('associate_pick_name', False) and context.get('sync_message_execution', False):
+                    wiz_context['associate_pick_name'] = context.get('associate_pick_name')
+                    del context['associate_pick_name']
                 # We process the creation of the picking
-                wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
+                res_wiz = wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
+                if 'res_id' in res_wiz:
+                    new_pick_id = res_wiz['res_id']
+                    if backorder_id and new_pick_id:
+                        new_pick_name = self.read(cr, uid, new_pick_id, ['name'], context=context)['name']
+                        self.write(cr, uid, backorder_id, {'associate_pick_name': new_pick_name,}, context=context)
 
             prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                 'prepare_pick': _('Done'),
@@ -1240,6 +1253,10 @@ class stock_picking(osv.osv):
             prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
             }, context=context)
+
+        # UF-2531: Run the creation of message if it's at RW at some important point
+        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+            self._manual_create_rw_messages(cr, uid, context=context)
 
         if context.get('rw_sync', False):
             prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
@@ -1262,6 +1279,9 @@ class stock_picking(osv.osv):
                 'context': context}
 
         return {'type': 'ir.actions.act_window_close'}
+
+    def _manual_create_rw_messages(self, cr, uid, context=None):
+        return
 
     def enter_reason(self, cr, uid, ids, context=None):
         '''
