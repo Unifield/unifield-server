@@ -124,16 +124,25 @@ class int_commitment_realloc_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0])
-        vals = {
-            'destination_id': False,
-            'cost_center_id': False,
-            'funding_pool_id': False,
-        }
-        for el in ['destination_id', 'cost_center_id', 'funding_pool_id']:
-            obj = getattr(wiz, el, None)
-            if obj:
-                vals.update({el: getattr(obj, 'id', None)})
+        
+        # check funding pool / CC
+        # if no CC set: no FP will be mass allocated as CC must be compatible with FP
+        # if FP not compatible with CC, no FP will be mass allocated
+        res = self.onchange_cost_center(cr, uid, ids,
+            cost_center_id=wiz.cost_center_id.id,
+            funding_pool_id=wiz.funding_pool_id.id)
+        funding_pool_id = res.get('value', {}).get('funding_pool_id', wiz.funding_pool_id.id)
+        
+        # set vals and update
+        vals={}
+        if wiz.destination_id:
+            vals['destination_id'] = wiz.destination_id.id
+        if wiz.cost_center_id:
+            vals['cost_center_id'] = wiz.cost_center_id.id
+        if funding_pool_id:
+            vals['account_id'] = funding_pool_id
         aal.write(cr, uid, line_ids, vals)
+        
         return { 'type': 'ir.actions.act_window_close', 'context': context}
 
 int_commitment_realloc_wizard()
