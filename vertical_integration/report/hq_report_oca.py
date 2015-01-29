@@ -209,14 +209,16 @@ class hq_report_oca(report_sxw.report_sxw):
 
             # For third report: add to corresponding sub
             if not account.shrink_entries_for_hq:
+                expat_identification = "0"
                 expat_employee = "0"
                 # Expat employees are the only third party in this report
                 if move_line.partner_txt and move_line.employee_id and move_line.employee_id.employee_type == 'ex':
-                    expat_employee = move_line.partner_txt[:5]
+                    expat_identification = move_line.employee_id.identification_id
+                    expat_employee = move_line.partner_txt
                 other_formatted_data = ["01",
                                         country_code,
                                         account and account.code or "0",
-                                        "0",
+                                        expat_identification,
                                         "0",
                                         move_line.date and datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         currency and currency.name or "0",
