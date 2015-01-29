@@ -23,7 +23,7 @@ from osv import osv, fields
 import tools
 from tools.translate import _
 from tools.safe_eval import safe_eval as eval
-
+import time
 import re
 import logging
 
@@ -140,6 +140,18 @@ class update_to_send(osv.osv):
         update = self
 
         def create_normal_update(self, rule, context):
+######################## TO BE REMOVED AT INTEGRATION ##################################
+            if rule.sequence_number == 416 and cr.dbname.endswith('HQ1C1P1'):
+                if 'logger' in context:
+                    logger = context['logger']
+                    idx = logger.append("I'm sleeping ...")
+                    logger.write()
+                    logging.getLogger('sync.client').warn("Rule 416 I'M SLEEPING ...")
+                    time.sleep(45)
+                    logging.getLogger('sync.client').warn("End of sleep")
+                    logger.pop(idx)
+                    logger.write()
+######################## TO BE REMOVED AT INTEGRATION ##################################
             domain = eval(rule.domain or '[]')
             export_fields = eval(rule.included_fields or '[]')
             if 'id' not in export_fields:
