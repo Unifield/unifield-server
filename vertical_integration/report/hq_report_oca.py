@@ -183,7 +183,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 if cr.rowcount:
                     curr_rate = cr.fetchall()[0][0]
                 if func_rate != 0.00:
-                    rate = round(1 / curr_rate / func_rate, 5)
+                    rate = round(1 / (curr_rate / func_rate), 5)
             # For first report: as if
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
