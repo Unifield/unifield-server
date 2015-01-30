@@ -56,9 +56,9 @@ class hq_report_oca(report_sxw.report_sxw):
         # method to create counterpart line
         return line[:2] + \
                ["20750",
+                line[3],  # expat employee identification or "0"
                 "0",
-                "0",
-                line[5],
+                line[5],  # expat employee name or "0"
                 line[6],
                 line[7],
                 line[9],
