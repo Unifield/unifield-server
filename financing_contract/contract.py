@@ -21,6 +21,7 @@
 import datetime
 from osv import fields, osv
 from tools.translate import _
+import netsvc
 
 class financing_contract_funding_pool_line(osv.osv):
     _name = "financing.contract.funding.pool.line"
@@ -102,23 +103,18 @@ class financing_contract_contract(osv.osv):
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
     _trace = True
+    
+    def contract_open_proxy(self, cr, uid, ids, context=None):
+        # utp-1030/7: check grant amount when going on in workflow
+        return self._check_grant_amount_proxy(cr, uid, ids,
+            'contract_open', context=context)
 
     def contract_open(self, cr, uid, ids, *args):
-        # get previous states and deduce previous 'draft' ids
-        prev_states = self.read(cr, uid, ids, ['state'])
-        draft_ids = [ps['id'] for ps in prev_states if ps['state'] == 'draft']
-
         self.write(cr, uid, ids, {
             'state': 'open',
             'open_date': datetime.date.today().strftime('%Y-%m-%d'),
             'soft_closed_date': None,
-            'is_show_grant_warn': False,
         })
-
-        # utp-1030/7: only check grant amount when going on in workflow
-        # so from 'draft' as with repopen we come from 'soft-closed'
-        if draft_ids:
-            self._check_grant_amount(cr, uid, draft_ids)
         return True
 
     def search_draft_or_temp_posted(self, cr, uid, ids, context=None):
@@ -147,6 +143,11 @@ class financing_contract_contract(osv.osv):
                 if sql_res:
                     res += [x and x[0] for x in sql_res]
         return res
+        
+    def contract_soft_closed_proxy(self, cr, uid, ids, context=None):
+        # utp-1030/7: check grant amount when going on in workflow
+        return self._check_grant_amount_proxy(cr, uid, ids,
+            'contract_soft_closed', context=context)
 
     def contract_soft_closed(self, cr, uid, ids, *args):
         """
@@ -171,18 +172,19 @@ class financing_contract_contract(osv.osv):
         self.write(cr, uid, ids, {
             'state': 'soft_closed',
             'soft_closed_date': datetime.date.today().strftime('%Y-%m-%d'),
-            'is_show_grant_warn': False,
         })
-        self._check_grant_amount(cr, uid, ids)
         return True
+        
+    def contract_hard_closed_proxy(self, cr, uid, ids, context=None):
+        # utp-1030/7: check grant amount when going on in workflow
+        return self._check_grant_amount_proxy(cr, uid, ids,
+            'contract_hard_closed', context=context)
 
     def contract_hard_closed(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
             'state': 'hard_closed',
             'hard_closed_date': datetime.date.today().strftime('%Y-%m-%d'),
-            'is_show_grant_warn': False,
         })
-        self._check_grant_amount(cr, uid, ids)
         return True
 
     def get_contract_domain(self, cr, uid, browse_contract, reporting_type=None, context=None):
@@ -276,14 +278,12 @@ class financing_contract_contract(osv.osv):
         'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
         'fp_added_flag': fields.boolean('Flag when new FP is added'),
         'instance_level': fields.function(_get_instance_level, method=True, string="Current instance level", type="char", readonly=True),  # UFTP-343
-        'is_show_grant_warn': fields.boolean('Show grant warning ?', readonly=True),  # UTP-1030/7
     }
 
     _defaults = {
         'state': 'draft',
         'fp_added_flag': False,
         'reporting_currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
-        'is_show_grant_warn': False,
     }
 
     def _check_unicity(self, cr, uid, ids, context=None):
@@ -637,23 +637,65 @@ class financing_contract_contract(osv.osv):
             if list_diff:
                 ret = format_line_obj.write(cr, uid, format_line.id, {'account_quadruplet_ids': [(6, 0, filtered_quads)]}, context=context)
         return res
-
-    def _check_grant_amount(self, cr, uid, ids, context=None):
+        
+    def _check_grant_amount_proxy(self, cr, uid, ids, signal, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]
-        marked_ids = []
+        check_action = self._check_grant_amount(cr, uid, ids, signal)
+        if check_action:
+            return check_action
+        wf_service = netsvc.LocalService("workflow")
+        for id in ids:
+            wf_service.trg_validate(uid, self._name, id, signal, cr)
+        return True
 
-        for self_br in self.browse(cr, uid, ids, context=context):
-            funded_budget = 0.0
-            for rl in self_br.actual_line_ids:
-                funded_budget += rl.allocated_budget
-            if funded_budget != self_br.grant_amount:
-                # UTP-1030/7: mark it as funded budget <> grant amount
-                marked_ids.append(self_br.id)
-
-        if marked_ids:
-            self.write(cr, uid, marked_ids, {'is_show_grant_warn': True},
-                context=context)
+    def _check_grant_amount(self, cr, uid, ids, signal, context=None):
+        """
+        UTP-1030/7: display a warning wizard if funded budget <> grant amount
+        except for "Total project only"
+        :return action to forward or False to let default behaviour
+        :rtype dict/Fakse
+        """
+        if not ids:
+            return False
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        if len(ids) != 1:
+            return False  # only warn from form (1 id)
+            
+        self_br = self.browse(cr, uid, ids[0], context=context)
+        if not self_br.reporting_type or self_br.reporting_type == 'project':
+            return False  # no warn for "Total project only"
+            
+        # proceed check
+        funded_budget = 0.0
+        for rl in self_br.actual_line_ids:
+            funded_budget += rl.allocated_budget
+        if funded_budget != self_br.grant_amount:
+            if context is None:
+                context = {}
+            warn_msg = _("WARNING: 'Grant' amount is not equal to "
+                "'Funded - Budget'.\nGrant: %.2f\nFunded Budget: %.2f")
+            context['financing_contract_warning'] = {
+                'text': warn_msg % (self_br.grant_amount, funded_budget, ),
+                'signal': signal,
+                'res_id': ids[0],
+            }
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr,
+                uid, 'financing_contract',
+                'view_financing_contract_contract_warning_form')[1]
+            return {
+                'name': 'Financing Contract Warning',
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.financing.contract.contract.warning',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'target': 'new',
+                'context': context,
+            }
+  
+        return False
 
 financing_contract_contract()
 

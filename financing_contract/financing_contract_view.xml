@@ -8,22 +8,6 @@
                 <field name="type">form</field>
                 <field name="arch" type="xml">
                     <form string="Financing Contract">
-                        <field name="is_show_grant_warn" invisible="1"/>
-                        <group colspan="6">
-                            <html>
-                                <p id="view_financing_contract_contract_form_grant_warning"
-                                style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
-                                WARNING: At last stage grant amount was not equal to "Funded - Budget"
-                                </p>
-                                <script language="javascript">
-                                    var show_warn = $('#is_show_grant_warn').val();
-                                    if (show_warn === "1") {
-                                        msg_dom = $('#view_financing_contract_contract_form_grant_warning')
-                                        msg_dom.show();
-                                    }
-                                </script>
-                            </html>
-                        </group>
                         <field name="code" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="name" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"
@@ -148,10 +132,23 @@
                             <field name="hard_closed_date" colspan="2" readonly="1"/>
                             <field name="state" colspan="2" readonly="1"/>
                         </group>
-                        <button name="contract_open" states="draft" string="Open" type="workflow" icon="gtk-go-forward"/>
-                        <button name="contract_soft_closed" states="open" string="Soft-close" type="workflow" icon="gtk-go-forward"/>
+                        <button name="contract_open_proxy" states="draft" string="Open" type="object" icon="gtk-go-forward"/>
+                        <button name="contract_soft_closed_proxy" states="open" string="Soft-close" type="object" icon="gtk-go-forward"/>
                         <button name="contract_reopen" states="soft_closed" string="Re-Open" type="workflow" icon="gtk-go-forward"/>
-                        <button name="contract_hard_closed" states="soft_closed" string="Hard-close" type="workflow" icon="gtk-ok"/>
+                        <button name="contract_hard_closed_proxy" states="soft_closed" string="Hard-close" type="object" icon="gtk-ok"/>
+                    </form>
+                </field>
+            </record>
+            
+            <record id="view_financing_contract_contract_warning_form" model="ir.ui.view">
+                <field name="name">wizard.financing.contract.contract.warning.form</field>
+                <field name="model">wizard.financing.contract.contract.warning</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form string="Financing Contract Warning">
+                        <field name="warn_message" nolabel="1" />
+                        <newline />
+                        <button name="btn_close" type="object" string="OK" icon="gtk-ok"/>
                     </form>
                 </field>
             </record>
