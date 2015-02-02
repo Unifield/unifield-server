@@ -64,7 +64,8 @@ if os.name == 'nt':
                 "pydot", "asyncore","asynchat", "reportlab", "vobject",
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
-                "uuid", "commands", "mx.DateTime", "json"
+                "uuid", "commands", "mx.DateTime", "json",
+                "pylzma"
             ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }
