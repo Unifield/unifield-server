@@ -641,7 +641,8 @@ class financing_contract_contract(osv.osv):
     def _check_grant_amount_proxy(self, cr, uid, ids, signal, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]
-        check_action = self._check_grant_amount(cr, uid, ids, signal)
+        check_action = self._check_grant_amount(cr, uid, ids, signal,
+            context=context)
         if check_action:
             return check_action
         wf_service = netsvc.LocalService("workflow")
@@ -654,7 +655,7 @@ class financing_contract_contract(osv.osv):
         UTP-1030/7: display a warning wizard if funded budget <> grant amount
         except for "Total project only"
         :return action to forward or False to let default behaviour
-        :rtype dict/Fakse
+        :rtype dict/False
         """
         if not ids:
             return False
