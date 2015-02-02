@@ -369,6 +369,75 @@ class analytic_line(osv.osv):
             if e in res:
                 res.remove(e)
         return res
-
+        
+    def check_dest_cc_fp_compatibility(self, cr, uid, ids,
+        dest_id=False, cc_id=False, fp_id=False, context=None):
+        """
+        check compatibility of new dest/cc/fp to reallocate
+        :return list of not compatible entries tuples (id, entry_sequence)
+        :rtype: list 
+        """
+        res = []
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not dest_id and not cc_id and not fp_id:
+            return [(id, '') for id in ids]  # all uncompatible
+        if context is None:
+            context = {}
+            
+        aaa_obj = self.pool.get('account.analytic.account')
+        if cc_id:
+            cc_br = aaa_obj.browse(cr, uid, cc_id, context=context)
+        else:
+            cc_br = False
+        if fp_id:
+            fp_br = aaa_obj.browse(cr, uid, fp_id, context=context)
+        else:
+            fp_br = False
+            
+        # MSF Private Fund
+        msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+            'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            
+        for self_br in self.browse(cr, uid, ids, context=context):
+            if not self_br.general_account_id.is_analytic_addicted:
+                res.append((self_br.id, self_br.entry_sequence))
+                continue
+                
+            new_dest_id = dest_id or self_br.destination_id.id
+            new_cc_id = cc_id or self_br.cost_center_id.id
+            new_cc_br = cc_br or self_br.cost_center_id
+            new_fp_id = fp_id or self_br.account_id.id
+            new_fp_br = fp_br or self_br.account_id
+ 
+            # check cost center with general account 
+            dest_ids = [d.id for d in \
+                self_br.general_account_id.destination_ids]
+            if not new_dest_id in dest_ids:
+                # not compatible with general account
+                res.append((self_br.id, self_br.entry_sequence))
+                continue
+        
+            # check funding pool (expect for MSF Private Fund)
+            if not new_fp_id == msf_pf_id:  # all OK for MSF Private Fund
+                # - cost center and funding pool compatibility
+                cc_ids = [cc.id for cc in new_fp_br.cost_center_ids]
+                if not new_cc_id in cc_ids:
+                    # not compatible with CC
+                    res.append((self_br.id, self_br.entry_sequence))
+                    continue
+                
+                # - destination / account
+                acc_dest = (self_br.general_account_id.id, new_dest_id)
+                if acc_dest not in [x.account_id and x.destination_id and \
+                    (x.account_id.id, x.destination_id.id) \
+                        for x in new_fp_br.tuple_destination_account_ids]:
+                    # not compatible with dest/account
+                    res.append((self_br.id, self_br.entry_sequence))
+ 
+        return res
+            
 analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -117,30 +117,36 @@ class int_commitment_realloc_wizard(osv.osv_memory):
         line_ids = aal.search(cr, uid, domain, context=context)
         if not line_ids:
             return { 'type': 'ir.actions.act_window_close', 'context': context}
-        
-        # proceed
         if isinstance(line_ids, (int, long)):
             line_ids = [line_ids]
+        
+        # wizard data
         if isinstance(ids, (int, long)):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0])
+        dest_id = wiz.destination_id and wiz.destination_id.id or False
+        cc_id = wiz.cost_center_id and wiz.cost_center_id.id or False
+        fp_id = wiz.funding_pool_id and wiz.funding_pool_id.id or False
+        if not dest_id and not cc_id and not fp_id:
+            raise osv.except_osv(_('Error'), _('Nothing to reallocate'))
         
-        # check funding pool / CC
-        # if no CC set: no FP will be mass allocated as CC must be compatible with FP
-        # if FP not compatible with CC, no FP will be mass allocated
-        res = self.onchange_cost_center(cr, uid, ids,
-            cost_center_id=wiz.cost_center_id.id,
-            funding_pool_id=wiz.funding_pool_id.id)
-        funding_pool_id = res.get('value', {}).get('funding_pool_id', wiz.funding_pool_id.id)
+        # check AD consistency
+        no_compat = aal.check_dest_cc_fp_compatibility(cr, uid, line_ids,
+            dest_id=dest_id, cc_id=cc_id, fp_id=fp_id, context=context)
+        if no_compat:
+            # no comptatible entries found
+            msg = _("No compatible entries found: %s") % (
+                ",".join([nc[1] or '' for nc in no_compat]), )
+            raise osv.except_osv(_('Error'), msg)
         
         # set vals and update
         vals={}
-        if wiz.destination_id:
-            vals['destination_id'] = wiz.destination_id.id
-        if wiz.cost_center_id:
-            vals['cost_center_id'] = wiz.cost_center_id.id
-        if funding_pool_id:
-            vals['account_id'] = funding_pool_id
+        if dest_id:
+            vals['destination_id'] = dest_id
+        if cc_id:
+            vals['cost_center_id'] = cc_id
+        if fp_id:
+            vals['account_id'] = fp_id
         aal.write(cr, uid, line_ids, vals)
         
         return { 'type': 'ir.actions.act_window_close', 'context': context}
