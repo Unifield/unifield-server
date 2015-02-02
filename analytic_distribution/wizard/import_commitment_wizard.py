@@ -210,6 +210,21 @@ class import_commitment_wizard(osv.osv_memory):
                     else:
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('No booking amount found!'))
 
+                    # Check AJI consistency
+                    no_compat = analytic_obj.check_dest_cc_fp_compatibility(cr,
+                        uid, False,
+                        dest_id=dest_id[0], cc_id=cc_id[0], fp_id=fp_id[0],
+                        from_import=True,
+                        from_import_general_account_id=account_ids[0],
+                        context=context)
+                    if no_compat:
+                        # no compatible AD
+                        msg = _("Dest / Cost Center / Funding Pool are not" \
+                            " compatible for entry name:'%s', ref:'%s'")
+                        raise osv.except_osv(_('Error'), msg % (
+                            vals.get('name', ''), vals.get('ref', ''))
+                        )
+                    
                     analytic_obj.create(cr, uid, vals, context=context)
                     sequence_number += 1
 

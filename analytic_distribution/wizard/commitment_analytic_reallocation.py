@@ -134,7 +134,7 @@ class int_commitment_realloc_wizard(osv.osv_memory):
         no_compat = aal.check_dest_cc_fp_compatibility(cr, uid, line_ids,
             dest_id=dest_id, cc_id=cc_id, fp_id=fp_id, context=context)
         if no_compat:
-            # no comptatible entries found
+            # no compatible entries found
             msg = _("No compatible entries found: %s") % (
                 ",".join([nc[1] or '' for nc in no_compat]), )
             raise osv.except_osv(_('Error'), msg)

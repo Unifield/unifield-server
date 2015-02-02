@@ -371,14 +371,52 @@ class analytic_line(osv.osv):
         return res
         
     def check_dest_cc_fp_compatibility(self, cr, uid, ids,
-        dest_id=False, cc_id=False, fp_id=False, context=None):
+        dest_id=False, cc_id=False, fp_id=False,
+        from_import=False, from_import_general_account_id=False,
+        context=None):
         """
         check compatibility of new dest/cc/fp to reallocate
         :return list of not compatible entries tuples (id, entry_sequence)
         :rtype: list 
         """
+        def check_entry(id, entry_sequence, general_account_br,
+            new_dest_id, new_cc_id, new_cc_br, new_fp_id, new_fp_br):
+            if not general_account_br.is_analytic_addicted:
+                res.append((id, entry_sequence))
+                return False
+ 
+            # check cost center with general account 
+            dest_ids = [d.id for d in general_account_br.destination_ids]
+            if not new_dest_id in dest_ids:
+                # not compatible with general account
+                res.append((id, entry_sequence))
+                return False
+        
+            # check funding pool (expect for MSF Private Fund)
+            if not new_fp_id == msf_pf_id:  # all OK for MSF Private Fund
+                # - cost center and funding pool compatibility
+                cc_ids = [cc.id for cc in new_fp_br.cost_center_ids]
+                if not new_cc_id in cc_ids:
+                    # not compatible with CC
+                    res.append((id, entry_sequence))
+                    return False
+                
+                # - destination / account
+                acc_dest = (general_account_br.id, new_dest_id)
+                if acc_dest not in [x.account_id and x.destination_id and \
+                    (x.account_id.id, x.destination_id.id) \
+                        for x in new_fp_br.tuple_destination_account_ids]:
+                    # not compatible with dest/account
+                    res.append((id, entry_sequence))
+                    return False
+            return True
+        
         res = []
-        if not ids:
+        if from_import:
+            if not dest_id or not cc_id or not fp_id or \
+                not from_import_general_account_id:
+                return [(False, '')]  # tripplet required at import
+        elif not ids:
             return res
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -401,41 +439,22 @@ class analytic_line(osv.osv):
         msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
             'analytic_distribution', 'analytic_account_msf_private_funds')[1]
             
-        for self_br in self.browse(cr, uid, ids, context=context):
-            if not self_br.general_account_id.is_analytic_addicted:
-                res.append((self_br.id, self_br.entry_sequence))
-                continue
-                
-            new_dest_id = dest_id or self_br.destination_id.id
-            new_cc_id = cc_id or self_br.cost_center_id.id
-            new_cc_br = cc_br or self_br.cost_center_id
-            new_fp_id = fp_id or self_br.account_id.id
-            new_fp_br = fp_br or self_br.account_id
- 
-            # check cost center with general account 
-            dest_ids = [d.id for d in \
-                self_br.general_account_id.destination_ids]
-            if not new_dest_id in dest_ids:
-                # not compatible with general account
-                res.append((self_br.id, self_br.entry_sequence))
-                continue
-        
-            # check funding pool (expect for MSF Private Fund)
-            if not new_fp_id == msf_pf_id:  # all OK for MSF Private Fund
-                # - cost center and funding pool compatibility
-                cc_ids = [cc.id for cc in new_fp_br.cost_center_ids]
-                if not new_cc_id in cc_ids:
-                    # not compatible with CC
-                    res.append((self_br.id, self_br.entry_sequence))
-                    continue
-                
-                # - destination / account
-                acc_dest = (self_br.general_account_id.id, new_dest_id)
-                if acc_dest not in [x.account_id and x.destination_id and \
-                    (x.account_id.id, x.destination_id.id) \
-                        for x in new_fp_br.tuple_destination_account_ids]:
-                    # not compatible with dest/account
-                    res.append((self_br.id, self_br.entry_sequence))
+        if from_import:
+            account_br = self.pool.get('account.account').browse(cr, uid,
+                from_import_general_account_id, context=context)
+            check_entry(False, '', account_br,
+                dest_id, cc_id, cc_br, fp_id, fp_br)
+        else:
+            for self_br in self.browse(cr, uid, ids, context=context):
+                new_dest_id = dest_id or self_br.destination_id.id
+                new_cc_id = cc_id or self_br.cost_center_id.id
+                new_cc_br = cc_br or self_br.cost_center_id
+                new_fp_id = fp_id or self_br.account_id.id
+                new_fp_br = fp_br or self_br.account_id
+            
+                check_entry(self_br.id, self_br.entry_sequence,
+                    self_br.general_account_id,
+                    new_dest_id, new_cc_id, new_cc_br, new_fp_id, new_fp_br)
  
         return res
             
