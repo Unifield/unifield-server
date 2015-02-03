@@ -428,7 +428,8 @@ class analytic_line(osv.osv):
             if not check_date(new_cc_br, posting_date):
                 res.append((id, entry_sequence, 'CC date'))
                 return False
-            if not check_date(new_fp_br, posting_date):
+            if new_fp_id != msf_pf_id and not \
+                check_date(new_fp_br, posting_date):
                 res.append((id, entry_sequence, 'FP date'))
                 return False
                     
