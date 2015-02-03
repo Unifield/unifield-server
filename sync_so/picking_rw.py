@@ -863,7 +863,7 @@ class stock_picking(osv.osv):
         if rw_type == self.CENTRAL_PLATFORM:
             if origin:
                 # look for the OUT if it has already been converted before, using the origin from FO
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'out'),('state', 'in', ['draft', 'assigned'])], context=context)  
+                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'out'),('state', 'in', ['draft', 'confirmed', 'assigned'])], context=context)  
                 if pick_ids: # This is a real pick in draft, then convert it to OUT
                     old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
                     context['rw_backorder_name'] = pick_name
