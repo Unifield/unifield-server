@@ -13,7 +13,8 @@ class hq_monitor(osv.osv):
     _columns = {
         'email': fields.char('Destination emails', size=1024, help='comma separated list of email addresses'),
         'title': fields.char('Title', size=1024, required=1),
-        'nb_not_run': fields.integer('Notification threshold'),
+        'not_run_data': fields.integer('Notification threshold for update'),
+        'not_run_msg': fields.integer('Notification threshold for message'),
         'last_instance_id': fields.integer('ID of the last message checked for this instance'),
         'last_other_instances_id': fields.integer('ID of the last message checked for the other instances'),
     }
@@ -21,7 +22,8 @@ class hq_monitor(osv.osv):
     _defaults = {
         'last_instance_id': 0,
         'last_other_instances_id': 0,
-        'nb_not_run': 1,
+        'not_run_data': 1,
+        'not_run_msg': 1,
     }
 
     def check_not_run(self, cr, uid, context=None):
@@ -45,7 +47,7 @@ class hq_monitor(osv.osv):
         subject = _('Not Run on UniField instances')
         body = _("""Hello,
 
-On %s, the system detected the following Not Run lines:
+On %s, the system detected Not Run data:
 """) % (instance and instance.name or '', )
 
         monitor_ids = []
@@ -70,10 +72,15 @@ On %s, the system detected the following Not Run lines:
 
         found = False
         for monitor in monitor_obj.read(cr, uid, monitor_ids, ['instance_id', 'nb_msg_not_run', 'nb_data_not_run']):
-            total = (monitor['nb_msg_not_run'] or 0) + (monitor['nb_data_not_run'] or 0)
-            if total >= template.nb_not_run:
+            if monitor['nb_msg_not_run'] >= template.not_run_msg or monitor['nb_data_not_run'] >= template.not_run_data:
                 found = True
-                body += _("  - %s not run on %s\n") % (total, monitor['instance_id'] and  monitor['instance_id'][1] or '')
+                body += "  - "
+                error = []
+                if monitor['nb_msg_not_run'] >= template.not_run_msg:
+                    error.append(_("%s message%s") % (monitor['nb_msg_not_run'], monitor['nb_msg_not_run'] > 1 and 's' or ''))
+                if monitor['nb_data_not_run'] >= template.not_run_data:
+                    error.append(_("%s update%s") % (monitor['nb_data_not_run'], monitor['nb_data_not_run'] > 1 and 's' or ''))
+                body += _("%s from instance %s.\n") % (' and '.join(error), monitor['instance_id'] and monitor['instance_id'][1] or '')
         if found:
             body += _("""
 

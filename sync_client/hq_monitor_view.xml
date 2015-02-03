@@ -60,7 +60,8 @@
             <tree string="HQ Monitor Configuration" hide_new_button="1" hide_delete_button="1" >
             <field name="title"/>
             <field name="email"/>
-            <field name="nb_not_run"/>
+            <field name="not_run_data"/>
+            <field name="not_run_msg"/>
             </tree>
         </field>
     </record>
@@ -73,7 +74,8 @@
             <form string="HQ Monitor Configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                 <separator colspan="4" string="Monitor Not Run lines on instances" />
                 <field name="email" colspan="4"/>
-                <field name="nb_not_run" colspan="1"/>
+                <field name="not_run_data" colspan="1"/>
+                <field name="not_run_msg" colspan="1"/>
             </form>
         </field>
     </record>
