@@ -543,7 +543,7 @@ function parse_filters(src, id) {
         }
         jQuery(id).toggleClass('active inactive');
     }
-    var $all_search_fields = jQuery('#search_filter_data').find("input:not([type=checkbox]):not([type=hidden]):not([value='']), select[name]");
+    var $all_search_fields = jQuery('#search_filter_data').find("input:not([type=checkbox]):not([type=hidden])), select[name]");
     jQuery('#_terp_filters_context').val(filter_context);
     $all_search_fields.each(function(fld_index, fld){
         var $fld = jQuery(fld);
@@ -562,8 +562,11 @@ function parse_filters(src, id) {
                     fld_value = 'selection_' + $fld.val();
                 }
                 if ($fld.attr('search_context')) {
-                    search_context['context'] = $fld.attr('search_context');
-                    search_context['value'] = fld_value;
+                    if (!search_context[fld_name]) {
+                        search_context[fld_name] = {};
+                    }
+                    search_context[fld_name]['context'] = $fld.attr('search_context');
+                    search_context[fld_name]['value'] = fld_value;
                 }
             }
         } else if(kind == 'many2one') {
@@ -576,8 +579,11 @@ function parse_filters(src, id) {
             }
             fld_context = jQuery(idSelector(fld_name)).attr('context');
             if (fld_context) {
-                search_context['context'] = fld_context;
-                search_context['value'] = fld_value;
+                if (!search_context[fld_name]) {
+                    search_context[fld_name] = {};
+                }
+                search_context[fld_name]['context'] = fld_context;
+                search_context[fld_name]['value'] = fld_value;
             }
         }
         

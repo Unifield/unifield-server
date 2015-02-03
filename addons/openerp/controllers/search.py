@@ -271,12 +271,14 @@ class Search(Form):
         if domains:
             domains = eval(domains)
 
-        c = search_context.get('context', {})
-        v = search_context.get('value')
-        if v and isinstance(v, basestring) and '__' in v:
-            value, operator = v.split('__')
-            v = int(value)
-        ctx = expr_eval(c, {'self':v})
+        ctx = {}
+        for fld_name, src_context in search_context.iteritems():
+            c = src_context.get('context', {})
+            v = src_context.get('value')
+            if v and isinstance(v, basestring) and '__' in v:
+                value, operator = v.split('__')
+                v = int(value)
+            ctx.update(expr_eval(c, {'self':v}))
 
         context = rpc.session.context
         if ctx:
