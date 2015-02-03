@@ -373,23 +373,34 @@ class analytic_line(osv.osv):
     def check_dest_cc_fp_compatibility(self, cr, uid, ids,
         dest_id=False, cc_id=False, fp_id=False,
         from_import=False, from_import_general_account_id=False,
+        from_import_posting_date=False,
         context=None):
         """
         check compatibility of new dest/cc/fp to reallocate
-        :return list of not compatible entries tuples (id, entry_sequence)
-        :rtype: list 
+        :return list of not compatible entries tuples
+        :rtype: list of tuples [(id, entry_sequence, reason), ]
         """
-        def check_entry(id, entry_sequence, general_account_br,
-            new_dest_id, new_cc_id, new_cc_br, new_fp_id, new_fp_br):
+        def check_date(aaa_br, posting_date):
+            if aaa_br.date_start and aaa_br.date:
+                return aaa_br.date > posting_date >= aaa_br.date_start or False
+            elif aaa_br.date_start:
+                return posting_date >= aaa_br.date_start or False
+            return False
+        
+        def check_entry(id, entry_sequence,
+            general_account_br, posting_date,
+            new_dest_id, new_dest_br,
+            new_cc_id, new_cc_br,
+            new_fp_id, new_fp_br):
             if not general_account_br.is_analytic_addicted:
-                res.append((id, entry_sequence))
+                res.append((id, entry_sequence, ''))
                 return False
  
             # check cost center with general account 
             dest_ids = [d.id for d in general_account_br.destination_ids]
             if not new_dest_id in dest_ids:
                 # not compatible with general account
-                res.append((id, entry_sequence))
+                res.append((id, entry_sequence, 'DEST'))
                 return False
         
             # check funding pool (expect for MSF Private Fund)
@@ -398,7 +409,7 @@ class analytic_line(osv.osv):
                 cc_ids = [cc.id for cc in new_fp_br.cost_center_ids]
                 if not new_cc_id in cc_ids:
                     # not compatible with CC
-                    res.append((id, entry_sequence))
+                    res.append((id, entry_sequence, 'CC'))
                     return False
                 
                 # - destination / account
@@ -407,25 +418,42 @@ class analytic_line(osv.osv):
                     (x.account_id.id, x.destination_id.id) \
                         for x in new_fp_br.tuple_destination_account_ids]:
                     # not compatible with dest/account
-                    res.append((id, entry_sequence))
+                    res.append((id, entry_sequence, 'account/dest'))
                     return False
+                    
+            # check active date
+            if not check_date(new_dest_br, posting_date):
+                res.append((id, entry_sequence, 'DEST date'))
+                return False
+            if not check_date(new_cc_br, posting_date):
+                res.append((id, entry_sequence, 'CC date'))
+                return False
+            if not check_date(new_fp_br, posting_date):
+                res.append((id, entry_sequence, 'FP date'))
+                return False
+                    
             return True
         
         res = []
         if from_import:
             if not dest_id or not cc_id or not fp_id or \
-                not from_import_general_account_id:
-                return [(False, '')]  # tripplet required at import
+                not from_import_general_account_id or \
+                not from_import_posting_date:
+                return [(False, '', '')]  # tripplet required at import
         elif not ids:
             return res
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not dest_id and not cc_id and not fp_id:
-            return [(id, '') for id in ids]  # all uncompatible
+            return [(id, '', '') for id in ids]  # all uncompatible
         if context is None:
             context = {}
             
         aaa_obj = self.pool.get('account.analytic.account')
+        if dest_id:
+            dest_br = aaa_obj.browse(cr, uid, dest_id, context=context)
+        else:
+            dest_br = False
         if cc_id:
             cc_br = aaa_obj.browse(cr, uid, cc_id, context=context)
         else:
@@ -442,19 +470,22 @@ class analytic_line(osv.osv):
         if from_import:
             account_br = self.pool.get('account.account').browse(cr, uid,
                 from_import_general_account_id, context=context)
-            check_entry(False, '', account_br,
-                dest_id, cc_id, cc_br, fp_id, fp_br)
+            check_entry(False, '', account_br, from_import_posting_date,
+                dest_id, dest_br, cc_id, cc_br, fp_id, fp_br)
         else:
             for self_br in self.browse(cr, uid, ids, context=context):
                 new_dest_id = dest_id or self_br.destination_id.id
+                new_dest_br = dest_br or self_br.destination_id
                 new_cc_id = cc_id or self_br.cost_center_id.id
                 new_cc_br = cc_br or self_br.cost_center_id
                 new_fp_id = fp_id or self_br.account_id.id
                 new_fp_br = fp_br or self_br.account_id
             
                 check_entry(self_br.id, self_br.entry_sequence,
-                    self_br.general_account_id,
-                    new_dest_id, new_cc_id, new_cc_br, new_fp_id, new_fp_br)
+                    self_br.general_account_id, self_br.date,
+                    new_dest_id, new_dest_br,
+                    new_cc_id, new_cc_br,
+                    new_fp_id, new_fp_br)
  
         return res
             

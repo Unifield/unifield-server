@@ -135,8 +135,9 @@ class int_commitment_realloc_wizard(osv.osv_memory):
             dest_id=dest_id, cc_id=cc_id, fp_id=fp_id, context=context)
         if no_compat:
             # no compatible entries found
-            msg = _("No compatible entries found: %s") % (
-                ",".join([nc[1] or '' for nc in no_compat]), )
+            entries = ["%s (%s)" % (nc[1] or '', nc[2] or '', ) \
+                for nc in no_compat]
+            msg = _("No compatible entries found: %s") % (",".join(entries), )
             raise osv.except_osv(_('Error'), msg)
         
         # set vals and update

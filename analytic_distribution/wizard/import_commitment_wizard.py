@@ -216,13 +216,17 @@ class import_commitment_wizard(osv.osv_memory):
                         dest_id=dest_id[0], cc_id=cc_id[0], fp_id=fp_id[0],
                         from_import=True,
                         from_import_general_account_id=account_ids[0],
+                        from_import_posting_date=line_date,
                         context=context)
                     if no_compat:
+                        no_compat = no_compat[0]
                         # no compatible AD
                         msg = _("Dest / Cost Center / Funding Pool are not" \
-                            " compatible for entry name:'%s', ref:'%s'")
+                            " compatible for entry name:'%s', ref:'%s'" \
+                            " reason: '%s'")
                         raise osv.except_osv(_('Error'), msg % (
-                            vals.get('name', ''), vals.get('ref', ''))
+                            vals.get('name', ''), vals.get('ref', ''),
+                            no_compat[2] or '', )
                         )
                     
                     analytic_obj.create(cr, uid, vals, context=context)
