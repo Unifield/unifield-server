@@ -37,6 +37,7 @@ class setup_remote_warehouse(osv.osv_memory):
     _sequences_to_suffix = [
         'stock.lot.serial',
         'stock.picking.in',
+        'picking.ticket',
         'stock.picking.internal',
         'stock.picking.out',
         'procurement.request',
@@ -100,12 +101,46 @@ class setup_remote_warehouse(osv.osv_memory):
 
         return
         
+    def _create_push_sequence(self, cr, uid, context=None):
+        """
+        Create the push sequence for instances of the remote where house
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that calls the method
+        :param suffix: Suffix that will be applied on all sequences
+        :param context: Context of the call
+
+        :return Nothing
+        """
+        seq_obj = self.pool.get('ir.sequence')
+        seq_code = 'rw.push.seq'
+
+        seq_ids = seq_obj.search(cr, uid, [('code', '=', seq_code)], context=context)
+        if len(seq_ids) > 0:
+            seq_obj.write(cr, uid, seq_ids, {'number_next': 1}, context=context)
+            
+            entity_ob = self.pool.get('sync.client.entity')
+            entity = entity_ob.get_entity(cr, uid, context=context)
+            entity_ob.write(cr, uid, entity.id, {'rw_pull_sequence': 0}, context=context)
+        else:
+            seq_typ_pool = self.pool.get('ir.sequence.type')
+            types = {'name':'RW push sequence', 'code':seq_code}
+            seq_typ_pool.create(cr, uid, types)
+            seq = {
+                'name':'RW push sequence', 
+                'code':seq_code, 
+                'prefix':'', 
+                'padding':1}
+            seq_obj.create(cr, uid, seq)
+        return        
+        
     def _setup_remote_warehouse(self, cr, uid, entity_id):
         """ Perform actions necessary to set up this instance as a remote warehouse """
         self._set_sync_menu_active(cr, uid, False)
         self._sync_disconnect(cr, uid)
         self._set_entity_type(cr, uid, entity_id, self.remote_warehouse)
         self._set_sequence_suffix(cr, uid, suffix="-RW", context=None)
+        self._create_push_sequence(cr, uid, context=None)
     
     def _setup_central_platform(self, cr, uid, entity_id):
         """ First set up as remote warehouse, save db backup, then revert changes and setup as central platform """
