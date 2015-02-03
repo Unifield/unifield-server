@@ -93,6 +93,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
 
         ctx = self.context.copy()
         ctx['fiscalyear'] = data['form'].get('fiscalyear_id', False)
+        ctx['state'] = data['form']['target_move']
 
         if data['form']['filter'] == 'filter_period':
             if data['form'].get('period_from', False) and data['form'].get('period_to', False):
