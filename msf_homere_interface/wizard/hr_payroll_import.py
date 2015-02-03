@@ -84,8 +84,12 @@ class hr_payroll_import(osv.osv_memory):
         name = ''
         ref = ''
         destination_id = False
-        accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
-        financing_contract, date, currency, project, analytic_line = zip(data)
+        if len(data) == 13:
+            accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
+                financing_contract, date, currency, project, analytic_line = zip(data)
+        else:
+            accounting_code, description, second_description, third,  expense, receipt, project, financing_line, \
+                financing_contract, date, currency, axis1, analytic_line, axis2, analytic_line2 = zip(data)
         # Check period
         if not date and not date[0]:
             raise osv.except_osv(_('Warning'), _('A date is missing!'))

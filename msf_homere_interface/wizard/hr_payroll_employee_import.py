@@ -515,6 +515,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             filename = fileobj.name
             fileobj.close()
             job_reader, contract_reader, staff_reader = self.read_files(cr, uid, filename)
+            filename = wiz.filename or ""
 
             job_ids = False
             if job_reader:
