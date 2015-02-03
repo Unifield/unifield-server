@@ -49,6 +49,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 <Style ss:ID="ssBorderLeft">
 <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
@@ -76,6 +77,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">

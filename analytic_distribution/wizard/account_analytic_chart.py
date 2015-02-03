@@ -31,6 +31,8 @@ class account_analytic_chart(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', 'Currency', help="Only display items from the given currency"),
         'fiscalyear': fields.many2one('account.fiscalyear', 'Fiscal year', help = 'Keep empty for all open fiscal years'),
         'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
+        'period_from': fields.many2one('account.period', 'From'),  # UTP-1030/13
+        'period_to': fields.many2one('account.period', 'To'),  # UTP-1030/13
     }
 
     _defaults = {
@@ -59,26 +61,32 @@ class account_analytic_chart(osv.osv_memory):
                                LIMIT 1) AS period_stop''', (fiscalyear_id, fiscalyear_id))
             periods =  [i[0] for i in cr.fetchall()]
             if periods and len(periods) > 1:
-                p1 = self.pool.get('account.period').browse(cr, uid, [periods[0]])[0]
-                start_period = p1.date_start
-                p2 = self.pool.get('account.period').browse(cr, uid, [periods[1]])[0]
-                end_period = p2.date_stop
-            res['value'] = {'from_date': start_period, 'to_date': end_period}
+                start_period = periods[0]
+                end_period = periods[1]
+            res['value'] = {'period_from': start_period, 'period_to': end_period}
         return res
 
     def analytic_account_chart_open_window(self, cr, uid, ids, context=None):
         result = super(account_analytic_chart, self).analytic_account_chart_open_window(cr, uid, ids, context=context)
         # add 'active_test' to the result's context; this allows to show or hide inactive items
-        data = self.read(cr, uid, ids, [], context=context)[0]
         context = eval(result['context'])
-        context['filter_inactive'] = not data['show_inactive']
-        if data['currency_id']:
-            context['currency_id'] = data['currency_id']
+        wiz = self.browse(cr, uid, ids, context=context)[0]
+        if wiz.period_from:
+            context['from_date'] = wiz.period_from.date_start
+        if wiz.period_to:
+            context['to_date'] = wiz.period_to.date_stop
+        if wiz.period_from and wiz.period_to and \
+            wiz.period_from.date_start > wiz.period_to.date_start:
+            raise osv.except_osv(_("Warning"),
+                _("'From' period can not be after 'To' period"))
+        context['filter_inactive'] = not wiz.show_inactive
+        if wiz.currency_id:
+            context['currency_id'] = wiz.currency_id.id
         result['name'] = _('Balance by analytic account')
-        if data['fiscalyear']:
-            result['name'] += ': ' + self.pool.get('account.fiscalyear').read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
-        if data['output_currency_id']:
-            context['output_currency_id'] = data['output_currency_id']
+        if wiz.fiscalyear:
+            result['name'] += ': ' + wiz.fiscalyear.code
+        if wiz.output_currency_id:
+            context['output_currency_id'] = wiz.output_currency_id.id
         # Display FP on result
         context['display_fp'] = True
         result['context'] = unicode(context)
@@ -105,21 +113,30 @@ class account_analytic_chart(osv.osv_memory):
             args = [('filter_active', '=', True)]
             if wiz.show_inactive == True:
                 args += [('filter_active', 'in', [True, False])]
+            if wiz.period_from and wiz.period_to and \
+                wiz.period_from.date_start > wiz.period_to.date_start:
+                raise osv.except_osv(_("Warning"),
+                    _("'From' period can not be after 'To' period"))
+
             if wiz.currency_id:
                 context.update({'currency_id': wiz.currency_id.id,})
             if wiz.instance_ids:
                 context.update({'instance_ids': [x.id for x in wiz.instance_ids],})
             if wiz.output_currency_id:
                 context.update({'output_currency_id': wiz.output_currency_id.id})
-            if wiz.from_date:
-                context['from_date'] = wiz.from_date
-            if wiz.to_date:
-                context['to_date'] = wiz.to_date
+            if wiz.period_from:
+                context['from_date'] = wiz.period_from.date_start
+            if wiz.period_to:
+                context['to_date'] = wiz.period_to.date_stop
             account_ids = self.pool.get('account.analytic.account').search(cr, uid, args, context=context)
             wiz_fields = {
                 'fy': wiz.fiscalyear and wiz.fiscalyear.name or '',
-                'from_date': wiz.from_date or '',
-                'to_date': wiz.to_date or '',
+                'period_from': wiz.period_from and wiz.period_from.date_start or False,
+                'period_to': wiz.period_to and wiz.period_to.date_stop or False,
+                'from_period_header': wiz.period_from and wiz.period_from.name or False,
+                'to_period_header': wiz.period_to and wiz.period_to.name or False,
+                'from_date': wiz.period_from and wiz.period_from.date_start or '',
+                'to_date': wiz.period_to and wiz.period_to.date_stop or '',
                 'instances': wiz.instance_ids and ','.join([x.name for x in wiz.instance_ids]) or '',
                 'show_inactive': wiz.show_inactive and 'X' or '',
                 'currency_filtering': wiz.currency_id and wiz.currency_id.name or '',

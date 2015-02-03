@@ -26,7 +26,7 @@ class account_subscription(osv.osv):
     _inherit = "account.subscription"
 
     _columns = {
-        'period_nbr': fields.integer('Periodicity', required=True, help="This field will determine how often entries will be generated: if the period type is 'month' and the periodicity '2' then entries will be generated every 2 months"),
+        'period_nbr': fields.integer('Repeat', required=True, help="This field will determine how often entries will be generated: if the period type is 'month' and the repeat '2' then entries will be generated every 2 months"),
     }
 
     _defaults = {
