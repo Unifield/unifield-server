@@ -609,7 +609,7 @@ def check_lines_currency(rows, ccy_col_index, ccy_expected_code):
     res = 0
     for row in rows:
         if row.cells:
-            if len(row.cells) != ccy_col_index + 1:
+            if len(row.cells) < ccy_col_index + 1:
                 res += 1
             else:
                 cell = row.cells[ccy_col_index]
