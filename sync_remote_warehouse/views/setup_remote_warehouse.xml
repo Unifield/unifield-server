@@ -9,7 +9,7 @@
                 <form string="Setup USB Synchronisation">
                     <field name="existing_usb_instance_type" attrs="{'invisible':[('existing_usb_instance_type','=','')]}" />
                     <group colspan="4"  attrs="{'invisible':[('existing_usb_instance_type','!=','')]}">
-	                	<label colspan="4" string="This wizard lets you mark this OpenERP instance as a Remote Warehouse or Central Platform. It can only be done once and is irreversble!" />
+	                	<label colspan="4" string="This wizard lets you mark this UniField instance as a Remote Warehouse or Central Platform. It can only be done once and is irreversble!" />
 	                	<field name="usb_instance_type" attrs="{'required':[('existing_usb_instance_type','=','')]}" />
 	                    <group col="4" colspan="4">
 	                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
