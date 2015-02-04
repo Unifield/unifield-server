@@ -227,7 +227,7 @@ class account_move_line(osv.osv):
         # Search analytic lines
         ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)], context=context)
         self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids, context=context)
-        res = super(account_move_line, self).unlink(cr, uid, ids, context=context, check=check)
+        res = super(account_move_line, self).unlink(cr, uid, ids, context=context, check=check) #ITWG-84: Pass also the check flag to the super!
         # Revalidate move
         self.pool.get('account.move').validate(cr, uid, move_ids, context=context)
         return res
