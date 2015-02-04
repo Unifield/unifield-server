@@ -86,6 +86,7 @@ class UF2490OneRfQ(UF2490OnePO):
         fo_id, fo_line_ids, po_ids, pol_ids = self.order_source_all_one_rfq(self.used_db)
         self.order_id = fo_id
         self.po_id = po_ids[0]
+        self.pol_ids = pol_ids
 
     # #########
     #

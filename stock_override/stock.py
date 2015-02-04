@@ -2351,7 +2351,8 @@ class stock_move_cancel_wizard(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context=context):
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
-            if wiz.move_id.picking_id:
+            move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)], context=context)
+            if move_ids and wiz.move_id.picking_id:
                 lines = wiz.move_id.picking_id.move_lines
                 if all(l.state == 'cancel' for l in lines):
                     wf_service.trg_validate(uid, 'stock.picking', wiz.move_id.picking_id.id, 'button_cancel', cr)
