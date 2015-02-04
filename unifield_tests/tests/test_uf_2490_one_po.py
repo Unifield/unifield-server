@@ -431,11 +431,55 @@ class UF2490OnePO(ResourcingTest):
             "There is %s lines on the FO/IR - Should be %s" % (order_nb_lines, 0),
         )
 
-    def test_cancel_whole_in(self):
+    def test_cancel_partial_in(self):
         """
         Create a FO/IR with 4 lines. Source all lines on
         a PO, then validate and confirm the PO.
         Cancel the whole IN
+        :return:
+        """
+        db = self.used_db
+        pick_obj = db.get('stock.picking')
+        wiz_obj = db.get('enter.reason')
+        out_wiz_obj = db.get('outgoing.delivery.processor')
+        proc_obj = db.get('stock.incoming.processor')
+        move_in_obj = db.get('stock.move.in.processor')
+
+        self.create_order_and_source()
+        self.pol_obj.write(self.pol_ids, {'price_unit': 2.00})
+
+        self._validate_po(db, [self.po_id])
+        self._confirm_po(db, [self.po_id])
+
+        in_ids = pick_obj.search([
+            ('purchase_id', '=', self.po_id),
+            ('state', '!=', 'done'),
+        ])
+
+        proc_res = pick_obj.action_process(in_ids)
+        proc_id = proc_res.get('res_id')
+        move_in_ids = move_in_obj.search([('wizard_id', '=', proc_id)])
+        move_in_obj.write([move_in_ids[0]], {'quantity': 1.0})
+        proc_obj.do_incoming_shipment([proc_id])
+
+        out_ids = pick_obj.search([
+            ('sale_id', '=', self.order_id),
+        ])
+        for out in pick_obj.browse(out_ids):
+            if out.state in ('confirmed', 'assigned'):
+                if out.subtype == 'picking':
+                    pick_obj.convert_to_standard([out.id])
+
+                out_res = pick_obj.action_process([out.id])
+                wiz_id = out_res.get('res_id')
+                out_wiz_obj.copy_all([wiz_id], {})
+                out_wiz_obj.do_partial([wiz_id])
+
+    def test_cancel_whole_in(self):
+        """
+        Create a FO/IR with 4 lines. Source all lines on
+        a PO, then validate and confirm the PO.
+        Process partially the IN and cancel the back order
         :return:
         """
         db = self.p1
