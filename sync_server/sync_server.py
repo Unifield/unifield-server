@@ -41,6 +41,7 @@ def check_validated(f):
             return (False, "Error: Instance does not exist in the server database")
         entity = entity_pool.browse(cr, uid, id)[0]
         if not entity.hardware_id or entity.hardware_id != hw_id:
+            logging.getLogger('sync.server').warn('Hardware id mismatch: instance %s, db hw_id: %s, hw_id sent: %s' % (entity.name, entity.hardware_id, hw_id))
             return (False, 'Error 17: Authentification Failed, please contact the support')
         if entity.state == 'updated':
             return (False, 'This Instance has been updated and the update procedure has to be launched at your side')
