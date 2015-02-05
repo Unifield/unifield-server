@@ -138,11 +138,12 @@ class account_analytic_line(osv.osv):
         Change account_id field name to "Funding Pool if we come from a funding pool
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         is_funding_pool_view = False
         if context.get('display_fp', False) and context.get('display_fp') is True:
             is_funding_pool_view = True
+        
         view = super(account_analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type in ('tree', 'search') and is_funding_pool_view:
             tree = etree.fromstring(view['arch'])
@@ -151,18 +152,30 @@ class account_analytic_line(osv.osv):
             for field in fields:
                 field.set('string', _("Funding Pool"))
                 field.set('domain', "[('category', '=', 'FUNDING'), ('type', '<>', 'view')]")
-            if view_type == 'tree' and "engagement_line_tree" in context:
-                # BKLG-4: comming from commitments list, allow delete of
-                # international commitments line (journal ENGI) but not allow
-                # delete of other engagements line
-                etree.SubElement(tree, 'button',
-                    name='unlink',
-                    type='object',
-                    icon='gtk-del',
-                    context='context',
-                    attrs="{'invisible': [('is_engi', '!=', True)]}",
-                    confirm='Do you really want to delete selected record(s) ?'
-                )
+            if "engagement_line_tree" in context:
+                # commitments activated in configurator ?
+                setup_br = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+                is_commitment = setup_br and setup_br.import_commitments or False
+                
+                if is_commitment:
+                    if view_type == 'tree':
+                        # BKLG-4: comming from commitments list, allow delete of
+                        # international commitments line (journal ENGI) but not
+                        #  allow delete of other engagements line
+                        etree.SubElement(tree, 'button',
+                            name='unlink',
+                            type='object',
+                            icon='gtk-del',
+                            context='context',
+                            attrs="{'invisible': [('is_engi', '!=', True)]}",
+                            confirm='Do you really want to delete selected record(s) ?'
+                        )
+                else:
+                    if view_type == 'search':
+                        # BKLG-4/6: commitments desactivated, no ENGI filter
+                        filter_nodes = tree.xpath('/search/group[1]/filter[@name="intl_engagements"]')
+                        if filter_nodes:
+                            filter_nodes[0].getparent().remove(filter_nodes[0])
             view['arch'] = etree.tostring(tree)
         return view
 
