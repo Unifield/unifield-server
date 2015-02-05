@@ -91,7 +91,7 @@ class report_stock_move(osv.osv):
         'comment': fields.char(size=128, string='Comment'),
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
         'tracking_id': fields.many2one('stock.tracking', 'Pack', select=True, states={'done': [('readonly', True)]}, help="Logistical shipping unit: pallet, box, pack ..."),
-        'origin': fields.related('picking_id','origin',type='char', size=64, relation="stock.picking", string="Origin", store=True),
+        'origin': fields.related('picking_id','origin',type='char', size=512, relation="stock.picking", string="Origin", store=True),
         'move': fields.many2one('stock.move', string='Move'),
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type'),
         'currency_id': fields.many2one('res.currency', string='Currency'),

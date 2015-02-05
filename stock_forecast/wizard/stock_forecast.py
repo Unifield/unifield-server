@@ -75,7 +75,7 @@ class stock_forecast_line(osv.osv_memory):
         'date' : fields.date(string="Date"),
         'doc' : fields.char('Doc', size=1024,),
         'order_type': fields.selection(_get_order_type, string='Order Type'),
-        'origin': fields.char('Origin', size=256),
+        'origin': fields.char('Origin', size=512),
         'reference': fields.reference('Reference', selection=[], size=128),
         'state' : fields.selection(_get_states, string='State'),
         'qty' : fields.float('Quantity', digits=(16,2)),
