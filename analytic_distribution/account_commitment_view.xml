@@ -232,7 +232,17 @@
             <field name="view_id" ref="import_commitment_wizard_view"/>
             <field name="target">new</field>
         </record>
-        
+
+    <!-- Menu -->
+        <menuitem id="menu_commitment" name="Commitments" parent="account.menu_finance" sequence="4"/>
+        <menuitem name="Commitment Voucher" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="1"/>
+        <menuitem name="Commitment Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="2"/>
+        <menuitem name="Import Intl Commitments" action="action_import_commitment_wizard" id="menu_import_commitment" parent="menu_commitment" sequence="3"/>
+
+    </data>
+    
+    <data noupdate="1">
+        <!-- 3 actions above not updatable: managed via configurator -->
         <act_window id="action_intl_commitment_realloc_wizard"
             name="Intl Commitments Analytic Reallocation"
             res_model="int.commitment.realloc.wizard"
@@ -265,12 +275,5 @@
             context="context"
             target="new"
             />
-
-    <!-- Menu -->
-        <menuitem id="menu_commitment" name="Commitments" parent="account.menu_finance" sequence="4"/>
-        <menuitem name="Commitment Voucher" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="1"/>
-        <menuitem name="Commitment Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="2"/>
-        <menuitem name="Import Intl Commitments" action="action_import_commitment_wizard" id="menu_import_commitment" parent="menu_commitment" sequence="3"/>
-
     </data>
 </openerp>

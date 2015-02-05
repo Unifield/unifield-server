@@ -52,6 +52,22 @@ class commitment_import_setup(osv.osv_memory):
         '''
         Fill the import_commitments field and active/de-activate ESC partner CV generation
         '''
+        def set_action_window_menus(on):
+            # BKLG-4/6: hide intl commitment window action if not activated
+            iaaw_obj = self.pool.get('ir.actions.act_window')
+            menu_map = {  # xml_id: name
+                'action_intl_commitment_realloc_wizard': 'Intl Commitments Analytic Reallocation',
+                'action_intl_commitment_clear_wizard': 'Clear intl commitments',
+                'action_intl_commitment_export_wizard': 'Export intl commitments',
+            }
+            for menu_xmlid in menu_map:
+                menu_id = self.pool.get('ir.model.data').get_object_reference(
+                    cr, uid, 'analytic_distribution', menu_xmlid)[1]
+                if menu_id:
+                    # a menu with ' ' as name will desactivate it in web client
+                    iaaw_obj.write(cr, uid, [menu_id],
+                        {'name': menu_map[menu_xmlid] if on else ' '})
+        
         assert len(ids) == 1, "We should only get one object from the form"
         payload = self.browse(cr, uid, ids[0], context=context)
         
@@ -72,6 +88,7 @@ class commitment_import_setup(osv.osv_memory):
                                              'type': 'engagement'})
                 
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': True}, context=context)
+                set_action_window_menus(True)
             else:
                 #If de-activated, remove analytic items from the journal + the journal
                 journal_ids = journal_obj.search(cr, uid, [('code', '=', 'ENGI')], context=context)
@@ -81,7 +98,8 @@ class commitment_import_setup(osv.osv_memory):
                     journal_obj.unlink(cr, uid, journal_ids, context=context)
                     
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': False}, context=context)
-                    
+                set_action_window_menus(False)
+                
         setup_obj.write(cr, uid, [setup_id.id], {'import_commitments': payload.import_commitments}, context=context)
 
 commitment_import_setup()
