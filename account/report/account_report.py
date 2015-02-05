@@ -176,7 +176,7 @@ class report_invoice_created(osv.osv):
             ('paid','Done'),
             ('cancel','Cancelled')
         ],'State', readonly=True),
-        'origin': fields.char('Source Document', size=64, readonly=True, help="Reference of the document that generated this invoice report."),
+        'origin': fields.char('Source Document', size=512, readonly=True, help="Reference of the document that generated this invoice report."),
         'create_date': fields.datetime('Create Date', readonly=True)
     }
     _order = 'create_date'
