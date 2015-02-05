@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
 
 import time
 import logging
@@ -195,6 +196,23 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the unlinked product is not the 'To be defined' product
+        """
+        try:
+            prd_tbd = self.pool.get('ir.model.data').get_object_reference(
+                cr, uid, 'msf_doc_import', 'product_tbd')[1]
+            if prd_tbd in ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _("""The product 'To be defined' is an Unifield internal
+product and can't be deleted"""),
+                )
+        except ValueError:
+            pass
+
+        return super(product_product, self).unlink(cr, uid, ids, context=context)
 
     def _get_list_sublist(self, cr, uid, ids, field_name, arg, context=None):
         '''

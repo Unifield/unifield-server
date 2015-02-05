@@ -1211,6 +1211,32 @@ class product_uom(osv.osv):
         'compatible_product_id': fields.function(_get_dummy, fnct_search=_get_compatible_uom, method=True, type='boolean', string='Compatible UoM'),
     }
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the deleted product category is not a system one
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        uom_data_id = [
+            'uom_tbd',
+            ]
+
+        for data_id in uom_data_id:
+            try:
+                uom_id = data_obj.get_object_reference(
+                    cr, uid, 'msf_doc_import', data_id)[1]
+                if uom_id in ids:
+                    uom_name = self.read(cr, uid, uom_id, ['name'])['name'] 
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''The UoM '%s' is an Unifield internal
+Uom, so you can't remove it''' % uom_name),
+                    )
+            except ValueError:
+                pass
+
+        return super(product_uom, self).unlink(cr, uid, ids, context=context)
+
 product_uom()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

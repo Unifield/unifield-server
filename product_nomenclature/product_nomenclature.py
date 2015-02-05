@@ -176,6 +176,35 @@ class product_nomenclature(osv.osv):
         # save the data to db
         return super(product_nomenclature, self).create(cr, user, vals, context)
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the deleted product nomenclature is not a system one
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        nomen_data_id = [
+            'nomen_tbd0',
+            'nomen_tbd1',
+            'nomen_tbd2',
+            'nomen_tbd3',
+        ]
+
+        for data_id in nomen_data_id:
+            try:
+                nomen_id = data_obj.get_object_reference(
+                    cr, uid, 'msf_doc_import', data_id)[1]
+                if nomen_id in ids:
+                    nomen_name = self.read(cr, uid, nomen_id, ['name'])['name']
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''The nomenclature '%s' is an Unifield internal
+nomenclature, so you can't remove it''' % nomen_name),
+                    )
+            except ValueError:
+                pass
+
+        return super(product_nomenclature, self).unlink(cr, uid, ids, context=context)
+
     def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the number of products for the nomenclature
@@ -1106,6 +1135,33 @@ class product_category(osv.osv):
     _defaults = {
                  'active': True,
     }
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the deleted product category is not a system one
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        categ_data_id = [
+            'cat_tbd',
+        ]
+
+        for data_id in categ_data_id:
+            try:
+                categ_id = data_obj.get_object_reference(
+                    cr, uid, 'msf_doc_import', data_id)[1]
+                if categ_id in ids:
+                    categ_name = self.read(cr, uid, categ_id, ['name'])['name']
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''The category '%s' is an Unifield internal
+category, so you can't remove it''' % categ_name),
+                    )
+            except ValueError:
+                pass
+
+        return super(product_category, self).unlink(cr, uid, ids, context=context)
+
 product_category()
 
 
