@@ -1190,4 +1190,30 @@ class product_uom_categ(osv.osv):
                  'active': True,
     }
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the deleted product UoM category is not a system one
+        """
+        data_obj = self.pool.get('ir.model.data')
+        
+        uom_data_id = [
+            'product_uom_tbd',
+        ]
+        
+        for data_id in uom_data_id:
+            try:
+                cat_id = data_obj.get_object_reference(
+                    cr, uid, 'msf_doc_import', data_id)[1]
+                if cat_id in ids:
+                    uom_name = self.read(cr, uid, cat_id, ['name'])['name'] 
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''The UoM category '%s' is an Unifield internal
+Uom category, so you can't remove it''' % uom_name),
+                    )
+            except ValueError:
+                pass
+            
+        return super(product_uom_categ, self).unlink(cr, uid, ids, context=context)
+
 product_uom_categ()
