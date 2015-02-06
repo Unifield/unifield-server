@@ -68,7 +68,10 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                     continue
                 code = line.cells and line.cells[1] and line.cells[1].data or False
                 if not code:
-                    continue
+                    msg = "At least one employee in the import file does not" \
+                        " have an ID number; make sure all employees in the" \
+                        " file have an ID number and run the import again."
+                    raise osv.except_osv(_('Error'), _(msg))
                 processed += 1
 
                 ids = hr_emp_obj.search(cr, uid,
