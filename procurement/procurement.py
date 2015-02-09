@@ -85,7 +85,7 @@ class procurement_order(osv.osv):
     _log_create = False
     _columns = {
         'name': fields.char('Reason', size=64, required=True, help='Procurement name.'),
-        'origin': fields.char('Source Document', size=256,
+        'origin': fields.char('Source Document', size=512,
             help="Reference of the document that created this Procurement.\n"
             "This is automatically completed by OpenERP."),
         'priority': fields.selection([('0','Not urgent'),('1','Normal'),('2','Urgent'),('3','Very Urgent')], 'Priority', required=True),
