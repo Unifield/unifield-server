@@ -31,6 +31,27 @@ class account_analytic_line(osv.osv):
     _name = "account.analytic.line"
     _inherit = "account.analytic.line"
 
+    def _is_engi(self, cr, uid, ids, name, args, context=None):
+        # BKLK-4: is line an intl commitment ? (of engagement ENGI journal)
+        # (allowed to have a delete button)
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        aaj_obj = self.pool.get('account.analytic.journal')
+
+        fields = ['imported_commitment', 'journal_id']
+        for r in self.read(cr, uid, ids, fields, context=context):
+            res[r['id']] = False
+            if r['imported_commitment'] and r['journal_id']:
+                rj = aaj_obj.read(cr, uid, [r['journal_id'][0]],
+                    ['type', 'code', ], context=context)[0]
+                if rj:
+                    res[r['id']]  = rj['type'] =='engagement' and \
+                        rj['code'] == 'ENGI' or False
+        return res
+
     def _get_is_free(self, cr, uid, ids, field_names, args, context=None):
         """
         Check if the line comes from a Free 1 or Free 2 analytic account category.
@@ -63,6 +84,8 @@ class account_analytic_line(osv.osv):
         'amount': fields.float('Func. Amount', required=True, digits_compute=dp.get_precision('Account'),
             help='Calculated by multiplying the quantity and the price given in the Product\'s cost price. Always expressed in the company main currency.', readonly=True),
         'exported': fields.boolean("Exported"),
+        'is_engi': fields.function(_is_engi, type='boolean', method=True,
+            string='Is intl engagement'),
     }
 
     _defaults = {
@@ -70,6 +93,7 @@ class account_analytic_line(osv.osv):
         'is_reversal': lambda *a: False,
         'is_reallocated': lambda *a: False,
         'exported': lambda *a: False,
+        'is_engi': lambda *a: False,
     }
 
     def _check_date(self, cr, uid, vals, context=None):
@@ -114,11 +138,12 @@ class account_analytic_line(osv.osv):
         Change account_id field name to "Funding Pool if we come from a funding pool
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         is_funding_pool_view = False
         if context.get('display_fp', False) and context.get('display_fp') is True:
             is_funding_pool_view = True
+
         view = super(account_analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type in ('tree', 'search') and is_funding_pool_view:
             tree = etree.fromstring(view['arch'])
@@ -127,6 +152,30 @@ class account_analytic_line(osv.osv):
             for field in fields:
                 field.set('string', _("Funding Pool"))
                 field.set('domain', "[('category', '=', 'FUNDING'), ('type', '<>', 'view')]")
+            if "engagement_line_tree" in context:
+                # commitments activated in configurator ?
+                setup_br = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+                is_commitment = setup_br and setup_br.import_commitments or False
+
+                if is_commitment:
+                    if view_type == 'tree':
+                        # BKLG-4: comming from commitments list, allow delete of
+                        # international commitments line (journal ENGI) but not
+                        #  allow delete of other engagements line
+                        etree.SubElement(tree, 'button',
+                            name='unlink',
+                            type='object',
+                            icon='gtk-del',
+                            context='context',
+                            attrs="{'invisible': [('is_engi', '!=', True)]}",
+                            confirm='Do you really want to delete selected record(s) ?'
+                        )
+                else:
+                    if view_type == 'search':
+                        # BKLG-4/6: commitments desactivated, no ENGI filter
+                        filter_nodes = tree.xpath('/search/group[1]/filter[@name="intl_engagements"]')
+                        if filter_nodes:
+                            filter_nodes[0].getparent().remove(filter_nodes[0])
             view['arch'] = etree.tostring(tree)
         return view
 

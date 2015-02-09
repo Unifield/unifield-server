@@ -58,6 +58,11 @@ class import_commitment_wizard(osv.osv_memory):
         journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')], context=context)
         to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
         functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
+        default_founding_pool_id = self.pool.get('account.analytic.account').search(
+            cr, uid,  [('category', '=', 'FUNDING'), ('code', '=', 'PF')], context=context)
+        if not default_founding_pool_id:
+            raise osv.except_osv(_('Error'), _('Default PF Funding Pool not found'))
+        default_founding_pool_id = default_founding_pool_id[0]
 
         now = False
         if len(journal_ids) > 0:
@@ -131,7 +136,14 @@ class import_commitment_wizard(osv.osv_memory):
                         else:
                             raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Destination "%s" doesn\'t exist!') % (destination,)))
                     else:
-                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No destination code found!'))
+                        # try to get default account destination by default
+                        account_br = self.pool.get('account.account').browse(cr,
+                            uid, account_ids[0])
+                        if account_br.default_destination_id:
+                            vals['destination_id'] = account_br.default_destination_id.id
+                        else:
+                            msg = _("No destination code found and no default destination for account %s !") % account_code
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + msg)
                     # Cost Center
                     if cost_center:
                         cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
@@ -149,7 +161,7 @@ class import_commitment_wizard(osv.osv_memory):
                         else:
                             raise osv.except_osv(_('Error'), raise_msg_prefix +_(('Funding Pool "%s" doesn\'t exist!') % (funding_pool,)))
                     else:
-                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No funding pool code found!'))
+                        vals['account_id'] = default_founding_pool_id
                     # description
                     if description:
                         vals.update({'name': description})
@@ -198,6 +210,25 @@ class import_commitment_wizard(osv.osv_memory):
                     else:
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('No booking amount found!'))
 
+                    # Check AJI consistency
+                    no_compat = analytic_obj.check_dest_cc_fp_compatibility(cr,
+                        uid, False,
+                        dest_id=dest_id[0], cc_id=cc_id[0], fp_id=fp_id[0],
+                        from_import=True,
+                        from_import_general_account_id=account_ids[0],
+                        from_import_posting_date=line_date,
+                        context=context)
+                    if no_compat:
+                        no_compat = no_compat[0]
+                        # no compatible AD
+                        msg = _("Dest / Cost Center / Funding Pool are not" \
+                            " compatible for entry name:'%s', ref:'%s'" \
+                            " reason: '%s'")
+                        raise osv.except_osv(_('Error'), msg % (
+                            vals.get('name', ''), vals.get('ref', ''),
+                            no_compat[2] or '', )
+                        )
+
                     analytic_obj.create(cr, uid, vals, context=context)
                     sequence_number += 1
 
@@ -209,4 +240,146 @@ class import_commitment_wizard(osv.osv_memory):
         return {'type' : 'ir.actions.act_window_close'}
 
 import_commitment_wizard()
+
+
+class int_commitment_clear_wizard(osv.osv_memory):
+    _name = 'int.commitment.clear.wizard'
+    _description = 'Clear Intl Commitments Wizard'
+
+    def _get_to_del_ids(self, cr, uid, context=None, count=False):
+        domain = [
+            ('type', '=', 'engagement'),
+            ('code', '=', 'ENGI'),
+        ]
+        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid,
+            domain, context=context)
+        if not journal_ids:
+            return False
+
+        domain = [
+            ('imported_commitment', '=', True),
+            ('journal_id', 'in', journal_ids),
+        ]
+        res_ids = self.pool.get('account.analytic.line').search(cr, uid, domain,
+            context=context, count=count)
+        return res_ids
+
+    _columns = {
+        'entries_count': fields.integer('Count Intl Commitments to delete'),
+    }
+
+    _defaults = {
+        'entries_count': lambda s, cr, uid, context: s._get_to_del_ids(cr, uid, context=context, count=True),
+    }
+
+    def mass_delete(self, cr, uid, ids, context=None):
+        to_del_ids = self._get_to_del_ids(cr, uid, context=context, count=False)
+        if to_del_ids:
+            self.pool.get('account.analytic.line').unlink(cr, uid, to_del_ids,
+                context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+int_commitment_clear_wizard()
+
+
+class int_commitment_export_wizard(osv.osv_memory):
+    _name = 'int.commitment.export.wizard'
+    _description = 'Export Intl Commitments'
+
+    _csv_filename_pattern = 'Intl_Commitments_%s.csv'
+    _csv_delimiter = ','
+    _csv_header = ['Description', 'Ref', 'Document Date', 'Posting Date',
+        'General Account', 'Destination', 'Cost Center' , 'Funding Pool',
+        'Third Party', 'Booking Amount', 'Booking Currency', ]
+
+    _columns = {
+        'data': fields.binary('File', readonly=True),
+        'name': fields.char('File Name', 128, readonly=True),
+        'state': fields.selection((('choose','choose'), ('get','get'), ),
+            readonly=True, invisible=True),
+    }
+
+    _defaults = {
+        'state': lambda *a: 'choose',
+    }
+
+    def button_export(self, cr, uid, ids, context=None):
+        aal_obj = self.pool.get('account.analytic.line')
+
+        instance_name = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id.name or ''
+        file_name = self._csv_filename_pattern % (instance_name, )
+
+        # csv prepare and header
+        csv_buffer = StringIO.StringIO()
+        csv_writer = csv.writer(csv_buffer, delimiter=self._csv_delimiter,
+            quoting=csv.QUOTE_MINIMAL)
+        csv_writer.writerow(self._csv_header)
+
+        # data lines
+        domain = [
+            ('journal_id.type', '=', 'engagement'),
+            ('journal_id.code', '=', 'ENGI'),
+        ]
+        export_ids = aal_obj.search(cr, uid, domain, context=context)
+        for export_br in aal_obj.browse(cr, uid, export_ids, context=context):
+            csv_writer.writerow(self._export_entry(export_br))
+
+        # download csv
+        vals = {
+            'state': 'get',
+            'data': base64.encodestring(csv_buffer.getvalue()),
+            'name': file_name,
+        }
+        csv_buffer.close()
+        return self.write(cr, uid, ids, vals, context=context)
+
+    def _export_entry(self, item_br):
+        def decode_m2o(m2o, want_code=False):
+            if not m2o:
+                return ''
+            res = m2o.code if want_code else m2o.name
+            return res or ''
+
+        def decode_date(dt):
+            # '%Y-%m-%d' orm -> '%d/%m/%Y' of import csv format
+            return dt and time.strftime('%d/%m/%Y', time.strptime(dt, '%Y-%m-%d')) or ''
+
+        return [
+            # Description
+            decode_m2o(item_br),
+
+            # Ref
+            item_br.ref or '',
+
+            # Document Date
+            decode_date(item_br.document_date),
+
+            # Posting Date
+            decode_date(item_br.date),
+
+            # General Account
+            decode_m2o(item_br.general_account_id, want_code=True),
+
+            # Destination
+            decode_m2o(item_br.destination_id, want_code=True),
+
+            # Cost Center
+            decode_m2o(item_br.cost_center_id, want_code=True),
+
+            # Funding Pool
+            decode_m2o(item_br.account_id, want_code=True),
+
+            # Third Party
+            item_br.partner_txt or '',
+
+            # Booking Amount
+            str(-1. * item_br.amount_currency),
+
+            # Booking Currency
+            decode_m2o(item_br.currency_id),
+        ]
+
+
+int_commitment_export_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -103,6 +103,7 @@
                             attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
                         <field name="is_reallocated" invisible="1"/>
                         <field name="last_corrected_id" invisible="1"/>
+                        <field name="is_engi" invisible="1"/>
                         <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False), ('last_corrected_id', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
                    </xpath>
                 </data>
@@ -296,6 +297,13 @@
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
             <field name="arch" type="xml">
+                <xpath expr="/search/group[1]/filter[@name='others']" position="before">
+                    <filter name="intl_engagements" string="ENGI"
+                            domain="[('imported_commitment', '=', True), ('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
+                            icon="terp-folder-violet"
+                            help="Analytic Journal Items related to an ENGI journal."
+                            />
+                </xpath>
                 <xpath expr="/search/group[1]/field[@name='date']" position='after'>
                     <field name="document_date" select="1"/>
                     <newline/>
