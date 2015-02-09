@@ -85,14 +85,25 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                     hr_emp_obj.create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex', 'identification_id': code})
                     created += 1
             
-            context.update({'message': ' '})
-            res_id = self.pool.get('hr.payroll.import.confirmation').create(cr,uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee'}, context=context)
-            
-            # BKLG-7: immediatly go to regular employee tree view
-            action = self.pool.get('ir.actions.act_window').for_xml_id(cr, uid,
-                'hr', 'open_view_employee_list_my', context=context)
-            action['target'] = 'same'
-            return action
+            context.update({'message': ' ', 'from': 'expat_import'})
+
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
+            view_id = view_id and view_id[1] or False
+
+            # This is to redirect to Employee Tree View
+            context.update({'from': 'expat_employee_import'})
+            res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee'}, context=context)
+            return {
+                'name': 'Expat Employee Import Confirmation',
+                'type': 'ir.actions.act_window',
+                'res_model': 'hr.payroll.import.confirmation',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'view_id': [view_id],
+                'res_id': res_id,
+                'target': 'new',
+                'context': context,
+            }
 
 hr_expat_employee_import_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
