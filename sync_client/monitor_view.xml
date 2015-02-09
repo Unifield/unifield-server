@@ -93,6 +93,7 @@
             <field name="res_model">sync.monitor</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="domain">[('my_instance', '=', True)]</field>
         </record>
 
         <menuitem id="sync_monitor_menu" name="Synchronisation Processes Monitor"

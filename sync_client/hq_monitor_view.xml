@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="sync_hq_monitor_tree" model="ir.ui.view">
+            <field name="name">sync.monitor.tree</field>
+            <field name="model">sync.monitor</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="200" />
+            <field name="arch" type="xml">
+                <tree hide_edit_button="1" hide_delete_button="1" colors="red: nb_msg_not_run&gt;0 or nb_data_not_run&gt;0">
+                    <field name="instance_id" />
+                    <field name="start"/>
+                    <field name="end"/>
+                    <field name="nb_msg_pull"/>
+                    <field name="nb_msg_push" />
+                    <field name="nb_data_pull" />
+                    <field name="nb_data_push"/>
+                    <field name="nb_msg_not_run" />
+                    <field name="nb_data_not_run" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="sync_hq_monitor_search" model="ir.ui.view">
+            <field name="name">sync.monitor.search</field>
+            <field name="model">sync.monitor</field>
+            <field name="type">search</field>
+            <field name="priority" eval="200" />
+            <field name="arch" type="xml">
+                <search>
+                    <field name="start" />
+                    <field name="end" />
+                    <newline/>
+                    <field name="instance_id"/>
+                    <newline />
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="sync_hq_monitor_action">
+            <field name="name">Synchronisation Instances Monitor</field>
+            <field name="res_model">sync.monitor</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="domain">[('my_instance', '=', False)]</field>
+            <field name="search_view_id" ref="sync_hq_monitor_search" />
+            <field name="view_id" ref="sync_hq_monitor_tree" />
+        </record>
+
+        <menuitem id="hq_monitor_main_menu" name="HQ Monitor" parent="base.menu_administration" sequence="10" />
+        <menuitem id="sync_hq_monitor_menu" name="Synchronisation Instances Monitor"
+            parent="hq_monitor_main_menu" sequence="10" action="sync_hq_monitor_action"/>
+
+
+    <record model="ir.ui.view" id="hq_monitor_configuration_tree_view">
+        <field name="name">hq.monitor.tree</field>
+        <field name="model">hq.monitor</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="HQ Monitor Configuration" hide_new_button="1" hide_delete_button="1" >
+            <field name="title"/>
+            <field name="email"/>
+            <field name="not_run_data"/>
+            <field name="not_run_msg"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="hq_monitor_configuration_form_view">
+        <field name="name">hq.monitor.form</field>
+        <field name="model">hq.monitor</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="HQ Monitor Configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                <separator colspan="4" string="Monitor Not Run lines on instances" />
+                <field name="email" colspan="4"/>
+                <field name="not_run_data" colspan="1"/>
+                <field name="not_run_msg" colspan="1"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="ir_actions_server_open_hq_monitor" model="ir.actions.server">
+        <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'hq_monitor_not_run')
+action = {
+    'res_model' : 'hq.monitor',
+    'view_type' : 'form',
+    'view_mode' : 'form,tree',
+    'type': 'ir.actions.act_window',
+    'res_id' : res[1],
+}</field>
+        <field eval="5" name="sequence"/>
+        <field name="state">code</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_hq_monitor"/>
+        <field name="condition">True</field>
+        <field name="name">Open HQ Monitor Configuration</field>
+    </record>
+
+
+    <record id="ir_ui_menu_hq_monitor_configuration" model="ir.ui.menu">
+        <field name="name">HQ Monitor Configuration</field>
+        <field name="parent_id" ref="hq_monitor_main_menu"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="ir_values_menuitem_hq_monitor_configuration" model="ir.values">
+        <field name="name">HQ Monitor Configuration</field>
+        <field name="key2">tree_but_open</field>
+        <field eval="1" name="object"/>
+        <field name="value" eval="'ir.actions.server,%s' % ref('sync_client.ir_actions_server_open_hq_monitor')" />
+        <field name="key">action</field>
+        <field name="model">ir.ui.menu</field>
+        <field eval="ref('ir_ui_menu_hq_monitor_configuration')" name="res_id"/>
+    </record>
+
+    </data>
+</openerp>
+<!--
+    vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+-->
