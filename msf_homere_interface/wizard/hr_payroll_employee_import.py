@@ -123,7 +123,6 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 action['target'] = 'same'
                 action['context'] = context
                 return action
-            return action
             if context.get('from') == 'nat_staff_import':
                 result = ('inherit_view_employee_tree', 'hr.employee')
                 context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
