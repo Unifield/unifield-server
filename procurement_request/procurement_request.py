@@ -117,7 +117,7 @@ class procurement_request(osv.osv):
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
-        'origin': fields.char(size=256, string='Origin', states={'draft': [('readonly', False)]}, readonly=True),
+        'origin': fields.char(size=512, string='Origin', states={'draft': [('readonly', False)]}, readonly=True),
         'notes': fields.text(string='Notes'),
         'order_ids': fields.many2many('purchase.order', 'procurement_request_order_rel',
                                       'request_id', 'order_id', string='Orders', readonly=True),

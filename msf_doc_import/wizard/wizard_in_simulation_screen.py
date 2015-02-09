@@ -129,7 +129,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'import_error_ok': fields.boolean(string='Error at import'),
         # Related fields
         'origin': fields.function(_get_related_values, method=True, string='Origin',
-                                  readonly=True, type='char', size=128, multi='related'),
+                                  readonly=True, type='char', size=512, multi='related'),
         'creation_date': fields.function(_get_related_values, method=True, string='Creation date',
                                          readonly=True, type='datetime', multi='related'),
         'purchase_id': fields.function(_get_related_values, method=True, string='Purchase Order',
