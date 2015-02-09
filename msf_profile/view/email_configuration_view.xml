@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data>
+    <record model="ir.ui.view" id="email_configuration_tree_view">
+        <field name="name">email.configuration.tree</field>
+        <field name="model">email.configuration</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Email Configuration" hide_new_button="1" hide_delete_button="1" >
+            <field name="smtp_server"/>
+            <field name="email_from"/>
+            <field name="smtp_port"/>
+            <field name="smtp_ssl"/>
+            <field name="smtp_user"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="email_configuration_form_view">
+        <field name="name">email.configuration.form</field>
+        <field name="model">email.configuration</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Email configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                <group colspan="4" col="10">
+                    <field name="smtp_server" colspan="8"/>
+                    <field name="smtp_port"/>
+                </group>
+                <group colspan="4" col="4">
+                    <field name="email_from" colspan="4" />
+                    <field name="smtp_ssl"/>
+                    <newline />
+                    <field name="smtp_user"/>
+                    <field name="smtp_password" password="True"/>
+                </group>
+                <newline />
+                <separator colspan="4" string="Test the connection" />
+                <field name="destination_test" />
+                <button type="object" string="Send a test email" name="test_email" />
+            </form>
+        </field>
+    </record>
+
+    <record id="ir_actions_server_openemailconfig" model="ir.actions.server">
+        <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_profile', 'smtp_config')
+action = {
+    'res_model' : 'email.configuration',
+    'view_type' : 'form',
+    'view_mode' : 'form,tree',
+    'type': 'ir.actions.act_window',
+    'res_id' : res[1],
+}</field>
+        <field eval="5" name="sequence"/>
+        <field name="state">code</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_email_configuration"/>
+        <field name="condition">True</field>
+        <field name="name">Open Email Configuration</field>
+    </record>
+
+
+    <record id="ir_ui_menu_emailconfig" model="ir.ui.menu">
+        <field name="name">Email Configuration</field>
+        <field name="parent_id" ref="base.menu_config"/>
+        <field name="sequence">10025</field>
+    </record>
+
+    <record id="ir_values_menuitem_emailconfig" model="ir.values">
+        <field name="name">Menuitem Email Configuration</field>
+        <field name="key2">tree_but_open</field>
+        <field eval="1" name="object"/>
+        <field name="value" eval="'ir.actions.server,%s' % ref('msf_profile.ir_actions_server_openemailconfig')" />
+        <field name="key">action</field>
+        <field name="model">ir.ui.menu</field>
+        <field eval="ref('ir_ui_menu_emailconfig')" name="res_id"/>
+    </record>
+
+  </data>
+</openerp>
