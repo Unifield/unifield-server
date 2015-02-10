@@ -56,9 +56,9 @@ class hq_report_oca(report_sxw.report_sxw):
         # method to create counterpart line
         return line[:2] + \
                ["20750",
+                line[3],  # expat employee identification or "0"
                 "0",
-                "0",
-                line[5],
+                line[5],  # expat employee name or "0"
                 line[6],
                 line[7],
                 line[9],
@@ -68,6 +68,7 @@ class hq_report_oca(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
         if len(line_key) > 2 and line_debit != 0.0 and line_functional_debit != 0.0:
+            rate = round(1 / (line_debit / line_functional_debit), 8)
             return [["01",
                      country_code,
                      line_key[0],
@@ -75,7 +76,7 @@ class hq_report_oca(report_sxw.report_sxw):
                      "0",
                      counterpart_date,
                      line_key[1],
-                     round(line_debit / line_functional_debit, 8),
+                     rate,
                      line_debit > 0 and round(line_debit, 2) or "",
                      line_debit < 0 and round(-line_debit, 2) or "",
                      sequence_number,
@@ -91,7 +92,7 @@ class hq_report_oca(report_sxw.report_sxw):
                       "0",
                       counterpart_date,
                       line_key[1],
-                      round(line_debit / line_functional_debit, 8),
+                      rate,
                       line_debit < 0 and round(-line_debit, 2) or "",
                       line_debit > 0 and round(line_debit, 2) or "",
                       sequence_number,
@@ -182,7 +183,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 if cr.rowcount:
                     curr_rate = cr.fetchall()[0][0]
                 if func_rate != 0.00:
-                    rate = round(1 / curr_rate / func_rate, 5)
+                    rate = round(1 / (curr_rate / func_rate), 5)
             # For first report: as if
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
@@ -208,14 +209,16 @@ class hq_report_oca(report_sxw.report_sxw):
 
             # For third report: add to corresponding sub
             if not account.shrink_entries_for_hq:
+                expat_identification = "0"
                 expat_employee = "0"
                 # Expat employees are the only third party in this report
                 if move_line.partner_txt and move_line.employee_id and move_line.employee_id.employee_type == 'ex':
-                    expat_employee = move_line.partner_txt[:5]
+                    expat_identification = move_line.employee_id.identification_id
+                    expat_employee = move_line.partner_txt
                 other_formatted_data = ["01",
                                         country_code,
                                         account and account.code or "0",
-                                        "0",
+                                        expat_identification,
                                         "0",
                                         move_line.date and datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         currency and currency.name or "0",
