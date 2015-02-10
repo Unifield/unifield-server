@@ -49,7 +49,7 @@ class account_invoice(osv.osv):
     ]
 
     _columns = {
-        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select="1"), # select: optimisation purpose
     }
 
     def _check_analytic_distribution_state(self, cr, uid, ids, context=None):
@@ -344,7 +344,7 @@ class account_invoice_line(osv.osv):
         return res
 
     _columns = {
-        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select="1"), # select is for optimisation purposes
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
