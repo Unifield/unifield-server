@@ -41,6 +41,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
         """
         Import XLS file
         """
+        hr_emp_obj = self.pool.get('hr.employee')
         # Some verifications
         if not context:
             context = {}
@@ -62,25 +63,36 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             reader = fileobj.getRows()
             reader.next()
             for line in reader:
-                processed += 1
                 name = line.cells and line.cells[0] and line.cells[0].data or False
                 if not name:
                     continue
-                code = line.cells and line.cells[1] and line.cells[1].data or False
-                # Create Expat employee
-                self.pool.get('hr.employee').create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex', 'identification_id': code})
-                created += 1
+                code = line.cells and len(line.cells) > 1 and line.cells[1] and line.cells[1].data or False
+                if not code:
+                    msg = "At least one employee in the import file does not" \
+                        " have an ID number; make sure all employees in the" \
+                        " file have an ID number and run the import again."
+                    raise osv.except_osv(_('Error'), _(msg))
+                processed += 1
+
+                ids = hr_emp_obj.search(cr, uid,
+                    [('identification_id', '=', code)])
+                if ids:
+                    # Update name of Expat employee
+                    hr_emp_obj.write(cr, uid, [ids[0]], {'name': name})
+                    updated += 1
+                else:
+                    # Create Expat employee
+                    hr_emp_obj.create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex', 'identification_id': code})
+                    created += 1
             
-            context.update({'message': ' '})
-            
+            context.update({'message': ' ', 'from': 'expat_import'})
+
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
             view_id = view_id and view_id[1] or False
-            
+
             # This is to redirect to Employee Tree View
             context.update({'from': 'expat_employee_import'})
-            
             res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee'}, context=context)
-            
             return {
                 'name': 'Expat Employee Import Confirmation',
                 'type': 'ir.actions.act_window',

@@ -117,8 +117,12 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 domain = ""
                 context.update({'search_default_non_validated': 1})
             if context.get('from') == 'expat_employee_import':
-                result = ('editable_view_employee_tree', 'hr.employee')
                 context.update({'search_default_employee_type_expatriate': 1})
+                action = self.pool.get('ir.actions.act_window').for_xml_id(cr,
+                    uid, 'hr', 'open_view_employee_list_my', context=context)
+                action['target'] = 'same'
+                action['context'] = context
+                return action
             if context.get('from') == 'nat_staff_import':
                 result = ('inherit_view_employee_tree', 'hr.employee')
                 context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
