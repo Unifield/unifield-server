@@ -104,6 +104,7 @@ class account_mcdb(osv.osv):
         'display_free2': fields.boolean('Display Free 2?'),
         'user': fields.many2one('res.users', "User"),
         'cheque_number': fields.char('Cheque Number', size=120),  # BKLG-7
+        'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
     }
 
     _defaults = {
@@ -304,7 +305,7 @@ class account_mcdb(osv.osv):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
             # LOOKS LIKE fields
-            for ll in [('ref', 'ref'), ('name', 'name'), ('cheque_number', 'cheque_number')]:
+            for ll in [('ref', 'ref'), ('name', 'name'), ('cheque_number', 'cheque_number'), ('partner_txt', 'partner_txt')]:
                 if getattr(wiz, ll[0]):
                     domain.append((ll[1], 'ilike', '%%%s%%' % getattr(wiz, ll[0])))
                     if ll[0] == 'cheque_number':
