@@ -122,6 +122,26 @@ class account_move_line(osv.osv):
                 for field in element_fields:
                     tree.remove(field)
             view['arch'] = etree.tostring(tree)
+
+        if view_type == 'tree' and \
+            context.get('selector_display_cheque_number', False):
+            # BKLG-7: cheque_number used in G/L selector: display it
+            view['fields']['cheque_number'] = {
+                'type': 'char',
+                'string': 'Cheque Number',
+            }
+
+            tree = etree.fromstring(view['arch'])
+
+            cheque_number_node = etree.Element('field', attrib={
+                'name': 'cheque_number',
+            })
+            # insert it after entry sequence
+            es_node = tree.find('.//field[@name="move_id"]')
+            tree.insert(es_node.getparent().index(es_node) + 1,
+                cheque_number_node)
+
+            view['arch'] = etree.tostring(tree)
         return view
 
 account_move_line()
