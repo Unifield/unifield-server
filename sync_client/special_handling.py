@@ -176,3 +176,22 @@ class account_move_line(osv.osv):
 
 account_move_line()
 
+class account_account(osv.osv):
+    _name = 'account.account'
+    _inherit = 'account.account'
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context = {}
+        # US-55: If the inactivation date is False and sent from sync, then put it as False before writing
+        if context.get('sync_update_execution', False):
+            # US-55: Add explicit the value if they are sent by sync with False but removed by the sync engine!
+            if context.get('fields', False):
+                fields =  context.get('fields')
+                if 'inactivation_date' in fields and 'inactivation_date' not in vals:
+                    vals['inactivation_date'] = False
+
+        return super(account_account, self).write(cr, uid, ids, vals, context=context)
+account_account()
+
+
