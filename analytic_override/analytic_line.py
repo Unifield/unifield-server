@@ -146,6 +146,10 @@ class account_analytic_line(osv.osv):
 
         view = super(account_analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type in ('tree', 'search') and is_funding_pool_view:
+            # commitments activated in configurator ?
+            setup_br = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+            is_commitment = setup_br and setup_br.import_commitments or False
+            
             tree = etree.fromstring(view['arch'])
             # Change OC field
             fields = tree.xpath('/' + view_type + '//field[@name="account_id"]')
@@ -153,10 +157,6 @@ class account_analytic_line(osv.osv):
                 field.set('string', _("Funding Pool"))
                 field.set('domain', "[('category', '=', 'FUNDING'), ('type', '<>', 'view')]")
             if "engagement_line_tree" in context:
-                # commitments activated in configurator ?
-                setup_br = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-                is_commitment = setup_br and setup_br.import_commitments or False
-
                 if is_commitment:
                     if view_type == 'tree':
                         # BKLG-4: comming from commitments list, allow delete of
@@ -170,12 +170,12 @@ class account_analytic_line(osv.osv):
                             attrs="{'invisible': [('is_engi', '!=', True)]}",
                             confirm='Do you really want to delete selected record(s) ?'
                         )
-                else:
-                    if view_type == 'search':
-                        # BKLG-4/6: commitments desactivated, no ENGI filter
-                        filter_nodes = tree.xpath('/search/group[1]/filter[@name="intl_engagements"]')
-                        if filter_nodes:
-                            filter_nodes[0].getparent().remove(filter_nodes[0])
+
+            if view_type == 'search' and not is_commitment:
+                # BKLG-4/6: commitments desactivated, no ENGI filter
+                filter_nodes = tree.xpath('/search/group[1]/filter[@name="intl_engagements"]')
+                if filter_nodes:
+                    filter_nodes[0].getparent().remove(filter_nodes[0])
             view['arch'] = etree.tostring(tree)
         return view
 
