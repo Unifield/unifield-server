@@ -189,7 +189,10 @@ class sync_monitor(osv.osv):
             cond = arg[2] in ('True', 't', '1', 1, True)
             if arg[1] == '!=':
                 cond = not cond
-            res.append(('instance_id', cond and '=' or '!=', instance.id))
+            if cond:
+                res += ['|',('instance_id', '=', instance.id),('instance_id', '=', False)]
+            else:
+                res.append(('instance_id', '!=', instance.id))
 
         return res
 
