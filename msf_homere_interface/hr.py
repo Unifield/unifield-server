@@ -48,6 +48,26 @@ class hr_employee(osv.osv):
         for e in ids:
             res[e] = allowed
         return res
+        
+    def _get_ex_allow_edition(self, cr, uid, ids, field_name=None, arg=None,
+        context=None):
+        """
+        US-94 do not allow to modify an already set identification id for expat
+        """
+        res = {}
+        if not ids:
+            return res
+            
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for self_br in self.browse(cr, uid, ids, context=context):
+            can_edit = True
+            if self_br.employee_type == 'ex' and self_br.identification_id:
+                can_edit = False
+            res[self_br.id] = can_edit
+        return res
 
     def onchange_type(self, cr, uid, ids, e_type=None, context=None):
         """
@@ -83,6 +103,7 @@ class hr_employee(osv.osv):
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),
+        'ex_allow_edition': fields.function(_get_ex_allow_edition, method=True, type='boolean', store=False, string="Allow expat employee edition?", readonly=True),
     }
 
     _defaults = {
@@ -91,6 +112,7 @@ class hr_employee(osv.osv):
         'homere_id_staff': lambda *a: 0.0,
         'homere_id_unique': lambda *a: '',
         'gender': lambda *a: 'unknown',
+        'ex_allow_edition': lambda *a: True,
     }
 
     def _check_unicity(self, cr, uid, ids, context=None):
