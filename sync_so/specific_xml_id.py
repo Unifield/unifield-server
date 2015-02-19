@@ -40,6 +40,7 @@ class account_journal(osv.osv):
 
 account_journal()
 
+
 class ir_actions_act_window(osv.osv):
     _inherit = 'ir.actions.act_window'
 
@@ -58,7 +59,30 @@ class ir_actions_act_window(osv.osv):
             vals['groups_id'] = [(6, 0, [])]
         return super(ir_actions_act_window, self).write(cr, uid, ids, vals, context)
 
+    def _get_is_remote_wh(self, cr, uid, ids, field_name, args, context=None):
+        return {}.fromkeys(ids, False)
+
+    def _search_is_remote_wh(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        rarg = []
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv('Error', 'Filter on is_remote_wh not implemented')
+            model_data_obj = self.pool.get('ir.model.data')
+            mod_ids = model_data_obj.search(cr, uid, [('model', '=', obj._name), ('module', '=', 'sync_remote_warehouse')])
+            ids = []
+            for m in model_data_obj.read(cr, uid, mod_ids, ['res_id']):
+                ids.append(m['res_id'])
+            value = arg[2] not in (False, 'f', 'False')
+            rarg.append(('id', value and 'in' or 'not in', ids))
+        return rarg
+
+    _columns = {
+        'is_remote_wh': fields.function(_get_is_remote_wh, type='boolean', string="From RW module", fnct_search=_search_is_remote_wh, method=True),
+    }
 ir_actions_act_window()
+
 
 class bank_statement(osv.osv):
 
@@ -696,6 +720,29 @@ class button_access_rule(osv.osv):
         bar = self.browse(cr, uid, res_id)
         view_xml_id = self.pool.get('ir.ui.view').get_xml_id(cr, 1, [bar.view_id.id])
         return get_valid_xml_name('BAR', view_xml_id[bar.view_id.id], bar.name)
+
+    def _get_is_remote_wh(self, cr, uid, ids, field_name, args, context=None):
+        return {}.fromkeys(ids, False)
+
+    def _search_is_remote_wh(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        rarg = []
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv('Error', 'Filter on is_remote_wh not implemented')
+            model_data_obj = self.pool.get('ir.model.data')
+            mod_ids = model_data_obj.search(cr, uid, [('model', '=', obj._name), ('name', '=like', 'BAR_sync_remote_warehouse%')])
+            ids = []
+            for m in model_data_obj.read(cr, uid, mod_ids, ['res_id']):
+                ids.append(m['res_id'])
+            value = arg[2] not in (False, 'f', 'False')
+            rarg.append(('id', value and 'in' or 'not in', ids))
+        return rarg
+
+    _columns = {
+        'is_remote_wh': fields.function(_get_is_remote_wh, type='boolean', string="From RW module", fnct_search=_search_is_remote_wh, method=True),
+    }
 
 button_access_rule()
 
