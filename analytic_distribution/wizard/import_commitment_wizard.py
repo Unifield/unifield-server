@@ -237,7 +237,20 @@ class import_commitment_wizard(osv.osv_memory):
 
         analytic_obj.unlink(cr, uid, to_be_deleted_ids, context=context)
 
-        return {'type' : 'ir.actions.act_window_close'}
+        # US-97: go to tree with intl engagements as default
+        action = self.pool.get('ir.actions.act_window').for_xml_id(cr, uid,
+            'analytic_distribution',
+            'action_engagement_line_tree',
+            context=context)
+        if action:
+            if action.get('context', False):
+                action['context'] = action['context'].replace(
+                    'search_default_engagements',
+                    'search_default_intl_engagements')
+            action['target'] = 'same'
+        else:
+            action = {'type' : 'ir.actions.act_window_close'}
+        return action
 
 import_commitment_wizard()
 
