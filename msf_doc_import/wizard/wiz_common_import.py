@@ -272,6 +272,19 @@ class product_product(osv.osv):
         ),
     }
 
+    def on_change_import_product_qty(self, cr, uid, ids, import_product_qty,
+        context=None):
+        res = {}
+        if not ids:
+            return res
+        if import_product_qty and import_product_qty < 0:
+            res['warning'] = {
+                'value': {'import_product_qty': 0.},
+                'title': _('Warning'),
+                'message': _('You can not set a negative quantity'),
+        }
+        return res
+
 product_product()
 
 
