@@ -718,7 +718,17 @@ class account_move(osv.osv):
         }
         res = super(account_move, self).copy(cr, uid, a_id, vals, context=context)
         for line in je.line_id:
-            self.pool.get('account.move.line').copy(cr, uid, line.id, {'move_id': res, 'document_date': je.document_date, 'date': je.date, 'period_id': je.period_id and je.period_id.id or False}, context)
+            line_default = {
+                'move_id': res,
+                'document_date': je.document_date,
+                'date': je.date,
+                'period_id': je.period_id and je.period_id.id or False,
+                'reconcile_id': False,
+                'reconcile_partial_id': False,
+                'reconcile_txt': False,
+            }
+            self.pool.get('account.move.line').copy(cr, uid, line.id,
+                line_default, context)
         self.validate(cr, uid, [res], context=context)
         return res
 
