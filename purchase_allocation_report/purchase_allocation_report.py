@@ -119,7 +119,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     aaa2.id AS destination_id,
                     cc.percentage AS percentage,
                     cc.amount AS subtotal,
-                    cc.currency_id AS currency_id,
+                    ppl.currency_id AS currency_id,
                     aaa.id AS cost_center_id,
                     so.name AS source_doc,
                     so.partner_id AS partner_id,
@@ -133,6 +133,10 @@ class purchase_order_line_allocation_report(osv.osv):
                     purchase_order po
                     ON
                     pol.order_id = po.id
+                  LEFT JOIN
+                    product_pricelist ppl
+                    ON
+                    po.pricelist_id = ppl.id
                   LEFT JOIN
                     analytic_distribution ad
                     ON
@@ -174,7 +178,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     aaa2.id AS destination_id,
                     cc.percentage AS percentage,
                     cc.amount AS subtotal,
-                    cc.currency_id AS currency_id,
+                    ppl.currency_id AS currency_id,
                     aaa.id AS cost_center_id,
                     so.name AS source_doc,
                     so.partner_id AS partner_id,
@@ -188,6 +192,10 @@ class purchase_order_line_allocation_report(osv.osv):
                     purchase_order po
                     ON
                     pol.order_id = po.id
+                  LEFT JOIN
+                    product_pricelist ppl
+                    ON
+                    po.pricelist_id = ppl.id
                   LEFT JOIN
                     analytic_distribution ad
                     ON
