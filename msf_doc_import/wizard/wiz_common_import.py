@@ -237,9 +237,9 @@ class product_product(osv.osv):
                 pplq_ids = pplq_obj.search(cr, uid, [
                     ('wizard_id', '=', wiz_id),
                     ('product_id', '=', i),
-                ], context=context)
+                ], order='id desc', context=context)
                 if pplq_ids:
-                    res[i] = pplq_obj.read(cr, uid, pplq_ids, ['qty'])[0]['qty']
+                    res[i] = pplq_obj.read(cr, uid, pplq_ids[0], ['qty'])['qty']
 
         return res
 
@@ -278,8 +278,8 @@ class product_product(osv.osv):
         if not ids:
             return res
         if import_product_qty and import_product_qty < 0:
+            res['value'] = {'import_product_qty': 0.}
             res['warning'] = {
-                'value': {'import_product_qty': 0.},
                 'title': _('Warning'),
                 'message': _('You can not set a negative quantity'),
         }
