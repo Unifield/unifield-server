@@ -855,6 +855,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # 1/ Check validity of analytic distribution
         self.analytic_distribution_checks(cr, uid, order_brw_list)
 
+        no_price_lines = line_obj.search(cr, uid, [
+            ('order_id', '=', ids),
+            ('price_unit', '=', 0.00),
+        ])
+        if no_price_lines:
+            raise osv.except_osv(
+                _('Warning'),
+                _('FO cannot be validated as line cannot have unit price of zero.'),
+            )
+
         for order in order_brw_list:
             # 2/ Check if there is lines in order
             if len(order.order_line) < 1:
