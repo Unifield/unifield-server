@@ -383,9 +383,6 @@ class po_follow_up_mixin(object):
     def getRunParmsRML(self,key):
         return self.datas['report_parms'][key]
 
-    def getPOLineHeaders(self):
-        return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
-       
     def printAnalyticLines(self, analytic_lines):
         res = []
         # if additional analytic lines print them here.
@@ -412,12 +409,14 @@ class po_follow_up_mixin(object):
         # TODO the multiplier is the value populated for no change in stock_move.price_unit
         # TODO it probably should be 1
         multiplier = 1.0000100000000001 
+        po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)], order='line_number')
         po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
         report_lines = []
+        order = po_obj.browse(self.cr, self.uid, po_id)
         for line in po_lines:
             in_lines = self.getAllLineIN(line.id)
             analytic_lines = self.getAnalyticLines(line)
@@ -438,6 +437,10 @@ class po_follow_up_mixin(object):
             # Display information of the initial reception
             if not same_product_same_uom:
                 report_line = {
+                    'order_ref': order.name or '',
+                    'order_created': order.date_order or '',
+                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_status': self._get_states().get(order.state, ''),
                     'item': line.line_number or '',
                     'code': line.product_id.default_code or '',
                     'description': line.product_id.name or '',
@@ -560,7 +563,7 @@ class po_follow_up_mixin(object):
         return self.datas.get('report_header')[1]
 
     def getPOLineHeaders(self):
-        return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
+        return ['Order Ref', 'Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price', 'Created', 'Confirmed Delivery', 'Status', 'Destination','Cost Center']
       
 
 
