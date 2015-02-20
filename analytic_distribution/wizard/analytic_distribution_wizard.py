@@ -512,12 +512,17 @@ class analytic_distribution_wizard(osv.osv_memory):
             # UFTP-363: Do not edit any element of JI or JE if the JE is imported
             if el.move_id and el.move_id.state not in ['draft']:
                 res[el.id] = False
-            if el.move_id and el.move_id.imported is True:
+            if el.move_id and el.move_id.imported is True and el.move_id.state not in ['draft']:
+                # US-99 JE imported posted: AD not writable
                 res[el.id] = False
             if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.state not in ['draft'] and not context.get('from_correction', False):
                 res[el.id] = False
-            if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.imported is True and not context.get('from_correction', False):
-                res[el.id] = False
+            if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.imported:
+                # US-99 JI imported not draft: AD not writable
+                # (from correction wizard: always writable)
+                if not context.get('from_correction', False) and \
+                    el.move_id.state and el.move_id.state not in ['draft']:
+                    res[el.id] = False
         return res
 
     def _have_header(self, cr, uid, ids, name, args, context=None):
