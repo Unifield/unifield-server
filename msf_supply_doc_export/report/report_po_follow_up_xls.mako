@@ -124,16 +124,14 @@
    <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Supplier: ${getRunParms()['supplier'] or '' |x}</Data></Cell>
    <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">PO State: ${getRunParms()['state'] or '' | x}</Data></Cell>
 </Row>
-<Row></Row>
-<Row></Row>
 
-% for o in objects:
-    
     <Row ss:AutoFitHeight="1" > 
       % for header in getPOLineHeaders():
     	    <Cell ss:StyleID="header"><Data ss:Type="String">${header}</Data></Cell>
        % endfor       
     </Row>
+    
+% for o in objects:
     
     % for line in getPOLines(o.id):
     <Row ss:AutoFitHeight="1">
