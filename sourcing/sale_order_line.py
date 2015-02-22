@@ -52,25 +52,10 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
 
-        '''
-            !!!!! ATTENTION ATTENTION!!!!!!
-            UTP-1021: This solution is NOT stable and could be dangerous!!!!
-            need to have a proper fix for this,
-            currently we have only 3 tree views for sale.order.line
-            so I use the value in the context to identify that it is not the
-            view of wizard, but this assumption could be totally WRONG!
-            But in this current version, it works!
-        '''
-        if not context.get('search_default_need_sourcing', False) and \
-            view_type == 'tree':
-            if '_terp_view_name' in context:
-                '''
-                UFTP-346: HACK ON HACK UTP-1021
-                '_terp_view_name' not set if grouping
-                and we do not want special view when grouping
-                '''
-                view_id = self.pool.get('ir.model.data').get_object_reference(
-                    cr, uid, 'sourcing', 'sourcing_line_special_tree_view')[1]
+        if not view_id and context.get('from_multiple_sourcing_line'):
+            view_id = self.pool.get('ir.model.data').get_object_reference(
+                cr, uid, 'sourcing', 'sourcing_line_special_tree_view')[1]
+
         return super(sale_order_line, self).fields_view_get(cr, uid, view_id,
             view_type, context, toolbar, submenu)
 

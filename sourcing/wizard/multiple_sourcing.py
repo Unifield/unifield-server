@@ -278,16 +278,16 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 }
         return result
 
-    def change_location(self, cr, uid, ids, location_id, context=None):
+    def change_location(self, cr, uid, ids, location_id, line_ids, context=None):
         res = {'value': {}}
         if not location_id:
             return res
 
-        if not context or not context[0] or not context[0][2]:
+        if not line_ids or not line_ids[0] or not line_ids[0][2]:
             return res
 
         line_obj = self.pool.get('sale.order.line')
-        active_ids = context[0][2]
+        active_ids = line_ids[0][2]
 
         context = {}
         context.update({'from_multiple_line_sourcing': False})
