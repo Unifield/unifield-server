@@ -200,8 +200,13 @@ class report_pdf_engagement(report_sxw.rml_parse):
                                                              cost_center_id))
                     if cr.rowcount:
                         # get the lines for the account ids
-                        budget_line_ids = pool.get('msf.budget.line').search(cr, uid, [('budget_id', '=', cr.fetchall()[0][0]),
-                                                                                       ('account_id', 'in', expense_account_ids)], context=context)
+                        domain = [
+                            ('budget_id', '=', cr.fetchall()[0][0]),
+                            ('account_id', 'in', expense_account_ids),
+                            ('destination_id', '=', destination_id),
+                            ('line_type', '=', 'destination'),
+                        ]
+                        budget_line_ids = pool.get('msf.budget.line').search(cr, uid, domain, context=context)
                         budget_data = pool.get('msf.budget.line').read(cr, uid, budget_line_ids, ['account_id', 'total'])
                         budget_amounts = dict([(x.get('account_id', [])[0], x.get('total', 0.0)) for x in budget_data])
 
