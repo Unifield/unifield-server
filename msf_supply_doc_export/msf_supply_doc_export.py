@@ -460,6 +460,10 @@ class po_follow_up_mixin(object):
 
             for spsul in same_product_same_uom:
                 report_line = {
+                    'order_ref': order.name or '',
+                    'order_created': order.date_order or '',
+                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_status': self._get_states().get(order.state, ''),
                     'item': first_line and line.line_number or '',
                     'code': first_line and line.product_id.default_code or '',
                     'description': first_line and line.product_id.name or '',
@@ -484,6 +488,10 @@ class po_follow_up_mixin(object):
 
             for spl in same_product:
                 report_line = {
+                    'order_ref': order.name or '',
+                    'order_created': order.date_order or '',
+                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_status': self._get_states().get(order.state, ''),
                     'item': first_line and line.line_number or '',
                     'code': first_line and line.product_id.default_code or '',
                     'description': first_line and line.product_id.name or '',
@@ -508,6 +516,10 @@ class po_follow_up_mixin(object):
             for ol in other_product:
                 prod_brw = prod_obj.browse(self.cr, self.uid, ol.get('product_id'))
                 report_line = {
+                    'order_ref': order.name or '',
+                    'order_created': order.date_order or '',
+                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_status': self._get_states().get(order.state, ''),
                     'item': line.line_number or '',
                     'code': prod_brw.default_code or '',
                     'description': prod_brw.name or '',
