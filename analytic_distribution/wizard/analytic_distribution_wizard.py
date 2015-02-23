@@ -1131,6 +1131,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
 
+        if wiz and wiz.move_line_id and wiz.move_line_id.move_id and \
+            wiz.move_line_id.move_id.imported:
+            # US-99 do not refresh lines as imported JE has no pencil
+            # (only AD wizard button allowed)
+            o2m_toreload = {}
         return_wiz =  dict(type='ir.actions.act_window_close', **o2m_toreload)
         if context.get("from_cash_return_analytic_dist"):
             # If the wizard was called from the cash return line, the perform some actions before returning back to the caller wizard
@@ -1280,6 +1285,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             o2m_toreload['o2m_refresh'] = context['from_list_grid']
         # Retrieve some values to verify if we come from a direct invoice
         wiz = self.browse(cr, uid, ids, context=context)[0]
+        if wiz and wiz.move_line_id and wiz.move_line_id.move_id and \
+            wiz.move_line_id.move_id.imported:
+            # US-99 do not refresh lines as imported JE has no pencil
+            # (only AD wizard button allowed)
+            o2m_toreload = {}
         if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
             # Get direct_invoice id
             direct_invoice_id = (wiz.direct_invoice_id and wiz.direct_invoice_id.id) or \
