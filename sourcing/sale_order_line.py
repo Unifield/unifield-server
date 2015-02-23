@@ -48,17 +48,6 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        if context is None:
-            context = {}
-
-        if not view_id and context.get('from_multiple_sourcing_line'):
-            view_id = self.pool.get('ir.model.data').get_object_reference(
-                cr, uid, 'sourcing', 'sourcing_line_special_tree_view')[1]
-
-        return super(sale_order_line, self).fields_view_get(cr, uid, view_id,
-            view_type, context, toolbar, submenu)
-
     """
     Other methods
     """
