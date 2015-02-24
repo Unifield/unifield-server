@@ -230,7 +230,25 @@ class account_analytic_account(osv.osv):
                             res_temp.append(result[0])
                     res[id] = res_temp
             return res
-
+        
+        # UFTP-2: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
+        if dest_field == 'instance_id':
+            ## Check if it is *funding pool* and created at HQ
+            ## UFTP-2: WORK IN PROGRESS
+            ## AND CURRENT INSTANCE IS HQ ---> CREATE AT HQ FOR COORDO!!!!!!!!!!!!!
+            res = dict.fromkeys(ids, False)
+            for target_line in self.browse(cr, uid, ids, context=context):
+                if target_line.instance_id:
+                    instance = target_line.instance_id
+                    if instance.state == 'active':
+                        res_data = [instance.instance]
+                        # if it is a coordo instance, send it to its active projects as well
+                        if instance.level == 'coordo':
+                            for project in instance.child_ids:
+                                if project.state == 'active':
+                                    res_data.append(project.instance)
+                        res[target_line.id] = res_data
+            return res
         return super(account_analytic_account, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
