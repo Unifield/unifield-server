@@ -29,7 +29,7 @@
     """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['sync_common'],
+    'depends': ['sync_common', 'msf_tools'],
     'init_xml': [],
     'data': [
         'sync_server_view.xml',
@@ -38,6 +38,7 @@
         'rules_view.xml',
         'security/ir.model.access.csv',
         'data/cron.xml',
+        'data/alert_email.xml',
     ],
     'demo_xml': [
     ],

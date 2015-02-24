@@ -727,3 +727,18 @@ class res_groups(osv.osv):
             vals['menu_access'] = [(6, 0, [])]
         return super(res_groups, self).write(cr, uid, ids, vals, context)
 res_groups()
+
+class hr_employee(osv.osv):
+    _inherit = 'hr.employee'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        r = self.read(cr, uid, [res_id],
+            ['employee_type', 'identification_id'])[0]
+        if r['employee_type'] and r['employee_type'] == 'ex' and \
+            r['identification_id']:
+            return get_valid_xml_name('employee', r['identification_id'])
+        else:
+            return super(hr_employee, self).get_unique_xml_name(cr, uid, uuid,
+                table_name, res_id)
+
+hr_employee()

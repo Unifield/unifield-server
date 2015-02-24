@@ -37,7 +37,7 @@ MODELS_TO_IGNORE = [
                     'ir.ui.view_sc',
                     'ir.config_parameter',
 
-                    'sync.monitor',
+                    #'sync.monitor',
                     'sync.client.rule',
                     'sync.client.push.data.information',
                     'sync.client.update_to_send',
