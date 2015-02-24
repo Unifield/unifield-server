@@ -141,6 +141,7 @@ class import_commitment_wizard(osv.osv_memory):
                             uid, account_ids[0])
                         if account_br.default_destination_id:
                             vals['destination_id'] = account_br.default_destination_id.id
+                            dest_id = [vals['destination_id']]
                         else:
                             msg = _("No destination code found and no default destination for account %s !") % account_code
                             raise osv.except_osv(_('Error'), raise_msg_prefix + msg)
@@ -162,6 +163,7 @@ class import_commitment_wizard(osv.osv_memory):
                             raise osv.except_osv(_('Error'), raise_msg_prefix +_(('Funding Pool "%s" doesn\'t exist!') % (funding_pool,)))
                     else:
                         vals['account_id'] = default_founding_pool_id
+                        fp_id = [default_founding_pool_id]
                     # description
                     if description:
                         vals.update({'name': description})
