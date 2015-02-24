@@ -50,7 +50,7 @@
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='partner_id2']" position="attributes">
-                    <attribute name="domain">['|', '&amp;', ('partner_type', '!=', 'internal'), ('customer', '=', True), ('is_instance', '=', True)]</attribute>
+                    <attribute name="domain">[('partner_type', 'in', ['esc', 'external']), ('customer', '=', True)]</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='move_lines']/tree//field[@name='location_id']" position="after">
                     <field name="location_dest_id" readonly="1" />
@@ -829,6 +829,7 @@
                             <field name="partner_id2"
                                 on_change="on_change_partner(partner_id2, address_id)"
                                 required="1"
+                                domain="[('partner_type', 'in', ['esc', 'external'])]"
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
                             <field name="address_id"
