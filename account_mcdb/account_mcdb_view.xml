@@ -286,6 +286,10 @@
                     <field name="reallocated" colspan="2"/>
                     <field name="reversed" colspan="2"/>
                     &currency;
+                    <group colspan="4" col="6">
+                        <separator string="Third Party" colspan="6"/>
+                        <field name="partner_txt" colspan="2"/>
+                     </group>
                     &end;
                 </form>
             </field>

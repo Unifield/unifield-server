@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from time import strftime
 from lxml import etree
+from tools.translate import _
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
@@ -70,12 +71,43 @@ class account_analytic_line(osv.osv):
             res[ml.id]['output_currency'] = currency_id
         return res
 
+    def _get_cheque_number(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for self_br in self.browse(cr, uid, ids, context=context):
+            res[self_br.id] = self_br.move_id and \
+                self_br.move_id.cheque_number or ''
+        return res
+
+    def _search_cheque_number(self, cr, uid, ids, name, args, context=None):
+        if not len(args):
+            return []
+        if len(args) != 1:
+            msg = _("Domain %s not suported") % (str(args), )
+            raise osv.except_osv(_('Error'), msg)
+        if args[0][1] != 'ilike':
+            # g/l selector / analytical selector default operator not found
+            msg = _("Operator %s not suported") % (args[0][1], )
+            raise osv.except_osv(_('Error'), msg)
+        if not args[0][2]:
+            return []
+
+        m_ids = self.pool.get('account.move.line').search(cr, uid,
+            [('cheque_number', 'ilike', args[0][2])], context=context)
+        return [('move_id', 'in', m_ids)] if m_ids else [('id', 'in', [])]
+
     _columns = {
         'output_amount': fields.function(_get_output, string="Output amount", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_amount_debit': fields.function(_get_output, string="Output debit", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_amount_credit': fields.function(_get_output, string="Output credit", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False,
             multi="analytic_output_currency"),
+        'cheque_number': fields.function(_get_cheque_number, type='char',
+            method=True, string='Cheque Number',
+            fnct_search=_search_cheque_number)  # BKLG-7: move cheque number
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -90,6 +122,28 @@ class account_analytic_line(osv.osv):
                 element_fields = tree.xpath('/tree/field[@name="' + element + '"]')
                 for field in element_fields:
                     tree.remove(field)
+            view['arch'] = etree.tostring(tree)
+
+        if view_type == 'tree' and \
+            context.get('selector_display_cheque_number', False):
+            # BKLG-7: cheque_number used in analytic selector: display it
+            view['fields']['cheque_number'] = {
+                'function': '_get_cheque_number',
+                'fnct_search': '_search_cheque_number',
+                'type': 'char',
+                'string': 'Cheque Number',
+            }
+
+            tree = etree.fromstring(view['arch'])
+
+            cheque_number_node = etree.Element('field', attrib={
+                'name': 'cheque_number',
+            })
+            # insert it after entry sequence
+            es_node = tree.find('.//field[@name="entry_sequence"]')
+            tree.insert(es_node.getparent().index(es_node) + 1,
+                cheque_number_node)
+
             view['arch'] = etree.tostring(tree)
         return view
 

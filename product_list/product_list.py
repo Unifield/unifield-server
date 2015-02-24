@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
 
 import time
 import logging
@@ -195,6 +196,23 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the unlinked product is not the 'To be defined' product
+        """
+        try:
+            prd_tbd = self.pool.get('ir.model.data').get_object_reference(
+                cr, uid, 'msf_doc_import', 'product_tbd')[1]
+            if prd_tbd in ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _("""The product 'To be defined' is an Unifield internal
+product and can't be deleted"""),
+                )
+        except ValueError:
+            pass
+
+        return super(product_product, self).unlink(cr, uid, ids, context=context)
 
     def _get_list_sublist(self, cr, uid, ids, field_name, arg, context=None):
         '''
@@ -247,8 +265,8 @@ class product_product(osv.osv):
         # UFTP-327 default_code passed from size 14 to 18
         # http://jira.unifield.org/browse/UFTP-327?focusedCommentId=36173&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-36173
         'default_code' : fields.char('CODE', size=18, select=True),
-        'xmlid_code' : fields.char('Hidden xmlid code', size=64), # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
         'msfid' : fields.integer(string='Hidden field for UniData'), # US-45: Added this field but hidden, for UniData to be able to import the Id
+        'xmlid_code' : fields.char('Hidden xmlid code', size=18), # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
     }
 
     _sql_constraints = [

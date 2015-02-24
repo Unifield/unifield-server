@@ -20,8 +20,10 @@
 ##############################################################################
 
 from osv import osv
+from osv import fields
 import base64
 from os.path import join as opj
+from tools.translate import _
 import tools
 
 class ir_model_data(osv.osv):
@@ -136,3 +138,57 @@ class res_users(osv.osv):
         'context_lang': _get_default_ctx_lang,
     }
 res_users()
+
+class email_configuration(osv.osv):
+    _name = 'email.configuration'
+    _description = 'Email configuration'
+
+    _columns = {
+        'smtp_server': fields.char('SMTP Server', size=512, required=True),
+        'email_from': fields.char('Email From', size=512, required=True),
+        'smtp_port': fields.integer('SMTP Port', required=True),
+        'smtp_ssl': fields.boolean('Use SSL'),
+        'smtp_user': fields.char('SMTP User', size=512),
+        'smtp_password': fields.char('SMTP Password', size=512),
+        'destination_test': fields.char('Email Destination Test', size=512),
+    }
+    _defaults = {
+        'smtp_port': 25,
+        'smtp_ssl': False,
+    }
+
+    def set_config(self, cr):
+        data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password']
+        cr.execute("""select """+','.join(data)+"""
+            from email_configuration
+            limit 1
+        """)
+        res = cr.fetchone()
+        if res:
+            for i, key in enumerate(data):
+                tools.config[key] = res[i] or False
+        return True
+
+    def __init__(self, pool, cr):
+        super(email_configuration, self).__init__(pool, cr)
+        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
+        if cr.rowcount:
+            self.set_config(cr)
+
+    def _update_email_config(self, cr, uid, ids, context=None):
+        self.set_config(cr)
+        return True
+
+    def test_email(self, cr, uid, ids, context=None):
+        cr.execute('select destination_test from email_configuration limit 1')
+        res = cr.fetchone()
+        if not res or not res[0]:
+            raise osv.except_osv(_('Warning !'), _('No destination email given!'))
+        if not tools.email_send(False, [res[0]], 'Test email from UniField', 'This is a test.'):
+            raise osv.except_osv(_('Warning !'), _('Could not deliver email'))
+        return True
+
+    _constraints = [
+        (_update_email_config, 'Always true: update email configuration', [])
+    ]
+email_configuration()

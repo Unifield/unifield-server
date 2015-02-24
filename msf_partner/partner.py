@@ -228,6 +228,30 @@ class res_partner(osv.osv):
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the deleted partner is not a system one
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        partner_data_id = [
+            'supplier_tbd',
+        ]
+
+        for data_id in partner_data_id:
+            try:
+                part_id = data_obj.get_object_reference(
+                    cr, uid, 'msf_doc_import', data_id)[1]
+                if part_id in ids:
+                    part_name = self.read(cr, uid, part_id, ['name'])['name']
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''The partner '%s' is an Unifield internal partner, so you can't remove it''' % part_name),
+                    )
+            except ValueError:
+                pass
+
+        return super(res_partner, self).unlink(cr, uid, ids, context=context)
 
     def _check_main_partner(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -568,6 +592,31 @@ res_partner()
 
 class res_partner_address(osv.osv):
     _inherit = 'res.partner.address'
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the deleted address is not a system one
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        addr_data_id = [
+            'address_tbd',
+        ]
+
+        for data_id in addr_data_id:
+            try:
+                addr_id = data_obj.get_object_reference(
+                    cr, uid, 'msf_doc_import', data_id)[1]
+                if addr_id in ids:
+                    addr_name = self.read(cr, uid, addr_id, ['name'])['name']
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''The Address '%s' is an Unifield internal address, so you can't remove it''' % addr_name),
+                    )
+            except ValueError:
+                pass
+
+        return super(res_partner_address, self).unlink(cr, uid, ids, context=context)
 
     def create(self, cr, uid, vals, context=None):
         '''
