@@ -502,9 +502,11 @@ class account_analytic_account(osv.osv):
             context = {}
         res = super(account_analytic_account, self).write(cr, uid, ids, vals, context=context)
         if context.get('from_web', False) is True:
-            for a in self.read(cr, uid, ids, ['category', 'instance_id'], context=context):
-                a.update({'instance_id': a.get('instance_id', [])[0]})
-                self.check_fp(cr, uid, a, context=context)
+            allvalues = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)
+            for instance in allvalues:
+                if instance == 'instance_id':
+                    instance = allvalues.get('instance_id', [])
+                    self.check_fp(cr, uid, {'instance_id': instance}, context=context)
         return res
 
 account_analytic_account()
