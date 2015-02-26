@@ -74,31 +74,8 @@ class stock_move(osv.osv):
     }
 
     def action_cancel(self, cr, uid, ids, context=None):
-#        self._manual_create_sync_messages(cr, uid, context=context)
         self.write(cr, uid, ids, {'date_cancel': time.strftime('%Y-%m-%d %H:%M:%S')})
         return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
-
-    def _manual_create_sync_messages(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-
-        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
-        message_pool = self.pool.get('sync.client.message_to_send')
-        update_pool = self.pool.get('sync.client.update_to_send')
-        rule_pool = self.pool.get('sync.client.message_rule')
-        urule_pool = self.pool.get('sync.client.rule')
-        messages_count = 0
-        updates_count = 0
-
-        rule_ids = rule_pool.search(cr, uid, [('type','!=', 'USB')], order='sequence_number', context=context)
-        if rule_ids:
-            for rule in rule_pool.browse(cr, uid, rule_ids, context=context):
-                order = "id asc"
-                messages_count += message_pool.create_from_rule(cr, uid, rule, order, context=context)
-            if messages_count:
-                cr.commit()
-
-        entity.sync_threaded(context=context)
 
 stock_move()
 
