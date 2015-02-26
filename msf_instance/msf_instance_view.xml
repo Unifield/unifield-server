@@ -398,7 +398,7 @@
                 <data>
                     <field name="name" position="before">
                         <field name="current_instance_type" invisible="1"/>
-                        <field name="instance_id" domain="[('level', '=', 'coordo')]" attrs="{'invisible': ['|', ('current_instance_type', '!=', 'section'), ('category', '!=', 'FUNDING')], 'readonly': [('current_instance_type', '!=', 'section')]}"/>
+                        <field name="instance_id" domain="[('level', '=', 'coordo')]" attrs="{'invisible': [('category', '!=', 'FUNDING')], 'readonly': [('current_instance_type', '!=', 'section')]}"/>
                         <newline/>
                     </field>
                 </data>
