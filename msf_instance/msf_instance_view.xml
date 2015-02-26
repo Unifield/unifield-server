@@ -395,11 +395,10 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="account.view_account_analytic_account_form"/>
             <field name="arch" type="xml">
-                <data>
-                    <field name="name" position="before">
+ 				<data>
+                    <field name="category" position="after">
                         <field name="current_instance_type" invisible="1"/>
                         <field name="instance_id" domain="[('level', '=', 'coordo')]" attrs="{'invisible': [('category', '!=', 'FUNDING')], 'readonly': [('current_instance_type', '!=', 'section')]}"/>
-                        <newline/>
                     </field>
                 </data>
             </field>
