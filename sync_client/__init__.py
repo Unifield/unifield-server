@@ -8,3 +8,4 @@ import orm
 import update
 import message
 from log_sale_purchase import get_sale_purchase_logger
+import hq_monitor

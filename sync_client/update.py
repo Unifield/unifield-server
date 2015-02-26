@@ -407,7 +407,10 @@ class update_received(osv.osv):
             try:
                 cr.execute("SAVEPOINT unlink_update")
                 # Keep a trace of the deletion
-                obj.unlink(cr, uid, ids, context=context)
+                if obj._name == 'account.move':
+                    obj.unlink(cr, uid, ids, context=context, check=False) #ITWG-84: Send this flag to not check on lines - otherwise it takes too much!
+                else:
+                    obj.unlink(cr, uid, ids, context=context)
             except:
                 cr.execute("ROLLBACK TO SAVEPOINT unlink_update")
                 raise

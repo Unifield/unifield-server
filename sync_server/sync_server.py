@@ -29,7 +29,7 @@ import pprint
 import logging
 from datetime import datetime, timedelta
 from sync_common import get_md5, check_md5
-
+import time
 pp = pprint.PrettyPrinter(indent=4)
 MAX_ACTIVITY_DELAY = timedelta(minutes=5)
 
@@ -41,6 +41,7 @@ def check_validated(f):
             return (False, "Error: Instance does not exist in the server database")
         entity = entity_pool.browse(cr, uid, id)[0]
         if not entity.hardware_id or entity.hardware_id != hw_id:
+            logging.getLogger('sync.server').warn('Hardware id mismatch: instance %s, db hw_id: %s, hw_id sent: %s' % (entity.name, entity.hardware_id, hw_id))
             return (False, 'Error 17: Authentification Failed, please contact the support')
         if entity.state == 'updated':
             return (False, 'This Instance has been updated and the update procedure has to be launched at your side')
@@ -761,3 +762,133 @@ class sync_manager(osv.osv):
         return (True, self.pool.get('sync.server.message').recovery(cr, 1, entity, start_seq, context=context))
 
 sync_manager()
+
+class sync_server_monitor_email(osv.osv):
+    _name = 'sync.server.monitor.email'
+    _description = 'Email alert'
+    _logger = logging.getLogger('sync.monitor')
+
+    _columns = {
+        'name': fields.char('Destination emails', size=1024, help='comma separated list of email addresses'),
+        'title': fields.char('Title', size=1024, required=1),
+        'nb_days': fields.integer('Notification threshold in days', required=1),
+    }
+
+    def check_msg_not_sync(self, cr, uid, out_file, context=None):
+        PACK = 1000
+        update_obj = self.pool.get('sync.server.update')
+        rule_obj = self.pool.get('sync_server.sync_rule')
+        group_obj = self.pool.get('sync.server.entity_group')
+        entity_obj = self.pool.get('sync.server.entity')
+
+        entities_last_activity = {}
+        rules = {}
+        ancestors_cache = {}
+        children_cache = {}
+
+        entities_id = entity_obj.search(cr, uid, [])
+        for entity in entity_obj.read(cr, uid, entities_id, ['last_activity']):
+            entities_last_activity[entity['id']] = entity['last_activity']
+            ancestors_cache[entity['id']] = entity_obj._get_ancestor(cr, uid, entity['id'])
+            children_cache[entity['id']] = entity_obj._get_all_children(cr, uid, entity['id'])
+
+        rule_ids = rule_obj.search(cr, uid, [('active', 'in', ['t', 'f'])])
+        for rule in rule_obj.browse(cr, uid, rule_ids):
+            rules[rule.id] = {
+                'direction': rule.direction,
+                'instances': {}
+            }
+            if rule.applies_to_type:
+                grp_ids = group_obj.search(cr, uid, [('type_id', '=', rule.type_id.id)])
+            else:
+                grp_ids = [rule.group_id.id]
+            instances = []
+            for group in group_obj.browse(cr, uid, grp_ids):
+                rules[rule.id]['instances'][group.id] = [x.id for x in group.entity_ids]
+        update_ids = update_obj.search(cr, uid, [])
+
+        entities = {}
+        self._logger.info("Analyze %s data" % len(update_ids))
+        i = 1
+        for split_update_ids in tools.misc.split_every(PACK, update_ids, list):
+            init_time = time.time()
+            for update in update_obj.browse(cr, uid, split_update_ids):
+                instances = rules[update.rule_id.id]['instances']
+
+                ancestor = ancestors_cache[update.source.id]
+                children = children_cache[update.source.id]
+
+                to_retrieve = []
+                if rules[update.rule_id.id]['direction'] == 'up':
+                    for x in ancestor:
+                        if x in tools.misc.flatten(instances.values()):
+                            to_retrieve.append(x)
+                elif rules[update.rule_id.id]['direction'] == 'down':
+                    for x in children:
+                        if x in tools.misc.flatten(instances.values()):
+                            to_retrieve.append(x)
+                elif rules[update.rule_id.id]['direction'] == 'bidirectional':
+                    for x in instances:
+                        if update.source.id in instances[x]:
+                            to_retrieve = [j for j in instances[x] if j!=update.source.id]
+                            break
+                elif rules[update.rule_id.id]['direction'] == 'bi-private':
+                    for x in instances:
+                        if update.source.id in instances[x]:
+                            list_to_retrieve = [j for j in instances[x] if j!=update.source.id]
+                            break
+
+                    if update.owner:
+                        privates = [ x for x in ancestors_cache[update.owner.id] + [update.owner.id] if x != update.source.id]
+                        to_retrieve = []
+                        for x in list_to_retrieve:
+                            if x in privates:
+                                to_retrieve.append(x)
+                    else:
+                        to_retrieve = list_to_retrieve
+
+                puller_ids = [y.entity_id.id for y in update.puller_ids]
+                not_pulled = []
+                for need_pull in to_retrieve:
+                    if need_pull in puller_ids:
+                        continue
+                    if entities_last_activity[need_pull] < update.create_date:
+                        continue
+                    not_pulled.append(need_pull)
+                for x in puller_ids:
+                    if x not in to_retrieve:
+                        print 'ERROR pulled by', x, to_retrieve, update.rule_id.id, update.id, update.sdref, update.rule_id.direction, update.owner
+                if not_pulled:
+                    print update.id, update.sdref, not_pulled, update.rule_id.direction, update.owner
+            self._logger.info("1000 lines of data analyzed in %lf seconds, %d left" % (time.time() - init_time, len(update_ids) - PACK*i))
+            i += 1
+        return True
+
+    def check_not_sync(self, cr, uid, context=None):
+        entity_obj = self.pool.get('sync.server.entity')
+        date_tools = self.pool.get('date.tools')
+
+        ids = self.search(cr, uid, [('name', '!=', False)])
+        if not ids:
+            return False
+        template = self.browse(cr, uid, ids[0])
+        thresold_date = (datetime.now() + timedelta(days=-template.nb_days)).strftime('%Y-%m-%d %H:%M:%S')
+        warn_ids = entity_obj.search(cr, uid, ['|', ('last_activity', '<=', thresold_date), '&', ('last_activity', '=', False), ('create_date', '<=', thresold_date), ('state', 'in', ['validated', 'updated'])])
+        if not warn_ids:
+            return False
+
+        emails = template.name.split(',')
+        subject = _('SYNC_SERVER: instances did not perform any sync')
+        body = _('''Hello,
+The sync server detected that the following instances did not perform any sync since %d days:
+''') % template.nb_days
+
+        for entity in entity_obj.browse(cr, uid, warn_ids):
+            body += _("  - %s last sync: %s\n") % (entity.name, entity.last_activity and date_tools.get_date_formatted(cr, uid, 'datetime', entity.last_activity) or _('never'))
+
+        body += _("\n\nThis is an automatically generated email, please do not reply.\n")
+
+        tools.email_send(False, emails, subject, body)
+        return True
+
+sync_server_monitor_email()
