@@ -1978,6 +1978,28 @@ class orm_template(object):
             values = defaults
         return values
 
+    def export_sort_fld_to_read(self, cr, uid, fields):
+        """
+        Override this method if you would like to change the order of the
+        exported fields.
+        """
+        return fields
+
+    def export_filter_results(self, cr, uid, result, fields, fields2):
+        """
+        Override this method if you would like to remove some data during
+        the export.
+        """
+        return result, fields, fields2
+
+    def export_get_fld_realname(self, cr, uid, fields):
+        """
+        Override this method if you would like to get the realname of the
+        fields to the header of the exported file.
+        """
+        return fields
+
+
 class orm_memory(orm_template):
 
     _protected = ['read', 'write', 'create', 'default_get', 'perm_read', 'unlink', 'fields_get', 'fields_view_get', 'search', 'name_get', 'distinct_field_get', 'name_search', 'copy', 'import_data', 'search_count', 'exists']
