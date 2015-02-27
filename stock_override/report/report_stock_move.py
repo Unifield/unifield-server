@@ -21,12 +21,14 @@
 
 import tools
 import time
+import threading
 
 from report import report_sxw
 from osv import fields,osv
 from decimal_precision import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
+from service.web_services import report_spool
 
 
 class report_stock_move(osv.osv):
@@ -321,6 +323,12 @@ product will be shown.""",
         'expiry_date': fields.date(
             string='Specific expiry date',
         ),
+        'location_id': fields.many2one(
+            'stock.location',
+            string='Specific location',
+            help="""If a location is choosen, only stock moves that comes
+from/to this location will be shown.""",
+        ),
         'date_from': fields.date(
             string='From',
         ),
@@ -336,6 +344,14 @@ product will be shown.""",
             string='State',
             readonly=True,
         ),
+        'exported_file': fields.binary(
+            string='Exported file',
+        ),
+        'file_name': fields.char(
+            size=128,
+            string='Filename',
+            readonly=True,
+        ),
     }
 
     _defaults = {
@@ -345,13 +361,16 @@ product will be shown.""",
                     cr, uid, 'export.report.stock.move', context=c)
     }
 
+    def update(self, cr, uid, ids, context=None):
+        return {}
+
     def generate_report(self, cr, uid, ids, context=None):
         """
         Select the good lines on the report.stock.move table
         """
         rsm_obj = self.pool.get('report.stock.move')
         lot_obj = self.pool.get('stock.production.lot')
-        model_obj = self.pool.get('ir.model.data')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -361,7 +380,6 @@ product will be shown.""",
 
         for report in self.browse(cr, uid, ids, context=context):
             domain = [
-                ('type', 'in', ['in', 'out']),
                 '|',
                 ('product_qty_in', '!=', 0),
                 ('product_qty_out', '!=', 0),
@@ -385,11 +403,19 @@ product will be shown.""",
             if rt_ids:
                 domain.append(('reason_type_id', 'in', rt_ids))
 
+            if report.location_id:
+                domain.extend([
+                    '|',
+                    ('location_id', '=', report.location_id.id),
+                    ('location_dest_id', '=', report.location_id.id),
+                ])
+
             context['domain'] = domain
 
             rsm_ids = rsm_obj.search(cr, uid, domain, context=context)
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'state': 'in_progress',
             })
 
             datas = {
@@ -397,36 +423,70 @@ product will be shown.""",
                 'moves': rsm_ids,
             }
 
-            background_id = self.pool.get('memory.background.report').create(
-                cr, uid, {
-                    'file_name': 'move_analysis.xls',
-                    'report_name': 'stock.move.xls',
-                }, context=context)
+            cr.commit()
+            new_thread = threading.Thread(
+                target=self.generate_report_bkg,
+                args=(cr, uid, report.id, datas, context)
+            )
+            new_thread.start()
+            new_thread.join(30.0)
 
-            return {
-                'type': 'ir.actions.report.xml',
-                'report_name': 'stock.move.xls',
-                'datas': datas,
-                'nodestroy': True,
-                'context': context,
-            }
-
-            view_id = model_obj.get_object_reference(
-                cr, uid, 'stock', 'view_stock_tree2')[1]
-            return {
+            res = {
                 'type': 'ir.actions.act_window',
-                'res_model': 'report.stock.move',
-                'view_id': [view_id],
+                'res_model': self._name,
                 'view_type': 'form',
-                'view_mode': 'tree,form',
-                'domain': [('id', 'in', rsm_ids)],
+                'view_mode': 'form,tree',
+                'res_id': report.id,
                 'context': context,
+                'target': 'same',
             }
+            if new_thread.isAlive():
+                view_id = data_obj.get_object_reference(
+                    cr, uid,
+                    'stock_override', 'export_report_stock_move_info_view')[1]
+                res['view_id'] = [view_id]
+
+            return res
 
         raise osv.except_osv(
             _('Error'),
             _('No stock moves found for these parameters')
         )
+
+    def generate_report_bkg(self, cr, uid, ids, datas, context=None):
+        """
+        Generate the report in background
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        import pooler
+        new_cr = pooler.get_db(cr.dbname).cursor()
+
+        rp_spool = report_spool()
+        result = rp_spool.exp_report(cr.dbname, uid, 'stock.move.xls', ids, datas, context)
+        file_res = {'state': False}
+        while not file_res.get('state'):
+            file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+            time.sleep(0.5)
+        attachment = self.pool.get('ir.attachment')
+        attachment.create(new_cr, uid, {
+            'name': 'move_analysis_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'datas_fname': 'move_analysis_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'description': 'Move analysis',
+            'res_model': 'export.report.stock.move',
+            'res_id': ids[0],
+            'datas': file_res.get('result'),
+        })
+        self.write(cr, uid, ids, {'state': 'ready'}, context=context)
+
+        new_cr.commit()
+        new_cr.close()
+
+        return True
 
 export_report_stock_move()
 
