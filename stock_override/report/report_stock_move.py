@@ -20,8 +20,13 @@
 ##############################################################################
 
 import tools
+import time
+
+from report import report_sxw
 from osv import fields,osv
 from decimal_precision import decimal_precision as dp
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from tools.translate import _
 
 
 class report_stock_move(osv.osv):
@@ -58,6 +63,26 @@ class report_stock_move(osv.osv):
         
         return res
 
+    def _get_src_dest(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns the name of the partner of IN or of OUT instead of name
+        of the location.
+        """
+        res = {}
+
+        for report in self.browse(cr, uid, ids, context=context):
+            res[report.id] = {
+                'source_name': report.location_id.name,
+                'destination_name': report.location_dest_id.name,
+            }
+            if report.picking_id and report.picking_id.partner_id:
+                if report.picking_id.type == 'in':
+                    res[report.id]['source_name'] = report.picking_id.partner_id.name
+                elif report.picking_id.type == 'out':
+                    res[report.id]['destination_name'] = report.picking_id.partner_id.name
+
+        return res
+
     _columns = {
         'date': fields.date('Date', readonly=True),
         'year': fields.char('Year', size=4, readonly=True),
@@ -76,16 +101,16 @@ class report_stock_move(osv.osv):
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True),
         'product_qty':fields.integer('Quantity',readonly=True),
         'categ_id': fields.many2one('product.nomenclature', 'Family', ),
-        'product_qty_in':fields.integer('In Qty',readonly=True),
-        'product_qty_out':fields.integer('Out Qty',readonly=True),
+        'product_qty_in':fields.float('In Qty',readonly=True),
+        'product_qty_out':fields.float('Out Qty',readonly=True),
         'value' : fields.float('Total Value', required=True),
         'day_diff2':fields.float('Lag (Days)',readonly=True,  digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
         'day_diff1':fields.float('Planned Lead Time (Days)',readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
         'day_diff':fields.float('Execution Lead Time (Days)',readonly=True,  digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
         'stock_journal': fields.many2one('stock.journal','Stock Journal', select=True),
-        'order_type': fields.function(_get_order_information, method=True, string='Order Type', type='selection', 
-                                      selection=[('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
-                                                 ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
+        'order_type': fields.function(_get_order_information, method=True, string='Order Type', type='selection',
+                                      selection=[('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+                                                 ('donation_st', 'Standard donation'), ('loan', 'Loan'),
                                                  ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
                                                  ('direct', 'Direct Purchase Order')], multi='move_order'),
         'comment': fields.char(size=128, string='Comment'),
@@ -95,6 +120,11 @@ class report_stock_move(osv.osv):
         'move': fields.many2one('stock.move', string='Move'),
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type'),
         'currency_id': fields.many2one('res.currency', string='Currency'),
+        'product_code': fields.related('product_id', 'default_code', type='char', string='Product Code'),
+        'product_name': fields.related('product_id', 'name', type='char', string='Product Name'),
+        'expiry_date': fields.related('prodlot_id', 'life_date', type='date', string='Expiry Date'),
+        'source_name': fields.function(_get_src_dest, method=True, string='Source Location', type='char', multi='src_dest'),
+        'destination_name': fields.function(_get_src_dest, method=True, string='Destination Location', type='char', multi='src_dest'),
     }
 
     def init(self, cr):
@@ -162,7 +192,7 @@ class report_stock_move(osv.osv):
                         sm.prodlot_id as prodlot_id,
                         sm.comment as comment,
                         sm.tracking_id as tracking_id,
-                        CASE 
+                        CASE
                           WHEN sp.type in ('out') THEN
                             sum((-sm.product_qty / pu.factor) * u.factor)
                           WHEN sp.type in ('in') THEN
@@ -211,7 +241,7 @@ class report_stock_move(osv.osv):
             fields = []
         context['with_expiry'] = 1
         return super(report_stock_move, self).read(cr, uid, ids, fields, context, load)
-    
+
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
         '''
         Add functional currency on all lines
@@ -244,7 +274,202 @@ class report_stock_move(osv.osv):
                     data.update({'product_qty_in': ''})
                 if not product_id and 'product_qty_out' in data:
                     data.update({'product_qty_out': ''})
-                
+
         return res
 
 report_stock_move()
+
+
+class export_report_stock_move(osv.osv):
+    _name = 'export.report.stock.move'
+
+    _columns = {
+        'company_id': fields.many2one(
+            'res.company',
+            string='DB/Instance name',
+            readonly=True,
+        ),
+        'name': fields.datetime(
+            string='Generated on',
+            readonly=True,
+        ),
+        'partner_id': fields.many2one(
+            'res.partner',
+            string='Specific partner',
+            help="""If a partner is choosen, only stock moves that comes
+from/to this partner will be shown.""",
+        ),
+        'reason_type_ids': fields.many2many(
+            'stock.reason.type',
+            'report_stock_move_reason_type_rel',
+            'report_id',
+            'reason_type_id',
+            string='Specific reason types',
+            help="""Only stock moves that have one of these reason types will
+be shown on the report""",
+        ),
+        'product_id': fields.many2one(
+            'product.product',
+            string='Specific product',
+            help="""If a product is choosen, only stock moves that move this
+product will be shown.""",
+        ),
+        'prodlot_id': fields.many2one(
+            'stock.production.lot',
+            string='Specific batch',
+        ),
+        'expiry_date': fields.date(
+            string='Specific expiry date',
+        ),
+        'date_from': fields.date(
+            string='From',
+        ),
+        'date_to': fields.date(
+            string='To',
+        ),
+        'state': fields.selection(
+            selection=[
+                ('draft', 'Draft'),
+                ('in_progress', 'In Progress'),
+                ('ready', 'Ready'),
+            ],
+            string='State',
+            readonly=True,
+        ),
+    }
+
+    _defaults = {
+        'state': 'draft',
+        'company_id': lambda s,cr,uid,c: s.pool.get('res.company').\
+                _company_default_get(
+                    cr, uid, 'export.report.stock.move', context=c)
+    }
+
+    def generate_report(self, cr, uid, ids, context=None):
+        """
+        Select the good lines on the report.stock.move table
+        """
+        rsm_obj = self.pool.get('report.stock.move')
+        lot_obj = self.pool.get('stock.production.lot')
+        model_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for report in self.browse(cr, uid, ids, context=context):
+            domain = [
+                ('type', 'in', ['in', 'out']),
+                '|',
+                ('product_qty_in', '!=', 0),
+                ('product_qty_out', '!=', 0),
+            ]
+            if report.partner_id:
+                domain.append(('partner_id', '=', report.partner_id.id))
+            if report.product_id:
+                domain.append(('product_id', '=', report.product_id.id))
+            if report.prodlot_id:
+                domain.append(('prodlot_id', '=', report.prodlot_id.id))
+            if report.expiry_date:
+                domain.append(('prodlot_id.life_date', '=', report.expiry_date))
+            if report.date_from:
+                domain.append(('date', '>=', report.date_from))
+            if report.date_to:
+                domain.append(('date', '<=', report.date_to))
+
+            rt_ids = []
+            for rt in report.reason_type_ids:
+                rt_ids.append(rt.id)
+            if rt_ids:
+                domain.append(('reason_type_id', 'in', rt_ids))
+
+            context['domain'] = domain
+
+            rsm_ids = rsm_obj.search(cr, uid, domain, context=context)
+            self.write(cr, uid, [report.id], {
+                'name': time.strftime('%Y-%m-%d %H:%M:%S'),
+            })
+
+            datas = {
+                'ids': [report.id],
+                'moves': rsm_ids,
+            }
+
+            background_id = self.pool.get('memory.background.report').create(
+                cr, uid, {
+                    'file_name': 'move_analysis.xls',
+                    'report_name': 'stock.move.xls',
+                }, context=context)
+
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'stock.move.xls',
+                'datas': datas,
+                'nodestroy': True,
+                'context': context,
+            }
+
+            view_id = model_obj.get_object_reference(
+                cr, uid, 'stock', 'view_stock_tree2')[1]
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'report.stock.move',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', rsm_ids)],
+                'context': context,
+            }
+
+        raise osv.except_osv(
+            _('Error'),
+            _('No stock moves found for these parameters')
+        )
+
+export_report_stock_move()
+
+
+class parser_report_stock_move_xls(report_sxw.rml_parse):
+
+    def __init__(self, cr, uid, name, context=None):
+        super(parser_report_stock_move_xls, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'getLines': self.getLines,
+        })
+
+    def getLines(self):
+        res = []
+        for move in self.pool.get('report.stock.move').browse(
+            self.cr,
+            self.uid,
+            self.datas['moves'],
+        ):
+            res.append({
+                'product_code': move.product_code,
+                'product_name': move.product_name,
+                'uom': move.product_uom.name,
+                'batch': move.prodlot_id and move.prodlot_id.name or '',
+                'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
+                'qty_in': move.product_qty_in or 0.00,
+                'qty_out': move.product_qty_out or 0.00,
+                'source': move.source_name,
+                'destination': move.destination_name,
+                'reason_code': move.reason_type_id and move.reason_type_id.name or '',
+                'doc_ref': move.picking_id and move.picking_id.name or '',
+            })
+        return res
+
+
+class report_stock_move_xls(SpreadsheetReport):
+
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(report_stock_move_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        a = super(report_stock_move_xls, self).create(cr, uid, ids, data, context=context)
+        return (a[0], 'xls')
+
+report_stock_move_xls('report.stock.move.xls', 'export.report.stock.move', 'addons/stock_override/report/report_stock_move_xls.mako', parser=parser_report_stock_move_xls, header='internal')

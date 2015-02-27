@@ -114,5 +114,117 @@
         </field>
     </record>
 
+    <record id="export_report_stock_move_tree_view" model="ir.ui.view">
+        <field name="name">export.report.stock.move.tree.view</field>
+        <field name="model">export.report.stock.move</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Export Moves Analysis">
+                <field name="name" />
+                <field name="date_from" />
+                <field name="date_to" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="export_report_stock_move_search_view" model="ir.ui.view">
+        <field name="name">export.report.stock.move.search.view</field>
+        <field name="model">export.report.stock.move</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Export Moves Analysis">
+                <field name="name" />
+                <field name="date_from" />
+                <field name="date_to" />
+            </search>
+        </field>
+    </record>
+
+    <record id="export_report_stock_move_form_view" model="ir.ui.view">
+        <field name="name">export.report.stock.move.form.view</field>
+        <field name="model">export.report.stock.move</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Export Moves Analysis">
+                <separator colspan="4" string="Request information" />
+                <field name="name" />
+                <field name="company_id" />
+                <separator colspan="4" string="Report parameters" />
+                <field name="date_from" />
+                <field name="date_to" />
+                <separator colspan="4" string="Advanced filters" />
+                <field name="partner_id" />
+                <field name="product_id" attrs="{'readonly': [('prodlot_id', '!=', False)]}" />
+                <field name="prodlot_id" domain="[('product_id', '=', product_id)]" attrs="{'readonly': [('expiry_date', '!=', False)]}" />
+                <field name="expiry_date" attrs="{'readonly': [('prodlot_id', '!=', False)]}" />
+                <field name="reason_type_ids" colspan="4" />
+                <separator colspan="4" string="Actions" />
+                <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
+                <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
+                <button name="get_file" type="object" string="Get file" icon="gtk-print" states="ready" />
+                <field name="state" invisible="1" />
+            </form>
+        </field>
+    </record>
+
+    <record id="export_report_stock_move_action" model="ir.actions.act_window">
+        <field name="name">Export Moves Analysis</field>
+        <field name="res_model">export.report.stock.move</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem
+        id="export_report_stock_move_menu"
+        action="export_report_stock_move_action"
+        parent="stock.menu_action_stock_move_report" />
+
+    <record id="stock.view_stock_tree2" model="ir.ui.view">
+        <field name="name">report.stock.move.tree2</field>
+        <field name="model">report.stock.move</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Moves Analysis">
+                <field name="product_code" />
+                <field name="product_name" />
+                <field name="product_uom" />
+                <field name="prodlot_id" />
+                <field name="expiry_date" />
+                <field name="product_qty_in" />
+                <field name="product_qty_out" />
+                <field name="source_name" />
+                <field name="destination_name" />
+                <field name="reason_type_id" />
+                <field name="picking_id" />
+                <field name="date" invisible="1"/>
+                <field name="year" invisible="1" />
+                <field name="month" invisible="1"/>
+                <field name="day" invisible="1"/>
+                <field name="type" invisible="1"/>
+                <field name="company_id" invisible="1"/>
+                <field name="location_id" invisible="1"/>
+                <field name="location_dest_id" invisible="1"/>
+                <field name="categ_id" invisible="1"/>
+                <field name="state" invisible="1"/>
+                <field name="comment" invisible="1"/>
+                <field name="order_type" invisible="1"/>
+                <field name="origin" invisible="1"/>
+                <field name="currency_id" invisible="1" />
+           </tree>
+        </field>
+    </record>
+
+    <report
+        id="report_stock_move_xls"
+        string="Export Moves Analysis"
+        model="export.report.stock.move"
+        name="stock.move.xls"
+        file="stock_override/report/report_stock_move_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"
+        />
+
 </data>
 </openerp>
