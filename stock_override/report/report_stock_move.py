@@ -76,12 +76,20 @@ class report_stock_move(osv.osv):
             res[report.id] = {
                 'source_name': report.location_id.name,
                 'destination_name': report.location_dest_id.name,
+                'move_type': 'internal',
             }
             if report.picking_id and report.picking_id.partner_id:
                 if report.picking_id.type == 'in':
-                    res[report.id]['source_name'] = report.picking_id.partner_id.name
-                elif report.picking_id.type == 'out':
+                    res[report.id].update({
+                        'source_name': report.picking_id.partner_id.name,
+                        'move_type': 'in',
+                    })
+                elif report.picking_id.type == 'out' and report.location_dest_id.usage in ['customer', 'supplier']:
                     res[report.id]['destination_name'] = report.picking_id.partner_id.name
+                    res[report.id].update({
+                        'destination_name': report.picking_id.partner_id.name,
+                        'move_type': 'out',
+                    })
 
         return res
 
@@ -127,6 +135,7 @@ class report_stock_move(osv.osv):
         'expiry_date': fields.related('prodlot_id', 'life_date', type='date', string='Expiry Date'),
         'source_name': fields.function(_get_src_dest, method=True, string='Source Location', type='char', multi='src_dest'),
         'destination_name': fields.function(_get_src_dest, method=True, string='Destination Location', type='char', multi='src_dest'),
+        'move_type': fields.function(_get_src_dest, method=True, string='Move typ', type='char', multi='src_dest'),
     }
 
     def init(self, cr):
@@ -378,8 +387,12 @@ from/to this location will be shown.""",
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        loc_usage = ['supplier', 'customer', 'internal']
         for report in self.browse(cr, uid, ids, context=context):
             domain = [
+                ('location_id.usage', 'in', loc_usage),
+                ('location_dest_id.usage', 'in', loc_usage),
+                ('state', '=', 'done'),
                 '|',
                 ('product_qty_in', '!=', 0),
                 ('product_qty_out', '!=', 0),
@@ -507,7 +520,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             self.uid,
             self.datas['moves'],
         ):
-            res.append({
+            move_vals = {
                 'product_code': move.product_code,
                 'product_name': move.product_name,
                 'uom': move.product_uom.name,
@@ -519,7 +532,24 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 'destination': move.destination_name,
                 'reason_code': move.reason_type_id and move.reason_type_id.name or '',
                 'doc_ref': move.picking_id and move.picking_id.name or '',
-            })
+            }
+            if move.type in ('in', 'out') and (
+                move.location_id.usage in ['customer', 'supplier'] or
+                move.location_dest_id.usage in ['customer', 'supplier']):
+                res.append(move_vals)
+            else:
+                move_vals_in = move_vals.copy()
+                move_vals_out = move_vals.copy()
+                move_vals_in.update({
+                    'qty_in': move.product_qty_in or move.product_qty_out,
+                    'qty_out': 0.00,
+                })
+                move_vals_out.update({
+                    'qty_in': 0.00,
+                    'qty_out': move.product_qty_out or move.product_qty_in,
+                })
+                res.append(move_vals_out)
+                res.append(move_vals_in)
         return res
 
 
