@@ -481,7 +481,7 @@ from/to this location will be shown.""",
             'res_id': ids[0],
             'datas': file_res.get('result'),
         })
-        self.write(cr, uid, ids, {'state': 'ready'}, context=context)
+        self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
 
         new_cr.commit()
         new_cr.close()
