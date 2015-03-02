@@ -334,7 +334,7 @@ class product_attributes(osv.osv):
         'old_code' : fields.char('Old code', size=64),
         'new_code' : fields.char('New code', size=64),
 
-        'international_status': fields.many2one('product.international.status', 'Product Creator', required=True),
+        'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
@@ -427,11 +427,14 @@ class product_attributes(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
-        id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1') and self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')[1] or 1
-        res.update({'international_status': id })
-        return res
+    # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
+    # in the field (international_status) declaration and put required=True in the XML view, the default value
+    # is blank and the field is mandatory before save
+    #def default_get(self, cr, uid, fields, context=None):
+    #    res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
+    #    id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1') and self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')[1] or 1
+    #    res.update({'international_status': id })
+    #    return res
 
     _defaults = {
         'duplicate_ok': True,
@@ -1207,6 +1210,32 @@ class product_uom(osv.osv):
     _columns = {
         'compatible_product_id': fields.function(_get_dummy, fnct_search=_get_compatible_uom, method=True, type='boolean', string='Compatible UoM'),
     }
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the deleted product category is not a system one
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        uom_data_id = [
+            'uom_tbd',
+            ]
+
+        for data_id in uom_data_id:
+            try:
+                uom_id = data_obj.get_object_reference(
+                    cr, uid, 'msf_doc_import', data_id)[1]
+                if uom_id in ids:
+                    uom_name = self.read(cr, uid, uom_id, ['name'])['name'] 
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''The UoM '%s' is an Unifield internal
+Uom, so you can't remove it''' % uom_name),
+                    )
+            except ValueError:
+                pass
+
+        return super(product_uom, self).unlink(cr, uid, ids, context=context)
 
 product_uom()
 

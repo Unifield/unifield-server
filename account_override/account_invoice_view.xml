@@ -342,7 +342,7 @@
             <field name="arch" type="xml">
                 <form string="In-kind Donation" hide_duplicate_button="1">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" widget="selection"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', 'inkind')]" on_change="onchange_journal_id(journal_id)"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="is_inkind_donation" invisible="1"/>
@@ -456,7 +456,7 @@
             <field name="arch" type="xml">
                 <form string="Intermission Voucher" hide_duplicate_button="1">
                     <group colspan="4" col="8">
-                        <field name="fake_journal_id" domain="[('is_current_instance','=',True)]" widget="selection" />
+                        <field name="fake_journal_id" domain="[('is_current_instance','=',True)]" />
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="is_intermission" invisible="1"/>

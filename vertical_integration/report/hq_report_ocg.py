@@ -53,9 +53,8 @@ class hq_report_ocg(report_sxw.report_sxw):
     def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period_name, department_info):
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
-        if len(line_key) > 2 and line_debit != 0.0:
-            journal = pool.get('account.journal').browse(cr, uid, line_key[1])
-            currency = pool.get('res.currency').browse(cr, uid, line_key[2])
+        if len(line_key) > 1 and line_debit != 0.0:
+            currency = pool.get('res.currency').browse(cr, uid, line_key[1])
             description = ""
             # Description for the line
             if line_key[0] == "1000 0000":
@@ -70,10 +69,10 @@ class hq_report_ocg(report_sxw.report_sxw):
                     if account_values != "":
                         account_values += "-"
                     account_values += mapping.account_id.code
-                description = "Mvts_" + account_values + period_name + journal.code + "_" + currency.name
+                description = "Mvts_" + account_values + period_name + "_" + currency.name
             
-            return [[journal.instance_id and journal.instance_id.code or "",
-                     journal.code,
+            return [["", # US-20 was 'journal.instance_id.code' now breakdown account+ccy instead of account+journal+ccy
+                     "",  # US-20 was 'journal.code' now breakdown account+ccy instead of account+journal+ccy
                      "",
                      description,
                      "",
@@ -187,9 +186,9 @@ class hq_report_ocg(report_sxw.report_sxw):
                 main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
             else:
                 translated_account_code = self.translate_account(cr, uid, pool, account)
-                if (translated_account_code, journal.id, currency.id) not in account_lines_debit:
-                    account_lines_debit[(translated_account_code, journal.id, currency.id)] = 0.0
-                account_lines_debit[(translated_account_code, journal.id, currency.id)] += (move_line.debit_currency - move_line.credit_currency)
+                if (translated_account_code, currency.id) not in account_lines_debit:
+                    account_lines_debit[(translated_account_code, currency.id)] = 0.0
+                account_lines_debit[(translated_account_code, currency.id)] += (move_line.debit_currency - move_line.credit_currency)
                             
                             
                             

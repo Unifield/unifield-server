@@ -52,7 +52,7 @@
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
+                                    <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
                                         <field name="transfer_amount" invisible="1"/>
                                         <field name="red_on_supplier" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
@@ -101,6 +101,10 @@
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                             context="context"/>
                                         <field name="state" readonly="True"/>
+                                        <button name="delete_button" states="draft,temp,unknown"
+                                            string="Delete" type="object" icon="gtk-del"
+                                            context="context"
+                                            confirm='Do you really want to delete selected record(s) ?' />
                                         <field name="from_import_cheque_id" invisible="1"/>
                                     </tree>
                                     <form string="Statement lines">
@@ -195,7 +199,7 @@
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
+                                    <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
                                       <field name="transfer_amount" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
@@ -251,6 +255,10 @@
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                             context="context"/>
                                         <field name="state" readonly="True"/>
+                                        <button name="delete_button" states="draft,temp,unknown"
+                                            string="Delete" type="object" icon="gtk-del"
+                                            context="context"
+                                            confirm='Do you really want to delete selected record(s) ?' />
                                         <field name="employee_id" invisible="1"/>
                                     </tree>
                                     <form string="Statement lines">
@@ -368,7 +376,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="20" />
             <field name="arch" type="xml">
-                <tree string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True" hide_new_button="1">
+                <tree hide_delete_button="1" string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True" hide_new_button="1">
                     <button name="button_advance" states="hard" string="Advance return" type="object" 
                         icon="terp-stock_effects-object-colorize" context="context"
                         attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0),'|', 
@@ -396,6 +404,10 @@
                     <field name="state"/>
                     <field name="statement_id" string="Register Name" readonly="1"/><!-- Pay ATTENTION that string="Register Name" had been added by UF-1736 -->
                     <field name="direct_invoice" invisible="1" readonly="1"/>
+                    <button name="delete_button" states="draft,temp,unknown"
+                            string="Delete" type="object" icon="gtk-del"
+                            context="context"
+                            confirm='Do you really want to delete selected record(s) ?' />
                 </tree>
             </field>
         </record>
@@ -688,7 +700,7 @@
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
-                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
+                                <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
                                     <field name="transfer_amount" invisible="1"/>
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
@@ -733,6 +745,10 @@
                                     <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                         context="context"/>
                                     <field name="state" readonly="True"/>
+                                    <button name="delete_button" states="draft,temp,unknown"
+                                            string="Delete" type="object" icon="gtk-del"
+                                            context="context"
+                                            confirm='Do you really want to delete selected record(s) ?' />
                                 </tree>
                                 <form string="Statement lines">
                                     <field name="document_date"/>

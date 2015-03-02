@@ -374,10 +374,12 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                     if not line.write_access:
                         if domains.get(line.field.name, False) != True:
                             if rule.domain_text and rule.domain_text != '[]':
-                                domains[line.field.name] = domains.get(line.field.name, []) + (eval(rule.domain_text))
+                                if domains.get(line.field.name, []):
+                                    domains[line.field.name] = ['|'] + domains.get(line.field.name, []) + (eval(rule.domain_text))
+                                else:
+                                    domains[line.field.name] = eval(rule.domain_text)
                             else:
                                 domains[line.field.name] = True
-
             # Edit the view xml by adding the rule domain to the rule's field if that field is in the xml
             if domains:
 

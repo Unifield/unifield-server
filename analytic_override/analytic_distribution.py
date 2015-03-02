@@ -224,7 +224,7 @@ class distribution_line(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=64),
-        "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution', ondelete='cascade'),
+        "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution', ondelete='cascade', select="1"), # select is for optimisation purposes. Example: 3 seconds on 1 invoice creation+validation
         "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account'),
         "amount": fields.float('Amount', digits_compute=dp.get_precision('Account')),
         "percentage": fields.float('Percentage', digits=(16,4)),

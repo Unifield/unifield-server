@@ -97,7 +97,7 @@
         % if o.order_id.date_order not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(o.order_id.date_order)|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ></Cell>
         % endif
     </Row>
 
@@ -137,14 +137,14 @@
         % if o.in_ready_to_ship_date not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(o.in_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ></Cell>
         % endif
         % if o.imp_ready_to_ship_date != o.in_ready_to_ship_date:
         <Cell ss:StyleID="line_change_short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
         % elif o.imp_ready_to_ship_date not in ('False', False):
         <Cell ss:StyleID="short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ss:MergeAcross="1" ></Cell>
         % endif
     </Row>
 
@@ -153,14 +153,14 @@
         % if o.in_shipment_date not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(o.in_shipment_date)|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ></Cell>
         % endif
         % if o.imp_shipment_date != o.in_shipment_date:
         <Cell ss:StyleID="line_change_short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_shipment_date)|n}T00:00:00.000</Data></Cell>
         % elif o.imp_shipment_date not in ('False', False):
         <Cell ss:StyleID="short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_shipment_date)|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ss:MergeAcross="1" ></Cell>
         % endif
     </Row>
 
@@ -263,7 +263,7 @@
         % if l.in_dcd not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.in_dcd)|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ></Cell>
         % endif
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.in_price or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.in_currency and obj_name_get('res.currency', l.in_currency.id) or '')|x}</Data></Cell>
@@ -299,14 +299,14 @@
         % elif l.imp_drd not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.imp_drd)|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ></Cell>
         % endif
         % if l.in_dcd != l.imp_dcd and l.imp_dcd not in ('False', False):
         <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
         % elif l.imp_dcd not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ></Cell>
         % endif
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_esc1 or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_esc2 or '')|x}</Data></Cell>

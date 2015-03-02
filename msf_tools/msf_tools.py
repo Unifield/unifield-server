@@ -186,6 +186,23 @@ class fields_tools(osv.osv):
         
         result = [x.id for x in browse_list]
         return result
+
+    def remove_sql_constraint(self, cr, table_name, field_name):
+        """
+        remove from field the constraint if it exists in current schema
+        (orm does not remove _sql_constraint removed items)
+        """
+        # table name and constraint name (tablename_fieldname) params
+        sql_params = (table_name, "%s_%s" % (table_name, field_name, ), )
+        tpl_has_const = "select count(constraint_name) from" \
+            " information_schema.constraint_column_usage where" \
+            " table_name=%s and constraint_name=%s"
+        cr.execute(tpl_has_const, sql_params)
+        res_record = cr.fetchone()
+        if res_record and res_record[0]:
+            # drop existing constraint
+            tpl_drop_const = "alter table %s drop constraint %s" % sql_params
+            cr.execute(tpl_drop_const)
     
 fields_tools()
     

@@ -117,6 +117,7 @@
                 <data>
                     <xpath expr="/form" position="attributes">
                         <attribute name='hide_delete_button'>1</attribute>
+                        <attribute name='hide_duplicate_button'>1</attribute>
                     </xpath>
                 </data>
             </field>

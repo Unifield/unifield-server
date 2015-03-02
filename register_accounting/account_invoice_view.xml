@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
                     <group colspan="4" col="6">
-                        <field name="journal_id" domain="[('is_current_instance','=',True),('type','=','purchase')]" on_change="onchange_journal_id(journal_id)" widget="selection"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True),('type','=','purchase')]" on_change="onchange_journal_id(journal_id)"/>
                         <field name="number" readonly="1" />
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />

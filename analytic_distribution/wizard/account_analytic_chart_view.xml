@@ -9,6 +9,14 @@
             <field name="inherit_id" ref="account.account_analytic_chart_view"/>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="//field[@name='from_date']" position="replace">
+                        <field name="period_from" /> <!-- utp-1030/13 -->
+                        <field name="from_date" invisible="1" />
+                    </xpath>
+                    <xpath expr="//field[@name='to_date']" position="replace">
+                        <field name="period_to" /> <!-- utp-1030/13 -->
+                        <field name="to_date" invisible="1" />
+                    </xpath>
                     <xpath expr="//separator[@string='Select the Period for Analysis']" position="replace">
                         <field name="fiscalyear" on_change="onchange_fiscalyear(fiscalyear)"/>
                         <separator string="Periods"/>

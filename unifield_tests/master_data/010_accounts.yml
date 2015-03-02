@@ -108,8 +108,12 @@
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
-    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
     parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_6101}:
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
 -
   I create a 6270 Expense Account.
 -
@@ -123,8 +127,12 @@
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
-    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
     parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_6270}:
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
 -
   I create a 6301 Expense Account.
 -
@@ -138,8 +146,12 @@
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
-    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
     parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_6301}:
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
 -
   I create Cash Advance 4204 Account.
 -
@@ -154,8 +166,12 @@
     reconcile: 1
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_national_staff
-    destination_ids: [analytic_distribution.analytic_account_destination_national_staff]
     parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_advance0}:
+    destination_ids: [analytic_distribution.analytic_account_destination_national_staff]
 -
   I create an adjustement account
 -
@@ -170,8 +186,12 @@
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
-    destination_ids: [analytic_distribution.analytic_account_destination_support, analytic_distribution.analytic_account_destination_operation]
     parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_adjustement0}:
+    destination_ids: [analytic_distribution.analytic_account_destination_support, analytic_distribution.analytic_account_destination_operation]
 -
   I create a 10100 Cash Account.
 -

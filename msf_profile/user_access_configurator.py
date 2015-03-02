@@ -436,24 +436,27 @@ class user_access_configurator(osv.osv_memory):
 
         # objects
         menu_obj = self.pool.get('ir.ui.menu')
+        groups_obj = self.pool.get('res.groups')
         # data structure
         data_structure = context['data_structure']
         # get all menus from database
         all_menus_context = dict(context)
         all_menus_context.update({'ir.ui.menu.full_list': True})
         db_menu_ids = menu_obj.search(cr, uid, [], context=all_menus_context)
-
+        admin_group_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
+        groups_to_write = {}
         for obj in self.browse(cr, uid, ids, context=context):
             # check each menus from database
             for db_menu_id in db_menu_ids:
                 # group ids to be linked to
                 group_ids = []
+                groups_not_in_file = []
+                db_menu = menu_obj.browse(cr, uid, db_menu_id, context=context)
                 # UF-1996 : If the items found in the import file, then modify accordingly (do not delete and re create).
                 # If the menu entry is in file but with no groups, set the Admin rights on it
                 if db_menu_id in data_structure[obj.id]['menus_groups'] and not data_structure[obj.id]['menus_groups'].get(db_menu_id):
                     # we modify the groups to admin only if the menu is not linked to one of the group of DNCGL
                     skip_update = False
-                    db_menu = menu_obj.browse(cr, uid, db_menu_id, context=context)
                     dncgl_ids = self._get_DNCGL_ids(cr, uid, ids, context=context)
                     for group in db_menu.groups_id:
                         if group.id in dncgl_ids:
@@ -461,14 +464,36 @@ class user_access_configurator(osv.osv_memory):
                     # the menu does not exist in the file OR the menu does not belong to any group
                     # link (6,0,[id]) to administration / access rights
                     if not skip_update:
-                        admin_group_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
                         group_ids = [admin_group_id]
                 elif data_structure[obj.id]['menus_groups'].get(db_menu_id, []):
                     # find the id of corresponding groups, and write (6,0, ids) in groups_id
                     group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=data_structure[obj.id]['menus_groups'][db_menu_id])
+                for group in db_menu.groups_id:
+                    if group.name not in data_structure[obj.id]['group_name_list'] and group.id != admin_group_id:
+                        groups_not_in_file.append(group.id)
+
                 # link the menu to selected group ids
                 if group_ids:
-                    menu_obj.write(cr, uid, [db_menu_id], {'groups_id': [(6, 0, group_ids)]}, context=context)
+                    if groups_not_in_file:
+                        # remove from menu object groups not listed in the file
+                        menu_obj.write(cr, uid, [db_menu_id], {'groups_id': [(3,x) for x in groups_not_in_file]}, context=context)
+                    for gp_id in group_ids:
+                        groups_to_write.setdefault(gp_id, [])
+                        groups_to_write[gp_id].append(db_menu_id)
+            grp_ids = groups_obj.search(cr, uid, [], context=context)
+            all_menu_in_file = data_structure[obj.id]['menus_groups'].keys()
+
+            # keep in group menu not listed in the file
+            for group in groups_obj.browse(cr, uid, grp_ids):
+                if group.id in groups_to_write:
+                    access_not_in_file = [x.id for x in group.menu_access if x.id not in all_menu_in_file]
+                    if access_not_in_file:
+                        groups_to_write[group.id] += access_not_in_file
+                if group.name in data_structure[obj.id]['group_name_list'] and group.id not in groups_to_write:
+                     groups_obj.write(cr, uid, [group.id], {'menu_access': [(6, 0, [])]}, context=context)
+
+            for gp_id in groups_to_write:
+                groups_obj.write(cr, uid, [gp_id], {'menu_access': [(6, 0, groups_to_write[gp_id])]}, context=context)
 
         return True
 

@@ -54,6 +54,7 @@ class UTP1007Test(ResourcingTest):
             'product_uom': uom_pce_id,
             'product_uom_qty': 100.0,
             'type': 'make_to_order',
+            'price_unit': 101.33,
         }
         self.c_sol_obj.create(line_values)
 

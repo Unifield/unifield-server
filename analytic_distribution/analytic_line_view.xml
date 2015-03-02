@@ -37,6 +37,8 @@
                         <field name="cost_center_id" invisible="not context.get('display_fp', False)"/>
                         <field name="account_id" domain="[('category', '=', context.get('categ', False) and context.get('categ') or 'FUNDING'), ('type', '!=', 'view')]"/>
                         <field name="is_reallocated"/>
+                        <newline/>
+                        <field name="partner_txt"/>
                     </xpath>
                     <xpath expr="/search/group[1]/field[@name='name']" position='after'>
                         <field name="ref"/>

@@ -216,10 +216,6 @@ class account_bank_statement(osv.osv):
         """
         Bypass disgusting default account_bank_statement write function.
         """
-        if values.get('open_advance_amount', False):
-            values.update({'open_advance_amount': abs(values.get('open_advance_amount'))})
-        if values.get('unrecorded_expenses_amount', False):
-            values.update({'unrecorded_expenses_amount': abs(values.get('unrecorded_expenses_amount'))})
         return osv.osv.write(self, cr, uid, ids, values, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -2548,6 +2544,16 @@ class account_bank_statement_line(osv.osv):
 #                if account_id:
 #                    res['value'] = {'account_id': account_id}
         return res
+
+    def delete_button(self, cr, uid, ids, context=None):
+        """
+        delete button (except for hard posted state)
+        """
+        if not ids:
+            return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.unlink(cr, uid, ids, context=context)
 
 account_bank_statement_line()
 

@@ -23,5 +23,6 @@ import account_analytic_chart
 import analytic_distribution_wizard
 import mass_reallocation_wizard
 import import_commitment_wizard
+import commitment_analytic_reallocation
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

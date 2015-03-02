@@ -15,6 +15,7 @@
             <form string="Employee">
                 <group colspan="4" col="8">
                     <field name="allow_edition" invisible="1"/>
+                    <field name="ex_allow_edition" invisible="1"/>
                     <field colspan="6" name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="user_id" on_change="onchange_user(user_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="company_id" widget="selection" on_change="onchange_company(company_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
@@ -38,7 +39,7 @@
                             <separator colspan="2" string="Social IDs"/>
                             <field name="ssnid" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                             <field name="sinid" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
-                            <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)], 'required': [('employee_type', '=', 'local')]}"/>
+                            <field name="identification_id" attrs="{'readonly': ['|', '&amp;', ('employee_type', '=', 'local'), ('allow_edition', '=', False), '&amp;', ('employee_type', '=', 'ex'), ('ex_allow_edition', '=', False)], 'required': [('employee_type', 'in', ('local', 'ex'))]}"/>
                             <field name="passport_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                         </group>
                         <group col="2" colspan="2">

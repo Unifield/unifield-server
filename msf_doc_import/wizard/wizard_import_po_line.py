@@ -100,6 +100,7 @@ class wizard_import_po_line(osv.osv_memory):
             error_log, message = '', ''
             header_index = context['header_index']
             template_col_count = len(header_index)
+            mandatory_col_count = 7
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
 
@@ -152,7 +153,7 @@ class wizard_import_po_line(osv.osv_memory):
                     }
 
                     col_count = len(row)
-                    if col_count != template_col_count:
+                    if col_count != template_col_count and col_count != mandatory_col_count:
                         message += _("Line %s: You should have exactly %s columns in this order: %s \n") % (
                                 line_num, template_col_count,
                                 ','.join(columns_for_po_line_import))

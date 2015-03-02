@@ -73,7 +73,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Reference*')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Reference')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
     </Row>
     <Row>
@@ -124,7 +124,7 @@
         % if line.expired_date not in (False, 'False'):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.expired_date|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ></Cell>
         % endif
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>

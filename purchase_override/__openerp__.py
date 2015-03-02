@@ -36,6 +36,7 @@
         "purchase_double_validation",
         "reason_types_moves",
         "unifield_setup",
+        "msf_tools",
     ],
     "update_xml": [
         "purchase_view.xml",
@@ -46,6 +47,7 @@
         "security/ir.model.access.csv",
         "purchase_sequence.xml",
         "wizard/purchase_order_group_view.xml",
+        "purchase_data.yml",
     ],
     "demo_xml": [
     ],

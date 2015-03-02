@@ -50,7 +50,7 @@
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='partner_id2']" position="attributes">
-                    <attribute name="domain">[('customer', '=', True)]</attribute>
+                    <attribute name="domain">[('partner_type', 'in', ['esc', 'external']), ('customer', '=', True)]</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='move_lines']/tree//field[@name='location_id']" position="after">
                     <field name="location_dest_id" readonly="1" />
@@ -350,8 +350,8 @@
                                     <field name="state"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="from_wkf" invisible="1" />
-                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
-                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" context="{'from_button': True}" />
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
@@ -453,8 +453,8 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
-                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                        <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
+                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}"/>
+                                        <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
                                     </group>
                                 </form>
                             </field>
@@ -464,10 +464,10 @@
                                 <!-- <button name="return_to_state" string="Return to initial state" states="import" icon="gtk-execute" type="object" />-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object" />
                                 <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', '&amp;', ('state', 'in', ['done', 'cancel', 'import']), ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
-                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
-                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
+                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                 <button name="change_all_location" string="Change All destinations" icon="gtk-execute" type="object" states="draft,confirmed,assigned" />
-                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
+                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" context="{'from_button': True}"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                                 <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
@@ -689,8 +689,8 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
-                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                        <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
+                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+                                        <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
                                     </group>
                                 </form>
                             </field>
@@ -716,14 +716,14 @@
                                     />
 
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
-                                <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
-                                <button name="force_assign" states="" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
+                                <button name="force_assign" states="" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                 <!--
                                      To go to simulation screen, click on Process then Simulate button on the opened wizard
                                      <button name="go_to_simulation_screen" states="assigned,shipped" string="Simulate" type="object" icon="gtk-execute" attrs="{'invisible': [('is_esc', '=', False)]}" />-->
                                 <field name="progress_memory" invisible="1" />
                                 <button name="go_to_processing_wizard" states="assigned,shipped" string="Open processing wizard" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'shipped']), ('progress_memory', '=', -1), ('progress_memory_not_done', '=', False)]}" context="{'progress_wizard': True}" />
-                                <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'shipped']), ('progress_memory_not_done', '=', True)]}"/>
+                                <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'shipped']), ('progress_memory_not_done', '=', True)]}" context="{'from_button': True}"/>
                                 <group colspan="1" states="done">
                                     <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 </group>
@@ -829,6 +829,7 @@
                             <field name="partner_id2"
                                 on_change="on_change_partner(partner_id2, address_id)"
                                 required="1"
+                                domain="[('partner_type', 'in', ['esc', 'external'])]"
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
                             <field name="address_id"
@@ -888,8 +889,8 @@
                                     <field name="date" string="Actual Shipped Date"/>
                                     <field name="state"/>
                                     <field name="fake_state" invisible="1"/>
-                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned"/>
-                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" context="{'from_button': True}"/>
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}"/>
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
@@ -977,8 +978,8 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
-                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                        <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
+                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+                                        <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
                                     </group>
                                 </form>
                             </field>
@@ -991,10 +992,10 @@
                                 <!--<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object" />
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
-                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
-                                <button name="convert_to_pick" states="draft,confirmed,assigned" string="Convert to Picking Ticket" type="object" icon="gtk-convert" />
-                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available"/>
+                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}" />
+                                <button name="convert_to_pick" states="draft,confirmed,assigned" string="Convert to Picking Ticket" type="object" icon="gtk-convert" context="{'from_button': True}" />
+                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available" context="{'from_button': True}"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>

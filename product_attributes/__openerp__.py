@@ -34,6 +34,7 @@
         'data/product_section_code.xml',
         'data/product_supply_source.xml',
         'data/product_justification_code.xml',
+        'data/sale_data.yml',
     ],
     'update_xml': [
         'product_attributes_view.xml',

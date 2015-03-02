@@ -1654,6 +1654,17 @@ class purchase_order(osv.osv):
                                        'created_by_rfq': True}
                             tl_id = tl_obj.create(cr, uid, tl_vals, context=context)
                         line_obj.write(cr, uid, [line.id], {'tender_line_id': tl_id}, context=context)
+            elif rfq.rfq_ok:
+                line_ids = line_obj.search(cr, uid, [
+                    ('order_id', '=', rfq.id),
+                    ('price_unit', '=', 0.00),
+                ], count=True, context=context)
+                if line_ids:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''You cannot update an RfQ with lines without unit
+price. Please set unit price on these lines or cancel them'''),
+                    )
 
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 

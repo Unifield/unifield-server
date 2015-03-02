@@ -1,6 +1,7 @@
                     <separator string="Others" colspan="4"/>
                     <field name="ref"/>
                     <field name="name"/>
+                    <field name="cheque_number"/>
                     <separator string=" " colspan="4"/>
                     <button name="button_clear" type="object" string="Clear" icon="gtk-clear" colspan="2"/>
                     <button name="button_validate" type="object" string="Search" icon="gtk-find" colspan="2"/>

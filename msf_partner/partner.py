@@ -99,11 +99,15 @@ class res_partner(osv.osv):
         '''
         Returns information from product supplierinfo if product_id is in context
         '''
-        if not context:
+        if context is None:
             context = {}
 
         partner_price = self.pool.get('pricelist.partnerinfo')
         res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
 
         for id in ids:
             res[id] = {'price_currency': False,
@@ -145,12 +149,45 @@ class res_partner(osv.osv):
         '''
         Return True if the system configuration VA management is set to True
         '''
-        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid,).vat_ok
         res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid,).vat_ok
         for id in ids:
             res[id] = vat_ok
 
         return res
+
+    def _get_is_instance(self, cr, uid, ids, field_name, args, context=None):
+        """ return the instance's partner id """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+
+        partner_id = False
+        user = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0]
+        if user and user.company_id and user.company_id.partner_id:
+            partner_id = user.company_id.partner_id.id
+
+        for id in ids:
+            res[id] = partner_id and id == partner_id or False
+        return res
+
+    def _get_is_instance_search(self, cr, uid, ids, field_name, args,
+        context=None):
+        """ search the instance's partner id """
+        partner_id = False
+        user = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0]
+        if user and user.company_id and user.company_id.partner_id:
+            partner_id = user.company_id.partner_id.id
+        return partner_id and [('id', '=', partner_id)] or []
 
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
@@ -182,6 +219,7 @@ class res_partner(osv.osv):
         'valide_until_date' : fields.function(_get_price_info, method=True, type='char', string='Valid until date', multi='info'),
         'price_currency': fields.function(_get_price_info, method=True, type='many2one', relation='res.currency', string='Currency', multi='info'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'is_instance': fields.function(_get_is_instance, fnct_search=_get_is_instance_search, method=True, type='boolean', string='Is current instance partner id'),
     }
 
     _defaults = {
@@ -190,6 +228,30 @@ class res_partner(osv.osv):
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the deleted partner is not a system one
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        partner_data_id = [
+            'supplier_tbd',
+        ]
+
+        for data_id in partner_data_id:
+            try:
+                part_id = data_obj.get_object_reference(
+                    cr, uid, 'msf_doc_import', data_id)[1]
+                if part_id in ids:
+                    part_name = self.read(cr, uid, part_id, ['name'])['name']
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''The partner '%s' is an Unifield internal partner, so you can't remove it''' % part_name),
+                    )
+            except ValueError:
+                pass
+
+        return super(res_partner, self).unlink(cr, uid, ids, context=context)
 
     def _check_main_partner(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -530,6 +592,31 @@ res_partner()
 
 class res_partner_address(osv.osv):
     _inherit = 'res.partner.address'
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Check if the deleted address is not a system one
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        addr_data_id = [
+            'address_tbd',
+        ]
+
+        for data_id in addr_data_id:
+            try:
+                addr_id = data_obj.get_object_reference(
+                    cr, uid, 'msf_doc_import', data_id)[1]
+                if addr_id in ids:
+                    addr_name = self.read(cr, uid, addr_id, ['name'])['name']
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('''The Address '%s' is an Unifield internal address, so you can't remove it''' % addr_name),
+                    )
+            except ValueError:
+                pass
+
+        return super(res_partner_address, self).unlink(cr, uid, ids, context=context)
 
     def create(self, cr, uid, vals, context=None):
         '''

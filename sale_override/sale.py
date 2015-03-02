@@ -2138,10 +2138,9 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
-    _sql_constraints = [
-        ('product_uom_qty', 'CHECK (product_uom_qty > 0)',
-         'You can not have an order line with a negative or zero quantity'),
-    ]
+    def init(self, cr):
+        self.pool.get('fields.tools').remove_sql_constraint(cr,
+            'sale_order_line', 'product_uom_qty')
 
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -2589,14 +2588,20 @@ class sale_order_line(osv.osv):
         context = context is None and {} or context
 
         if not context.get('noraise') and not context.get('import_in_progress'):
+            empty_lines = False
             if ids and not 'product_uom_qty' in vals:
                 empty_lines = self.search(cr, uid, [
                     ('id', 'in', ids),
-                    ('order_id.state', 'not in', ['draft', 'cancel']),
+                    ('order_id.state', '!=', 'cancel'),
                     ('product_uom_qty', '<=', 0.00),
                 ], count=True, context=context)
-                if empty_lines:
-                        raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
+            elif 'product_uom_qty' in vals:
+                empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
+            if empty_lines:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You can not have an order line with a negative or zero quantity')
+                )
 
         return True
 

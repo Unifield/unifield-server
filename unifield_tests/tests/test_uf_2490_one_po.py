@@ -10,6 +10,10 @@ import time
 
 class UF2490OnePO(ResourcingTest):
 
+    def setUp(self):
+        super(UF2490OnePO, self).setUp()
+        self.need_ext_loc = False
+
     def create_po_from_scratch(self):
         """
         Create a PO from scratch, then cancel it.
@@ -95,6 +99,32 @@ class UF2490OnePO(ResourcingTest):
             "The %s state is '%s' - Should be '%s'" % (self.pr and 'IR' or 'FO', order_state, order_to_check),
         )
 
+    def _get_ir_values(self, db, values=None):
+        values = super(UF2490OnePO, self)._get_ir_values(db, values=values)
+
+        if not values:
+            values = {}
+
+        if self.pr and self.need_ext_loc:
+            ext_loc_ids = db.get('stock.location').search([
+                ('usage', '=', 'customer'),
+                ('location_category', '=', 'consumption_unit'),
+            ])
+            if not ext_loc_ids:
+                ext_loc_id = db.get('stock.location').create({
+                    'name': 'External CU for test',
+                    'location_category': 'consumption_unit',
+                    'usage': 'customer',
+                    'location_id': self.get_record(db, 'stock', 'stock_location_internal_customers'),
+                    'optional_loc': True,
+                })
+            else:
+                ext_loc_id = ext_loc_ids[0]
+
+            values.update({'location_requestor_id': ext_loc_id})
+
+        return values
+
     def create_order_and_source(self):
         """
         Create a FO/IR with 4 lines, source it to a Po
@@ -103,6 +133,7 @@ class UF2490OnePO(ResourcingTest):
         fo_id, fo_line_ids, po_ids, pol_ids = self.order_source_all_one_po(self.used_db)
         self.order_id = fo_id
         self.po_id = po_ids[0]
+        self.pol_ids = pol_ids
 
     def create_order_cancel_po(self):
         """
@@ -399,6 +430,91 @@ class UF2490OnePO(ResourcingTest):
             order_nb_lines == 0,
             "There is %s lines on the FO/IR - Should be %s" % (order_nb_lines, 0),
         )
+
+    def test_cancel_partial_in(self):
+        """
+        Create a FO/IR with 4 lines. Source all lines on
+        a PO, then validate and confirm the PO.
+        Cancel the whole IN
+        :return:
+        """
+        db = self.used_db
+        pick_obj = db.get('stock.picking')
+        wiz_obj = db.get('enter.reason')
+        out_wiz_obj = db.get('outgoing.delivery.processor')
+        proc_obj = db.get('stock.incoming.processor')
+        move_in_obj = db.get('stock.move.in.processor')
+
+        self.create_order_and_source()
+        self.pol_obj.write(self.pol_ids, {'price_unit': 2.00})
+
+        self._validate_po(db, [self.po_id])
+        self._confirm_po(db, [self.po_id])
+
+        in_ids = pick_obj.search([
+            ('purchase_id', '=', self.po_id),
+            ('state', '!=', 'done'),
+        ])
+
+        proc_res = pick_obj.action_process(in_ids)
+        proc_id = proc_res.get('res_id')
+        move_in_ids = move_in_obj.search([('wizard_id', '=', proc_id)])
+        move_in_obj.write([move_in_ids[0]], {'quantity': 1.0})
+        proc_obj.do_incoming_shipment([proc_id])
+
+        out_ids = pick_obj.search([
+            ('sale_id', '=', self.order_id),
+        ])
+        for out in pick_obj.browse(out_ids):
+            if out.state in ('confirmed', 'assigned'):
+                if out.subtype == 'picking':
+                    pick_obj.convert_to_standard([out.id])
+
+                out_res = pick_obj.action_process([out.id])
+                wiz_id = out_res.get('res_id')
+                out_wiz_obj.copy_all([wiz_id], {})
+                out_wiz_obj.do_partial([wiz_id])
+
+    def test_cancel_whole_in(self):
+        """
+        Create a FO/IR with 4 lines. Source all lines on
+        a PO, then validate and confirm the PO.
+        Process partially the IN and cancel the back order
+        :return:
+        """
+        db = self.p1
+        self.used_db = db
+        self.po_obj = db.get('purchase.order')
+        self.order_obj = db.get('sale.order')
+        self.order_line_obj = db.get('sale.order.line')
+        self.po_obj = db.get('purchase.order')
+        self.pol_obj = db.get('purchase.order.line')
+        self.proc_obj = db.get('procurement.order')
+        self.data_obj = db.get('ir.model.data')
+        self.tender_obj = db.get('tender')
+        self.tender_line_obj = db.get('tender.line')
+        self.need_ext_loc = True
+
+        pick_obj = db.get('stock.picking')
+        wiz_obj = db.get('enter.reason')
+
+        self.create_order_and_source()
+        self.pol_obj.write(self.pol_ids, {'price_unit': 2.00})
+
+        self._validate_po(db, [self.po_id])
+        self._confirm_po(db, [self.po_id])
+
+        in_ids = pick_obj.search([
+            ('purchase_id', '=', self.po_id),
+        ])
+        wiz_res = pick_obj.enter_reason(in_ids)
+        wiz_id = wiz_res.get('res_id')
+
+        ctx = {
+            'active_ids': in_ids,
+        }
+        wiz_obj.write([wiz_id], {'change_reason': 'US 6 test'})
+        wiz_obj.do_cancel([wiz_id], ctx)
 
 
 class UF2490FOOnePO(UF2490OnePO):
