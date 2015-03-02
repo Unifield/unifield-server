@@ -18,14 +18,14 @@
                         <field name="line_ids" nolabel="1" colspan="4" />
                         <separator colspan="4" string="Procurement method" />
                         <field name="type" 
-                               on_change="change_type(type, line_ids)"/>
+                               on_change="change_type(type)"/>
                         <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
                                on_change="change_po_cft(po_cft)"/>
                         <separator colspan="4" string="Supplier selection" />
-                        <field name="supplier"
+                        <field name="supplier_id"
                                domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids)]"
                                attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')]}"
-                               on_change="change_supplier(supplier)"
+                               on_change="change_supplier(supplier_id)"
                         />
 
 
@@ -33,7 +33,6 @@
                                                       ('scrap_location', '=', False), ('destruction_location', '=', False), 
                                                       ('output_ok', '=', False), ('input_ok', '=', False)]" 
                                                       attrs="{'readonly': [('type', '!=', 'make_to_stock')]}" 
-                                                      context="{'from_multiple_sourcing_line': True}"
                               on_change="change_location(location_id, line_ids)" />
 
                     </group>
@@ -70,7 +69,6 @@
                     res_model="multiple.sourcing.wizard"
                     src_model="sale.order.line"
                     view_mode="form"
-                    context="{'from_multiple_sourcing_line': True}"
                     target="new"
                     key2="client_action_multi"
                     id="action_multiple_sourcing" 

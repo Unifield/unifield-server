@@ -53,7 +53,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
             'stock.location',
             string='Location',
         ),
-        'supplier': fields.many2one(
+        'supplier_id': fields.many2one(
             'res.partner',
             string='Supplier',
             help="If you have choose lines coming from Field Orders, only External/ESC suppliers will be available.",
@@ -124,7 +124,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if loc != -1:
             res['location_id'] = loc
         if supplier != -1:
-            res['supplier'] = supplier
+            res['supplier_id'] = supplier
 
         if not res['line_ids']:
             raise osv.except_osv(_('Error'), _('No non-sourced lines are selected. Please select non-sourced lines'))
@@ -146,7 +146,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
             if wiz.type == 'make_to_order':
                 if not wiz.po_cft:
                     raise osv.except_osv(_('Error'), _('The Procurement method should be filled !'))
-                elif wiz.po_cft != 'cft' and not wiz.supplier:
+                elif wiz.po_cft != 'cft' and not wiz.supplier_id:
                     raise osv.except_osv(_('Error'), _('You should select a supplier !'))
 
             errors = {}
@@ -159,7 +159,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     try:
                         line_obj.write(cr, uid, [line.id], {'type': wiz.type,
                                                             'po_cft': wiz.po_cft,
-                                                            'supplier': wiz.supplier and wiz.supplier.id or False,
+                                                            'supplier': wiz.supplier_id and wiz.supplier_id.id or False,
                                                             'location_id': wiz.location_id.id and wiz.location_id.id or False},
                                                              context=context)
                     except osv.except_osv, e:
@@ -227,7 +227,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if l_type == 'make_to_order':
             return {'value': {'location_id': False}}
 
-        res = {'value': {'po_cft': False, 'supplier': False}}
+        res = {'value': {'po_cft': False, 'supplier_id': False}}
         if not context or not context[0] or not context[0][2]:
             return res
 
@@ -248,15 +248,15 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 all_line_empty = False
 
         if all_line_empty: # by default, and if all lines has no location, then set by default Stock
-            return {'value': {'po_cft': False, 'supplier': False, 'location_id': stock_loc}}
-        return {'value': {'po_cft': False, 'supplier': False}}
+            return {'value': {'po_cft': False, 'supplier_id': False, 'location_id': stock_loc}}
+        return {'value': {'po_cft': False, 'supplier_id': False}}
 
     def change_po_cft(self, cr, uid, ids, po_cft, context=None):
         '''
         Unset the supplier if tender is choosen
         '''
         if po_cft == 'cft':
-            return {'value': {'supplier': False}}
+            return {'value': {'supplier_id': False}}
 
         return {}
 
