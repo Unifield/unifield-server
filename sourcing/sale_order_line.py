@@ -1361,6 +1361,14 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         res = {'value': value, 'warning': warning}
 
         line = self.browse(cr, uid, line_id, context=context)
+
+        if line.product_id.type in ('service', 'service_recep') and po_cft != 'dpo':
+            res['warning'] = {
+                'title': _('Warning'),
+                'message': _("""Only 'Direct Purchase Order' is allowed to source a 'Service' product."""),
+            }
+            res['value'].update({'po_cft': 'dpo'})
+
         partner_id = 'supplier' in value and value['supplier'] or partner_id
         if line_id and partner_id and line.product_id:
             check_fnct = product_obj._on_change_restriction_error
@@ -1415,7 +1423,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             line = self.browse(cr, uid, line_id, context=context)
             if line.product_id.type in ('consu', 'service', 'service_recep') and l_type == 'make_to_stock':
                 product_type = line.product_id.type == 'consu' and 'non stockable' or 'service'
-                value['l_type'] = 'make_to_order'
+                value['type'] = 'make_to_order'
                 message.update({
                     'title': _('Warning'),
                     'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type,
