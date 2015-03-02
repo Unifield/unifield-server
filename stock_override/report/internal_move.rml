@@ -49,6 +49,7 @@
         <blockTableStyle id="HeaderInfo">
             <blockValign value="MIDDLE" />
             <lineStyle kind="GRID" colorName="#f2f2f2" />
+            <blockSpan start="1,-1" stop="-1,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="LineHeader">
@@ -101,7 +102,7 @@
         </para>
 
         <!-- Header Information -->
-        <blockTable colWidths="90.0,100.0,80.0,230.0,120.0,100.0" style="HeaderInfo">
+        <blockTable colWidths="100.0,100.0,100.0,200.0,120.0,100.0" style="HeaderInfo">
             <tr>
                 <td>
                     <para style="HeaderRight">Reference :</para>
@@ -110,10 +111,10 @@
                     <para style="Header">[[ picking.name ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Origin :</para>
+                    <para style="HeaderRight">Order Category :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ picking.origin ]]</para>
+                    <para style="Header">[[ get_selec(picking, 'order_category') ]]</para>
                 </td>
                 <td>
                     <para style="HeaderRight">Actual Receipt Date :</para>
@@ -144,12 +145,6 @@
             </tr>
             <tr>
                 <td>
-                    <para style="HeaderRight">Order Category :</para>
-                </td>
-                <td>
-                    <para style="Header">[[ get_selec(picking, 'order_category') ]]</para>
-                </td>
-                <td>
                     <para style="HeaderRight">State :</para>
                 </td>
                 <td>
@@ -160,6 +155,20 @@
                 </td>
                 <td>
                     <para style="Header"> </para>
+                </td>
+                <td>
+                    <para style="HeaderRight"> </para>
+                </td>
+                <td>
+                    <para style="Header"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderRight">Origin :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ picking.origin ]]</para>
                 </td>
             </tr>
         </blockTable>
