@@ -1552,6 +1552,8 @@ class account_bank_statement_line(osv.osv):
                 move_vals = { 'partner_type': partner_type, }
                 if 'ref' in values: # only get this value if it presented in "values"
                     move_vals['ref'] = values.get('ref', False)
+                if 'date' in move_line_values:  # US-84
+                    move_vals.update({'date': move_line_values.get('date')})
                 if 'document_date' in move_line_values:
                     move_vals.update({'document_date': move_line_values.get('document_date')})
                 if 'cheque_number' in move_line_values:
