@@ -104,7 +104,7 @@
             parent="stock.menu_action_stock_inventory_report" />
 
         <report
-            id="report_stock.inventory_xls"
+            id="report_stock_inventory_xls"
             string="Export Inventory Level"
             model="export.report.stock.inventory"
             name="stock.inventory.xls"

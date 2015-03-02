@@ -61,6 +61,7 @@ will be shown.""",
             string='Specific location',
             help="""If a location is choosen, only product quantities in this
 location will be shown.""",
+            required=True,
         ),
         'date_from': fields.date(
             string='From',
@@ -111,7 +112,7 @@ location will be shown.""",
             if report.expiry_date:
                 domain.append(('expired_date', '=', report.expiry_date))
             if report.location_id:
-                domain.append(('location_id', '=', report.location_id))
+                domain.append(('location_id', '=', report.location_id.id))
 
             if report.date_from:
                 domain.append(('date', '>=', report.date_from))
@@ -230,18 +231,30 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                     'uom': line.product_id.uom_id.name,
                     'sum_qty': 0.00,
                     'sum_value': 0.00,
-                    'lines': [],
+                    'lines': {},
                 }
 
             res[line.product_id.id]['sum_qty'] += line.product_qty
-            res[line.product_id.id]['sum_values'] += line.value
-            res[line.product_id.id]['lines'].append({
-                'batch': line.prodlot_id and line.prodlot_id.name or '',
-                'expiry_date': line.prodlot_id and \
-                    line.prodlot_id.life_date.strftime('%Y-%m-%d') or False,
-                'qty': line.product_qty,
-                'value': line.value,
-            })
+            res[line.product_id.id]['sum_value'] += line.value
+            batch_id = 'no_batch'
+            batch_name = ''
+            expiry_date = False
+
+            if line.prodlot_id:
+                batch_id = line.prodlot_id.id
+                batch_name = line.prodlot_id.name
+                expiry_date = line.prodlot_id.life_date
+
+            if batch_id not in res[line.product_id.id]['lines']:
+                res[line.product_id.id]['lines'][batch_id] = {
+                    'batch': batch_name,
+                    'expiry_date': expiry_date,
+                    'qty': 0.00,
+                    'value': 0.00,
+                }
+
+            res[line.product_id.id]['lines'][batch_id]['qty'] += line.product_qty
+            res[line.product_id.id]['lines'][batch_id]['value'] += line.value
 
         return res
 

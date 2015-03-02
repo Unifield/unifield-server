@@ -54,17 +54,6 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
-
-    <Style ss:ID="sumline">
-        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-        <Interior ss:Color="#cecece" ss:Pattern="Solid"/>
-        <Borders>
-          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-        </Borders>
-    </Style>
     
     <Style ss:ID="line">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -113,14 +102,18 @@
     <Column ss:AutoFitWidth="1" ss:Width="100" />
     # Exp Date
     <Column ss:AutoFitWidth="1" ss:Width="100" />
-    # Qty
+    # IN
     <Column ss:AutoFitWidth="1" ss:Width="80" />
-    # Value
+    # OUT
     <Column ss:AutoFitWidth="1" ss:Width="80" />
-    # Total Qty
-    <Column ss:AutoFitWidth="1" ss:Width="120" />
-    # Total Value
-    <Column ss:AutoFitWidth="1" ss:Width="120" />
+    # Source
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Destination
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Reason Code
+    <Column ss:AutoFitWidth="1" ss:Width="100" />
+    # Document Ref
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
 
 % for o in objects:
 
@@ -144,41 +137,32 @@
         <Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">Exp Date</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Qty</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Value</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Total Qty</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Total Value</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">IN</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">OUT</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Source</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Destination</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Reason Code</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Document Ref.</Data></Cell>
     </Row>
     
-    % for prd in getLines().itervalues():
+    % for line in getLines():
     <Row ss:AutoFitHeight="1">
-        <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['uom'])|x}</Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(prd['sum_qty'])|x}</Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(prd['sum_value'])|x}</Data></Cell>
-    </Row>
-        % for line in prd['lines'].itervalues():
-    <Row ss:AutoFitHeight="1">
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['uom'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['product_code'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['product_name'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['batch'])|x}</Data></Cell>
         % if line['expiry_date'] not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(line['expiry_date'])|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
         % endif
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['value'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_in'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_out'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['source'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['reason_code'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['doc_ref'])|x}</Data></Cell>
     </Row>
-        % endfor
     % endfor
  % endfor   
     
