@@ -84,8 +84,12 @@ class hr_payroll_import(osv.osv_memory):
         name = ''
         ref = ''
         destination_id = False
-        accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
-        financing_contract, date, currency, project, analytic_line = zip(data)
+        if len(data) == 13:
+            accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
+                financing_contract, date, currency, project, analytic_line = zip(data)
+        else:
+            accounting_code, description, second_description, third,  expense, receipt, project, financing_line, \
+                financing_contract, date, currency, axis1, analytic_line, axis2, analytic_line2 = zip(data)
         # Check period
         if not date and not date[0]:
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
@@ -128,7 +132,7 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('This account is a view type account: %s') % (ustr(accounting_code[0]),))
         # Check if it's a payroll rounding line
         is_payroll_rounding = False
-        if third and third[0] and ustr(third[0]) == 'SAGA_BALANCE':
+        if third and third[0] and ustr(third[0]) in ('SAGA_BALANCE', 'CSH_DIFF'):
             is_payroll_rounding = True
         # Check if it's a counterpart line (In HOMERE import, it seems to be lines that have a filled in column "third")
         is_counterpart = False
