@@ -99,7 +99,8 @@
         <menuitem
             id="export_report_stock_inventory_menu"
             action="export_report_stock_inventory_action"
-            parent="stock.menu_action_stock_inventory_report" />
+            parent="stock.menu_stock_inventory_control"
+            sequence="22" />
 
         <report
             id="report_stock_inventory_xls"
