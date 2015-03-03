@@ -172,12 +172,12 @@ class usb_synchronisation(osv.osv_memory):
             kwargs = {}            
             wiz_obj = self.pool.get('wizard')
             # open the selected wizard
-            wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
+            res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
                                                                                                     callback={'clazz': clazz,
                                                                                                               'func': func,
                                                                                                               'args': args,
                                                                                                               'kwargs': kwargs}))
-            return
+            return res
         if new_sequence != -1:
             context.update({'rw_pull_sequence' : new_sequence})
         

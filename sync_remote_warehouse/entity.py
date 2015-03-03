@@ -124,9 +124,6 @@ class Entity(osv.osv):
         def get_pull_sequence():
             seq_pool = self.pool.get('ir.sequence')
             seq = seq_pool.get(cr, uid, 'rw.push.seq')
-            
-            ##### Move code to the setup_remote_warehouse.py
-            
             # value must be int for simplifying at the partner instance   
             return int(seq)
 
