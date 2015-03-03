@@ -427,6 +427,12 @@ from/to this location will be shown.""",
             context['domain'] = domain
 
             rsm_ids = rsm_obj.search(cr, uid, domain, context=context)
+            if not rsm_ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('No stock moves found for these parameters')
+                )
+
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress',
