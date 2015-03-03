@@ -68,7 +68,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Generated on')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${o.creation_date|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.creation_date|n}T00:00:00.000</Data></Cell>
     </Row>
 
     <Row>
