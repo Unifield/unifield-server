@@ -125,29 +125,33 @@
 % for o in objects:
 
     <Row ss:AutoFitHeight="1">
-        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">DB/instance name</Data></Cell>
-        <Cell ss:MergeAcross="2" ss:StyleID="poheader"><Data ss:Type="String">${o.company_id.name or ''|x}</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">DB/instance name</Data></Cell>
+        <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${o.company_id.name or ''|x}</Data></Cell>
     </Row>
     <Row ss:AutoFitHeight="1">
-        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Generated on</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">Generated on</Data></Cell>
         % if o.name not in ('False', False):                              
-            <Cell ss:MergeAcross="2" ss:StyleID="poheader_short_date" ><Data ss:Type="DateTime">${o.name[:10]|n}T${o.name[-8:]|n}.000</Data></Cell>
+            <Cell ss:MergeAcross="2" ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.name[:10]|n}T${o.name[-8:]|n}.000</Data></Cell>
         % else:                                                                 
             <Cell ss:MergeAcross="2" ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>          
         % endif 
     </Row>
+    <Row ss:AutoFitHeight="1">
+        <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">Location</Data></Cell>
+        <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${o.location_id.name or ''|x}</Data></Cell>
+    </Row>
     <Row></Row>
     <Row></Row>
     <Row ss:AutoFitHeight="1">
-        <Cell ss:StyleID="header"><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Exp Date</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Qty</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Value</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Total Qty</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Total Value</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Product Code</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Product Description</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">UoM</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Batch</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Exp Date</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Qty</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Value</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Total Qty</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Total Value</Data></Cell>
     </Row>
     
     % for prd in getLines().itervalues():
