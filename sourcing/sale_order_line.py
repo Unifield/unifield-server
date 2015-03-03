@@ -656,8 +656,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if vals.get('product_id', False):
             product = product_obj.browse(cr, uid, vals['product_id'], context=context)
 
+        ir = False
         if vals.get('order_id', False):
             order = order_obj.browse(cr, uid, vals['order_id'], context=context)
+            ir = order.procurement_request
             if order.order_type == 'loan' and order.state == 'validated':
                 vals.update({
                     'type': 'make_to_stock',
@@ -668,12 +670,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
             vals['supplier'] = product.seller_id and product.seller_id.id or False
 
-
         if product and product.type in ('consu', 'service', 'service_recep'):
             vals['type'] = 'make_to_order'
 
         if product and product.type in ('service', 'service_recep'):
-            vals['po_cft'] = 'dpo'
+            if ir and vals.get('po_cft', 'dpo') == 'dpo':
+                vals['po_cft'] = 'po'
+            elif not ir and vals.get('po_cft', 'po') == 'po':
+                vals['po_cft'] = 'dpo'
 
         # If type is missing, set to make_to_stock and po_cft to False
         if not vals.get('type', False):
@@ -800,10 +804,11 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
             if line.product_id and \
                line.product_id.type in ('service', 'service_recep') and \
-               line.po_cft != 'dpo':
+               not line.order_id.procurement_request and \
+               line.po_cft == 'po':
                 raise osv.except_osv(
                     _('Warning'),
-                    _("""Only 'Direct Purchase Order' is allowed to source a 'Service' product."""),
+                    _("""'Purchase Order' is not allowed to source a 'Service' product."""),
                 )
 
             if not line.product_id:
@@ -1362,10 +1367,10 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         line = self.browse(cr, uid, line_id, context=context)
 
-        if line.product_id.type in ('service', 'service_recep') and po_cft != 'dpo':
+        if line.product_id.type in ('service', 'service_recep') and not line.order_id.procurement_request and po_cft == 'po':
             res['warning'] = {
                 'title': _('Warning'),
-                'message': _("""Only 'Direct Purchase Order' is allowed to source a 'Service' product."""),
+                'message': _("""'Purchase Order' is not allowed to source a 'Service' product."""),
             }
             res['value'].update({'po_cft': 'dpo'})
 

@@ -215,6 +215,10 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         if sale_line_ids:
             line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+            if line.product_id.type in ('service', 'service_recep') and not line.order_id.procurement_request:
+                if ('order_type', '!=', 'direct') in purchase_domain:
+                    purchase_domain.remove(('order_type', '!=', 'direct'))
+                purchase_domain.append(('order_type', '=', 'direct'))
 
         if partner.po_by_project in ('project', 'category_project') or (procurement.po_cft == 'dpo' and partner.po_by_project == 'all'):
             if line:
@@ -332,7 +336,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
-            if procurement.po_cft == 'dpo':
+            if procurement.po_cft == 'dpo' or procurement.product_id.type in ('service', 'service_recep'):
                 sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
                 if sol_ids:
                     sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
