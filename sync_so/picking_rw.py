@@ -869,7 +869,8 @@ class stock_picking(osv.osv):
                     context['rw_backorder_name'] = pick_name
                     # Before converting to OUT, the PICK needs to be updated as what sent from the RW
                     self.convert_to_pick(cr, uid, pick_ids, context)
-                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
+                    # US-27: Do not change the status of this PICK, otherwise cannot close ship!
+                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True}, context=context)
                     message = "The OUT: " + old_name + " has been converted back to PICK: " + pick_name
                 else:
                     # If the OUT has already been converted back to PICK before, then just inform this fact
