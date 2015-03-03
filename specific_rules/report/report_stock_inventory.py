@@ -104,11 +104,12 @@ location will be shown.""",
         for report in self.browse(cr, uid, ids, context=context):
             domain = [
                 ('location_id.usage', '=', 'internal'),
+                ('product_id.type', '=', 'product'),
             ]
-            if report.product_id:
-                domain.append(('product_id', '=', report.product_id.id))
             if report.prodlot_id:
                 domain.append(('prodlot_id', '=', report.prodlot_id.id))
+            elif report.product_id:
+                domain.append(('product_id', '=', report.product_id.id))
             if report.expiry_date:
                 domain.append(('expired_date', '=', report.expiry_date))
             if report.location_id:
@@ -122,6 +123,9 @@ location will be shown.""",
             context['domain'] = domain
 
             rsi_ids = rsi_obj.search(cr, uid, domain, context=context)
+            if not rsi_ids:
+                continue
+
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress',
@@ -203,6 +207,55 @@ location will be shown.""",
         new_cr.close()
 
         return True
+
+    def onchange_prodlot(self, cr, uid, ids, prodlot_id):
+        """
+        Change the product when change the prodlot
+        """
+        if not prodlot_id:
+            return {
+                'value': {
+                    'product_id': False,
+                    'expiry_date': False,
+                },
+            }
+
+        prodlot = self.pool.get('stock.production.lot').\
+            browse(cr, uid, prodlot_id)
+        return {
+            'value': {
+                'product_id': prodlot.product_id.id,
+                'expiry_date': prodlot.life_date,
+            },
+        }
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Call onchange_prodlot if a lot is defined
+        """
+        if vals.get('prodlot_id'):
+            vals.update(
+                self.onchange_prodlot(
+                    cr, uid, False, vals.get('prodlot_id')
+                ).get('value', {})
+            )
+
+        return super(export_report_stock_inventory, self).\
+            create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Call onchange_prodlot if a lot is defined
+        """
+        if vals.get('prodlot_id'):
+            vals.update(
+                self.onchange_prodlot(
+                    cr, uid, ids, vals.get('prodlot_id')
+                ).get('value', {})
+            )
+
+        return super(export_report_stock_inventory, self).\
+            write(cr, uid, ids, vals, context=context)
 
 export_report_stock_inventory()
 
