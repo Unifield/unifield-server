@@ -2892,6 +2892,7 @@ sale_order_cancelation_wizard()
 
 class sale_order_leave_close(osv.osv_memory):
     _name = 'sale.order.leave.close'
+    _rec_name = 'order_id'
 
     _columns = {
         'wizard_id': fields.many2one(

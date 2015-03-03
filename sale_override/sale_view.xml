@@ -496,7 +496,7 @@
             <field name="name">sale.order.cancelation.ask.wizard.form.view</field>
             <field name="model">sale.order.cancelation.wizard</field>
             <field name="type">form</field>
-            <field name="priority" eval="1" />
+            <field name="priority" eval="100" />
             <field name="arch" type="xml">
                 <form string="Cancel Field Order">
                     <group colspan="4" col="1">
