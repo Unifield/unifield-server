@@ -530,6 +530,12 @@ class UF2490IROnePO(UF2490OnePO):
         self.pr = True
         super(UF2490IROnePO, self).setUp()
 
+    def test_create_order_cancel_po_leave_order(self):
+        pass
+
+    def test_create_order_cancel_po_close_order(self):
+        pass
+
 
 def get_test_suite():
     '''Return the class to use for tests'''
