@@ -63,12 +63,6 @@ will be shown.""",
 location will be shown.""",
             required=True,
         ),
-        'date_from': fields.date(
-            string='From',
-        ),
-        'date_to': fields.date(
-            string='To',
-        ),
         'state': fields.selection(
             selection=[
                 ('draft', 'Draft'),
@@ -108,17 +102,13 @@ location will be shown.""",
             ]
             if report.prodlot_id:
                 domain.append(('prodlot_id', '=', report.prodlot_id.id))
-            elif report.product_id:
-                domain.append(('product_id', '=', report.product_id.id))
-            if report.expiry_date:
-                domain.append(('expired_date', '=', report.expiry_date))
+            else:
+                if report.product_id:
+                    domain.append(('product_id', '=', report.product_id.id))
+                if report.expiry_date:
+                    domain.append(('expired_date', '=', report.expiry_date))
             if report.location_id:
                 domain.append(('location_id', '=', report.location_id.id))
-
-            if report.date_from:
-                domain.append(('date', '>=', report.date_from))
-            if report.date_to:
-                domain.append(('date', '<=', report.date_to))
 
             context['domain'] = domain
 

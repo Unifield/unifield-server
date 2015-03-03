@@ -9,8 +9,7 @@
             <field name="arch" type="xml">
                 <tree string="Export Inventory Level">
                     <field name="name" />
-                    <field name="date_from" />
-                    <field name="date_to" />
+                    <field name="location_id" />
                     <field name="state" />
                 </tree>
             </field>
@@ -23,8 +22,8 @@
             <field name="arch" type="xml">
                 <search string="Export Inventory Level">
                     <field name="name" />
-                    <field name="date_from" />
-                    <field name="date_to" />
+                    <field name="location_id" />
+                    <field name="state" />
                 </search>
             </field>
         </record>
@@ -38,9 +37,6 @@
                     <separator colspan="4" string="Request information" />
                     <field name="name" />
                     <field name="company_id" />
-                    <separator colspan="4" string="Report parameters" />
-                    <field name="date_from" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                    <field name="date_to" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <separator colspan="4" string="Advanced filters" />
                     <field name="product_id" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" domain="[('type', '=', 'product')]" />
                     <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('usage', '=', 'internal')]" />
