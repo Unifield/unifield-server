@@ -201,7 +201,7 @@
                                     Due to the volume of data, your report cannot be shown immediatly.<br />
                                 </p>                                                
                                 <p style="font-size:14px;align:center">             
-                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Moves Analysis / Export Moves Analysis.<br />
+                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Export Moves Analysis.<br />
                                 </p>                                                
                             </div>                                                  
                         </html>                                                     
@@ -221,7 +221,8 @@
         <menuitem
             id="export_report_stock_move_menu"
             action="export_report_stock_move_action"
-            parent="stock.menu_action_stock_move_report" />
+            parent="stock.next_id_61"
+            sequence="4" />
 
         <record id="stock.view_stock_tree2" model="ir.ui.view">
             <field name="name">report.stock.move.tree2</field>
