@@ -399,12 +399,13 @@ from/to this location will be shown.""",
             ]
             if report.partner_id:
                 domain.append(('partner_id', '=', report.partner_id.id))
-            if report.product_id:
-                domain.append(('product_id', '=', report.product_id.id))
             if report.prodlot_id:
                 domain.append(('prodlot_id', '=', report.prodlot_id.id))
-            if report.expiry_date:
-                domain.append(('prodlot_id.life_date', '=', report.expiry_date))
+            else:
+                if report.product_id:
+                    domain.append(('product_id', '=', report.product_id.id))
+                if report.expiry_date:
+                    domain.append(('prodlot_id.life_date', '=', report.expiry_date))
             if report.date_from:
                 domain.append(('date', '>=', report.date_from))
             if report.date_to:
@@ -500,6 +501,56 @@ from/to this location will be shown.""",
         new_cr.close()
 
         return True
+
+    def onchange_prodlot(self, cr, uid, ids, prodlot_id):
+        """
+        Select the good product and the good expiry date according to
+        selected batch number.
+        """
+        if not prodlot_id:
+            return {
+                'value': {
+                    'product_id': False,
+                    'expiry_date': False,
+                },
+            }
+
+        prodlot = self.pool.get('stock.production.lot')\
+            .browse(cr, uid, prodlot_id)
+        return {
+            'value': {
+                'product_id': prodlot.product_id.id,
+                'expiry_date': prodlot.life_date,
+            },
+        }
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Call onchange_prodlot() if a prodlot is specified
+        """
+        if vals.get('prodlot_id'):
+            vals.update(
+                self.onchange_prodlot(
+                    cr, uid, False, vals.get('prodlot_id')
+                )
+            )
+
+        return super(export_report_stock_move, self).\
+            create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Call onchange_prodlot() if a prodlot is specified
+        """
+        if vals.get('prodlot_id'):
+            vals.update(
+                self.onchange_prodlot(
+                    cr, uid, ids, vals.get('prodlot_id')
+                )
+            )
+
+        return super(export_report_stock_move, self).\
+            write(cr, uid, ids, vals, context=context)
 
 export_report_stock_move()
 
