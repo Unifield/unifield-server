@@ -161,7 +161,11 @@
                            on_change="onchange_prodlot(prodlot_id)"
                            domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
-                    <field name="reason_type_ids" colspan="4" />
+                    <field name="reason_type_ids" colspan="4" mode="tree">
+                        <tree noteditable="True" string="Reason Types">
+                            <field name="name" />
+                        </tree>
+                    </field>
                     <separator colspan="4" string="Actions" />
                     <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
                     <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
