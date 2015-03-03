@@ -47,7 +47,7 @@ class wizard_import_fmc(osv.osv_memory):
           * Product Description
           * UoM (not imported)
           * FMC
-          * Security Stock (qty) - (not imported)
+          * Safety Stock (qty) - (not imported)
           * Valid until (DD-MMM-YYYY)
         """)
     }

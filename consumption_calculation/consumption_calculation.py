@@ -1368,7 +1368,7 @@ class monthly_review_consumption_line(osv.osv):
             _get_security_stock,
             method=True,
             type='float',
-            string='Security Stock (qty)',
+            string='Safety Stock (qty)',
             readonly=True,
             store={
                 'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 10),

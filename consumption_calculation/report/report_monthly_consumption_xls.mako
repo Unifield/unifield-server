@@ -80,7 +80,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('AMC')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('FMC')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Security Stock (qty)')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Safety Stock (qty)')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Valid Until')}</Data></Cell>
     </Row>
     ## we loop over the products line
