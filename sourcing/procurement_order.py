@@ -340,7 +340,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
                 if sol_ids:
                     sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
-                    if not sol.procurement_request:
+                    if not sol.order_id.procurement_request:
                         values.update({'order_type': 'direct',
                                        'dest_partner_id': sol.order_id.partner_id.id,
                                        'dest_address_id': sol.order_id.partner_shipping_id.id})
