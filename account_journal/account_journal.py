@@ -54,7 +54,6 @@ class account_journal(osv.osv):
                 file = tools.file_open(pathname)
                 tools.convert_xml_import(cr, 'account_journal', file, {}, mode='init', noupdate=False)
 
-
     def get_journal_type(self, cursor, user_id, context=None):
         return [('accrual', 'Accrual'),
                 ('bank', 'Bank'),
@@ -78,12 +77,28 @@ class account_journal(osv.osv):
                 ('sale_refund','Sale Refund'),
                 ('stock', 'Stock'),
         ]
-
+        
+    def _get_has_entries(self, cr, uid, ids, field_name, arg, context=None):
+        def count_entries(journal_id):
+            return am_obj.search(cr, uid, [('journal_id', '=', journal_id)],
+                count=True, context=context)
+            
+        res = {}
+        if not ids:
+            return res
+        am_obj = self.pool.get('account.move')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = bool(count_entries(id))
+        return res
+    
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
         'bank_journal_id': fields.many2one('account.journal', _("Corresponding bank journal"), domain="[('type', '=', 'bank'), ('currency', '=', currency)]"),
         'cheque_journal_id': fields.one2many('account.journal', 'bank_journal_id', 'Linked cheque'),
+        'has_entries': fields.function(_get_has_entries, type='boolean', method=True, string='Has journal entries'),
     }
 
     _defaults = {
