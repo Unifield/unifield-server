@@ -597,7 +597,7 @@ class user_access_configurator(osv.osv_memory):
         # UF-1996 : Don't reset the Object ACL at reloading of Menu Access from file
         # self._process_objects_uac(cr, uid, context=context)
         # process rules
-        self._process_record_rules_uac(cr, uid, context=context)
+        #self._process_record_rules_uac(cr, uid, context=context)
         return data_structure
 
     def do_process_uac(self, cr, uid, ids, context=None):
