@@ -125,7 +125,11 @@ def secured(fn):
             password = kw.get('password', '')
 
             # See if the user just tried to log in
-            if rpc.session.login(db, user, password) <= 0:
+            login_ret = rpc.session.login(db, user, password)
+            if action == 'login' and login_ret == -2:
+                return login(cherrypy.request.path_info, message=_('Database newer than UniField version'),
+                    db=db, user=user, action=action, origArgs=get_orig_args(kw))
+            elif login_ret <= 0:
                 # Bad login attempt
                 if action == 'login':
                     message = _("Bad username or password")

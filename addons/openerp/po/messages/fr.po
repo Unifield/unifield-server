@@ -483,6 +483,10 @@ msgstr "Aucune ressource sélectionnée"
 msgid "Could not connect to server"
 msgstr "Impossible de se connecter au serveur"
 
+#: controllers/utils.py:130
+msgid "Database newer than UniField version"
+msgstr "Base de données plus récente que la version d'UniField"
+
 #: controllers/utils.py:127 controllers/templates/login_ajax.mako:111
 msgid "Bad username or password"
 msgstr "Mauvais nom d'utilisateur ou mot de passe"
