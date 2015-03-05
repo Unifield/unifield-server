@@ -50,7 +50,7 @@ real_average_consumption()
 class real_average_consumption_line(osv.osv):
     _inherit = 'real.average.consumption.line'
 
-    # Need to redefine the asset_id field from char to m2o because the
+    # Need to redefine the asset_id field from int to m2o because the
     # product_asset module is not loaded before consumption_calculation
     # module
     _columns = {
