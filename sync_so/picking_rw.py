@@ -823,7 +823,7 @@ class stock_picking(osv.osv):
                     context['rw_backorder_name'] = pick_name
                     # Before converting to OUT, the PICK needs to be updated as what sent from the RW
                     self.convert_to_standard(cr, uid, pick_ids, context)
-                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
+                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True}, context=context)
                     message = "The PICK " + old_name + " has been converted to OUT " + pick_name
                 else:
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', '=', 'assigned')], context=context)

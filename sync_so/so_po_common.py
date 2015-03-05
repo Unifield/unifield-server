@@ -318,6 +318,7 @@ class so_po_common(osv.osv_memory):
     def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
+        rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
 
         line_vals_dict = line_values.to_dict()
         if 'order_line' not in line_vals_dict:
@@ -378,7 +379,8 @@ class so_po_common(osv.osv_memory):
                     product = product_obj.browse(cr, uid, [rec_id], context=context)[0]
                     procure_method = product.procure_method
                     # UF-1534: use the cost price of the product, not the one from PO line
-                    if so_called and not so_id:
+                    # US-27: the request above is not applicable for RemoteWarehouse instance! so do not change the price!
+                    if so_called and not so_id and rw_type != self.pool.get('stock.picking').REMOTE_WAREHOUSE:
                         values['price_unit'] = product.list_price
 
                     values['type'] = procure_method
