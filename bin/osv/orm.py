@@ -2469,8 +2469,11 @@ class orm(orm_template):
         parent_table_name = parent_model._table
         quoted_parent_table_name = '"%s"' % parent_table_name
         if quoted_parent_table_name not in query.tables:
-            query.tables.append(quoted_parent_table_name)
-            query.where_clause.append('("%s".%s = %s.id)' % (self._table, inherits_field, parent_table_name))
+            query.join([self._table, parent_table_name, inherits_field, 'id'], outer=True)
+            # Use query.join() instead of just put new table and new where clause elements because
+            # to be able to sort on translated values, we need JOIN between tables
+#            query.tables.append(quoted_parent_table_name)
+#            query.where_clause.append('("%s".%s = %s.id)' % (self._table, inherits_field, parent_table_name))
 
     def _inherits_join_calc(self, field, query):
         """
