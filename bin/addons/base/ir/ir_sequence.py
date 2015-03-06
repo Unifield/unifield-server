@@ -32,10 +32,6 @@ class ir_sequence_type(osv.osv):
     }
 ir_sequence_type()
 
-def _code_get(self, cr, uid, context={}):
-    cr.execute('select code, name from ir_sequence_type')
-    return cr.fetchall()
-
 class ir_sequence(osv.osv):
     _name = 'ir.sequence'
     _order = 'name'
@@ -57,9 +53,26 @@ class ir_sequence(osv.osv):
                     ret[seq['id']] += data[2]
         return ret
 
+    def _check_sequence_type_existence(self, cr, uid, ids, context=None):
+        """
+        Check that same code exists for a sequence type.
+        """
+        if context is None:
+            context = {}
+        for sequence in self.read(cr, uid, ids, ['code']):
+            cr.execute('SELECT id FROM ir_sequence_type WHERE code = %s LIMIT 1', (sequence.get('code', ''),))
+            tmp_res = cr.fetchall()
+            if not tmp_res:
+                return False
+        return True
+
+    _constraints = [
+        (_check_sequence_type_existence, "Sequence type code doesn't exist.", ['code']),
+    ]
+
     _columns = {
         'name': fields.char('Name',size=64, required=True),
-        'code': fields.selection(_code_get, 'Code',size=64, required=True),
+        'code': fields.char('Code',size=64, required=True),
         'active': fields.boolean('Active'),
         'prefix': fields.char('Prefix',size=64, help="Prefix value of the record for the sequence"),
         'suffix': fields.char('Suffix',size=64, help="Suffix value of the record for the sequence"),
