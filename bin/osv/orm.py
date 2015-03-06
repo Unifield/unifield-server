@@ -4198,6 +4198,10 @@ class orm(orm_template):
         if context is None:
             context = {}
         order_by_clause = self._order
+
+        if not order_spec:
+            order_spec = self._order
+
         from_order_clause = []
         translation = 0
         if order_spec:
@@ -4209,51 +4213,59 @@ class orm(orm_template):
                 order_field = order_split[0].strip()
                 order_direction = order_split[1].strip() if len(order_split) == 2 else ''
                 inner_clause = None
+                end_inner_clause = []
                 if order_field == 'id':
-                    inner_clause = '"%s"."%s"' % (self._table, order_field)
+                    end_inner_clause = '"%s"."%s"' % (self._table, order_field)
                 elif order_field in self._columns:
                     order_column = self._columns[order_field]
                     translatable = order_column.translate
-                    if not translatable:
-                        if order_column._classic_read:
-                            inner_clause = '"%s"."%s"' % (self._table, order_field)
-                        elif order_column._type == 'many2one':
-                            inner_clause = self._generate_m2o_order_by(order_field, query)
-                        else:
-                            continue # ignore non-readable or "non-joinable" fields
-                    else:
+                    if translatable:
                         translation += 1
                         trans_name = '"ir_translation%s"' % translation
-                        inner_clause = '%s."value"' % trans_name
+                        end_inner_clause.append('%s."value"' % trans_name)
                         left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
                         on_clause = 'ON %s.src = "%s"."%s" AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
                             trans_name, self._table, order_field, trans_name, self._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
                         from_order_clause.append('%s %s' % (left_join_clause, on_clause))
+                    if order_column._classic_read:
+                        inner_clause = '"%s"."%s"' % (self._table, order_field)
+                    elif order_column._type == 'many2one':
+                        inner_clause = self._generate_m2o_order_by(order_field, query)
+                    else:
+                        continue # ignore non-readable or "non-joinable" fields
+
+                    if isinstance(inner_clause, list):
+                        end_inner_clause.extend(inner_clause)
+                    else:
+                        end_inner_clause.append(inner_clause)
                 elif order_field in self._inherit_fields:
                     parent_obj = self.pool.get(self._inherit_fields[order_field][3])
                     order_column = parent_obj._columns[order_field]
                     translatable = order_column.translate
-                    if not translatable:
-                        if order_column._classic_read:
-                            inner_clause = self._inherits_join_calc(order_field, query)
-                        elif order_column._type == 'many2one':
-                            inner_clause = self._generate_m2o_order_by(order_field, query)
-                        else:
-                            continue # ignore non-readable or "non-joinable" fields
-                    else:
+                    if translatable:
                         translation += 1
                         trans_name = '"ir_translation%s"' % translation
-                        inner_clause = '%s."value"' % trans_name
+                        end_inner_clause.append('%s."value"' % trans_name)
                         left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
                         on_clause = 'ON %s.src = "%s"."%s" AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
                             trans_name, self._table, order_field, trans_name, parent_obj._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
                         from_order_clause.append('%s %s' % (left_join_clause, on_clause))
-                if inner_clause:
+                    if order_column._classic_read:
+                        inner_clause = self._inherits_join_calc(order_field, query)
+                    elif order_column._type == 'many2one':
+                        inner_clause = self._generate_m2o_order_by(order_field, query)
+                    else:
+                        continue # ignore non-readable or "non-joinable" fields
                     if isinstance(inner_clause, list):
-                        for clause in inner_clause:
+                        end_inner_clause.extend(inner_clause)
+                    else:
+                        end_inner_clause.append(inner_clause)
+                if end_inner_clause:
+                    if isinstance(end_inner_clause, list):
+                        for clause in end_inner_clause:
                             order_by_elements.append("%s %s" % (clause, order_direction))
                     else:
-                        order_by_elements.append("%s %s" % (inner_clause, order_direction))
+                        order_by_elements.append("%s %s" % (end_inner_clause, order_direction))
             if order_by_elements:
                 order_by_clause = ",".join(order_by_elements)
 
@@ -4273,9 +4285,6 @@ class orm(orm_template):
             context = {}
         self.pool.get('ir.model.access').check(cr, access_rights_uid or user, self._name, 'read', context=context)
 
-        if self._name == 'res.country':
-            print context
-            pass
         query = self._where_calc(cr, user, args, context=context)
         self._apply_ir_rules(cr, user, query, 'read', context=context)
         order_by, from_order_clause = self._generate_order_by(order, query, context=context)
@@ -4291,7 +4300,6 @@ class orm(orm_template):
             cr.execute('SELECT count("%s".id) FROM ' % self._table + from_clause + where_str + limit_str + offset_str, where_clause_params)
             res = cr.fetchall()
             return res[0][0]
-        #print 'SELECT "%s".id FROM ' % self._table + from_clause + where_str + order_by + limit_str + offset_str, where_clause_params
         cr.execute('SELECT "%s".id FROM ' % self._table + from_clause + where_str + order_by + limit_str + offset_str, where_clause_params)
         res = cr.fetchall()
         return [x[0] for x in res]
