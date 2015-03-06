@@ -48,22 +48,44 @@ def usb_need_to_push(self, cr, uid, ids, context=None):
         
         clone_date = self.pool.get('sync.client.entity').get_entity(cr, uid, context).clone_date
         
+        
+        # US-112: Added the condition to include data received from normal sync for the usb sync
+        monitor = self.pool.get("sync.monitor")
+        end_date_usb_sync = False
+        last_usb_sync = monitor.search(cr, uid, [('usb', '=', True), ('end', '!=', False)], order='id desc', limit=1)
+        if last_usb_sync:
+            end_date_usb_sync = monitor.read(cr, uid, last_usb_sync, ['end'], context=context)
+            if end_date_usb_sync:
+                end_date_usb_sync = end_date_usb_sync[0]['end']
+        
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable: ids = [ids]
         ids = filter(None, ids)
         if not ids: return ids if result_iterable else False
         
         # Optimization for not deleted records:
-        # Filter data where sync_date < last_modification OR sync_date IS NULL        
-        cr.execute("""\
-        SELECT res_id
-            FROM ir_model_data
-            WHERE module = 'sd' AND
-                  model = %%s AND
-                  res_id IN %%s AND
-                  (last_modification > '%(clone_date)s' OR sync_date > '%(clone_date)s' OR (last_modification is null and sync_date is null)) AND
-                  (usb_sync_date < last_modification OR usb_sync_date < sync_date OR usb_sync_date IS NULL)""" % {'clone_date' : clone_date},
-        [self._name, tuple(ids)])
+        # Filter data where sync_date < last_modification OR sync_date IS NULL
+        if end_date_usb_sync: # US-112: Use the date_update to include data from the normal sync      
+            cr.execute("""\
+            SELECT res_id
+                FROM ir_model_data
+                WHERE module = 'sd' AND
+                      model = %%s AND
+                      res_id IN %%s AND
+                      (last_modification > '%(clone_date)s' OR sync_date > '%(clone_date)s' OR (last_modification is null and sync_date is null) 
+                      OR date_update > '%(end_date_usb_sync)s') 
+                      AND
+                      (date_update > '%(end_date_usb_sync)s' OR usb_sync_date < last_modification OR usb_sync_date < sync_date OR usb_sync_date IS NULL)""" % {'clone_date' : clone_date, 'end_date_usb_sync' : end_date_usb_sync},[self._name, tuple(ids)])
+        else:
+            cr.execute("""\
+            SELECT res_id
+                FROM ir_model_data
+                WHERE module = 'sd' AND
+                      model = %%s AND
+                      res_id IN %%s AND
+                      (last_modification > '%(clone_date)s' OR sync_date > '%(clone_date)s' OR (last_modification is null and sync_date is null)) 
+                      AND
+                      (usb_sync_date < last_modification OR usb_sync_date < sync_date OR usb_sync_date IS NULL)""" % {'clone_date' : clone_date},[self._name, tuple(ids)])
         
         result = [row[0] for row in cr.fetchall()]
         return result if result_iterable else len(result) > 0
