@@ -39,8 +39,11 @@ class UpdateToSend(osv.osv):
             if not 'id' in included_fields: 
                 included_fields.append('id')
 
-            ids_to_compute = self.usb_need_to_push(cr, uid,
-                self.search_ext(cr, uid, domain, context=context), context=context)
+            ids_need_to_push = self.usb_need_to_push(cr, uid, context=context)
+            if not ids_need_to_push:
+                return 0
+            domain.append(('id', 'in', ids_need_to_push))
+            ids_to_compute = self.search_ext(cr, uid, domain, context=context)
             if not ids_to_compute:
                 return 0
 

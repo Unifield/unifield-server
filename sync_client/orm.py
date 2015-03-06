@@ -630,7 +630,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         elif not isinstance(ids, tuple): ids = tuple(ids)
         ids = filter(None, ids)
         if not ids: return True
-        already_deleted = self.search_deleted(cr, uid, res_id=ids, context=context)
+        already_deleted = self.search_deleted(cr, uid, res_ids=ids, context=context)
         to_delete = list(set(ids) - set(already_deleted))
         self.unlink(cr, uid, to_delete, context=context)
         cr.execute("""\
