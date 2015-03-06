@@ -144,11 +144,15 @@ class update_to_send(osv.osv):
             export_fields = eval(rule.included_fields or '[]')
             if 'id' not in export_fields:
                 export_fields.append('id')
-
-            ids_to_compute = self.need_to_push(cr, uid,
-                self.search_ext(cr, uid, domain, context=context),
+            ids_need_to_push = self.need_to_push(cr, uid, [], 
                 [m.group(0) for m in map(re_fieldname.match, export_fields)],
+                empty_ids=True,
                 context=context)
+            if not ids_need_to_push:
+                return 0
+            domain.append(('id', 'in', ids_need_to_push))
+
+            ids_to_compute = self.search_ext(cr, uid, domain, context=context)
             if not ids_to_compute:
                 return 0
 
@@ -185,7 +189,7 @@ class update_to_send(osv.osv):
                 return 0
 
             ids_to_delete = self.need_to_push(cr, uid,
-                self.search_deleted(cr, uid, [('module','=','sd')], context=context),
+                self.search_deleted(cr, uid, module='sd', context=context),
                 context=context)
             if not ids_to_delete:
                 return 0

@@ -70,7 +70,7 @@ class UpdateToSend(osv.osv):
                 return 0
 
             ids_to_delete = self.need_to_push(cr, uid,
-                self.search_deleted(cr, uid, [('module','=','sd')], context=context), context=context)
+                self.search_deleted(cr, uid, module='sd', context=context), context=context)
 
             if not ids_to_delete:
                 return 0
