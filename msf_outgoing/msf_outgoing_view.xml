@@ -1415,7 +1415,7 @@
                     <field name="asset_id"/>
                     <field name="partner_id"/>
                     <field name="date"/>
-                    <field name="not_shipped" invisible="1" />
+                    <field name="not_shipped" string="Returned" />
                 </tree>
             </field>
         </record>

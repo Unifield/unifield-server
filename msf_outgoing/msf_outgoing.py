@@ -628,6 +628,7 @@ class shipment(osv.osv):
                         'from_pack': family.to_pack - family.selected_number + 1,
                         'to_pack': family.to_pack,
                         'state': 'done',
+                        'not_shipped': True, #BKLG-13: set the pack returned to stock also as not_shipped, for showing to view ship draft
                     }
                     context['non_stock_noupdate'] = True
 
