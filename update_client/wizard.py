@@ -48,16 +48,14 @@ class upgrade(osv.osv_memory):
         restart_server()
         return {'type': 'ir.actions.act_window_close'}
 
-    def _get_text_unbalance_aml(self, cr, uid, context=None):
+    def _get_error(self, cr, uid, context=None):
         text = ""
         account_move_obj = self.pool.get('account.move')
         a_m_ids = account_move_obj.get_valid_but_unbalanced(cr, uid, context)
         if a_m_ids:
-            text += "Warning ! Before patching please correct the following unbalanced Journal Entries: "
-            am_name = []
+            text += "Warning ! Before patching please correct the following unbalanced Journal Entries: \n"
             for a_m in account_move_obj.read(cr, uid, a_m_ids, ['name']):
-                am_name.append(a_m['name'])
-            text += ", ".join(am_name)
+                text += " - %s\n"% (a_m['name'])
         return text
 
     def download(self, cr, uid, ids, context=None):
@@ -79,7 +77,6 @@ class upgrade(osv.osv_memory):
                     raise osv.except_osv(_("Error!"), _("Can't retrieve the patch %(name)s (%(sum)s)!" % rev))
                 revisions.write(cr, uid, rev.id, {'patch':patch[1]})
                 cr.commit()
-        text += self._get_text_unbalance_aml(cr, uid, context)
         return self.write(cr, uid, ids, {
             'message' : text,
             'state' : 'need-install',
@@ -199,7 +196,6 @@ class upgrade(osv.osv_memory):
             if any(rev.need_download for rev in next_revisions) and not is_online():
                 text += _("But it seems you don't have an Internet access. " \
                           "Please provide the patches manually.")+"\n"
-            text += self._get_text_unbalance_aml(cr, uid, context)
         else:
             text += "\n"+_("Your OpenERP version is up-to-date.")+"\n"
         return text
@@ -240,11 +236,13 @@ class upgrade(osv.osv_memory):
                 ('blocked','Blocked')
             ], string="Status"),
         'patch' : fields.binary("Patch"),
+        'error': fields.text('Error', readonly="1"),
     }
 
     _defaults = {
         'message' : _generate,
         'state' : _get_state,
+        'error': _get_error,
     }
 
 upgrade()
