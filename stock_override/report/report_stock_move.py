@@ -65,34 +65,6 @@ class report_stock_move(osv.osv):
         
         return res
 
-    def _get_src_dest(self, cr, uid, ids, field_name, args, context=None):
-        """
-        Returns the name of the partner of IN or of OUT instead of name
-        of the location.
-        """
-        res = {}
-
-        for report in self.browse(cr, uid, ids, context=context):
-            res[report.id] = {
-                'source_name': report.location_id.name,
-                'destination_name': report.location_dest_id.name,
-                'move_type': 'internal',
-            }
-            if report.picking_id and report.picking_id.partner_id:
-                if report.picking_id.type == 'in':
-                    res[report.id].update({
-                        'source_name': report.picking_id.partner_id.name,
-                        'move_type': 'in',
-                    })
-                elif report.picking_id.type == 'out' and report.location_dest_id.usage in ['customer', 'supplier']:
-                    res[report.id]['destination_name'] = report.picking_id.partner_id.name
-                    res[report.id].update({
-                        'destination_name': report.picking_id.partner_id.name,
-                        'move_type': 'out',
-                    })
-
-        return res
-
     _columns = {
         'date': fields.date('Date', readonly=True),
         'year': fields.char('Year', size=4, readonly=True),
@@ -133,9 +105,6 @@ class report_stock_move(osv.osv):
         'product_code': fields.related('product_id', 'default_code', type='char', string='Product Code'),
         'product_name': fields.related('product_id', 'name', type='char', string='Product Name'),
         'expiry_date': fields.related('prodlot_id', 'life_date', type='date', string='Expiry Date'),
-        'source_name': fields.function(_get_src_dest, method=True, string='Source Location', type='char', multi='src_dest'),
-        'destination_name': fields.function(_get_src_dest, method=True, string='Destination Location', type='char', multi='src_dest'),
-        'move_type': fields.function(_get_src_dest, method=True, string='Move typ', type='char', multi='src_dest'),
     }
 
     def init(self, cr):
@@ -377,7 +346,7 @@ from/to this location will be shown.""",
         """
         Select the good lines on the report.stock.move table
         """
-        rsm_obj = self.pool.get('report.stock.move')
+        rsm_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
         data_obj = self.pool.get('ir.model.data')
 
@@ -393,19 +362,18 @@ from/to this location will be shown.""",
                 ('location_id.usage', 'in', loc_usage),
                 ('location_dest_id.usage', 'in', loc_usage),
                 ('state', '=', 'done'),
-                '|',
-                ('product_qty_in', '!=', 0),
-                ('product_qty_out', '!=', 0),
+#                '|',
+                ('product_qty', '!=', 0),
+#                ('product_qty_out', '!=', 0),
             ]
             if report.partner_id:
                 domain.append(('partner_id', '=', report.partner_id.id))
+            if report.product_id:
+                domain.append(('product_id', '=', report.product_id.id))
             if report.prodlot_id:
                 domain.append(('prodlot_id', '=', report.prodlot_id.id))
-            else:
-                if report.product_id:
-                    domain.append(('product_id', '=', report.product_id.id))
-                if report.expiry_date:
-                    domain.append(('prodlot_id.life_date', '=', report.expiry_date))
+            if report.expiry_date:
+                domain.append(('prodlot_id.life_date', '=', report.expiry_date))
             if report.date_from:
                 domain.append(('date', '>=', report.date_from))
             if report.date_to:
@@ -426,13 +394,7 @@ from/to this location will be shown.""",
 
             context['domain'] = domain
 
-            rsm_ids = rsm_obj.search(cr, uid, domain, context=context)
-            if not rsm_ids:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('No stock moves found for these parameters')
-                )
-
+            rsm_ids = rsm_obj.search(cr, uid, domain, order='date', context=context)
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress',
@@ -572,41 +534,45 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
 
     def getLines(self):
         res = []
-        for move in self.pool.get('report.stock.move').browse(
+        for move in self.pool.get('stock.move').browse(
             self.cr,
             self.uid,
             self.datas['moves'],
         ):
             move_vals = {
-                'product_code': move.product_code,
-                'product_name': move.product_name,
+                'product_code': move.product_id.default_code,
+                'product_name': move.product_id.name,
                 'uom': move.product_uom.name,
                 'batch': move.prodlot_id and move.prodlot_id.name or '',
                 'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
-                'qty_in': move.product_qty_in or 0.00,
-                'qty_out': move.product_qty_out or 0.00,
-                'source': move.source_name,
-                'destination': move.destination_name,
+                'qty_in': 0.00,
+                'qty_out': 0.00,
+                'source': move.location_id.usage == 'supplier' and move.picking_id and move.picking_id.partner_id.name or move.location_id.name,
+                'destination': move.location_dest_id.usage == 'customer' and move.picking_id and move.picking_id.partner_id.name or move.location_dest_id.name,
                 'reason_code': move.reason_type_id and move.reason_type_id.name or '',
                 'doc_ref': move.picking_id and move.picking_id.name or '',
             }
             if move.type in ('in', 'out') and (
                 move.location_id.usage in ['customer', 'supplier'] or
                 move.location_dest_id.usage in ['customer', 'supplier']):
+                if move.type == 'in':
+                    move_vals['qty_in'] = move.product_qty
+                else:
+                    move_vals['qty_out'] = move.product_qty
                 res.append(move_vals)
             else:
                 move_vals_in = move_vals.copy()
                 move_vals_out = move_vals.copy()
                 move_vals_in.update({
-                    'qty_in': move.product_qty_in or move.product_qty_out,
+                    'qty_in': move.product_qty,
                     'qty_out': 0.00,
                 })
                 move_vals_out.update({
                     'qty_in': 0.00,
-                    'qty_out': move.product_qty_out or move.product_qty_in,
+                    'qty_out': move.product_qty,
                 })
-                res.append(move_vals_out)
                 res.append(move_vals_in)
+                res.append(move_vals_out)
         return res
 
 
