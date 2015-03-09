@@ -150,6 +150,18 @@ class local_message_rule(osv.osv):
             msg_to_send_obj.create(cr, uid, data, context=context)
             logger.info("A manual RW message for the method: %s, created for the object: %s " % (full_method, pick_name)) 
 
+    def update_ir_model_data(self, cr, uid, list_update, usb=False, context=None):
+        date_field = 'message_date'
+        if usb:
+            date_field = 'usb_message_date'
+
+        count = 0
+        for obj in list_update:
+            if list_update[obj]:
+                cr.execute('''UPDATE ir_model_data SET '''+date_field+'''=NOW() WHERE module='sd' AND model=%s AND res_id IN %s''', [obj, tuple(list_update[obj])])
+                count += len(list_update[obj])
+        return count
+
     _order = 'sequence_number asc'
 local_message_rule()
 
@@ -182,26 +194,38 @@ class message_to_send(osv.osv):
         context = dict(context or {})
         context['active_test'] = False
 
+        date_field = 'message_date'
+        if rule.type == 'USB':
+            date_field = 'usb_message_date'
+        obj = self.pool.get(rule.model)
+        new_ids = obj.need_to_push(cr, uid, [], field=date_field, empty_ids=True, context=context)
         # either use rule filter_method or domain to find records for message
         if rule.filter_method:
-            obj_ids_temp = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
+            obj_ids_temp = getattr(obj, rule.filter_method)(cr, uid, rule, new_ids, context=context)
         else:
             domain = rule.domain and eval(rule.domain) or []
-            obj_ids_temp = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
+            domain.append(('id', 'in', new_ids))
+            obj_ids_temp = obj.search_ext(cr, uid, domain, order=order, context=context)
 
         '''
             Add only real new messages to sync those haven't been synced before! This reduces significantly the cost of calculating the args (which is heavy)
             The solution is to get the identifiers, then check to remove those exist but not sent, no need to calculate args for them 
         '''
         obj_ids = []
+        already_created_ids = []
         identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids_temp, rule.server_id, context=context)
         for obj_id in obj_ids_temp:
             # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
             ids = self.search(cr, uid, [('identifier', '=', identifiers[obj_id])], context=context)
             if not ids:
                 obj_ids.append(obj_id)
+            else:
+                already_created_ids.append(obj_id)
 
-        dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
+        if already_created_ids:
+            self.pool.get('sync.client.message_rule').update_ir_model_data(cr, uid, {rule.model: already_created_ids}, usb=rule.type == 'USB', context=context)
+
+        dest = obj.get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
         for obj_id in obj_ids:
             if initial == False: # default action
@@ -216,7 +240,7 @@ class message_to_send(osv.osv):
                     destination = 'fake'
                 # UF-2483: By default the "sent" parameter is False
                 self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context)
-        return len(obj_ids)
+        return obj_ids
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
         return dict( (id, "%s_%s" % (name, server_rule_id)) \

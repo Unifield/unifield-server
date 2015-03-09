@@ -752,7 +752,7 @@ class stock_picking(osv.osv):
 
         message_pool = self.pool.get('sync_remote_warehouse.message_to_send')
         rule_pool = self.pool.get("sync.client.message_rule")
-        messages_count = 0
+        ids_generated = {}
         message_direction = entity.usb_instance_type == 'central_platform' and \
             ['|', ('direction_usb', '=', 'cp_to_rw'), ('direction_usb', '=', 'bidirectional')] or \
             ['|', ('direction_usb', '=', 'rw_to_cp'), ('direction_usb', '=', 'bidirectional')]
@@ -763,7 +763,9 @@ class stock_picking(osv.osv):
                 if 'usb_create_partial_int_moves' in rule.remote_call or 'usb_create_partial_in' in rule.remote_call:
                     # For this INT sync, create messages ordered by the date_done to make sure that the first INTs will be synced first
                     order = 'date_done asc'
-                messages_count += message_pool.create_from_rule(cr, uid, rule, order, context=context)
+                ids_generated.setdefault(rule.model, [])
+                ids_generated[rule.model] += message_pool.create_from_rule(cr, uid, rule, order, context=context)
+            messages_count = rule_pool.update_ir_model_data(cr, uid, ids_generated, usb=True, context=context)
             if messages_count:
                 cr.commit()
         

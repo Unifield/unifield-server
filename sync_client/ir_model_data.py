@@ -73,6 +73,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
             fnct=_get_is_deleted, fnct_search=_get_is_deleted, method=True),
         'touched' : fields.text("Which records has been touched"),
         'force_recreation' : fields.boolean("Force record re-creation"),
+        'message_date': fields.datetime('Last message generation Date'),
     }
 
     _defaults={

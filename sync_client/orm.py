@@ -74,7 +74,7 @@ class extended_orm_methods:
             return res
         return recur_get_model(self, [])
 
-    def need_to_push(self, cr, uid, ids, touched_fields=None, empty_ids=False, context=None):
+    def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
         """
         Check if records need to be pushed to the next synchronization process
         or not.
@@ -122,7 +122,7 @@ SELECT res_id
     WHERE module = 'sd' AND
           model = %s AND
           """+add_sql+"""
-          (sync_date < last_modification OR sync_date IS NULL) AND
+          ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
           (create_date is NULL or create_date <= NOW())""",
 sql_params)
         # NOW() is the sql transaction begin date
@@ -138,7 +138,7 @@ SELECT res_id, touched
     WHERE module = 'sd' AND
           model = %s AND
           """+add_sql+"""
-          (sync_date < last_modification OR sync_date IS NULL) AND
+          ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
           (create_date is NULL or create_date <= NOW())""",
 sql_params)
             result = [row[0] for row in cr.fetchall()
