@@ -534,6 +534,15 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
 
     def getLines(self):
         res = []
+        company_id = self.pool.get('res.users').browse(
+            self.cr, self.uid, self.uid).company_id.partner_id.id
+
+        def get_src_dest(m, f='location_id'):
+            if m[f].usage in ('supplier', 'customer') and m.picking_id and m.picking_id.partner_id.id != company_id:
+                return m.picking_id.partner_id.name
+            else:
+                return m[f].name
+
         for move in self.pool.get('stock.move').browse(
             self.cr,
             self.uid,
@@ -547,8 +556,8 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
                 'qty_in': 0.00,
                 'qty_out': 0.00,
-                'source': move.location_id.usage == 'supplier' and move.picking_id and move.picking_id.partner_id.name or move.location_id.name,
-                'destination': move.location_dest_id.usage == 'customer' and move.picking_id and move.picking_id.partner_id.name or move.location_dest_id.name,
+                'source': get_src_dest(move, 'location_id'),
+                'destination': get_src_dest(move, 'location_dest_id'),
                 'reason_code': move.reason_type_id and move.reason_type_id.name or '',
                 'doc_ref': move.picking_id and move.picking_id.name or '',
             }
