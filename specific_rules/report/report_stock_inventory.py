@@ -100,6 +100,7 @@ location will be shown.""",
                 ('location_id.usage', '=', 'internal'),
                 ('product_id.type', '=', 'product'),
                 ('product_qty', '!=', 0.00),
+                ('state', '=', 'done'),
             ]
             if report.prodlot_id:
                 domain.append(('prodlot_id', '=', report.prodlot_id.id))
