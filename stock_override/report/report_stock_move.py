@@ -377,7 +377,7 @@ from/to this location will be shown.""",
         """
         Select the good lines on the report.stock.move table
         """
-        rsm_obj = self.pool.get('report.stock.move')
+        rsm_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
         data_obj = self.pool.get('ir.model.data')
 
@@ -393,9 +393,9 @@ from/to this location will be shown.""",
                 ('location_id.usage', 'in', loc_usage),
                 ('location_dest_id.usage', 'in', loc_usage),
                 ('state', '=', 'done'),
-                '|',
-                ('product_qty_in', '!=', 0),
-                ('product_qty_out', '!=', 0),
+#                '|',
+                ('product_qty', '!=', 0),
+#                ('product_qty_out', '!=', 0),
             ]
             if report.partner_id:
                 domain.append(('partner_id', '=', report.partner_id.id))
@@ -425,7 +425,7 @@ from/to this location will be shown.""",
 
             context['domain'] = domain
 
-            rsm_ids = rsm_obj.search(cr, uid, domain, context=context)
+            rsm_ids = rsm_obj.search(cr, uid, domain, order='date', context=context)
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress',
@@ -515,41 +515,45 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
 
     def getLines(self):
         res = []
-        for move in self.pool.get('report.stock.move').browse(
+        for move in self.pool.get('stock.move').browse(
             self.cr,
             self.uid,
             self.datas['moves'],
         ):
             move_vals = {
-                'product_code': move.product_code,
-                'product_name': move.product_name,
+                'product_code': move.product_id.default_code,
+                'product_name': move.product_id.name,
                 'uom': move.product_uom.name,
                 'batch': move.prodlot_id and move.prodlot_id.name or '',
                 'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
-                'qty_in': move.product_qty_in or 0.00,
-                'qty_out': move.product_qty_out or 0.00,
-                'source': move.source_name,
-                'destination': move.destination_name,
+                'qty_in': 0.00,
+                'qty_out': 0.00,
+                'source': move.location_id.usage == 'supplier' and move.picking_id and move.picking_id.partner_id.name or move.location_id.name,
+                'destination': move.location_dest_id.usage == 'customer' and move.picking_id and move.picking_id.partner_id.name or move.location_dest_id.name,
                 'reason_code': move.reason_type_id and move.reason_type_id.name or '',
                 'doc_ref': move.picking_id and move.picking_id.name or '',
             }
             if move.type in ('in', 'out') and (
                 move.location_id.usage in ['customer', 'supplier'] or
                 move.location_dest_id.usage in ['customer', 'supplier']):
+                if move.type == 'in':
+                    move_vals['qty_in'] = move.product_qty
+                else:
+                    move_vals['qty_out'] = move.product_qty
                 res.append(move_vals)
             else:
                 move_vals_in = move_vals.copy()
                 move_vals_out = move_vals.copy()
                 move_vals_in.update({
-                    'qty_in': move.product_qty_in or move.product_qty_out,
+                    'qty_in': move.product_qty,
                     'qty_out': 0.00,
                 })
                 move_vals_out.update({
                     'qty_in': 0.00,
-                    'qty_out': move.product_qty_out or move.product_qty_in,
+                    'qty_out': move.product_qty,
                 })
-                res.append(move_vals_out)
                 res.append(move_vals_in)
+                res.append(move_vals_out)
         return res
 
 

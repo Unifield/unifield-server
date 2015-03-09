@@ -99,6 +99,7 @@ location will be shown.""",
             domain = [
                 ('location_id.usage', '=', 'internal'),
                 ('product_id.type', '=', 'product'),
+                ('product_qty', '!=', 0.00),
             ]
             if report.prodlot_id:
                 domain.append(('prodlot_id', '=', report.prodlot_id.id))

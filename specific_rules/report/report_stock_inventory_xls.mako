@@ -155,34 +155,38 @@
     </Row>
     
     % for prd in getLines().itervalues():
-    <Row ss:AutoFitHeight="1">
-        <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['uom'])|x}</Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(prd['sum_qty'])|x}</Data></Cell>
-        <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(prd['sum_value'])|x}</Data></Cell>
-    </Row>
+      % if prd['sum_qty']:
+      <Row ss:AutoFitHeight="1">
+          <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['uom'])|x}</Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(prd['sum_qty'])|x}</Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(prd['sum_value'])|x}</Data></Cell>
+      </Row>
         % for line in prd['lines'].itervalues():
-    <Row ss:AutoFitHeight="1">
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['uom'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['batch'])|x}</Data></Cell>
-        % if line['expiry_date'] not in ('False', False):
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(line['expiry_date'])|n}T00:00:00.000</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-        % endif
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['value'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-    </Row>
+          % if line['qty']:
+          <Row ss:AutoFitHeight="1">
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['uom'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['batch'])|x}</Data></Cell>
+            % if line['expiry_date'] not in ('False', False):
+            <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(line['expiry_date'])|n}T00:00:00.000</Data></Cell>
+            % else:
+            <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+            % endif
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['value'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+          </Row>
+          %endif
         % endfor
+      % endif
     % endfor
  % endfor   
     
