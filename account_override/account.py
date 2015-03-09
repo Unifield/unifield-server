@@ -775,6 +775,10 @@ class account_move(osv.osv):
         self.unlink(cr, uid, to_delete, context, check=False)
         return True
 
+    def get_valid_but_unbalanced(self, cr, uid, context=None):
+        cr.execute("select move_id, sum(debit-credit) from account_move_line where state='valid' group by move_id having abs(sum(debit-credit)) > 0.00001")
+        return [x[0] for x in cr.fetchall()]
+
 account_move()
 
 class account_move_reconcile(osv.osv):
