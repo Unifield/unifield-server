@@ -43,7 +43,7 @@ class wizard_import_rac(osv.osv_memory):
         
         The file should be in XML 2003 format.
         The columns should be in this order :
-           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Consumed quantity ; Remark
+           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark
         """)
     }
     

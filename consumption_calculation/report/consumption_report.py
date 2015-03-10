@@ -50,6 +50,7 @@ class real_consumption_xls(WebKitParser):
         return (a[0], 'xls')
 
 real_consumption_xls('report.real.consumption.xls', 'real.average.consumption', 'addons/consumption_calculation/report/report_real_consumption_xls.mako')
+real_consumption_xls('report.incoming.consumption.xls', 'stock.picking', 'addons/consumption_calculation/report/report_incoming_consumption_xls.mako')
 
 
 class monthly_consumption_xls(WebKitParser):

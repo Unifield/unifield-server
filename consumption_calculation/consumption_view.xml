@@ -330,6 +330,19 @@
             menu="False"
             />
 
+    <!-- INCOMING SHIPMENT CONSUMPTION EXPORT -->
+        <report
+            id="report_incoming_consumption_xls"
+            string="XML Export"
+            model="stock.picking"
+            name="incoming.consumption.xls"
+            file="consumption_calculation/report/report_incoming_consumption_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
     <!-- MONTHLY REVIEW CONSUMPTION -->
         <report
             id="report_monthly_consumption_xls"
