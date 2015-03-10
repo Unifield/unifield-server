@@ -1311,12 +1311,19 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         sellerId = False
         po_cft = False
         l_type = 'type' in result['value'] and result['value']['type']
+
+        line = None
+        if ids:
+            line = self.browse(cr, uid, ids[0])
+
         if product and type:
             seller = product_obj.browse(cr, uid, product).seller_id
             sellerId = (seller and seller.id) or False
 
             if l_type == 'make_to_order':
                 po_cft = 'po'
+                if line and line.product_id and line.product_id.type in ('service', 'service_recep') and line.order_id and not line.order_id.procurement_request:
+                    po_cft = 'dpo'
 
             result['value'].update({
                 'supplier': sellerId,
