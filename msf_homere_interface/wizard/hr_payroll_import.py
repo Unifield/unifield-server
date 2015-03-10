@@ -132,7 +132,7 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('This account is a view type account: %s') % (ustr(accounting_code[0]),))
         # Check if it's a payroll rounding line
         is_payroll_rounding = False
-        if third and third[0] and ustr(third[0]) in ('SAGA_BALANCE', 'CSH_DIFF'):
+        if third and third[0] and ustr(third[0]) == 'SAGA_BALANCE' or accounting_code[0] == '67000':
             is_payroll_rounding = True
         # Check if it's a counterpart line (In HOMERE import, it seems to be lines that have a filled in column "third")
         is_counterpart = False
