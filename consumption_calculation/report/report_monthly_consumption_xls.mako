@@ -72,6 +72,8 @@
     </Row>
 
     <Row>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
 
     <Row>
