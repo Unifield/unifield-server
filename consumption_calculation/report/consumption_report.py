@@ -21,6 +21,7 @@
 from report import report_sxw
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
+from tools.translate import _
 
 import pooler
 
@@ -68,3 +69,35 @@ class monthly_consumption_xls(WebKitParser):
         a = super(monthly_consumption_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 monthly_consumption_xls('report.monthly.consumption.xls', 'monthly.review.consumption', 'addons/consumption_calculation/report/report_monthly_consumption_xls.mako')
+
+
+class wizard_incoming_xml_export(osv.osv_memory):
+    _name = 'wizard.incoming.xml.export'
+
+    def print_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        incoming_ids = context.get('active_ids', [])
+
+        not_done = self.pool.get('stock.picking').search(cr, uid, [
+            ('id', 'in', incoming_ids),
+            ('state', '!=', 'done'),
+        ], context=context)
+
+        if not_done:
+            raise osv.except_osv(
+                _('Error'),
+                _('The XML Export is only available for Closed Incoming Shipment'),
+            )
+
+        datas = {'ids':incoming_ids}
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'incoming.consumption.xls',
+            'datas': datas,
+            'context': context,
+        }
+
+wizard_incoming_xml_export()
