@@ -49,6 +49,7 @@ class stock_incoming_processor(osv.osv):
             ],
             string='Destination Type',
             readonly=False,
+            required=True,
             help="The default value is the one set on each stock move line.",
         ),
         'source_type': fields.selection([
