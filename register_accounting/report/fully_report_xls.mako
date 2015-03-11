@@ -576,7 +576,7 @@
           <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${hasattr(inv_line, 'price_subtotal') and inv_line.price_subtotal or hasattr(inv_line, 'amount') and inv_line.amount or 0.0}</Data>
+          <Data ss:Type="Number">${hasattr(inv_line, 'price_subtotal') and inv_line.price_subtotal or hasattr(inv_line, 'amount_currency') and inv_line.amount_currency or 0.0}</Data>
         </Cell>
       </Row>
 % if hasattr(inv_line, 'analytic_lines'):
