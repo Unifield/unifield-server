@@ -1237,8 +1237,6 @@ class stock_move(osv.osv):
         return res
 
     def _is_price_changed(self, cr, uid, ids, field_name, args, context=None):
-        import pdb
-        pdb.set_trace()
         if isinstance(ids, (int, long)):
             ids = [ids]
 
