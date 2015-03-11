@@ -23,6 +23,7 @@ from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
+import time
 from mx.DateTime import Parser
 from mx.DateTime import RelativeDateTime
 from time import strftime
@@ -311,6 +312,16 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_requested_date_in_past(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for po in self.read(cr, uid, ids, ['delivery_requested_date'], context=context):
+            res[po['id']] = po['delivery_requested_date'] and po['delivery_requested_date'] < time.strftime('%Y-%m-%d') or False
+
+        return res
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),
@@ -380,6 +391,13 @@ class purchase_order(osv.osv):
             multi='so_info',
         ),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'requested_date_in_past': fields.function(
+            _get_requested_date_in_past,
+            method=True,
+            string='Requested date in past',
+            type='boolean',
+            store=False,
+        ),
     }
 
     _defaults = {
