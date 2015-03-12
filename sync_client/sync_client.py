@@ -1037,9 +1037,9 @@ class Connection(osv.osv):
         'login' : 'admin',
         'max_size' : 500,
         'database' : 'SYNC_SERVER',
-        'timeout' : 10.0,
-        'netrpc_retry' : 0,
-        'xmlrpc_retry' : 0,
+        'timeout' : 600.0,
+        'netrpc_retry' : 10,
+        'xmlrpc_retry' : 10,
     }
 
     def _get_connection_manager(self, cr, uid, context=None):
