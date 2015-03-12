@@ -1223,7 +1223,7 @@
 									<field name="currency_id" />
 									<field name="location_id" />
                                     <field name="state" />
-                                    <field name="not_shipped" invisible="1" />
+                                    <field name="not_shipped"  string="Returned" />
 								</tree>
 								<form>
 									<field name="sale_order_id"/>
