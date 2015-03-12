@@ -1161,12 +1161,12 @@ class account_bank_statement_line(osv.osv):
                     del context['sync_update_execution']
                 account_analytic_line.unlink(cr, uid, aal_ids, context=context)
                 analytic_distribution.unlink(cr, uid, ad_ids, context=context)
-                if from_sync:
-                    context['sync_update_execution'] = True
 
                 # Save the seqnums and delete the move lines
                 context['seqnums'] = seqnums
                 account_move.unlink(cr, uid, move_ids, context=context)
+                if from_sync:
+                    context['sync_update_execution'] = True
         return True
 
 
