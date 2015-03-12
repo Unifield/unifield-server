@@ -180,7 +180,7 @@ class hq_report_ocg(report_sxw.report_sxw):
             first_result_lines.append(formatted_data)
             
             # For second report: add to corresponding sub
-            if journal.type in ['correction', 'intermission'] or not account.shrink_entries_for_hq:
+            if not account.shrink_entries_for_hq:
                 if (journal.code, journal.id, currency.id) not in main_lines:
                     main_lines[(journal.code, journal.id, currency.id)] = []
                 main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
