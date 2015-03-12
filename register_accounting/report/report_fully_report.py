@@ -41,12 +41,37 @@ class report_fully_report(report_sxw.rml_parse):
             return res
         if isinstance(move_ids, (int, long)):
             move_ids = [move_ids]
+        
+        # US-69: at JI level exclude the detail display of HR journal JIs
+        # - detail for payroll entries not wished (no JI AND AJI display)
+        # - as we not display HR JIs, JI/AJIs will not be displayed by report
+        
+        # get journals to exclude
+        journal_obj = pooler.get_pool(self.cr.dbname).get('account.journal')
+        domain = [('type', '=', 'hr')]
+        excluded_journal_ids = journal_obj.search(self.cr, self.uid, domain)
+        
+        # get JIs ids filtered by excluded journal
+        am_obj = pooler.get_pool(self.cr.dbname).get('account.move')
+        domain = [
+            ('journal_id', 'not in', excluded_journal_ids),
+            ('id', 'in', move_ids),
+        ]
+        move_ids = am_obj.search(self.cr, self.uid, domain)
+        if not move_ids:
+            return []
+        
         # We need move lines linked to the given move ID. Except the invoice counterpart.
         #+ Lines that have is_counterpart to True is the invoice counterpart. We do not need it.
         aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
-        aml_ids = aml_obj.search(self.cr, self.uid, [('move_id', 'in', move_ids), ('is_counterpart', '=', False)])
+        domain = [
+            ('move_id', 'in', move_ids),
+            ('is_counterpart', '=', False)
+        ]
+        aml_ids = aml_obj.search(self.cr, self.uid, domain)
         if aml_ids:
             res = aml_obj.browse(self.cr, self.uid, aml_ids)
+            
         return sorted(res, key=lambda x: x.line_number)
 
     def getAnalyticLines(self, analytic_ids):
