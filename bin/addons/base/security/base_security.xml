@@ -36,9 +36,6 @@
         <field name="name">Sales / User</field>
     </record>
     <!-- Set accesses to menu -->
-    <record model="ir.ui.menu" id="base.menu_administration">
-        <field name="groups_id" eval="[(6,0, [ref('group_system'), ref('group_erp_manager')])]"/>
-    </record>
 
     <record model="ir.rule" id="res_widget_user_rule">
         <field name="name">res.widget.user rule</field>
