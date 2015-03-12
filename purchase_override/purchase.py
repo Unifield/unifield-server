@@ -317,8 +317,8 @@ class purchase_order(osv.osv):
             ids = [ids]
 
         res = {}
-        for po in self.read(cr, uid, ids, ['delivery_requested_date'], context=context):
-            res[po['id']] = po['delivery_requested_date'] and po['delivery_requested_date'] < time.strftime('%Y-%m-%d') or False
+        for po in self.read(cr, uid, ids, ['delivery_requested_date', 'rfq_ok'], context=context):
+            res[po['id']] = po['delivery_requested_date'] and not po['rfq_ok'] and po['delivery_requested_date'] < time.strftime('%Y-%m-%d') or False
 
         return res
 
