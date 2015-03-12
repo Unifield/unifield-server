@@ -452,7 +452,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 # Check if all is ok for the file
                 ## The lines should be balanced for each currency
                 for c in money:
-                    if (money[c]['debit'] - money[c]['credit']) >= 10**-2:
+                    if abs(money[c]['debit'] - money[c]['credit']) >= 10**-2:
                         raise osv.except_osv(_('Error'), _('Currency %s is not balanced: %s') % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),))
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0})
