@@ -148,6 +148,7 @@ class account_move_line(osv.osv):
             journal = self.pool.get('account.journal').read(cr, uid, obj_line.get('journal_id', [False])[0], ['analytic_journal_id', 'name'], context=context)
             move = self.pool.get('account.move').read(cr, uid, obj_line.get('move_id', [False])[0], ['analytic_distribution_id', 'status', 'line_id'], context=context)
             account = self.pool.get('account.account').read(cr, uid, obj_line.get('account_id', [False])[0], ['is_analytic_addicted'], context=context)
+            aal_obj = self.pool.get('account.analytic.line')
             line_distrib_id = (obj_line.get('analytic_distribution_id', False) and obj_line.get('analytic_distribution_id')[0]) or (move.get('analytic_distribution_id', False) and move.get('analytic_distribution_id')[0]) or False
             # When you create a journal entry manually, we should not have analytic lines if ONE line is invalid!
             other_lines_are_ok = True
@@ -169,9 +170,23 @@ class account_move_line(osv.osv):
                 distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, line_distrib_id, context=context)
                 # create lines
                 for distrib_lines in [distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
+                    aji_greater_amount = {
+                        'amount': 0.,
+                        'is': False,
+                        'id': False,
+                    }
+                    dl_total_amount_rounded = 0.
                     for distrib_line in distrib_lines:
                         context.update({'date': obj_line.get('source_date', False) or obj_line.get('date', False)})
                         anal_amount = distrib_line.percentage*amount/100
+                        dl_total_amount_rounded += round(anal_amount, 2)
+                        if anal_amount > aji_greater_amount['amount']:
+                            # US-119: breakdown by fp line or free 1, free2
+                            # register the aji that will have the greatest amount
+                            aji_greater_amount['amount'] = anal_amount
+                            aji_greater_amount['is'] = True
+                        else:
+                            aji_greater_amount['is'] = False
                         line_vals = {
                                      'name': obj_line.get('name', ''),
                                      'date': obj_line.get('date', False),
@@ -201,7 +216,25 @@ class account_move_line(osv.osv):
                         # Add source_date value for account_move_line that are a correction of another account_move_line
                         if obj_line.get('corrected_line_id', False) and obj_line.get('source_date', False):
                             line_vals.update({'source_date': obj_line.get('source_date', False)})
-                        self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
+                        aji_id = aal_obj.create(cr, uid, line_vals, context=context)
+                        if aji_greater_amount['is']:
+                            aji_greater_amount['id'] = aji_id
+
+                    if amount > 0. and dl_total_amount_rounded > 0.:
+                        if abs(dl_total_amount_rounded - amount) > 0.001 and \
+                            aji_greater_amount['id']:
+                            # US-119 deduce the rounding gap and apply it
+                            # to the AJI of greater amount
+                            # http://jira.unifield.org/browse/US-119?focusedCommentId=38217&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38217
+                            fixed_amount = aji_greater_amount['amount'] - (dl_total_amount_rounded - amount)
+                            fixed_amount_vals = {
+                                'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
+                                        fixed_amount, round=False, context=context),
+                                'amount_currency': -1 * fixed_amount,
+                            }
+                            aal_obj.write(cr, uid, [aji_greater_amount['id']],
+                                fixed_amount_vals, context=context)
+
         return True
 
     def unlink(self, cr, uid, ids, context=None, check=True):
