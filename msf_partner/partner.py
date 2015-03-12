@@ -447,6 +447,16 @@ class res_partner(osv.osv):
             if msf_supplier and not 'property_stock_supplier' in vals:
                 vals['property_stock_supplier'] = msf_supplier[1]
 
+            if vals.get('partner_type') == 'esc':
+                eur_cur = self.pool.get('res.currency').search(cr, uid, [('name', '=', 'EUR')], context=context)
+                if eur_cur:
+                    pl_ids = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', 'in', eur_cur)], context=context)
+                    for pl in self.pool.get('product.pricelist').browse(cr, uid, pl_ids, context=context):
+                        if pl.type == 'sale':
+                            vals['property_product_pricelist'] = pl.id
+                        elif pl.type == 'purchase':
+                            vals['property_product_pricelist_purchase'] = pl.id
+
         if not vals.get('address'):
             vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
 
