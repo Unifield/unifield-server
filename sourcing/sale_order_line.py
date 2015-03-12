@@ -1047,6 +1047,17 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 _('A location must be chosen before sourcing the line.'),
             )
 
+        no_price = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('price_unit', '=', 0.00),
+            ('order_id.procurement_request', '=', False),
+        ], count=True, context=context)
+        if no_price:
+            raise osv.except_osv(
+                _('Warning'),
+                _('You cannot confirm the sourcing of a line with unit price as zero.'),
+            )
+
         order_to_check = {}
         for line in self.read(cr, uid, ids, ['order_id', 'estimated_delivery_date'], context=context):
             order_proc = order_obj.read(cr, uid, line['order_id'][0], ['procurement_request'], context=context)['procurement_request']
