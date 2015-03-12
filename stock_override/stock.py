@@ -315,6 +315,7 @@ class stock_picking(osv.osv):
             string='Do not sync.',
             store=False,
         ),
+        'company_id2': fields.many2one('res.partner', string='Company', required=True),
     }
 
     _defaults = {'from_yml_test': lambda *a: False,
@@ -322,7 +323,8 @@ class stock_picking(osv.osv):
                  'from_wkf_sourcing': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
                  'fake_type': 'in',
-                 'shipment_ref':False
+                 'shipment_ref':False,
+                 'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
                  }
 
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -1191,10 +1193,13 @@ class stock_move(osv.osv):
     def _default_location_destination(self, cr, uid, context=None):
         if not context:
             context = {}
+        partner_id = context.get('partner_id')
+        company_part_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
         if context.get('picking_type') == 'out':
-            wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
-            if wh_ids:
-                return self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_output_id.id
+            if partner_id != company_part_id:
+                wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+                if wh_ids:
+                    return self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_output_id.id
 
         return False
 
