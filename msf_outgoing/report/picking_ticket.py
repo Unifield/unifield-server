@@ -25,6 +25,23 @@ from tools.translate import _
 from report import report_sxw
 
 
+class BatchMoveLines(object):
+
+    def __init__(self, move):
+        self.move = move
+        self.location_id = move.location_id
+        self.product_id = move.product_id
+        self.line_number = move.line_number
+        self.sale_line_id = move.sale_line_id
+        self.product_uom = None
+        self.product_qty = None
+        self.prodlot_id = None
+        self.kc_check = False
+        self.dg_check = False
+        self.np_check = False
+        self.no_product = False
+
+
 class picking_ticket(report_sxw.rml_parse):
     """
     Parser for the picking ticket report
@@ -47,7 +64,39 @@ class picking_ticket(report_sxw.rml_parse):
             'uid': uid,
             'getWarningMessage': self.get_warning,
             'getStock': self.get_qty_available,
+            'getLines': self.get_lines,
         })
+
+    def get_lines(self, picking):
+        """
+        Returns the move lines. For move lines with a batch number/expiry date
+        create a first line with the whole quantity of product in stock, then
+        one line for each batch with the quantity of batch in stock.
+        """
+        res = []
+        dict_res = {}
+
+        for m in picking.move_lines:
+            dict_res.setdefault(m.line_number, [])
+            if m.prodlot_id and not dict_res[m.line_number]:
+                # First create a line without batch
+                dict_res[m.line_number].append(BatchMoveLines(m))
+            bm = BatchMoveLines(m)
+            bm.product_uom = m.product_uom
+            bm.product_qty = m.product_qty
+            bm.prodlot_id = m.prodlot_id
+            bm.kc_check = m.kc_check
+            bm.dg_check = m.dg_check
+            bm.np_check = m.np_check
+            if m.prodlot_id and dict_res[m.line_number]:
+                bm.no_product = True
+            dict_res[m.line_number].append(bm)
+
+        for key in dict_res:
+            for m in dict_res[key]:
+                res.append(m)
+
+        return res
 
     def get_warning(self, picking):
         """
@@ -100,6 +149,7 @@ class picking_ticket(report_sxw.rml_parse):
             context = {
                 'location': move.location_id.id,
                 'location_id': move.location_id.id,
+                'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
             }
 
         qty_available = product_obj.browse(
