@@ -273,6 +273,12 @@ class procurement_request(osv.osv):
         return default
 
     def copy(self, cr, uid, id, default, context=None):
+        if not default:
+            default = {}
+
+        if not default.get('order_ids'):
+            default['order_ids'] = None
+
         # bypass name sequence
         new_id = super(procurement_request, self).copy(cr, uid, id, default, context=context)
         if new_id:

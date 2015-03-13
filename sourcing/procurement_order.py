@@ -272,10 +272,13 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         location_id = False
         categ = False
+        ir_to_link = None
         if sol_ids:
             sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
             if sol.order_id:
                 categ = sol.order_id.categ
+                if sol.order_id.procurement_request:
+                    ir_to_link = sol.order_id.id
 
             if sol.analytic_distribution_id:
                 new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(
@@ -330,6 +333,10 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if po_values:
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], po_values, context=dict(context, import_in_progress=True))
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
+
+            if ir_to_link:
+                self.pool.get('sale.order').write(cr, uid, [ir_to_link], {'order_ids': [(4, purchase_ids[0])]}, context=context)
+
             return purchase_ids[0]
         else:
             if procurement.po_cft == 'dpo':
@@ -350,6 +357,10 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if categ:
                 values.update({'categ': categ})
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
+
+            if ir_to_link:
+                self.pool.get('sale.order').write(cr, uid, [ir_to_link], {'order_ids': [(4, purchase_id)]}, context=context)
+
             return purchase_id
 
     def write(self, cr, uid, ids, vals, context=None):
