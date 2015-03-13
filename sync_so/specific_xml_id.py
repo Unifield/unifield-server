@@ -414,14 +414,40 @@ class account_analytic_line(osv.osv):
                 new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
                 # UTP-1128: if the old cost center belong to the current instance, do not generate the delete message
                 if instance_name != old_destination_name and old_destination_name != new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
+                    send_msg = True
+                    if instance_level == 'coordo':
+                        """
+                        BKLG-19/5: not to delete AJIs with a not target CC at 
+                        project level if these AJIs are tied to a project JI
+                        
+                        use case:
+                        - after the AD is changed project side to a coordo CC
+                        - sync to project
+                        - sync to coordo
+                        
+                        AT COORDO side:
+                        - delete message will be send here (as not target CC)
+                        - do not send it
+                        """
+                        aml_obj = self.pool.get('account.analytic.line')
+                        aml_br = self.browse(cr, uid, ids[i], context=context)
+                        aml_ml_level = aml_br and aml_br.move_id and \
+                            aml_br.move_id.journal_id and \
+                            aml_br.move_id.journal_id.instance_id and \
+                            aml_br.move_id.journal_id.instance_id.level
+                        if aml_ml_level and aml_ml_level == 'project':
+                            send_msg = False
+                            
                     now = fields.datetime.now()
-                    message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
-                        'sent':False,
-                        'generate_message':True,
-                        'remote_call':self._name + ".message_unlink_analytic_line",
-                        'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                        'destination_name':old_destination_name}
-                    msg_to_send_obj.create(cr, uid, message_data)
+
+                    if send_msg:
+                        message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
+                            'sent':False,
+                            'generate_message':True,
+                            'remote_call':self._name + ".message_unlink_analytic_line",
+                            'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
+                            'destination_name':old_destination_name}
+                        msg_to_send_obj.create(cr, uid, message_data)
 
                     #UF-2439: If the old destination is not the same as the creating instance, then a delete message needs also be generated for the creating instance
                     creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id_record.name.split('/')[0]), ('level', '=', 'project')])
