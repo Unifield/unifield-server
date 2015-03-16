@@ -81,6 +81,8 @@
 ## definition of the columns' size
 <% nb_of_columns = 12 %>
 <Table x:FullColumns="1" x:FullRows="1">
+    # Order name
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
     # Item
     <Column ss:AutoFitWidth="1" ss:Width="40" />
     # Code
@@ -101,6 +103,12 @@
     <Column ss:AutoFitWidth="1" ss:Width="95" />
     # IN Unit Price
     <Column ss:AutoFitWidth="1" ss:Width="95" />
+    # Created (order)
+    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    # Delivery Confirmed (order)
+    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    # Status (order)
+    <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Destination
     <Column ss:AutoFitWidth="1" ss:Width="95" />
     # Cost Center
@@ -116,16 +124,6 @@
    <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Supplier: ${getRunParms()['supplier'] or '' |x}</Data></Cell>
    <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">PO State: ${getRunParms()['state'] or '' | x}</Data></Cell>
 </Row>
-<Row></Row>
-<Row></Row>
-
-% for o in objects:
-    
-    <Row ss:AutoFitHeight="0" ss:Height="36">
-       % for header in getHeaderLine(o):
-    	  <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${header |x}</Data></Cell>
-       % endfor
-    </Row>
 
     <Row ss:AutoFitHeight="1" > 
       % for header in getPOLineHeaders():
@@ -133,8 +131,11 @@
        % endfor       
     </Row>
     
+% for o in objects:
+    
     % for line in getPOLines(o.id):
     <Row ss:AutoFitHeight="1">
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
@@ -145,6 +146,9 @@
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
     </Row>
