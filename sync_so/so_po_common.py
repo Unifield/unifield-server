@@ -212,6 +212,9 @@ class so_po_common(osv.osv_memory):
         if 'analytic_distribution_id' in header_info:
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
 
+        if 'sync_date' in header_info:
+            header_result['fo_sync_date'] = header_info.get('sync_date')
+
         # UF-2267: If the original FO provided, then retrieve the original PO that links to this FO
         if header_info.get('parent_order_name', False):
             # build the complete partner_ref value and search for the linked PO
@@ -591,6 +594,7 @@ class so_po_common(osv.osv_memory):
         arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
 
         identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
+        
         if not identifiers:
             return
 

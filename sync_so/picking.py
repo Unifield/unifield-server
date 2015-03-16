@@ -23,9 +23,61 @@ from osv import osv, fields
 import netsvc
 
 import logging
+import time
 
 from sync_common import xmlid_to_sdref
 from sync_client import get_sale_purchase_logger
+
+
+class stock_move(osv.osv):
+    _inherit = 'stock.move'
+
+    def _get_sent_ok(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for m in self.browse(cr, uid, ids, context=context):
+            res[m.id] = m.state == 'cancel' and m.picking_id and m.picking_id.sale_id and m.picking_id.sale_id.state in ['done', 'cancel']
+
+        return res
+
+    def _src_sent_ok(self, cr, uid, obj, name, args, context=None):
+        if not len(args):
+            return []
+
+        for arg in args:
+            if arg[0] == 'to_be_sent':
+                if arg[1] != '=' and arg[2] is True:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Only \'=\' operator is accepted for \'to_be_sent\' field')
+                    )
+
+                res = [('state', '=', 'cancel')]
+                order_ids = self.pool.get('sale.order').search(cr, uid, [('state', 'in', ['done', 'cancel'])])
+                picking_ids = self.pool.get('stock.picking').search(cr, uid, [('type', '=', 'out'), ('sale_id', 'in', order_ids)])
+                res.append(('picking_id', 'in', picking_ids))
+
+        return res
+
+    _columns = {
+        'to_be_sent': fields.function(
+            _get_sent_ok,
+            fnct_search=_src_sent_ok,
+            method=True,
+            type='boolean',
+            string='Send to other instance ?',
+            readonly=True,
+        ),
+        'date_cancel': fields.datetime(string='Date cancel'),
+    }
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'date_cancel': time.strftime('%Y-%m-%d %H:%M:%S')})
+        return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
+
+stock_move()
 
 
 class stock_picking(osv.osv):
@@ -452,6 +504,11 @@ class stock_picking(osv.osv):
                 return message
             else:
                 po = po_obj.browse(cr, uid, [po_id], context=context)[0]
+                if po.fo_sync_date > pick_dict['date_cancel']:
+                    message = "The message is ignored as the stock move has been canceled before update of the PO"
+                    self._logger.info(message)
+                    return message
+
                 if len(po.order_line) == 0:
                     message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
                     self._logger.info(message)
