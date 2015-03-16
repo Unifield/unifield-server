@@ -833,7 +833,7 @@
                                 on_change="on_change_partner(partner_id2, address_id)"
                                 required="1"
                                 domain="[('partner_type', 'in', ['esc', 'external'])]"
-                                attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
+                                attrs="{'readonly': ['|', ('sale_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
                             <field name="address_id"
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
