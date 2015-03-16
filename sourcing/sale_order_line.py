@@ -630,8 +630,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if vals.get('product_id', False):
             product = product_obj.browse(cr, uid, vals['product_id'], context=context)
 
+        ir = False
         if vals.get('order_id', False):
             order = order_obj.browse(cr, uid, vals['order_id'], context=context)
+            ir = order.procurement_request
             if order.order_type == 'loan' and order.state == 'validated':
                 vals.update({
                     'type': 'make_to_stock',
@@ -644,6 +646,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if product and product.type in ('consu', 'service', 'service_recep'):
             vals['type'] = 'make_to_order'
+
+        if product and product.type in ('service', 'service_recep'):
+            if ir and vals.get('po_cft', 'dpo') == 'dpo':
+                vals['po_cft'] = 'po'
+            elif not ir and vals.get('po_cft', 'po') == 'po':
+                vals['po_cft'] = 'dpo'
 
         # If type is missing, set to make_to_stock and po_cft to False
         if not vals.get('type', False):
@@ -766,6 +774,15 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 raise osv.except_osv(
                     _('Warning'),
                     _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
+                )
+
+            if line.product_id and \
+               line.product_id.type in ('service', 'service_recep') and \
+               not line.order_id.procurement_request and \
+               line.po_cft == 'po':
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("""'Purchase Order' is not allowed to source a 'Service' product."""),
                 )
 
             if not line.product_id:
@@ -1279,12 +1296,19 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         sellerId = False
         po_cft = False
         l_type = 'type' in result['value'] and result['value']['type']
+
+        line = None
+        if ids:
+            line = self.browse(cr, uid, ids[0])
+
         if product and type:
             seller = product_obj.browse(cr, uid, product).seller_id
             sellerId = (seller and seller.id) or False
 
             if l_type == 'make_to_order':
                 po_cft = 'po'
+                if line and line.product_id and line.product_id.type in ('service', 'service_recep') and line.order_id and not line.order_id.procurement_request:
+                    po_cft = 'dpo'
 
             result['value'].update({
                 'supplier': sellerId,
@@ -1334,6 +1358,14 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         res = {'value': value, 'warning': warning}
 
         line = self.browse(cr, uid, line_id, context=context)
+
+        if line.product_id.type in ('service', 'service_recep') and not line.order_id.procurement_request and po_cft == 'po':
+            res['warning'] = {
+                'title': _('Warning'),
+                'message': _("""'Purchase Order' is not allowed to source a 'Service' product."""),
+            }
+            res['value'].update({'po_cft': 'dpo'})
+
         partner_id = 'supplier' in value and value['supplier'] or partner_id
         if line_id and partner_id and line.product_id:
             check_fnct = product_obj._on_change_restriction_error
@@ -1388,7 +1420,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             line = self.browse(cr, uid, line_id, context=context)
             if line.product_id.type in ('consu', 'service', 'service_recep') and l_type == 'make_to_stock':
                 product_type = line.product_id.type == 'consu' and 'non stockable' or 'service'
-                value['l_type'] = 'make_to_order'
+                value['type'] = 'make_to_order'
                 message.update({
                     'title': _('Warning'),
                     'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type,
