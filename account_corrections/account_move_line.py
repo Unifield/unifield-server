@@ -673,7 +673,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 continue
 
             # UTP-1187 check corrected line has an AD if need one
-            initial_al_ids = al_obj.search(cr, uid, [('move_id', '=', ml.id)],
+            # + BKLG-19/3: search only for fp ones as 'free' are not synced to
+            # HQ and initial_al_ids[0] is used to set reversal_origin
+            initial_al_ids = al_obj.search(cr, uid,
+                [('move_id', '=', ml.id), ('account_id.category', '=', 'FUNDING')],
                 context=context)
             # Note: this search result will be used near end of this function
             # (see # Change analytic lines that come from)
