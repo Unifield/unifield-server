@@ -124,19 +124,6 @@ class Entity(osv.osv):
         def get_pull_sequence():
             seq_pool = self.pool.get('ir.sequence')
             seq = seq_pool.get(cr, uid, 'rw.push.seq')
-            if not seq: # first time reference --> create for it
-                seq_typ_pool = self.pool.get('ir.sequence.type')
-                code_name = 'rw.push.seq'
-                types = {'name':'RW push sequence', 'code':code_name}
-                seq_typ_pool.create(cr, uid, types)
-                seq = {
-                    'name':'RW push sequence', 
-                    'code':code_name, 
-                    'prefix':'', 
-                    'padding':1}
-                seq_pool.create(cr, uid, seq)
-                seq = seq_pool.get(cr, uid, 'rw.push.seq')
-                
             # value must be int for simplifying at the partner instance   
             return int(seq)
 
@@ -566,7 +553,7 @@ class Entity(osv.osv):
                 patch_cr = db.cursor()
                 try:
                     patch_cr.autocommit(True)
-                    logger.append(_("Zip-file built with OpenERP Server %(release)s") % header)
+                    logger.append(_("Zip-file built with UniField Server %(release)s") % header)
                     revisions = self.pool.get('sync_client.version')
                     if revisions:
                         # import patches used by the zip-file
@@ -576,7 +563,7 @@ class Entity(osv.osv):
                         # check database revision
                         if revisions._is_outdated(patch_cr, uid, force_recalculate=True, exact_version=True, context=context):
                             raise osv.except_osv(_("Error!"),
-                                _("Your OpenERP Server is outdated. Please upgrade using the \"Patch Synchronization\" " \
+                                _("Your UniField Server is outdated. Please upgrade using the \"Patch Synchronization\" " \
                                   "menu under the \"Synchronization\" menu."))
                 finally:
                     patch_cr.close()
