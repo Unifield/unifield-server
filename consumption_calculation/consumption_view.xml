@@ -202,6 +202,7 @@
                             <field name="name" on_change="product_onchange(name, parent.id, parent.period_from, parent.period_to)" />
                             <field name="amc" />
                             <field name="fmc" on_change="fmc_change(amc, fmc, name)" attrs="{'readonly': [('valid_ok', '=', True)]}" />
+                            <field name="security_stock" />
                             <field name="last_reviewed" />
                             <field name="valid_ok" />
                             <field name="valid_until" />

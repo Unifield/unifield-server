@@ -63,10 +63,26 @@
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
     <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('DB/Instance name')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.company_id.name or '')|x}</Data></Cell>
+    </Row>
+    <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Generated on')}</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.creation_date|n}T00:00:00.000</Data></Cell>
+    </Row>
+
+    <Row>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+    </Row>
+
+    <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('AMC')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('FMC')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Safety Stock (qty)')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Valid Until')}</Data></Cell>
     </Row>
     ## we loop over the products line
@@ -74,6 +90,7 @@
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.uom_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" >
             % if line.amc and line.amc:
                 <Data ss:Type="Number">${(line.amc or '')|x}</Data>
@@ -84,6 +101,13 @@
         <Cell ss:StyleID="line" >
             % if line.fmc and line.fmc:
                 <Data ss:Type="Number">${(line.fmc or '')|x}</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
+        <Cell ss:StyleID="line" >
+            % if line.security_stock and line.security_stock:
+                <Data ss:Type="Number">${(line.security_stock or '')|x}</Data>
             % else:
                 <Data ss:Type="String"></Data>
             % endif
