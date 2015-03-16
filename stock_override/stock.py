@@ -490,14 +490,20 @@ class stock_picking(osv.osv):
         '''
         Change the delivery address when the partner change.
         '''
+        if context is None:
+            context = {}
+
         v = {}
         d = {}
+
+        partner = False
 
         if not partner_id:
             v.update({'address_id': False, 'is_esc': False})
         else:
+            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
             d.update({'address_id': [('partner_id', '=', partner_id)]})
-            v.update({'is_esc': self.pool.get('res.partner').browse(cr, uid, partner_id).partner_type == 'esc'})
+            v.update({'is_esc': partner.partner_type == 'esc'})
 
 
         if address_id:
@@ -512,6 +518,26 @@ class stock_picking(osv.osv):
 
             v.update({'address_id': addr})
 
+        if partner_id and ids:
+            context['partner_id'] = partner_id
+
+            out_loc_ids = self.pool.get('stock.location').search(cr, uid, [
+                ('outgoing_dest', '=', context['partner_id']),
+            ], context=context)
+            move_ids = self.pool.get('stock.move').search(cr, uid, [
+                ('picking_id', 'in', ids),
+                ('location_dest_id', 'not in', out_loc_ids),
+            ], context=context)
+            if move_ids:
+                return {
+                    'value': {'partner_id2': False, 'partner_id': False,},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _("""
+You cannot choose this supplier because some destination locations are not available for this partner.
+"""),
+                    },
+                }
 
         return {'value': v,
                 'domain': d}
