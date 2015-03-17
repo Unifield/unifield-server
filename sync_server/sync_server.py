@@ -30,6 +30,7 @@ import logging
 from datetime import datetime, timedelta
 from sync_common import get_md5, check_md5
 import time
+import psycopg2
 pp = pprint.PrettyPrinter(indent=4)
 MAX_ACTIVITY_DELAY = timedelta(minutes=5)
 
@@ -126,11 +127,25 @@ class entity(osv.osv):
                 res[entity.id] = _('Inactive')
         return res
 
-    def set_activity(self, cr, uid, entity, activity, context={}):
+    def set_activity(self, cr, uid, entity, activity, wait=False, context=None):
+        if context is None:
+            context = {}
+
         now = datetime.now()
         self._activity_pool[entity.identifier] = (activity, now)
         no_update = dict(context, update=False)
-        self.write(cr, 1, [entity.id], {'last_activity' : now.strftime("%Y-%m-%d %H:%M:%S")}, context=no_update)
+        try:
+            if not wait:
+                cr.execute("SAVEPOINT update_entity_last_activity")
+                cr.execute('select id from %s where id=%%s for update nowait'% self._table, (entity.id,), log_exceptions=False)
+            self.write(cr, 1, [entity.id], {'last_activity' : now.strftime("%Y-%m-%d %H:%M:%S")}, context=no_update)
+        except psycopg2.OperationalError, e:
+            if not wait and e.pgcode == '55P03':
+                # can't acquire lock: ok the show must go on
+                cr.execute("ROLLBACK TO update_entity_last_activity")
+                logging.getLogger('sync.server').info("Can't acquire lock to set sate")
+                return
+            raise
 
     _columns = {
         'name':fields.char('Instance Name', size=64, required=True, select=True),
@@ -371,7 +386,7 @@ class entity(osv.osv):
         
     @check_validated
     def end_synchronization(self, cr, uid, entity, context=None):
-        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Inactive'))
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Inactive'), wait=True)
         return (True, "Instance %s has finished the synchronization" % entity.identifier)
 
     @check_validated
