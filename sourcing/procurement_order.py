@@ -335,7 +335,13 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
 
             if ir_to_link:
-                self.pool.get('sale.order').write(cr, uid, [ir_to_link], {'order_ids': [(4, purchase_ids[0])]}, context=context)
+                self.pool.get('procurement.request.sourcing.document').chk_create(
+                    cr, uid, {
+                        'order_id': ir_to_link,
+                        'sourcing_document_model': 'purchase.order',
+                        'sourcing_document_type': 'po',
+                        'sourcing_document_id': purchase_ids[0],
+                    }, context=context)
 
             return purchase_ids[0]
         else:
@@ -359,7 +365,13 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
 
             if ir_to_link:
-                self.pool.get('sale.order').write(cr, uid, [ir_to_link], {'order_ids': [(4, purchase_id)]}, context=context)
+                self.pool.get('procurement.request.sourcing.document').chk_create(
+                    cr, uid, {
+                        'order_id': ir_to_link,
+                        'sourcing_document_model': 'purchase.order',
+                        'sourcing_document_type': 'po',
+                        'sourcing_document_id': purchase_id,
+                    }, context=context)
 
             return purchase_id
 
