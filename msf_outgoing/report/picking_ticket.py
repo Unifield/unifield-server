@@ -20,6 +20,7 @@
 ##############################################################################
 
 import time
+import pooler
 from osv import osv
 from tools.translate import _
 from report import report_sxw
@@ -33,8 +34,8 @@ class BatchMoveLines(object):
         self.product_id = move.product_id
         self.line_number = move.line_number
         self.sale_line_id = move.sale_line_id
-        self.product_uom = None
-        self.product_qty = None
+        self.product_uom = move.product_id.uom_id
+        self.product_qty = 0.00
         self.prodlot_id = None
         self.kc_check = False
         self.dg_check = False
@@ -75,6 +76,7 @@ class picking_ticket(report_sxw.rml_parse):
         """
         res = []
         dict_res = {}
+        pool = pooler.get_pool(self.cr.dbname)
 
         for m in picking.move_lines:
             dict_res.setdefault(m.line_number, [])
@@ -90,6 +92,8 @@ class picking_ticket(report_sxw.rml_parse):
             bm.np_check = m.np_check
             if m.prodlot_id and dict_res[m.line_number]:
                 bm.no_product = True
+                dict_res[m.line_number][0].product_qty += pool.get('product.uom')._compute_qty(
+                    self.cr, self.uid, bm.product_uom.id, bm.product_qty, bm.product_id.uom_id.id)
             dict_res[m.line_number].append(bm)
 
         for key in dict_res:
