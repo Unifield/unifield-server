@@ -202,6 +202,7 @@ No split of FO found !""")
             'product_uom': uom_pce_id,
             'product_uom_qty': 10.0,
             'type': 'make_to_order',
+            'price_unit': 12.24,
         }
         self.order_line_obj.create(line_values)
 
