@@ -1978,6 +1978,13 @@ class orm_template(object):
             values = defaults
         return values
 
+    def update_exported_fields(self, cr, uid, fields):
+        """
+        Override this method if you would like to change the exported
+        fields on the object.
+        """
+        return fields
+
 class orm_memory(orm_template):
 
     _protected = ['read', 'write', 'create', 'default_get', 'perm_read', 'unlink', 'fields_get', 'fields_view_get', 'search', 'name_get', 'distinct_field_get', 'name_search', 'copy', 'import_data', 'search_count', 'exists']
