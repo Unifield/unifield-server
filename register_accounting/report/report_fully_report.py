@@ -32,7 +32,7 @@ class report_fully_report(report_sxw.rml_parse):
         })
         return
 
-    def getMoveLines(self, move_ids):
+    def getMoveLines(self, move_ids, regline_br):
         """
         Fetch all lines except the partner counterpart one
         """
@@ -42,16 +42,29 @@ class report_fully_report(report_sxw.rml_parse):
         if isinstance(move_ids, (int, long)):
             move_ids = [move_ids]
         
-        # US-69: at JI level exclude the detail display of HR journal JIs
-        # - detail for payroll entries not wished (no JI AND AJI display)
-        # - as we not display HR JIs, JI/AJIs will not be displayed by report
+        # US-69
+        # - at JI level exclude the detail display of HR journal JIs/AJIs
+        # (detail for payroll entries not wished (no JI AND AJI display))
+        # - same process for register lines of account tax (imported from SI)
+        # => as we not display JIs, related AJIs will not be displayed too
         
-        # get journals to exclude
+        # 1) exclude register line of account of given user_type
+        excluded_regline_acc_type_codes = ['tax', ]
+        aat_obj = pooler.get_pool(self.cr.dbname).get('account.account.type')
+        domain = [('code', 'in', excluded_regline_acc_type_codes)]
+        excluded_regline_acc_type_ids = aat_obj.search(self.cr, self.uid,
+            domain)
+        if regline_br and regline_br.account_id and \
+            regline_br.account_id.user_type and \
+            regline_br.account_id.user_type.id in excluded_regline_acc_type_ids:
+            return []
+        
+        # 2) get journals to exclude
         journal_obj = pooler.get_pool(self.cr.dbname).get('account.journal')
         domain = [('type', '=', 'hr')]
         excluded_journal_ids = journal_obj.search(self.cr, self.uid, domain)
         
-        # get JIs ids filtered by excluded journal
+        # 3) get JIs ids filtered by excluded journal
         am_obj = pooler.get_pool(self.cr.dbname).get('account.move')
         domain = [
             ('journal_id', 'not in', excluded_journal_ids),
@@ -61,7 +74,7 @@ class report_fully_report(report_sxw.rml_parse):
         if not move_ids:
             return []
         
-        # We need move lines linked to the given move ID. Except the invoice counterpart.
+        # 4) We need move lines linked to the given move ID. Except the invoice counterpart.
         #+ Lines that have is_counterpart to True is the invoice counterpart. We do not need it.
         aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
         domain = [
