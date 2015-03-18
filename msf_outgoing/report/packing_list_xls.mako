@@ -311,7 +311,7 @@
     <Cell ss:StyleID="s16"><Data ss:Type="String">Shipper:</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s16"><Data ss:Type="String">Consignee:</Data></Cell>
-    <Cell ss:StyleID="s20"><Data ss:Type="String">Dispatch:</Data></Cell>
+    <Cell ss:StyleID="s16"><Data ss:Type="String">Dispatch:</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s16"><Data ss:Type="String">Invoice to:</Data></Cell>
     <Cell ss:StyleID="s107"/>
@@ -322,8 +322,9 @@
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('name'))|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_name or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_id.name or '')|x}</Data></Cell>
+    <Cell ss:StyleID="s18"/>
+    <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
@@ -336,7 +337,6 @@
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('addr_name'))|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_address or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
