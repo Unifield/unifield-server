@@ -315,6 +315,7 @@ class stock_picking(osv.osv):
             string='Do not sync.',
             store=False,
         ),
+        'company_id2': fields.many2one('res.partner', string='Company', required=True),
     }
 
     _defaults = {'from_yml_test': lambda *a: False,
@@ -322,7 +323,8 @@ class stock_picking(osv.osv):
                  'from_wkf_sourcing': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
                  'fake_type': 'in',
-                 'shipment_ref':False
+                 'shipment_ref':False,
+                 'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
                  }
 
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -488,14 +490,20 @@ class stock_picking(osv.osv):
         '''
         Change the delivery address when the partner change.
         '''
+        if context is None:
+            context = {}
+
         v = {}
         d = {}
+
+        partner = False
 
         if not partner_id:
             v.update({'address_id': False, 'is_esc': False})
         else:
+            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
             d.update({'address_id': [('partner_id', '=', partner_id)]})
-            v.update({'is_esc': self.pool.get('res.partner').browse(cr, uid, partner_id).partner_type == 'esc'})
+            v.update({'is_esc': partner.partner_type == 'esc'})
 
 
         if address_id:
@@ -510,6 +518,26 @@ class stock_picking(osv.osv):
 
             v.update({'address_id': addr})
 
+        if partner_id and ids:
+            context['partner_id'] = partner_id
+
+            out_loc_ids = self.pool.get('stock.location').search(cr, uid, [
+                ('outgoing_dest', '=', context['partner_id']),
+            ], context=context)
+            move_ids = self.pool.get('stock.move').search(cr, uid, [
+                ('picking_id', 'in', ids),
+                ('location_dest_id', 'not in', out_loc_ids),
+            ], context=context)
+            if move_ids:
+                return {
+                    'value': {'partner_id2': False, 'partner_id': False,},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _("""
+You cannot choose this supplier because some destination locations are not available for this partner.
+"""),
+                    },
+                }
 
         return {'value': v,
                 'domain': d}
@@ -1191,10 +1219,13 @@ class stock_move(osv.osv):
     def _default_location_destination(self, cr, uid, context=None):
         if not context:
             context = {}
+        partner_id = context.get('partner_id')
+        company_part_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
         if context.get('picking_type') == 'out':
-            wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
-            if wh_ids:
-                return self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_output_id.id
+            if partner_id != company_part_id:
+                wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+                if wh_ids:
+                    return self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_output_id.id
 
         return False
 

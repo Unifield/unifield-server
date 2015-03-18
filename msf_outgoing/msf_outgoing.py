@@ -4179,11 +4179,18 @@ class stock_move(osv.osv):
 
         res = super(stock_move, self).default_get(cr, uid, fields, context=context)
 
+        partner_id = context.get('partner_id')
+        auto_company = False
+        if partner_id:
+            cp_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
+            auto_company = cp_partner_id == partner_id
+
         if 'warehouse_id' in context and context.get('warehouse_id'):
             warehouse_id = context.get('warehouse_id')
         else:
             warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)[0]
-        res.update({'location_output_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id})
+        if not auto_company:
+            res.update({'location_output_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id})
 
         loc_virtual_ids = self.pool.get('stock.location').search(cr, uid, [('name', '=', 'Virtual Locations')])
         loc_virtual_id = len(loc_virtual_ids) > 0 and loc_virtual_ids[0] or False
@@ -4196,7 +4203,7 @@ class stock_move(osv.osv):
         if 'subtype' in context and context.get('subtype', False) == 'picking':
             loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_packing_id.id
             res.update({'location_dest_id': loc_packing_id})
-        elif 'subtype' in context and context.get('subtype', False) == 'standard':
+        elif 'subtype' in context and context.get('subtype', False) == 'standard' and not auto_company:
             loc_output_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id
             res.update({'location_dest_id': loc_output_id})
 

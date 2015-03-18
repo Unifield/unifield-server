@@ -49,8 +49,11 @@
                 <xpath expr="/form//field[@name='sale_id']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                 </xpath>
+                <xpath expr="/form//field[@name='partner_id2']" position="before">
+                    <field name="company_id2" invisible="1" />
+                </xpath>
                 <xpath expr="/form//field[@name='partner_id2']" position="attributes">
-                    <attribute name="domain">[('partner_type', 'in', ['esc', 'external']), ('customer', '=', True)]</attribute>
+                    <attribute name="domain">['|', '&amp;', ('partner_type', 'in', ['esc', 'external']), ('customer', '=', True), ('id', '=', company_id2)]</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='move_lines']/tree//field[@name='location_id']" position="after">
                     <field name="location_dest_id" readonly="1" />
@@ -830,7 +833,7 @@
                                 on_change="on_change_partner(partner_id2, address_id)"
                                 required="1"
                                 domain="[('partner_type', 'in', ['esc', 'external'])]"
-                                attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
+                                attrs="{'readonly': ['|', ('sale_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
                             <field name="address_id"
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
@@ -864,8 +867,8 @@
                                 colspan="4"
                                 nolabel="1"
                                 widget="one2many_list"
-                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'date_expected': min_date, 'reason_type_id': reason_type_id}"
-                                context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
+                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'date_expected': min_date, 'reason_type_id': reason_type_id, 'partner_id': partner_id2}"
+                                context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date, 'partner_id': partner_id2}"
                                 on_change="onchange_move()"
                                 >
                                 <tree colors="grey:scrapped==True; red: inactive_product == True or product_tbd == True" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True">
@@ -942,9 +945,10 @@
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"/>
                                         <field name="move_cross_docking_ok" invisible="1"/>
                                         <field name="location_dest_id"
-                                        	domain="[('usage', '!=', 'view'), '|', ('output_ok', '=', True), ('usage', '=', 'customer'), ('id', '!=', location_id)]"
+                                            domain="[('outgoing_dest', '=', parent.partner_id2)]"
                                         	on_change="location_dest_change(location_dest_id, location_id)"
-                                        	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            context="partner_id=parent.partner_id2"
                                         	 />
                                     </group>
                                     
