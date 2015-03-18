@@ -106,6 +106,7 @@ def create(self, cr, uid, vals, context=None):
 
                 # do we have rules that apply to this user and model?
                 if rules_search:
+                    field_changed = False
                     rules = rules_pool.browse(cr, 1, rules_search)
 
                     # for each rule, check the record against the rule domain.
@@ -120,12 +121,14 @@ def create(self, cr, uid, vals, context=None):
                             # record matches the domain so modify values based on rule lines
                             for line in rule.field_access_rule_line_ids:
                                 if line.value_not_synchronized_on_create:
+                                    field_changed = True
                                     default_value = defaults.get(line.field.name, None)
                                     new_value = default_value if default_value and not hasattr(default_value, '__call__') else None
                                     vals[line.field.name] = new_value
 
                     # Then update the record
-                    self.write(cr, 1, create_result, vals, context=dict(context, sync_update_execution=False))
+                    if field_changed:
+                        self.write(cr, 1, create_result, vals, context=dict(context, sync_update_execution=False))
 
                 return create_result
             else:
