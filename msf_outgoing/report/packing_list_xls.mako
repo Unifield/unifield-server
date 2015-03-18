@@ -322,8 +322,8 @@
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('name'))|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_name or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_id.name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_id.name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
@@ -409,8 +409,7 @@
    <Row>
     <Cell ss:StyleID="s135" ss:MergeAcross="1"><Data ss:Type="String">Parcel No: ${(pf.from_pack)|x} to ${(pf.to_pack)|x}</Data></Cell>
     <Cell ss:StyleID="s135"><Data ss:Type="String">${(pf.num_of_packs)|x} Parcel${(pf.num_of_packs > 1 and 's' or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s135" ss:MergeAcross="2"><Data ss:Type="String">Total weight ${(formatLang(pf.total_weight or 0.00))|x} kg</Data></Cell>
-    <Cell ss:StyleID="s135"><Data ss:Type="String">Total volume ${(formatLang(pf.total_volume or 0.00))|x} dm³</Data></Cell>
+    <Cell ss:StyleID="s135" ss:MergeAcross="3"><Data ss:Type="String">Total weight ${(formatLang(pf.total_weight or 0.00))|x} kg     -     Total volume ${(formatLang(pf.total_volume or 0.00))|x} dm³</Data></Cell>
     <Cell ss:StyleID="s135"/>
     <Cell ss:StyleID="s135"/>
     <Cell ss:StyleID="s130" ss:MergeAcross="2"><ss:Data ss:Type="String"
