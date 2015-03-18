@@ -1144,6 +1144,25 @@ class stock_production_lot(osv.osv):
 
         return res
 
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for id in ids:
+            res[id] = True
+
+        return res
+
+    def _src_product(self, cr, uid, obj, name, args, context=None):
+        res = []
+
+        for arg in args:
+            if arg[0] == 'src_product_id':
+                if arg[2]:
+                    res.append(('product_id', arg[1], arg[2]))
+
+        return res
+
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
                 'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type", readonly=True),
@@ -1158,6 +1177,7 @@ class stock_production_lot(osv.osv):
                 'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Real Stock", select=True,
                                                    help="Current real quantity of products with this Batch Number in company warehouses",
                                                    digits_compute=dp.get_precision('Product UoM')),
+                'src_product_id': fields.function(_get_dummy, fnct_search=_src_product, method=True, type="boolean", string="By product"),
                 'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
                 'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
                 'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
