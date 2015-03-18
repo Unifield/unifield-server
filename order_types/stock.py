@@ -306,7 +306,7 @@ class stock_picking(osv.osv):
                 proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
                 wizard_obj.create_lines(cr, uid, proc_id, context=context)
 
-                return {
+                res = {
                     'type': 'ir.actions.act_window',
                     'res_model': wizard_obj._name,
                     'res_id': proc_id,
@@ -314,6 +314,14 @@ class stock_picking(osv.osv):
                     'view_mode': 'form',
                     'target': 'new',
                     }
+
+                if not context.get('force_process', False) and pick.type == 'in' \
+                   and pick.state != 'shipped' and pick.partner_id.partner_type == 'internal':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 
+                        'msf_outgoing', 'stock_incoming_processor_internal_warning_form_view')[1]
+                    res['view_id'] = [view_id]
+
+                return res
 
         return super(stock_picking, self).action_process(cr, uid, ids, context=context)
 
