@@ -48,6 +48,13 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
 
+    _replace_exported_fields = {
+        'product_id': [
+            (['product_code', 'Product Code'], 10),
+            (['product_name', 'Product Description'], 20),
+        ],
+    }
+
     """
     Other methods
     """
@@ -1570,47 +1577,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                     line_count = self.search(cr, uid, g.get('__domain', []),
                         context={}, count=True)  # search with 'new' context
                     g['line_number'] = line_count
-        return res
-
-    _replace_exported_fields = {
-        'product_id': [
-            (['product_code', 'Product Code'], 10),
-            (['product_name', 'Product Description'], 20),
-        ],
-    }
-
-    def update_exported_fields(self, cr, uid, fields):
-        """
-        Replace the product_id by product_name + product_code on export
-        """
-        res = super(sale_order_line, self).\
-            update_exported_fields(cr, uid, fields)
-
-        return res
-
-        prd_id_index = None
-        prd_id_fld = None
-        prd_name_fld = None
-        prd_code_fld = None
-        for fld in res:
-            if fld[0] == 'product_id':
-                prd_id_index = res.index(fld)
-                prd_id_fld = fld
-            elif fld[0] == 'product_name':
-                prd_name_fld = fld
-            elif fld[0] == 'product_code':
-                prd_code_fld = fld
-
-        if prd_id_index:
-            if prd_code_fld:
-                res.remove(prd_code_fld)
-            if prd_name_fld:
-                res.remove(prd_name_fld)
-
-            res.insert(prd_id_index, ['product_name', 'Product Name'])
-            res.insert(prd_id_index, ['product_code', 'Product Code'])
-            res.remove(prd_id_fld)
-
         return res
 
 sale_order_line()
