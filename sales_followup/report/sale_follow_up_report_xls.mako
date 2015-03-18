@@ -117,7 +117,7 @@
 
 ## COLUMNS
 <%
-col_count = 12
+col_count = 13
 header_merge_accross_count = col_count - 2  ## merging cell self deduced
 %>
 % for o in objects:
@@ -126,7 +126,9 @@ header_merge_accross_count = col_count - 2  ## merging cell self deduced
 ## order line
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 ## product code
-<Column ss:AutoFitWidth="1" ss:Width="220" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+## product description
+<Column ss:AutoFitWidth="1" ss:Width="160" />
 ## proc. method
 <Column ss:AutoFitWidth="1" ss:Width="80"  />
 ## po/cft
@@ -212,6 +214,7 @@ else:
 headers_list = [
     _('ORDER LINE'),
     _('PRODUCT CODE'),
+    _('PRODUCT DESCRIPTION'),
     _('PROC. METHOD'),
     _('PO/CFT'),
     _('ORDERED QTY'),
@@ -236,26 +239,28 @@ headers_list = [
 ## 1) order line
     <Cell ss:StyleID="lineInt"><Data ss:Type="Number">${int(line.line_number)}</Data></Cell>
 ## 2) product code
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_id and '[%s] %s' % (line.product_id.default_code, line.product_id.name) or ''|x}</Data></Cell>
-## 3) proc.method
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_id and line.product_id.default_code or ''|x}</Data></Cell>
+## 3) product description
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_id and line.product_id.name or ''|x}</Data></Cell>
+## 4) proc.method
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.procure_method and getSel(line, 'procure_method') or ''|x}</Data></Cell>
-## 4) po/cft
+## 5) po/cft
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.po_cft and getSel(line, 'po_cft') or ''|x}</Data></Cell>
-## 5) ordered qty
+## 6) ordered qty
     <Cell ss:StyleID="lineFloat"><Data ss:Type="Number">${line.qty_ordered or 0.}</Data></Cell>
-## 6) uom
+## 7) uom
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.uom_id and line.uom_id.name or ''|x}</Data></Cell>
-## 7) sourced
+## 8) sourced
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.sourced_ok or ''|x}</Data></Cell>
-## 8) tender
+## 9) tender
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.tender_status or ''|x}</Data></Cell>
-## 9) purchase order
+## 10) purchase order
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.purchase_status or ''|x}</Data></Cell>
-## 10) incoming shipment
+## 11) incoming shipment
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.incoming_status or ''|x}</Data></Cell>
-## 11) product available
+## 12) product available
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_available or ''|x}</Data></Cell>
-## 12) outgoing delivery
+## 13) outgoing delivery
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.outgoing_status or ''|x}</Data></Cell>
 </Row>
 % endfor
