@@ -60,7 +60,7 @@ import tools
 from tools.safe_eval import safe_eval as eval
 
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
-from tools import SKIPPED_ELEMENT_TYPES
+from tools import SKIPPED_ELEMENT_TYPES, cache
 
 regex_order = re.compile('^(([a-z0-9_]+|"[a-z0-9_]+")( *desc| *asc)?( *, *|))+$', re.I)
 
@@ -819,7 +819,7 @@ class orm_template(object):
             data_res_id = False
             xml_id = False
             nbrmax = position+1
-
+ 
             done = {}
             for i in range(len(fields)):
                 res = False
@@ -963,6 +963,9 @@ class orm_template(object):
             except except_osv, e:
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
+                #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
+                if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
+                    cache.clean_caches_for_db(cr.dbname)
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e), '')
 
             if config.get('import_partial', False) and filename and (not (position%100)):
