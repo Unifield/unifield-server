@@ -65,34 +65,6 @@ class report_stock_move(osv.osv):
         
         return res
 
-    def _get_src_dest(self, cr, uid, ids, field_name, args, context=None):
-        """
-        Returns the name of the partner of IN or of OUT instead of name
-        of the location.
-        """
-        res = {}
-
-        for report in self.browse(cr, uid, ids, context=context):
-            res[report.id] = {
-                'source_name': report.location_id.name,
-                'destination_name': report.location_dest_id.name,
-                'move_type': 'internal',
-            }
-            if report.picking_id and report.picking_id.partner_id:
-                if report.picking_id.type == 'in':
-                    res[report.id].update({
-                        'source_name': report.picking_id.partner_id.name,
-                        'move_type': 'in',
-                    })
-                elif report.picking_id.type == 'out' and report.location_dest_id.usage in ['customer', 'supplier']:
-                    res[report.id]['destination_name'] = report.picking_id.partner_id.name
-                    res[report.id].update({
-                        'destination_name': report.picking_id.partner_id.name,
-                        'move_type': 'out',
-                    })
-
-        return res
-
     _columns = {
         'date': fields.date('Date', readonly=True),
         'year': fields.char('Year', size=4, readonly=True),
@@ -133,9 +105,6 @@ class report_stock_move(osv.osv):
         'product_code': fields.related('product_id', 'default_code', type='char', string='Product Code'),
         'product_name': fields.related('product_id', 'name', type='char', string='Product Name'),
         'expiry_date': fields.related('prodlot_id', 'life_date', type='date', string='Expiry Date'),
-        'source_name': fields.function(_get_src_dest, method=True, string='Source Location', type='char', multi='src_dest'),
-        'destination_name': fields.function(_get_src_dest, method=True, string='Destination Location', type='char', multi='src_dest'),
-        'move_type': fields.function(_get_src_dest, method=True, string='Move typ', type='char', multi='src_dest'),
     }
 
     def init(self, cr):
@@ -501,6 +470,56 @@ from/to this location will be shown.""",
 
         return True
 
+    def onchange_prodlot(self, cr, uid, ids, prodlot_id):
+        """
+        Select the good product and the good expiry date according to
+        selected batch number.
+        """
+        if not prodlot_id:
+            return {
+                'value': {
+                    'product_id': False,
+                    'expiry_date': False,
+                },
+            }
+
+        prodlot = self.pool.get('stock.production.lot')\
+            .browse(cr, uid, prodlot_id)
+        return {
+            'value': {
+                'product_id': prodlot.product_id.id,
+                'expiry_date': prodlot.life_date,
+            },
+        }
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Call onchange_prodlot() if a prodlot is specified
+        """
+        if vals.get('prodlot_id'):
+            vals.update(
+                self.onchange_prodlot(
+                    cr, uid, False, vals.get('prodlot_id')
+                )
+            )
+
+        return super(export_report_stock_move, self).\
+            create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Call onchange_prodlot() if a prodlot is specified
+        """
+        if vals.get('prodlot_id'):
+            vals.update(
+                self.onchange_prodlot(
+                    cr, uid, ids, vals.get('prodlot_id')
+                )
+            )
+
+        return super(export_report_stock_move, self).\
+            write(cr, uid, ids, vals, context=context)
+
 export_report_stock_move()
 
 
@@ -515,6 +534,15 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
 
     def getLines(self):
         res = []
+        company_id = self.pool.get('res.users').browse(
+            self.cr, self.uid, self.uid).company_id.partner_id.id
+
+        def get_src_dest(m, f='location_id'):
+            if m[f].usage in ('supplier', 'customer') and m.picking_id and m.picking_id.partner_id.id != company_id:
+                return m.picking_id.partner_id.name
+            else:
+                return m[f].name
+
         for move in self.pool.get('stock.move').browse(
             self.cr,
             self.uid,
@@ -528,8 +556,8 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
                 'qty_in': 0.00,
                 'qty_out': 0.00,
-                'source': move.location_id.usage == 'supplier' and move.picking_id and move.picking_id.partner_id.name or move.location_id.name,
-                'destination': move.location_dest_id.usage == 'customer' and move.picking_id and move.picking_id.partner_id.name or move.location_dest_id.name,
+                'source': get_src_dest(move, 'location_id'),
+                'destination': get_src_dest(move, 'location_dest_id'),
                 'reason_code': move.reason_type_id and move.reason_type_id.name or '',
                 'doc_ref': move.picking_id and move.picking_id.name or '',
             }

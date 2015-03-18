@@ -157,9 +157,15 @@
                     <field name="partner_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <field name="product_id" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
                     <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                    <field name="prodlot_id" domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <field name="prodlot_id"
+                           on_change="onchange_prodlot(prodlot_id)"
+                           domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
-                    <field name="reason_type_ids" colspan="4" />
+                    <field name="reason_type_ids" colspan="4" mode="tree">
+                        <tree noteditable="True" string="Reason Types">
+                            <field name="name" />
+                        </tree>
+                    </field>
                     <separator colspan="4" string="Actions" />
                     <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
                     <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
@@ -195,7 +201,7 @@
                                     Due to the volume of data, your report cannot be shown immediatly.<br />
                                 </p>
                                 <p style="font-size:14px;align:center">
-                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Moves Analysis / Export Moves Analysis.<br />
+                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Export Moves Analysis.<br />
                                 </p>
                             </div>
                         </html>
@@ -215,7 +221,8 @@
         <menuitem
             id="export_report_stock_move_menu"
             action="export_report_stock_move_action"
-            parent="stock.menu_action_stock_move_report" />
+            parent="stock.next_id_61"
+            sequence="4" />
 
         <record id="stock.view_stock_tree2" model="ir.ui.view">
             <field name="name">report.stock.move.tree2</field>
@@ -230,8 +237,6 @@
                     <field name="expiry_date" />
                     <field name="product_qty_in" />
                     <field name="product_qty_out" />
-                    <field name="source_name" />
-                    <field name="destination_name" />
                     <field name="reason_type_id" />
                     <field name="picking_id" />
                     <field name="date" invisible="1"/>
