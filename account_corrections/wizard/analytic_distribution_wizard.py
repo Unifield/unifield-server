@@ -403,6 +403,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Set move line as corrected upstream if needed
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
+        if context and not context.get('ji_correction_account_changed', False):
+            # BKLG-12 pure AD correction flag
+            self.pool.get('account.move.line').write(cr, uid, [ml.id],
+                {'last_cor_was_only_analytic': True}, context=context)
 
     def button_cancel(self, cr, uid, ids, context=None):
         """
@@ -452,6 +456,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     account_changed = True
 
                 # Account AND/OR Distribution have changed
+                context['ji_correction_account_changed'] = account_changed
                 if account_changed:
                     # Create new distribution
                     new_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})

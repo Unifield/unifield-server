@@ -12,7 +12,10 @@
                     <field name="move_id"/>
                     <field name="ref"/>
                     <field name="date"/>
-                    <field name="account_id" domain="[('restricted_area', '=', 'correction_wizard')]" />
+                    <field name="account_id"
+                        domain="[('restricted_area', '=', 'correction_wizard')]"
+                        attrs="{'readonly': [('last_cor_was_only_analytic', '=', True)]}"
+                    />
                     <button name="button_analytic_distribution" type="object"
                             icon="terp-stock_symbol-selection" string="Ana. Distri."
                             attrs="{'invisible': [('is_analytic_target', '=', False)]}" />
@@ -22,6 +25,7 @@
                     <field name="currency_id"/>
                     <field name="analytic_distribution_id" invisible="1"/>
                     <field name="is_analytic_target" invisible="1"/>
+                    <field name="last_cor_was_only_analytic" invisible="1"/>
                 </tree>
             </field>
         </record>
