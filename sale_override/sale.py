@@ -1496,6 +1496,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         data_obj = self.pool.get('ir.model.data')
         sol_obj = self.pool.get('sale.order.line')
         config_obj = self.pool.get('unifield.setup.configuration')
+        prsd_obj = self.pool.get('procurement.request.sourcing.document')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
 
@@ -1549,6 +1550,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     if order.procurement_request:
                         move_obj.action_confirm(cr, uid, [move_id], context=context)
+                        prsd_obj.chk_create(cr, uid, {
+                            'order_id': order.id,
+                            'sourcing_document_id': picking_id,
+                            'sourcing_document_model': 'stock.picking',
+                            'sourcing_document_type': picking_data.get('type'),
+                        }, context=context)
 
                     """
                     We update the procurement and the purchase orders if we are treating o FO which is
@@ -1671,6 +1678,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if order.procurement_request:
                     proc = proc_obj.browse(cr, uid, [proc_id], context=context)
                     pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
+
                     if pick_id:
                         picks_to_check.add(pick_id)
 
