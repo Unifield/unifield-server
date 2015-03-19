@@ -156,6 +156,10 @@ class ImpEx(SecuredController):
         if '_export_id' in kw and kw['_export_id']:
             export_id = int(kw['_export_id'])
 
+        if params.model:
+            proxy = rpc.RPCProxy(params.model)
+            default = proxy.update_exported_fields(default)
+
         if params.model == 'product.product':
             default = [x for x in default if x[0] not in product_remove_fields]
         default = simplejson.dumps(default)
