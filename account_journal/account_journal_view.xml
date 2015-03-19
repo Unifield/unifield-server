@@ -12,8 +12,9 @@
                 <form string="Account Journal" position="replace">
                     <form string="Account Journal" hide_duplicate_button="1">
                         <group colspan="4" col="6">
+                            <field name="has_entries" invisible="1"/>
                             <field name="name" select="1"/>
-                            <field name="code" select="1"/>
+                            <field name="code" select="1" attrs="{'readonly': [('has_entries', '=', True)]}"/>
                             <field name="type" on_change="onchange_type(type, currency, context)"/>
                         </group>
                         <group col="2" colspan="2">
