@@ -1267,6 +1267,18 @@ class stock_move(osv.osv):
 
         return res
 
+    def _is_price_changed(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for m in self.browse(cr, uid, ids, context=context):
+            res[m.id] = False
+            if m.purchase_line_id and m.purchase_line_id.price_unit != m.price_unit:
+                res[m.id] = True
+
+        return res
+
     _columns = {
         'price_unit': fields.float('Unit Price', digits_compute=dp.get_precision('Picking Price Computation'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
@@ -1291,6 +1303,11 @@ class stock_move(osv.osv):
         'product_tbd': fields.function(_is_expired_lot, method=True, type='boolean', string='TbD', store=False, multi='attribute'),
         'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
         'from_wkf': fields.related('picking_id', 'from_wkf', type='boolean', string='From wkf'),
+        'price_changed': fields.function(_is_price_changed, method=True, type='boolean', string='Price changed',
+            store={
+                'stock.move': (lambda self, cr, uid, ids, c=None: ids, ['price_unit', 'purchase_order_line'], 10),
+            },
+        ),
     }
 
     _defaults = {
@@ -1349,6 +1366,23 @@ class stock_move(osv.osv):
                         'context': context}
 
         return self.unlink(cr, uid, ids, context=context)
+
+    def get_price_changed(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        move = self.browse(cr, uid, ids[0], context=context)
+        if move.price_changed:
+            raise osv.except_osv(
+                _('Information'),
+                _('The initial unit price (coming from Purchase order line) is %s %s - The new unit price is %s %s') % (
+                    move.purchase_line_id.price_unit,
+                    move.purchase_line_id.currency_id.name,
+                    move.price_unit,
+                    move.price_currency_id.name)
+            )
+
+        return True
 
     @check_cp_rw
     def force_assign(self, cr, uid, ids, context=None):

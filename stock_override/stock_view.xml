@@ -614,6 +614,8 @@
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="price_changed" invisible="1" />
+                                    <button name="get_price_changed" type="object" string="Price changed" icon="terp-dolar_ok!" attrs="{'invisible': ['|', ('price_changed', '=', False), ('fake_state', '!=', 'done')]}" />
                                     <field name="from_wkf" invisible="1" />
                                     <button name="call_cancel_wizard" type="object" string="Cancel" attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}" icon="gtk-del" />
                                 </tree>
