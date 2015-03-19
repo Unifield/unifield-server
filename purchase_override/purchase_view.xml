@@ -44,6 +44,26 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
+
+                    <xpath expr="/form//field[@name='name']" position="before">
+                        <field name="requested_date_in_past" invisible="1" />
+                        <group colspan="4">
+                            <html>
+                                <p id="view_order_requested_in_past"
+                                    style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                    WARNING: The requested date of this purchase order is in the past.
+                                </p>
+                                <script language="javascript">
+                                    var is_in_past = $('#requested_date_in_past').val();
+                                    if (is_in_past == "1") {
+                                        msg_dom = $('#view_order_requested_in_past');
+                                        msg_dom.show();
+                                    } 
+                                </script>
+                            </html>
+                        </group>
+                    </xpath>
+
                     <xpath expr="/form/group/field[@name='partner_ref']" position="attributes">
                         <attribute name="attrs">{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'confirmed'])]}</attribute>
                     </xpath>
