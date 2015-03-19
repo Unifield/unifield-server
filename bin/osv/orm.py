@@ -407,6 +407,14 @@ class orm_template(object):
     _table = None
     _invalids = set()
     _log_create = False
+    # Dict with fields to replace as key and replacing fields as value like this
+    # {'product_id': [
+    #         (['product_code', 'Product Code'], 10),
+    #         (['product_name', 'Product Name'], 20),
+    #     ]
+    # }
+    _replace_exported_fields = {}
+
 
     CONCURRENCY_CHECK_FIELD = '__last_update'
     def log(self, cr, uid, id, message, secondary=False, context=None):
@@ -1980,6 +1988,37 @@ class orm_template(object):
             defaults.update(values)
             values = defaults
         return values
+
+    def update_exported_fields(self, cr, uid, fields):
+        """
+        Override this method if you would like to change the exported
+        fields on the object.
+        """
+        for fld, rpl_flds in self._replace_exported_fields.iteritems():
+            fld_index = None
+            fld_val = None
+            fld_to_rm = []
+            for f in fields:
+                if f[0] == fld:
+                    fld_index = fields.index(f)
+                    fld_val = f
+                else:
+                    for rpl_fld in rpl_flds:
+                        if f[0] == rpl_fld[0][0]:
+                            fld_to_rm.append(f)
+
+            if fld_index is not None:
+                for frm in fld_to_rm:
+                    if frm[0] not in self._replace_exported_fields.keys():
+                        fields.remove(frm)
+
+                sorted_rpl_flds = reversed(sorted(rpl_flds, key=lambda x: x[1]))
+                for rpl_fld in sorted_rpl_flds:
+                    fields.insert(fld_index, rpl_fld[0])
+
+                fields.remove(fld_val)
+
+        return fields
 
 class orm_memory(orm_template):
 
