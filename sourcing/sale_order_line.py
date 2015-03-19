@@ -48,6 +48,13 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
 
+    _replace_exported_fields = {
+        'product_id': [
+            (['product_code', 'Product Code'], 10),
+            (['product_name', 'Product Description'], 20),
+        ],
+    }
+
     """
     Other methods
     """
@@ -536,6 +543,23 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             string='Available Stock',
             digits_compute=dp.get_precision('Product UoM'),
             readonly=True,
+        ),
+        # Fields used for export
+        'product_code': fields.related(
+            'product_id',
+            'default_code',
+            type='char',
+            size=64,
+            string='Product code',
+            store=False,
+        ),
+        'product_name': fields.related(
+            'product_id',
+            'name',
+            type='char',
+            size=128,
+            string='Product description',
+            store=False,
         ),
     }
 
