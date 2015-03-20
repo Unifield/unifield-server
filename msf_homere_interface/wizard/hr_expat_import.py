@@ -83,7 +83,12 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                 if not active_str:
                     msg = "Active column is missing or empty at line %d"
                     raise osv.except_osv(_('Error'), _(msg) % (line_index, ))
-                active = active_str in ('True', 'true', '1') or False
+                active_str = active_str.lower()
+                if active_str not in ('active', 'inactive'):
+                    msg = "Active column invalid value line %d" \
+                        " (should be Active/Inactive)"
+                    raise osv.except_osv(_('Error'), _(msg) % (line_index, ))
+                active = active_str == 'active' or False
                 
                 processed += 1
 
