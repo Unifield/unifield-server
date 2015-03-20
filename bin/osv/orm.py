@@ -2084,7 +2084,7 @@ class orm_memory(orm_template):
                 return result[0]
         return result
     
-    def copy_translations(self, cr, uid, old_id, new_id, context=None):
+    def copy_translations(self, cr, uid, old_id, new_id, data, context=None):
         pass
 
     def write(self, cr, user, ids, vals, context=None):
@@ -4315,7 +4315,7 @@ class orm(orm_template):
         fields = self.fields_get(cr, uid, context=context)
         to_read = []
         for f in fields:
-            if 'function' not in fields[f]:
+            if 'function' not in fields[f] and f not in default.keys():
                 to_read.append(f)
         data = self.read(cr, uid, [id,], to_read, context=context_wo_lang)
         if data:
@@ -4374,9 +4374,12 @@ class orm(orm_template):
         remove_ids(self._inherits)
         return data
 
-    def copy_translations(self, cr, uid, old_id, new_id, context=None):
+    def copy_translations(self, cr, uid, old_id, new_id, data=None, context=None):
         if context is None:
             context = {}
+
+        if data is None:
+            data = []
 
         # avoid recursion through already copied records in case of circular relationship
         seen_map = context.setdefault('__copy_translations_seen',{})
@@ -4385,8 +4388,12 @@ class orm(orm_template):
         seen_map[self._name].append(old_id)
 
         trans_obj = self.pool.get('ir.translation')
-        fields = self.fields_get(cr, uid, context=context)
+        fields_keys = []
+        for f in data:
+            if data[f]:
+                fields_keys.append(f)
 
+        fields = self.fields_get(cr, uid, fields_keys, context=context)
         translation_records = []
         for field_name, field_def in fields.items():
             # we must recursively copy the translations for o2o and o2m
@@ -4438,7 +4445,7 @@ class orm(orm_template):
         context = context.copy()
         data = self.copy_data(cr, uid, id, default, context)
         new_id = self.create(cr, uid, data, context)
-        self.copy_translations(cr, uid, id, new_id, context)
+        self.copy_translations(cr, uid, id, new_id, data, context)
         return new_id
 
     def exists(self, cr, uid, ids, context=None):
