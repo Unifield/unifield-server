@@ -129,6 +129,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         to_delete = []
         to_reverse = []
         old_line_ok = []
+        any_reverse = False
         period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
         ana_obj = self.pool.get('account.analytic.line')
         # Prepare journal and period information for entry sequences
@@ -198,6 +199,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, reversed_id) )
                 # delete the distribution line
                 wiz_line.unlink()
+                any_reverse = True
             else:
                 to_delete.append(wiz_line)
 
@@ -403,7 +405,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Set move line as corrected upstream if needed
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
-        if context and not context.get('ji_correction_account_changed', False):
+
+        any_reverse = any_reverse or to_reverse
+        if any_reverse and context and not context.get('ji_correction_account_changed', False):
             # BKLG-12 pure AD correction flag
             self.pool.get('account.move.line').write(cr, uid, [ml.id],
                 {'last_cor_was_only_analytic': True}, context=context)
