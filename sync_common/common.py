@@ -84,6 +84,9 @@ MODELS_TO_IGNORE_DOMAIN = [
         'workflow%',
     ]
 
+TOUCH_FIELDS_TO_IGNORE = {
+    'purchase.order': ['allocation_report_lines'],
+}
 def __compile_models_to_ignore():
     global MODELS_TO_IGNORE_DOMAIN
     simple_patterns = []
