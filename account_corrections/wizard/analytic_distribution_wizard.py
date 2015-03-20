@@ -406,11 +406,14 @@ class analytic_distribution_wizard(osv.osv_memory):
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
 
-        any_reverse = any_reverse or to_reverse
-        if any_reverse and context and not context.get('ji_correction_account_changed', False):
-            # BKLG-12 pure AD correction flag
-            self.pool.get('account.move.line').write(cr, uid, [ml.id],
-                {'last_cor_was_only_analytic': True}, context=context)
+        if context and 'ji_correction_account_changed' in context:
+            if (any_reverse or to_reverse) and \
+                not context['ji_correction_account_changed']:
+                # BKLG-12 pure AD correction flag marker
+                # (do this bypassing model write)
+                return osv.osv.write(self.pool.get('account.move.line'), cr,
+                    uid, [ml.id], {'last_cor_was_only_analytic': True})
+            del context['ji_correction_account_changed']
 
     def button_cancel(self, cr, uid, ids, context=None):
         """
