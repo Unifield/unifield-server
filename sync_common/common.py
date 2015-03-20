@@ -72,6 +72,8 @@ MODELS_TO_IGNORE = [
                     'res.widget',
                     'product.likely.expire.report',
                     'product.likely.expire.report.line',
+                    'internal.move.processor',
+                    'internal.picking.processor',
                   ]
 
 MODELS_TO_IGNORE_DOMAIN = [
