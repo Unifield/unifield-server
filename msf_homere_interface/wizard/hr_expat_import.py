@@ -67,6 +67,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             fileobj = SpreadsheetXML(xmlstring=decodestring(wiz.file))
             reader = fileobj.getRows()
             reader.next()
+            line_index = 2  # header taken into account
             for line in reader:
                 # get cells
                 name = get_xml_spreadheet_cell_value(0)
@@ -79,6 +80,9 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                         " file have an ID number and run the import again."
                     raise osv.except_osv(_('Error'), _(msg))
                 active_str = get_xml_spreadheet_cell_value(2)
+                if not active_str:
+                    msg = "Active column is missing or empty at line %d"
+                    raise osv.except_osv(_('Error'), _(msg) % (line_index, ))
                 active = active_str in ('True', 'true', '1') or False
                 
                 processed += 1
@@ -101,6 +105,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                         'identification_id': code,
                     })
                     created += 1
+                line_index += 1
             
             context.update({'message': ' ', 'from': 'expat_import'})
 
