@@ -1815,6 +1815,12 @@ class res_partner(osv.osv):
         'invoice_ids': fields.one2many('account.invoice.line', 'partner_id', 'Invoices', readonly=True),
     }
 
+    def copy(self, cr, uid, ids, default=None, context=None):
+        if default is None:
+            default = {}
+        if 'invoice_ids' not in default:
+            default['invoice_ids'] = []
+        return super(res_partner, self).copy(cr, uid, ids, default, context=context)
 res_partner()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
