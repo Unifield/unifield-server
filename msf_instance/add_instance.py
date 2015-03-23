@@ -451,13 +451,22 @@ class account_analytic_account(osv.osv):
             res[account.id] = current_instance_type
         return res
 
+    #UFTP-2: Set the default prop instance only if the current instance is a coordo, if HQ, let is empty
+    def _set_default_prop_instance(self, cr, uid, context=None):
+        if context is None:
+            context = {}        
+        instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
+        if instance and instance.level == 'coordo':        
+            return instance.id
+        return False
+
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
         'current_instance_type': fields.function(_get_current_instance_type, method=True, store=False, string='Instance type', type='selection', selection=[('section', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')], readonly=True),
     }
 
     _defaults = {
-        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
+        'instance_id': _set_default_prop_instance,
         'current_instance_type': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.level,
     }
 
@@ -472,8 +481,11 @@ class account_analytic_account(osv.osv):
             return True
         cat = vals.get('category', False)
         if cat == 'FUNDING':
-            instance_id = vals.get('instance_id', False) or False
+            instance_id = vals.get('instance_id', False)  or False
+            if isinstance(instance_id, (tuple)): # UFTP-2: This is for the case of write (create: only instance_id as int is given)
+                instance_id = instance_id[0]
             if not instance_id:
+                # check the current instance
                 current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
                 if not current_instance or current_instance.level == 'section':
                     raise osv.except_osv(_('Error'), _('Proprietary Instance is mandatory for FP accounts!'))
@@ -501,12 +513,10 @@ class account_analytic_account(osv.osv):
         if context is None:
             context = {}
         res = super(account_analytic_account, self).write(cr, uid, ids, vals, context=context)
-        if context.get('from_web', False) is True:
-            allvalues = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)
-            for instance in allvalues:
-                if instance == 'instance_id':
-                    instance = allvalues.get('instance_id', [])
-                    self.check_fp(cr, uid, {'instance_id': instance}, context=context)
+        if context.get('from_web', False):
+            cat_instance = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)[0]
+            if cat_instance:
+                self.check_fp(cr, uid, cat_instance, context=context)
         return res
 
 account_analytic_account()
