@@ -380,7 +380,6 @@ class kit_mass_import(osv.osv):
 
             # Manage product not found or product is not a kit
             if not kit_product_id or kit_product_id < 0:
-                error = True
                 err_index = values['items'][0]['line']
                 error_index.add(err_index)
                 error_msg.setdefault(err_index, [])
@@ -398,6 +397,33 @@ class kit_mass_import(osv.osv):
                     )
                 continue
 
+            # Check if kit exist for this product
+            update_kit_id = False
+            exist_kit_ids = kit_obj.search(cr, uid, [
+                ('composition_product_id', '=', kit_product_id),
+                ('composition_version_txt', '=', values.get('version')),
+                ('composition_type', '=', 'theoretical'),
+                ('active', 'in', ['t', 'f']),
+            ], context=context)
+            if exist_kit_ids:
+                for exist_kit in kit_obj.browse(
+                        cr, uid, exist_kit_ids, context=context):
+                    if exist_kit.state == 'draft':
+                        update_kit_id = exist_kit.id
+                        break
+                    else:
+                        err_index = values['items'][0]['line']
+                        error_index.add(err_index)
+                        error_msg.setdefault(err_index, [])
+                        if not kit_product_id:
+                            error_msg[err_index].append(
+                                _("""A kit already exists for the Kit Product
+'\'%s\'. But this kit is not in \'Draft\' state""") % values.get('code')
+                            )
+                else:
+                    # In case of non draft existing kit, pass to the next kit
+                    continue
+
             kit_values = {
                 'composition_type': 'theoretical',
                 'composition_product_id': kit_product_id,
@@ -411,7 +437,6 @@ class kit_mass_import(osv.osv):
                 item_product_id = self._get_product(
                     cr, uid, item.get('item'), cache_product)
                 if not item_product_id:
-                    error = True
                     err_index = item.get('line')
                     error_index.add(err_index)
                     error_msg.setdefault(err_index, [])
@@ -451,21 +476,67 @@ class kit_mass_import(osv.osv):
                     item_uom_id = self._get_uom_from_product(
                         cr, uid, item_product_id, context=context)
 
+                update_item_id = False
+                if update_kit_id:
+                    exist_item_ids = item_obj.search(cr, uid, [
+                        ('item_module', '=', item.get('module', '')),
+                        ('item_product_id', '=', item_product_id),
+                    ], context=context)
+                    if exist_item_ids:
+                        update_item_id = exist_item_ids[0]
+
                 items.append({
+                    'to_update': update_item_id,
                     'item_module': item.get('module', ''),
                     'item_product_id': item_product_id,
                     'item_qty': item.get('qty', 0.00),
                     'item_uom_id': item_uom_id,
                 })
             else:
-                kit_id = kit_obj.create(cr, uid, kit_values, context=context)
-                msg = _('Kit \'%s\' created') % values.get('code')
+                if update_kit_id:
+                    kit_id = update_kit_id
+                    kit_obj.write(cr, uid, update_kit_id,kit_values, context)
+                    msg = _('Kit \'%s\' updated') % values.get('code')
+                else:
+                    kit_id = kit_obj.\
+                        create(cr, uid, kit_values, context=context)
+                    msg = _('Kit \'%s\' created') % values.get('code')
+
                 if warning:
                     msg += _(' with warning')
                 log_msg.append(msg)
+
+                updated_items = []
                 for i_vals in items:
                     i_vals['item_kit_id'] = kit_id
-                    item_obj.create(cr, uid, i_vals, context=context)
+                    if i_vals['to_update']:
+                        it_id = i_vals['to_update']
+                        updated_items.append(it_id)
+                        item_obj.write(cr, uid, it_id, i_vals, context=context)
+                    else:
+                        updated_items.append(
+                            item_obj.create(cr, uid, i_vals, context=context)
+                        )
+
+                # Delete old kit items in case of update
+                if update_kit_id:
+                    old_items = item_obj.search(cr, uid, [
+                        ('item_kit_id', '=', update_kit_id),
+                        ('id', 'not in', updated_items),
+                    ], context=context)
+                    for it in item_obj.browse(cr, uid, old_items, context):
+                        warning = True
+                        warn_index = 0
+                        warning_index.add(warn_index)
+                        warning_msg.setdefault(warn_index, [])
+                        warning_msg[warn_index].append(_(
+"""Kit \'%s\' - Module \'%s\' - Item \'%s\' not found in file, item removed"""
+                        ) % (
+                            it.item_kit_id.composition_product_id.default_code,
+                            it.item_module,
+                            it.item_product_id.default_code,
+                        ))
+                    item_obj.unlink(cr, uid, old_items, context=context)
 
         # Generation of the warning message
         warn_text = self._generate_message(warning_msg, list(warning_index))
@@ -543,7 +614,10 @@ class kit_mass_import(osv.osv):
         res = ''
         if msg_index:
             for m_index in sorted(msg_index):
-                res += _('Line %s: \n' % m_index)
+                if m_index == 0:
+                    res += _('Not in file: \n')
+                else:
+                    res += _('Line %s: \n' % m_index)
                 for msg in msg_list[m_index]:
                     res += '    * %s\n' % msg
         else:
