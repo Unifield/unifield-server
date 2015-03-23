@@ -356,9 +356,13 @@ class account_analytic_line(osv.osv):
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 res[line_data.id] = current_instance.parent_id.instance
-            # UFTP-382: sync down the distrib line associated to a register line no matter of the CC used
+            # UFTP-382/BKLG-24: sync the line associated to a register line to the register owner and to the target CC
             if line_data and line_data.move_id and line_data.move_id.statement_id and line_data.move_id.statement_id.instance_id.id != current_instance.id:
-                res[line_data.id] = line_data.move_id.statement_id.instance_id.instance
+                new_dest = line_data.move_id.statement_id.instance_id.instance
+                if res[line_data.id] and res[line_data.id] != new_dest:
+                    res[line_data.id] = [res[line_data.id], new_dest]
+                else:
+                    res[line_data.id] = new_dest
         return res
 
     # Generate delete message for AJI at Project
