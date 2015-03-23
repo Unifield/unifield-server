@@ -914,9 +914,45 @@ class res_users(osv.osv):
                 if group.is_an_admin_profile:
                     return True
         return False
+        
+    def _get_fake(self, cr, uid, ids, field_names, args, context=None):
+        res = {}
+        if not ids:
+            return res
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+        
+    def _search_get_is_admin(self, cr, uid, obj, name, args, context=None):
+        """
+        US-42: 'is_admin' field search for ir.rule domain
+        - if we are here, we are not logged as admin as ir rules are not applied
+        - we just return a domain to exclude admin record when applying rule
+          of id 'res_users_model_res_users_Administrator_User_Profile_Access'
+          (Consolidated Record Rules.csv)
+        """
+        if context is None:
+            context = {}
+        if not obj or not args or len(args) != 1:
+            return []
+        if args[0][1] not in ('=', '!=', ):
+            msg = _("Operator '%s' not suported") % (args[0][1], )
+            raise osv.except_osv(_('Error'), msg)
+            
+        admin_id = self._get_admin_id(cr)
+        return admin_id and [('id', 'not in', [admin_id])] or []
+        
+    _columns = {
+        'is_admin': fields.function(_get_fake, fnct_search=_search_get_is_admin,
+            type='boolean', method=True, string='Is editable user ?'),
+    }
 
     _defaults = {
         'groups_id': lambda *a: [],
+        'is_admin': False,
     }
 res_users()
 
