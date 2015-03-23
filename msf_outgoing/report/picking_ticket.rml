@@ -133,7 +133,7 @@
                     <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.name or '-' ]]</para>
                     <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.client_order_ref or '-' ]]</para>
                     <para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'categ') or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ len(pt.move_lines) or 0 ]]</para>
+                    <para style="HeaderInfosValue">[[ getNbItems(pt) ]]</para>
                 </td>
                 <td>
                     <para style="HeaderInfosTitle"></para>

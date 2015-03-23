@@ -65,6 +65,7 @@ class picking_ticket(report_sxw.rml_parse):
             'uid': uid,
             'getWarningMessage': self.get_warning,
             'getStock': self.get_qty_available,
+            'getNbItems': self.get_nb_items,
             'getLines': self.get_lines,
         })
 
@@ -99,6 +100,24 @@ class picking_ticket(report_sxw.rml_parse):
         for key in dict_res:
             for m in dict_res[key]:
                 res.append(m)
+
+        return res
+
+    def get_nb_items(self, picking):
+        """
+        Returns the number of different line number. If a line is split
+        with a different product, this line count for +1
+        """
+        res = 0
+        dict_res = {}
+        for m in picking.move_lines:
+            dict_res.setdefault(m.line_number, {})
+            if m.product_id.id not in dict_res[m.line_number]:
+                dict_res[m.line_number][m.product_id.id] = 1
+
+        for ln in dict_res.values():
+            for p in ln.values():
+                res += p
 
         return res
 
