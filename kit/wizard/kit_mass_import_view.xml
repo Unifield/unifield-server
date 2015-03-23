@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="kit_mass_import_form_view" model="ir.ui.view">
+            <field name="name">kit.mass.import.form.view</field>
+            <field name="model">kit.mass.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Kit mass import">
+                    <field name="display_warning_message" invisible="1" />
+                    <field name="display_error_message" invisible="1" />
+                    <separator colspan="4" string="Information" />
+                    <field name="name" readonly="1" />
+                    <newline />
+                    <field name="file_to_import" filename="filename" accept="application/vnd.ms-excel,application/xml"/>
+                    <field name="filename" invisible="1" />
+                    <group colspan="4" col="4" name="check_messages" attrs="{'invisible': [('state', '!=', 'check_error')]}">
+                        <html>
+                            <p id="check_messages_warn"
+                                style="display:none; text-align: center; color:red; font-weigth:bold; font-size:1.2em">
+                                There are some warning raised by the consistency checks. Please read these messages and correct the file if you want or click on 'Confirm import' if it's ok for you.
+                            </p>
+                            <p id="check_messages_err"
+                                style="display:none; text-align: center; color:red; font-weigth:bold; font-size:1.2em">
+                                There are some errors raised by the consistency checks. Please correct your file and try to re-import it.
+                            </p>
+                            <script language="javascript">
+                                var err = $('#display_error_message').val();
+                                var warn = $('#display_warning_message').val();
+                                if (err != "") {
+                                    msg_dom = $('#check_messages_err');
+                                    msg_dom.show();
+                                } else if (warn != "") {
+                                    msg_dom = $('#check_messages_warn');
+                                    msg_dom.show();
+                                }
+                            </script>
+                        </html>
+                    </group>
+
+                    <group colspan="4" col="4" name="check_err_messages" attrs="{'invisible': ['|', ('display_error_message', '=', False), ('state', '!=', 'check_error')]}">
+                        <separator colspan="4" string="Error messages" />
+                        <field name="error_message" colspan="4" nolabel="1" />
+                    </group>
+
+                    <group colspan="4" col="4" name="check_warn_messages" attrs="{'invisible': ['|', ('display_warning_message', '=', False), ('state', '!=', 'check_error')]}">
+                        <separator colspan="4" string="Warning messages" />
+                        <field name="warning_message" colspan="4" nolabel="1" />
+                    </group>
+
+
+                    <group colspan="4" col="4" name="import_log_messages" attrs="{'invisible': [('state', '!=', 'complete')]}">
+                        <separator colspan="4" string="Import log messages" />
+                        <field name="log_import" colspan="4" nolabel="1" />
+                    </group>
+
+                    <group colspan="4" col="4" name="import_err_messages" attrs="{'invisible': ['|', ('display_error_message', '=', False), ('state', '!=', 'complete')]}">
+                        <separator colspan="4" string="Error messages" />
+                        <field name="error_import" colspan="4" nolabel="1" />
+                    </group>
+
+                    <group colspan="4" col="4" name="import_wran_messages" attrs="{'invisible': ['|', ('display_warning_message', '=', False), ('state', '!=', 'complete')]}">
+                        <separator colspan="4" string="Warning messages" />
+                        <field name="warning_import" colspan="4" nolabel="1" />
+                    </group>
+
+                    <separator colspan="4" string="Actions" />
+                    <group colspan="4" col="6">
+                        <field name="state" readonly="1" />
+                        <group colspan="4" col="4">
+                            <button type="object" icon="gtk-execute" name="import_data_from_file" string="Import file"
+                                attrs="{'invisible': [('state', 'not in', ['draft', 'check_done'])]}" />
+                            <button type="object" icon="gtk-execute" name="import_data_from_file" string="Test again" 
+                                attrs="{'invisible': [('state', 'not in', ['check_error'])]}" />
+                            <button type="object" icon="gtk-execute" name="force_import_data" string="Confirm import"
+                                attrs="{'invisible': ['|', ('state', 'not in', ['check_error']), ('display_error_message', '=', True)]}" />
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="kit_mass_import_tree_view" model="ir.ui.view">
+            <field name="name">kit.mass.import.tree.view</field>
+            <field name="model">kit.mass.import</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Kit mass imports">
+                    <field name="name" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="kit_mass_import_search_view" model="ir.ui.view">
+            <field name="name">kit.mass.import.search.view</field>
+            <field name="model">kit.mass.import</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Kit mass imports">
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+        <record id="kit_mass_import_action" model="ir.actions.act_window">
+            <field name="name">Kit Mass Import</field>
+            <field name="res_model">kit.mass.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="kit_mass_import_menu"
+            action="kit_mass_import_action"
+            parent="kit_management"
+            sequence="30" />
+
+    </data>
+</openerp>
