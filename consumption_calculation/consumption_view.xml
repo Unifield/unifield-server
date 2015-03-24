@@ -32,6 +32,7 @@
                     <separator colspan="4" string="Products" />
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object" 
                     confirm="Are you sure that you want to remove all lines?" invisible="1"/>
+                    <button colspan="4" icon="gtk-go-down" string="Copy all" type="object" name="copy_all" attrs="{'invisible': [('created_ok', '=', True)]}" />
                     <field name="hide_column_error_ok" invisible="1" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}"
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
@@ -189,7 +190,7 @@
                     <field name="cons_location_id" />
                     <newline />
                     <separator colspan="4" string="Products" />
-                    <group colspan="4" col="4" name="import" string="Import lines">
+                    <group colspan="4" col="6" name="import" string="Import lines">
                         <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="2" />
                         <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
                     </group>
