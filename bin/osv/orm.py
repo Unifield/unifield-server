@@ -895,8 +895,9 @@ class orm_template(object):
 
                     # TODO: improve this by using csv.csv_reader
                     res = []
-                    for db_id in line[i] and line[i].split(config.get('csv_internal_sep')) or []:
-                        res.append( _get_id(relation, db_id, current_module, mode) )
+                    if line[i]:
+                        for db_id in line[i].split(config.get('csv_internal_sep')) or []:
+                            res.append( _get_id(relation, db_id, current_module, mode) )
                     res = [(6,0,res)]
 
                 elif fields_def[field[len(prefix)]]['type'] == 'integer':
