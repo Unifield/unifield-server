@@ -31,6 +31,7 @@ from psycopg2.pool import PoolError
 import psycopg2.extensions
 import warnings
 import pooler
+from tools import SKIPPED_ELEMENT_TYPES, cache
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 
@@ -160,8 +161,15 @@ class Cursor(object):
                     for key in osv_pool._sql_error.keys():
                         if key in ie[0]:
                             self.__logger.warn("Normal Constraint Error: %s : %s", self._obj.query or query, ie[0])
+                            #US-88: if error occurred for account analytic then just clear the cache
+                            if 'account_analytic_account_parent_id_fkey' in ie[0]:
+                                cache.clean_caches_for_db(self.dbname)
                             raise
                 self.__logger.exception("Unknown Constraint Error: %s", self._obj.query or query)
+
+            #US-88: if error occurred for account analytic then just clear the cache
+            if 'account_analytic_account_parent_id_fkey' in ie[0]:
+                cache.clean_caches_for_db(self.dbname)
             raise
         except Exception, e:
             if log_exceptions:
