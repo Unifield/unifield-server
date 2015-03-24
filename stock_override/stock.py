@@ -85,6 +85,8 @@ class procurement_order(osv.osv):
                         'reason_type_id': reason_type_id,
                     })
                     move_obj.action_confirm(cr, uid, [id], context=context)
+                    if procurement.procure_method == 'make_to_order':
+                        move_obj.write(cr, uid, [id], {'state': 'hidden'}, context=context)
                     self.write(cr, uid, [procurement.id], {'move_id': id, 'close_move': 1})
         self.write(cr, uid, ids, {'state': 'confirmed', 'message': ''})
         return True
@@ -1281,7 +1283,7 @@ class stock_move(osv.osv):
 
     _columns = {
         'price_unit': fields.float('Unit Price', digits_compute=dp.get_precision('Picking Price Computation'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
-        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
+        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled'), ('hidden', 'Hidden')], 'State', readonly=True, select=True,
               help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
