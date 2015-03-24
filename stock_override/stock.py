@@ -34,6 +34,7 @@ from tools.translate import _
 import decimal_precision as dp
 from msf_partner import PARTNER_TYPE
 from order_types.stock import check_cp_rw
+from order_types.stock import check_rw_warning
 
 
 #----------------------------------------------------------
@@ -1318,6 +1319,7 @@ class stock_move(osv.osv):
         'has_to_be_resourced': False,
     }
 
+    @check_rw_warning
     def call_cancel_wizard(self, cr, uid, ids, context=None):
         '''
         Call the wizard to ask user if he wants to re-source the need
