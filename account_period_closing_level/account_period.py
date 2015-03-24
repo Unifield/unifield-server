@@ -524,7 +524,9 @@ class account_period(osv.osv):
             'view_mode': 'tree,form',
             'view_type': 'form',
             'context': context,
-            'domain': [('user_validated', '=', 'False'), ('period_id', 'in', ids)]
+            # BKLG-15 do not use ('user_validated', '=', 'False') in domain
+            # as already used by 'search_default_non_validated' in context
+            'domain': [('period_id', 'in', ids)],
         }
 
     def button_recurring(self, cr, uid, ids, context=None):
