@@ -537,15 +537,16 @@ class kit_mass_import(osv.osv):
                 update_item_id = False
                 if update_kit_id:
                     exist_item_ids = item_obj.search(cr, uid, [
-                        ('item_module', '=', item.get('module', '')),
+                        ('item_module', '=', item.get('module', False)),
                         ('item_product_id', '=', item_product_id),
+                        ('item_kit_id', '=', update_kit_id),
                     ], context=context)
                     if exist_item_ids:
                         update_item_id = exist_item_ids[0]
 
                 items.append({
                     'to_update': update_item_id,
-                    'item_module': item.get('module', ''),
+                    'item_module': item.get('module', False),
                     'item_product_id': item_product_id,
                     'item_qty': item.get('qty', 0.00),
                     'item_uom_id': item_uom_id,
@@ -591,7 +592,7 @@ class kit_mass_import(osv.osv):
 """Kit \'%s\' - Module \'%s\' - Item \'%s\' not found in file, item removed"""
                         ) % (
                             it.item_kit_id.composition_product_id.default_code,
-                            it.item_module,
+                            it.item_module or '',
                             it.item_product_id.default_code,
                         ))
                     item_obj.unlink(cr, uid, old_items, context=context)
