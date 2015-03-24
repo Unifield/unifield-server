@@ -31,6 +31,7 @@ from tools.translate import _
 
 # Addons imports
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 
 class kit_mass_import(osv.osv):
@@ -43,13 +44,31 @@ class kit_mass_import(osv.osv):
         ),
         'file_to_import': fields.binary(
             string='File to import',
-            required=True,
+            required=False,
             readonly=True,
-            states={'draft': [('readonly', False)], 'check_error': [('readonly', False)]}
+            states={
+                'draft': [
+                    ('readonly', False),
+                ],
+                'check_error': [
+                    ('readonly', False),
+                ],
+            },
         ),
         'filename': fields.char(
             size=128,
             string='Filename',
+        ),
+        'template_file': fields.binary(
+            string='Template file',
+            readonly=True,
+        ),
+        'template_filename': fields.char(
+            size=128,
+            string='Template filename',
+        ),
+        'show_template': fields.boolean(
+            string='Show template',
         ),
         'state': fields.selection(
             selection=[
@@ -95,6 +114,39 @@ class kit_mass_import(osv.osv):
         'name': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'state': lambda *a: 'draft',
     }
+
+    def get_template(self, cr, uid, ids, context=None):
+        """
+        Send a empty template file to the user
+        """
+        if context is None:
+            context = {}
+
+        columns_header = [
+            (_('Kit Code'), 'string'),
+            (_('Kit Description'), 'string'),
+            (_('Kit Version'), 'string'),
+            (_('Active'), 'string'),
+            (_('Module'), 'string'),
+            (_('Product Code'), 'string'),
+            (_('Product Description'), 'string'),
+            (_('Product Qty'), 'string'),
+            (_('Product UoM'), 'string'),
+        ]
+        default_template = SpreadsheetCreator(
+            'Template of import',
+            columns_header,
+            [],)
+        template = base64.encodestring(default_template.get_xml(
+            default_filters=['decode.utf8']))
+
+        self.write(cr, uid, ids, {
+            'template_file': template,
+            'template_filename': 'template.xls',
+            'show_template': True,
+        }, context=context)
+
+        return {}
 
     def get_value_from_excel(self, cr, uid, file_to_import, context=None):
         """
@@ -152,6 +204,11 @@ class kit_mass_import(osv.osv):
         tkc_values = {}
         active_values = [True, False, 'True', 'False', 'TRUE', 'FALSE']
         for wiz in self.browse(cr, uid, ids, context=context):
+            if not wiz.file_to_import:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('No file to import'),
+                )
             # Get values from file
             values = self.get_value_from_excel(
                 cr, uid, wiz.file_to_import, context=context)
@@ -358,9 +415,11 @@ class kit_mass_import(osv.osv):
 
         if not kit_values:
             self.write(cr, uid, wizard.id, {
-                'import_error': _('No data to import'),
-                'state': _('import_error'),
+                'error_message': _('No data to import'),
+                'display_error_message': True,
+                'state': 'check_error',
             }, context=context)
+            return True
 
         cache_product = {}
         cache_uom = {}
