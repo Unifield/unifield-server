@@ -51,13 +51,6 @@ class ir_actions_act_window(osv.osv):
         origin_xmlid = model_data_obj.read(cr, uid, sdref_ids[0], ['module', 'name'])
         return get_valid_xml_name(origin_xmlid['module'], origin_xmlid['name'])
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if context is None:
-            context = {}
-        if context.get('sync_update_execution') and 'groups_id/id' in context.get('fields', []) and 'groups_id' not in vals:
-            vals['groups_id'] = [(6, 0, [])]
-        return super(ir_actions_act_window, self).write(cr, uid, ids, vals, context)
-
 ir_actions_act_window()
 
 class bank_statement(osv.osv):
@@ -770,17 +763,6 @@ class button_access_rule(osv.osv):
         return get_valid_xml_name('BAR', view_xml_id[bar.view_id.id], bar.name)
 
 button_access_rule()
-
-class res_groups(osv.osv):
-    _inherit = 'res.groups'
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if context is None:
-            context = {}
-        if context.get('sync_update_execution') and 'menu_access/id' in context.get('fields', []) and 'menu_access' not in vals:
-            vals['menu_access'] = [(6, 0, [])]
-        return super(res_groups, self).write(cr, uid, ids, vals, context)
-res_groups()
 
 class hr_employee(osv.osv):
     _inherit = 'hr.employee'
