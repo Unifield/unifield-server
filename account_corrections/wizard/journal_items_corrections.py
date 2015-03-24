@@ -84,7 +84,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         'is_analytic_target': fields.function(_get_is_analytic_target, type='boolean', string='Is analytic target', method=True, invisible=True),
         'last_cor_was_only_analytic': fields.related('move_line_id', 
             'last_cor_was_only_analytic',
-            type='boolean', relation='account.move.line',
+            type='boolean', relation='account.move.line', readonly=True,
             string="AD Corrected?"),
     }
 
