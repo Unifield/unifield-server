@@ -474,11 +474,10 @@ class kit_mass_import(osv.osv):
                         err_index = values['items'][0]['line']
                         error_index.add(err_index)
                         error_msg.setdefault(err_index, [])
-                        if not kit_product_id:
-                            error_msg[err_index].append(
-                                _("""A kit already exists for the Kit Product
+                        error_msg[err_index].append(
+                            _("""A kit already exists for the Kit Product
 '\'%s\'. But this kit is not in \'Draft\' state""") % values.get('code')
-                            )
+                        )
                 else:
                     # In case of non draft existing kit, pass to the next kit
                     continue
