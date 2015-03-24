@@ -2501,7 +2501,7 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
 
         incoming_accepted_values = {'client_action_multi': ['act_stock_return_picking', 'action_stock_invoice_onshipping'],
-                                    'client_print_multi': ['Reception'],
+                                    'client_print_multi': ['Reception', 'XML Export'],
                                     'client_action_relate': ['View_log_stock.picking'],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
