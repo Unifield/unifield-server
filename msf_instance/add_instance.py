@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
@@ -435,4 +436,89 @@ class account_cashbox_line(osv.osv):
         return super(account_cashbox_line, self).write(cr, uid, ids, vals, context=context)
 
 account_cashbox_line()
+
+class account_analytic_account(osv.osv):
+    _name = 'account.analytic.account'
+    _inherit = 'account.analytic.account'
+
+    def _get_current_instance_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Get current instance type
+        """
+        res = {}
+        current_instance_type = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
+        for id in ids:
+            res[id] = current_instance_type
+        return res
+
+    #UFTP-2: Set the default prop instance only if the current instance is a coordo, if HQ, let is empty
+    def _set_default_prop_instance(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
+        if instance and instance.level == 'coordo':
+            return instance.id
+        return False
+
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'current_instance_type': fields.function(_get_current_instance_type, method=True, store=False, string='Instance type', type='selection', selection=[('section', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')], readonly=True),
+    }
+
+    _defaults = {
+        'instance_id': _set_default_prop_instance,
+        'current_instance_type': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.level,
+    }
+
+    def check_fp(self, cr, uid, vals, context=None):
+        """
+        Check that FP have an instance_id
+        Check that the given instance is not section level!
+        """
+        if context is None:
+            context = {}
+        if not vals:
+            return True
+        cat = vals.get('category', False)
+        if cat == 'FUNDING':
+            instance_id = vals.get('instance_id', False)  or False
+            if isinstance(instance_id, (tuple)): # UFTP-2: This is for the case of write (create: only instance_id as int is given)
+                instance_id = instance_id[0]
+            if not instance_id:
+                # check the current instance
+                current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+                if not current_instance or current_instance.level == 'section':
+                    raise osv.except_osv(_('Error'), _('Proprietary Instance is mandatory for FP accounts!'))
+                instance_id = current_instance.id
+            instance_level = self.pool.get('msf.instance').browse(cr, uid, instance_id).level
+            if instance_level == 'section':
+                raise osv.except_osv(_('Warning'), _('Proprietary Instance for FP accounts should be only COORDO and/or MISSION'))
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Check FPs
+        """
+        if context is None:
+            context = {}
+        # Check that instance_id is filled in for FP
+        if context.get('from_web', False) is True:
+            self.check_fp(cr, uid, vals, context=context)
+        return super(account_analytic_account, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check FPs
+        """
+        if context is None:
+            context = {}
+        res = super(account_analytic_account, self).write(cr, uid, ids, vals, context=context)
+        if context.get('from_web', False):
+            cat_instance = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)[0]
+            if cat_instance:
+                self.check_fp(cr, uid, cat_instance, context=context)
+        return res
+
+account_analytic_account()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
