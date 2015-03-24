@@ -7,7 +7,7 @@
             <field name="model">kit.mass.import</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Kit mass import">
+                <form string="Theoretical Kit mass import">
                     <field name="display_warning_message" invisible="1" />
                     <field name="display_error_message" invisible="1" />
                     <field name="show_template" invisible="1" />
@@ -92,7 +92,7 @@
             <field name="model">kit.mass.import</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Kit mass imports">
+                <tree string="Theoretical Kit mass imports">
                     <field name="name" />
                     <field name="state" />
                 </tree>
@@ -104,14 +104,14 @@
             <field name="model">kit.mass.import</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Kit mass imports">
+                <search string="Theoretical Kit mass imports">
                     <field name="state" />
                 </search>
             </field>
         </record>
 
         <record id="kit_mass_import_action" model="ir.actions.act_window">
-            <field name="name">Kit Mass Import</field>
+            <field name="name">Theoretical Kit Mass Import</field>
             <field name="res_model">kit.mass.import</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
