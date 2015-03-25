@@ -42,6 +42,9 @@ class account_invoice(osv.osv):
                 res[invoice.id]['amount_untaxed'] += line.price_subtotal
             for line in invoice.tax_line:
                 res[invoice.id]['amount_tax'] += line.amount
+                if line.account_tax_id and line.account_tax_id.price_include:
+                    # US-52: tax include in price, deduce it in untaxed amount
+                    res[invoice.id]['amount_untaxed'] -= line.amount
             res[invoice.id]['amount_total'] = res[invoice.id]['amount_tax'] + res[invoice.id]['amount_untaxed']
         return res
 
@@ -1678,20 +1681,27 @@ class account_invoice_tax(osv.osv):
     }
 
 
-    def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed):
+    def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed,
+        amount_total):
         atx_obj = self.pool.get('account.tax')
         atx = atx_obj.browse(cr, uid, account_tax_id)
-        return {'value': {'account_id': atx.account_collected_id.id, 'name': "{0} - {1}".format(atx.name,atx.description), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id,amount_untaxed)}}
+        return {'value': {'account_id': atx.account_collected_id.id, 'name': "{0} - {1}".format(atx.name,atx.description), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id, amount_untaxed, amount_total)}}
 
 
-    def _calculate_tax(self, cr, uid, account_tax_id, amount_untaxed):
+    def _calculate_tax(self, cr, uid, account_tax_id, amount_untaxed,
+        amount_total):
         atx_obj = self.pool.get('account.tax')
         atx = atx_obj.browse(cr, uid, account_tax_id)
         tax_amount = 0.0
         if atx.type == 'fixed':
             tax_amount = atx.amount
         if atx.type == 'percent':
-            tax_amount = atx.amount * amount_untaxed
+            if atx.price_include:
+                # US-52: tax price include, compute based on total
+                # tax amount = total - (total/1.dd) where dd = tax ratio
+                tax_amount = amount_total - (amount_total / (1+atx.amount))
+            else:
+                tax_amount = atx.amount * amount_untaxed
             tax_amount = round(tax_amount,2)
 
         return tax_amount
@@ -1781,7 +1791,7 @@ class account_invoice_tax(osv.osv):
         aits = self.pool.get('account.invoice.tax').browse(cr, uid, ait_ids)
         for ait in aits:
             if ait.account_tax_id and not ait.amount:
-                self.pool.get('account.invoice.tax').write(cr, uid, ait.id, {'amount': self._calculate_tax(cr, uid, ait.account_tax_id.id,ai.amount_untaxed)})
+                self.pool.get('account.invoice.tax').write(cr, uid, ait.id, {'amount': self._calculate_tax(cr, uid, ait.account_tax_id.id,ai.amount_untaxed,ai.amount_total)})
 
         return tax_grouped
 
