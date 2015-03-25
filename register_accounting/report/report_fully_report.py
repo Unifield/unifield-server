@@ -49,7 +49,7 @@ class report_fully_report(report_sxw.rml_parse):
         # => as we not display JIs, related AJIs will not be displayed too
         
         # 1) exclude register line of account of given user_type
-        excluded_regline_acc_type_codes = ['tax', ]
+        excluded_regline_acc_type_codes = ['tax', 'cash', 'receivables', ]
         aat_obj = pooler.get_pool(self.cr.dbname).get('account.account.type')
         domain = [('code', 'in', excluded_regline_acc_type_codes)]
         excluded_regline_acc_type_ids = aat_obj.search(self.cr, self.uid,
