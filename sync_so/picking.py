@@ -97,10 +97,12 @@ class stock_picking(osv.osv):
 
         # product
         product_name = data['product_id']['name']
-        product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
-        if not product_ids:
-            raise Exception, "The corresponding product does not exist here. Product name: %s" % product_name
-        product_id = product_ids[0]
+        product_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
+        if not product_id:
+            product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
+            if not product_ids:
+                raise Exception, "The corresponding product does not exist here. Product name: %s" % product_name
+            product_id = product_ids[0]
 
         # UF-1617: asset form
         asset_id = False
