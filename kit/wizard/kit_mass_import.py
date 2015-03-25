@@ -452,7 +452,7 @@ class kit_mass_import(osv.osv):
                     error_msg[err_index].append(
                         _('Kit Product \'%s\' is not a kit product - '\
                           'Kit not imported') %
-                            value.get('code')
+                            values.get('code')
                     )
                 continue
 
