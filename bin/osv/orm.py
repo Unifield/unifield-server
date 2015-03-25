@@ -2927,6 +2927,9 @@ class orm(orm_template):
 
         cr.commit()     # start a new transaction
 
+        def unify_cons_text(txt):
+            return txt.lower().replace(', ',',').replace(' (','(').replace(' > ', '>').replace('!=', ' <> ')
+
         for (key, con, _) in self._sql_constraints:
             conname = '%s_%s' % (self._table, key)
 
@@ -2956,7 +2959,7 @@ class orm(orm_template):
                 # constraint does not exists:
                 sql_actions['add']['execute'] = True
                 sql_actions['add']['msg_err'] = sql_actions['add']['msg_err'] % (sql_actions['add']['query'], )
-            elif con.lower() not in [item['condef'].lower() for item in existing_constraints]:
+            elif unify_cons_text(con) not in [unify_cons_text(item['condef']) for item in existing_constraints]:
                 # constraint exists but its definition has changed:
                 sql_actions['drop']['execute'] = True
                 sql_actions['drop']['msg_ok'] = sql_actions['drop']['msg_ok'] % (existing_constraints[0]['condef'].lower(), )
