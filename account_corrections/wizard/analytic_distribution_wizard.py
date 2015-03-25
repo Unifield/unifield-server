@@ -190,7 +190,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if period_closed:
                 # reverse the line
                 to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
-                reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids)
+                reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
                 # Set initial lines as non correctible
                 ana_obj.write(cr, uid, to_reverse_ids, {'is_reallocated': True})
                 # Set right journal and right entry sequence
