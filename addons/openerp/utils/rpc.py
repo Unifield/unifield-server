@@ -130,6 +130,8 @@ class RPCGateway(object):
                     common.concurrency(err.message, err.data, args)
                 else:
                     common.warning(err.data)
+            elif err.code.startswith('updater.py'):
+                common.error('updater.py', err.code)
             elif err.code.startswith('AccessDenied'):
                 raise openobject.errors.AccessDenied(err.code, _('Access Denied'))
             else:
@@ -294,6 +296,8 @@ class RPCSession(object):
         try:
             uid = self.execute_noauth('common', 'login', db, user, password)
         except Exception, e:
+            if e.title == 'updater.py':
+                return -2
             return -1
 
         if uid <= 0:
