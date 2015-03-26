@@ -129,6 +129,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         to_delete = []
         to_reverse = []
         old_line_ok = []
+        any_reverse = False
         period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
         ana_obj = self.pool.get('account.analytic.line')
         # Prepare journal and period information for entry sequences
@@ -189,7 +190,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if period_closed:
                 # reverse the line
                 to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
-                reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids)
+                reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
                 # Set initial lines as non correctible
                 ana_obj.write(cr, uid, to_reverse_ids, {'is_reallocated': True})
                 # Set right journal and right entry sequence
@@ -198,6 +199,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, reversed_id) )
                 # delete the distribution line
                 wiz_line.unlink()
+                any_reverse = True
             else:
                 to_delete.append(wiz_line)
 
@@ -404,6 +406,15 @@ class analytic_distribution_wizard(osv.osv_memory):
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
 
+        if context and 'ji_correction_account_changed' in context:
+            if (any_reverse or to_reverse) and \
+                not context['ji_correction_account_changed']:
+                # BKLG-12 pure AD correction flag marker
+                # (do this bypassing model write)
+                return osv.osv.write(self.pool.get('account.move.line'), cr,
+                    uid, [ml.id], {'last_cor_was_only_analytic': True})
+            del context['ji_correction_account_changed']
+
     def button_cancel(self, cr, uid, ids, context=None):
         """
         Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
@@ -452,6 +463,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     account_changed = True
 
                 # Account AND/OR Distribution have changed
+                context['ji_correction_account_changed'] = account_changed
                 if account_changed:
                     # Create new distribution
                     new_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
