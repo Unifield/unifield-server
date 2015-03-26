@@ -43,13 +43,14 @@ def cp_rw_warning(func, rw_flag, *args, **kwargs):
         pick_obj = self.pool.get('stock.picking')
         rw_type = hasattr(pick_obj, '_get_usb_entity_type') and pick_obj._get_usb_entity_type(cr, uid) or False
                   
-        if rw_flag == pick_obj.CENTRAL_PLATFORM:
-            text = "remote warehouse"
-        elif rw_flag == pick_obj.REMOTE_WAREHOUSE:    
+        text = "remote warehouse"
+        this_instance = "central platform"
+        if rw_flag == pick_obj.REMOTE_WAREHOUSE:    
             text = "central platform"
+            this_instance = "remote warehouse"
     
         if rw_type == rw_flag:
-            name = """This action should only be performed at the %s instance! Are you sure to proceed it at this main instance?""" %text
+            name = """This action should only be performed at the %s instance! Are you sure to proceed it at this %s instance?""" %(text, this_instance)
             model = 'confirm'
             step = 'default'
             question = name
