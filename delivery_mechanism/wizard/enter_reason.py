@@ -24,7 +24,7 @@ from tools.translate import _
 import decimal_precision as dp
 
 import netsvc
-
+from order_types.stock import check_rw_warning
 
 class enter_reason(osv.osv_memory):
     '''
@@ -37,6 +37,7 @@ class enter_reason(osv.osv_memory):
     _defaults = {'picking_id': lambda obj, cr, uid, c: c and c.get('picking_id', False),
                  }
 
+    @check_rw_warning
     def do_cancel(self, cr, uid, ids, context=None):
         # quick integrity check
         assert context, 'No context defined, problem on method call'
