@@ -76,7 +76,8 @@ class account_move_line(osv.osv):
             ('reconcile_id','=',False),
             ('state', '=', 'valid'),
             ('move_state', '=', 'posted'), # UFTP-204: Exclude the Direct Invoice from the list
-            ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr', 'extra', 'correction', 'intermission']),  # UTP-1088 add extra(OD)/correction/intermission types
+            ('journal_id.type', 'not in', ['migration']),  # US-70 Open the pending payment to receivable and payable entries from all journals except for the migration journal
+            #('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr', 'extra', 'correction', 'intermission']),  # UTP-1088 add extra(OD)/correction/intermission types
             ('account_id.type_for_register', 'not in', ['down_payment']),
             # UTP-1088 exclude correction/reversal lines as can be in journal of type correction
             ('corrected_line_id', '=', False),  # is a correction line if has a corrected line

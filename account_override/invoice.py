@@ -117,7 +117,8 @@ class account_invoice(osv.osv):
             ('reconciled','=',False),
             ('state', '=', 'open'),
             ('type', '=', 'out_invoice'),
-            ('journal_id.type', 'in', ['sale']),
+            ('journal_id.type', 'not in', ['migration']),  # US-70 Debit note import invoices restrictions: remove restrictions on journal, only leaving the restriction on the MIG journal
+            #('journal_id.type', 'in', ['sale']),
             ('partner_id.partner_type', '=', 'section'),
         ]
         return dom1+[('is_debit_note', '=', False)]
