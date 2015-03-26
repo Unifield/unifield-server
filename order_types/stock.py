@@ -44,9 +44,9 @@ def cp_rw_warning(func, rw_flag, *args, **kwargs):
         rw_type = hasattr(pick_obj, '_get_usb_entity_type') and pick_obj._get_usb_entity_type(cr, uid) or False
                   
         if rw_flag == pick_obj.CENTRAL_PLATFORM:
-            text = "Remote Warehouse"
+            text = "remote warehouse"
         elif rw_flag == pick_obj.REMOTE_WAREHOUSE:    
-            text = "Central Platform"
+            text = "central platform"
     
         if rw_type == rw_flag:
             name = """This action should only be performed at the %s instance! Are you sure to proceed it at this main instance?""" %text
@@ -77,16 +77,16 @@ def cp_rw_warning(func, rw_flag, *args, **kwargs):
                                       step=step,
                                       context=tmp_context)
             return res
-        new_kwargs = {}
-        for kwk in kw_keys:
-            if kwk in wargs:
-                new_kwargs[kwk] = wargs[kwk]
+    new_kwargs = {}
+    for kwk in kw_keys:
+        if kwk in wargs:
+            new_kwargs[kwk] = wargs[kwk]
 
-        res = func(*args, **new_kwargs)
-        if from_cp_check and not (isinstance(res, dict) and res.get('res.model') != 'wizard'):
-            return {'type': 'ir.actions.act_window_close'}
-        else:
-            return res
+    res = func(*args, **new_kwargs)
+    if from_cp_check and not (isinstance(res, dict) and res.get('res.model') != 'wizard'):
+        return {'type': 'ir.actions.act_window_close'}
+    else:
+        return res
 
 # US-28: Refactored the method decoration to be reused for both RW and CP warning
 def check_cp_rw(func):
