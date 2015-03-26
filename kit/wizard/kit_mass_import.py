@@ -238,7 +238,7 @@ class kit_mass_import(osv.osv):
                     tkc_values.setdefault(kit_key, {
                         'code': val[0],
                         'version': val[2],
-                        'active': val[3] in active_values and True or False,
+                        'active': val[3].strip() in active_values and True or False,
                         'items': [],
                     })
                     tkc_values[kit_key]['items'].append({
@@ -311,7 +311,7 @@ class kit_mass_import(osv.osv):
 
             # Col. 4 :: Active (expected values: True or False)a
             active_values = [True, False, 'True', 'False', 'TRUE', 'FALSE']
-            if not val[3] or val[3] not in active_values:
+            if not val[3] or val[3].strip() not in active_values:
                 warning_index.add(line)
                 warning_msg.setdefault(line, [])
                 warning_msg[line].append(
