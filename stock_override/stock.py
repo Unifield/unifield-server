@@ -589,6 +589,8 @@ You cannot choose this supplier because some destination locations are not avail
     def cancel_assign(self, cr, uid, ids, *args, **kwargs):
         return super(stock_picking, self).cancel_assign(cr, uid, ids)
 
+ 
+    @check_rw_warning
     def call_cancel_wizard(self, cr, uid, ids, context=None):
         '''
         Call the wizard of cancelation (ask user if he wants to resource goods)
