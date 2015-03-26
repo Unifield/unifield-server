@@ -49,6 +49,7 @@ def get_db_and_pool(db_name, force_demo=False, status=None, update_module=False,
             pool.get('ir.actions.report.xml').register_all(cr)
             if not updater.do_upgrade(cr, pool):
                 pool_dic.pop(db_name)
+                # please do not change "updater.py" in the message, or change unifield-web/addons/openerp/utils/rpc.py accordingly
                 raise Exception("updater.py told us that OpenERP version doesn't match database version!")
             cr.commit()
         finally:
