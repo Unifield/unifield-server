@@ -202,7 +202,7 @@ class kit_mass_import(osv.osv):
             ids = [ids]
 
         tkc_values = {}
-        active_values = [True, False, 'True', 'False', 'TRUE', 'FALSE']
+        active_values = [True, 'True', 'TRUE']
         for wiz in self.browse(cr, uid, ids, context=context):
             if not wiz.file_to_import:
                 raise osv.except_osv(
@@ -238,7 +238,7 @@ class kit_mass_import(osv.osv):
                     tkc_values.setdefault(kit_key, {
                         'code': val[0],
                         'version': val[2],
-                        'active': val[3] in active_values and val[3] or True,
+                        'active': val[3] in active_values and True or False,
                         'items': [],
                     })
                     tkc_values[kit_key]['items'].append({
