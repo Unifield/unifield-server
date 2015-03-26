@@ -508,10 +508,12 @@ class res_partner(osv.osv):
         [utp-315] avoid deactivating partner that have still open document linked to them.
         """
         # some verifications
+        if not ids:
+            return {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         # UF-2463: If the partner is not saved into the system yet, just ignore this check
-        if not active and len(ids) > 0:
+        if not active:
             if context is None:
                 context = {}
 
@@ -521,6 +523,39 @@ class res_partner(osv.osv):
                         'warning': {'title': _('Error'),
                                     'message': _("Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
                                                 ) % (objects_linked_to_partner,)}}
+        else:
+            # US-49 check that activated partner is not using a not active CCY
+            check_pricelist_ids = []
+            fields_pricelist = [
+                'property_product_pricelist_purchase',
+                'property_product_pricelist'
+            ]
+            check_ccy_ids = []
+            for r in self.read(cr, uid, ids, fields_pricelist,
+                context=context):
+                for f in fields_pricelist:
+                    if r[f] and r[f][0] not in check_pricelist_ids:
+                        check_pricelist_ids.append(r[f][0])
+            if check_pricelist_ids:
+                for cpl_r in self.pool.get('product.pricelist').read(cr,
+                    uid, check_pricelist_ids, ['currency_id'],
+                    context=context):
+                    if cpl_r['currency_id'] and \
+                        cpl_r['currency_id'][0] not in check_ccy_ids:
+                        check_ccy_ids.append(cpl_r['currency_id'][0])
+                if check_ccy_ids:
+                    count = self.pool.get('res.currency').search(cr, uid, [
+                            ('active', '!=', True),
+                            ('id', 'in', check_ccy_ids),
+                        ], count=True, context=context)
+                    if count:
+                        return {
+                            'value': {'active': False},
+                            'warning': {
+                                'title': _('Error'),
+                                'message': _('PO or FO currency is not active'),
+                            }
+                        }
         return {}
 
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
