@@ -306,7 +306,8 @@ class procurement_order(osv.osv):
 
                     prods = location_obj._product_virtual_get(cr, uid,
                             op.location_id.id, [opl.product_id.id],
-                            {'uom': opl.product_uom_id.id})[opl.product_id.id]
+                            {'uom': opl.product_uom_id.id},
+                            ['confirmed', 'waiting', 'assigned', 'done', 'hidden'])[opl.product_id.id]
 
                     if prods < opl.product_min_qty:
                         qty = max(opl.product_min_qty, opl.product_max_qty)-prods
