@@ -61,13 +61,18 @@ class SavePullerCache(object):
         todo = {}
         for entity_id, updates in cache:
             for update_id in updates:
-                try:
-                    todo[update_id].add( entity_id )
-                except KeyError:
-                    todo[update_id] = set([entity_id])
-        for id, entity_ids in todo.items():
-            puller_ids = [(0, 0, {'entity_id':x}) for x in entity_ids]
-            self.__model__.write(cr, uid, [id], {'puller_ids': puller_ids}, context)
+                self.__model__.pool.get('sync.server.puller_logs').create(cr, uid, {
+                    'update_id': update_id,
+                    'entity_id': entity_id,
+                }, context=context)
+#            for update_id in updates:
+#                try:
+#                    todo[update_id].add( entity_id )
+#                except KeyError:
+#                    todo[update_id] = set([entity_id])
+#        for id, entity_ids in todo.items():
+#            puller_ids = [(0, 0, {'entity_id':x}) for x in entity_ids]
+#            self.__model__.write(cr, uid, [id], {'puller_ids': puller_ids}, context)
 
 class puller_ids_rel(osv.osv):
     _name = "sync.server.puller_logs"
