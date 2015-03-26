@@ -189,7 +189,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if period_closed:
                 # reverse the line
                 to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
-                reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids)
+                reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
                 # Set initial lines as non correctible
                 ana_obj.write(cr, uid, to_reverse_ids, {'is_reallocated': True})
                 # Set right journal and right entry sequence
@@ -222,12 +222,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                 create_date = ml.date
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
-            if to_reverse:
+            if period_closed:
                 create_date = wizard.date
                 name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
             # Set right analytic correction journal to these lines
-            if to_reverse:
+            if period_closed:
                 self.pool.get('account.analytic.line').write(cr, uid, created_analytic_line_ids[new_distrib_line], {'journal_id': correction_journal_id})
             have_been_created.append(created_analytic_line_ids[new_distrib_line])
 
