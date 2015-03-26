@@ -1108,6 +1108,7 @@ Calendar.prototype._init = function (firstDayOfWeek, date) {
 	// displayed in the calendar, even if it's from the previous month.
 	// WARNING: this is magic. ;-)
 	date.setDate(1);
+	date.setHours(12);
 	var day1 = (date.getDay() - this.firstDayOfWeek) % 7;
 	if (day1 < 0)
 		day1 += 7;
@@ -1590,7 +1591,7 @@ Date.parseDate = function(str, fmt) {
 	var a = str.split(/\W+/);
 	var b = fmt.match(/%./g);
 	var i = 0, j = 0;
-	var hr = 12;
+	var hr = 0;
 	var min = 0;
 	for (i = 0; i < a.length; ++i) {
 		if (!a[i])
