@@ -660,7 +660,7 @@ class real_average_consumption_line(osv.osv):
         'batch_mandatory': fields.boolean(string='BM'),
         'expiry_date': fields.date(string='Expiry date'),
         'date_mandatory': fields.boolean(string='DM'),
-        'asset_id': fields.char(size=32, string='Asset'),
+        'asset_id': fields.integer(string='Asset'),
         'asset_mandatory': fields.boolean('AM'),
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
