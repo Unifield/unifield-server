@@ -24,6 +24,7 @@ import time
 from osv import osv, fields
 from osv.orm import browse_record
 from tools.translate import _
+from order_types.stock import check_rw_warning
 
 
 class stock_picking_processing_info(osv.osv_memory):
@@ -1294,6 +1295,7 @@ class stock_picking(osv.osv):
     def _manual_create_rw_messages(self, cr, uid, context=None):
         return
 
+    @check_rw_warning
     def enter_reason(self, cr, uid, ids, context=None):
         '''
         open reason wizard
