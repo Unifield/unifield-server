@@ -392,45 +392,7 @@ class stock_picking(osv.osv):
             self._logger.info(message)
             return message
 
-
-    def do_incoming_shipment_sync(self, cr, uid, in_id, in_processor, context=None):
-        '''
-        ' Modify the original method do_incoming_shipment in delivery_mechanism/wizard/stock_partial_picking.py to perform similarly as a
-        ' partial incoming shipment for the sync case, as partial shipment/OUT has been made.
-        '
-        ' The main idea here is to "rebuild" the value of "partial_datas" then call the method do_incoming_shipment of stock.picking
-        '''
-        # picking ids
-        move_obj = self.pool.get('stock.move')
-        prodlot_obj = self.pool.get('stock.production.lot')
-
-        pick = self.browse(cr, uid, in_id, context=context)
-
-        # treated moves
-        move_ids = partial_datas[in_id].keys()
-        # all moves
-        all_move_ids = [move.id for move in pick.move_lines]
-        # these moves will be set to 0 - not present in the wizard - create partial objects with qty 0
-        missing_move_ids = [x for x in all_move_ids if x not in move_ids]
-        # missing moves (deleted memory moves) are replaced by a corresponding partial with qty 0
-        for missing_move in move_obj.browse(cr, uid, missing_move_ids, context=context):
-            values = {'name': move.product_id.partner_ref,
-                      'product_id': missing_move.product_id.id,
-                      'product_qty': 0,
-                      'product_uom': missing_move.product_uom.id,
-                      'prodlot_id': False,
-                      'asset_id': False,
-                      'force_complete': False,
-                      'change_reason': None,
-                      }
-            # average computation from original openerp
-            if (missing_move.product_id.cost_method == 'average') and not missing_move.location_dest_id.cross_docking_location_ok:
-                values.update({'product_price' : missing_move.product_id.standard_price,
-                               'product_currency': missing_move.product_id.company_id and missing_move.product_id.company_id.currency_id and missing_move.product_id.company_id.currency_id.id or False,
-                               })
-            partial_datas[in_id].setdefault(missing_move.id, []).append(values)
-        return self.do_incoming_shipment(cr, uid, [in_id], context=dict(context, partial_datas=partial_datas))
-
+    # REMOVE THIS METHOD, NO MORE USE! do_incoming_shipment_sync
 
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
         '''

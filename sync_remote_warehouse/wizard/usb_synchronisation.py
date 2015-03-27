@@ -245,7 +245,7 @@ class usb_synchronisation(osv.osv_memory):
         
         self.write(cr, uid, ids, vals, context=context)
         return {
-                        'name': "Warning Message For RW",
+                        'name': "USB Synchronisation",
                         'type': 'ir.actions.act_window',
                         'res_model': 'usb_synchronisation',
                         'view_type': 'form',
