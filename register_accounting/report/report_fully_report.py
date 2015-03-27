@@ -29,8 +29,48 @@ class report_fully_report(report_sxw.rml_parse):
         self.localcontext.update({
             'getMoveLines': self.getMoveLines,
             'getAnalyticLines': self.getAnalyticLines,
+            'getImportedInvoiceMoveLines': self.getImportedInvoiceMoveLines,
         })
         return
+        
+    def filter_moves(self, move_ids, regline_br):
+        # US-69
+        # - at JI level exclude the detail display of (no JI AND AJI display)
+
+        # 1) exclude register line of account of given user_type
+        # (redondencies of invoice detail for the tax regline)
+        excluded_acc_type_codes = [
+            'tax',
+        ]
+        if regline_br and regline_br.account_id and \
+            regline_br.account_id.user_type:
+                if regline_br.account_id.user_type.code and \
+                    regline_br.account_id.user_type.code in \
+                    excluded_acc_type_codes:
+                    return []
+                    
+        # 2) exclude HR entries of account_type 'tax', 'cash', 'receivable'
+        """excluded_acc_type_codes = ['tax', 'cash', 'receivables', ]
+        aat_obj = pooler.get_pool(self.cr.dbname).get('account.account.type')
+        domain = [('code', 'in', excluded_acc_type_codes)]
+        excluded_acc_type_ids = aat_obj.search(self.cr, self.uid,
+            domain)
+        
+        journal_obj = pooler.get_pool(self.cr.dbname).get('account.journal')
+        domain = [('type', '=', 'hr')]
+        hr_journal_ids = journal_obj.search(self.cr, self.uid, domain)
+        
+        aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
+        domain = [
+            ('journal_id', 'in', hr_journal_ids),
+            ('account_id.user_type', 'in', excluded_acc_type_ids),
+            ('id', 'in', move_ids),
+        ]
+        move_ids_to_exclude = aml_obj.search(self.cr, self.uid, domain)
+        if move_ids_to_exclude:
+            move_ids = [ id for id in move_ids \
+                if id not in move_ids_to_exclude]"""
+        return move_ids
 
     def getMoveLines(self, move_ids, regline_br):
         """
@@ -42,41 +82,9 @@ class report_fully_report(report_sxw.rml_parse):
         if isinstance(move_ids, (int, long)):
             move_ids = [move_ids]
         
-        # US-69
-        # - at JI level exclude the detail display of (no JI AND AJI display):
-        #   - register lines of account types: tax, cash, receivable
-        #   - any HR journal entries (detail for payroll entries not wished
-        # => as we not display JIs, related AJIs will not be displayed too
+        move_ids = self.filter_moves(move_ids, regline_br)
         
-        # 1) exclude register line of account of given user_type or B/S
-        excluded_regline_acc_type_codes = [
-            'tax',
-            #'cash',
-            #'receivables',
-        ]
-        if regline_br and regline_br.account_id and \
-            regline_br.account_id.user_type:
-                if regline_br.account_id.user_type.code and \
-                    regline_br.account_id.user_type.code in \
-                    excluded_regline_acc_type_codes:
-                    return []
-        
-        # 2) get journals to exclude (JI's journal)
-        journal_obj = pooler.get_pool(self.cr.dbname).get('account.journal')
-        domain = [('type', '=', 'hr')]
-        excluded_journal_ids = journal_obj.search(self.cr, self.uid, domain)
-        
-        # 3) get JIs ids filtered by excluded journal
-        am_obj = pooler.get_pool(self.cr.dbname).get('account.move')
-        domain = [
-            ('journal_id', 'not in', excluded_journal_ids),
-            ('id', 'in', move_ids),
-        ]
-        move_ids = am_obj.search(self.cr, self.uid, domain)
-        if not move_ids:
-            return []
-        
-        # 4) We need move lines linked to the given move ID. Except the invoice counterpart.
+        # We need move lines linked to the given move ID. Except the invoice counterpart.
         #+ Lines that have is_counterpart to True is the invoice counterpart. We do not need it.
         aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
         domain = [
@@ -103,6 +111,9 @@ class report_fully_report(report_sxw.rml_parse):
         if al_ids:
             res = al_obj.browse(self.cr, self.uid, al_ids)
         return res
+      
+    def getImportedInvoiceMoveLines(self, move_ids, regline_br):
+        return self.filter_moves(move_ids, regline_br)
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

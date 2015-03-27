@@ -549,7 +549,8 @@
 % if line.invoice_id:
 <% move_lines = getMoveLines([line.invoice_id.move_id.id], line) %>
 % elif line.imported_invoice_line_ids:
-<% moves = [x.move_id.id for x in line.imported_invoice_line_ids] %>
+<% moves = getImportedInvoiceMoveLines([x.move_id.id for x in line.imported_invoice_line_ids], line) %>
+getImportedInvoiceMoveLines
 <% move_lines = getMoveLines(moves, line) %>
 % elif line.direct_invoice_move_id:
 <% move_lines = getMoveLines([line.direct_invoice_move_id.id], line) %>
