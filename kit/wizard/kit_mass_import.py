@@ -311,7 +311,10 @@ class kit_mass_import(osv.osv):
 
             # Col. 4 :: Active (expected values: True or False)a
             active_values = [True, False, 'True', 'False', 'TRUE', 'FALSE']
-            if not val[3] or val[3].strip() not in active_values:
+            vval = val[3]
+            if isinstance(vval, str):
+                vval = vval.strip()
+            if not vval or vval not in active_values:
                 warning_index.add(line)
                 warning_msg.setdefault(line, [])
                 warning_msg[line].append(
