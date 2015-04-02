@@ -512,6 +512,11 @@ class account_analytic_account(osv.osv):
         """
         if context is None:
             context = {}
+
+        # US-166: Ids needs to be always a list
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         res = super(account_analytic_account, self).write(cr, uid, ids, vals, context=context)
         if context.get('from_web', False):
             cat_instance = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)[0]
