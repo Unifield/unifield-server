@@ -3053,7 +3053,10 @@ class purchase_order_line(osv.osv):
 
         # Cancel the listed procurement orders
         for proc_id in proc_ids:
-            if not self.search(cr, uid, [('id', 'not in', ids), ('procurement_id', '=', proc_id)], context=context):
+            if not self.search(cr, uid, [
+                ('order_id.state', '!=', 'split'),
+                ('id', 'not in', ids),
+                ('procurement_id', '=', proc_id)], context=context):
                 proc_obj.action_cancel(cr, uid, [proc_id])
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
