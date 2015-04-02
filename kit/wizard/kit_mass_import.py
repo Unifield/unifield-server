@@ -234,11 +234,14 @@ class kit_mass_import(osv.osv):
                   #9: Product UoM (if not set, take the Product Default UoM)
                 """
                 for line, val in values.iteritems():
+                    vval = val[3]
+                    if isinstance(val[3], str):
+                        vval = val[3].strip()
                     kit_key = '%s_%s' % (val[0], val[2])
                     tkc_values.setdefault(kit_key, {
                         'code': val[0],
                         'version': val[2],
-                        'active': val[3].strip() in active_values and True or False,
+                        'active': vval in active_values and True or False,
                         'items': [],
                     })
                     tkc_values[kit_key]['items'].append({
