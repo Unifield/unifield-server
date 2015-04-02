@@ -394,13 +394,13 @@ class product_template(osv.osv):
     _name = 'product.template'
     _inherit = 'product.template'
     _columns = {
-        'property_stock_account_input': fields.property('account.account',
-            type='many2one', relation='account.account',
-            string='Stock Input Account', method=True, view_load=True,
+        'property_stock_account_input': fields.many2one(
+            'account.account',
+            string='Stock Input Account',
             help='When doing real-time inventory valuation, counterpart Journal Items for all incoming stock moves will be posted in this account. If not set on the product, the one from the product category is used.'),
-        'property_stock_account_output': fields.property('account.account',
-            type='many2one', relation='account.account',
-            string='Stock Output Account', method=True, view_load=True,
+        'property_stock_account_output': fields.many2one(
+            'account.account',
+            string='Stock Output Account',
             help='When doing real-time inventory valuation, counterpart Journal Items for all outgoing stock moves will be posted in this account. If not set on the product, the one from the product category is used.'),
         'property_stock_procurement': fields.many2one('stock.location',
             string='Procurement Location',
