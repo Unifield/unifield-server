@@ -728,7 +728,10 @@ class stock_mission_report_line(osv.osv):
         'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
         'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
-                                store={'product.template': (_get_template, ['type'], 10)}),
+                                store={
+                                    'product.template': (_get_template, ['type'], 10),
+                                    'stock.mission.report.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 10),
+                                }),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
         'internal_qty': fields.float(digits=(16,2), string='Instance Stock'),
         'internal_val': fields.function(_get_internal_val, method=True, type='float', string='Instance Stock Val.'),
