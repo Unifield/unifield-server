@@ -236,7 +236,7 @@ class account_account(osv.osv):
         if not context:
             context = {}
         # Check default destination presence
-        if not context.get('sync_update_execution') and 'default_destination_id' in vals:
+        if not context.get('sync_update_execution') and 'default_destination_id' in vals and vals.get('default_destination_id'):
             # Fetch it
             dd_id = vals.get('default_destination_id')
             res = super(account_account, self).write(cr, uid, ids, vals, context=context)
