@@ -29,15 +29,17 @@ class report_fully_report(report_sxw.rml_parse):
         self.localcontext.update({
             'getMoveLines': self.getMoveLines,
             'getAnalyticLines': self.getAnalyticLines,
-            'getImportedInvoiceMoveLines': self.getImportedInvoiceMoveLines,
+            'getImportedMoveLines': self.getImportedMoveLines,
         })
-        return
         
-    def filter_moves(self, move_ids, regline_br):
+    def filter_regline(self, regline_br):
+        """
+        :param regline_br: browsed regline
+        :return: True to show detail of the reg line False to not display
+        """
         # US-69
-        # - at JE level exclude the detail display of (no JI AND AJI display)
 
-        # exclude detail of register line of account of given user_type
+        # exclude ALL detail of register line of account of given user_type
         # (redondencies of invoice detail)
         # http://jira.unifield.org/browse/US-69?focusedCommentId=38845&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38845
         excluded_acc_type_codes = [
@@ -50,24 +52,16 @@ class report_fully_report(report_sxw.rml_parse):
                 if regline_br.account_id.user_type.code and \
                     regline_br.account_id.user_type.code in \
                     excluded_acc_type_codes:
-                    return []
-                    
-        return move_ids
-
-    def getMoveLines(self, move_ids, regline_br):
-        """
-        Fetch all lines except the partner counterpart one
-        """
-        res = []
-        if not move_ids:
-            return res
-        if isinstance(move_ids, (int, long)):
-            move_ids = [move_ids]
+                    return False
+        return True
         
-        move_ids = self.filter_moves(move_ids, regline_br)
-        
+    def get_move_lines(self, move_ids):
         # We need move lines linked to the given move ID. Except the invoice counterpart.
         #+ Lines that have is_counterpart to True is the invoice counterpart. We do not need it.
+        res = []
+        if  not move_ids:
+            return res
+            
         aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
         domain = [
             ('move_id', 'in', move_ids),
@@ -78,6 +72,41 @@ class report_fully_report(report_sxw.rml_parse):
             res = aml_obj.browse(self.cr, self.uid, aml_ids)
             
         return sorted(res, key=lambda x: x.line_number)
+
+    def getMoveLines(self, move_brs, regline_br):
+        """
+        Fetch all lines except the partner counterpart one
+        :param move_brs: browsed moves (JIs)
+        :type move_brs: list
+        :param regline_br: browsed regline
+        """
+        if not move_brs:
+            return []
+        if not self.filter_regline(regline_br):
+            return []  # not any detail for this reg line
+        return self.get_move_lines([m.id for m in move_brs])
+        
+    def getImportedMoveLines(self, ml_brs, regline_br):
+        """
+        Fetch all lines except the partner counterpart one
+        :param ml_brs: list of browsed move lines
+        :type ml_brs: list
+        :param regline_br: browsed regline
+        """
+        if not self.filter_regline(regline_br):
+            return []  # not any detail for this reg line
+        if not ml_brs:
+            return []
+            
+        # exclude detail for Balance/Sheet entries (whatever the Account type) booked in a HR journal are imported in a register
+        # http://jira.unifield.org/browse/US-69?focusedCommentId=38845&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38845
+        move_ids = [
+            ml.move_id.id for ml in ml_brs if not ( \
+                ml.journal_id and ml.journal_id.type == 'hr' and \
+                ml.account_id and ml.account_id.user_type and \
+                ml.account_id.user_type.report_type in ('asset', 'liability', ))
+        ]
+        return self.get_move_lines(move_ids)
 
     def getAnalyticLines(self, analytic_ids):
         """
@@ -93,9 +122,6 @@ class report_fully_report(report_sxw.rml_parse):
         if al_ids:
             res = al_obj.browse(self.cr, self.uid, al_ids)
         return res
-      
-    def getImportedInvoiceMoveLines(self, move_ids, regline_br):
-        return self.filter_moves(move_ids, regline_br)
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

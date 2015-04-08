@@ -547,28 +547,14 @@
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
 <% move_lines = [] %>
 % if line.invoice_id:
-<% move_lines = getMoveLines([line.invoice_id.move_id.id], line) %>
+<% move_lines = getMoveLines([line.invoice_id.move_id], line) %>
 % elif line.imported_invoice_line_ids:
-<% moves = getImportedInvoiceMoveLines([x.move_id.id for x in line.imported_invoice_line_ids], line) %>
-<% move_lines = getMoveLines(moves, line) %>
+<% move_lines = getImportedMoveLines([ml for ml in line.imported_invoice_line_ids], line) %>
 % elif line.direct_invoice_move_id:
-<% move_lines = getMoveLines([line.direct_invoice_move_id.id], line) %>
+<% move_lines = getMoveLines([line.direct_invoice_move_id], line) %>
 % endif
 
 % for inv_line in move_lines:
-      <!--
-        US-69
-        http://jira.unifield.org/browse/US-69?focusedCommentId=38845&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38845
-        do not display the entry lines if
-        a) Balance/Sheet entries (whatever the Account type) booked in a HR
-           journal are imported in a register,
-        OR
-        b) IF any Account type Tax, Cash, Receivable (what ever the journal they
-           are booked in) are imported in a register
-      -->
-      % if (inv_line.journal_id and inv_line.journal_id.type == 'hr' and inv_line.account_id and inv_line.account_id.user_type and inv_line.account_id.user_type.report_type in ('asset', 'liability', )): 
-        <% continue %>
-      % endif
       <Row>
         <Cell ss:Index="4" ss:StyleID="text_center">
           <Data ss:Type="String">${hasattr(inv_line, 'line_number') and inv_line.line_number or ''|x}</Data>
