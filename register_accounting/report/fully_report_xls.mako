@@ -557,6 +557,21 @@ getImportedInvoiceMoveLines
 % endif
 
 % for inv_line in move_lines:
+      <!--
+        US-69
+        http://jira.unifield.org/browse/US-69?focusedCommentId=38845&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38845
+        do not display the entry lines if
+        a) Balance/Sheet entries (whatever the Account type) booked in a HR
+           journal are imported in a register,
+        OR
+        b) IF any Account type Tax, Cash, Receivable (what ever the journal they
+           are booked in) are imported in a register
+           
+        hr_journal_ids bs_account_type_ids tcr_account_type_ids
+      -->
+      % if (inv_line.journal_id and inv_line.journal_id.type == 'hr' and inv_line.account_id and inv_line.account_id.user_type and inv_line.account_id.user_type.report_type in ('asset', 'liability', )) or (inv_line.account_id and inv_line.account_id.user_type and inv_line.account_id.user_type.code in ('tax', 'cash', 'receivables', )): 
+        <% continue %>
+      % endif
       <Row>
         <Cell ss:Index="4" ss:StyleID="text_center">
           <Data ss:Type="String">${hasattr(inv_line, 'line_number') and inv_line.line_number or ''|x}</Data>

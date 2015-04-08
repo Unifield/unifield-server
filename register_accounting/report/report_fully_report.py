@@ -35,9 +35,9 @@ class report_fully_report(report_sxw.rml_parse):
         
     def filter_moves(self, move_ids, regline_br):
         # US-69
-        # - at JI level exclude the detail display of (no JI AND AJI display)
+        # - at JE level exclude the detail display of (no JI AND AJI display)
 
-        # 1) exclude register line of account of given user_type
+        # exclude register line of account of given user_type
         # (redondencies of invoice detail for the tax regline)
         excluded_acc_type_codes = [
             'tax',
@@ -49,27 +49,6 @@ class report_fully_report(report_sxw.rml_parse):
                     excluded_acc_type_codes:
                     return []
                     
-        # 2) exclude HR entries of account_type 'tax', 'cash', 'receivable'
-        """excluded_acc_type_codes = ['tax', 'cash', 'receivables', ]
-        aat_obj = pooler.get_pool(self.cr.dbname).get('account.account.type')
-        domain = [('code', 'in', excluded_acc_type_codes)]
-        excluded_acc_type_ids = aat_obj.search(self.cr, self.uid,
-            domain)
-        
-        journal_obj = pooler.get_pool(self.cr.dbname).get('account.journal')
-        domain = [('type', '=', 'hr')]
-        hr_journal_ids = journal_obj.search(self.cr, self.uid, domain)
-        
-        aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
-        domain = [
-            ('journal_id', 'in', hr_journal_ids),
-            ('account_id.user_type', 'in', excluded_acc_type_ids),
-            ('id', 'in', move_ids),
-        ]
-        move_ids_to_exclude = aml_obj.search(self.cr, self.uid, domain)
-        if move_ids_to_exclude:
-            move_ids = [ id for id in move_ids \
-                if id not in move_ids_to_exclude]"""
         return move_ids
 
     def getMoveLines(self, move_ids, regline_br):
