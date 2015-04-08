@@ -37,10 +37,13 @@ class report_fully_report(report_sxw.rml_parse):
         # US-69
         # - at JE level exclude the detail display of (no JI AND AJI display)
 
-        # exclude register line of account of given user_type
-        # (redondencies of invoice detail for the tax regline)
+        # exclude detail of register line of account of given user_type
+        # (redondencies of invoice detail)
+        # http://jira.unifield.org/browse/US-69?focusedCommentId=38845&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38845
         excluded_acc_type_codes = [
             'tax',
+            'cash',
+            'receivables',
         ]
         if regline_br and regline_br.account_id and \
             regline_br.account_id.user_type:

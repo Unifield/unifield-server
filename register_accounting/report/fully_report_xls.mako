@@ -550,7 +550,6 @@
 <% move_lines = getMoveLines([line.invoice_id.move_id.id], line) %>
 % elif line.imported_invoice_line_ids:
 <% moves = getImportedInvoiceMoveLines([x.move_id.id for x in line.imported_invoice_line_ids], line) %>
-getImportedInvoiceMoveLines
 <% move_lines = getMoveLines(moves, line) %>
 % elif line.direct_invoice_move_id:
 <% move_lines = getMoveLines([line.direct_invoice_move_id.id], line) %>
@@ -566,10 +565,8 @@ getImportedInvoiceMoveLines
         OR
         b) IF any Account type Tax, Cash, Receivable (what ever the journal they
            are booked in) are imported in a register
-           
-        hr_journal_ids bs_account_type_ids tcr_account_type_ids
       -->
-      % if (inv_line.journal_id and inv_line.journal_id.type == 'hr' and inv_line.account_id and inv_line.account_id.user_type and inv_line.account_id.user_type.report_type in ('asset', 'liability', )) or (inv_line.account_id and inv_line.account_id.user_type and inv_line.account_id.user_type.code in ('tax', 'cash', 'receivables', )): 
+      % if (inv_line.journal_id and inv_line.journal_id.type == 'hr' and inv_line.account_id and inv_line.account_id.user_type and inv_line.account_id.user_type.report_type in ('asset', 'liability', )): 
         <% continue %>
       % endif
       <Row>
