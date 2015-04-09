@@ -68,7 +68,7 @@ class account_analytic_line(osv.osv):
         return res
 
     _columns = {
-        'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
+        'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution', select=1),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
         'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
