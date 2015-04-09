@@ -84,6 +84,59 @@ class account_move(osv.osv):
 
 account_move()
 
+
+# Add a field sd_ref for the ir.translation synchronisation.
+class sync_ir_translation(osv.osv):
+
+    _name = 'ir.translation'
+    _inherit = 'ir.translation'
+
+    # _get_sd_ref return the xml_id of target (ex : product.product)
+    def _get_sd_ref(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for rec in self.browse(cr, uid, ids, context=context):
+            res[rec.id] = ''
+            if rec.name:
+                if ',' in rec.name:
+                    model_name = rec.name.split(",")[0]
+                else:
+                    model_name = rec.name
+                target = self.pool.get(model_name)
+                if target:
+                    sd_ref = target.get_sd_ref(cr, uid, [rec.res_id])
+                    if sd_ref:
+                        res[rec.id] = sd_ref.values()[0]
+        return res
+
+    def _get_res_id(self, cr, uid, ids, field_name, field_value, arg, context):
+        res = {}
+
+        print "GET RES ID"
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for rec in self.browse(cr, uid, ids, context=context):
+            print rec
+            print rec.src
+            if rec.sd_ref:
+                print rec.sd_ref
+                ir_models = self.pool.get('ir.model_data').browse(cr, uid, [rec.sd_ref], context=context)
+                if ir_models.res_id:
+                    res[rec.id] = ir_models.res_id
+        return res
+
+    _columns = {
+        'sd_ref': fields.function(_get_sd_ref, fnct_inv=_get_res_id, type="char", size=128, method=True, store=True),
+    }
+
+    _defaults = {
+        'sd_ref': '',
+    }
+sync_ir_translation()
+
+
 class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
