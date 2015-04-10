@@ -188,11 +188,13 @@ class ir_translation(osv.osv):
         if ',' in vals['name']:
             model_name = vals['name'].split(",")[0]
             field = vals['name'].split(",")[1]
-            model_obj = self.pool.get(model_name)
-            field_obj = model_obj.fields_get(cursor, user, fields=[field], context=context)[field]
-            if 'size' in field_obj:
-                size = field_obj['size']
-                vals['value'] = vals['value'][:size]
+            if field:
+                model_obj = self.pool.get(model_name)
+                if hasattr(model_obj, 'fields_get'):
+                    field_obj = model_obj.fields_get(cursor, user, fields=[field], context=context)[field]
+                    if 'size' in field_obj:
+                        size = field_obj['size']
+                        vals['value'] = vals['value'][:size]
 
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
