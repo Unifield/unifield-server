@@ -1004,7 +1004,6 @@ class stock_picking(osv.osv):
                     # Sort the OUT moves to get the closest quantities as the IN quantity
                     out_moves = sorted(out_moves, key=lambda x: abs(x.product_qty-line.quantity))
 
-
                     for lst_out_move in out_moves:
                         if remaining_out_qty <= 0.00:
                             break
@@ -1033,6 +1032,35 @@ class stock_picking(osv.osv):
                             uom_partial_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, remaining_out_qty, out_move.product_uom.id)
                         else:
                             uom_partial_qty = remaining_out_qty
+
+                        # Manage OUT BO moves already processed (forced)
+                        bo_moves = []
+                        if out_move.picking_id and out_move.picking_id.backorder_id:
+                            bo_moves = move_obj.search(cr, uid, [
+                                ('picking_id', '=', out_move.picking_id.backorder_id.id),
+                                ('sale_line_id', '=', out_move.sale_line_id.id),
+                                ('state', '=', 'done'),
+                            ], context=context)
+                            while bo_moves:
+                                boms = move_obj.browse(cr, uid, bo_moves, context=context)
+                                bo_moves = []
+                                for bom in boms:
+                                    if bom.product_uom.id != out_move.product_uom.id:
+                                        minus_qty = uom_obj._compute_qty(cr, uid, bom.product_uom.id, bom.product_qty, out_move.product_uom.id)
+                                        uom_partial_qty -= minus_qty
+                                        remaining_out_qty -= minus_qty
+                                    else:
+                                        uom_partial_qty -= bom.product_qty
+                                        remaining_out_qty -= bom.product_qty
+                                    if bom.picking_id and bom.picking_id.backorder_id:
+                                        bo_moves.extend(move_obj.search(cr, uid, [
+                                            ('picking_id', '=', bom.picking_id.backorder_id.id),
+                                            ('sale_line_id', '=', bom.sale_line_id.id),
+                                            ('state', '=', 'done'),
+                                        ], context=context))
+
+                        if remaining_out_qty <= 0.00:
+                            break
 
                         if uom_partial_qty < out_move.product_qty:
                             # Splt the out move
