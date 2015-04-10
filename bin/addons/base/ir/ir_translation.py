@@ -184,9 +184,15 @@ class ir_translation(osv.osv):
         if not context:
             context = {}
 
-        # SP-193 : Product.template.name must limited to 60 digits
-        if 'product.template,name' in vals['name']:
-            vals['value'] = vals['value'][:60]
+        # SP-193 : translation must limited to object limitation
+        if ',' in vals['name']:
+            model_name = vals['name'].split(",")[0]
+            field = vals['name'].split(",")[1]
+            model_obj = self.pool.get(model_name)
+            field_obj = model_obj.fields_get(cursor, user, fields=[field], context=context)[field]
+            if 'size' in field_obj:
+                size = field_obj['size']
+                vals['value'] = vals['value'][:size]
 
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
