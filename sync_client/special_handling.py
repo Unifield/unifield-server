@@ -86,6 +86,7 @@ account_move()
 
 
 # Add a field sd_ref for the ir.translation synchronisation.
+# Class added for SP-193
 class sync_ir_translation(osv.osv):
 
     _name = 'ir.translation'
