@@ -183,6 +183,11 @@ class ir_translation(osv.osv):
     def create(self, cursor, user, vals, context=None):
         if not context:
             context = {}
+
+        # SP-193 : Product.template.name must limited to 60 digits
+        if 'product.template,name' in vals['name']:
+            vals['value'] = vals['value'][:60]
+
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
             self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
