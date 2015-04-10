@@ -191,7 +191,7 @@ class ir_translation(osv.osv):
             if field:
                 model_obj = self.pool.get(model_name)
                 if hasattr(model_obj, 'fields_get'):
-                    field_obj = model_obj.fields_get(cursor, user, fields=[field], context=context)[field]
+                    field_obj = model_obj.fields_get(cursor, user, context=context)[field]
                     if 'size' in field_obj:
                         size = field_obj['size']
                         vals['value'] = vals['value'][:size]
