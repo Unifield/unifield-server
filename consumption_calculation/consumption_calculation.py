@@ -393,27 +393,19 @@ class real_average_consumption(osv.osv):
         self.write(cr, uid, ids, {'created_ok': True})
         used_product_ids = []
         for report in self.browse(cr, uid, ids, context=context):
-            if not report.line_ids:
-                break
-
-            product_ids = set()
-            for line in report.line_ids:
-                product_ids.add(line.product_id.id)
-            product_ids = list(product_ids)
-
             cr.execute('''select distinct sm.product_id, sm.prodlot_id, sm.expired_date,
                             pp.batch_management, pp.perishable, pp.product_tmpl_id,
                             pt.uom_id
                         from stock_move sm, product_product pp, product_template pt
                         where sm.location_id = %s and pp.id = sm.product_id and pt.id = pp.product_tmpl_id
-                        and pp.id in %s;''', (report.cons_location_id.id, tuple(product_ids)))
+                        ''', (report.cons_location_id.id, ))
             dict1 = cr.dictfetchall()
             cr.execute('''select distinct sm.product_id, sm.prodlot_id, sm.expired_date,
                                 pp.batch_management, pp.perishable, pp.product_tmpl_id,
                                 pt.uom_id
                             from stock_move sm, product_product pp, product_template pt
                             where sm.location_dest_id = %s and pp.id = sm.product_id and pt.id = pp.product_tmpl_id
-                            and pp.id in %s;''', (report.cons_location_id.id, tuple(product_ids)))
+                            ''', (report.cons_location_id.id, ))
             dict2 = cr.dictfetchall()
             products_by_location = dict1 + dict2
 
@@ -422,15 +414,16 @@ class real_average_consumption(osv.osv):
             for product in products_by_location:
                 rm_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, [
                     ('product_id', '=', product['product_id']),
+                    ('prodlot_id', '=', product['prodlot_id']),
+                    ('uom_id', '=', product['uom_id']),
                     ('rac_id', '=', report.id),
                 ], context=context)
-                self.pool.get('real.average.consumption.line').unlink(cr, uid, rm_line_ids, context=context)
+#                self.pool.get('real.average.consumption.line').unlink(cr, uid, rm_line_ids, context=context)
                 used_product_ids.append(product['product_id'])
                 batch_mandatory = product['batch_management']
                 date_mandatory = product['perishable']
                 values = {'product_id': product['product_id'],
                           'uom_id': product['uom_id'],
-                          'consumed_qty': 0.00,
                           'batch_mandatory': batch_mandatory,
                           'date_mandatory': date_mandatory,
                           'expiry_date': product['expired_date'],
@@ -448,8 +441,11 @@ class real_average_consumption(osv.osv):
                 if product['prodlot_id']:
                     product_qty = self.pool.get('stock.production.lot')._get_stock(cr, uid, product['prodlot_id'], [], None, context=context)
                     values.update({'product_qty':product_qty[product['prodlot_id']]})
-                values.update({'consumed_qty': values.get('product_qty', 0.00)})
-                to_create.append(values)
+                if rm_line_ids:
+                    self.pool.get('real.average.consumption.line').write(cr, uid, rm_line_ids, values, context=context)
+                elif values.get('product_qty', 0.00):
+                    values.update({'consumed_qty': values.get('product_qty', 0.00)})
+                    to_create.append(values)
             else:
                 for tc in to_create:
                     self.pool.get('real.average.consumption.line').create(cr, uid, tc, context=context)
