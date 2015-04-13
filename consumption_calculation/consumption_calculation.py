@@ -414,15 +414,16 @@ class real_average_consumption(osv.osv):
             for product in products_by_location:
                 rm_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, [
                     ('product_id', '=', product['product_id']),
+                    ('prodlot_id', '=', product['prodlot_id']),
+                    ('uom_id', '=', product['uom_id']),
                     ('rac_id', '=', report.id),
                 ], context=context)
-                self.pool.get('real.average.consumption.line').unlink(cr, uid, rm_line_ids, context=context)
+#                self.pool.get('real.average.consumption.line').unlink(cr, uid, rm_line_ids, context=context)
                 used_product_ids.append(product['product_id'])
                 batch_mandatory = product['batch_management']
                 date_mandatory = product['perishable']
                 values = {'product_id': product['product_id'],
                           'uom_id': product['uom_id'],
-                          'consumed_qty': 0.00,
                           'batch_mandatory': batch_mandatory,
                           'date_mandatory': date_mandatory,
                           'expiry_date': product['expired_date'],
@@ -440,8 +441,11 @@ class real_average_consumption(osv.osv):
                 if product['prodlot_id']:
                     product_qty = self.pool.get('stock.production.lot')._get_stock(cr, uid, product['prodlot_id'], [], None, context=context)
                     values.update({'product_qty':product_qty[product['prodlot_id']]})
-                values.update({'consumed_qty': values.get('product_qty', 0.00)})
-                to_create.append(values)
+                if rm_line_ids:
+                    self.pool.get('real.average.consumption.line').write(cr, uid, rm_line_ids, values, context=context)
+                else:
+                    values.update({'consumed_qty': values.get('product_qty', 0.00)})
+                    to_create.append(values)
             else:
                 for tc in to_create:
                     self.pool.get('real.average.consumption.line').create(cr, uid, tc, context=context)
