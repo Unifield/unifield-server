@@ -393,27 +393,19 @@ class real_average_consumption(osv.osv):
         self.write(cr, uid, ids, {'created_ok': True})
         used_product_ids = []
         for report in self.browse(cr, uid, ids, context=context):
-            if not report.line_ids:
-                break
-
-            product_ids = set()
-            for line in report.line_ids:
-                product_ids.add(line.product_id.id)
-            product_ids = list(product_ids)
-
             cr.execute('''select distinct sm.product_id, sm.prodlot_id, sm.expired_date,
                             pp.batch_management, pp.perishable, pp.product_tmpl_id,
                             pt.uom_id
                         from stock_move sm, product_product pp, product_template pt
                         where sm.location_id = %s and pp.id = sm.product_id and pt.id = pp.product_tmpl_id
-                        and pp.id in %s;''', (report.cons_location_id.id, tuple(product_ids)))
+                        ''', (report.cons_location_id.id, ))
             dict1 = cr.dictfetchall()
             cr.execute('''select distinct sm.product_id, sm.prodlot_id, sm.expired_date,
                                 pp.batch_management, pp.perishable, pp.product_tmpl_id,
                                 pt.uom_id
                             from stock_move sm, product_product pp, product_template pt
                             where sm.location_dest_id = %s and pp.id = sm.product_id and pt.id = pp.product_tmpl_id
-                            and pp.id in %s;''', (report.cons_location_id.id, tuple(product_ids)))
+                            ''', (report.cons_location_id.id, ))
             dict2 = cr.dictfetchall()
             products_by_location = dict1 + dict2
 
