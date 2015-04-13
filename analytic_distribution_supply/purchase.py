@@ -443,6 +443,13 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if not context.get('partner_type'):
+            raise osv.except_osv(
+                _('Error'),
+                _('You need to select a partner before add the analytic distribution'),
+            )
+
         # Prepare some values
         purchase_line = self.browse(cr, uid, ids[0], context=context)
         amount = purchase_line.price_subtotal or 0.0

@@ -854,9 +854,21 @@ class purchase_order(osv.osv):
                         else:
                             bro_dest_ok = pol.account_4_distribution.default_destination_id
                         # Copy cost center line to the new distribution
-                        ccdl_obj.copy(cr, uid, line.id, {'distribution_id': id_ad, 'destination_id': bro_dest_ok.id})
+                        ccdl_obj.copy(cr, uid, line.id, {
+                            'distribution_id': id_ad,
+                            'destination_id': bro_dest_ok.id,
+                            'partner_type': pol.order_id.partner_id.partner_type,
+                        })
                         # Write result
                         pol_obj.write(cr, uid, [pol.id], {'analytic_distribution_id': id_ad})
+                else:
+                    ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
+                    for line in ad_lines:
+                        if not line.partner_type:
+                            ccdl_obj.write(cr, uid, [line.id], {
+                                'partner_type': pol.order_id.partner_id.partner_type,
+                            })
+
         return True
 
     def wkf_picking_done(self, cr, uid, ids, context=None):
