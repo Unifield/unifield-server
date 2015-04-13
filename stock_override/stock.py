@@ -1381,7 +1381,7 @@ class stock_move(osv.osv):
         if move.price_changed:
             func_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
             price_unit = self.pool.get('res.currency').compute(cr, uid,
-                func_curr_id, move.price_currency_id.id, move.price_unit, round=False)
+                func_curr_id, move.price_currency_id.id, move.price_unit, round=True)
             raise osv.except_osv(
                 _('Information'),
                 _('The initial unit price (coming from Purchase order line) is %s %s - The new unit price is %s %s') % (
