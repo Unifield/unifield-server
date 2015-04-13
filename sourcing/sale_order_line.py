@@ -641,6 +641,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         """
         # Objects
         order_obj = self.pool.get('sale.order')
+        partner_obj = self.pool.get('res.partner')
         product_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')
 
@@ -655,9 +656,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             product = product_obj.browse(cr, uid, vals['product_id'], context=context)
 
         ir = False
+        order_p_type = False
         if vals.get('order_id', False):
             order = order_obj.browse(cr, uid, vals['order_id'], context=context)
             ir = order.procurement_request
+            order_p_type = order.partner_type
             if order.order_type == 'loan' and order.state == 'validated':
                 vals.update({
                     'type': 'make_to_stock',
@@ -693,6 +696,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # UFTP-11: if make_to_order can not have a location
         if vals.get('type', False) == 'make_to_order':
             vals['location_id'] = False
+            if vals.get('supplier') and order_p_type == 'internal':
+                sup = partner_obj.read(cr, uid, vals.get('supplier'), ['partner_type'], context=context)
+                if sup['partner_type'] == 'internal':
+                    vals['supplier'] = False
 
         # UFTP-139: if make_to_stock and no location, put Stock as location
         if vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
@@ -1071,6 +1078,18 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             raise osv.except_osv(
                 _('Warning'),
                 _('You cannot confirm the sourcing of a line with unit price as zero.'),
+            )
+
+        int_int_supplier = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('supplier.partner_type', '=', 'internal'),
+            ('order_id.partner_type', '=', 'internal'),
+            ('order_id.procurement_request', '=', False),
+        ], count=True, context=context)
+        if int_int_supplier:
+            raise osv.except_osv(
+                _('Warning'),
+                _('You cannot confirm the sourcing of a line to an internal customer with an internal supplier.'),
             )
 
         order_to_check = {}
