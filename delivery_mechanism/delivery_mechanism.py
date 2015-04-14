@@ -1035,6 +1035,7 @@ class stock_picking(osv.osv):
 
                         # Manage OUT BO moves already processed (forced)
                         bo_moves = []
+                        minus_qty = 0.00
                         if out_move.picking_id and out_move.picking_id.backorder_id:
                             bo_moves = move_obj.search(cr, uid, [
                                 ('picking_id', '=', out_move.picking_id.backorder_id.id),
@@ -1046,21 +1047,15 @@ class stock_picking(osv.osv):
                                 bo_moves = []
                                 for bom in boms:
                                     if bom.product_uom.id != out_move.product_uom.id:
-                                        minus_qty = uom_obj._compute_qty(cr, uid, bom.product_uom.id, bom.product_qty, out_move.product_uom.id)
-                                        uom_partial_qty -= minus_qty
-                                        remaining_out_qty -= minus_qty
+                                        minus_qty += uom_obj._compute_qty(cr, uid, bom.product_uom.id, bom.product_qty, out_move.product_uom.id)
                                     else:
-                                        uom_partial_qty -= bom.product_qty
-                                        remaining_out_qty -= bom.product_qty
+                                        minus_qty += bom.product_qty
                                     if bom.picking_id and bom.picking_id.backorder_id:
                                         bo_moves.extend(move_obj.search(cr, uid, [
                                             ('picking_id', '=', bom.picking_id.backorder_id.id),
                                             ('sale_line_id', '=', bom.sale_line_id.id),
                                             ('state', '=', 'done'),
                                         ], context=context))
-
-                        if remaining_out_qty <= 0.00:
-                            break
 
                         if uom_partial_qty < out_move.product_qty:
                             # Splt the out move
@@ -1104,7 +1099,7 @@ class stock_picking(osv.osv):
                             remaining_out_qty = 0.00
                         else:
                             # Just update the data of the initial out move
-                            processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty or out_move.product_qty
+                            processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty - minus_qty or out_move.product_qty
                             out_values.update({
                                 'product_qty': processed_qty,
                                 'product_uom': line.uom_id.id,
