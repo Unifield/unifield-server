@@ -260,6 +260,7 @@ def get_hardware_id():
             for line in os.popen("/sbin/ifconfig"): 
                 if line.find('Ether') > -1: 
                     mac.append(line.split()[4]) 
+        mac.sort()
         hw_hash = hashlib.md5(''.join(mac)).hexdigest()
         logging.getLogger('sync.client').info('Hardware identifier: %s' % (hw_hash,))
         return hw_hash
@@ -1037,9 +1038,9 @@ class Connection(osv.osv):
         'login' : 'admin',
         'max_size' : 500,
         'database' : 'SYNC_SERVER',
-        'timeout' : 10.0,
-        'netrpc_retry' : 0,
-        'xmlrpc_retry' : 0,
+        'timeout' : 600.0,
+        'netrpc_retry' : 10,
+        'xmlrpc_retry' : 10,
     }
 
     def _get_connection_manager(self, cr, uid, context=None):

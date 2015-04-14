@@ -181,7 +181,7 @@ class usb_synchronisation(osv.osv_memory):
         if new_sequence != -1:
             context.update({'rw_pull_sequence' : new_sequence})
         
-        self.pull_continue(cr, uid, ids, context)
+        return self.pull_continue(cr, uid, ids, context)
      
     def pull_continue(self, cr, uid, ids, context=None):
         context = context or {}
@@ -245,7 +245,7 @@ class usb_synchronisation(osv.osv_memory):
         
         self.write(cr, uid, ids, vals, context=context)
         return {
-                        'name': "Warning Message For RW",
+                        'name': "USB Synchronisation",
                         'type': 'ir.actions.act_window',
                         'res_model': 'usb_synchronisation',
                         'view_type': 'form',

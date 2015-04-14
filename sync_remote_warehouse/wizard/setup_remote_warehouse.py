@@ -37,6 +37,7 @@ class setup_remote_warehouse(osv.osv_memory):
     _sequences_to_suffix = [
         'stock.lot.serial',
         'stock.picking.in',
+        'picking.ticket',
         'stock.picking.internal',
         'stock.picking.out',
         'procurement.request',
@@ -89,25 +90,90 @@ class setup_remote_warehouse(osv.osv_memory):
 
         :return Nothing
         """
+        if context is None:
+            context = {}
         seq_obj = self.pool.get('ir.sequence')
+
+        # US-27: Use this value and store in context for the reverting values of sequences        
+        dict_seq_values = {}
+        if context.get('dict_seq_values', False):
+            dict_seq_values = context['dict_seq_values']         
 
         for seq_code in self._sequences_to_suffix:
             seq_ids = seq_obj.search(cr, uid, [('code', '=', seq_code)], context=context)
             for seq in seq_obj.browse(cr, uid, seq_ids, context=context):
                 old_suffix = seq.suffix and seq.suffix.replace('-RW', '') or ''
+                #US-27: If it's a RW instance, then just reset all the sequence for them, to restart by 1.
+                temp = 'ir_sequence_%03d' % seq['id']
+                if suffix == '-RW':
+                    # US-27: Reset the sequence for the RW instance
+                    cr.execute("SELECT 0 FROM pg_class where relname = '%s'" % temp)
+                    res = cr.dictfetchone()
+                    if res:
+                        cr.execute("select last_value from %s" % temp)
+                        res = cr.dictfetchone()
+                        if res:
+                            dict_seq_values[temp] = res['last_value']
+                        cr.execute("ALTER SEQUENCE " + temp +" RESTART WITH " + str(1))
+                else:
+                    # US-27: Revert all the sequence that has been set before
+                    value = dict_seq_values.get(temp, False)
+                    if value:
+                        cr.execute("ALTER SEQUENCE " + temp +" RESTART WITH " + str(value + 1))
                 new_suffix = '%s%s' % (old_suffix, suffix)
                 seq_obj.write(cr, uid, [seq.id], {'suffix': new_suffix}, context=context)
 
-        return
         
-    def _setup_remote_warehouse(self, cr, uid, entity_id):
+        if suffix == '-RW': # US-27: Store it for reverting purpose
+            context['dict_seq_values'] = dict_seq_values
+        elif context.get('dict_seq_values', False):
+            del context['dict_seq_values']
+        
+    def _create_push_sequence(self, cr, uid, context=None):
+        """
+        Create the push sequence for instances of the remote where house
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that calls the method
+        :param suffix: Suffix that will be applied on all sequences
+        :param context: Context of the call
+
+        :return Nothing
+        """
+        seq_obj = self.pool.get('ir.sequence')
+        seq_code = 'rw.push.seq'
+
+        seq_ids = seq_obj.search(cr, uid, [('code', '=', seq_code)], context=context)
+        if len(seq_ids) > 0:
+            seq_obj.write(cr, uid, seq_ids, {'number_next': 1}, context=context)
+            
+            entity_ob = self.pool.get('sync.client.entity')
+            entity = entity_ob.get_entity(cr, uid, context=context)
+            entity_ob.write(cr, uid, entity.id, {'rw_pull_sequence': 0}, context=context)
+        else:
+            seq_typ_pool = self.pool.get('ir.sequence.type')
+            types = {'name':'RW push sequence', 'code':seq_code}
+            seq_typ_pool.create(cr, uid, types)
+            seq = {
+                'name':'RW push sequence', 
+                'code':seq_code, 
+                'prefix':'', 
+                'padding':5}
+            seq_obj.create(cr, uid, seq)
+        
+    def _setup_remote_warehouse(self, cr, uid, entity_id, context=None):
+        if context is None:
+            context = {}
         """ Perform actions necessary to set up this instance as a remote warehouse """
         self._set_sync_menu_active(cr, uid, False)
         self._sync_disconnect(cr, uid)
         self._set_entity_type(cr, uid, entity_id, self.remote_warehouse)
-        self._set_sequence_suffix(cr, uid, suffix="-RW", context=None)
+        self._set_sequence_suffix(cr, uid, suffix="-RW", context=context)
+        self._create_push_sequence(cr, uid, context=context)
     
-    def _setup_central_platform(self, cr, uid, entity_id):
+    def _setup_central_platform(self, cr, uid, entity_id, context=None):
+        if context is None:
+            context = {}
         """ First set up as remote warehouse, save db backup, then revert changes and setup as central platform """
         # Fill ir model data dates then setup as remote warehouse
         self._fill_ir_model_data_dates(cr)
@@ -115,7 +181,7 @@ class setup_remote_warehouse(osv.osv_memory):
         #UF-2483: Make a fake sync on messages and set them all the sync before 
         self.pool.get('sync.client.entity').usb_push_create_message_initial(cr, uid)
         self._logger.info('Run the initial USB messages sync')
-        self._setup_remote_warehouse(cr, uid, entity_id)
+        self._setup_remote_warehouse(cr, uid, entity_id, context=context)
         
         # commit changes to db then take and save backup to file
         cr.commit()
@@ -123,21 +189,22 @@ class setup_remote_warehouse(osv.osv_memory):
         dump_file_path = self._save_dump_file(db_dump)
         
         # revert remote warehouse changes and setup as central platform
-        self._revert_remote_warehouse(cr, uid, entity_id)
+        self._revert_remote_warehouse(cr, uid, entity_id,context=context)
         self._set_entity_type(cr, uid, entity_id, self.central_platform)
-        self._set_sequence_suffix(cr, uid, suffix="", context=None)
+        #US-27: Remove the following call, as it is called already in _revert_remote_warehouse
+#        self._set_sequence_suffix(cr, uid, suffix="", context=None)
         
         return dump_file_path
     
-    def _revert_remote_warehouse(self, cr, uid, entity_id):
+    def _revert_remote_warehouse(self, cr, uid, entity_id, context=None):
         """ Enables sync menu, un-prefixes sequences and clears entity usb instance type """
         self._set_sync_menu_active(cr, uid, True)
-        self._set_entity_type(cr, uid, entity_id, "", context=None)
-        self._set_sequence_suffix(cr, uid, suffix="", context=None)
+        self._set_entity_type(cr, uid, entity_id, "", context=context)
+        self._set_sequence_suffix(cr, uid, suffix="", context=context)
     
-    def _revert_central_platform(self, cr, uid, entity_id):
-        self._set_entity_type(cr, uid, entity_id, "", context=None)
-        self._set_sequence_suffix(cr, uid, suffix="-RW", context=None)
+    def _revert_central_platform(self, cr, uid, entity_id, context=None):
+        self._set_entity_type(cr, uid, entity_id, "", context=context)
+        self._set_sequence_suffix(cr, uid, suffix="-RW", context=context)
         
     def _get_db_dump(self, database_name):
         """ Makes a dump of database_name and returns the base64 SQL """

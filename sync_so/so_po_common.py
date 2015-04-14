@@ -212,6 +212,9 @@ class so_po_common(osv.osv_memory):
         if 'analytic_distribution_id' in header_info:
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
 
+        if 'sync_date' in header_info:
+            header_result['fo_sync_date'] = header_info.get('sync_date')
+
         # UF-2267: If the original FO provided, then retrieve the original PO that links to this FO
         if header_info.get('parent_order_name', False):
             # build the complete partner_ref value and search for the linked PO
@@ -318,6 +321,7 @@ class so_po_common(osv.osv_memory):
     def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
+        rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
 
         line_vals_dict = line_values.to_dict()
         if 'order_line' not in line_vals_dict:
@@ -368,6 +372,10 @@ class so_po_common(osv.osv_memory):
             else:
                 values['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
 
+            #US-172: Added the cost_price to IR, for FO line it's not required.
+            if line_dict.get('cost_price'):
+                values['cost_price'] = line.cost_price
+
             if line_dict.get('product_id'):
                 rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
                 if rec_id:
@@ -378,7 +386,8 @@ class so_po_common(osv.osv_memory):
                     product = product_obj.browse(cr, uid, [rec_id], context=context)[0]
                     procure_method = product.procure_method
                     # UF-1534: use the cost price of the product, not the one from PO line
-                    if so_called and not so_id:
+                    # US-27: the request above is not applicable for RemoteWarehouse instance! so do not change the price!
+                    if so_called and not so_id and rw_type != self.pool.get('stock.picking').REMOTE_WAREHOUSE:
                         values['price_unit'] = product.list_price
 
                     values['type'] = procure_method
@@ -591,6 +600,7 @@ class so_po_common(osv.osv_memory):
         arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
 
         identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
+        
         if not identifiers:
             return
 

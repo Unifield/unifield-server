@@ -25,6 +25,15 @@ from osv import fields
 import tools
 from datetime import datetime
 from tools.translate import _
+import release
+import re
+
+def get_server_version():
+    version = release.version or ""
+    ver_match = re.match('(.*)-\d{8}-\d{6}$', version)
+    if ver_match:
+        version = ver_match.group(1)
+    return version
 
 class BackupConfig(osv.osv):
     """ Backup configurations """
@@ -93,7 +102,7 @@ class BackupConfig(osv.osv):
             if res:
                 raise Exception, "Couldn't dump database"
             self._unset_pg_psw_env_var()
-            outfile = os.path.join(bck.name, "%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S")))
+            outfile = os.path.join(bck.name, "%s-%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"), get_server_version()))
             bkpfile = open(outfile,"wb")
             bkpfile.write(data)
             bkpfile.close()
