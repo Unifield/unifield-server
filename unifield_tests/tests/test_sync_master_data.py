@@ -37,9 +37,6 @@ def dfv(vals, include=None, exclude=None):
         exclude = []
     return [(x[0], '=', x[1]) for x in vals.iteritems() if x[0] not in exclude]
 
-def are_same_db(db1, db2):
-    return db1.db_name == db2.db_name or False
-
 def date_now_field_val():
     return time.strftime("%Y-%m-%d")
 
@@ -62,17 +59,6 @@ class MasterDataSyncTest(UnifieldTest):
         self._record_unlink_all_generated_ids()
 
     # TOOLS
-
-    def _get_db_from_name(self, db_name):
-        if self.hq1.db_name == db_name:
-            return self.hq1
-        elif self.c1.db_name == db_name:
-            return self.c1
-        elif self.p1.db_name == db_name:
-            return self.p1
-        raise MasterDataSyncTestException("'%s' database not found" % (
-            db_name, ))
-
     # AUTO GENERATED RECORD LOG
 
     def _record_set_ids(self, db, model_name, ids, _insert=True):
@@ -98,7 +84,7 @@ class MasterDataSyncTest(UnifieldTest):
         """
         if self._ids_unlink_off:
             return
-        db = self._get_db_from_name(db_name)
+        db = self.get_db_from_name(db_name)
         for model_name, ids in self._ids.get(db_name, []):
             if ids:
                 model = db.get(model_name)
@@ -302,13 +288,13 @@ class MasterDataSyncTest(UnifieldTest):
         """
         if db is None:
             db = self.hq1
-        if are_same_db(self.p1, db):
+        if self.are_same_db(self.p1, db):
             raise MasterDataSyncTestException('can not sync down from project')
 
         # sync down and check
         self.synchronize(db)
 
-        if are_same_db(self.hq1, db):
+        if self.are_same_db(self.hq1, db):
             # hq1 to c1 sync down and check
             global TEST_THE_TEST
             if not TEST_THE_TEST:  # volontary miss the sync to test the test
@@ -316,11 +302,11 @@ class MasterDataSyncTest(UnifieldTest):
             # will volontary fail if above sync not done
             self._sync_check_data_set_on_db(self.c1, check_batch,
                 inverse=inverse)
-            if last_db is not None and are_same_db(last_db, self.c1):
+            if last_db is not None and self.are_same_db(last_db, self.c1):
                 return
 
         # p1 sync down and check (from hq or c1 sync down)
-        if not are_same_db(self.p1, db):
+        if not self.are_same_db(self.p1, db):
             self.synchronize(self.p1)
 
         self._sync_check_data_set_on_db(self.p1, check_batch, inverse=inverse)
@@ -339,13 +325,13 @@ class MasterDataSyncTest(UnifieldTest):
         """
         if db is None:
             db = self.p1
-        if are_same_db(self.hq1, db):
+        if self.are_same_db(self.hq1, db):
             raise MasterDataSyncTestException('can not sync up from hq')
 
         # sync up and check
         self.synchronize(db)
 
-        if are_same_db(self.p1, db):
+        if self.are_same_db(self.p1, db):
             # c1 sync up and check
             global TEST_THE_TEST
             if not TEST_THE_TEST:  # volontary miss the sync to test the test
@@ -353,11 +339,11 @@ class MasterDataSyncTest(UnifieldTest):
             # will volontary fail if above sync not done
             self._sync_check_data_set_on_db(self.c1, check_batch,
                 inverse=inverse)
-            if last_db is not None and are_same_db(last_db, self.c1):
+            if last_db is not None and self.are_same_db(last_db, self.c1):
                 return
 
         # hq1 sync up and check (from p1 or c1 sync up)
-        if not are_same_db(self.hq1, db):
+        if not self.are_same_db(self.hq1, db):
             self.synchronize(self.hq1)
         self._sync_check_data_set_on_db(self.hq1, check_batch, inverse=inverse)
 
@@ -402,11 +388,11 @@ class MasterDataSyncTest(UnifieldTest):
         - synchronize down/up and check
         """
         if sync_up:
-            if are_same_db(db, self.hq1):
+            if self.are_same_db(db, self.hq1):
                 raise MasterDataSyncTestException(
                     'can not test sync up product list from hq')
         else:
-            if are_same_db(db, self.p1):
+            if self.are_same_db(db, self.p1):
                 raise MasterDataSyncTestException(
                     'can not test sync down product list from project')
 

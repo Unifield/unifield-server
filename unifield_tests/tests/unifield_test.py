@@ -227,5 +227,18 @@ class UnifieldTest(unittest.TestCase):
                 db.colored_name, )
             raise UnifieldTestException(msg)
         return False
+        
+    def get_db_from_name(self, db_name):
+        if self.hq1.db_name == db_name:
+            return self.hq1
+        elif self.c1.db_name == db_name:
+            return self.c1
+        elif self.p1.db_name == db_name:
+            return self.p1
+        raise UnifieldTestException("'%s' database not found" % (
+            db_name, ))
+            
+    def are_same_db(self, db1, db2):
+        return db1.db_name == db2.db_name or False
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
