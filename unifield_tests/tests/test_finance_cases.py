@@ -38,8 +38,8 @@ class FinanceTestCases(UnifieldTest):
             'USD': [ 1.24, 1.28, ],  
         },
     
-        # FPs corresponding CCs
-        'fp_ccs': {
+        # C1 FPs and relating CCs
+        'C1_fp_ccs': {
             'FP1': [ 'HT101', 'HT120', ],
             'FP2': [ 'HT101', ],
         },
@@ -85,9 +85,51 @@ class FinanceTestCases(UnifieldTest):
                             })
                         
                         index += 1
-        
+                        
+        def set_funding_pool():
+            # propagation from C1
+            
+            # create on C1
+            db = self.c1
+            company = self.get_company(db)
+            model = 'account.analytic.account'
+            
+            parent_ids = db.get(model).search([
+                ('code', '=', 'FUNDING'),
+                ('type', '=', 'view')
+            ])
+            if not parent_ids:
+                raise FinanceTestCasesException(
+                    'parent funding pool not found')
+            
+            for fp in self._data_set['C1_fp_ccs']:
+                vals = {
+                    'code': fp,
+                    'description': fp,
+                    'currency_id': company.currency_id.id,
+                    'name': fp,
+                    'date_start': fy_start_date,
+                    'parent_id': parent_ids[0],
+                    'state': 'open',
+                    'type': 'normal', 
+                    'category': 'FUNDING',
+                    'instance_id': company.instance_id.id,
+                }
+                if not self.record_exists(db, model, 
+                        self.dfv(vals, include=('code', 'instance_id', ))):
+                    db.get(model).create(vals)
+                    
+            # sync up
+            self.synchronize(db)
+            self.synchronize(self.h1)
+            
+            # sync down
+            self.synchronize(self.p1)
+            # TODO
+            #self.synchronize(self.p12)
         
         year = datetime.now().year
+        fy_start_date = "%04d-01-01" % (year, )
         
         for i in self._data_set['instances']:
             # check instance dataset
@@ -105,6 +147,12 @@ class FinanceTestCases(UnifieldTest):
                 
             # set default rates
             set_default_currency_rates(db)
+            
+        # C1 funding pool + sync up/down
+        set_funding_pool()
+        
+        
+        
     
 
 def get_test_class():

@@ -258,5 +258,38 @@ class UnifieldTest(unittest.TestCase):
             
     def are_same_db(self, db1, db2):
         return db1.db_name == db2.db_name or False
+        
+    def dfv(self, vals, include=None, exclude=None):
+        """
+        domain from vals (all vals with implicite &)
+
+        create a domain from a data dictionary
+        include is prior to exclude (exclude not used if include is set)
+        :type d: dict
+        :param include: field or list of field to include in domain
+        :type include: str/list
+        :param exclude: field or list of field not to include in domain
+        :type exclude: str/list
+        :return: A list of tuples like [('op1', 'operator', 'op2')]
+        """
+        if include and isinstance(include, (str, list, )):
+            if isinstance(include, str):
+                include = [include]
+            return [(x[0], '=', x[1]) for x in vals.iteritems() if x[0] in include]
+        if isinstance(exclude, str):
+            exclude = [exclude]
+        if exclude is None:
+            exclude = []
+        return [(x[0], '=', x[1]) for x in vals.iteritems() if x[0] not in exclude]
+        
+    def record_exists(self, db, model, domain):
+        """
+        at least 1 record for the given domain
+        :param db: db
+        :type db: object
+        :param model: model name
+        :rtype: boolean
+        """
+        return db.get(model).search(domain, 0, 1)  # domain, offset, limit
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

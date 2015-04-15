@@ -13,30 +13,6 @@ TEST_THE_TEST = False
 
 PRODUCT_TEST_CODE = 'ADAPCART02-'
 
-
-def dfv(vals, include=None, exclude=None):
-    """
-    domain from vals (all vals with implicite &)
-
-    create a domain from a data dictionary
-    include is prior to exclude (exclude not used if include is set)
-    :type d: dict
-    :param include: field or list of field to include in domain
-    :type include: str/list
-    :param exclude: field or list of field not to include in domain
-    :type exclude: str/list
-    :return: A list of tuples like [('op1', 'operator', 'op2')]
-    """
-    if include and isinstance(include, (str, list, )):
-        if isinstance(include, str):
-            include = [include]
-        return [(x[0], '=', x[1]) for x in vals.iteritems() if x[0] in include]
-    if isinstance(exclude, str):
-        exclude = [exclude]
-    if exclude is None:
-        exclude = []
-    return [(x[0], '=', x[1]) for x in vals.iteritems() if x[0] not in exclude]
-
 def date_now_field_val():
     return time.strftime("%Y-%m-%d")
 
@@ -141,7 +117,7 @@ class MasterDataSyncTest(UnifieldTest):
             map(check_field_in_vals, domain_exclude)
 
         model_obj = db.get(model_name)
-        domain = dfv(vals, include=domain_include, exclude=domain_exclude)
+        domain = self.dfv(vals, include=domain_include, exclude=domain_exclude)
         ids = model_obj.search(domain)
         if ids:
             id = ids[0]
@@ -183,7 +159,7 @@ class MasterDataSyncTest(UnifieldTest):
         new_id = db.get(model_name).copy(id, defaults)
         if teardown_log:
             self._record_set_ids(db, model_name, new_id)
-        domain = dfv(defaults, include=domain_include)
+        domain = self.dfv(defaults, include=domain_include)
         if check_batch is not None:
             # insert to keep record cascade dependencies when auto deleting
             # tests records
