@@ -30,7 +30,9 @@ class FinanceTestCases(UnifieldTest):
             #[ 'C2P1', [ 'HT211', ], [], ],
         ],
     
-        'functional_ccy': 'EUR',
+        # TODO EUR expected
+        #'functional_ccy': 'EUR',
+        'functional_ccy': 'CHF',
     
         'rates': { # from Januar
             'USD': [ 1.24, 1.28, ],  
@@ -58,8 +60,21 @@ class FinanceTestCases(UnifieldTest):
         python -m unittest tests.test_finance_cases.FinanceTestCases.test_dataset
         """
         for i in self._data_set['instances']:
+            # check instance dataset
             db = self.get_db_from_name(self.get_db_name_from_suffix(i))
             print(db.db_name)
+            
+            company = self.get_company(db)
+            
+            # check functional currency
+            self.assertEqual(
+                company.currency_id.name, self._data_set['functional_ccy'],
+                "Functional %s currency expected :: %s" % (
+                    self._data_set['functional_ccy'], db.colored_name, )
+            )
+                
+            
+            
     
 
 def get_test_class():

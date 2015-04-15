@@ -185,26 +185,40 @@ class UnifieldTest(unittest.TestCase):
 
         company_ids = company_obj.search([])
         return company_obj.browse(company_ids[0]).partner_id.name
-
+        
+    def get_company(self, db):
+        """
+        :param db: db
+        :return: company
+        """
+        user = db.get('res.users').browse(1)
+        return user.company_id if user else False
+        
     def get_company_id(self, db):
         """
         :param db: db
         :return: company id
         :rtype: int
         """
-        user = db.get('res.users').browse(1)
-        return user.company_id.id if user else False
+        cpy = self.get_company(db)
+        return cpy and cpy.id or False
 
+    def get_instance(self, db):
+        """
+        :param db: db
+        :return: instance
+        """
+        cpy = self.get_company(db)
+        return cpy and company_id.instance_id or False
+        
     def get_instance_id(self, db):
         """
         :param db: db
         :return: instance id
         :rtype: int
         """
-        user = db.get('res.users').browse(1)
-        if user and user.company_id and user.company_id.instance_id:
-            return user.company_id.instance_id.id
-        return False
+        inst = self.get_instance(db)
+        return inst and inst.id or False
 
     def get_id_from_key(self, db, model_name, search_val, key_field='name',
         raise_if_no_ids=False):
