@@ -59,6 +59,36 @@ class FinanceTestCases(UnifieldTest):
         """
         python -m unittest tests.test_finance_cases.FinanceTestCases.test_dataset
         """
+        def set_default_currency_rates(db):
+            for ccy_name in self._data_set['rates']:
+                ccy_ids = db.get('res.currency').search([
+                    ('name', '=', ccy_name),
+                    ('active', 'in', ('t', 'f')),
+                ])
+                if ccy_ids:
+                    index = 1
+                    for r in self._data_set['rates'][ccy_name]:
+                        # rates for ccy in month order from Januar
+                        dt = "%04d-%02d-01" % (year, index, )
+                        ccy_rate_ids = db.get('res.currency.rate').search([
+                            ('currency_id', '=', ccy_ids[0]),
+                            ('name', '=', dt),
+                        ])
+                        if ccy_rate_ids:
+                            db.get('res.currency.rate').write(ccy_rate_ids,
+                                {'name': dt, 'rate': r})
+                        else:
+                            db.get('res.currency.rate').create({
+                                'currency_id': ccy_ids[0],
+                                'name': dt,
+                                'rate': r,
+                            })
+                        
+                        index += 1
+        
+        
+        year = datetime.now().year
+        
         for i in self._data_set['instances']:
             # check instance dataset
             db = self.get_db_from_name(self.get_db_name_from_suffix(i))
@@ -73,8 +103,8 @@ class FinanceTestCases(UnifieldTest):
                     self._data_set['functional_ccy'], db.colored_name, )
             )
                 
-            
-            
+            # set default rates
+            set_default_currency_rates(db)
     
 
 def get_test_class():
