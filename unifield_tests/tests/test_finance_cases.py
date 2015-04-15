@@ -18,6 +18,8 @@ class FinanceTestCasesException(UnifieldTestException):
 
 class FinanceTestCases(UnifieldTest):
     _data_set = {
+        'instances': [ 'HQ1', 'HQ1C1',  'HQ1C1P1', ],
+    
         # instances CCs and associated FPs
         'instance_ccs_fps_matrix': [
             [ 'HQ1', [], [ 'FP1', 'FP2', ], ],
@@ -55,7 +57,9 @@ class FinanceTestCases(UnifieldTest):
         """
         python -m unittest tests.test_finance_cases.FinanceTestCases.test_dataset
         """
-        pass
+        for i in self._data_set['instances']:
+            db = self.get_db_from_name(self.get_db_name_from_suffix(i))
+            print(db.db_name)
     
 
 def get_test_class():
