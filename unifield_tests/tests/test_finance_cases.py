@@ -121,7 +121,7 @@ class FinanceTestCases(UnifieldTest):
                     
             # sync up
             self.synchronize(db)
-            self.synchronize(self.h1)
+            self.synchronize(self.hq1)
             
             # sync down
             self.synchronize(self.p1)
@@ -151,9 +151,6 @@ class FinanceTestCases(UnifieldTest):
         # C1 funding pool + sync up/down
         set_funding_pool()
         
-        
-        
-    
 
 def get_test_class():
     return FinanceTestCases
