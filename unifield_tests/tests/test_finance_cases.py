@@ -19,16 +19,8 @@ class FinanceTestCasesException(UnifieldTestException):
 class FinanceTestCases(UnifieldTest):
     _data_set = {
         'instances': [ 'HQ1', 'HQ1C1',  'HQ1C1P1', ],
-    
-        # instances CCs and associated FPs
-        'instance_ccs_fps_matrix': [
-            [ 'HQ1', [], [ 'FP1', 'FP2', ], ],
-            [ 'C1', [ 'HT101', 'HT120', ], [ 'FP1', 'FP2', ], ],
-            [ 'C1P1', [ 'HT111', 'HT112', ], [ 'FP1', 'FP2', ], ],
-            #[ 'C1P2', [ 'HT121', 'HT122', ], [ 'FP1', 'FP2', ], ],
-            [ 'C2', [ 'HT201', 'HT220',], [], ],
-            #[ 'C2P1', [ 'HT211', ], [], ],
-        ],
+        
+        'ccs': [ 'HT112', 'HT120', 'HT122', 'HT220', ],
     
         # TODO EUR expected
         #'functional_ccy': 'EUR',
@@ -43,9 +35,11 @@ class FinanceTestCases(UnifieldTest):
             'FP1': [ 'HT101', 'HT120', ],
             'FP2': [ 'HT101', ],
         },
+        
+        'donor': 'DONOR',
     
         'financing_contrats': {
-            'FC1': [ 'HT101', 'HT120', ],
+            'FC1': { 'ccs' : [ 'HT101', 'HT120', ], 'fps': [ 'FP1', 'FP2', ], },
         },
     }  # end of dataset
     
@@ -86,6 +80,57 @@ class FinanceTestCases(UnifieldTest):
                         
                         index += 1
                         
+        def set_cost_centers():
+            db = self.hq1
+            company = self.get_company(db)
+            model = 'account.analytic.account'
+            propagate = False
+            parent_cc_ids = {}
+            
+            for cc in self._data_set['ccs']:
+                if self.record_exists(db, model, 
+                    [('code', '=', cc), ('category', '=', 'OC')]):
+                    continue
+                
+                parent_code = cc[:3]
+                if not parent_code in parent_cc_ids:
+                    parent_ids = db.get(model).search([
+                        ('type', '=', 'view'),
+                        ('category', '=', 'OC'),
+                        ('code', '=', parent_code),
+                    ])
+                    parent_id = parent_ids and parent_ids[0] or False
+                    parent_cc_ids[parent_code] = parent_id
+                else:
+                    parent_id = parent_cc_ids.get(parent_code, False)
+                    
+                if parent_id:
+                    vals = {
+                        'code': cc,
+                        'description': cc,
+                        'currency_id': company.currency_id.id,
+                        'name': cc,
+                        'date_start': fy_start_date,
+                        'parent_id': parent_id,
+                        'state': 'open',
+                        'type': 'normal', 
+                        'category': 'OC',
+                        'instance_id': company.instance_id.id,
+                    }
+                    db.get(model).create(vals)
+                    propagate = True
+                else:
+                    raise FinanceTestCasesException(
+                        "parent cost center not found '%s'" % (parent_code,))
+                        
+            if propagate:
+                # sync down to C1, C1P1, C1P2, C2 (C2P2 do not need any new CC)
+                self.synchronize(self.hq1)
+                self.synchronize(self.c1)
+                self.synchronize(self.p1)
+                #self.synchronize(self.p12)
+                #self.synchronize(self.c2)
+                        
         def set_funding_pool():
             # propagation from C1
             
@@ -93,6 +138,7 @@ class FinanceTestCases(UnifieldTest):
             db = self.c1
             company = self.get_company(db)
             model = 'account.analytic.account'
+            propagate = False
             
             parent_ids = db.get(model).search([
                 ('code', '=', 'FUNDING'),
@@ -118,25 +164,104 @@ class FinanceTestCases(UnifieldTest):
                 if not self.record_exists(db, model, 
                         self.dfv(vals, include=('code', 'instance_id', ))):
                     # get related CCs and set them
-                    cc_ids = db.get('account.analytic.account').search([
+                    cc_ids = db.get(model).search([
                         ('category', '=', 'OC'),
                         ('code', 'in', self._data_set['C1_fp_ccs'][fp]),
                     ])
                     if cc_ids:
                         vals['cost_center_ids'] = [(6, 0, cc_ids)]
                     db.get(model).create(vals)
+                    propagate = True
                     
-            # sync up
-            self.synchronize(db)
-            self.synchronize(self.hq1)
+            if propagate:
+                # sync up
+                self.synchronize(db)
+                self.synchronize(self.hq1)
+                
+                # sync down
+                self.synchronize(self.p1)
+                # TODO
+                #self.synchronize(self.p12)
+                
+        def set_financing_contract():
+            db = self.hq1
+            company = self.get_company(db)
+            model = 'financing.contract.contract'
+            model_fcd = 'financing.contract.donor'
+            model_fcfpl = 'financing.contract.funding.pool.line'
+            model_aaa = 'account.analytic.account'
+            propagate = False
             
-            # sync down
-            self.synchronize(self.p1)
-            # TODO
-            #self.synchronize(self.p12)
+            # set donor
+            vals = {
+                'code': self._data_set['donor'],
+                'name': self._data_set['donor'],
+                'reporting_currency': company.currency_id.id,
+            }
+            donor_ids = db.get(model_fcd).search(
+                self.dfv(vals, include=('code', )))
+            if not donor_ids:
+                donor_ids = [db.get(model_fcd).create(vals), ]
+            
+            for fc in self._data_set['financing_contrats']:
+                vals = {
+                    'code': fc,
+                    'name': fc,
+                    'donor_id': donor_ids[0],
+                    'instance_id': company.instance_id.id,
+                    'eligibility_from_date': fy_start_date,
+                    'eligibility_to_date': fy_end_date,
+                    'grant_amount': 0.,
+                    'state': 'open',
+                    'open_date': datetime.date.today().strftime('%Y-%m-%d'),
+                }
+                if not self.record_exists(db, model,
+                    self.dfv(vals, include=('code', )))
+                    # set CCS
+                    """cc_codes = self._data_set['financing_contrats'][fc].get(
+                        'ccs', False)
+                    if cc_codes:
+                        cc_ids = db.get(model_aaa).search([
+                            ('category', '=', 'OC'),
+                            ('code', 'in', cc_codes),
+                        ])
+                        if cc_ids:
+                            vals['cost_center_ids'] = [(6, 0, cc_ids)]"""
+                    
+                    contract_id = db.get(model).create(vals)
+                    
+                    # set FPs
+                    fp_codes = self._data_set['financing_contrats'][fc].get(
+                        'fps', False)
+                    if fp_codes:
+                        fp_ids = db.get(model_aaa).search([
+                            ('category', '=', 'FUNDING'),
+                            ('code', 'in', fp_codes),
+                        ])
+                        if fp_ids:
+                            for fp_id in fp_ids:
+                                vals = {
+                                    'contract_id': contract_id,
+                                    'funding_pool_id': fp_id,
+                                    'funded': True,
+                                    'total_project': True,
+                                }
+                                db.get(model_fcfpl).create(vals)
+                    
+                    propagate = True
+                    
+            """if propagate:
+                # sync down
+                self.synchronize(self.hq1)
+                self.synchronize(self.c1)
+                self.synchronize(self.p1)
+                #self.synchronize(self.p12)"""
+                    
         
+        # ---------------------------------------------------------------------
         year = datetime.now().year
         fy_start_date = "%04d-01-01" % (year, )
+        fy_end_date = "%04d-12-31" % (year, )
         
         for i in self._data_set['instances']:
             # check instance dataset
@@ -154,8 +279,14 @@ class FinanceTestCases(UnifieldTest):
             # set default rates
             set_default_currency_rates(db)
             
-        # C1 funding pool + sync up/down
-        set_funding_pool()
+        # HQ level: set financing contract + sync down
+        set_cost_centers()
+            
+        # C1 level: set funding pool + sync up/down
+        #set_funding_pool()
+        
+        # HQ level: set financing contract + sync down
+        #set_financing_contract()
         
 
 def get_test_class():
