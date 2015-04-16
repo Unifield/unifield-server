@@ -117,6 +117,13 @@ class FinanceTestCases(UnifieldTest):
                 }
                 if not self.record_exists(db, model, 
                         self.dfv(vals, include=('code', 'instance_id', ))):
+                    # get related CCs and set them
+                    cc_ids = db.get('account.analytic.account').search([
+                        ('category', '=', 'OC'),
+                        ('code', 'in', self._data_set['C1_fp_ccs'][fp]),
+                    ])
+                    if cc_ids:
+                        vals['cost_center_ids'] = [(6, 0, cc_ids)]
                     db.get(model).create(vals)
                     
             # sync up
@@ -134,7 +141,6 @@ class FinanceTestCases(UnifieldTest):
         for i in self._data_set['instances']:
             # check instance dataset
             db = self.get_db_from_name(self.get_db_name_from_suffix(i))
-            print(db.db_name)
             
             company = self.get_company(db)
             
