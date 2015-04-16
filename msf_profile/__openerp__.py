@@ -127,7 +127,7 @@
     ],
     "function": [
         ('user.access.configurator', 'do_update_after_module_install'),
-        ('ir.model.data', 'us_203_sync_down_donor'),
+#        ('ir.model.data', 'us_203_sync_down_donor'),
     ],
 # add this to function to apply patch13 AND REMOVE export_import_lang FROM depends ('ir.model.data', 'patch13_install_export_import_lang')],
     "test": [
