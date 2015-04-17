@@ -21,12 +21,14 @@ class base_language_export(osv.osv_memory):
 
 
     _columns = {
+        'only_new_terms': fields.boolean('Export only new terms'),
         'format': fields.selection([('csv', 'CSV File'), ('po', 'PO File'), ('tgz', 'TGZ Archive'), ('xls', 'Microsoft SpreadSheet XML')], 'File Format', required=True),
         'advanced': fields.boolean('Show advanced options'),
     }
 
     _defaults = {
         'format': lambda *a: 'xls',
+        'only_new_terms': lambda *a: False,
     }
 
     def act_getfile_background(self, cr, uid, ids, context=None):
@@ -48,6 +50,13 @@ class base_language_export(osv.osv_memory):
     def open_requests(self, cr, uid, ids, context=None):
         return lang_tools.open_requests(self, cr, uid, ids, 'export', context)
 
+    def split_xlscell(self, array):
+        size = len(array)
+        if size > 1 and len('\n'.join(array)) > 32700:
+            return self.split_xlscell(array[:size/2])+self.split_xlscell(array[size/2:])
+        else:
+            return [array]
+
     def _export(self, dbname, uid, ids, context=None):
         #modules = ['account_mcdb']
         modules = 'all_installed'
@@ -63,18 +72,29 @@ class base_language_export(osv.osv_memory):
                 filename = get_iso_codes(this.lang)
             this.name = "%s.%s" % (filename, this.format)
             ignore_name = ['ir.filters,model_id', 'ir.actions.server,copy_object', 'ir.ui.menu,icon', 'ir.sequence,code', 'stock.location,icon']
+            out = ''
             if this.format == 'xls':
-                trans = tools.trans_generate(this.lang, modules, cr, ignore_name=ignore_name)
+                trans = tools.trans_generate(this.lang, modules, cr, ignore_name=ignore_name, only_new_terms=this.only_new_terms)
                 if trans:
-                    headers = []
-                    for h in trans.pop(0):
-                        headers.append([h, 'char'])
+                    headers = [('Source', 'char'), ('Value', 'char'), ('Internal Data', 'char')]
+                    # remove the header
+                    trans.pop(0)
+                    grouped_rows = {}
+                    for module, type, name, res_id, src, trad in trans:
+                        row = grouped_rows.setdefault((src, trad), {})
+                        if ('translation' not in row) or (not row['translation']):
+                            row['translation'] = trad
+                        row.setdefault('tnrs', []).append('%s:%s:%s' % (type, name, res_id))
 
-                    xml = SpreadsheetCreator(title=this.name, headers=headers, datas=trans)
+                    trans_data = []
+                    for (src, trad), row in grouped_rows.items():
+                        for splited in self.split_xlscell(row['tnrs']):
+                            trans_data.append([src, trad, '\n'.join(splited)])
+                    xml = SpreadsheetCreator(title=this.name, headers=headers, datas=trans_data)
                     out = base64.encodestring(xml.get_xml(default_filters=['decode.utf8']))
             else:
                 buf=cStringIO.StringIO()
-                tools.trans_export(this.lang, modules, buf, this.format, cr, ignore_name=ignore_name)
+                tools.trans_export(this.lang, modules, buf, this.format, cr, ignore_name=ignore_name, only_new_terms=this.only_new_terms)
                 out = base64.encodestring(buf.getvalue())
                 buf.close()
 
@@ -155,11 +175,15 @@ class base_language_import(osv.osv_memory):
             import_data = self.browse(cr, uid, ids)[0]
             (fileobj, fileformat) = lang_tools.get_data_file(cr, uid, import_data.data)
             if fileformat == 'xml':
-                fileformat = 'csv'
+                first_line = fileobj.readline().strip().replace('"', '').replace(' ', '')
+                if first_line.startswith('Source'):
+                    fileformat = 'compactcsv'
+                else:
+                    fileformat = 'csv'
             else:
                 first_line = fileobj.readline().strip().replace('"', '').replace(' ', '')
                 fileformat = first_line.endswith("type,name,res_id,src,value") and 'csv' or 'po'
-                fileobj.seek(0)
+            fileobj.seek(0)
 
             lang_obj = self.pool.get('res.lang')
             lang_ids = lang_obj.search(cr, uid, [('code', '=', import_data.name)])

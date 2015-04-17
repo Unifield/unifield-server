@@ -197,8 +197,7 @@ class product_nomenclature(osv.osv):
                     nomen_name = self.read(cr, uid, nomen_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
-                        _('''The nomenclature '%s' is an Unifield internal
-nomenclature, so you can't remove it''' % nomen_name),
+                        _('''The nomenclature '%s' is an Unifield internal nomenclature, so you can't remove it''') % nomen_name,
                     )
             except ValueError:
                 pass
@@ -1154,8 +1153,7 @@ class product_category(osv.osv):
                     categ_name = self.read(cr, uid, categ_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
-                        _('''The category '%s' is an Unifield internal
-category, so you can't remove it''' % categ_name),
+                        _('''The category '%s' is an Unifield internal category, so you can't remove it''') % categ_name,
                     )
             except ValueError:
                 pass
@@ -1208,8 +1206,7 @@ class product_uom_categ(osv.osv):
                     uom_name = self.read(cr, uid, cat_id, ['name'])['name'] 
                     raise osv.except_osv(
                         _('Error'),
-                        _('''The UoM category '%s' is an Unifield internal
-Uom category, so you can't remove it''' % uom_name),
+                        _('''The UoM category '%s' is an Unifield internal Uom category, so you can't remove it''') % uom_name,
                     )
             except ValueError:
                 pass
