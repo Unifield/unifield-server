@@ -112,7 +112,7 @@ class FinanceTestCases(UnifieldTest):
                         'description': cc,
                         'currency_id': company.currency_id.id,
                         'name': cc,
-                        'date_start': fy_start_date,
+                        'date_start': date_fy_start,
                         'parent_id': parent_id,
                         'state': 'open',
                         'type': 'normal', 
@@ -129,15 +129,13 @@ class FinanceTestCases(UnifieldTest):
                 # sync down to C1, C1P1, C1P2, C2 (C2P2 do not need any new CC)
                 self.synchronize(self.hq1)
                 self.synchronize(self.c1)
+                self.synchronize(self.c1)
                 self.synchronize(self.p1)
                 #self.synchronize(self.p12)
                 #self.synchronize(self.c2)
                         
         def set_funding_pool():
-            # propagation from C1
-            
-            # create on C1
-            db = self.c1
+            db = self.hq1
             company = self.get_company(db)
             model = 'account.analytic.account'
             propagate = False
@@ -156,7 +154,7 @@ class FinanceTestCases(UnifieldTest):
                     'description': fp,
                     'currency_id': company.currency_id.id,
                     'name': fp,
-                    'date_start': fy_start_date,
+                    'date_start': date_fy_start,
                     'parent_id': parent_ids[0],
                     'state': 'open',
                     'type': 'normal', 
@@ -176,14 +174,10 @@ class FinanceTestCases(UnifieldTest):
                     propagate = True
                     
             if propagate:
-                # sync up
-                self.synchronize(db)
                 self.synchronize(self.hq1)
-                
-                # sync down
+                self.synchronize(self.c1)
+                self.synchronize(self.c1)
                 self.synchronize(self.p1)
-                # TODO
-                #self.synchronize(self.p12)
                 
         def set_financing_contract():
             db = self.hq1
@@ -211,11 +205,11 @@ class FinanceTestCases(UnifieldTest):
                     'name': fc,
                     'donor_id': donor_ids[0],
                     'instance_id': company.instance_id.id,
-                    'eligibility_from_date': fy_start_date,
-                    'eligibility_to_date': fy_end_date,
+                    'eligibility_from_date': date_fy_start,
+                    'eligibility_to_date': date_fy_stop,
                     'grant_amount': 0.,
                     'state': 'open',
-                    'open_date': datetime.date.today().strftime('%Y-%m-%d'),
+                    'open_date': date_now,
                 }
                 if not self.record_exists(db, model,
                     self.dfv(vals, include=('code', ))):
@@ -233,6 +227,8 @@ class FinanceTestCases(UnifieldTest):
                     contract_id = db.get(model).create(vals)
                     
                     # set FPs
+                    # TODO
+                    """
                     fp_codes = self._data_set['financing_contrats'][fc].get(
                         'fps', False)
                     if fp_codes:
@@ -249,21 +245,24 @@ class FinanceTestCases(UnifieldTest):
                                     'total_project': True,
                                 }
                                 db.get(model_fcfpl).create(vals)
+                    """
                     
                     propagate = True
                     
-            """if propagate:
+            if propagate:
                 # sync down
                 self.synchronize(self.hq1)
                 self.synchronize(self.c1)
+                self.synchronize(self.c1)
                 self.synchronize(self.p1)
-                #self.synchronize(self.p12)"""
+                #self.synchronize(self.p12)
                     
         
         # ---------------------------------------------------------------------
         year = datetime.now().year
-        fy_start_date = "%04d-01-01" % (year, )
-        fy_end_date = "%04d-12-31" % (year, )
+        date_fy_start = self.get_orm_date_fy_start()
+        date_fy_stop = self.get_orm_date_fy_stop()
+        date_now = self.get_orm_date_now()
         
         for i in self._data_set['instances']:
             # check instance dataset
@@ -284,11 +283,11 @@ class FinanceTestCases(UnifieldTest):
         # HQ level: set financing contract + sync down
         set_cost_centers()
             
-        # C1 level: set funding pool + sync up/down
-        #set_funding_pool()
+        # HQ level: set funding pool + sync up/down
+        set_funding_pool()
         
         # HQ level: set financing contract + sync down
-        #set_financing_contract()
+        set_financing_contract()
         
 
 def get_test_class():

@@ -11,6 +11,7 @@ import unittest
 from connection import XMLRPCConnection as XMLConn
 from connection import UnifieldTestConfigParser
 from colors import TerminalColors
+from datetime import datetime
 
 
 class UnifieldTestException(Exception):
@@ -291,5 +292,14 @@ class UnifieldTest(unittest.TestCase):
         :rtype: boolean
         """
         return db.get(model).search(domain, 0, 1)  # domain, offset, limit
+        
+    def get_orm_date_fy_start(self):
+        return "%04d-01-01" % (datetime.now().year, )
+        
+    def get_orm_date_fy_stop(self):
+        return "%04d-12-31" % (datetime.now().year, )
+        
+    def get_orm_date_now(self):
+        return datetime.now().strftime('%Y-%m-%d')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
