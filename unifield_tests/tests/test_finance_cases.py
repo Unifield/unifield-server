@@ -49,9 +49,10 @@ class FinanceTestCases(UnifieldTest):
     def tearDown(self):
         pass
     
-    def test_dataset(self):
+    def test_cor_dataset(self):
         """
-        python -m unittest tests.test_finance_cases.FinanceTestCases.test_dataset
+        python -m unittest tests.test_finance_cases.FinanceTestCases.test_cor_dataset
+        correction test cases dataset
         """
         def set_default_currency_rates(db):
             for ccy_name in self._data_set['rates']:
@@ -92,7 +93,8 @@ class FinanceTestCases(UnifieldTest):
                     [('code', '=', cc), ('category', '=', 'OC')]):
                     continue
                 
-                parent_code = cc[:3]
+                # get parent (parent code: 3 first caracters (HT1, HT2, ...))
+                parent_code = cc[:3]  
                 if not parent_code in parent_cc_ids:
                     parent_ids = db.get(model).search([
                         ('type', '=', 'view'),
@@ -216,9 +218,9 @@ class FinanceTestCases(UnifieldTest):
                     'open_date': datetime.date.today().strftime('%Y-%m-%d'),
                 }
                 if not self.record_exists(db, model,
-                    self.dfv(vals, include=('code', )))
+                    self.dfv(vals, include=('code', ))):
                     # set CCS
-                    """cc_codes = self._data_set['financing_contrats'][fc].get(
+                    cc_codes = self._data_set['financing_contrats'][fc].get(
                         'ccs', False)
                     if cc_codes:
                         cc_ids = db.get(model_aaa).search([
@@ -226,7 +228,7 @@ class FinanceTestCases(UnifieldTest):
                             ('code', 'in', cc_codes),
                         ])
                         if cc_ids:
-                            vals['cost_center_ids'] = [(6, 0, cc_ids)]"""
+                            vals['cost_center_ids'] = [(6, 0, cc_ids)]
                     
                     contract_id = db.get(model).create(vals)
                     
