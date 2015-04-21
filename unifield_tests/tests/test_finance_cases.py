@@ -333,6 +333,14 @@ class FinanceTestCases(FinanceTest):
         self._set_register(db)
         
         reg_id = self._get_register(db, browse=False)
+        if reg_id:
+            print('reg_id ' + str(reg_id))
+            import pdb
+            pdb.set_trace()
+            self.create_register_line(db, reg_id, '60010', 1000.,
+                ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF', ), ],
+                date=False, document_date=False,
+                do_hard_post=True)
 
 def get_test_class():
     return FinanceTestCases
