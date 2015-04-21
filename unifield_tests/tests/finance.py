@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 from __future__ import print_function
+from unifield_test import UnifieldTestException
 from unifield_test import UnifieldTest
 from time import strftime
 from random import randint
 from oerplib import error
+
+class FinanceTestException(UnifieldTestException):
+    pass
 
 class FinanceTest(UnifieldTest):
 
@@ -49,6 +53,154 @@ class FinanceTest(UnifieldTest):
         else:
             print (database.colored_name + ' [' + colors.BYellow + 'WARN'.center(4) + colors.Color_Off + '] %s: Data already exists' % (keyword))
         return super(FinanceTest, self)._hook_db_process(name, database)
+        
+    def create_journal(self, db, name, code, journal_type,
+        analytic_journal_id=False, account_code=False, currency_name=False,
+        bank_journal_id=False):
+        """
+        create journal
+        if of type bank/cash/cheque: account_code and currency_name needed.
+
+        :type db: oerplib object
+        :param name: journal name
+        :param code: journal code
+        :param journal_type: journal type. available types::
+         * accrual
+         * bank
+         * cash
+         * cheque
+         * correction
+         * cur_adj
+         * depreciation
+         * general
+         * hq
+         * hr
+         * inkind
+         * intermission
+         * migration
+         * extra
+         * situation
+         * purchase
+         * purchase_refund
+         * revaluation
+         * sale
+         * sale_refund
+         * stock
+        :param analytic_journal_id: (optional) linked analytic journal id
+            default attempt to search an analytic journal that have the same
+            journal_type
+        :param account_code: (mandatory for bank/cash/cheque) account
+            code that will be used in debit/credit for the journal
+        :param currency_name: (mandatory for bank/cash/cheque) journal
+            currency name
+        :param bank_journal_id: (mandatory for cheque) linked bank journal
+        :return: journal id
+        :rtype: int
+        """
+        # checks
+        if not name:
+            raise FinanceTestException("name missing")
+        if not code:
+            raise FinanceTestException("code missing")
+        if not journal_type:
+            raise FinanceTestException("journal type missing")
+        # bank/cash/cheque
+        if journal_type in ('bank', 'cheque', 'cash', ):
+            if not account_code or not currency_name:
+                tpl = "bank/cash/cheque: account code and a currency" \
+                      " required. account: '%s', currency: '%s'"
+                raise FinanceTestException(tpl % (account_code or '',
+                    currency_name or '', ))
+        # cheque journal
+        if journal_type == 'cheque' and not bank_journal_id:
+            tpl = "bank journal mandatory for cheque journal"
+            raise FinanceTestException(tpl)
+            
+        aaj_obj = db.get('account.analytic.journal')
+        aa_obj = db.get('account.account')
+        ccy_obj =  db.get('res.currency')
+        aj_obj = db.get('account.journal')
+
+        # analytic journal
+        if not analytic_journal_id:
+            analytic_journal_type = journal_type
+            if journal_type in ('bank', 'cheque', ):
+                analytic_journal_type = 'cash'
+            aaj_ids = aaj_obj.search([('type', '=', analytic_journal_type)])
+            if not aaj_ids:
+                tpl = "no analytic journal found with this type: %s"
+                raise FinanceTestException(tpl % (journal_type, ))
+            analytic_journal_id = aaj_ids[0]
+
+        # prepare values
+        vals = {
+            'name': name,
+            'code': code,
+            'type': journal_type,
+            'analytic_journal_id': analytic_journal_id,
+        }
+        if account_code:
+            a_ids = aa_obj.search([('code', '=', account_code)])
+            if not a_ids:
+                tpl = "no account found for the given code: %s"
+                raise FinanceTestException(tpl % (account_code, ))
+            account_id = a_ids[0]
+            vals.update({
+                'default_debit_account_id': account_id,
+                'default_credit_account_id': account_id,
+            })
+        if currency_name:
+            c_ids = ccy_obj.search([('name', '=', currency_name)])
+            if not c_ids:
+                tpl = "currency not found: %s"
+                raise FinanceTestException(tpl % (currency_name, ))
+            vals.update({'currency': c_ids[0]})
+        if bank_journal_id:
+            vals['bank_journal_id'] = bank_journal_id
+        # create the journal
+        return aj_obj.create(vals)
+        
+    def create_register(self, db, name, code, register_type, account_code,
+        currency_name, bank_journal_id=False):
+        """
+        create a register in the current period.
+        (use create_journal)
+        
+        :type db: oerplib object
+        :param name: register name (used as journal's name)
+        :param code: register's code (used as journal's code)
+        :param register_type: register available types::
+         * bank
+         * cash
+         * cheque
+        :param account_code: account code used for debit/credit account
+            at journal creation. (so used by the register)
+        :param currency_name: name of currency to use(must exists)
+        :param bank_journal_id: (mandatory for cheque) linked bank journal
+        :return: register_id and journal_id
+        :rtype: tuple (registed id, journal id)
+        """
+        aaj_obj = db.get('account.analytic.journal')
+        abs_obj = db.get('account.bank.statement')
+        
+        analytic_journal_code_map = {
+            'cash': 'CAS',
+            'bank': 'BNK',
+            'cheque': 'CHK',
+        }
+        aaj_code = analytic_journal_code_map[register_type]
+        aaj_ids = aaj_obj.search([('code', '=', aaj_code)])
+        if not aaj_ids:
+            tpl = "analytic journal code %s not found"
+            raise FinanceTestException(tpl % (aaj_code, ))
+
+        j_id = self.create_journal(db, name, code, register_type,
+            account_code=account_code, currency_name=currency_name,
+            bank_journal_id=bank_journal_id,
+            analytic_journal_id=aaj_ids[0])
+        # search the register (should be created by journal creation)
+        reg_ids = abs_obj.search([('journal_id', '=', j_id)])
+        return reg_ids and reg_ids[0] or False, j_id
 
     def create_journal_entry(self, database):
         '''

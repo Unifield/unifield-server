@@ -3,6 +3,8 @@
 from __future__ import print_function
 from unifield_test import UnifieldTestException
 from unifield_test import UnifieldTest
+from finance import FinanceTestException
+from finance import FinanceTest
 
 import time
 from datetime import datetime
@@ -16,7 +18,7 @@ class FinanceTestCasesException(UnifieldTestException):
     pass
 
 
-class FinanceTestCases(UnifieldTest):
+class FinanceTestCases(FinanceTest):
     _data_set = {
         'instances': [ 'HQ1', 'HQ1C1',  'HQ1C1P1', ],
         
@@ -48,8 +50,23 @@ class FinanceTestCases(UnifieldTest):
 
     def tearDown(self):
         pass
+        
+    def self._setup():
+        self._set_register()
+        #self._set_dataset()
+        
+    def _set_register(self):
+        db = self.c1
+        aj_obj = db.get('account.journal')
+        
+        # set Januar bank journal/register and open register
+        journal_code = 'BNK EUR'
+        if not self.record_exists(db, 'account.journal',
+            [('code', '=', journal_code)]):
+            reg_id, journal_id = self.create_register(db, journal_code,
+                journal_code, 'bank', '10200', 'EUR')
     
-    def test_cor_dataset(self):
+    def _set_dataset(self):
         """
         python -m unittest tests.test_finance_cases.FinanceTestCases.test_cor_dataset
         correction test cases dataset
@@ -289,6 +306,11 @@ class FinanceTestCases(UnifieldTest):
         # HQ level: set financing contract + sync down
         set_financing_contract()
         
+    def test_cor1_1(self):
+        """
+        python -m unittest tests.test_finance_cases.FinanceTestCases.test_cor1_1
+        """
+        self._setup()
 
 def get_test_class():
     return FinanceTestCases

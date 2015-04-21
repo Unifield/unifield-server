@@ -3,8 +3,7 @@
 '''
 Created on Feb 28, 2014
 
-@author: qt
-Modified by 'od' on 2014 March, the 11th
+@author: qt and vg
 '''
 from __future__ import print_function
 import unittest
