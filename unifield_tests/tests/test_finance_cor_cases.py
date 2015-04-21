@@ -14,11 +14,11 @@ from datetime import datetime
 TEST_THE_TEST = False
 
 
-class FinanceTestCasesException(UnifieldTestException):
+class FinanceTestCorCasesException(UnifieldTestException):
     pass
 
 
-class FinanceTestCases(FinanceTest):
+class FinanceTestCorCases(FinanceTest):
     _data_set = {
         'instances': [ 'HQ1', 'HQ1C1',  'HQ1C1P1', ],
         
@@ -76,7 +76,7 @@ class FinanceTestCases(FinanceTest):
         abs_obj = db.get('account.bank.statement')
         ids = abs_obj.search([('name', '=', self._data_set['register'])])
         if not ids:
-            raise FinanceTestCasesException('register %s not found' % (
+            raise FinanceTestCorCasesException('register %s not found' % (
                  self._data_set['register'], ))
         if browse:
             return abs_obj.browse([ids[0]])[0]
@@ -156,7 +156,7 @@ class FinanceTestCases(FinanceTest):
                     db.get(model).create(vals)
                     propagate = True
                 else:
-                    raise FinanceTestCasesException(
+                    raise FinanceTestCorCasesException(
                         "parent cost center not found '%s'" % (parent_code,))
                         
             if propagate:
@@ -179,7 +179,7 @@ class FinanceTestCases(FinanceTest):
                 ('type', '=', 'view')
             ])
             if not parent_ids:
-                raise FinanceTestCasesException(
+                raise FinanceTestCorCasesException(
                     'parent funding pool not found')
             
             for fp in self._data_set['C1_fp_ccs']:
@@ -325,7 +325,7 @@ class FinanceTestCases(FinanceTest):
         
     def test_cor1_1(self):
         """
-        python -m unittest tests.test_finance_cases.FinanceTestCases.test_cor1_1
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_1
         """
         self._setup()
         
@@ -343,4 +343,4 @@ class FinanceTestCases(FinanceTest):
                 do_hard_post=True)
 
 def get_test_class():
-    return FinanceTestCases
+    return FinanceTestCorCases
