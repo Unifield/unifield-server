@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2013-02-05 17:10+0100\n"
-"PO-Revision-Date: 2011-04-23 10:42+0000\n"
-"Last-Translator: simone.sandri <lexluxsox@hotmail.it>\n"
+"PO-Revision-Date: 2015-04-20 09:18+0000\n"
+"Last-Translator: Simone Bernini <simone@aperturelabs.it>\n"
 "Language-Team: it <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2013-04-02 05:27+0000\n"
-"X-Generator: Launchpad (build 16546)\n"
+"X-Launchpad-Export-Date: 2015-04-21 05:24+0000\n"
+"X-Generator: Launchpad (build 17430)\n"
 "Generated-By: Babel None\n"
 
 #: validators.py:84
@@ -241,11 +241,11 @@ msgstr "Cambia password"
 
 #: controllers/database.py:110
 msgid "Old super admin password:"
-msgstr ""
+msgstr "Vecchia password super admin:"
 
 #: controllers/database.py:111
 msgid "New super admin password:"
-msgstr ""
+msgstr "Nuova password super admin:"
 
 #: controllers/database.py:112 controllers/preferences.py:39
 msgid "Confirm Password:"
@@ -366,7 +366,7 @@ msgstr ""
 
 #: controllers/impex.py:116
 msgid "You cannot export these record(s) !"
-msgstr ""
+msgstr "Non puoi esportare questo/i record!"
 
 #: controllers/impex.py:116 utils/common.py:24
 msgid "Error"
@@ -392,11 +392,15 @@ msgstr "Errore Input."
 #, python-format
 msgid "You cannot import the field '%s', because we cannot auto-detect it"
 msgstr ""
+"Non è stato possibile riconoscere automaticamente il campo '%s', per questo "
+"motivo non è possibile importarlo"
 
 #: controllers/impex.py:475
 #, python-format
 msgid "Error processing the first line of the file. Field \"%s\" is unknown"
 msgstr ""
+"Errore durante l'elaborazione della prima riga del file. Il campo \"%s\" è "
+"sconosciuto"
 
 #: controllers/impex.py:475
 msgid "Import Error."
@@ -404,7 +408,7 @@ msgstr "Errore Importazione."
 
 #: controllers/impex.py:495
 msgid "The CSV delimiter must be a single character"
-msgstr ""
+msgstr "Il delimitatore del CSV deve essere un carattere singolo"
 
 #: controllers/impex.py:510
 msgid "File Format Error"
@@ -412,11 +416,11 @@ msgstr "Errore nel formato del file"
 
 #: controllers/impex.py:528
 msgid "The file is empty !"
-msgstr ""
+msgstr "Il file è vuoto !"
 
 #: controllers/impex.py:528
 msgid "Importation !"
-msgstr ""
+msgstr "Importazione !"
 
 #: controllers/impex.py:535
 msgid "XML-RPC error"
@@ -431,6 +435,8 @@ msgstr "Importati %d oggetti"
 #, python-format
 msgid "Error trying to import this record:%s. ErrorMessage:%s %s"
 msgstr ""
+"Si è verificato un errore tentando di importare questo record:%s. Messaggio "
+"errore:%s %s"
 
 #: controllers/impex.py:546
 msgid "ImportationError"
@@ -620,6 +626,14 @@ msgid ""
 "                    project management, production, services, CRM, etc..\n"
 "                    "
 msgstr ""
+"%(openobject)s è un sistema software libero su scala aziendale che è stato "
+"progettato per aumentare\n"
+"                    la produttività e il profitto attraverso l'integrazione "
+"dei dati. Si collega, migliora e\n"
+"                    gestisce i processi di business in settori quali "
+"vendite, finanza, catene di rifornimento,\n"
+"                    gestione del progetto, produzione, servizi, CRM, ecc..\n"
+"                    "
 
 #: controllers/templates/about.mako:51
 msgid ""
@@ -632,6 +646,14 @@ msgid ""
 "                    production system and migration to a new version to be "
 "straightforward."
 msgstr ""
+"Il sistema è indipendente dalla piattaforma, e può essere installato su "
+"Windows, Mac OS X,\n"
+"                    e su varie distribuzioni Linux o Unix-based. Questa "
+"architettura fà si che nuove\n"
+"                    funzionalità vengano implementate in maniera rapida, e "
+"gli aggiornamenti da \n"
+"                    fare sui sistemi di produzione o le migrazioni verso una "
+"nuova versione siano semplici."
 
 #: controllers/templates/about.mako:57
 msgid ""
@@ -674,6 +696,8 @@ msgid ""
 "Your request will be sent to OpenERP and publisher warranty team will reply "
 "you shortly."
 msgstr ""
+"La tua richiesta sara inviata ad OpenERP ed il team responsabile ti "
+"risponderà nel più breve tempo possibile."
 
 #: controllers/templates/error_page.mako:128
 msgid "Summary of the problem:"
@@ -732,7 +756,7 @@ msgstr "Tipo di esportazione:"
 
 #: controllers/templates/exp.mako:169
 msgid "Import Compatible Export"
-msgstr ""
+msgstr "Esportazione compatibile con successive importazioni"
 
 #: controllers/templates/exp.mako:172
 msgid "Export all Data"
@@ -1416,7 +1440,7 @@ msgstr "aggiungi allegato"
 
 #: widgets/form/templates/image.mako:6
 msgid "Replace image"
-msgstr ""
+msgstr "Sostituisci immagine"
 
 #: widgets/form/templates/many2one.mako:2
 #: widgets/form/templates/reference.mako:30
@@ -1522,7 +1546,7 @@ msgstr "Modifica il flusso di lavoro dell'oggetto corrente"
 
 #: widgets/templates/sidebar.mako:94
 msgid "Edit Workflow"
-msgstr ""
+msgstr "Modifica Workflow"
 
 #: widgets/templates/sidebar.mako:98
 msgid "Customize current object or create a new object"
@@ -1574,7 +1598,7 @@ msgstr "Filtri Salvati"
 
 #: widgets/templates/viewform.mako:52
 msgid "New Filter"
-msgstr ""
+msgstr "Nuovo Filtro"
 
 #: widgets/templates/viewform.mako:53
 msgid "Save Filter"
