@@ -7,6 +7,15 @@ from time import strftime
 from random import randint
 from oerplib import error
 
+FINANCE_TEST_MASK = {
+    'register': "%s %s",
+    'register_line': "regl %s",
+    'je': "JE %s",
+    'ji': "JI %s",
+    'ad': "AD %s",
+    'cheque_number': "cheque %s",
+}
+
 class FinanceTestException(UnifieldTestException):
     pass
 
@@ -201,7 +210,204 @@ class FinanceTest(UnifieldTest):
         # search the register (should be created by journal creation)
         reg_ids = abs_obj.search([('journal_id', '=', j_id)])
         return reg_ids and reg_ids[0] or False, j_id
+        
+    def create_register_line(self, db, regbr_or_id, account_code_or_id, amount,
+            ad_breakdown_data=False,
+            date=False, document_date=False,
+            third_partner_id=False, third_employee_id=False,
+            third_journal_id=False, do_hard_post=False):
+        """
+        create a register line in the given register
+        
+        :type db: oerplib object
+        :param regbr_or_id: parent register browsed object or id
+        :type regbr_or_id: object/int/long
+        :param account_code_or_id: account code to search or account_id
+        :type code_or_id: str/int/long
+        :param amount: > 0 amount IN, < 0 amount OUT
+        :param ad_breakdown_data: (optional) see create_analytic_distribution 
+            breakdown_data param help
+        :param datetime date: posting date
+        :param datetime document_date: document date
+        :param third_partner_id: partner id
+        :param third_employee_id: emp id (operational advance)
+        :param third_journal_id: journal id (internal transfer)
+        :return: register line id and AD id
+        :rtype: tuple (register_line_id/ad_id or False)
+        """
+        # register
+        if not regbr_or_id:
+            raise FinanceTestException("register missing")
+            
+        abs_obj = db.get('account.bank.statement')
+        absl_obj = db.get('account.bank.statement.line')
+        aa_obj = db.get('account.account')
+            
+        if isinstance(regbr_or_id, (int, long)):
+            register_br = abs_obj.browse(regbr_or_id)
+        else:
+            register_br = regbr_or_id
 
+        # general account
+        if isinstance(account_code_or_id, (str, unicode)):
+            # check account code
+            code_ids = aa_obj.search(
+                ['|', ('name', 'ilike', code), ('code', 'ilike', code)])
+            if not code_ids:
+                raise FinanceTestException(
+                    "error searching for this account code: %s" % (
+                        account_code_or_id), )
+            if len(code_ids) > 1:
+                raise FinanceTestException(
+                    "error more than 1 account with code: %s" % (
+                        account_code_or_id), )
+            account_id = code_ids[0]
+        else:
+            account_id = account_code_or_id
+        account_br = aa_obj.browse(account_id)
+
+        # check dates
+        if not date:
+            date_start = register_br.period_id.date_start or False
+            date_stop = register_br.period_id.date_stop or False
+            if not date_start or not date_stop:
+                tpl = "no date found for the period %s"
+                raise FinanceTestException(tpl % (
+                    register_br.period_id.name, ))
+            random_date = self.proxy.random_date(
+                datetime.strptime(str(date_start), '%Y-%m-%d'),
+                datetime.strptime(str(date_stop), '%Y-%m-%d')
+            )
+            date = datetime.strftime(random_date, '%Y-%m-%d')
+        if not document_date:
+            document_date = date
+
+        # vals
+        vals = {
+            'statement_id': register_br.id,
+            'account_id': account_id,
+            'document_date': document_date,
+            'date': date,
+            'amount': amount,
+            'name': FINANCE_TEST_MASK['register_line'] % (date, ),
+        }
+        if third_partner_id:
+            vals['partner_id'] = third_partner_id
+        if third_employee_id:
+            vals['employee_id'] = third_employee_id
+        if third_journal_id:
+            vals['transfer_journal_id'] = third_journal_id
+        if register_br.journal_id.type == 'cheque':
+            vals['cheque_number'] = FINANCE_TEST_MASK['cheque_number'] % (
+                self.proxy.get_uuid(), )
+
+        # create
+        regl_id = absl_obj.create(vals)
+        
+        # optional AD
+        if ad_breakdown_data and account_br.is_analytic_addicted:
+            distrib_id = self.create_analytic_distribution(
+                breakdown_data=ad_breakdown_data)
+            absl_obj.write([regl_id],
+                {'analytic_distribution_id': distrib_id}, {})
+        else:
+            distrib_id = False
+        if do_hard_post:
+            absl_obj.regl.button_hard_posting([regl_id], {})
+        return regl_id, distrib_id
+        
+    def create_analytic_distribution(self, db,
+        breakdown_data=[(100., 'OPS', False, False)]):
+        """
+        create analytic distribution
+        
+        :type db: oerplib object
+        :param account_id: related account._id (if not set search for a random
+            destination)
+        :type account_id: int
+        :param breakdown_data: [(purcent, dest, cc, fp)]
+            - for breakdown of lines list: percent, dest code, cc code, fp code
+            - False cc for default company top cost center
+            - False FP for PF
+        :return: ad id
+        """
+        comp_obj = db.get('res.company')
+        aaa_obj = db.get('account.analytic.account')
+        ad_obj = db.get('analytic.distribution')
+        
+        company = comp_obj.browse(comp_obj.search([])[0])
+        funding_pool_pf_id = self.get_record_id_from_xmlid(db,
+            'analytic_distribution', 'analytic_account_msf_private_funds', )
+        if not funding_pool_pf_id:
+            if not dest_id:
+                raise FinanceTestException('PF funding pool not found')
+
+        # DEST/CC/FP
+        if not breakdown_data:
+            breakdown_data  = [(100., 'OPS', 'HT101', 'PF', ), ]
+             
+        # create ad
+        name = FINANCE_TEST_MASK['ad'] % (self.get_uuid(), )
+        distrib_id = ad_obj.create({'name': name})
+        
+        for purcent, dest, cc, fp in breakdown_data:
+            dest_id = aaa_obj.search([
+                ('category', '=', 'DEST'),
+                ('type', '=', 'normal'),
+                ('code', '=', dest),
+            ])
+            if not dest_id:
+                raise FinanceTestException('no destination found %s' % (
+                    dest, ))
+            
+            if cc:
+                cost_center_id = aaa_obj.search([
+                    ('category', '=', 'OC'),
+                    ('type', '=', 'normal'),
+                    ('code', '=', cc),
+                ])
+                if not cost_center_id:
+                    raise FinanceTestException('no cost center found %s' % (
+                        cc, ))
+            else:
+                cost_center_id = company.instance_id.top_cost_center_id \
+                    and company.instance_id.top_cost_center_id.id or False
+                if not cost_center_id:
+                    raise FinanceTestException(
+                        'no top cost center found for instance %s' % (
+                        company.name or '', ))
+    
+            if fp:
+                funding_pool_id = aaa_obj.search([
+                    ('category', '=', 'FUNDING'),
+                    ('type', '=', 'normal'),
+                    ('code', '=', fp),
+                ])
+                if not funding_pool_id:
+                    raise FinanceTestException('no funding pool found %s' % (
+                        fp, ))
+            else:
+                funding_pool_id = funding_pool_pf_id  # default PF
+            
+            # relating ad line dimension distribution lines (1 cc, 1fp)                
+            data = [
+                ('cost.center.distribution.line', cost_center_id, False),
+                ('funding.pool.distribution.line', funding_pool_id,
+                    cost_center_id),
+            ]
+            for ad_dim_analytic_obj, val, fpdim_cc_id in data:
+                vals = {
+                    'distribution_id': distrib_id,
+                    'name': name,
+                    'analytic_id': val,
+                    'cost_center_id': fpdim_cc_id,
+                    'percentage': purcent,
+                    'currency_id': company.currency_id.id,
+                    'destination_id': destination_id,
+                }
+                db.get(ad_dim_analytic_obj).create(vals)
+        return distrib_id
+        
     def create_journal_entry(self, database):
         '''
         Create a journal entry (account.move) with 2 lines: 

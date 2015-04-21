@@ -43,6 +43,8 @@ class FinanceTestCases(FinanceTest):
         'financing_contrats': {
             'FC1': { 'ccs' : [ 'HT101', 'HT120', ], 'fps': [ 'FP1', 'FP2', ], },
         },
+        
+        'register': 'BNK EUR',
     }  # end of dataset
     
     def setUp(self):
@@ -51,20 +53,35 @@ class FinanceTestCases(FinanceTest):
     def tearDown(self):
         pass
         
-    def self._setup():
-        self._set_register()
+    def _setup(self):
+        # TODO: activate _set_dataset() if required
         #self._set_dataset()
+        pass
         
-    def _set_register(self):
+    def _set_register(self, db):
         db = self.c1
         aj_obj = db.get('account.journal')
         
         # set Januar bank journal/register and open register
-        journal_code = 'BNK EUR'
+        journal_code = self._data_set['register']
         if not self.record_exists(db, 'account.journal',
             [('code', '=', journal_code)]):
             reg_id, journal_id = self.create_register(db, journal_code,
                 journal_code, 'bank', '10200', 'EUR')
+                
+    def _get_register(self, db, browse=False):
+        """
+        :param browse: to return browsed object instead of id
+        """
+        abs_obj = db.get('account.bank.statement')
+        ids = abs_obj.search([('name', '=', self._data_set['register'])])
+        if not ids:
+            raise FinanceTestCasesException('register %s not found' % (
+                 self._data_set['register'], ))
+        if browse:
+            return abs_obj.browse([ids[0]])[0]
+        else:
+            return ids[0]
     
     def _set_dataset(self):
         """
@@ -311,6 +328,11 @@ class FinanceTestCases(FinanceTest):
         python -m unittest tests.test_finance_cases.FinanceTestCases.test_cor1_1
         """
         self._setup()
+        
+        db = self.c1
+        self._set_register(db)
+        
+        reg_id = self._get_register(db, browse=False)
 
 def get_test_class():
     return FinanceTestCases

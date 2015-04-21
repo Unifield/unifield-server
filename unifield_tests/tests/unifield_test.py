@@ -11,6 +11,7 @@ from connection import XMLRPCConnection as XMLConn
 from connection import UnifieldTestConfigParser
 from colors import TerminalColors
 from datetime import datetime
+from uuid import uuid4
 
 
 class UnifieldTestException(Exception):
@@ -300,5 +301,26 @@ class UnifieldTest(unittest.TestCase):
         
     def get_orm_date_now(self):
         return datetime.now().strftime('%Y-%m-%d')
+        
+    def get_uuid(self):
+        """
+        get UUID (universal unique id)
+        :return uuid
+        :rtype: str
+        """
+        return str(uuid4())
+        
+    def get_record_id_from_xmlid(self, db, module, xmlid):
+        """
+        get record id from xml id
+        :type db: oerplib object
+        :param module: module name
+        :type module: str
+        :param xmlid: xmlid
+        :type xmlid: str
+        :return: id
+        """
+        obj = db.get('ir.model.data').get_object_reference(module, xmlid)
+        return obj[1] if obj else False
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
