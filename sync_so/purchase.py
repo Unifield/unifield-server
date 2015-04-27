@@ -64,7 +64,7 @@ class purchase_order_line_sync(osv.osv):
                 'name': line_dict.get('name', ''),
                 'product_uom': line_dict.get('product_uom'),
                 'line_number': line_dict.get('link_sol_id', {}).get('line_number', 0),
-                'dpo_line_id': line_dict.get('id', 1),
+                'dpo_line_id': line_dict.get('fake_id', 1),
                 'state': 'done',
                 'original_qty_partial': -1,
                 'note': line_dict.get('notes', ''),
