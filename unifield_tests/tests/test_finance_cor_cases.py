@@ -61,13 +61,15 @@ class FinanceTestCorCases(FinanceTest):
     def _set_register(self, db):
         db = self.c1
         aj_obj = db.get('account.journal')
+        abs_obj = db.get('account.bank.statement')
         
-        # set Januar bank journal/register and open register
+        # set Januar bank journal/register and open it
         journal_code = self._data_set['register']
         if not self.record_exists(db, 'account.journal',
             [('code', '=', journal_code)]):
             reg_id, journal_id = self.create_register(db, journal_code,
                 journal_code, 'bank', '10200', 'EUR')
+            abs_obj.button_open_bank([reg_id])
                 
     def _get_register(self, db, browse=False):
         """
