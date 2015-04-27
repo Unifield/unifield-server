@@ -452,6 +452,10 @@ class stock_picking(osv.osv):
             readonly=True,
             multi='process',
         ),
+        'in_dpo': fields.boolean(
+            string='Incoming shipment of a DPO',
+            readonly=True,
+        ),
     }
 
     def go_to_processing_wizard(self, cr, uid, ids, context=None):
@@ -953,7 +957,6 @@ class stock_picking(osv.osv):
 
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
-
                     if not values.get('product_qty', 0.00):
                         continue
 
@@ -1125,29 +1128,43 @@ class stock_picking(osv.osv):
                 initial_vals_copy = {
                     'name':sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
                     'move_lines':[],
-                    'state':'draft'}
+                    'state':'draft',
+                    'in_dpo': context.get('for_dpo', False),
+                }
 
                 if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                     initial_vals_copy.update({
                         'already_replicated': False,
                     })
 
-                backorder_id = self.copy(cr, uid, picking.id, initial_vals_copy, context=context)
+                backorder_id = False
+                if context.get('for_dpo', False) and picking.purchase_id:
+                    # Look for an available IN for the same purchase order in case of DPO
+                    backorder_ids = self.search(cr, uid, [
+                        ('purchase_id', '=', picking.purchase_id.id),
+                        ('in_dpo', '=', True),
+                        ('state', '=', 'assigned'),
+                    ], limit=1, context=context)
+                    if backorder_ids:
+                        backorder_id = backorder_ids[0]
 
-                back_order_post_copy_vals = {}
-                if usb_entity == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
-                    new_name = context.get('rw_backorder_name')
-                    del context['rw_backorder_name']
-                    back_order_post_copy_vals['name'] = new_name
+                if not backorder_id:
+                    backorder_id = self.copy(cr, uid, picking.id, initial_vals_copy, context=context)
 
-                if picking.purchase_id:
-                    # US-111: in case of partial reception invoice was not linked to PO
-                    # => analytic_distribution_supply/stock.py _invoice_hook
-                    #    picking.purchase_id was False
-                    back_order_post_copy_vals['purchase_id'] = picking.purchase_id.id
+                    back_order_post_copy_vals = {}
+                    if usb_entity == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
+                        new_name = context.get('rw_backorder_name')
+                        del context['rw_backorder_name']
+                        back_order_post_copy_vals['name'] = new_name
 
-                if back_order_post_copy_vals:
-                    self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
+                    if picking.purchase_id:
+                        # US-111: in case of partial reception invoice was not linked to PO
+                        # => analytic_distribution_supply/stock.py _invoice_hook
+                        #    picking.purchase_id was False
+                        back_order_post_copy_vals['purchase_id'] = picking.purchase_id.id
+
+                    if back_order_post_copy_vals:
+                        self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
 
                 for bo_move, bo_qty, av_values, data_back in backordered_moves:
                     if bo_move.product_qty != bo_qty:
@@ -1184,7 +1201,11 @@ class stock_picking(osv.osv):
 
                 if sync_in:
                     # UF-1617: When it is from the sync., then just send the IN to shipped, then return the backorder_id
-                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_shipped', cr)
+                    if context.get('for_dpo', False):
+                        wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
+                    else:
+                        wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_shipped', cr)
+
                     return backorder_id
 
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
