@@ -352,6 +352,67 @@ class FinanceTestCorCases(FinanceTest):
                     new_account_code=cor_account_code,
                     new_ad_breakdown_data=cor_ad_breakdown_data
                 )
+                self._check_reg_line_correction(db, ji,
+                    account_code, amount, ad_breakdown_data,
+                    cor_account_code=cor_account_code,
+                    cor_ad_breakdown_data=cor_ad_breakdown_data)
+                
+    def _check_reg_line_correction(self, db, ji_br,
+        account_code, amount, ad_breakdown_data,
+        cor_account_code=False, cor_ad_breakdown_data=False):
+        def get_rev_cor_amount_and_field(amount, is_cor):
+            if is_cor:
+                amount_field = 'credit_currency' \
+                    if amount > 0 else 'debit_currency'
+            else:
+                amount_field = 'debit_currency' \
+                    if amount > 0 else 'credit_currency'
+                amount *= -1
+            return (amount, amount_field, )
+            
+        aa_obj = db.get('account.account')
+        aml_obj = db.get('account.move.line')
+            
+        od_journal_ids = self.get_journal_ids(db, 'correction',
+            is_of_instance=False, is_analytic=False)
+        aod_journal_ids = self.get_journal_ids(db, 'correction',
+            is_of_instance=False, is_analytic=True)
+            
+        if cor_account_code:
+            # G/L account correction rev/cor in JI
+            account_id = aa_obj.search([('code', '=', account_code)])[0]
+            cor_account_id = aa_obj.search([('code', '=', cor_account_code)])[0]
+            
+            # check JI REV
+            cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
+                amount, False)
+            domain = [
+                ('journal_id', 'in', od_journal_ids),
+                ('reversal_line_id', '=', ji_br.id),
+                ('account_id', '=', account_id),
+                (cor_rev_amount_field, '=', cor_rev_amount),
+            ]
+            rev_ids = aml_obj.search(domain)
+            if not rev_ids:
+                raise FinanceTestCorCasesException(
+                    "no JI REV found for %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
+            
+            # check JI COR
+            cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
+                amount, True)
+            domain = [
+                ('journal_id', 'in', od_journal_ids),
+                ('corrected_line_id', '=', ji_br.id),
+                ('account_id', '=', cor_account_id),
+                (cor_rev_amount_field, '=', cor_rev_amount),
+            ]
+            if not rev_ids:
+                raise FinanceTestCorCasesException(
+                    "no JI COR found for %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
         
     def test_cor1_1(self):
         """

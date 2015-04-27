@@ -64,6 +64,20 @@ class FinanceTest(UnifieldTest):
             print (database.colored_name + ' [' + colors.BYellow + 'WARN'.center(4) + colors.Color_Off + '] %s: Data already exists' % (keyword))
         return super(FinanceTest, self)._hook_db_process(name, database)
         
+    def get_journal_ids(self, db, journal_type, is_of_instance=False,
+        is_analytic=False):
+        model = 'account.analytic.journal' if is_analytic \
+            else 'account.journal'
+        domain = [('type', '=', journal_type)]
+        if is_of_instance:
+            domain.append(('is_current_instance', '=', True))
+    
+        ids = db.get(model).search(domain)
+        if not ids:
+            raise FinanceTestException("no %s journal(s) found" % (
+                journal_type, ))
+        return ids
+        
     def create_journal(self, db, name, code, journal_type,
         analytic_journal_id=False, account_code=False, currency_name=False,
         bank_journal_id=False):
