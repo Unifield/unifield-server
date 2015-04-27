@@ -6,6 +6,7 @@ from unifield_test import UnifieldTest
 from finance import FinanceTestException
 from finance import FinanceTest
 
+import random
 import time
 from datetime import datetime
 
@@ -326,13 +327,17 @@ class FinanceTestCorCases(FinanceTest):
         set_financing_contract()
         
     def _create_reg_line_and_do_correction(self, db, reg_id,
-        account_code, ad_breakdown_data, do_hard_post=True,
+        account_code, ad_breakdown_data, is_expense=True, do_hard_post=True,
         cor_account_code=False, cor_ad_breakdown_data=False):
         absl_obj = db.get('account.bank.statement.line')
         
+        amount = float(random.randrange(100, 10000))
+        if is_expense:
+            amount *= -1.
+        
         regl_id, distrib_id = self.create_register_line(
                 db, reg_id,
-                account_code, 1000.,
+                account_code, amount,
                 ad_breakdown_data=ad_breakdown_data,
                 date=False, document_date=False,
                 do_hard_post=do_hard_post
