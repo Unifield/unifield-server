@@ -748,8 +748,13 @@ class stock_picking(osv.osv):
             'direct_incoming': line.wizard_id.direct_incoming,
             # Values for Direct Purchase Order
             'sync_dpo': move.dpo_line_id and True or move.sync_dpo,
-            'dpo_line_id': move.dpo_line_id and move.dpo_line_id.id or False,
+            'dpo_line_id': False,
         }
+        if move.dpo_line_id:
+            if isinstance(move.dpo_line_id, int):
+                values['dpo_line_id'] = move.dpo_line_id
+            else:
+                values['dpo_line_id'] = move.dpo_line_id.id
 
         # UTP-872: Don't change the quantity if the move is canceled
         # If the quantity is changed to 0.00, a backorder is created
@@ -1180,7 +1185,8 @@ class stock_picking(osv.osv):
                             'state': 'assigned',
                             'move_dest_id': False,
                             'change_reason': False,
-                            'processed_stock_move': True, 
+                            'processed_stock_move': True,
+                            'dpo_line_id': bo_move.dpo_line_id,
                             'purchase_line_id': bo_move.purchase_line_id and bo_move.purchase_line_id.id or False,
                         }
                         bo_values.update(av_values)
