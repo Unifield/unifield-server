@@ -326,6 +326,17 @@ class UnifieldTest(unittest.TestCase):
         obj = db.get('ir.model.data').get_object_reference(module, xmlid)
         return obj[1] if obj else False
         
+    def get_first(self, itr):
+        """
+        get first element of an iterator (to use with a not indexed iterator)
+        """
+        res = None
+        if itr:
+            for e in itr:
+                res = e
+                break
+        return res
+        
     def random_date(self, start, end):
         """
         :type start: datetime

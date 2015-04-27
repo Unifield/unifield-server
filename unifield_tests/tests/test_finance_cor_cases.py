@@ -325,6 +325,29 @@ class FinanceTestCorCases(FinanceTest):
         # HQ level: set financing contract + sync down
         set_financing_contract()
         
+    def _create_reg_line_and_do_correction(self, db, reg_id,
+        account_code, ad_breakdown_data, do_hard_post=True,
+        cor_account_code=False, cor_ad_breakdown_data=False):
+        absl_obj = db.get('account.bank.statement.line')
+        
+        regl_id, distrib_id = self.create_register_line(
+                db, reg_id,
+                account_code, 1000.,
+                ad_breakdown_data=ad_breakdown_data,
+                date=False, document_date=False,
+                do_hard_post=do_hard_post
+            )
+            
+        # get the associated JI of the register line and simulate correction
+        if regl_id:
+            regl_br = absl_obj.browse(regl_id)
+            ji = self.get_first(regl_br.move_ids)
+            if ji:
+                self.simulation_correction_wizard(db, ji.id,
+                    new_account_code=cor_account_code,
+                    new_ad_breakdown_data=cor_ad_breakdown_data
+                )
+        
     def test_cor1_1(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_1
@@ -334,29 +357,18 @@ class FinanceTestCorCases(FinanceTest):
         db = self.c1
         #self._set_register(db)
         
+        absl_obj = db.get('account.bank.statement.line')
+        
         reg_id = self._get_register(db, browse=False)
         if reg_id:
-            print('reg_id ' + str(reg_id))
-            regl_id, distrib_id = self.create_register_line(
+            self._create_reg_line_and_do_correction(
                 db, reg_id,
-                '60010', 1000.,
-                ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF', ), ],
-                date=False, document_date=False,
-                do_hard_post=True
+                '60010',
+                [(100., 'OPS', 'HT101', 'PF', ), ],
+                cor_account_code='60020',
+                cor_ad_breakdown_data=False
             )
-            print('register_line ' + str(regl_id) + ' ' + str(distrib_id))
-                
-            """
-            account.bank.statement.line related account move line
-            ('statement_id')...
-            
-            'move_ids': fields.many2many('account.move',
-            'account_bank_statement_line_move_rel', 'move_id','statement_id',
-            'Moves'),
-            """
-                
-            """simulation_correction_wizard(db, ji_to_correct_id,
-                new_account_code=False, new_ad_breakdown_data=False)"""
+
 
 def get_test_class():
     return FinanceTestCorCases

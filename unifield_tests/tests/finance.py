@@ -415,13 +415,13 @@ class FinanceTest(UnifieldTest):
                 db.get(ad_dim_analytic_obj).create(vals)
         return distrib_id
         
-    def simulation_correction_wizard(db, ji_to_correct_id,
+    def simulation_correction_wizard(self, db, ji_to_correct_id,
         new_account_code=False, new_ad_breakdown_data=False):
         """
         :param new_account_code: new account code for a G/L correction
         :param new_ad_breakdown_data: new ad lines info for an AD correction
         """
-        wizard_obj = db.get('wizard.journal.items.corrections.lines')
+        wizard_obj = db.get('wizard.journal.items.corrections')
         wizard_line_obj = db.get('wizard.journal.items.corrections.lines')
         aa_obj = db.get('account.account')
         aml_obj = db.get('account.move.line')
@@ -450,6 +450,7 @@ class FinanceTest(UnifieldTest):
                 ' same account code')
         
         # set wizard header (will generate in create the correction lines)
+        # TODO
         vals = {
             'date': self.get_orm_date_now(),
             'move_line_id': ji_to_correct_id,
@@ -459,9 +460,8 @@ class FinanceTest(UnifieldTest):
         wiz_br = wizard_obj.browse(wizard_obj.create(vals))
 
         # set the generated correction line
-        wiz_cor_line_id = wiz_br.to_be_corrected_ids and \
-            wiz_br.to_be_corrected_ids[0].id or False
-        if not wiz_cor_line_id:
+        wiz_cor_line = self.get_first(wiz_br.to_be_corrected_ids)
+        if not wiz_cor_line:
             raise FinanceTestException('error generating a correction line')
             
         # TODO: AD correction
@@ -469,7 +469,7 @@ class FinanceTest(UnifieldTest):
         if account_id:  # G/L correction
             vals['account_id'] = account_id
         if vals:
-            wizard_line_obj.write([wiz_cor_line_id], vals)
+            wizard_line_obj.write([wiz_cor_line.id], vals)
         
         # confirm wizard
         # action_confirm(ids, context=None, distrib_id=False)
