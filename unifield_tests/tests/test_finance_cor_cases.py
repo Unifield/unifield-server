@@ -85,7 +85,7 @@ class FinanceTestCorCases(FinanceTest):
     
     def _set_dataset(self):
         """
-        python -m unittest tests.test_finance_cases.FinanceTestCases.test_cor_dataset
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCases.test_cor_dataset
         correction test cases dataset
         """
         def set_default_currency_rates(db):
@@ -327,20 +327,34 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_1
         """
-        self._setup()
+        #self._setup()
         
         db = self.c1
-        self._set_register(db)
+        #self._set_register(db)
         
         reg_id = self._get_register(db, browse=False)
         if reg_id:
             print('reg_id ' + str(reg_id))
-            import pdb
-            pdb.set_trace()
-            self.create_register_line(db, reg_id, '60010', 1000.,
+            regl_id, distrib_id = self.create_register_line(
+                db, reg_id,
+                '60010', 1000.,
                 ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF', ), ],
                 date=False, document_date=False,
-                do_hard_post=True)
+                do_hard_post=True
+            )
+            print('register_line ' + str(regl_id) + ' ' + str(distrib_id))
+                
+            """
+            account.bank.statement.line related account move line
+            ('statement_id')...
+            
+            'move_ids': fields.many2many('account.move',
+            'account_bank_statement_line_move_rel', 'move_id','statement_id',
+            'Moves'),
+            """
+                
+            """simulation_correction_wizard(db, ji_to_correct_id,
+                new_account_code=False, new_ad_breakdown_data=False)"""
 
 def get_test_class():
     return FinanceTestCorCases

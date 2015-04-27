@@ -3,6 +3,7 @@
 from __future__ import print_function
 from unifield_test import UnifieldTestException
 from unifield_test import UnifieldTest
+from datetime import datetime
 from time import strftime
 from random import randint
 from oerplib import error
@@ -251,8 +252,11 @@ class FinanceTest(UnifieldTest):
         # general account
         if isinstance(account_code_or_id, (str, unicode)):
             # check account code
-            code_ids = aa_obj.search(
-                ['|', ('name', 'ilike', code), ('code', 'ilike', code)])
+            code_ids = aa_obj.search([
+                '|',
+                ('name', 'ilike', account_code_or_id),
+                ('code', 'ilike', account_code_or_id)]
+            )
             if not code_ids:
                 raise FinanceTestException(
                     "error searching for this account code: %s" % (
@@ -274,7 +278,7 @@ class FinanceTest(UnifieldTest):
                 tpl = "no date found for the period %s"
                 raise FinanceTestException(tpl % (
                     register_br.period_id.name, ))
-            random_date = self.proxy.random_date(
+            random_date = self.random_date(
                 datetime.strptime(str(date_start), '%Y-%m-%d'),
                 datetime.strptime(str(date_stop), '%Y-%m-%d')
             )
@@ -306,14 +310,14 @@ class FinanceTest(UnifieldTest):
         
         # optional AD
         if ad_breakdown_data and account_br.is_analytic_addicted:
-            distrib_id = self.create_analytic_distribution(
+            distrib_id = self.create_analytic_distribution(db,
                 breakdown_data=ad_breakdown_data)
             absl_obj.write([regl_id],
                 {'analytic_distribution_id': distrib_id}, {})
         else:
             distrib_id = False
         if do_hard_post:
-            absl_obj.regl.button_hard_posting([regl_id], {})
+            absl_obj.button_hard_posting([regl_id], {})
         return regl_id, distrib_id
         
     def create_analytic_distribution(self, db,
@@ -359,6 +363,7 @@ class FinanceTest(UnifieldTest):
             if not dest_id:
                 raise FinanceTestException('no destination found %s' % (
                     dest, ))
+            dest_id = dest_id[0]
             
             if cc:
                 cost_center_id = aaa_obj.search([
@@ -369,6 +374,7 @@ class FinanceTest(UnifieldTest):
                 if not cost_center_id:
                     raise FinanceTestException('no cost center found %s' % (
                         cc, ))
+                cost_center_id = cost_center_id[0]
             else:
                 cost_center_id = company.instance_id.top_cost_center_id \
                     and company.instance_id.top_cost_center_id.id or False
@@ -386,6 +392,7 @@ class FinanceTest(UnifieldTest):
                 if not funding_pool_id:
                     raise FinanceTestException('no funding pool found %s' % (
                         fp, ))
+                funding_pool_id = funding_pool_id[0]
             else:
                 funding_pool_id = funding_pool_pf_id  # default PF
             
@@ -403,10 +410,70 @@ class FinanceTest(UnifieldTest):
                     'cost_center_id': fpdim_cc_id,
                     'percentage': purcent,
                     'currency_id': company.currency_id.id,
-                    'destination_id': destination_id,
+                    'destination_id': dest_id,
                 }
                 db.get(ad_dim_analytic_obj).create(vals)
         return distrib_id
+        
+    def simulation_correction_wizard(db, ji_to_correct_id,
+        new_account_code=False, new_ad_breakdown_data=False):
+        """
+        :param new_account_code: new account code for a G/L correction
+        :param new_ad_breakdown_data: new ad lines info for an AD correction
+        """
+        wizard_obj = db.get('wizard.journal.items.corrections.lines')
+        wizard_line_obj = db.get('wizard.journal.items.corrections.lines')
+        aa_obj = db.get('account.account')
+        aml_obj = db.get('account.move.line')
+    
+        # check any correction done
+        if not new_account_code and not new_ad_breakdown_data:
+            raise FinanceTestException(
+                'no correction changes: required G/L or AD or both')
+                
+        # get new account id for a G/L correction
+        account_id = False
+        if new_account_code:
+            account_ids = aa_obj.search([('code', '=', new_account_code)])
+            if not account_ids:
+                raise FinanceTestException(
+                    'account %s for a G/L correction not found' % (
+                        new_account_code, ))
+            account_id = account_ids[0]
+                
+        # get ji and checks
+        ji_br = aml_obj.browse(ji_to_correct_id)
+        if not ji_br:
+            raise FinanceTestException('journal item not found')
+        if ji_br.account_id.code == new_account_code:
+            raise FinanceTestException('you can not do a G/L correction with' \
+                ' same account code')
+        
+        # set wizard header (will generate in create the correction lines)
+        vals = {
+            'date': self.get_orm_date_now(),
+            'move_line_id': ji_to_correct_id,
+            'state': 'draft',
+            'from_donation': False,
+        }
+        wiz_br = wizard_obj.browse(wizard_obj.create(vals))
+
+        # set the generated correction line
+        wiz_cor_line_id = wiz_br.to_be_corrected_ids and \
+            wiz_br.to_be_corrected_ids[0].id or False
+        if not wiz_cor_line_id:
+            raise FinanceTestException('error generating a correction line')
+            
+        # TODO: AD correction
+        vals = {}
+        if account_id:  # G/L correction
+            vals['account_id'] = account_id
+        if vals:
+            wizard_line_obj.write([wiz_cor_line_id], vals)
+        
+        # confirm wizard
+        # action_confirm(ids, context=None, distrib_id=False)
+        wizard_obj.action_confirm([wiz_br.id], {'fake': 1}, False)
         
     def create_journal_entry(self, database):
         '''

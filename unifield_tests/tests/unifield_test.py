@@ -11,6 +11,9 @@ from connection import XMLRPCConnection as XMLConn
 from connection import UnifieldTestConfigParser
 from colors import TerminalColors
 from datetime import datetime
+from datetime import timedelta
+import time
+import random
 from uuid import uuid4
 
 
@@ -322,5 +325,18 @@ class UnifieldTest(unittest.TestCase):
         """
         obj = db.get('ir.model.data').get_object_reference(module, xmlid)
         return obj[1] if obj else False
+        
+    def random_date(self, start, end):
+        """
+        :type start: datetime
+        :type end: datetime
+        :return: a random datetime between two datetime
+        :rtype: datetime
+        """
+        # http://stackoverflow.com/questions/553303/generate-a-random-date-between-two-other-dates
+        delta = end - start
+        int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
+        random_second = random.randrange(int_delta)
+        return (start + timedelta(seconds=random_second))
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
