@@ -3240,6 +3240,21 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_link_sol_id(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return the ID of the first FO line sourced by this PO line
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for line_id in ids:
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line_id], context=context)
+            if sol_ids:
+                res[line_id] = sol_ids[0]
+
+        return res
+
     _columns = {
         'is_line_split': fields.boolean(string='This line is a split line?'), # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
@@ -3268,6 +3283,14 @@ class purchase_order_line(osv.osv):
         'instance_sync_order_ref': fields.many2one(
             'sync.order.label',
             string='Order in sync. instance',
+        ),
+        'link_sol_id': fields.function(
+            _get_link_sol_id,
+            method=True,
+            type='many2one',
+            relation='sale.order.line',
+            string='Linked FO line',
+            store=False,
         ),
     }
 
