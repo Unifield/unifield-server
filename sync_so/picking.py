@@ -327,6 +327,9 @@ class stock_picking(osv.osv):
                         if not move_id:
                             move_id = move_ids[0]
 
+                    if data.get('dpo_line_id'):
+                        move_obj.write(cr, uid, [move_id], {'dpo_line_id': data.get('dpo_line_id')}, context=context)
+
                     # If we have a shipment with 10 packs and return from shipment
                     # the pack 2 and 3, the IN shouldn't be splitted in three moves (pack 1 available,
                     # pack 2 and 3 not available and pack 4 to 10 available) but splitted into
