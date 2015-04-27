@@ -1223,7 +1223,8 @@ class stock_picking(osv.osv):
                     'close_in': _('In progress'),
                 }, context=context)
                 if sync_in:  # If it's from sync, then we just send the pick to become Available Shippde, not completely close!
-                    self.write(cr, uid, [picking.id], {'state': 'shipped'}, context=context)
+                    if not context.get('for_dpo', False):
+                        self.write(cr, uid, [picking.id], {'state': 'shipped'}, context=context)
                     return picking.id
                 else:
                     self.action_move(cr, uid, [picking.id], context=context)
