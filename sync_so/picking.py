@@ -217,7 +217,10 @@ class stock_picking(osv.osv):
         self._logger.info("+++ Call to update partial shipment/OUT from supplier %s to INcoming Shipment of PO at %s" % (source, cr.dbname))
         context['InShipOut'] = ""
 
-        pick_dict = out_info.to_dict()
+        if not isinstance(out_info, dict):
+            pick_dict = out_info.to_dict()
+        else:
+            pick_dict = out_info
 
         if context.get('for_dpo'):
             pick_dict = self.picking_data_update_in(cr, uid, source, pick_dict, context=context)
