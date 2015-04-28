@@ -707,11 +707,14 @@ class FinanceTest(UnifieldTest):
                         ji_br.name, amount, db.colored_name, )
                 )
                 
+        base_aji_ids = []  # ids of AJIs not rev/cor (not in correction journal)
         if expected_ad:
+            # check AJIs
             ids = aal_obj.search([
                 ('move_id', '=', ji_id),
                 ('journal_id', 'not in', aod_journal_ids),
             ])
+            base_aji_ids = ids
             if len(ids) != len(expected_ad):
                 raise FinanceTestException(
                     "expected AJIs count do not match for JI %s %f:: %s" % (
@@ -722,7 +725,8 @@ class FinanceTest(UnifieldTest):
             for aal_br in aal_obj.browse(ids):
                 for percent, dest, cc, fp in expected_ad:
                     aji_amount = (amount * percent) / 100.  # percent match ?
-                    if aal_br.destination_id.code == dest and \
+                    if aal_br.general_account_id.id == account_id and \
+                        aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
                         aal_br.amount_currency == aji_amount:
@@ -732,6 +736,68 @@ class FinanceTest(UnifieldTest):
             if len(ids) != match_count:
                 raise FinanceTestException(
                     "expected AJIs do not match for JI %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
+                
+        if expected_ad_rev:
+            # check REV AJIs
+            ids = aal_obj.search([
+                ('reversal_origin', 'in', base_aji_ids),
+                ('journal_id', 'in', aod_journal_ids),
+            ])
+            if len(ids) != len(expected_ad_rev):
+                raise FinanceTestException(
+                    "expected REV AJIs count do not match for JI %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
+            
+            match_count = 0
+            for aal_br in aal_obj.browse(ids):
+                for percent, dest, cc, fp in expected_ad_rev:
+                    aji_amount = (amount * percent) / 100.  # percent match ?
+                    aji_amount *= -1  # reversal amount
+                    if aal_br.general_account_id.id == account_id and \
+                        aal_br.destination_id.code == dest and \
+                        aal_br.cost_center_id.code == cc and \
+                        aal_br.account_id.code == fp and \
+                        aal_br.amount_currency == aji_amount:
+                        match_count += 1
+                        break
+                        
+            if len(ids) != match_count:
+                raise FinanceTestException(
+                    "expected REV AJIs do not match for JI %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
+                
+        if expected_ad_cor:
+            # check COR AJIs
+            ids = aal_obj.search([
+                ('last_corrected_id', 'in', base_aji_ids),
+                ('journal_id', 'in', aod_journal_ids),
+            ])
+            if len(ids) != len(expected_ad_cor):
+                raise FinanceTestException(
+                    "expected COR AJIs count do not match for JI %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
+            
+            match_count = 0
+            for aal_br in aal_obj.browse(ids):
+                for percent, dest, cc, fp in expected_ad_cor:
+                    aji_amount = (amount * percent) / 100.  # percent match ?
+                    # COR with new account
+                    if aal_br.general_account_id.id == new_account_id and \
+                        aal_br.destination_id.code == dest and \
+                        aal_br.cost_center_id.code == cc and \
+                        aal_br.account_id.code == fp and \
+                        aal_br.amount_currency == aji_amount:
+                        match_count += 1
+                        break
+                        
+            if len(ids) != match_count:
+                raise FinanceTestException(
+                    "expected COR AJIs do not match for JI %s %f:: %s" % (
                         ji_br.name, amount, db.colored_name, )
                 )
         
