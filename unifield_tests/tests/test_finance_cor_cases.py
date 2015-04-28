@@ -395,6 +395,78 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_rev=False,
                 expected_ad_cor=False,
             )
+            
+    def test_cor1_3(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_3
+        """
+        #self._setup()
+        
+        db = self.c1
+        #self._set_register(db)
+        
+        absl_obj = db.get('account.bank.statement.line')
+        
+        reg_id = self._get_register(db, browse=False)
+        if reg_id:
+            regl_id, distrib_id, ji_id = self.create_register_line(
+                db, reg_id,
+                '60010', self.get_random_amount(True),
+                ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF'), ],
+                date=False, document_date=False,
+                do_hard_post=True
+            )
+            
+            # correction CC from HT101 to HT120
+            self.simulation_correction_wizard(db, ji_id,
+                    new_account_code=False,
+                    new_ad_breakdown_data=False,
+                    ad_replace_data={ 'cc': [('HT101', 'HT120')] },
+            )
+            
+            ji_id = 1
+            self.check_ji_correction(db, ji_id,
+                '60010', new_account_code=False,
+                expected_ad=[(100., 'OPS', 'HT120', 'PF'), ],
+                expected_ad_rev=False,
+                expected_ad_cor=False,
+            )
+            
+    def test_cor1_4(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_4
+        """
+        #self._setup()
+        
+        db = self.c1
+        #self._set_register(db)
+        
+        absl_obj = db.get('account.bank.statement.line')
+        
+        reg_id = self._get_register(db, browse=False)
+        if reg_id:
+            regl_id, distrib_id, ji_id = self.create_register_line(
+                db, reg_id,
+                '60010', self.get_random_amount(True),
+                ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF'), ],
+                date=False, document_date=False,
+                do_hard_post=True
+            )
+            
+            # correction FP from PF to FP1
+            self.simulation_correction_wizard(db, ji_id,
+                    new_account_code=False,
+                    new_ad_breakdown_data=False,
+                    ad_replace_data={ 'fp': [('PF', 'FP1')] },
+            )
+            
+            ji_id = 1
+            self.check_ji_correction(db, ji_id,
+                '60010', new_account_code=False,
+                expected_ad=[(100., 'OPS', 'HT101', 'FP1'), ],
+                expected_ad_rev=False,
+                expected_ad_cor=False,
+            )
 
 def get_test_class():
     return FinanceTestCorCases

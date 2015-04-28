@@ -546,7 +546,6 @@ class FinanceTest(UnifieldTest):
                                 is_analytic=True),
                         ))
                     ad_replace_data_by_id[k] = old_new_values
-                print(ad_replace_data_by_id)
                 
                 fields = [
                     'percentage',
@@ -664,6 +663,11 @@ class FinanceTest(UnifieldTest):
             is_of_instance=False, is_analytic=False)
         aod_journal_ids = self.get_journal_ids(db, 'correction',
             is_of_instance=False, is_analytic=True)
+            
+        account_id = self.get_account_from_code(db, account_code,
+            is_analytic=False)
+        new_account_id = self.get_account_from_code(db, new_account_code,
+            is_analytic=False)
         
         ji_br = aml_obj.browse(ji_id)
         amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
@@ -671,10 +675,6 @@ class FinanceTest(UnifieldTest):
         
         if new_account_code and new_account_code != account_code:
             # CHECK JI REV COR
-            account_id = self.get_account_from_code(db, account_code,
-                is_analytic=False)
-            new_account_id = self.get_account_from_code(db, new_account_code,
-                is_analytic=False)
                 
             # check JI REV
             cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
