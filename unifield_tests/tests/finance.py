@@ -78,6 +78,17 @@ class FinanceTest(UnifieldTest):
                 journal_type, ))
         return ids
         
+    def get_account_from_code(self, db, code, is_analytic=False):
+        model = 'account.analytic.account' if is_analytic \
+            else 'account.account'
+        ids = db.get(model).search([('code', '=', code)])
+        return ids and ids[0] or False
+        
+    def get_account_code(self, db, id, is_analytic=False):
+        model = 'account.analytic.account' if is_analytic \
+            else 'account.account'
+        return db.get(model).browse(id).code
+        
     def create_journal(self, db, name, code, journal_type,
         analytic_journal_id=False, account_code=False, currency_name=False,
         bank_journal_id=False):
@@ -430,20 +441,34 @@ class FinanceTest(UnifieldTest):
         return distrib_id
         
     def simulation_correction_wizard(self, db, ji_to_correct_id,
-        new_account_code=False, new_ad_breakdown_data=False):
+        new_account_code=False,
+        new_ad_breakdown_data=False, ad_replace_data=False):
         """
         :param new_account_code: new account code for a G/L correction
-        :param new_ad_breakdown_data: new ad lines info for an AD correction
+        :param new_ad_breakdown_data: new ad lines to replace all ones (delete)
+        :param ad_replace_data: {'dest/cc/fp/per': [(old, new), ], }
+        choose between delete and recreate AD with new_ad_breakdown_data
+        or to replace dest/cc/fp/percentage values with ad_replace_data
         """
-        wizard_obj = db.get('wizard.journal.items.corrections')
-        wizard_line_obj = db.get('wizard.journal.items.corrections.lines')
+        wizard_cor_obj = db.get('wizard.journal.items.corrections')
+        wizard_corl_obj = db.get('wizard.journal.items.corrections.lines')
+        wizard_ad_obj = db.get('analytic.distribution.wizard')
+        wizard_adl_obj = db.get('analytic.distribution.wizard.lines')
+        wizard_adfpl_obj = db.get('analytic.distribution.wizard.fp.lines')
+        
         aa_obj = db.get('account.account')
         aml_obj = db.get('account.move.line')
+        aaa_obj = db.get('account.analytic.account')
     
-        # check any correction done
-        if not new_account_code and not new_ad_breakdown_data:
+        # check valid correction
+        if not new_account_code and not new_ad_breakdown_data and \
+            not ad_replace_data:
             raise FinanceTestException(
                 'no correction changes: required G/L or AD or both')
+        # check valid correction
+        if new_ad_breakdown_data and ad_replace_data:
+            raise FinanceTestException(
+                'you can not both redifine full AD and replace attributes')
                 
         # get new account id for a G/L correction
         account_id = False
@@ -459,7 +484,7 @@ class FinanceTest(UnifieldTest):
         ji_br = aml_obj.browse(ji_to_correct_id)
         if not ji_br:
             raise FinanceTestException('journal item not found')
-        if ji_br.account_id.code == new_account_code:
+        if new_account_code and ji_br.account_id.code == new_account_code:
             raise FinanceTestException('you can not do a G/L correction with' \
                 ' same account code')
         
@@ -471,23 +496,96 @@ class FinanceTest(UnifieldTest):
             'state': 'draft',
             'from_donation': False,
         }
-        wiz_br = wizard_obj.browse(wizard_obj.create(vals))
+        wiz_br = wizard_cor_obj.browse(wizard_cor_obj.create(vals))
 
         # set the generated correction line
         wiz_cor_line = self.get_first(wiz_br.to_be_corrected_ids)
         if not wiz_cor_line:
             raise FinanceTestException('error generating a correction line')
             
-        # TODO: AD correction
         vals = {}
         if account_id:  # G/L correction
             vals['account_id'] = account_id
+        if new_ad_breakdown_data or ad_replace_data:
+            action = wizard_corl_obj.button_analytic_distribution(
+                [wiz_cor_line.id], {'fake': 1})
+            # read the AD wizard
+            wizard_ad_br = wizard_ad_obj.browse(action['res_id'][0])
+            if not wizard_ad_br:
+                raise FinanceTestException(
+                    "error getting AD wizard record from action: %s" % (
+                        str(action), )
+                    )
+            
+            ad_replace_data_by_id = {}        
+            if ad_replace_data:
+                for k in ad_replace_data:
+                    old_new_values = [] 
+                    for old, new in ad_replace_data[k]:
+                        old_new_values.append((
+                            self.get_account_from_code(db, old,
+                                is_analytic=True),
+                            self.get_account_from_code(db, new,
+                                is_analytic=True),
+                        ))
+                    ad_replace_data_by_id[k] = old_new_values
+                print(ad_replace_data_by_id)
+                
+                fields = [
+                    'percentage',
+                    'cost_center_id',
+                    'destination_id',
+                    'analytic_id',
+                ]
+                
+                if wizard_ad_br.line_ids:
+                    # CC lines:
+                    # 'cost_center_id' False, 'destination_id' dest, 'analytic_id' <=> CC
+                    line_ids = [ l.id for l in wizard_ad_br.line_ids ]
+                    for adwl_r in wizard_adl_obj.read(line_ids, fields):
+                        print('AD LINE')
+                        print(adwl_r)
+                        ad_line_val = {}
+                        
+                        if 'dest' in ad_replace_data_by_id:
+                            for old, new in ad_replace_data_by_id['dest']:
+                                if adwl_r['destination_id'] == old:
+                                    ad_line_val['destination_id'] = new
+                                    break
+                                    
+                        if ad_line_val:
+                            ad_line_val['percentage'] = adwl_r['percentage']  # line write workarround
+                            wizard_adl_obj.write([adwl_r['id']], ad_line_val)
+            
+                if wizard_ad_br.fp_line_ids:
+                    # FP LINES: 
+                    #    'cost_center_id', 'destination_id', 'analytic_id' <=> FP
+                    # as browse failed here: workaround with read
+                    fp_line_ids = [ l.id for l in wizard_ad_br.fp_line_ids ]
+                    for adwl_r in wizard_adfpl_obj.read(fp_line_ids, fields):
+                        print('AD LINE')
+                        print(adwl_r)
+                        ad_line_val = {}
+                        
+                        if 'dest' in ad_replace_data_by_id:
+                            for old, new in ad_replace_data_by_id['dest']:
+                                if adwl_r['destination_id'] == old:
+                                    ad_line_val['destination_id'] = new
+                                    break
+                                    
+                        if ad_line_val:
+                            ad_line_val['percentage'] = adwl_r['percentage']  # line write workarround
+                            wizard_adfpl_obj.write([adwl_r['id']], ad_line_val)
+ 
+            """ad_id = self.create_analytic_distribution(db,
+                breakdown_data=new_ad_breakdown_data)
+            vals['analytic_distribution_id'] = ad_id"""
         if vals:
-            wizard_line_obj.write([wiz_cor_line.id], vals)
+            wizard_corl_obj.write([wiz_cor_line.id], vals)
         
         # confirm wizard
         # action_confirm(ids, context=None, distrib_id=False)
-        wizard_obj.action_confirm([wiz_br.id], {'fake': 1}, False)
+        #wizard_cor_obj.action_confirm([wiz_br.id], {'fake': 1}, False)
         
     def create_journal_entry(self, database):
         '''
