@@ -6,6 +6,7 @@ from unifield_test import UnifieldTest
 from datetime import datetime
 from time import strftime
 from random import randint
+from random import randrange
 from oerplib import error
 
 FINANCE_TEST_MASK = {
@@ -88,6 +89,12 @@ class FinanceTest(UnifieldTest):
         model = 'account.analytic.account' if is_analytic \
             else 'account.account'
         return db.get(model).browse(id).code
+        
+    def get_random_amount(self, is_expense):
+        amount = float(randrange(100, 10000))
+        if is_expense:
+            amount *= -1.
+        return amount
         
     def create_journal(self, db, name, code, journal_type,
         analytic_journal_id=False, account_code=False, currency_name=False,
@@ -259,7 +266,7 @@ class FinanceTest(UnifieldTest):
         :param third_employee_id: emp id (operational advance)
         :param third_journal_id: journal id (internal transfer)
         :return: register line id and AD id
-        :rtype: tuple (register_line_id/ad_id or False)
+        :rtype: tuple (register_line_id, ad_id/False, ji_id)
         """
         # register
         if not regbr_or_id:
@@ -343,7 +350,12 @@ class FinanceTest(UnifieldTest):
             distrib_id = False
         if do_hard_post:
             absl_obj.button_hard_posting([regl_id], {})
-        return regl_id, distrib_id
+            
+        if regl_id:
+            regl_br = absl_obj.browse(regl_id)
+            ji = self.get_first(regl_br.move_ids)    
+        
+        return (regl_id, distrib_id, ji and ji.id or False, )
         
     def create_analytic_distribution(self, db,
         breakdown_data=[(100., 'OPS', False, False)]):
@@ -633,6 +645,95 @@ class FinanceTest(UnifieldTest):
             # (with an AD correction, cor is confirmed by AD wizard)
             # action_confirm(ids, context=None, distrib_id=False)
             wizard_cor_obj.action_confirm([wiz_br.id], {'fake': 1}, False)
+            
+    def check_ji_correction(self, db, ji_id,
+        account_code, new_account_code=False,
+        expected_ad=False, expected_ad_rev=False, expected_ad_cor=False):
+        
+        def get_rev_cor_amount_and_field(base_amount, is_rev):
+            if is_rev:
+                base_amount *= -1.
+            amount_field = 'credit_currency' \
+                    if base_amount > 0 else 'debit_currency'   
+            return (base_amount, amount_field, )
+            
+        aml_obj = db.get('account.move.line')
+        aal_obj = db.get('account.analytic.line')
+        
+        od_journal_ids = self.get_journal_ids(db, 'correction',
+            is_of_instance=False, is_analytic=False)
+        aod_journal_ids = self.get_journal_ids(db, 'correction',
+            is_of_instance=False, is_analytic=True)
+        
+        ji_br = aml_obj.browse(ji_id)
+        amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
+            ji_br.credit_currency
+        
+        if new_account_code and new_account_code != account_code:
+            # CHECK JI REV COR
+            account_id = self.get_account_from_code(db, account_code,
+                is_analytic=False)
+            new_account_id = self.get_account_from_code(db, new_account_code,
+                is_analytic=False)
+                
+            # check JI REV
+            cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
+                amount, True)
+            domain = [
+                ('journal_id', 'in', od_journal_ids),
+                ('reversal_line_id', '=', ji_id),
+                ('account_id', '=', account_id),
+                (cor_rev_amount_field, '=', abs(cor_rev_amount)),
+            ]
+            rev_ids = aml_obj.search(domain)
+            if not rev_ids:
+                raise FinanceTestException(
+                    "no JI REV found for %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
+            
+            # check JI COR
+            cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
+                amount, False)
+            domain = [
+                ('journal_id', 'in', od_journal_ids),
+                ('corrected_line_id', '=', ji_id),
+                ('account_id', '=', new_account_id),
+                (cor_rev_amount_field, '=', abs(cor_rev_amount)),
+            ]
+            if not rev_ids:
+                raise FinanceTestException(
+                    "no JI COR found for %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
+                
+        if expected_ad:
+            ids = aal_obj.search([
+                ('move_id', '=', ji_id),
+                ('journal_id', 'not in', aod_journal_ids),
+            ])
+            if len(ids) != len(expected_ad):
+                raise FinanceTestException(
+                    "expected AJIs count do not match for JI %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
+            
+            match_count = 0
+            for aal_br in aal_obj.browse(ids):
+                for percent, dest, cc, fp in expected_ad:
+                    aji_amount = (amount * percent) / 100.  # percent match ?
+                    if aal_br.destination_id.code == dest and \
+                        aal_br.cost_center_id.code == cc and \
+                        aal_br.account_id.code == fp and \
+                        aal_br.amount_currency == aji_amount:
+                        match_count += 1
+                        break
+                        
+            if len(ids) != match_count:
+                raise FinanceTestException(
+                    "expected AJIs do not match for JI %s %f:: %s" % (
+                        ji_br.name, amount, db.colored_name, )
+                )
         
     def create_journal_entry(self, database):
         '''

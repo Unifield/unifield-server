@@ -6,7 +6,6 @@ from unifield_test import UnifieldTest
 from finance import FinanceTestException
 from finance import FinanceTest
 
-import random
 import time
 from datetime import datetime
 
@@ -326,104 +325,6 @@ class FinanceTestCorCases(FinanceTest):
         # HQ level: set financing contract + sync down
         set_financing_contract()
         
-    def _create_reg_line_and_do_correction(self, db, reg_id,
-        account_code, ad_breakdown_data, is_expense=True, do_hard_post=True,
-        cor_account_code=False,
-        cor_ad_breakdown_data=False, cor_ad_replace_data=False):
-        
-        absl_obj = db.get('account.bank.statement.line')
-        
-        amount = float(random.randrange(100, 10000))
-        if is_expense:
-            amount *= -1.
-        
-        regl_id, distrib_id = self.create_register_line(
-                db, reg_id,
-                account_code, amount,
-                ad_breakdown_data=ad_breakdown_data,
-                date=False, document_date=False,
-                do_hard_post=do_hard_post
-            )
-            
-        # get the associated JI of the register line and simulate correction
-        if regl_id:
-            regl_br = absl_obj.browse(regl_id)
-            ji = self.get_first(regl_br.move_ids)
-            if ji and \
-                (cor_account_code or cor_ad_breakdown_data or \
-                    cor_ad_replace_data):
-                self.simulation_correction_wizard(db, ji.id,
-                    new_account_code=cor_account_code,
-                    new_ad_breakdown_data=cor_ad_breakdown_data,
-                    ad_replace_data=cor_ad_replace_data
-                )
-                # TODO enable check
-                """self._check_reg_line_correction(db, ji,
-                    account_code, amount, ad_breakdown_data,
-                    cor_account_code=cor_account_code,
-                    cor_ad_breakdown_data=cor_ad_breakdown_data)"""
-                
-    def _check_reg_line_correction(self, db, ji_br,
-        account_code, amount, ad_breakdown_data,
-        cor_account_code=False, cor_ad_breakdown_data=False):
-        def get_rev_cor_amount_and_field(amount, is_cor):
-            if is_cor:
-                amount_field = 'credit_currency' \
-                    if amount > 0 else 'debit_currency'
-            else:
-                amount_field = 'debit_currency' \
-                    if amount > 0 else 'credit_currency'
-                amount *= -1
-            return (amount, amount_field, )
-            
-        aa_obj = db.get('account.account')
-        aml_obj = db.get('account.move.line')
-            
-        od_journal_ids = self.get_journal_ids(db, 'correction',
-            is_of_instance=False, is_analytic=False)
-        aod_journal_ids = self.get_journal_ids(db, 'correction',
-            is_of_instance=False, is_analytic=True)
-            
-        if cor_account_code and account_code and \
-            cor_account_code != account_code:
-            # G/L account correction rev/cor in JI
-            account_id = aa_obj.search([('code', '=', account_code)])[0]
-            cor_account_id = aa_obj.search([('code', '=', cor_account_code)])[0]
-            
-            # check JI REV
-            cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
-                amount, False)
-            domain = [
-                ('journal_id', 'in', od_journal_ids),
-                ('reversal_line_id', '=', ji_br.id),
-                ('account_id', '=', account_id),
-                (cor_rev_amount_field, '=', cor_rev_amount),
-            ]
-            rev_ids = aml_obj.search(domain)
-            if not rev_ids:
-                raise FinanceTestCorCasesException(
-                    "no JI REV found for %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
-                )
-            
-            # check JI COR
-            cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
-                amount, True)
-            domain = [
-                ('journal_id', 'in', od_journal_ids),
-                ('corrected_line_id', '=', ji_br.id),
-                ('account_id', '=', cor_account_id),
-                (cor_rev_amount_field, '=', cor_rev_amount),
-            ]
-            if not rev_ids:
-                raise FinanceTestCorCasesException(
-                    "no JI COR found for %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
-                )
-                
-        if cor_ad_breakdown_data and ad_breakdown_data:
-            pass
-        
     def test_cor1_1(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_1
@@ -437,12 +338,27 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._get_register(db, browse=False)
         if reg_id:
-            self._create_reg_line_and_do_correction(
+            """regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
-                '60010',
-                [(100., 'OPS', 'HT101', 'PF', ), ],
-                cor_account_code='60020',
-                cor_ad_breakdown_data=False
+                '60010', self.get_random_amount(True),
+                ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF'), ],
+                date=False, document_date=False,
+                do_hard_post=True
+            )
+            
+            # correction with '60010' to '60020'
+            self.simulation_correction_wizard(db, ji_id,
+                    new_account_code='60020',
+                    new_ad_breakdown_data=False,
+                    ad_replace_data=False,
+            )"""
+            
+            ji_id = 1
+            self.check_ji_correction(db, ji_id,
+                '60010', new_account_code='60020',
+                expected_ad=[(100., 'OPS', 'HT101', 'PF'), ],
+                expected_ad_rev=False,
+                expected_ad_cor=False,
             )
             
     def test_cor1_2(self):
@@ -458,14 +374,27 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._get_register(db, browse=False)
         if reg_id:
-            self._create_reg_line_and_do_correction(
+            regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
-                '60010',
-                [(100., 'OPS', 'HT101', 'PF', ), ],
-                cor_account_code=False,
-                cor_ad_replace_data={ 'dest': [('OPS', 'NAT'), ] }
+                '60010', self.get_random_amount(True),
+                ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF'), ],
+                date=False, document_date=False,
+                do_hard_post=True
             )
-
+            
+            # correction dest from OPS to NAT
+            self.simulation_correction_wizard(db, ji_id,
+                    new_account_code=False,
+                    new_ad_breakdown_data=False,
+                    ad_replace_data={ 'dest': [('OPS', 'NAT')] },
+            )
+            
+            """self.check_ji_correction(db, ji_id,
+                '60010', new_account_code=False,
+                expected_ad=[(100., 'NAT', 'HT101', 'PF'), ],
+                expected_ad_rev=False,
+                expected_ad_cor=False,
+            )"""
 
 def get_test_class():
     return FinanceTestCorCases
