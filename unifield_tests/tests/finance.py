@@ -541,6 +541,7 @@ class FinanceTest(UnifieldTest):
                 if wizard_ad_br.line_ids:
                     # CC lines: 'cost_center_id' False, 'destination_id' dest,
                     # 'analytic_id' <=> CC
+                    # as rpc browse failed here: dirty workaround with read
                     line_ids = [ l.id for l in wizard_ad_br.line_ids ]
                     for adwl_r in wizard_adl_obj.read(line_ids, fields):
                         print('AD LINE')
@@ -566,9 +567,9 @@ class FinanceTest(UnifieldTest):
                             wizard_adl_obj.write([adwl_r['id']], ad_line_val)
             
                 if wizard_ad_br.fp_line_ids:
-                    # FP LINES: 
-                    #    'cost_center_id', 'destination_id', 'analytic_id' <=> FP
-                    # as browse failed here: workaround with read
+                    # FP LINES: 'cost_center_id', 'destination_id',
+                    # 'analytic_id' <=> FP
+                    # as rpc browse failed here: dirty workaround with read
                     fp_line_ids = [ l.id for l in wizard_ad_br.fp_line_ids ]
                     for adwl_r in wizard_adfpl_obj.read(fp_line_ids, fields):
                         print('AD LINE')
@@ -587,6 +588,13 @@ class FinanceTest(UnifieldTest):
                             for old, new in ad_replace_data_by_id['cc']:
                                 if adwl_r['cost_center_id'] == old:
                                     ad_line_val['cost_center_id'] = new
+                                    break
+                                    
+                        if 'fp' in ad_replace_data_by_id:
+                            # funding pool replace
+                            for old, new in ad_replace_data_by_id['fp']:
+                                if adwl_r['analytic_id'] == old:
+                                    ad_line_val['analytic_id'] = new
                                     break
                                     
                         if ad_line_val:
