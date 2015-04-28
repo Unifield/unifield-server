@@ -505,8 +505,11 @@ class FinanceTest(UnifieldTest):
             
         vals = {}
         if account_id:  # G/L correction
-            vals['account_id'] = account_id
+            wizard_corl_obj.write([wiz_cor_line.id],
+                {'account_id' : account_id})
+                
         if new_ad_breakdown_data or ad_replace_data:
+            # AD correction
             action = wizard_corl_obj.button_analytic_distribution(
                 [wiz_cor_line.id], {'fake': 1})
             # read the AD wizard
@@ -519,6 +522,8 @@ class FinanceTest(UnifieldTest):
             
             ad_replace_data_by_id = {}        
             if ad_replace_data:
+                total_amount = 0.
+                
                 for k in ad_replace_data:
                     old_new_values = [] 
                     for old, new in ad_replace_data[k]:
@@ -544,8 +549,6 @@ class FinanceTest(UnifieldTest):
                     # as rpc browse failed here: dirty workaround with read
                     line_ids = [ l.id for l in wizard_ad_br.line_ids ]
                     for adwl_r in wizard_adl_obj.read(line_ids, fields):
-                        print('AD LINE')
-                        print(adwl_r)
                         ad_line_val = {}
                         percent = adwl_r['percentage']
                         
@@ -580,8 +583,6 @@ class FinanceTest(UnifieldTest):
                     # as rpc browse failed here: dirty workaround with read
                     fp_line_ids = [ l.id for l in wizard_ad_br.fp_line_ids ]
                     for adwl_r in wizard_adfpl_obj.read(fp_line_ids, fields):
-                        print('AD LINE')
-                        print(adwl_r)
                         ad_line_val = {}
                         percent = adwl_r['percentage']
                         
@@ -616,16 +617,22 @@ class FinanceTest(UnifieldTest):
                         if ad_line_val:
                             ad_line_val['percentage'] = percent  # line write workarround (always needed percentage in vals)
                             wizard_adfpl_obj.write([adwl_r['id']], ad_line_val)
+                                              
+                    # update amount
+                    for adwl_r in wizard_adl_obj.read(line_ids, ['amount']):
+                        total_amount += adwl_r['amount']
+                         
+            # will validate cor wizard too
+            if total_amount and ad_replace_data_by_id:
+                wizard_ad_obj.write([wizard_ad_br.id], { 'amount': total_amount, })
+                wizard_ad_obj.button_confirm(wizard_ad_br.id, 
+                    {'from': 'wizard.journal.items.corrections', })
  
-            """ad_id = self.create_analytic_distribution(db,
-                breakdown_data=new_ad_breakdown_data)
-            vals['analytic_distribution_id'] = ad_id"""
-        if vals:
-            wizard_corl_obj.write([wiz_cor_line.id], vals)
-        
-        # confirm wizard
-        # action_confirm(ids, context=None, distrib_id=False)
-        #wizard_cor_obj.action_confirm([wiz_br.id], {'fake': 1}, False)
+        if account_id:
+            # G/L correction without AD correction: confirm wizard
+            # (with an AD correction, cor is confirmed by AD wizard)
+            # action_confirm(ids, context=None, distrib_id=False)
+            wizard_cor_obj.action_confirm([wiz_br.id], {'fake': 1}, False)
         
     def create_journal_entry(self, database):
         '''
