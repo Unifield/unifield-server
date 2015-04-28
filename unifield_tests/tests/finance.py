@@ -539,8 +539,8 @@ class FinanceTest(UnifieldTest):
                 ]
                 
                 if wizard_ad_br.line_ids:
-                    # CC lines:
-                    # 'cost_center_id' False, 'destination_id' dest, 'analytic_id' <=> CC
+                    # CC lines: 'cost_center_id' False, 'destination_id' dest,
+                    # 'analytic_id' <=> CC
                     line_ids = [ l.id for l in wizard_ad_br.line_ids ]
                     for adwl_r in wizard_adl_obj.read(line_ids, fields):
                         print('AD LINE')
@@ -548,9 +548,17 @@ class FinanceTest(UnifieldTest):
                         ad_line_val = {}
                         
                         if 'dest' in ad_replace_data_by_id:
+                            # destination replace
                             for old, new in ad_replace_data_by_id['dest']:
                                 if adwl_r['destination_id'] == old:
                                     ad_line_val['destination_id'] = new
+                                    break
+                                    
+                        if 'cc' in ad_replace_data_by_id:
+                            # cost center replace
+                            for old, new in ad_replace_data_by_id['cc']:
+                                if adwl_r['analytic_id'] == old:
+                                    ad_line_val['analytic_id'] = new
                                     break
                                     
                         if ad_line_val:
@@ -568,9 +576,17 @@ class FinanceTest(UnifieldTest):
                         ad_line_val = {}
                         
                         if 'dest' in ad_replace_data_by_id:
+                            # destination replace
                             for old, new in ad_replace_data_by_id['dest']:
                                 if adwl_r['destination_id'] == old:
                                     ad_line_val['destination_id'] = new
+                                    break
+                                    
+                        if 'cc' in ad_replace_data_by_id:
+                            # cost center replace
+                            for old, new in ad_replace_data_by_id['cc']:
+                                if adwl_r['cost_center_id'] == old:
+                                    ad_line_val['cost_center_id'] = new
                                     break
                                     
                         if ad_line_val:
