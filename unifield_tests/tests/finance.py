@@ -547,6 +547,7 @@ class FinanceTest(UnifieldTest):
                         print('AD LINE')
                         print(adwl_r)
                         ad_line_val = {}
+                        percent = adwl_r['percentage']
                         
                         if 'dest' in ad_replace_data_by_id:
                             # destination replace
@@ -562,8 +563,15 @@ class FinanceTest(UnifieldTest):
                                     ad_line_val['analytic_id'] = new
                                     break
                                     
+                        if 'per' in ad_replace_data_by_id:
+                            # percentage replace
+                            for old, new in ad_replace_data_by_id['per']:
+                                if percent == old:
+                                    percent = new
+                                    break
+                                    
                         if ad_line_val:
-                            ad_line_val['percentage'] = adwl_r['percentage']  # line write workarround
+                            ad_line_val['percentage'] = percent  # line write workarround (always needed percentage in vals)
                             wizard_adl_obj.write([adwl_r['id']], ad_line_val)
             
                 if wizard_ad_br.fp_line_ids:
@@ -575,6 +583,7 @@ class FinanceTest(UnifieldTest):
                         print('AD LINE')
                         print(adwl_r)
                         ad_line_val = {}
+                        percent = adwl_r['percentage']
                         
                         if 'dest' in ad_replace_data_by_id:
                             # destination replace
@@ -596,9 +605,16 @@ class FinanceTest(UnifieldTest):
                                 if adwl_r['analytic_id'] == old:
                                     ad_line_val['analytic_id'] = new
                                     break
+                                              
+                        if 'per' in ad_replace_data_by_id:
+                            # percentage replace
+                            for old, new in ad_replace_data_by_id['per']:
+                                if percent == old:
+                                    percent = new
+                                    break
                                     
                         if ad_line_val:
-                            ad_line_val['percentage'] = adwl_r['percentage']  # line write workarround
+                            ad_line_val['percentage'] = percent  # line write workarround (always needed percentage in vals)
                             wizard_adfpl_obj.write([adwl_r['id']], ad_line_val)
  
             """ad_id = self.create_analytic_distribution(db,
