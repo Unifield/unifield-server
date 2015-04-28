@@ -2,7 +2,7 @@
 <openerp>
     <data>
 
-    <!-- Tree for purchase displayed on the accounting board -->
+        <!-- Tree for purchase displayed on the accounting board -->
         <record id="account_purchase_order_tree" model="ir.ui.view">
             <field name="name">account.purchase.order.tree</field>
             <field name="model">purchase.order</field>
@@ -27,7 +27,7 @@
             </field>
         </record>
 
-    <!-- Action that give a link to the purchase_order_tree only for accounting (priority superior to the mainly purchase_order_tree -->
+        <!-- Action that give a link to the purchase_order_tree only for accounting (priority superior to the mainly purchase_order_tree -->
         <record id="purchase_waiting_msf" model="ir.actions.act_window">
             <field name="name">Purchase Order Waiting Approval</field>
             <field name="type">ir.actions.act_window</field>
@@ -39,31 +39,104 @@
             <field name="search_view_id" eval="False"/>
         </record>
 
-    <!-- Custom Accounting Board -->
+        <record id="action_commitment_voucher" model="ir.actions.act_window">
+			<field name="name">Commitment Voucher</field>
+			<field name="res_model">account.commitment</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar,graph</field>
+			<field eval="False" name="view_id"/>
+			<field name="domain">[('state', 'in', ('draft','open'))]</field>
+            <field name="context">{'board_view': True}</field>
+		</record>
+        <record id="action_supplier_invoice_draft" model="ir.actions.act_window">
+			<field name="name">Suppliers invoices pending validation</field>
+			<field name="res_model">account.invoice</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar,graph</field>
+			<field eval="False" name="view_id"/>
+			<field name="domain">[('state', '=', 'draft')]</field>
+            <field name="context">{'board_view': True}</field>
+		</record>
+        <record id="action_supplier_invoice_open" model="ir.actions.act_window">
+			<field name="name">Suppliers invoices pending payment</field>
+			<field name="res_model">account.invoice</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar,graph</field>
+			<field eval="False" name="view_id"/>
+			<field name="domain">[('state', '=', 'open')]</field>
+            <field name="context">{'board_view': True}</field>
+		</record>
+
+
+        <record id="board_account_board_liquidity" model="ir.ui.view">
+            <field name="name">account.bank.statement</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Statement">
+                    <field name="instance_id"/>
+                    <field name="journal_id" string="Register Code"/>
+                    <field name="name"/>
+                    <field name="current_board_balance"/>
+                    <field name="currency" string="Register currency"/>
+                    <field name="current_board_balance_func" string="Current balance in func. ccy" sum="Total"/>
+                    <field name="current_board_currency_func" string="Func. ccy"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account_board_liquidity" model="ir.actions.act_window">
+			<field name="name">Liquidity</field>
+			<field name="res_model">account.bank.statement</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar,graph</field>
+			<field ref="board_account_board_liquidity" name="view_id"/>
+            <field name="context">{'board_view': True}</field>
+		</record>
+
+        <record id="board_account_board_currency" model="ir.ui.view">
+            <field name="name">res.currency</field>
+            <field name="model">res.currency</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Latest FX rates">
+                    <field name="name"/>
+                    <field name="rate"/>
+                    <field name="date"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account_board_currency" model="ir.actions.act_window">
+			<field name="name">Latest FX rates</field>
+			<field name="res_model">res.currency</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar,graph</field>
+			<field ref="board_account_board_currency" name="view_id"/>
+            <field name="context">{'board_view': True}</field>
+		</record>
+
+
+        <!-- Custom Accounting Board -->
         <record id="inherit_board_account_form" model="ir.ui.view">
             <field name="name">inherit.board.account.form</field>
             <field name="model">board.board</field>
-            <field name="type">form</field>
+            <field name="type">tree</field>
             <field name='inherit_id' ref='account.board_account_form' />
             <field name="priority" eval="15"/>
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
-                  <form string="Account Board">
-                  </form>
-                  <!-- DASHBOARD FALSE DELETION UTP-398
+                    <form string="Account Board">
                         <hpaned>
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(account.action_draft_customer_invoices_dashboard)d" string="Customer Invoices to Approve" />
-                                <action colspan="4" height="220" name="%(purchase_waiting_msf)d" string="Purchase Order Waiting Approval" width="400"/>
-                                <action colspan="4" height="160" width="400" name="%(account.action_company_analysis_tree)d" string="Company Analysis" />
+                                <action colspan="4" height="160" width="400" name="%(action_commitment_voucher)d" string="Commitment Voucher" />
+                                <action colspan="4" height="160" width="400" name="%(action_supplier_invoice_draft)d" string="Suppliers invoices pending validation" />
+                                <action colspan="4" height="160" width="400" name="%(action_supplier_invoice_open)d" string="Suppliers invoices pending payment" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_liquidity)d" string="Liquidity" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" />
                             </child1>
-                            <child2>
-                                <action colspan="4" height="220" name="%(account.action_treasory_graph)d" string="Treasury" />
-                                <action colspan="4" height="220" name="%(account.action_aged_receivable)d" string="Aged Receivables" />
-                            </child2>
                         </hpaned>
-                      </form>
-                      END OF DASHBOARD FALSE DELETION UTP-398 -->
+                    </form>
                 </xpath>
             </field>
         </record>

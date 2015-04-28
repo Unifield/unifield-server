@@ -59,7 +59,7 @@
                    "view/purchase_view.xml",
                    "view/sale_view.xml",
                    "view/shop_view.xml",
-                   
+
                    "dashboard/board_purchase_view.xml",
                    "dashboard/board_sale_view.xml",
                    "dashboard/board_warehouse_view.xml",

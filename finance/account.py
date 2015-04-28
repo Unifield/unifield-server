@@ -45,7 +45,7 @@ class account_account(osv.osv):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         if company and company.additional_allocation:
             company_account_active = company.additional_allocation
-        company_account = 7 # User for accounts that begins by "7"
+        company_account = 7  # User for accounts that begins by "7"
         # Prepare result
         for account in self.read(cr, uid, ids, ['user_type_code', 'code'], context=context):
             account_id = account.get('id', False)
