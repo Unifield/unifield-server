@@ -483,29 +483,30 @@ class FinanceTestCorCases(FinanceTest):
         if reg_id:
             ad = [(100., 'OPS', 'HT101', 'PF'), ]
             
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            """regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
                 '60010', self.get_random_amount(True),
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True
-            )
+            )"""
             
-            # 60010 - >60030
+            # 60010 -> 60000
             # AD 100% OPS, HT101, PF -> 55% OPS, HT101, PF
             #                        -> 45% NAT, HT101, PF
             #
+            ji_id = 1
             new_ad=[
                 (55., 'OPS', 'HT101', 'PF'),
                 (45., 'NAT', 'HT101', 'PF'),
             ]
             self.simulation_correction_wizard(db, ji_id,
-                    new_account_code='60030',
+                    new_account_code='60000',
                     new_ad_breakdown_data=new_ad,
                     ad_replace_data=False
             )
             
-            """ji_id = 1
+            """
             self.check_ji_correction(db, ji_id,
                 '60030', new_account_code=False,
                 expected_ad=ad,

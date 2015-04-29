@@ -500,6 +500,8 @@ class FinanceTest(UnifieldTest):
         if new_account_code and ji_br.account_id.code == new_account_code:
             raise FinanceTestException('you can not do a G/L correction with' \
                 ' same account code')
+        ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
+            ji_br.credit_currency
         
         # set wizard header (will generate in create the correction lines)
         # TODO
@@ -669,41 +671,46 @@ class FinanceTest(UnifieldTest):
                     fp_id = self.get_account_from_code(db, fp,
                         is_analytic=True)
                         
-                    amount = (amount * percent) / 100.
-                    total_amount += amount
+                    total_amount += (ji_amount * percent) / 100.
                     
                     # set cc line
                     # 'destination_id' dest, # 'analytic_id' <=> CC
-                    ad_line_vals.append((0, 0, {
+                    # not set amount here as will be auto computed from percent
+                    ad_line_vals.append({
                         'analytic_id': cc_id,
-                        'amount': amount,
                         'percentage': percent,
                         'currency_id': ccy_id,
                         'destination_id': dest_id,
-                    }))
+                    })
                     
                     # set fp line
                     # FP LINES: 'cost_center_id', 'destination_id',
                     # 'analytic_id' <=> FP
-                    ad_fp_line_vals.append((0, 0, {
+                    # not set amount here as will be auto computed from percent
+                    ad_fp_line_vals.append({
                         'analytic_id': fp_id,
-                        'amount': amount,
                         'percentage': percent,
                         'currency_id': ccy_id,
                         'destination_id': dest_id,
                         'cost_center_id': cc_id,
-                    }))
+                    })
                     
                 if ad_line_vals and ad_fp_line_vals:
-                    wizard_ad_obj.write({
-                        'line_ids': ad_line_vals,
-                        'fp_line_ids': ad_line_vals
-                    })
+                    for new_vals in ad_line_vals:
+                        new_vals['wizard_id'] = wizard_ad_br.id
+                        wizard_adl_obj.create(new_vals,
+                            {'skip_validation': True, })
+                    for new_vals in ad_fp_line_vals:
+                        new_vals['wizard_id'] = wizard_ad_br.id
+                        wizard_adfpl_obj.create(new_vals,
+                            {'skip_validation': True, })
                          
             # will validate cor wizard too
             if total_amount and \
                 (ad_replace_data_by_id or new_ad_breakdown_data):
-                wizard_ad_obj.write([wizard_ad_br.id], { 'amount': total_amount, })
+                wizard_ad_obj.write([wizard_ad_br.id],
+                    { 'amount': total_amount, },
+                     {'skip_validation': True, })
                 wizard_ad_obj.button_confirm(wizard_ad_br.id, 
                     {'from': 'wizard.journal.items.corrections', })
  
@@ -738,7 +745,7 @@ class FinanceTest(UnifieldTest):
             is_analytic=False)
         
         ji_br = aml_obj.browse(ji_id)
-        amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
+        ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
             ji_br.credit_currency
         
         if new_account_code and new_account_code != account_code:
@@ -746,7 +753,7 @@ class FinanceTest(UnifieldTest):
                 
             # check JI REV
             cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
-                amount, True)
+                ji_amount, True)
             domain = [
                 ('journal_id', 'in', od_journal_ids),
                 ('reversal_line_id', '=', ji_id),
@@ -757,12 +764,12 @@ class FinanceTest(UnifieldTest):
             if not rev_ids:
                 raise FinanceTestException(
                     "no JI REV found for %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
+                        ji_br.name, ji_amount, db.colored_name, )
                 )
             
             # check JI COR
             cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
-                amount, False)
+                ji_amount, False)
             domain = [
                 ('journal_id', 'in', od_journal_ids),
                 ('corrected_line_id', '=', ji_id),
@@ -772,7 +779,7 @@ class FinanceTest(UnifieldTest):
             if not rev_ids:
                 raise FinanceTestException(
                     "no JI COR found for %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
+                        ji_br.name, ji_amount, db.colored_name, )
                 )
                 
         base_aji_ids = []  # ids of AJIs not rev/cor (not in correction journal)
@@ -786,13 +793,13 @@ class FinanceTest(UnifieldTest):
             if len(ids) != len(expected_ad):
                 raise FinanceTestException(
                     "expected AJIs count do not match for JI %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
+                        ji_br.name, ji_amount, db.colored_name, )
                 )
             
             match_count = 0
             for aal_br in aal_obj.browse(ids):
                 for percent, dest, cc, fp in expected_ad:
-                    aji_amount = (amount * percent) / 100.  # percent match ?
+                    aji_amount = (ji_amount * percent) / 100.  # percent match ?
                     if aal_br.general_account_id.id == account_id and \
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
@@ -804,7 +811,7 @@ class FinanceTest(UnifieldTest):
             if len(ids) != match_count:
                 raise FinanceTestException(
                     "expected AJIs do not match for JI %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
+                        ji_br.name, ji_amount, db.colored_name, )
                 )
                 
         if expected_ad_rev:
@@ -816,13 +823,13 @@ class FinanceTest(UnifieldTest):
             if len(ids) != len(expected_ad_rev):
                 raise FinanceTestException(
                     "expected REV AJIs count do not match for JI %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
+                        ji_br.name, ji_amount, db.colored_name, )
                 )
             
             match_count = 0
             for aal_br in aal_obj.browse(ids):
                 for percent, dest, cc, fp in expected_ad_rev:
-                    aji_amount = (amount * percent) / 100.  # percent match ?
+                    aji_amount = (ji_amount * percent) / 100.  # percent match ?
                     aji_amount *= -1  # reversal amount
                     if aal_br.general_account_id.id == account_id and \
                         aal_br.destination_id.code == dest and \
@@ -835,7 +842,7 @@ class FinanceTest(UnifieldTest):
             if len(ids) != match_count:
                 raise FinanceTestException(
                     "expected REV AJIs do not match for JI %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
+                        ji_br.name, ji_amount, db.colored_name, )
                 )
                 
         if expected_ad_cor:
@@ -853,7 +860,7 @@ class FinanceTest(UnifieldTest):
             match_count = 0
             for aal_br in aal_obj.browse(ids):
                 for percent, dest, cc, fp in expected_ad_cor:
-                    aji_amount = (amount * percent) / 100.  # percent match ?
+                    aji_amount = (ji_amount * percent) / 100.  # percent match ?
                     # COR with new account
                     if aal_br.general_account_id.id == new_account_id and \
                         aal_br.destination_id.code == dest and \
@@ -866,7 +873,7 @@ class FinanceTest(UnifieldTest):
             if len(ids) != match_count:
                 raise FinanceTestException(
                     "expected COR AJIs do not match for JI %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
+                        ji_br.name, ji_amount, db.colored_name, )
                 )
         
     def create_journal_entry(self, database):
