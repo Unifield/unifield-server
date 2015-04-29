@@ -505,13 +505,13 @@ class FinanceTestCorCases(FinanceTest):
                     ad_replace_data=False
             )
             
-            ji_id = 1
+            """ji_id = 1
             self.check_ji_correction(db, ji_id,
                 '60030', new_account_code=False,
                 expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
-            )
+            )"""
 
 def get_test_class():
     return FinanceTestCorCases

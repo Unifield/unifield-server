@@ -462,6 +462,7 @@ class FinanceTest(UnifieldTest):
         choose between delete and recreate AD with new_ad_breakdown_data
         or to replace dest/cc/fp/percentage values with ad_replace_data
         """
+        
         wizard_cor_obj = db.get('wizard.journal.items.corrections')
         wizard_corl_obj = db.get('wizard.journal.items.corrections.lines')
         wizard_ad_obj = db.get('analytic.distribution.wizard')
@@ -532,10 +533,9 @@ class FinanceTest(UnifieldTest):
                         str(action), )
                     )
             
+            total_amount = 0.
             ad_replace_data_by_id = {}        
-            if ad_replace_data:
-                total_amount = 0.
-                
+            if ad_replace_data:                
                 for k in ad_replace_data:
                     old_new_values = [] 
                     for old, new in ad_replace_data[k]:
@@ -587,6 +587,13 @@ class FinanceTest(UnifieldTest):
                         if ad_line_val:
                             ad_line_val['percentage'] = percent  # line write workarround (always needed percentage in vals)
                             wizard_adl_obj.write([adwl_r['id']], ad_line_val)
+                            
+                    # supply update amount from cc lines
+                    # NOTE: for finance (state != 'cc') the amount is to be
+                    # computed from amount of fp lines
+                    if wiz_br.state != 'cc':
+                        for adwl_r in wizard_adl_obj.read(line_ids, ['amount']):
+                            total_amount += adwl_r['amount']
             
                 if wizard_ad_br.fp_line_ids:
                     # FP LINES: 'cost_center_id', 'destination_id',
@@ -629,12 +636,73 @@ class FinanceTest(UnifieldTest):
                             ad_line_val['percentage'] = percent  # line write workarround (always needed percentage in vals)
                             wizard_adfpl_obj.write([adwl_r['id']], ad_line_val)
                                               
-                    # update amount
-                    for adwl_r in wizard_adl_obj.read(line_ids, ['amount']):
-                        total_amount += adwl_r['amount']
+                    # finance update amount from fp lines
+                    # NOTE: for supply (state == 'cc') the amount is to be
+                    # computed from amount of cc lines 
+                    if wiz_br.state != 'cc':
+                        for adwl_r in wizard_adfpl_obj.read(line_ids,
+                            ['amount']):
+                            total_amount += adwl_r['amount']
+            elif new_ad_breakdown_data:
+                # replace full AD
+                
+                # delete previous AD
+                del_vals = {}
+                if wizard_ad_br.line_ids:
+                    del_vals['line_ids'] = [ (2, l.id, ) \
+                        for l in wizard_ad_br.line_ids ]
+                if wizard_ad_br.fp_line_ids:
+                    del_vals['fp_line_ids'] = [ (2, l.id, ) \
+                        for l in wizard_ad_br.fp_line_ids ]
+                if del_vals:
+                    wizard_ad_obj.write([wiz_br.id], del_vals)
+                    
+                # set the new AD
+                ccy_id = self.get_company(db).currency_id.id
+                ad_line_vals = []
+                ad_fp_line_vals = []
+                for percent, dest, cc, fp in new_ad_breakdown_data:
+                    dest_id = self.get_account_from_code(db, dest,
+                        is_analytic=True)
+                    cc_id = self.get_account_from_code(db, cc,
+                        is_analytic=True)
+                    fp_id = self.get_account_from_code(db, fp,
+                        is_analytic=True)
+                        
+                    amount = (amount * percent) / 100.
+                    total_amount += amount
+                    
+                    # set cc line
+                    # 'destination_id' dest, # 'analytic_id' <=> CC
+                    ad_line_vals.append((0, 0, {
+                        'analytic_id': cc_id,
+                        'amount': amount,
+                        'percentage': percent,
+                        'currency_id': ccy_id,
+                        'destination_id': dest_id,
+                    }))
+                    
+                    # set fp line
+                    # FP LINES: 'cost_center_id', 'destination_id',
+                    # 'analytic_id' <=> FP
+                    ad_fp_line_vals.append((0, 0, {
+                        'analytic_id': fp_id,
+                        'amount': amount,
+                        'percentage': percent,
+                        'currency_id': ccy_id,
+                        'destination_id': dest_id,
+                        'cost_center_id': cc_id,
+                    }))
+                    
+                if ad_line_vals and ad_fp_line_vals:
+                    wizard_ad_obj.write({
+                        'line_ids': ad_line_vals,
+                        'fp_line_ids': ad_line_vals
+                    })
                          
             # will validate cor wizard too
-            if total_amount and ad_replace_data_by_id:
+            if total_amount and \
+                (ad_replace_data_by_id or new_ad_breakdown_data):
                 wizard_ad_obj.write([wizard_ad_br.id], { 'amount': total_amount, })
                 wizard_ad_obj.button_confirm(wizard_ad_br.id, 
                     {'from': 'wizard.journal.items.corrections', })
