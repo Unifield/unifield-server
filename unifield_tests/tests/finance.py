@@ -453,6 +453,7 @@ class FinanceTest(UnifieldTest):
         return distrib_id
         
     def simulation_correction_wizard(self, db, ji_to_correct_id,
+        cor_date=False,
         new_account_code=False,
         new_ad_breakdown_data=False, ad_replace_data=False):
         """
@@ -462,6 +463,8 @@ class FinanceTest(UnifieldTest):
         choose between delete and recreate AD with new_ad_breakdown_data
         or to replace dest/cc/fp/percentage values with ad_replace_data
         """
+        if not cor_date:
+            cor_date = self.get_orm_date_now()
         
         wizard_cor_obj = db.get('wizard.journal.items.corrections')
         wizard_corl_obj = db.get('wizard.journal.items.corrections.lines')
@@ -506,7 +509,7 @@ class FinanceTest(UnifieldTest):
         
         # set wizard header (will generate in create the correction lines)
         vals = {
-            'date': self.get_orm_date_now(),
+            'date': cor_date,
             'move_line_id': ji_to_correct_id,
             'state': 'draft',
             'from_donation': False,
