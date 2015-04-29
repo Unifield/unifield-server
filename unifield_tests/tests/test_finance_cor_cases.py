@@ -483,19 +483,17 @@ class FinanceTestCorCases(FinanceTest):
         if reg_id:
             ad = [(100., 'OPS', 'HT101', 'PF'), ]
             
-            """regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
                 '60010', self.get_random_amount(True),
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True
-            )"""
+            )
             
             # 60010 -> 60000
             # AD 100% OPS, HT101, PF -> 55% OPS, HT101, PF
             #                        -> 45% NAT, HT101, PF
-            #
-            ji_id = 1
             new_ad=[
                 (55., 'OPS', 'HT101', 'PF'),
                 (45., 'NAT', 'HT101', 'PF'),
@@ -506,13 +504,12 @@ class FinanceTestCorCases(FinanceTest):
                     ad_replace_data=False
             )
             
-            """
             self.check_ji_correction(db, ji_id,
-                '60030', new_account_code=False,
+                '60010', new_account_code='60000',
                 expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
-            )"""
+            )
 
 def get_test_class():
     return FinanceTestCorCases
