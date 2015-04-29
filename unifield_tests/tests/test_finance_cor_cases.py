@@ -476,7 +476,6 @@ class FinanceTestCorCases(FinanceTest):
         
         db = self.c1
         self._set_start_register(db)
-        return
         
         absl_obj = db.get('account.bank.statement.line')
         
