@@ -44,7 +44,7 @@ class FinanceTestCorCases(FinanceTest):
             'FC1': { 'ccs' : [ 'HT101', 'HT120', ], 'fps': [ 'FP1', 'FP2', ], },
         },
         
-        'register': 'BNK EUR',
+        'register': 'BNK',
     }  # end of dataset
     
     def setUp(self):
@@ -57,17 +57,22 @@ class FinanceTestCorCases(FinanceTest):
         self._set_dataset()
         pass
         
-    def _set_start_register(self, db, period_id=1):
+    def _set_start_register(self, db, period_id=1, ccy_name=False):
         db = self.c1
         aj_obj = db.get('account.journal')
         abs_obj = db.get('account.bank.statement')
         
+        if not ccy_name:
+            ccy_name = self._data_set.get('functional_ccy', 'EUR')
+        
         # set Januar bank journal/register and open it
         journal_code = self._data_set['register']
+        if ccy:
+            journal_code += ' ' + ccy_name
         if not self.record_exists(db, 'account.journal',
             [('code', '=', journal_code)]):
             reg_id, journal_id = self.create_register(db, journal_code,
-                journal_code, 'bank', '10200', 'EUR')
+                journal_code, 'bank', '10200', ccy_name)
             # update period
             abs_obj.write([reg_id], {'period_id': period_id})
             abs_obj.button_open_bank([reg_id])
@@ -508,6 +513,52 @@ class FinanceTestCorCases(FinanceTest):
                 '60010', new_account_code='60000',
                 expected_ad=ad,
                 expected_ad_rev=ad,
+                expected_ad_cor=new_ad,
+            )
+            
+    def test_cor1_6(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_6
+        """
+        self._setup()
+        
+        db = self.c1
+        self._set_start_register(db, ccy_name='USD')
+        
+        absl_obj = db.get('account.bank.statement.line')
+        
+        reg_id = self._get_register(db, browse=False, , ccy_name='USD')
+        if reg_id:
+            ad = [
+                (60., 'OPS', 'HT101', 'PF'),
+                (30., 'OPS', 'HT120', 'PF'),
+            ]
+            
+            regl_id, distrib_id, ji_id = self.create_register_line(
+                db, reg_id,
+                '60010', self.get_random_amount(True),
+                ad_breakdown_data=ad,
+                date=False, document_date=False,
+                do_hard_post=True
+            )
+            
+            # TODO
+            # CLOSE PERIOD Januar
+            new_ad=[
+                (70., 'OPS', 'HT101', 'PF'),
+                (30., 'OPS', 'HT101', 'PF'),
+            ]
+            self.simulation_correction_wizard(db, ji_id,
+                    cor_date=False  # TODO 7 Feb of this year
+                    new_account_code=False,
+                    new_ad_breakdown_data=new_ad,
+                    ad_replace_data=False
+            )
+            
+            self.check_ji_correction(db, ji_id,
+                '60010', new_account_code=False,
+                expected_ad=ad,
+                expected_ad_rev=new_ad,
                 expected_ad_cor=new_ad,
             )
 
