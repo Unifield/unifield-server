@@ -484,14 +484,14 @@ class FinanceTest(UnifieldTest):
                 'you can not both redifine full AD and replace attributes')
                 
         # get new account id for a G/L correction
-        account_id = False
+        new_account_id = False
         if new_account_code:
             account_ids = aa_obj.search([('code', '=', new_account_code)])
             if not account_ids:
                 raise FinanceTestException(
                     'account %s for a G/L correction not found' % (
                         new_account_code, ))
-            account_id = account_ids[0]
+            new_account_id = account_ids[0]
                 
         # get ji and checks
         ji_br = aml_obj.browse(ji_to_correct_id)
@@ -500,11 +500,11 @@ class FinanceTest(UnifieldTest):
         if new_account_code and ji_br.account_id.code == new_account_code:
             raise FinanceTestException('you can not do a G/L correction with' \
                 ' same account code')
+        old_account_id = ji_br.account_id and ji_br.account_id.id or False
         ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
             ji_br.credit_currency
         
         # set wizard header (will generate in create the correction lines)
-        # TODO
         vals = {
             'date': self.get_orm_date_now(),
             'move_line_id': ji_to_correct_id,
@@ -519,16 +519,17 @@ class FinanceTest(UnifieldTest):
             raise FinanceTestException('error generating a correction line')
             
         vals = {}
-        if account_id:  # G/L correction
+        if new_account_id:  # G/L correction
             wizard_corl_obj.write([wiz_cor_line.id],
-                {'account_id' : account_id})
+                {'account_id' : new_account_id})
                 
         if new_ad_breakdown_data or ad_replace_data:
             # AD correction
             action = wizard_corl_obj.button_analytic_distribution(
                 [wiz_cor_line.id], {'fake': 1})
             # read the AD wizard
-            wizard_ad_br = wizard_ad_obj.browse(action['res_id'][0])
+            wizard_ad_id = action['res_id'][0]
+            wizard_ad_br = wizard_ad_obj.browse(wizard_ad_id)
             if not wizard_ad_br:
                 raise FinanceTestException(
                     "error getting AD wizard record from action: %s" % (
@@ -536,7 +537,7 @@ class FinanceTest(UnifieldTest):
                     )
             
             total_amount = 0.
-            ad_replace_data_by_id = {}        
+            ad_replace_data_by_id = {}
             if ad_replace_data:                
                 for k in ad_replace_data:
                     old_new_values = [] 
@@ -593,7 +594,7 @@ class FinanceTest(UnifieldTest):
                     # supply update amount from cc lines
                     # NOTE: for finance (state != 'cc') the amount is to be
                     # computed from amount of fp lines
-                    if wiz_br.state != 'cc':
+                    if wizard_ad_br.state != 'cc':
                         for adwl_r in wizard_adl_obj.read(line_ids, ['amount']):
                             total_amount += adwl_r['amount']
             
@@ -641,7 +642,7 @@ class FinanceTest(UnifieldTest):
                     # finance update amount from fp lines
                     # NOTE: for supply (state == 'cc') the amount is to be
                     # computed from amount of cc lines 
-                    if wiz_br.state != 'cc':
+                    if wizard_ad_br.state != 'cc':
                         for adwl_r in wizard_adfpl_obj.read(line_ids,
                             ['amount']):
                             total_amount += adwl_r['amount']
@@ -651,13 +652,15 @@ class FinanceTest(UnifieldTest):
                 # delete previous AD
                 del_vals = {}
                 if wizard_ad_br.line_ids:
+                    # get del vals
                     del_vals['line_ids'] = [ (2, l.id, ) \
                         for l in wizard_ad_br.line_ids ]
                 if wizard_ad_br.fp_line_ids:
+                    # get del vals
                     del_vals['fp_line_ids'] = [ (2, l.id, ) \
                         for l in wizard_ad_br.fp_line_ids ]
                 if del_vals:
-                    wizard_ad_obj.write([wiz_br.id], del_vals)
+                    wizard_ad_obj.write([wizard_ad_id], del_vals)
                     
                 # set the new AD
                 ccy_id = self.get_company(db).currency_id.id
@@ -677,6 +680,7 @@ class FinanceTest(UnifieldTest):
                     # 'destination_id' dest, # 'analytic_id' <=> CC
                     # not set amount here as will be auto computed from percent
                     ad_line_vals.append({
+                        'wizard_id': wizard_ad_br.id,
                         'analytic_id': cc_id,
                         'percentage': percent,
                         'currency_id': ccy_id,
@@ -688,6 +692,7 @@ class FinanceTest(UnifieldTest):
                     # 'analytic_id' <=> FP
                     # not set amount here as will be auto computed from percent
                     ad_fp_line_vals.append({
+                        'wizard_id': wizard_ad_br.id,
                         'analytic_id': fp_id,
                         'percentage': percent,
                         'currency_id': ccy_id,
@@ -697,24 +702,36 @@ class FinanceTest(UnifieldTest):
                     
                 if ad_line_vals and ad_fp_line_vals:
                     for new_vals in ad_line_vals:
-                        new_vals['wizard_id'] = wizard_ad_br.id
-                        wizard_adl_obj.create(new_vals,
-                            {'skip_validation': True, })
+                        wizard_adl_obj.create(new_vals)
                     for new_vals in ad_fp_line_vals:
-                        new_vals['wizard_id'] = wizard_ad_br.id
-                        wizard_adfpl_obj.create(new_vals,
-                            {'skip_validation': True, })
+                        wizard_adfpl_obj.create(new_vals)
                          
             # will validate cor wizard too
             if total_amount and \
                 (ad_replace_data_by_id or new_ad_breakdown_data):
-                wizard_ad_obj.write([wizard_ad_br.id],
-                    { 'amount': total_amount, },
-                     {'skip_validation': True, })
-                wizard_ad_obj.button_confirm(wizard_ad_br.id, 
-                    {'from': 'wizard.journal.items.corrections', })
+                # set wizard header vals to update
+                ad_wiz_vals = {
+                    'amount': total_amount,
+                }
+                if new_account_id:
+                    # needed for AD wizard to process directly from it a G/L
+                    # account change
+                    ad_wiz_vals.update({
+                        'old_account_id': old_account_id,
+                        'account_id': new_account_id,
+                    })
+                wizard_ad_obj.write([wizard_ad_id], ad_wiz_vals)
+                
+                # confirm the wizard with adoc context values to process a
+                # correction
+                context = {
+                    'from': 'wizard.journal.items.corrections',
+                    'wiz_id': wizard_ad_id,
+                }
+                wizard_ad_obj.button_confirm([wizard_ad_id], context)
+                return  # G/L account change already processed line above
  
-        if account_id:
+        if new_account_id:
             # G/L correction without AD correction: confirm wizard
             # (with an AD correction, cor is confirmed by AD wizard)
             # action_confirm(ids, context=None, distrib_id=False)
