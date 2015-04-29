@@ -54,11 +54,10 @@ class FinanceTestCorCases(FinanceTest):
         pass
         
     def _setup(self):
-        # TODO: activate _set_dataset() if required
-        #self._set_dataset()
+        self._set_dataset()
         pass
         
-    def _set_register(self, db):
+    def _set_start_register(self, db, period_id=1):
         db = self.c1
         aj_obj = db.get('account.journal')
         abs_obj = db.get('account.bank.statement')
@@ -69,6 +68,8 @@ class FinanceTestCorCases(FinanceTest):
             [('code', '=', journal_code)]):
             reg_id, journal_id = self.create_register(db, journal_code,
                 journal_code, 'bank', '10200', 'EUR')
+            # update period
+            abs_obj.write([reg_id], {'period_id': period_id})
             abs_obj.button_open_bank([reg_id])
                 
     def _get_register(self, db, browse=False):
@@ -293,7 +294,6 @@ class FinanceTestCorCases(FinanceTest):
                 self.synchronize(self.p1)
                 #self.synchronize(self.p12)
                     
-        
         # ---------------------------------------------------------------------
         year = datetime.now().year
         date_fy_start = self.get_orm_date_fy_start()
@@ -329,10 +329,10 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_1
         """
-        #self._setup()
+        self._setup()
         
         db = self.c1
-        #self._set_register(db)
+        self._set_start_register(db)
         
         absl_obj = db.get('account.bank.statement.line')
         
@@ -365,10 +365,10 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_2
         """
-        #self._setup()
+        self._setup()
         
         db = self.c1
-        #self._set_register(db)
+        self._set_start_register(db)
         
         absl_obj = db.get('account.bank.statement.line')
         
@@ -400,10 +400,10 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_3
         """
-        #self._setup()
+        self._setup()
         
         db = self.c1
-        #self._set_register(db)
+        self._set_start_register(db)
         
         absl_obj = db.get('account.bank.statement.line')
         
@@ -436,10 +436,10 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_4
         """
-        #self._setup()
+        self._setup()
         
         db = self.c1
-        #self._set_register(db)
+        self._set_start_register(db)
         
         absl_obj = db.get('account.bank.statement.line')
         
@@ -472,10 +472,11 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_5
         """
-        #self._setup()
+        self._setup()
         
         db = self.c1
-        #self._set_register(db)
+        self._set_start_register(db)
+        return
         
         absl_obj = db.get('account.bank.statement.line')
         
