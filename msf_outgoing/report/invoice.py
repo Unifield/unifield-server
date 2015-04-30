@@ -70,7 +70,8 @@ class invoice(report_sxw.rml_parse):
         """
         pf_done = {}
 
-        for pl in shipment.pack_family_memory_ids:
+        pfm_ids = sorted(shipment.pack_family_memory_ids, key=lambda a: a.from_pack)
+        for pl in pfm_ids:
             pf = PackFamily(pl.ppl_id, pl.shipment_id, [])
 
             if pf.ident not in pf_done:
@@ -138,7 +139,7 @@ class invoice(report_sxw.rml_parse):
         for m in pl.move_lines:
             res.append((index, m))
             index += 1
-        return res
+        return sorted(res, key=lambda x: x[1].line_number)
 
     def _get_total(self, pf):
         """
