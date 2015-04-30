@@ -395,7 +395,7 @@ class account_move_line(osv.osv):
             res[line_id] = invoice_id
             invoice_ids.append(invoice_id)
         invoice_names = {False: ''}
-        for invoice_id, name in invoice_obj.name_get(cursor, user, invoice_ids, context=context):
+        for invoice_id, name in invoice_obj.name_get(cursor, 1, invoice_ids, context=context):
             invoice_names[invoice_id] = name
         for line_id in res.keys():
             invoice_id = res[line_id]
