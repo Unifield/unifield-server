@@ -139,7 +139,7 @@ class invoice(report_sxw.rml_parse):
         for m in pl.move_lines:
             res.append((index, m))
             index += 1
-        return sorted(res, key=lambda x: x[1].line_number)
+        return sorted(res, key=lambda x: x[1].sale_line_id and x[1].sale_line_id.line_number or x[1].line_number)
 
     def _get_total(self, pf):
         """
