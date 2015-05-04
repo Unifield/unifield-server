@@ -260,6 +260,7 @@ class shipment(osv.osv):
                 'driver_name': fields.char(string='Driver Name', size=1024),
                 # -- shipper
                 'shipper_name': fields.char(string='Name', size=1024),
+                'shipper_contact': fields.char(string='Contact', size=1024),
                 'shipper_address': fields.char(string='Address', size=1024),
                 'shipper_phone': fields.char(string='Phone', size=1024),
                 'shipper_email': fields.char(string='Email', size=1024),
@@ -315,6 +316,45 @@ class shipment(osv.osv):
     def _get_sequence(self, cr, uid, context=None):
         ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
         return self.pool.get('ir.model.data').browse(cr, uid, ir_id).res_id
+
+    def default_get(self, cr, uid, fields, context=None):
+        """
+        The 'Shipper' fields must be filled automatically with the
+        default address of the current instance
+        """
+        user_obj = self.pool.get('res.users')
+        partner_obj = self.pool.get('res.partner')
+        addr_obj = self.pool.get('res.partner.address')
+
+        res = super(shipment, self).default_get(cr, uid, fields, context=context)
+
+        instance_partner = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id
+        instance_addr_id = partner_obj.address_get(cr, uid, instance_partner.id)['default']
+        instance_addr = addr_obj.browse(cr, uid, instance_addr_id, context=context)
+
+        addr = instance_addr.street
+        addr += ' '
+        if instance_addr.street2:
+            addr += instance_addr.street2
+            addr += ' '
+        if instance_addr.zip:
+            addr += instance_addr.zip
+            addr += ' '
+        if instance_addr.city:
+            addr += instance_addr.city
+            addr += ' '
+        if instance_addr.country_id:
+            addr += instance_addr.country_id.name
+
+        res.update({
+            'shipper_name': instance_partner.name,
+            'shipper_contact': 'Supply responsible',
+            'shipper_address': addr,
+            'shipper_phone': instance_addr.phone,
+            'shipper_email': instance_addr.email,
+        })
+
+        return res
 
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
