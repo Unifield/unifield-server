@@ -978,6 +978,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                                               'order_line': [],
                                                               'loan_id': so.loan_id and so.loan_id.id or False,
                                                               'delivery_requested_date': so.delivery_requested_date,
+                                                              'transport_type': so.transport_type,
                                                               'split_type_sale_order': fo_type,
                                                               'ready_to_ship_date': line.order_id.ready_to_ship_date,
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
