@@ -56,22 +56,16 @@ class product_template(osv.osv):
         'supplier_taxes_id': fields.many2many('account.tax',
             'product_supplier_taxes_rel', 'prod_id', 'tax_id',
             'Supplier Taxes', domain=[('parent_id', '=', False),('type_tax_use','in',['purchase','all'])]),
-        'property_account_income': fields.property(
+        'property_account_income': fields.many2one(
             'account.account',
-            type='many2one',
-            relation='account.account',
-            string="Income Account",
-            method=True,
-            view_load=True,
-            help="This account will be used for invoices instead of the default one to value sales for the current product"),
-        'property_account_expense': fields.property(
+            string='Income Account',
+            help='This account will be used for invoices instead of the default one to value sales for the current product',
+        ),
+        'property_account_expense': fields.many2one(
             'account.account',
-            type='many2one',
-            relation='account.account',
-            string="Expense Account",
-            method=True,
-            view_load=True,
-            help="This account will be used for invoices instead of the default one to value expenses for the current product"),
+            string='Expense Account',
+            help='This account will be used for invoices instead of the default one to value expenses for the current product',
+        ),
     }
 
 product_template()

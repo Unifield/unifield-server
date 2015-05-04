@@ -25,6 +25,7 @@ import time
 
 import netsvc
 from osv import osv
+from osv.orm import except_orm
 import pooler
 import tools
 from tools.translate import _
@@ -89,7 +90,12 @@ class procurement_order(osv.osv):
                 procurement_obj.write(cr, uid, ids, {}, context=context)
                 for proc in procurement_obj.browse(cr, uid, ids, context=context):
                     if maxdate >= proc.date_planned:
-                        wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+                        try:
+                            wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+                            cr.commit()
+                        except except_orm, e:
+                            ids.remove(proc.id)
+                            continue
                     else:
                         offset += 1
                         report_later += 1
@@ -306,7 +312,8 @@ class procurement_order(osv.osv):
 
                     prods = location_obj._product_virtual_get(cr, uid,
                             op.location_id.id, [opl.product_id.id],
-                            {'uom': opl.product_uom_id.id})[opl.product_id.id]
+                            {'uom': opl.product_uom_id.id},
+                            ['confirmed', 'waiting', 'assigned', 'done', 'hidden'])[opl.product_id.id]
 
                     if prods < opl.product_min_qty:
                         qty = max(opl.product_min_qty, opl.product_max_qty)-prods
