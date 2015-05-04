@@ -268,6 +268,7 @@ class shipment(osv.osv):
                 'shipper_date': fields.date(string='Date'),
                 'shipper_signature': fields.char(string='Signature', size=1024),
                 # -- carrier
+                'carrier_id': fields.many2one('res.partner', string='Carrier', domain=[('transporter', '=', True)]),
                 'carrier_name': fields.char(string='Name', size=1024),
                 'carrier_address': fields.char(string='Address', size=1024),
                 'carrier_phone': fields.char(string='Phone', size=1024),
@@ -362,6 +363,43 @@ class shipment(osv.osv):
         'in_ref': False,
     }
     _order = 'name desc'
+
+    def selected_carrier(self, cr, uid, ids, carrier_id, context=None):
+        """
+        Update the different carrier fields if a carrier is selected
+        """
+        partner_obj = self.pool.get('res.partner')
+        addr_obj = self.pool.get('res.partner.address')
+
+        if carrier_id:
+            carrier = partner_obj.browse(cr, uid, carrier_id, context=context)
+            carrier_addr_id = partner_obj.address_get(cr, uid, carrier_id)['default']
+            carrier_addr = addr_obj.browse(cr, uid, carrier_addr_id, context=context)
+
+            addr = carrier_addr.street
+            addr += ' '
+            if carrier_addr.street2:
+                addr += carrier_addr.street2
+                addr += ' '
+            if carrier_addr.zip:
+                addr += carrier_addr.zip
+                addr += ' '
+            if carrier_addr.city:
+                addr += carrier_addr.city
+                addr += ' '
+            if carrier_addr.country_id:
+                addr += carrier_addr.country_id.name
+
+            return {
+                'value': {
+                    'carrier_name': carrier.name,
+                    'carrier_address': addr,
+                    'carrier_phone': carrier_addr.phone,
+                    'carrier_email': carrier_addr.email,
+                },
+            }
+
+        return {}
 
     @check_cp_rw
     def create_shipment(self, cr, uid, ids, context=None):

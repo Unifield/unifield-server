@@ -1296,12 +1296,13 @@
 								<field name="shipper_date" />
 							</group>
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
-								<separator string="Carrier" colspan="2" />
-								<field name="carrier_name" />
-								<field name="carrier_address" />
-								<field name="carrier_phone" />
-								<field name="carrier_email" />
-								<field name="carrier_other" />
+                                <separator string="Carrier" colspan="2" />
+                                <field name="carrier_id" on_change="selected_carrier(carrier_id)" />
+                                <field name="carrier_name" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
+                                <field name="carrier_address" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
+                                <field name="carrier_phone" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
+                                <field name="carrier_email" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
+                                <field name="carrier_other" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
 								<field name="carrier_date" />
 							</group>
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
