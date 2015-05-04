@@ -278,6 +278,7 @@ class shipment(osv.osv):
                 'carrier_signature': fields.char(string='Signature', size=1024),
                 # -- consignee
                 'consignee_name': fields.char(string='Name', size=1024),
+                'consignee_contact': fields.char(string='Contact', size=1024),
                 'consignee_address': fields.char(string='Address', size=1024),
                 'consignee_phone': fields.char(string='Phone', size=1024),
                 'consignee_email': fields.char(string='Email', size=1024),
@@ -364,6 +365,60 @@ class shipment(osv.osv):
     }
     _order = 'name desc'
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        Update the consignee values by default
+        """
+        partner_obj = self.pool.get('res.partner')
+        addr_obj = self.pool.get('res.partner.address')
+
+        if vals.get('partner_id') and not context.get('create_shipment'):
+            consignee_partner = partner_obj.browse(cr, uid, vals.get('partner_id'), context=context)
+            consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
+            consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id, context=context)
+
+            addr = consignee_addr.street
+            addr += ' '
+            if consignee_addr.street2:
+                addr += consignee_addr.street2
+                addr += ' '
+            if consignee_addr.zip:
+                addr += consignee_addr.zip
+                addr += ' '
+            if consignee_addr.city:
+                addr += consignee_addr.city
+                addr += ' '
+            if consignee_addr.country_id:
+                addr += consignee_addr.country_id.name
+
+            vals.update({
+                'consignee_name': consignee_partner.name,
+                'consignee_contact': consignee_partner.partner_type == 'internal' and 'Supply responsible' or consignee_addr.name,
+                'consignee_address': addr,
+                'consignee_phone': consignee_addr.phone,
+                'consignee_email': consignee_addr.email,
+            })
+
+        return super(shipment, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Force values for carrier if carrier_id is filled
+        """
+        if vals.get('carrier_id'):
+            test_fields = [
+                'carrier_name', 'carrier_address',
+                'carrier_phone', 'carrier_email',
+            ]
+
+            sel_vals = self.selected_carrier(cr, uid, ids, vals.get('carrier_id'), context=context)['value']
+            for f in test_fields:
+                if not vals.get(f):
+                    vals[f] = sel_vals.get(f, False)
+
+        return super(shipment, self).write(cr, uid, ids, vals, context=context)
+
+
     def selected_carrier(self, cr, uid, ids, carrier_id, context=None):
         """
         Update the different carrier fields if a carrier is selected
@@ -426,7 +481,6 @@ class shipment(osv.osv):
             ship_proc_vals = {
                 'shipment_id': shipment.id,
                 'address_id': shipment.address_id.id,
-
             }
             ship_proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
             ship_proc_obj.create_lines(cr, uid, ship_proc_id, context=context)
@@ -461,6 +515,16 @@ class shipment(osv.osv):
         if isinstance(wizard_ids, (int, long)):
             wizard_ids = wizard_ids
 
+        cp_fields = [
+            'consignee_name', 'consignee_contact', 'consignee_address',
+            'consignee_phone', 'consignee_email', 'consignee_other',
+            'consignee_date', 'shipper_name', 'shipper_contact',
+            'shipper_address', 'shipper_phone', 'shipper_email',
+            'shipper_other', 'shipper_date', 'carrier_name',
+            'carrier_address', 'carrier_phone', 'carrier_email',
+            'carrier_other', 'carrier_date',
+        ]
+
         for wizard in ship_proc_obj.browse(cr, uid, wizard_ids, context=context):
             shipment = wizard.shipment_id
             sequence = shipment.sequence_id
@@ -481,9 +545,14 @@ class shipment(osv.osv):
                 'shipment_expected_date': shipment.shipment_expected_date,
                 'shipment_actual_date': shipment.shipment_actual_date,
                 'parent_id': shipment.id,
+                'carrier_id': shipment.carrier_id and shipment.carrier_id.id or False,
             }
+            for cpf in cp_fields:
+                ship_val[cpf] = shipment[cpf]
 
+            context['create_shipment'] = True
             shipment_id = self.create(cr, uid, ship_val, context=context)
+            del context['create_shipment']
 
             context['shipment_id'] = shipment_id
             if source_shipment_address_id:
