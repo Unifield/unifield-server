@@ -143,7 +143,7 @@ class so_po_common(osv.osv_memory):
         if not po_id:
             return False
 
-        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', states)], 0, None, None, context)
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', states)], 0, None, 'id asc', context)
         return in_ids[0] if in_ids else False
 
     # Update the next line number for the FO, PO that have been created by the synchro

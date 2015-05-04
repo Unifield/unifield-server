@@ -24,6 +24,7 @@ import netsvc
 
 import logging
 import pdb
+import time
 from tools.translate import _
 
 from sync_client import get_sale_purchase_logger
@@ -34,7 +35,49 @@ class purchase_order_line_sync(osv.osv):
 
     _columns = {
         'original_purchase_line_id': fields.text(string='Original purchase line id'),
+        'dest_partner_id': fields.related('order_id', 'dest_partner_id', string='Destination partner', readonly=True, type='many2one', relation='res.partner', store=True),
     }
+
+    def confirmed_dpo_service_lines_update_in_po(self, cr, uid, source, line_info, context=None):
+        """
+        Each DPO line with service products update IN lines
+        This method parses the line_info values and transform this data to call
+        the partial_shipped_fo_updates_in_po() method of stock.picking
+        """
+        if context is None:
+            context ={}
+
+        line_dict = line_info.to_dict()
+
+        out_info = {
+            'state': 'draft',
+            'subtype': 'picking',
+            'partner_type_stock_picking': 'internal',
+            'shipment_id': False,
+            'name': line_dict.get('order_id', {}).get('name', ''),
+            'origin': line_dict.get('origin', False),
+            'min_date': line_dict.get('order_id', {}).get('delivery_confirmed_date', time.strftime('%Y-%m-%d %H:%M:%S')),
+            'move_lines': [{
+                'asset_id': False,
+                'processed_stock_move': False,
+                'date_expected': line_dict.get('confirmed_delivery_date', time.strftime('%Y-%m-%d %H:%M:%S')),
+                'name': line_dict.get('name', ''),
+                'product_uom': line_dict.get('product_uom'),
+                'line_number': line_dict.get('link_sol_id', {}).get('line_number', 0),
+                'dpo_line_id': int(line_dict.get('fake_id', '0')),
+                'state': 'done',
+                'original_qty_partial': -1,
+                'note': line_dict.get('notes', ''),
+                'prodlot_id': False,
+                'expired_date': False,
+                'product_qty': line_dict.get('product_qty', 0.00),
+                'date': line_dict.get('confirmed_delivery_date', time.strftime('%Y-%m-%d %H:%M:%S')),
+                'change_reason': False,
+                'product_id': line_dict.get('product_id'),
+            }],
+        }
+
+        return self.pool.get('stock.picking').partial_shippped_dpo_updates_in_po(cr, uid, source, out_info, context=context)
 
 purchase_order_line_sync()
 
