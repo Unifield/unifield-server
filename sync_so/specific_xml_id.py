@@ -51,13 +51,6 @@ class ir_actions_act_window(osv.osv):
         origin_xmlid = model_data_obj.read(cr, uid, sdref_ids[0], ['module', 'name'])
         return get_valid_xml_name(origin_xmlid['module'], origin_xmlid['name'])
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if context is None:
-            context = {}
-        if context.get('sync_update_execution') and 'groups_id/id' in context.get('fields', []) and 'groups_id' not in vals:
-            vals['groups_id'] = [(6, 0, [])]
-        return super(ir_actions_act_window, self).write(cr, uid, ids, vals, context)
-
 ir_actions_act_window()
 
 class bank_statement(osv.osv):
@@ -231,6 +224,22 @@ class account_analytic_account(osv.osv):
                     res[id] = res_temp
             return res
 
+        # UFTP-2: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
+        if dest_field == 'instance_id':
+            ## Check if it is *funding pool* and created at HQ
+            res = dict.fromkeys(ids, False)
+            for target_line in self.browse(cr, uid, ids, context=context):
+                if target_line.instance_id:
+                    instance = target_line.instance_id
+                    if instance.state == 'active':
+                        res_data = [instance.instance]
+                        # if it is a coordo instance, send it to its active projects as well
+                        if instance.level == 'coordo':
+                            for project in instance.child_ids:
+                                if project.state == 'active':
+                                    res_data.append(project.instance)
+                        res[target_line.id] = res_data
+            return res
         return super(account_analytic_account, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
@@ -238,6 +247,33 @@ class account_analytic_account(osv.osv):
         return get_valid_xml_name(account.category, account.code, account.name)
 
 account_analytic_account()
+
+
+class financing_contract_contract(osv.osv):
+
+    _inherit = 'financing.contract.contract'
+
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
+        if dest_field == 'instance_id':
+            ## Check if it is *financing contract* created at HQ
+            res = dict.fromkeys(ids, False)
+            for target_line in self.browse(cr, uid, ids, context=context):
+                if target_line.instance_id:
+                    instance = target_line.instance_id
+                    if instance.state == 'active':
+                        res_data = [instance.instance]
+                        # if it is a coordo instance, send it to its active projects as well
+                        if instance.level == 'coordo':
+                            for project in instance.child_ids:
+                                if project.state == 'active':
+                                    res_data.append(project.instance)
+                        res[target_line.id] = res_data
+            return res
+        return super(financing_contract_contract, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+
+financing_contract_contract()
+
 
 class msf_instance(osv.osv):
 
@@ -356,9 +392,13 @@ class account_analytic_line(osv.osv):
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 res[line_data.id] = current_instance.parent_id.instance
-            # UFTP-382: sync down the distrib line associated to a register line no matter of the CC used
+            # UFTP-382/BKLG-24: sync the line associated to a register line to the register owner and to the target CC
             if line_data and line_data.move_id and line_data.move_id.statement_id and line_data.move_id.statement_id.instance_id.id != current_instance.id:
-                res[line_data.id] = line_data.move_id.statement_id.instance_id.instance
+                new_dest = line_data.move_id.statement_id.instance_id.instance
+                if res[line_data.id] and res[line_data.id] != new_dest:
+                    res[line_data.id] = [res[line_data.id], new_dest]
+                else:
+                    res[line_data.id] = new_dest
         return res
 
     # Generate delete message for AJI at Project
@@ -414,14 +454,39 @@ class account_analytic_line(osv.osv):
                 new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
                 # UTP-1128: if the old cost center belong to the current instance, do not generate the delete message
                 if instance_name != old_destination_name and old_destination_name != new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
+                    send_msg = True
+                    if instance_level == 'coordo':
+                        """
+                        BKLG-19/5: not to delete AJIs with a not target CC at 
+                        project level if these AJIs are tied to a project JI
+
+                        use case:
+                        - after the AD is changed project side to a coordo CC
+                        - sync to project
+                        - sync to coordo
+
+                        AT COORDO side:
+                        - delete message will be send here (as not target CC)
+                        - do not send it
+                        """
+                        aml_br = self.browse(cr, uid, ids[i], context=context)
+                        aml_ml_level = aml_br and aml_br.move_id and \
+                            aml_br.move_id.journal_id and \
+                            aml_br.move_id.journal_id.instance_id and \
+                            aml_br.move_id.journal_id.instance_id.level
+                        if aml_ml_level and aml_ml_level == 'project':
+                            send_msg = False
+
                     now = fields.datetime.now()
-                    message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
-                        'sent':False,
-                        'generate_message':True,
-                        'remote_call':self._name + ".message_unlink_analytic_line",
-                        'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                        'destination_name':old_destination_name}
-                    msg_to_send_obj.create(cr, uid, message_data)
+
+                    if send_msg:
+                        message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
+                            'sent':False,
+                            'generate_message':True,
+                            'remote_call':self._name + ".message_unlink_analytic_line",
+                            'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
+                            'destination_name':old_destination_name}
+                        msg_to_send_obj.create(cr, uid, message_data)
 
                     #UF-2439: If the old destination is not the same as the creating instance, then a delete message needs also be generated for the creating instance
                     creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id_record.name.split('/')[0]), ('level', '=', 'project')])
@@ -698,17 +763,6 @@ class button_access_rule(osv.osv):
         return get_valid_xml_name('BAR', view_xml_id[bar.view_id.id], bar.name)
 
 button_access_rule()
-
-class res_groups(osv.osv):
-    _inherit = 'res.groups'
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if context is None:
-            context = {}
-        if context.get('sync_update_execution') and 'menu_access/id' in context.get('fields', []) and 'menu_access' not in vals:
-            vals['menu_access'] = [(6, 0, [])]
-        return super(res_groups, self).write(cr, uid, ids, vals, context)
-res_groups()
 
 class hr_employee(osv.osv):
     _inherit = 'hr.employee'

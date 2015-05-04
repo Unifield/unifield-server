@@ -23,6 +23,7 @@ import logging
 
 from osv import osv, fields
 import so_po_common
+import time
 from sync_client import get_sale_purchase_logger
 
 class sale_order_line_sync(osv.osv):
@@ -69,9 +70,27 @@ class sale_order_sync(osv.osv):
     _inherit = "sale.order"
     _logger = logging.getLogger('------sync.sale.order')
 
+    def _get_sync_date(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for so_id in ids:
+            res[so_id] = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        return res
+
     _columns = {
                 'received': fields.boolean('Received by Client', readonly=True),
                 'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
+                'sync_date': fields.function(
+                    _get_sync_date,
+                    method=True,
+                    string='Sync Date',
+                    type='datetime',
+                    store=False,
+                    readonly=True,
+                ),
     }
 
     _defaults = {

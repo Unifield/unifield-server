@@ -385,10 +385,8 @@ class update_received(osv.osv):
             try:
                 cr.rollback_org, cr.rollback = cr.rollback, lambda:None
                 cr.commit_org, cr.commit = cr.commit, lambda:None
-                context['fields'] = fields # UTP-1100: Added this list for checking later if some values need to be re-taken
                 cr.execute("SAVEPOINT import_data")
                 res = obj.import_data(cr, uid, fields, values, mode='update', current_module='sd', noupdate=True, context=context)
-                del context['fields']
             except BaseException, e:
                 cr.execute("ROLLBACK TO SAVEPOINT import_data")
                 self._logger.exception("import failure")

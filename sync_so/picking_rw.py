@@ -823,7 +823,7 @@ class stock_picking(osv.osv):
                     context['rw_backorder_name'] = pick_name
                     # Before converting to OUT, the PICK needs to be updated as what sent from the RW
                     self.convert_to_standard(cr, uid, pick_ids, context)
-                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
+                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True}, context=context)
                     message = "The PICK " + old_name + " has been converted to OUT " + pick_name
                 else:
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', '=', 'assigned')], context=context)
@@ -863,13 +863,14 @@ class stock_picking(osv.osv):
         if rw_type == self.CENTRAL_PLATFORM:
             if origin:
                 # look for the OUT if it has already been converted before, using the origin from FO
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'out'),('state', 'in', ['draft', 'assigned'])], context=context)  
+                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'out'),('state', 'in', ['draft', 'confirmed', 'assigned'])], context=context)  
                 if pick_ids: # This is a real pick in draft, then convert it to OUT
                     old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
                     context['rw_backorder_name'] = pick_name
                     # Before converting to OUT, the PICK needs to be updated as what sent from the RW
                     self.convert_to_pick(cr, uid, pick_ids, context)
-                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
+                    # US-27: Do not change the status of this PICK, otherwise cannot close ship!
+                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True}, context=context)
                     message = "The OUT: " + old_name + " has been converted back to PICK: " + pick_name
                 else:
                     # If the OUT has already been converted back to PICK before, then just inform this fact

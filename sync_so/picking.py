@@ -23,9 +23,61 @@ from osv import osv, fields
 import netsvc
 
 import logging
+import time
 
 from sync_common import xmlid_to_sdref
 from sync_client import get_sale_purchase_logger
+
+
+class stock_move(osv.osv):
+    _inherit = 'stock.move'
+
+    def _get_sent_ok(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for m in self.browse(cr, uid, ids, context=context):
+            res[m.id] = m.state == 'cancel' and m.picking_id and m.picking_id.sale_id and m.picking_id.sale_id.state in ['done', 'cancel']
+
+        return res
+
+    def _src_sent_ok(self, cr, uid, obj, name, args, context=None):
+        if not len(args):
+            return []
+
+        for arg in args:
+            if arg[0] == 'to_be_sent':
+                if arg[1] != '=' and arg[2] is True:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Only \'=\' operator is accepted for \'to_be_sent\' field')
+                    )
+
+                res = [('state', '=', 'cancel')]
+                order_ids = self.pool.get('sale.order').search(cr, uid, [('state', 'in', ['done', 'cancel'])])
+                picking_ids = self.pool.get('stock.picking').search(cr, uid, [('type', '=', 'out'), ('sale_id', 'in', order_ids)])
+                res.append(('picking_id', 'in', picking_ids))
+
+        return res
+
+    _columns = {
+        'to_be_sent': fields.function(
+            _get_sent_ok,
+            fnct_search=_src_sent_ok,
+            method=True,
+            type='boolean',
+            string='Send to other instance ?',
+            readonly=True,
+        ),
+        'date_cancel': fields.datetime(string='Date cancel'),
+    }
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'date_cancel': time.strftime('%Y-%m-%d %H:%M:%S')})
+        return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
+
+stock_move()
 
 
 class stock_picking(osv.osv):
@@ -45,10 +97,12 @@ class stock_picking(osv.osv):
 
         # product
         product_name = data['product_id']['name']
-        product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
-        if not product_ids:
-            raise Exception, "The corresponding product does not exist here. Product name: %s" % product_name
-        product_id = product_ids[0]
+        product_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
+        if not product_id:
+            product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
+            if not product_ids:
+                raise Exception, "The corresponding product does not exist here. Product name: %s" % product_name
+            product_id = product_ids[0]
 
         # UF-1617: asset form
         asset_id = False
@@ -338,45 +392,7 @@ class stock_picking(osv.osv):
             self._logger.info(message)
             return message
 
-
-    def do_incoming_shipment_sync(self, cr, uid, in_id, in_processor, context=None):
-        '''
-        ' Modify the original method do_incoming_shipment in delivery_mechanism/wizard/stock_partial_picking.py to perform similarly as a
-        ' partial incoming shipment for the sync case, as partial shipment/OUT has been made.
-        '
-        ' The main idea here is to "rebuild" the value of "partial_datas" then call the method do_incoming_shipment of stock.picking
-        '''
-        # picking ids
-        move_obj = self.pool.get('stock.move')
-        prodlot_obj = self.pool.get('stock.production.lot')
-
-        pick = self.browse(cr, uid, in_id, context=context)
-
-        # treated moves
-        move_ids = partial_datas[in_id].keys()
-        # all moves
-        all_move_ids = [move.id for move in pick.move_lines]
-        # these moves will be set to 0 - not present in the wizard - create partial objects with qty 0
-        missing_move_ids = [x for x in all_move_ids if x not in move_ids]
-        # missing moves (deleted memory moves) are replaced by a corresponding partial with qty 0
-        for missing_move in move_obj.browse(cr, uid, missing_move_ids, context=context):
-            values = {'name': move.product_id.partner_ref,
-                      'product_id': missing_move.product_id.id,
-                      'product_qty': 0,
-                      'product_uom': missing_move.product_uom.id,
-                      'prodlot_id': False,
-                      'asset_id': False,
-                      'force_complete': False,
-                      'change_reason': None,
-                      }
-            # average computation from original openerp
-            if (missing_move.product_id.cost_method == 'average') and not missing_move.location_dest_id.cross_docking_location_ok:
-                values.update({'product_price' : missing_move.product_id.standard_price,
-                               'product_currency': missing_move.product_id.company_id and missing_move.product_id.company_id.currency_id and missing_move.product_id.company_id.currency_id.id or False,
-                               })
-            partial_datas[in_id].setdefault(missing_move.id, []).append(values)
-        return self.do_incoming_shipment(cr, uid, [in_id], context=dict(context, partial_datas=partial_datas))
-
+    # REMOVE THIS METHOD, NO MORE USE! do_incoming_shipment_sync
 
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
         '''
@@ -452,6 +468,11 @@ class stock_picking(osv.osv):
                 return message
             else:
                 po = po_obj.browse(cr, uid, [po_id], context=context)[0]
+                if po.fo_sync_date > pick_dict['date_cancel']:
+                    message = "The message is ignored as the stock move has been canceled before update of the PO"
+                    self._logger.info(message)
+                    return message
+
                 if len(po.order_line) == 0:
                     message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
                     self._logger.info(message)

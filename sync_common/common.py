@@ -66,6 +66,7 @@ MODELS_TO_IGNORE = [
                     'sync.server.update',
                     'sync.server.message',
                     'sync_server.version',
+                    'sync.server.puller_logs',
                     'audittrail.log.sequence',
                     'audittrail.log.line',
 
