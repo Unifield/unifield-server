@@ -25,6 +25,7 @@ import netsvc
 from datetime import datetime, date
 
 from order_types.stock import check_cp_rw
+from msf_order_date import TRANSPORT_TYPE
 
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
@@ -247,7 +248,7 @@ class shipment(osv.osv):
                 'date': fields.datetime(string='Creation Date'),
                 'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
                 'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
-                'transport_type': fields.selection([('by_road', 'By road')],
+                'transport_type': fields.selection(TRANSPORT_TYPE,
                                                    string="Transport Type", readonly=True),
                 'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
                 'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
