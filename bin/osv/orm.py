@@ -60,7 +60,7 @@ import tools
 from tools.safe_eval import safe_eval as eval
 
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
-from tools import SKIPPED_ELEMENT_TYPES
+from tools import SKIPPED_ELEMENT_TYPES, cache
 
 regex_order = re.compile('^(([a-z0-9_]+|"[a-z0-9_]+")( *desc| *asc)?( *, *|))+$', re.I)
 
@@ -407,6 +407,14 @@ class orm_template(object):
     _table = None
     _invalids = set()
     _log_create = False
+    # Dict with fields to replace as key and replacing fields as value like this
+    # {'product_id': [
+    #         (['product_code', 'Product Code'], 10),
+    #         (['product_name', 'Product Name'], 20),
+    #     ]
+    # }
+    _replace_exported_fields = {}
+
 
     CONCURRENCY_CHECK_FIELD = '__last_update'
     def log(self, cr, uid, id, message, secondary=False, context=None):
@@ -819,12 +827,12 @@ class orm_template(object):
             data_res_id = False
             xml_id = False
             nbrmax = position+1
-
+ 
             done = {}
             for i in range(len(fields)):
                 res = False
-                if not line[i]:
-                    continue
+                #if not line[i]:
+                #    continue
                 if i >= len(line):
                     raise Exception(_('Please check that all your lines have %d columns.') % (len(fields),))
 
@@ -837,7 +845,7 @@ class orm_template(object):
                 # ID of the record using a XML ID
                 if field[len(prefix)]=='id':
                     try:
-                        data_res_id = _get_id(model_name, line[i], current_module, 'id')
+                        data_res_id = line[i] and _get_id(model_name, line[i], current_module, 'id')
                     except ValueError, e:
                         pass
                     xml_id = line[i]
@@ -845,7 +853,7 @@ class orm_template(object):
 
                 # ID of the record using a database ID
                 elif field[len(prefix)]=='.id':
-                    data_res_id = _get_id(model_name, line[i], current_module, '.id')
+                    data_res_id = line[i] and _get_id(model_name, line[i], current_module, '.id')
                     continue
 
                 # recursive call for getting children and returning [(0,0,{})] or [(1,ID,{})]
@@ -876,7 +884,7 @@ class orm_template(object):
                         mode = False
                     else:
                         mode = field[len(prefix)+1]
-                    res = _get_id(relation, line[i], current_module, mode)
+                    res = line[i] and _get_id(relation, line[i], current_module, mode)
 
                 elif fields_def[field[len(prefix)]]['type']=='many2many':
                     relation = fields_def[field[len(prefix)]]['relation']
@@ -887,14 +895,15 @@ class orm_template(object):
 
                     # TODO: improve this by using csv.csv_reader
                     res = []
-                    for db_id in line[i].split(config.get('csv_internal_sep')):
-                        res.append( _get_id(relation, db_id, current_module, mode) )
+                    if line[i]:
+                        for db_id in line[i].split(config.get('csv_internal_sep')) or []:
+                            res.append( _get_id(relation, db_id, current_module, mode) )
                     res = [(6,0,res)]
 
                 elif fields_def[field[len(prefix)]]['type'] == 'integer':
                     res = line[i] and int(line[i]) or 0
                 elif fields_def[field[len(prefix)]]['type'] == 'boolean':
-                    res = line[i].lower() not in ('0', 'false', 'off')
+                    res = line[i] and line[i].lower() not in ('0', 'false', 'off') or False
                 elif fields_def[field[len(prefix)]]['type'] == 'float':
                     res = line[i] and float(line[i].replace(',','.')) or 0.0
                 elif fields_def[field[len(prefix)]]['type'] == 'selection':
@@ -902,6 +911,8 @@ class orm_template(object):
                         if line[i] in [tools.ustr(key), tools.ustr(val)]:
                             res = key
                             break
+                    if not line[i]:
+                        res = False
                     if line[i] and not res:
                         model_obj = self.pool.get(model_name)
                         if model_obj:
@@ -919,7 +930,7 @@ class orm_template(object):
                         warning += [_("Key/value '%s' not found in selection field '%s'") % (line[i], field[len(prefix)])]
                 elif fields_def[field[len(prefix)]]['type'] == 'reference':
                     # support importing of reference fields
-                    field_value = eval(line[i])
+                    field_value = line[i] and eval(line[i])
                     if isinstance(field_value, tuple):
                         (module, model, ref_xml_id) = (field_value[0], field_value[1], field_value[2])
                         ir_model_data_obj = self.pool.get('ir.model.data')
@@ -963,6 +974,9 @@ class orm_template(object):
             except except_osv, e:
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
+                #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
+                if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
+                    cache.clean_caches_for_db(cr.dbname)
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e), '')
 
             if config.get('import_partial', False) and filename and (not (position%100)):
@@ -1977,6 +1991,37 @@ class orm_template(object):
             defaults.update(values)
             values = defaults
         return values
+
+    def update_exported_fields(self, cr, uid, fields):
+        """
+        Override this method if you would like to change the exported
+        fields on the object.
+        """
+        for fld, rpl_flds in self._replace_exported_fields.iteritems():
+            fld_index = None
+            fld_val = None
+            fld_to_rm = []
+            for f in fields:
+                if f[0] == fld:
+                    fld_index = fields.index(f)
+                    fld_val = f
+                else:
+                    for rpl_fld in rpl_flds:
+                        if f[0] == rpl_fld[0][0]:
+                            fld_to_rm.append(f)
+
+            if fld_index is not None:
+                for frm in fld_to_rm:
+                    if frm[0] not in self._replace_exported_fields.keys():
+                        fields.remove(frm)
+
+                sorted_rpl_flds = reversed(sorted(rpl_flds, key=lambda x: x[1]))
+                for rpl_fld in sorted_rpl_flds:
+                    fields.insert(fld_index, rpl_fld[0])
+
+                fields.remove(fld_val)
+
+        return fields
 
 class orm_memory(orm_template):
 
