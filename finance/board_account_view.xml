@@ -39,7 +39,9 @@
             <field name="search_view_id" eval="False"/>
         </record>
 
-        <record id="action_commitment_voucher" model="ir.actions.act_window">
+        <!-- DashBoard -->
+
+        <record id="account_board_commitment_voucher" model="ir.actions.act_window">
 			<field name="name">Commitment Voucher</field>
 			<field name="res_model">account.commitment</field>
 			<field name="view_type">form</field>
@@ -48,7 +50,8 @@
 			<field name="domain">[('state', 'in', ('draft','open'))]</field>
             <field name="context">{'board_view': True}</field>
 		</record>
-        <record id="action_supplier_invoice_draft" model="ir.actions.act_window">
+
+        <record id="account_board_supplier_invoice_draft" model="ir.actions.act_window">
 			<field name="name">Suppliers invoices pending validation</field>
 			<field name="res_model">account.invoice</field>
 			<field name="view_type">form</field>
@@ -57,7 +60,8 @@
 			<field name="domain">[('state', '=', 'draft')]</field>
             <field name="context">{'board_view': True}</field>
 		</record>
-        <record id="action_supplier_invoice_open" model="ir.actions.act_window">
+
+        <record id="account_board_supplier_invoice_open" model="ir.actions.act_window">
 			<field name="name">Suppliers invoices pending payment</field>
 			<field name="res_model">account.invoice</field>
 			<field name="view_type">form</field>
@@ -67,8 +71,7 @@
             <field name="context">{'board_view': True}</field>
 		</record>
 
-
-        <record id="board_account_board_liquidity" model="ir.ui.view">
+        <record id="account_board_liquidity_view" model="ir.ui.view">
             <field name="name">account.bank.statement</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
@@ -84,17 +87,16 @@
                 </tree>
             </field>
         </record>
-
         <record id="account_board_liquidity" model="ir.actions.act_window">
 			<field name="name">Liquidity</field>
 			<field name="res_model">account.bank.statement</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar,graph</field>
-			<field ref="board_account_board_liquidity" name="view_id"/>
+			<field ref="account_board_liquidity_view" name="view_id"/>
             <field name="context">{'board_view': True}</field>
 		</record>
 
-        <record id="board_account_board_currency" model="ir.ui.view">
+        <record id="account_board_currency_view" model="ir.ui.view">
             <field name="name">res.currency</field>
             <field name="model">res.currency</field>
             <field name="type">tree</field>
@@ -106,17 +108,75 @@
                 </tree>
             </field>
         </record>
-
         <record id="account_board_currency" model="ir.actions.act_window">
 			<field name="name">Latest FX rates</field>
 			<field name="res_model">res.currency</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar,graph</field>
-			<field ref="board_account_board_currency" name="view_id"/>
+			<field ref="account_board_currency_view" name="view_id"/>
             <field name="context">{'board_view': True}</field>
 		</record>
 
+        <record id="account_board_contract_view" model="ir.ui.view">
+            <field name="name">financing.contract.contract</field>
+            <field name="model">financing.contract.contract</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Latest FX rates">
+                    <field name="name"/>
+                    <field name="grant_amount"/>
+                    <field name="reporting_currency"/>
+                    <field name="eligibility_from_date"/>
+                    <field name="eligibility_to_date"/>
+                    <field name="board_time_elapsed"/>
+                    <field name="board_grant"/>
+                    <field name="board_total_project"/>
+                </tree>
+            </field>
+        </record>
+        <record id="account_board_contract" model="ir.actions.act_window">
+			<field name="name">Financing contract overview</field>
+			<field name="res_model">financing.contract.contract</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar,graph</field>
+			<field ref="account_board_contract_view" name="view_id"/>
+            <field name="context">{'board_view': True}</field>
+		</record>
 
+        <record id="account_board_budget_search_view" model="ir.ui.view">
+            <field name="name">msf.budget.line</field>
+            <field name="model">msf.budget.line</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Budget">
+                    <group col="6" colspan="4">
+                        <field name="budget_id" select="1"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        <record id="account_board_budget_view" model="ir.ui.view">
+            <field name="name">msf.budget.line</field>
+            <field name="model">msf.budget.line</field>
+            <field name="type">graph</field>
+            <field name="arch" type="xml">
+                <graph string="Budgets (percents)" type="bar" orientation="horizontal">
+                    <field name="name"/>
+                    <field name="bugdet_synthesis" operator="max"/>
+                </graph>
+            </field>
+        </record>
+        <record id="account_board_budgets" model="ir.actions.act_window">
+			<field name="name">Budget synthesis</field>
+			<field name="res_model">msf.budget.line</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">graph,tree,form</field>
+			<field ref="account_board_budget_view" name="view_id"/>
+            <field name="context">{'board_view': 'budget'}</field>
+            <field name="domain">[]</field>
+            <field name="search_view_id" ref="account_board_budget_search_view"/>
+		</record>
+        -->
         <!-- Custom Accounting Board -->
         <record id="inherit_board_account_form" model="ir.ui.view">
             <field name="name">inherit.board.account.form</field>
@@ -129,11 +189,16 @@
                     <form string="Account Board">
                         <hpaned>
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(action_commitment_voucher)d" string="Commitment Voucher" />
-                                <action colspan="4" height="160" width="400" name="%(action_supplier_invoice_draft)d" string="Suppliers invoices pending validation" />
-                                <action colspan="4" height="160" width="400" name="%(action_supplier_invoice_open)d" string="Suppliers invoices pending payment" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_commitment_voucher)d" string="Commitment Voucher" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" />
                                 <action colspan="4" height="160" width="400" name="%(account_board_liquidity)d" string="Liquidity" />
+                            </child1>
+
+                            <child1>
                                 <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_contract)d" string="Financing contract overview" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_budgets)d" string="Budgets" />
                             </child1>
                         </hpaned>
                     </form>

@@ -358,6 +358,21 @@ class msf_budget_line(osv.osv):
             res = dict(tmp_res)
         return res
 
+    def _get_bugdet_synthesis(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        res = {}
+        for line_id in ids:
+            res[line_id] = 0
+
+            line = self.browse(cr, uid, line_id, context=context)
+
+            actual =    line["actual_amount"]   if line["actual_amount"] else 0
+            comm =      line["comm_amount"]     if line["comm_amount"]   else 0
+            budget =    line["budget_amount"]   if line["budget_amount"] else 0
+
+            if budget > 0 and (actual + comm) > 0:
+                res[line_id] = round(((actual + comm) / budget) * 100, 2)
+        return res
+
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
@@ -387,7 +402,24 @@ class msf_budget_line(osv.osv):
                                        ('normal','Normal'),
                                        ('destination', 'Destination')], 'Line type', required=True),
         'account_code': fields.related('account_id', 'code', type='char', string='Account code', size=64, store=True),
+        'bugdet_synthesis': fields.function(_get_bugdet_synthesis, method=True, store=False, string="Budget synthesis", type="float", readonly=True),  # BKLG-65
     }
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if context and "board_view" in context and "budget" in context["board_view"]:
+            res = []
+            where = "WHERE LENGTH(account_code) = 2"
+            for arg in args:
+                where += " AND " + str(arg[0]) + " " + str(arg[1]) + " " + str(arg[2])
+            sql = "SELECT id FROM msf_budget_line " + where
+            cr.execute(sql)
+            sql_res = cr.fetchall()
+            if sql_res:
+                res += [x and x[0] for x in sql_res]
+            return res
+        else:
+            return super(msf_budget_line, self).search(cr, uid, args, offset=offset,
+                                                       limit=limit, order=order, context=context, count=count)
 
     _order = 'account_code asc, line_type desc'
 
