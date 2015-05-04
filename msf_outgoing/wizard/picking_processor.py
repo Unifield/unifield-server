@@ -129,6 +129,9 @@ class stock_picking_processor(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if context is None:
+            context = {}
+
         if not ids:
             raise osv.except_osv(
                 _('Error'),

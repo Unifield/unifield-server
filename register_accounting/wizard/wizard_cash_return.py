@@ -531,6 +531,13 @@ class wizard_cash_return(osv.osv_memory):
         employee_id = move_line.employee_id.id or False
         seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
         reference = move_line.ref or False
+        # BKLG-44: we keep the link with AD of the move line
+        # (no need to copy it, just link it (register line already hard posted))
+        # => as a temp/posted reg line copied will copy (new) AD, this gives a
+        #    consistent mechanism of AD copy: for reg lines generated from
+        #    advance cash return wizard
+        analytic_distribution_id = move_line.analytic_distribution_id and \
+            move_line.analytic_distribution_id.id or False
 
         # Verify that the currency is the same as those of the Register
         register = self.pool.get('account.bank.statement').browse(cr, uid, register_id, context=context)
@@ -552,6 +559,7 @@ class wizard_cash_return(osv.osv_memory):
             'from_cash_return': True, # this permits to disable the return function on the statement line
             'sequence_for_reference': seq,
             'ref': reference,
+            'analytic_distribution_id': analytic_distribution_id,
         }
         # Add invoice link if exists
         if invoice_id:

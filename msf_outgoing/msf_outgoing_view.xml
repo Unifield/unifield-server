@@ -251,7 +251,7 @@
 									<field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <field name="pt_created" invisible="1" />
-                                    <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}" />
+                                    <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}"   context="{'from_button': True}"  />
 								</tree>
 								<form string="Stock Moves">
 									<group colspan="2" col="4">
@@ -336,8 +336,8 @@
                                 <field name="line_state" readonly="1" attrs="{'invisible': [('state', '!=', 'draft')]}" nolabel="1" />
                                 <field name="flow_type" />
                                 <group colspan="1" col="1">
-                                    <button name="call_cancel_wizard" type="object" states="draft" string="_Cancel Picking" icon="gtk-cancel"/>
-                                    <button name="button_cancel" states="assigned,confirmed" string="_Cancel Picking" icon="gtk-cancel"/>
+                                    <button name="call_cancel_wizard" type="object" states="draft" string="_Cancel Picking" icon="gtk-cancel"   context="{'from_button': True}" />
+                                    <button name="button_cancel" states="assigned,confirmed" string="_Cancel Picking" icon="gtk-cancel"   context="{'from_button': True}" />
                                 </group>
                                 <field name="has_draft_moves" invisible="1" />
                                 <button name="action_confirm_moves" states="draft" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': [('has_draft_moves', '=', False)]}"/>
@@ -1067,7 +1067,7 @@
 							<group col="12" colspan="4">
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
-								<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
+								<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"  context="{'from_button': True}" />
 								<button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" icon="gtk-find"/>
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 								<button name="packing" states="assigned" string="Pack..." type="object" icon="gtk-go-forward"/>
@@ -1223,7 +1223,7 @@
 									<field name="currency_id" />
 									<field name="location_id" />
                                     <field name="state" />
-                                    <field name="not_shipped" invisible="1" />
+                                    <field name="not_shipped"  string="Returned" />
 								</tree>
 								<form>
 									<field name="sale_order_id"/>

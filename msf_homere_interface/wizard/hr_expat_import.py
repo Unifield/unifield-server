@@ -41,6 +41,11 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
         """
         Import XLS file
         """
+        def get_xml_spreadheet_cell_value(cell_index):
+            return line.cells and len(line.cells) > cell_index and \
+                line.cells[cell_index] and line.cells[cell_index].data \
+                or False
+
         hr_emp_obj = self.pool.get('hr.employee')
         # Some verifications
         if not context:
@@ -62,29 +67,51 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             fileobj = SpreadsheetXML(xmlstring=decodestring(wiz.file))
             reader = fileobj.getRows()
             reader.next()
+            line_index = 2  # header taken into account
             for line in reader:
-                name = line.cells and line.cells[0] and line.cells[0].data or False
+                # get cells
+                name = get_xml_spreadheet_cell_value(0)
                 if not name:
                     continue
-                code = line.cells and len(line.cells) > 1 and line.cells[1] and line.cells[1].data or False
+                code = get_xml_spreadheet_cell_value(1)
                 if not code:
                     msg = "At least one employee in the import file does not" \
                         " have an ID number; make sure all employees in the" \
                         " file have an ID number and run the import again."
                     raise osv.except_osv(_('Error'), _(msg))
+                active_str = get_xml_spreadheet_cell_value(2)
+                if not active_str:
+                    msg = "Active column is missing or empty at line %d"
+                    raise osv.except_osv(_('Error'), _(msg) % (line_index, ))
+                active_str = active_str.lower()
+                if active_str not in ('active', 'inactive'):
+                    msg = "Active column invalid value line %d" \
+                        " (should be Active/Inactive)"
+                    raise osv.except_osv(_('Error'), _(msg) % (line_index, ))
+                active = active_str == 'active' or False
+
                 processed += 1
 
                 ids = hr_emp_obj.search(cr, uid,
                     [('identification_id', '=', code)])
                 if ids:
                     # Update name of Expat employee
-                    hr_emp_obj.write(cr, uid, [ids[0]], {'name': name})
+                    hr_emp_obj.write(cr, uid, [ids[0]], {
+                        'name': name, 
+                        'active': active,
+                    })
                     updated += 1
                 else:
                     # Create Expat employee
-                    hr_emp_obj.create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex', 'identification_id': code})
+                    hr_emp_obj.create(cr, uid, {
+                        'name': name,
+                        'active': active,
+                        'type': 'ex',
+                        'identification_id': code,
+                    })
                     created += 1
-            
+                line_index += 1
+
             context.update({'message': ' ', 'from': 'expat_import'})
 
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')

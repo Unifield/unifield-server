@@ -855,6 +855,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # 1/ Check validity of analytic distribution
         self.analytic_distribution_checks(cr, uid, order_brw_list)
 
+        no_price_lines = line_obj.search(cr, uid, [
+            ('order_id', '=', ids),
+            ('price_unit', '=', 0.00),
+        ])
+        if no_price_lines:
+            raise osv.except_osv(
+                _('Warning'),
+                _('FO cannot be validated as line cannot have unit price of zero.'),
+            )
+
         for order in order_brw_list:
             # 2/ Check if there is lines in order
             if len(order.order_line) < 1:
@@ -1486,6 +1496,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         data_obj = self.pool.get('ir.model.data')
         sol_obj = self.pool.get('sale.order.line')
         config_obj = self.pool.get('unifield.setup.configuration')
+        prsd_obj = self.pool.get('procurement.request.sourcing.document')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
 
@@ -1539,6 +1550,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     if order.procurement_request:
                         move_obj.action_confirm(cr, uid, [move_id], context=context)
+                        prsd_obj.chk_create(cr, uid, {
+                            'order_id': order.id,
+                            'sourcing_document_id': picking_id,
+                            'sourcing_document_model': 'stock.picking',
+                            'sourcing_document_type': picking_data.get('type'),
+                        }, context=context)
 
                     """
                     We update the procurement and the purchase orders if we are treating o FO which is
@@ -1661,6 +1678,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if order.procurement_request:
                     proc = proc_obj.browse(cr, uid, [proc_id], context=context)
                     pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
+
                     if pick_id:
                         picks_to_check.add(pick_id)
 
@@ -2892,6 +2910,7 @@ sale_order_cancelation_wizard()
 
 class sale_order_leave_close(osv.osv_memory):
     _name = 'sale.order.leave.close'
+    _rec_name = 'order_id'
 
     _columns = {
         'wizard_id': fields.many2one(

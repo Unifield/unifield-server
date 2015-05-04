@@ -383,9 +383,6 @@ class po_follow_up_mixin(object):
     def getRunParmsRML(self,key):
         return self.datas['report_parms'][key]
 
-    def getPOLineHeaders(self):
-        return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
-       
     def printAnalyticLines(self, analytic_lines):
         res = []
         # if additional analytic lines print them here.
@@ -412,12 +409,14 @@ class po_follow_up_mixin(object):
         # TODO the multiplier is the value populated for no change in stock_move.price_unit
         # TODO it probably should be 1
         multiplier = 1.0000100000000001 
+        po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)], order='line_number')
         po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
         report_lines = []
+        order = po_obj.browse(self.cr, self.uid, po_id)
         for line in po_lines:
             in_lines = self.getAllLineIN(line.id)
             analytic_lines = self.getAnalyticLines(line)
@@ -438,6 +437,10 @@ class po_follow_up_mixin(object):
             # Display information of the initial reception
             if not same_product_same_uom:
                 report_line = {
+                    'order_ref': order.name or '',
+                    'order_created': order.date_order or '',
+                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_status': self._get_states().get(order.state, ''),
                     'item': line.line_number or '',
                     'code': line.product_id.default_code or '',
                     'description': line.product_id.name or '',
@@ -457,6 +460,10 @@ class po_follow_up_mixin(object):
 
             for spsul in same_product_same_uom:
                 report_line = {
+                    'order_ref': order.name or '',
+                    'order_created': order.date_order or '',
+                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_status': self._get_states().get(order.state, ''),
                     'item': first_line and line.line_number or '',
                     'code': first_line and line.product_id.default_code or '',
                     'description': first_line and line.product_id.name or '',
@@ -481,6 +488,10 @@ class po_follow_up_mixin(object):
 
             for spl in same_product:
                 report_line = {
+                    'order_ref': order.name or '',
+                    'order_created': order.date_order or '',
+                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_status': self._get_states().get(order.state, ''),
                     'item': first_line and line.line_number or '',
                     'code': first_line and line.product_id.default_code or '',
                     'description': first_line and line.product_id.name or '',
@@ -505,6 +516,10 @@ class po_follow_up_mixin(object):
             for ol in other_product:
                 prod_brw = prod_obj.browse(self.cr, self.uid, ol.get('product_id'))
                 report_line = {
+                    'order_ref': order.name or '',
+                    'order_created': order.date_order or '',
+                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_status': self._get_states().get(order.state, ''),
                     'item': line.line_number or '',
                     'code': prod_brw.default_code or '',
                     'description': prod_brw.name or '',
@@ -560,7 +575,7 @@ class po_follow_up_mixin(object):
         return self.datas.get('report_header')[1]
 
     def getPOLineHeaders(self):
-        return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
+        return ['Order Ref', 'Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price', 'Created', 'Confirmed Delivery', 'Status', 'Destination','Cost Center']
       
 
 
@@ -631,11 +646,11 @@ class ir_values(osv.osv):
 #            new_act = []
 #            for v in values :
 #                if v[2]['name'] == 'Purchase Order Excel Export' and context['_terp_view_name'] == 'Purchase Orders' \
-#                or v[2]['report_name'] == 'purchase.msf.order' and context['_terp_view_name'] == 'Purchase Orders' \
-#                or v[2]['report_name'] == 'purchase.order.merged' and context['_terp_view_name'] == 'Purchase Orders' \
-#                or v[2]['report_name'] == 'po.line.allocation.report' and context['_terp_view_name'] == 'Purchase Orders' \
-#                or v[2]['report_name'] == 'purchase.msf.quotation' and context['_terp_view_name'] == 'Requests for Quotation' \
-#                or v[2]['report_name'] == 'request.for.quotation_xls' and context['_terp_view_name'] == 'Requests for Quotation' :
+#                or v[2].get('report_name', False) == 'purchase.msf.order' and context['_terp_view_name'] == 'Purchase Orders' \
+#                or v[2].get('report_name', False) == 'purchase.order.merged' and context['_terp_view_name'] == 'Purchase Orders' \
+#                or v[2].get('report_name', False) == 'po.line.allocation.report' and context['_terp_view_name'] == 'Purchase Orders' \
+#                or v[2].get('report_name', False) == 'purchase.msf.quotation' and context['_terp_view_name'] == 'Requests for Quotation' \
+#                or v[2].get('report_name', False) == 'request.for.quotation_xls' and context['_terp_view_name'] == 'Requests for Quotation' :
 #                    new_act.append(v)
 #                values = new_act
         
@@ -646,12 +661,12 @@ class ir_values(osv.osv):
             #field_orders_view = data_obj.get_object_reference(cr, uid, 'procurement_request', 'action_procurement_request')[1]
             for v in values:
                 if context.get('procurement_request', False):
-                    if v[2]['report_name'] in ('internal.request_xls', 'procurement.request.report') \
+                    if v[2].get('report_name', False) in ('internal.request_xls', 'procurement.request.report') \
                     or v[1] == 'action_open_wizard_import': # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 else:
-                    if v[2]['report_name'] == 'msf.sale.order' \
-                    or v[2]['report_name'] == 'sale.order_xls' \
+                    if v[2].get('report_name', False) == 'msf.sale.order' \
+                    or v[2].get('report_name', False) == 'sale.order_xls' \
                     or v[1] == 'Order Follow Up': # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 values = new_act
@@ -666,11 +681,11 @@ class ir_values(osv.osv):
             Delivery_Order = trans_obj.tr_view(cr, 'Delivery Order', context)
             Internal_Moves = trans_obj.tr_view(cr, 'Internal Moves', context)
             for v in values:
-                if v[2]['report_name'] == 'picking.ticket' and (context.get('_terp_view_name') in (Picking_Tickets, Picking_Ticket) or context.get('picking_type') == 'picking_ticket') and context.get('picking_screen', False)\
-                or v[2]['report_name'] == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
-                or v[2]['report_name'] == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
-                or v[2]['report_name'] in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
-                or v[2]['report_name'] == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):
+                if v[2].get('report_name', False) == 'picking.ticket' and (context.get('_terp_view_name') in (Picking_Tickets, Picking_Ticket) or context.get('picking_type') == 'picking_ticket') and context.get('picking_screen', False)\
+                or v[2].get('report_name', False) == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
+                or v[2].get('report_name', False) == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
+                or v[2].get('report_name', False) in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
+                or v[2].get('report_name', False) == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):
                     new_act.append(v)
                 values = new_act
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
@@ -682,7 +697,7 @@ class ir_values(osv.osv):
             Shipments = trans_obj.tr_view(cr, 'Shipments', context)
             Shipment = trans_obj.tr_view(cr, 'Shipment', context)
             for v in values:
-                if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] in (Packing_Lists, Packing_List) :
+                if v[2].get('report_name', False) == 'packing.list' and context['_terp_view_name'] in (Packing_Lists, Packing_List) :
                     new_act.append(v)
                 elif context['_terp_view_name'] in (Shipment_Lists, Shipment_List, Shipments, Shipment):
                     new_act.append(v)
@@ -691,19 +706,19 @@ class ir_values(osv.osv):
             new_act = []
             for v in values:
                 if v[2].get('report_name', False) :
-                    if v[2]['report_name'] in ('picking.ticket', 'labels'):
+                    if v[2].get('report_name', False) in ('picking.ticket', 'labels'):
                         new_act.append(v)
                 values = new_act
 
         elif key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
             new_act = []
             for v in values:
-                if context.get('composition_type')=='theoretical' and v[2]['report_name'] in ('composition.kit.xls', 'kit.report'):
-                    if v[2]['report_name'] == 'kit.report':
+                if context.get('composition_type')=='theoretical' and v[2].get('report_name', False) in ('composition.kit.xls', 'kit.report'):
+                    if v[2].get('report_name', False) == 'kit.report':
                         v[2]['name'] = _('Theoretical Kit')
                     new_act.append(v)
-                elif context.get('composition_type')=='real' and v[2]['report_name'] in ('real.composition.kit.xls', 'kit.report'):
-                    if v[2]['report_name'] == 'kit.report':
+                elif context.get('composition_type')=='real' and v[2].get('report_name', False) in ('real.composition.kit.xls', 'kit.report'):
+                    if v[2].get('report_name', False) == 'kit.report':
                         v[2]['name'] = _('Kit Composition')
                     new_act.append(v)
             values = new_act

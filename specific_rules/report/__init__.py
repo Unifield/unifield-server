@@ -20,3 +20,4 @@
 ##############################################################################
 
 import report_stock_virtual
+import report_stock_inventory

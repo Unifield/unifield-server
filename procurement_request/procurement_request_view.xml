@@ -115,10 +115,10 @@
                         </page>
                         <page string="Sourcing Documents">
                             <field name="order_ids" nolabel="1" colspan="4">
-                                <tree string="Sourcing Documents" colors="blue:state=='draft'">
-                                    <field name="name" />
-                                    <field name="partner_id" />
-                                    <field name="state" />
+                                <tree string="Sourcing Documents">
+                                    <field name="sourcing_document_type" />
+                                    <field name="sourcing_document_name" />
+                                    <button type="object" name="go_to_document" string="Open document" icon="terp-gtk-jump-to-ltr" />
                                 </tree>
                             </field> 
                         </page>

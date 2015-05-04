@@ -404,10 +404,21 @@ class hq_entries_validation(osv.osv_memory):
                 if isinstance(cor_ids, (int, long)):
                     cor_ids = [cor_ids]
                 cor_ids += res_reverse
+
+                gl_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+                if not gl_journal_ids:
+                    raise osv.except_osv(_('Error'), _('No correction journal found!'))
+                gl_journal_obj = self.pool.get('account.journal').browse(cr, uid, gl_journal_ids[0], context=context)
+                journal_sequence_id = gl_journal_obj.sequence_id.id
+                journal_code = gl_journal_obj.code
+                seq_obj = self.pool.get('ir.sequence')
+                seqnum = False
                 for ana_line in ana_line_obj.browse(cr, uid, cor_ids, context=context):
+                    if not seqnum:
+                        seqnum = seq_obj.get_id(cr, uid, journal_sequence_id,
+                            context={'fiscalyear_id': ana_line.period_id.fiscalyear_id.id})
                     prefix = ana_line.instance_id.move_prefix
-                    seqnum = ana_line.entry_sequence.split('-')[2]
-                    entry_seq = "%s-%s-%s" % (prefix, ana_line.journal_id.code, seqnum)
+                    entry_seq = "%s-%s-%s" % (prefix, journal_code, seqnum)
                     cr.execute('UPDATE account_analytic_line SET entry_sequence = %s WHERE id = %s', (entry_seq, ana_line.id))
                 # update old ana lines
                 ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
@@ -431,7 +442,7 @@ class hq_entries_validation(osv.osv_memory):
                                 'destination_id': line.destination_id.id,
                             })]
                     })
-                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
+                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
             # Do split lines process
             original_move_ids = self.process_split(cr, uid, split_change, context=context)
 

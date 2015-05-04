@@ -200,8 +200,13 @@ class report_pdf_engagement(report_sxw.rml_parse):
                                                              cost_center_id))
                     if cr.rowcount:
                         # get the lines for the account ids
-                        budget_line_ids = pool.get('msf.budget.line').search(cr, uid, [('budget_id', '=', cr.fetchall()[0][0]),
-                                                                                       ('account_id', 'in', expense_account_ids)], context=context)
+                        domain = [
+                            ('budget_id', '=', cr.fetchall()[0][0]),
+                            ('account_id', 'in', expense_account_ids),
+                            ('destination_id', '=', destination_id),
+                            ('line_type', '=', 'destination'),
+                        ]
+                        budget_line_ids = pool.get('msf.budget.line').search(cr, uid, domain, context=context)
                         budget_data = pool.get('msf.budget.line').read(cr, uid, budget_line_ids, ['account_id', 'total'])
                         budget_amounts = dict([(x.get('account_id', [])[0], x.get('total', 0.0)) for x in budget_data])
 
@@ -235,10 +240,10 @@ class report_pdf_engagement(report_sxw.rml_parse):
                     formatted_line = [cost_center.name]
                     formatted_line += [expense_account.code + " " + expense_account.name]
                     if values[0] != 'Budget missing':
-                        total_values = [sum(pair) for pair in zip(values, total_values)]
+                        total_values = [round(sum(pair)) for pair in zip(values, total_values)]
                         formatted_line += [values[0]]
                     else:
-                        total_values = [sum(pair) for pair in zip([0] + values[1:], total_values)]
+                        total_values = [round(sum(pair)) for pair in zip([0] + values[1:], total_values)]
                         formatted_line += [values[0]]
                     formatted_line += values[1:]
                     formatted_line += [ temp_data2[str(cost_center_id)+'_'+str(destination_id)][expense_account_id] ]
@@ -247,7 +252,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 # empty line between cost centers
                 res.append([''] * 7)
             # append formatted total
-            res.append(['TOTALS', ''] + map(int, map(round, total_values)))
+            res.append(['TOTALS', ''] + map(int, total_values))
         return res
 
 report_sxw.report_sxw('report.msf.pdf.engagement', 'purchase.order', 'addons/msf_budget/report/engagement.rml', parser=report_pdf_engagement, header=False)

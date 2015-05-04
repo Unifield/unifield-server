@@ -64,11 +64,17 @@ class hq_report_oca(report_sxw.report_sxw):
                 line[9],
                 line[8]] + line[10:]
 
-    def create_subtotal(self, cr, uid, line_key, line_debit, line_functional_debit, counterpart_date, country_code, sequence_number):
+    def create_subtotal(self, cr, uid, line_key,
+        line_debit, line_functional_debit, line_functional_debit_no_ccy_adj,
+        counterpart_date, country_code, sequence_number):
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
         if len(line_key) > 2 and line_debit != 0.0 and line_functional_debit != 0.0:
-            rate = round(1 / (line_debit / line_functional_debit), 8)
+            # US-118: func debit with no FXA currency adjustement entries
+            # compute subtotal line inverted rate with no FXA entry:
+            # no booking amount but funct one then cause a wrong balance
+            # for ccy inverted rate computation
+            rate = round(1 / (line_debit / line_functional_debit_no_ccy_adj), 8)
             return [["01",
                      country_code,
                      line_key[0],
@@ -135,6 +141,10 @@ class hq_report_oca(report_sxw.report_sxw):
         account_lines = []
         account_lines_debit = {}
         account_lines_functional_debit = {}
+        # US-118: func debit with no FXA currency adjustement entries
+        account_lines_functional_debit_no_ccy_adj = {}
+        journal_cur_adj_ids = pool.get('account.journal').search(cr, uid,
+            [('type', '=', 'cur_adj')], context=context)
         # General variables
         period = pool.get('account.period').browse(cr, uid, data['form']['period_id'])
         period_name = period and period.code or "0"
@@ -236,8 +246,19 @@ class hq_report_oca(report_sxw.report_sxw):
                 if (account.code, currency.name, period_name) not in account_lines_debit:
                     account_lines_debit[(account.code, currency.name, period_name)] = 0.0
                     account_lines_functional_debit[(account.code, currency.name, period_name)] = 0.0
+                    account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] = 0.0
+                    
                 account_lines_debit[(account.code, currency.name, period_name)] += (move_line.debit_currency - move_line.credit_currency)
-                account_lines_functional_debit[(account.code, currency.name, period_name)] += (move_line.debit - move_line.credit)
+                funct_balance = (move_line.debit - move_line.credit)
+                account_lines_functional_debit[(account.code, currency.name, period_name)] += funct_balance
+        
+                # US-118: func debit with no FXA currency adjustement entries
+                # compute subtotal line inverted rate with no FXA entry:
+                # no booking amount but funct one then cause a wrong balance
+                # for ccy inverted rate computation
+                if not journal_cur_adj_ids or \
+                    move_line.journal_id.id not in journal_cur_adj_ids:
+                    account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] += funct_balance
 
         # UFTP-375: Do not include FREE1 and FREE2 analytic lines
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
@@ -322,6 +343,7 @@ class hq_report_oca(report_sxw.report_sxw):
             subtotal_lines = self.create_subtotal(cr, uid, key,
                                                   account_lines_debit[key],
                                                   account_lines_functional_debit[key],
+                                                  account_lines_functional_debit_no_ccy_adj[key],
                                                   counterpart_date,
                                                   country_code,
                                                   sequence_number)

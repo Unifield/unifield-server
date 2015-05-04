@@ -32,6 +32,7 @@
                     <separator colspan="4" string="Products" />
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object" 
                     confirm="Are you sure that you want to remove all lines?" invisible="1"/>
+                    <button colspan="4" icon="gtk-go-down" string="Copy all" type="object" name="copy_all" attrs="{'invisible': [('created_ok', '=', True)]}" />
                     <field name="hide_column_error_ok" invisible="1" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}"
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
@@ -189,7 +190,7 @@
                     <field name="cons_location_id" />
                     <newline />
                     <separator colspan="4" string="Products" />
-                    <group colspan="4" col="4" name="import" string="Import lines">
+                    <group colspan="4" col="6" name="import" string="Import lines">
                         <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="2" />
                         <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
                     </group>
@@ -202,6 +203,7 @@
                             <field name="name" on_change="product_onchange(name, parent.id, parent.period_from, parent.period_to)" />
                             <field name="amc" />
                             <field name="fmc" on_change="fmc_change(amc, fmc, name)" attrs="{'readonly': [('valid_ok', '=', True)]}" />
+                            <field name="security_stock" />
                             <field name="last_reviewed" />
                             <field name="valid_ok" />
                             <field name="valid_until" />
@@ -342,6 +344,35 @@
             auto="False"
             menu="False"
             />
+
+        <!-- INCOMING SHIPMENT CONSUMPTION EXPORT -->
+        <report
+            id="report_incoming_consumption_xls"
+            string="XML Export"
+            model="stock.picking"
+            name="incoming.consumption.xls"
+            file="consumption_calculation/report/report_incoming_consumption_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+
+        <record id="action_incoming_print_xml_export" model="ir.actions.server">
+            <field name="name">XML Export</field>
+            <field name="model_id" ref="model_wizard_incoming_xml_export" />
+            <field name="state">code</field>
+            <field name="code">action = obj.print_report(context=context)</field>
+        </record>
+
+        <record id="ir_print_incoming_xml_export" model="ir.values">
+            <field name="key2">client_print_multi</field>
+            <field name="model">stock.picking</field>
+            <field name="name">XML Export</field>
+            <field eval="'ir.actions.server,%d'%action_incoming_print_xml_export" name="value" />
+            <field eval="True" name="object" />
+        </record>
 
         <record id="view_real_consumption_change_location" model="ir.ui.view">
             <field name="name">real.consumption.change.location.form.view</field>

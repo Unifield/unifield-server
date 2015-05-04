@@ -9,10 +9,23 @@
             </pageGraphics>
         </pageTemplate>-->
 
-        <pageTemplate>
+        <pageTemplate id="first">
             <frame id="first" x1="28.0" y1="28.0" width="786" height="525"/>
             <pageGraphics>
                 <image x="28.0" y="510" height="35.0" >[[ company.logo or removeParentNode('image') ]]</image>
+                <fill color="black"/>
+                <stroke color="black"/>
+                <setFont name="DejaVu Sans" size="8"/>
+                <drawString x="25" y="555"> [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]  [[ time.strftime("%H:%M") ]]</drawString>
+                <setFont name="DejaVu Sans Bold" size="10"/>
+                <drawString x="382" y="555">[[ company.partner_id.name ]]</drawString>
+                <stroke color="#000000"/>
+                <lines>25 550 818 550</lines>
+            </pageGraphics>
+        </pageTemplate>
+        <pageTemplate id="second">
+            <frame id="second" x1="28.0" y1="28.0" width="786" height="525"/>
+            <pageGraphics>
                 <fill color="black"/>
                 <stroke color="black"/>
                 <setFont name="DejaVu Sans" size="8"/>
@@ -36,6 +49,7 @@
         <blockTableStyle id="HeaderInfo">
             <blockValign value="MIDDLE" />
             <lineStyle kind="GRID" colorName="#f2f2f2" />
+            <blockSpan start="1,-1" stop="-1,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="LineHeader">
@@ -88,7 +102,7 @@
         </para>
 
         <!-- Header Information -->
-        <blockTable colWidths="120.0,120.0,120.0,120.0,120.0,120.0" style="HeaderInfo">
+        <blockTable colWidths="100.0,100.0,100.0,200.0,120.0,100.0" style="HeaderInfo">
             <tr>
                 <td>
                     <para style="HeaderRight">Reference :</para>
@@ -97,10 +111,10 @@
                     <para style="Header">[[ picking.name ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Origin :</para>
+                    <para style="HeaderRight">Order Category :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ picking.origin ]]</para>
+                    <para style="Header">[[ get_selec(picking, 'order_category') ]]</para>
                 </td>
                 <td>
                     <para style="HeaderRight">Actual Receipt Date :</para>
@@ -131,12 +145,6 @@
             </tr>
             <tr>
                 <td>
-                    <para style="HeaderRight">Order Category :</para>
-                </td>
-                <td>
-                    <para style="Header">[[ get_selec(picking, 'order_category') ]]</para>
-                </td>
-                <td>
                     <para style="HeaderRight">State :</para>
                 </td>
                 <td>
@@ -148,6 +156,20 @@
                 <td>
                     <para style="Header"> </para>
                 </td>
+                <td>
+                    <para style="HeaderRight"> </para>
+                </td>
+                <td>
+                    <para style="Header"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderRight">Origin :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ picking.origin ]]</para>
+                </td>
             </tr>
         </blockTable>
 
@@ -155,6 +177,7 @@
             <font color="white"> </font>
         </para>
 
+        <setNextTemplate name="second" />
 
         <section>
         <blockTable colWidths="25.0,70.0,120.0,60.0,45.0,40.0,70.0,70.0,70.0,80.0,80.0,80.0" style="LineHeader" repeatRows="1">
@@ -242,7 +265,7 @@
         <para style="Header">
             <font color="white"> </font>
         </para>
-        
+
         <blockTable colWidths="44.0,169.0,169.0,169.0,169.0" style="FooterInfo" keepWithNext="1">
             <tr>
                 <td>

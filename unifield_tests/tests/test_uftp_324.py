@@ -112,6 +112,17 @@ class UFTP324Test(ResourcingTest):
         # Validate the sale order
         self.c1.exec_workflow('sale.order', 'order_validated', self.c_so_id)
 
+    def test_utp_324(self):
+        """
+        Cancel the PO at coordo side, synchronize and check the state of the PO at
+        project side.
+        :return:
+        """
+        wiz_model = 'purchase.order.cancel.wizard'
+        c_wiz_obj = self.c1.get(wiz_model)
+        c_lc_wiz_obj = self.c1.get('sale.order.leave.close')
+        c_cancel_so_wiz_obj = self.c1.get('sale.order.cancelation.wizard')
+
         # Source all lines on a Purchase Order to ext_supplier_1
         line_ids = self.c_sol_obj.search([('order_id', '=', self.c_so_id)])
         self.c_sol_obj.write(line_ids, {
@@ -146,17 +157,6 @@ class UFTP324Test(ResourcingTest):
             po_ids.add(po_line['order_id'][0])
 
             self.c_po_id = po_line['order_id'][0]
-
-    def test_utp_324(self):
-        """
-        Cancel the PO at coordo side, synchronize and check the state of the PO at
-        project side.
-        :return:
-        """
-        wiz_model = 'purchase.order.cancel.wizard'
-        c_wiz_obj = self.c1.get(wiz_model)
-        c_lc_wiz_obj = self.c1.get('sale.order.leave.close')
-        c_cancel_so_wiz_obj = self.c1.get('sale.order.cancelation.wizard')
 
         # Cancel PO at coordo side
         c_res = self.c_po_obj.purchase_cancel(self.c_po_id)

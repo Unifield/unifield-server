@@ -46,6 +46,15 @@
                 header="False"
                 rml="addons/msf_outgoing/report/packing_list.rml"
                 string="Packing List" />
+
+        <report auto="False"
+                id="report_packing_list_xls"
+                model="shipment"
+                name="packing.list.xls"
+                header="False"
+                report_type="webkit"
+                file="msf_outgoing/report/packing_list_xls.mako"
+                string="Packing List (xls)" />
                 
         <!--
         <report auto="False" 

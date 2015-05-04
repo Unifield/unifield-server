@@ -49,6 +49,7 @@ class stock_incoming_processor(osv.osv):
             ],
             string='Destination Type',
             readonly=False,
+            required=True,
             help="The default value is the one set on each stock move line.",
         ),
         'source_type': fields.selection([
@@ -293,6 +294,26 @@ class stock_incoming_processor(osv.osv):
             }
 
         return result
+
+    def force_process(self, cr, uid, ids, context=None):
+        '''
+        Go to the processing wizard
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
 
     def launch_simulation(self, cr, uid, ids, context=None):
         '''

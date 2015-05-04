@@ -43,7 +43,7 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
-    
+
     <Style ss:ID="header">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Interior ss:Color="#d3d3d3" ss:Pattern="Solid"/>
@@ -54,7 +54,7 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
-    
+
     <Style ss:ID="line">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
@@ -64,7 +64,18 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
-    
+
+  <Style ss:ID="poheader_short_date">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+    <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <NumberFormat ss:Format="Short Date"/>
+  </Style>
   <Style ss:ID="short_date">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -81,85 +92,85 @@
 ## definition of the columns' size
 <% nb_of_columns = 12 %>
 <Table x:FullColumns="1" x:FullRows="1">
-    # Order name
-    <Column ss:AutoFitWidth="1" ss:Width="65" />
-    # Item
-    <Column ss:AutoFitWidth="1" ss:Width="40" />
-    # Code
+    # Product code
     <Column ss:AutoFitWidth="1" ss:Width="81" />
-    # Description
-    <Column ss:AutoFitWidth="1" ss:Width="161" />
-    # Qty ordered
-    <Column ss:AutoFitWidth="1" ss:Width="57" />
+    # Product Description
+    <Column ss:AutoFitWidth="1" ss:Width="200" />
     # UoM
-    <Column ss:AutoFitWidth="1" ss:Width="65" />
-    # Qty received
-    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    <Column ss:AutoFitWidth="1" ss:Width="55" />
+    # Batch
+    <Column ss:AutoFitWidth="1" ss:Width="100" />
+    # Exp Date
+    <Column ss:AutoFitWidth="1" ss:Width="100" />
     # IN
-    <Column ss:AutoFitWidth="1" ss:Width="60" />
-    # Qty backorder
-    <Column ss:AutoFitWidth="1" ss:Width="58" />
-    # Unit Price
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
-    # IN Unit Price
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
-    # Created (order)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
-    # Delivery Confirmed (order)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
-    # Status (order)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    # OUT
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    # Source
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
     # Destination
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
-    # Cost Center
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Reason Code
+    <Column ss:AutoFitWidth="1" ss:Width="100" />
+    # Document Ref
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
 
-<Row>
-    <Cell ss:MergeAcross="11" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
-</Row>
-<Row ss:AutoFitHeight="1">
-   <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">Report run date: ${getRunParms()['run_date'] or '' |x}</Data></Cell>
-   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">PO date from: ${getRunParms()['date_from'] or ''|x}</Data></Cell>
-   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">PO date to: ${getRunParms()['date_thru'] or '' |x}</Data></Cell>
-   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Supplier: ${getRunParms()['supplier'] or '' |x}</Data></Cell>
-   <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">PO State: ${getRunParms()['state'] or '' | x}</Data></Cell>
-</Row>
-
-    <Row ss:AutoFitHeight="1" > 
-      % for header in getPOLineHeaders():
-    	    <Cell ss:StyleID="header"><Data ss:Type="String">${header}</Data></Cell>
-       % endfor       
-    </Row>
-    
 % for o in objects:
-    
-    % for line in getPOLines(o.id):
+
     <Row ss:AutoFitHeight="1">
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">DB/instance name</Data></Cell>
+        <Cell ss:MergeAcross="2" ss:StyleID="poheader"><Data ss:Type="String">${o.company_id.name or ''|x}</Data></Cell>
+    </Row>
+    <Row ss:AutoFitHeight="1">
+        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Generated on</Data></Cell>
+        % if o.name not in ('False', False):
+            <Cell ss:MergeAcross="2" ss:StyleID="poheader_short_date" ><Data ss:Type="DateTime">${o.name[:10]|n}T${o.name[-8:]|n}.000</Data></Cell>
+        % else:
+            <Cell ss:MergeAcross="2" ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        % endif
+    </Row>
+    <Row></Row>
+    <Row></Row>
+    <Row ss:AutoFitHeight="1">
+        <Cell ss:StyleID="header"><Data ss:Type="String">Product Code</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Product Description</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Exp Date</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">IN</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">OUT</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Source</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Destination</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Reason Code</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">Document Ref.</Data></Cell>
+    </Row>
+
+    % for line in getLines():
+    <Row ss:AutoFitHeight="1">
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['product_code'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['product_name'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['batch'])|x}</Data></Cell>
+        % if line['expiry_date'] not in ('False', False):
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(line['expiry_date'])|n}T00:00:00.000</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+        % endif
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_in'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_out'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['source'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['reason_code'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['doc_ref'])|x}</Data></Cell>
     </Row>
     % endfor
- % endfor   
-    
+ % endfor
+
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
-    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14${getRunParms()['title'] or '' |x}"/>
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>

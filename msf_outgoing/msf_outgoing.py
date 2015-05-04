@@ -632,6 +632,7 @@ class shipment(osv.osv):
                         'from_pack': family.to_pack - family.selected_number + 1,
                         'to_pack': family.to_pack,
                         'state': 'done',
+                        'not_shipped': True, #BKLG-13: set the pack returned to stock also as not_shipped, for showing to view ship draft
                     }
                     context['non_stock_noupdate'] = True
 
@@ -1636,7 +1637,7 @@ class stock_picking(osv.osv):
 #                else:
 #                    default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'ppl'))
 
-        if context.get('picking_type') == 'delivery_order' and obj.partner_id2:
+        if context.get('picking_type') == 'delivery_order' and obj.partner_id2 and not context.get('allow_copy', False):
             # UF-2539: do not allow to duplicate (validated by Skype 03/12/2014)
             # as since UF-2539 it is not allowed to select other internal
             # instances partner, but it was previously in UF 1.0.
@@ -2982,7 +2983,9 @@ class stock_picking(osv.osv):
                     'move_lines' : [],
                     'state':'draft',
                 }
+                context['allow_copy'] = True
                 new_picking_id = picking_obj.copy(cr, uid, picking.id, cp_vals, context=context)
+                context['allow_copy'] = False
                 move_obj.write(cr, uid, processed_moves, {'picking_id': new_picking_id}, context=context)
 
             # At first we confirm the new picking (if necessary)
@@ -4180,11 +4183,18 @@ class stock_move(osv.osv):
 
         res = super(stock_move, self).default_get(cr, uid, fields, context=context)
 
+        partner_id = context.get('partner_id')
+        auto_company = False
+        if partner_id:
+            cp_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
+            auto_company = cp_partner_id == partner_id
+
         if 'warehouse_id' in context and context.get('warehouse_id'):
             warehouse_id = context.get('warehouse_id')
         else:
             warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)[0]
-        res.update({'location_output_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id})
+        if not auto_company:
+            res.update({'location_output_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id})
 
         loc_virtual_ids = self.pool.get('stock.location').search(cr, uid, [('name', '=', 'Virtual Locations')])
         loc_virtual_id = len(loc_virtual_ids) > 0 and loc_virtual_ids[0] or False
@@ -4197,7 +4207,7 @@ class stock_move(osv.osv):
         if 'subtype' in context and context.get('subtype', False) == 'picking':
             loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_packing_id.id
             res.update({'location_dest_id': loc_packing_id})
-        elif 'subtype' in context and context.get('subtype', False) == 'standard':
+        elif 'subtype' in context and context.get('subtype', False) == 'standard' and not auto_company:
             loc_output_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id
             res.update({'location_dest_id': loc_output_id})
 

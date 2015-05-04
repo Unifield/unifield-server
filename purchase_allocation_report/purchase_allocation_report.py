@@ -34,6 +34,13 @@ class purchase_order_line_allocation_report(osv.osv):
     _name = 'purchase.order.line.allocation.report'
     _table = 'purchase_order_line_allocation_report'
     _auto = False
+
+    _replace_exported_fields = {
+        'product_id': [
+            (['product_code', 'Product Code'], 10),
+            (['product_name', 'Product Name'], 20),
+        ],
+    }
     
     def _get_product_account(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -56,6 +63,22 @@ class purchase_order_line_allocation_report(osv.osv):
         'order_category': fields.selection(ORDER_CATEGORY, string='Cat.'),
         'line_number': fields.integer(string='O. l.'),
         'product_id': fields.many2one('product.product', string='Product'),
+        'product_code': fields.related(
+            'product_id',
+            'default_code',
+            type='char',
+            size=64,
+            string='Product Code',
+            store=False,
+        ),
+        'product_name': fields.related(
+            'product_id',
+            'name',
+            type='char',
+            size=128,
+            string='Product Name',
+            store=False,
+        ),
         'product_qty': fields.float(digits=(16,2), string='Qty'),
         'uom_id': fields.many2one('product.uom', string='UoM'),
         'unit_price': fields.float(string='Unit Price', digits_compute=dp.get_precision('Purchase Price Computation')),
@@ -119,7 +142,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     aaa2.id AS destination_id,
                     cc.percentage AS percentage,
                     cc.amount AS subtotal,
-                    cc.currency_id AS currency_id,
+                    ppl.currency_id AS currency_id,
                     aaa.id AS cost_center_id,
                     so.name AS source_doc,
                     so.partner_id AS partner_id,
@@ -133,6 +156,10 @@ class purchase_order_line_allocation_report(osv.osv):
                     purchase_order po
                     ON
                     pol.order_id = po.id
+                  LEFT JOIN
+                    product_pricelist ppl
+                    ON
+                    po.pricelist_id = ppl.id
                   LEFT JOIN
                     analytic_distribution ad
                     ON
@@ -174,7 +201,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     aaa2.id AS destination_id,
                     cc.percentage AS percentage,
                     cc.amount AS subtotal,
-                    cc.currency_id AS currency_id,
+                    ppl.currency_id AS currency_id,
                     aaa.id AS cost_center_id,
                     so.name AS source_doc,
                     so.partner_id AS partner_id,
@@ -188,6 +215,10 @@ class purchase_order_line_allocation_report(osv.osv):
                     purchase_order po
                     ON
                     pol.order_id = po.id
+                  LEFT JOIN
+                    product_pricelist ppl
+                    ON
+                    po.pricelist_id = ppl.id
                   LEFT JOIN
                     analytic_distribution ad
                     ON

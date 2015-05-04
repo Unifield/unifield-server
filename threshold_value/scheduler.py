@@ -43,6 +43,7 @@ class procurement_order(osv.osv):
         request_obj = self.pool.get('res.request')
         threshold_obj = self.pool.get('threshold.value')
         proc_obj = self.pool.get('procurement.order')
+        product_obj = self.pool.get('product.product')
         
         threshold_ids = threshold_obj.search(cr, uid, [], context=context)
                 
@@ -59,10 +60,11 @@ class procurement_order(osv.osv):
         threshold_obj.write(cr, uid, threshold_ids, {}, context=context)
         for threshold in threshold_obj.browse(cr, uid, threshold_ids, context=context):
             c = context.copy()
-            c.update({'location': threshold.location_id.id, 'compute_child': True})
+            c.update({'location': threshold.location_id.id, 'compute_child': True, 'states': ['confirmed', 'waiting', 'assigned', 'done', 'hidden'], 'what': ['in', 'out']})
             line_ids = self.pool.get('threshold.value.line').search(cr, uid, [('threshold_value_id', '=', threshold.id)], context=c)
             for line in self.pool.get('threshold.value.line').browse(cr, uid, line_ids, context=c):
-                if line.threshold_value >= line.product_id.virtual_available and line.product_qty > 0.00:
+                product_av_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context=c)[line.product_id.id]
+                if line.threshold_value >= product_av_qty and line.product_qty > 0.00:
                     proc_id = proc_obj.create(cr, uid, {
                                         'name': _('Threshold value: %s') % (threshold.name,),
                                         'origin': threshold.name,

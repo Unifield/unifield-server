@@ -139,6 +139,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
             store=False),
         'corrected_st_line_id': fields.many2one('account.bank.statement.line', string="Corrected register line", readonly=True,
             help="This register line is those which have been corrected last."),
+        'last_cor_was_only_analytic': fields.boolean(string="AD Corrected?",
+            invisible=True,
+            help="If true, this line has been corrected by an accounting correction wizard but with only an AD correction (no G/L correction)"),
     }
 
     _defaults = {
@@ -146,6 +149,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         'reversal': lambda *a: False,
         'have_an_historic': lambda *a: False,
         'is_corrigible': lambda *a: True,
+        'last_cor_was_only_analytic': lambda *a: False,
     }
 
     def copy(self, cr, uid, aml_id, default=None, context=None):
@@ -163,6 +167,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'have_an_historic': False,
             'corrected': False,
             'reversal': False,
+            'last_cor_was_only_analytic': False,
         })
         # Add default date if no one given
         if not 'date' in default:
@@ -673,7 +678,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 continue
 
             # UTP-1187 check corrected line has an AD if need one
-            initial_al_ids = al_obj.search(cr, uid, [('move_id', '=', ml.id)],
+            # + BKLG-19/3: search only for fp ones as 'free' are not synced to
+            # HQ and initial_al_ids[0] is used to set reversal_origin
+            initial_al_ids = al_obj.search(cr, uid,
+                [('move_id', '=', ml.id), ('account_id.category', '=', 'FUNDING')],
                 context=context)
             # Note: this search result will be used near end of this function
             # (see # Change analytic lines that come from)

@@ -226,7 +226,7 @@ class account_analytic_line(osv.osv):
         self._check_document_date(cr, uid, ids)
         return res
 
-    def reverse(self, cr, uid, ids, posting_date=strftime('%Y-%m-%d'), context=None):
+    def reverse(self, cr, uid, ids, posting_date=None, context=None):
         """
         Reverse an analytic line:
          - keep date as source_date
@@ -236,6 +236,8 @@ class account_analytic_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if posting_date is None:
+            posting_date = strftime('%Y-%m-%d')
         res = []
         for al in self.browse(cr, uid, ids, context=context):
             vals = {

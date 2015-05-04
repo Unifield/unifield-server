@@ -58,14 +58,18 @@
             <field name="inherit_id" ref="account.view_account_analytic_account_form"/>
             <field name="arch" type="xml">
                 <data>
-                    <field name="parent_id" position="replace">
-                        <field name="parent_id" on_change="on_change_parent(parent_id)" required="1" attrs="{'readonly': [('category', '=', 'FUNDING')], 'required': [('category', 'not in', ['FREE1', 'FREE2'])]}"/>
-                    </field>
+                    <xpath expr="//field[@name='name']" position="replace">
+                        <field name="name" select="1"/>
+                    </xpath>    
+                    <xpath expr="//field[@name='type']" position="replace">
+                    </xpath>    
                     <field name="code" position="replace">
                         <field name="code" select="1" required="1"/>
-                        <field name="category" select="1" required="1" on_change="on_change_category(category)" />
+                        <field name="type"/>
                     </field>
-                    <field name="type" position="after">
+                    <field name="parent_id" position="replace">
+                        <field name="category" select="1" required="1" on_change="on_change_category(category)"/>
+                        <field name="parent_id" on_change="on_change_parent(parent_id)" required="1" attrs="{'readonly': [('category', '=', 'FUNDING')], 'required': [('category', 'not in', ['FREE1', 'FREE2'])]}"/>
                         <newline/>
                         <field name="for_fx_gain_loss"/>
                     </field>
@@ -245,7 +249,7 @@
             <field name="search_view_id" ref="view_analytic_account_search"/>
             <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
             <field name="domain">[]</field>
-            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
+            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1, 'from_web': True}</field>
         </record>
 
         <menuitem action="action_account_analytic_account_form"

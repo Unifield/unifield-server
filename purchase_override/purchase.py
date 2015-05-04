@@ -23,6 +23,7 @@ from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
+import time
 from mx.DateTime import Parser
 from mx.DateTime import RelativeDateTime
 from time import strftime
@@ -311,6 +312,16 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_requested_date_in_past(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for po in self.read(cr, uid, ids, ['delivery_requested_date', 'rfq_ok'], context=context):
+            res[po['id']] = po['delivery_requested_date'] and not po['rfq_ok'] and po['delivery_requested_date'] < time.strftime('%Y-%m-%d') or False
+
+        return res
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),
@@ -380,6 +391,13 @@ class purchase_order(osv.osv):
             multi='so_info',
         ),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'requested_date_in_past': fields.function(
+            _get_requested_date_in_past,
+            method=True,
+            string='Requested date in past',
+            type='boolean',
+            store=False,
+        ),
     }
 
     _defaults = {
@@ -836,9 +854,21 @@ class purchase_order(osv.osv):
                         else:
                             bro_dest_ok = pol.account_4_distribution.default_destination_id
                         # Copy cost center line to the new distribution
-                        ccdl_obj.copy(cr, uid, line.id, {'distribution_id': id_ad, 'destination_id': bro_dest_ok.id})
+                        ccdl_obj.copy(cr, uid, line.id, {
+                            'distribution_id': id_ad,
+                            'destination_id': bro_dest_ok.id,
+                            'partner_type': pol.order_id.partner_id.partner_type,
+                        })
                         # Write result
                         pol_obj.write(cr, uid, [pol.id], {'analytic_distribution_id': id_ad})
+                else:
+                    ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
+                    for line in ad_lines:
+                        if not line.partner_type:
+                            ccdl_obj.write(cr, uid, [line.id], {
+                                'partner_type': pol.order_id.partner_id.partner_type,
+                            })
+
         return True
 
     def wkf_picking_done(self, cr, uid, ids, context=None):
@@ -3035,7 +3065,10 @@ class purchase_order_line(osv.osv):
 
         # Cancel the listed procurement orders
         for proc_id in proc_ids:
-            if not self.search(cr, uid, [('id', 'not in', ids), ('procurement_id', '=', proc_id)], context=context):
+            if not self.search(cr, uid, [
+                ('order_id.state', '!=', 'split'),
+                ('id', 'not in', ids),
+                ('procurement_id', '=', proc_id)], context=context):
                 proc_obj.action_cancel(cr, uid, [proc_id])
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)

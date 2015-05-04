@@ -383,6 +383,75 @@ class real_average_consumption(osv.osv):
                 'context': context,
                 }
 
+    def copy_all(self, cr, uid, ids, context=None):
+        '''
+        Fill all lines according to defined location with pre-filled lines
+        '''
+        if context is None:
+            context = {}
+
+        self.write(cr, uid, ids, {'created_ok': True})
+        for report in self.browse(cr, uid, ids, context=context):
+            cr.execute('''select distinct sm.product_id, sm.prodlot_id, sm.expired_date,
+                            pp.batch_management, pp.perishable, pp.product_tmpl_id,
+                            pt.uom_id
+                        from stock_move sm, product_product pp, product_template pt
+                        where sm.location_id = %s and pp.id = sm.product_id and pt.id = pp.product_tmpl_id
+                        ''', (report.cons_location_id.id, ))
+            dict1 = cr.dictfetchall()
+            cr.execute('''select distinct sm.product_id, sm.prodlot_id, sm.expired_date,
+                                pp.batch_management, pp.perishable, pp.product_tmpl_id,
+                                pt.uom_id
+                            from stock_move sm, product_product pp, product_template pt
+                            where sm.location_dest_id = %s and pp.id = sm.product_id and pt.id = pp.product_tmpl_id
+                            ''', (report.cons_location_id.id, ))
+            dict2 = cr.dictfetchall()
+            products_by_location = dict1 + dict2
+
+            context['location_id'] = report.cons_location_id.id
+            for product in products_by_location:
+                rm_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, [
+                    ('product_id', '=', product['product_id']),
+                    ('prodlot_id', '=', product['prodlot_id']),
+                    ('uom_id', '=', product['uom_id']),
+                    ('rac_id', '=', report.id),
+                ], context=context)
+                batch_mandatory = product['batch_management']
+                date_mandatory = product['perishable']
+                values = {'product_id': product['product_id'],
+                          'uom_id': product['uom_id'],
+                          'batch_mandatory': batch_mandatory,
+                          'date_mandatory': date_mandatory,
+                          'expiry_date': product['expired_date'],
+                          'prodlot_id': product['prodlot_id'],
+                          'rac_id': report.id,}
+
+                v = self.pool.get('real.average.consumption.line').product_onchange(cr, uid, [], product['product_id'], report.cons_location_id.id,
+                                                                        product['uom_id'], product['prodlot_id'], context=context)['value']
+
+                values.update(v)
+                if batch_mandatory:
+                    values.update({'remark': 'You must assign a batch number'})
+                if date_mandatory:
+                    values.update({'remark': 'You must assign an expiry date'})
+                if product['prodlot_id']:
+                    product_qty = self.pool.get('stock.production.lot')._get_stock(cr, uid, product['prodlot_id'], [], None, context=context)
+                    values.update({'product_qty':product_qty[product['prodlot_id']]})
+                if rm_line_ids:
+                    self.pool.get('real.average.consumption.line').write(cr, uid, rm_line_ids, values, context=context)
+                elif values.get('product_qty', 0.00) > 0.00:
+                    values.update({'consumed_qty': values.get('product_qty', 0.00)})
+                    self.pool.get('real.average.consumption.line').create(cr, uid, values, context=context)
+
+        self.write(cr, uid, ids, {'created_ok': False})
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
+
     def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill all lines according to defined nomenclature level and sublist
@@ -660,7 +729,7 @@ class real_average_consumption_line(osv.osv):
         'batch_mandatory': fields.boolean(string='BM'),
         'expiry_date': fields.date(string='Expiry date'),
         'date_mandatory': fields.boolean(string='DM'),
-        'asset_id': fields.char(size=32, string='Asset'),
+        'asset_id': fields.integer(string='Asset'),
         'asset_mandatory': fields.boolean('AM'),
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
@@ -967,6 +1036,7 @@ class monthly_review_consumption(osv.osv):
     _columns = {
         'creation_date': fields.date(string='Creation date'),
         'cons_location_id': fields.char(size=256, string='Location', readonly=True),
+        'company_id': fields.many2one('res.company', string='Company', readonly=True),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
@@ -984,6 +1054,7 @@ class monthly_review_consumption(osv.osv):
         'period_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
         'cons_location_id': lambda *a: 'MSF Instance',
+        'company_id': lambda self, cr, uid, ids, c={}: self.pool.get('res.users').browse(cr, uid, uid).company_id.id,
     }
 
     def period_change(self, cr, uid, ids, period_from, period_to, context=None):
@@ -1304,6 +1375,54 @@ class monthly_review_consumption_line(osv.osv):
                 result[out.id]['to_correct_ok'] = True
         return result
 
+    def _get_security_stock(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Get the security stock of the last created order cycle line with the same product
+        """
+        res = {}
+        ocl_obj = self.pool.get('stock.warehouse.order.cycle.line')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            ocl_ids = ocl_obj.search(cr, uid, [
+                ('product_id', '=', line.name.id),
+            ], order='id desc', context=context)
+            if not ocl_ids:
+                res[line.id] = 0.00
+            else:
+                res[line.id] = ocl_obj.browse(cr, uid, ocl_ids[0], context=context).safety_stock
+
+        return res
+
+    def _get_order_cycle_line(self, cr, uid, ids, context=None):
+        """
+        ids represents the ids of stock.warehouse.order.cycle.line objects
+        for which values have changed.
+
+        Return the list of ids of monthly.review.consumption.line which need
+        to get their fields updated.
+
+        self is stock.warehouse.order.cycle.line object
+        """
+        line_obj = self.pool.get('monthly.review.consumption.line')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = []
+        for cycle_line in self.browse(cr, uid, ids, context=context):
+            res.extend(line_obj.search(cr, uid, [
+                ('name', '=', cycle_line.product_id.id),
+            ], context=context))
+
+        return res
+
+
     _columns = {
         'name': fields.many2one('product.product', string='Product', required=True),
         'ref': fields.related('name', 'default_code', type='char', size=64, readonly=True,
@@ -1314,6 +1433,17 @@ class monthly_review_consumption_line(osv.osv):
                                       'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, [],20),}),
         'fmc': fields.float(digits=(16,2), string='FMC'),
         'fmc2': fields.float(digits=(16,2), string='FMC (hidden)'),
+        'security_stock': fields.function(
+            _get_security_stock,
+            method=True,
+            type='float',
+            string='Safety Stock (qty)',
+            readonly=True,
+            store={
+                'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 10),
+                'stock.warehouse.order.cycle.line': (_get_order_cycle_line, ['safety_stock'], 10),
+            },
+        ),
         #'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True, store=True),
         'last_reviewed': fields.date(string='Last reviewed on', readonly=True),
         'last_reviewed2': fields.date(string='Last reviewed on (hidden)'),
@@ -1324,7 +1454,7 @@ class monthly_review_consumption_line(osv.osv):
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
     }
-    
+
     def valid_line(self, cr, uid, ids, context=None):
         '''
         Valid the line and enter data in product form

@@ -23,72 +23,83 @@ from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 
+# US-28: Refactored the method decoration to be reused for both RW and CP
+def cp_rw_warning(func, rw_flag, *args, **kwargs):
+    self = args[0]
+    kw_keys = kwargs.keys()
 
+    from_button = False
+    if kwargs.get('context'):
+        from_button = kwargs['context'].get('from_button')
+    elif len(args) > 4 and isinstance(args[4], dict ):
+        from_button = args[4].get('from_button')
+
+    from_cp_check = kwargs.get('context', {}).get('from_cp_check')
+    wargs = kwargs.get('context', {}).get('callback', {}) or kwargs
+    if from_button and not from_cp_check:
+        cr = args[1]
+        uid = args[2]
+        ids = args[3]
+        pick_obj = self.pool.get('stock.picking')
+        rw_type = hasattr(pick_obj, '_get_usb_entity_type') and pick_obj._get_usb_entity_type(cr, uid) or False
+
+        text = "remote warehouse"
+        this_instance = "central platform"
+        if rw_flag == pick_obj.REMOTE_WAREHOUSE:    
+            text = "central platform"
+            this_instance = "remote warehouse"
+
+        if rw_type == rw_flag:
+            name = """This action should only be performed at the %s instance! Are you sure to proceed it at this %s instance?""" %(text, this_instance)
+            model = 'confirm'
+            step = 'default'
+            question = name
+            clazz = self._name
+            args = [ids]
+            kwargs = {}
+            wiz_obj = self.pool.get('wizard')
+            # open the selected wizard
+            callback = {
+                'clazz': clazz,
+                'func': func.__name__,
+                'args': args,
+                'kwargs': kwargs,
+                'from_cp_check': True,
+            }
+            tmp_context = dict(kwargs.get('context', {}),
+                               question=question,
+                               callback=callback,
+                               from_cp_check=True)
+
+
+            res = wiz_obj.open_wizard(cr, uid, ids,
+                                      name=name,
+                                      model=model,
+                                      step=step,
+                                      context=tmp_context)
+            return res
+    new_kwargs = {}
+    for kwk in kw_keys:
+        if kwk in wargs:
+            new_kwargs[kwk] = wargs[kwk]
+
+    res = func(*args, **new_kwargs)
+    if from_cp_check and not (isinstance(res, dict) and res.get('res.model') != 'wizard'):
+        return {'type': 'ir.actions.act_window_close'}
+    else:
+        return res
+
+# US-28: Refactored the method decoration to be reused for both RW and CP warning
 def check_cp_rw(func):
     def decorated(*args, **kwargs):
-        self = args[0]
-        kw_keys = kwargs.keys()
-
-        from_button = False
-        if kwargs.get('context'):
-            from_button = kwargs['context'].get('from_button')
-        elif len(args) > 4 and isinstance(args[4], dict ):
-            from_button = args[4].get('from_button')
-
-        from_cp_check = kwargs.get('context', {}).get('from_cp_check')
-        wargs = kwargs.get('context', {}).get('callback', {}) or kwargs
-        if from_button and not from_cp_check:
-            cr = args[1]
-            uid = args[2]
-            ids = args[3]
-            pick_obj = self.pool.get('stock.picking')
-            rw_type = hasattr(pick_obj, '_get_usb_entity_type') and \
-                      pick_obj._get_usb_entity_type(cr, uid) or False
-
-            if rw_type == self.pool.get('stock.picking').CENTRAL_PLATFORM:
-                name = """This action should only be performed at the Remote
-    Warehouse instance! Are you sure to proceed it at this main instance?"""
-                model = 'confirm'
-                step = 'default'
-                question = name
-                clazz = self._name
-                args = [ids]
-                kwargs = {}
-                wiz_obj = self.pool.get('wizard')
-                # open the selected wizard
-                callback = {
-                    'clazz': clazz,
-                    'func': func.__name__,
-                    'args': args,
-                    'kwargs': kwargs,
-                    'from_cp_check': True,
-                }
-                tmp_context = dict(kwargs.get('context', {}),
-                                   question=question,
-                                   callback=callback,
-                                   from_cp_check=True)
-
-
-                res = wiz_obj.open_wizard(cr, uid, ids,
-                                          name=name,
-                                          model=model,
-                                          step=step,
-                                          context=tmp_context)
-                return res
-
-        new_kwargs = {}
-        for kwk in kw_keys:
-            if kwk in wargs:
-                new_kwargs[kwk] = wargs[kwk]
-
-        res = func(*args, **new_kwargs)
-        if from_cp_check and not (isinstance(res, dict) and res.get('res.model') != 'wizard'):
-            return {'type': 'ir.actions.act_window_close'}
-        else:
-            return res
-
+        return cp_rw_warning(func, "central_platform", *args, **kwargs)
     return decorated
 
+# US-28: Refactored the method decoration to be reused for both RW and CP warning
+def check_rw_warning(func):
+    def decorated(*args, **kwargs):
+        return cp_rw_warning(func, "remote_warehouse", *args, **kwargs)
+    return decorated
 
 class stock_move(osv.osv):
     _name = 'stock.move'
@@ -306,7 +317,7 @@ class stock_picking(osv.osv):
                 proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
                 wizard_obj.create_lines(cr, uid, proc_id, context=context)
 
-                return {
+                res = {
                     'type': 'ir.actions.act_window',
                     'res_model': wizard_obj._name,
                     'res_id': proc_id,
@@ -314,6 +325,14 @@ class stock_picking(osv.osv):
                     'view_mode': 'form',
                     'target': 'new',
                     }
+
+                if not context.get('force_process', False) and pick.type == 'in' \
+                   and pick.state != 'shipped' and pick.partner_id.partner_type == 'internal':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 
+                        'msf_outgoing', 'stock_incoming_processor_internal_warning_form_view')[1]
+                    res['view_id'] = [view_id]
+
+                return res
 
         return super(stock_picking, self).action_process(cr, uid, ids, context=context)
 

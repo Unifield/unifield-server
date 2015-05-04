@@ -215,6 +215,26 @@ class res_partner(osv.osv):
             view_load=True,
             required=True,
             help="This currency will be used, instead of the default one, for field orders to the current partner"),
+        'property_stock_customer': fields.property(
+            'stock.location',
+            type='many2one',
+            relation='stock.location',
+            string='Customer Location',
+            method=True,
+            view_load=True,
+            required=True,
+            help="This stock location will be used, instead of the default one, as the destination location for goods you send to this partner.",
+        ),
+        'property_stock_supplier': fields.property(
+            'stock.location',
+            type='many2one',
+            relation='stock.location',
+            string='Supplier Location',
+            method=True,
+            view_load=True,
+            required=True,
+            help="This stock location will be used, instead of the default one, as the source location for goods you receive from the current partner.",
+        ),
         'price_unit': fields.function(_get_price_info, method=True, type='float', string='Unit price', multi='info'),
         'valide_until_date' : fields.function(_get_price_info, method=True, type='char', string='Valid until date', multi='info'),
         'price_currency': fields.function(_get_price_info, method=True, type='many2one', relation='res.currency', string='Currency', multi='info'),
@@ -447,6 +467,16 @@ class res_partner(osv.osv):
             if msf_supplier and not 'property_stock_supplier' in vals:
                 vals['property_stock_supplier'] = msf_supplier[1]
 
+            if vals.get('partner_type') == 'esc':
+                eur_cur = self.pool.get('res.currency').search(cr, uid, [('name', '=', 'EUR')], context=context)
+                if eur_cur:
+                    pl_ids = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', 'in', eur_cur)], context=context)
+                    for pl in self.pool.get('product.pricelist').browse(cr, uid, pl_ids, context=context):
+                        if pl.type == 'sale':
+                            vals['property_product_pricelist'] = pl.id
+                        elif pl.type == 'purchase':
+                            vals['property_product_pricelist_purchase'] = pl.id
+
         if not vals.get('address'):
             vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
 
@@ -478,10 +508,12 @@ class res_partner(osv.osv):
         [utp-315] avoid deactivating partner that have still open document linked to them.
         """
         # some verifications
+        if not ids:
+            return {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         # UF-2463: If the partner is not saved into the system yet, just ignore this check
-        if not active and len(ids) > 0:
+        if not active:
             if context is None:
                 context = {}
 
@@ -491,6 +523,39 @@ class res_partner(osv.osv):
                         'warning': {'title': _('Error'),
                                     'message': _("Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
                                                 ) % (objects_linked_to_partner,)}}
+        else:
+            # US-49 check that activated partner is not using a not active CCY
+            check_pricelist_ids = []
+            fields_pricelist = [
+                'property_product_pricelist_purchase',
+                'property_product_pricelist'
+            ]
+            check_ccy_ids = []
+            for r in self.read(cr, uid, ids, fields_pricelist,
+                context=context):
+                for f in fields_pricelist:
+                    if r[f] and r[f][0] not in check_pricelist_ids:
+                        check_pricelist_ids.append(r[f][0])
+            if check_pricelist_ids:
+                for cpl_r in self.pool.get('product.pricelist').read(cr,
+                    uid, check_pricelist_ids, ['currency_id'],
+                    context=context):
+                    if cpl_r['currency_id'] and \
+                        cpl_r['currency_id'][0] not in check_ccy_ids:
+                        check_ccy_ids.append(cpl_r['currency_id'][0])
+                if check_ccy_ids:
+                    count = self.pool.get('res.currency').search(cr, uid, [
+                            ('active', '!=', True),
+                            ('id', 'in', check_ccy_ids),
+                        ], count=True, context=context)
+                    if count:
+                        return {
+                            'value': {'active': False},
+                            'warning': {
+                                'title': _('Error'),
+                                'message': _('PO or FO currency is not active'),
+                            }
+                        }
         return {}
 
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):

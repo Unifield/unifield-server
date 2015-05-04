@@ -51,74 +51,53 @@
      <NumberFormat ss:Format="Short Date"/>
     </Style>
 </Styles>
-## ==================================== we loop over the monthly_review_consumption so "objects" == monthly_review_consumption  ====================================================
-<% val = 0 %>
+## ==================================== we loop over the stock_picking so "objects" == stock_picking  ====================================================
 % for o in objects:
-<% val += 1 %>
-## the val enables to have several reports with the same name (in tab) except for the val
-<ss:Worksheet ss:Name="${"%s- %s"%(val, o.cons_location_id)|x}">
+<ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
 
 ## definition of the columns' size
+<% nb_of_columns = 7 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('DB/Instance name')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.company_id.name or '')|x}</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Generated on')}</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.creation_date|n}T00:00:00.000</Data></Cell>
-    </Row>
-
-    <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-    </Row>
+% for x in range(2,nb_of_columns - 1):
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+% endfor
+<Column ss:AutoFitWidth="1" ss:Width="250" />
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('AMC')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('FMC')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Safety Stock (qty)')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Valid Until')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product UOM')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch Number')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Asset')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Consumed Quantity')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Remark')}</Data></Cell>
     </Row>
     ## we loop over the products line
-    % for line in o.line_ids:
+    % for line in o.move_lines:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.uom_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" >
-            % if line.amc and line.amc:
-                <Data ss:Type="Number">${(line.amc or '')|x}</Data>
-            % else:
-                <Data ss:Type="String"></Data>
-            % endif
-        </Cell>
-        <Cell ss:StyleID="line" >
-            % if line.fmc and line.fmc:
-                <Data ss:Type="Number">${(line.fmc or '')|x}</Data>
-            % else:
-                <Data ss:Type="String"></Data>
-            % endif
-        </Cell>
-        <Cell ss:StyleID="line" >
-            % if line.security_stock and line.security_stock:
-                <Data ss:Type="Number">${(line.security_stock or '')|x}</Data>
-            % else:
-                <Data ss:Type="String"></Data>
-            % endif
-        </Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prodlot_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" >
-            % if line.valid_until and line.valid_until != 'False':
-                <Data ss:Type="DateTime">${line.valid_until|n}T00:00:00.000</Data>
+            % if line.expired_date and line.expired_date != 'False':
+                <Data ss:Type="DateTime">${line.expired_date|n}T00:00:00.000</Data>
             % else:
                 <Data ss:Type="String"></Data>
             % endif
         </Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.asset_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" >
+            % if line.product_qty:
+                <Data ss:Type="Number">${(line.product_qty or '')|x}</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>

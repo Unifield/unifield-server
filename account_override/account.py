@@ -461,6 +461,52 @@ class account_journal(osv.osv):
         }
         return seq_pool.create(cr, uid, seq)
 
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_instance_filter(self, cr, uid, obj, name, args, context=None):
+        # journals instance filter: let all default journals,
+        # except specific cases
+        res = False
+        if not args:
+            return res
+        if len(args) != 1 or len(args[0]) != 3 or \
+            args[0][0] != 'instance_filter' or args[0][1] != '=':
+            raise osv.except_osv(_('Error'), 'invalid arguments')
+
+        is_manual_view = context and context.get('from_manual_entry', False)
+        if is_manual_view:
+            self_instance = self.pool.get('res.users').browse(cr, uid, [uid],
+                context=context)[0].company_id.instance_id
+            if self_instance:
+                forbid_levels = []
+                if self_instance.level and self_instance.level == 'coordo':
+                    # BKLG-19/7: forbid creation of MANUAL journal entries
+                    # from COORDO on a PROJECT journal
+                    forbid_levels.append('project')
+                if forbid_levels:
+                    msf_instance_obj = self.pool.get('msf.instance')
+                    forbid_instance_ids = msf_instance_obj.search(cr, uid, 
+                        [('level', 'in', forbid_levels)], context=context)
+                    if forbid_instance_ids:
+                        res = [('instance_id', 'not in', forbid_instance_ids)]
+        return res
+
+    _columns = {
+        # BKLG-19/7: journals instance filter 
+        'instance_filter': fields.function(
+            _get_fake, fnct_search=_search_instance_filter,
+            method=True, type='boolean', string='Instance filter'
+        ),
+    }
+
 account_journal()
 
 class account_move(osv.osv):
@@ -479,7 +525,7 @@ class account_move(osv.osv):
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, domain="[('state', '=', 'draft')]"),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj'])]"),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj']), ('instance_filter', '=', True)]"),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
             help="This indicates which Journal Type is attached to this Journal Entry"),

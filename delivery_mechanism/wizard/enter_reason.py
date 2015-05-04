@@ -25,7 +25,6 @@ import decimal_precision as dp
 
 import netsvc
 
-
 class enter_reason(osv.osv_memory):
     '''
     wizard called to split a memory stock move from create picking wizard

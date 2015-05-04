@@ -48,31 +48,12 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        if context is None:
-            context = {}
-
-        '''
-            !!!!! ATTENTION ATTENTION!!!!!!
-            UTP-1021: This solution is NOT stable and could be dangerous!!!!
-            need to have a proper fix for this,
-            currently we have only 3 tree views for sale.order.line
-            so I use the value in the context to identify that it is not the
-            view of wizard, but this assumption could be totally WRONG!
-            But in this current version, it works!
-        '''
-        if not context.get('search_default_need_sourcing', False) and \
-            view_type == 'tree':
-            if '_terp_view_name' in context:
-                '''
-                UFTP-346: HACK ON HACK UTP-1021
-                '_terp_view_name' not set if grouping
-                and we do not want special view when grouping
-                '''
-                view_id = self.pool.get('ir.model.data').get_object_reference(
-                    cr, uid, 'sourcing', 'sourcing_line_special_tree_view')[1]
-        return super(sale_order_line, self).fields_view_get(cr, uid, view_id,
-            view_type, context, toolbar, submenu)
+    _replace_exported_fields = {
+        'product_id': [
+            (['product_code', 'Product Code'], 10),
+            (['product_name', 'Product Description'], 20),
+        ],
+    }
 
     """
     Other methods
@@ -563,6 +544,23 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             digits_compute=dp.get_precision('Product UoM'),
             readonly=True,
         ),
+        # Fields used for export
+        'product_code': fields.related(
+            'product_id',
+            'default_code',
+            type='char',
+            size=64,
+            string='Product code',
+            store=False,
+        ),
+        'product_name': fields.related(
+            'product_id',
+            'name',
+            type='char',
+            size=128,
+            string='Product description',
+            store=False,
+        ),
     }
 
     """
@@ -643,6 +641,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         """
         # Objects
         order_obj = self.pool.get('sale.order')
+        partner_obj = self.pool.get('res.partner')
         product_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')
 
@@ -656,8 +655,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if vals.get('product_id', False):
             product = product_obj.browse(cr, uid, vals['product_id'], context=context)
 
+        ir = False
+        order_p_type = False
         if vals.get('order_id', False):
             order = order_obj.browse(cr, uid, vals['order_id'], context=context)
+            ir = order.procurement_request
+            order_p_type = order.partner_type
             if order.order_type == 'loan' and order.state == 'validated':
                 vals.update({
                     'type': 'make_to_stock',
@@ -670,6 +673,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if product and product.type in ('consu', 'service', 'service_recep'):
             vals['type'] = 'make_to_order'
+
+        if product and product.type in ('service', 'service_recep'):
+            if ir and vals.get('po_cft', 'dpo') == 'dpo':
+                vals['po_cft'] = 'po'
+            elif not ir and vals.get('po_cft', 'po') == 'po':
+                vals['po_cft'] = 'dpo'
 
         # If type is missing, set to make_to_stock and po_cft to False
         if not vals.get('type', False):
@@ -687,6 +696,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # UFTP-11: if make_to_order can not have a location
         if vals.get('type', False) == 'make_to_order':
             vals['location_id'] = False
+            if vals.get('supplier') and order_p_type == 'internal':
+                sup = partner_obj.read(cr, uid, vals.get('supplier'), ['partner_type'], context=context)
+                if sup['partner_type'] == 'internal':
+                    vals['supplier'] = False
 
         # UFTP-139: if make_to_stock and no location, put Stock as location
         if vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
@@ -792,6 +805,15 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 raise osv.except_osv(
                     _('Warning'),
                     _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
+                )
+
+            if line.product_id and \
+               line.product_id.type in ('service', 'service_recep') and \
+               not line.order_id.procurement_request and \
+               line.po_cft == 'po':
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("""'Purchase Order' is not allowed to source a 'Service' product."""),
                 )
 
             if not line.product_id:
@@ -1047,6 +1069,29 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 _('A location must be chosen before sourcing the line.'),
             )
 
+        no_price = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('price_unit', '=', 0.00),
+            ('order_id.procurement_request', '=', False),
+        ], count=True, context=context)
+        if no_price:
+            raise osv.except_osv(
+                _('Warning'),
+                _('You cannot confirm the sourcing of a line with unit price as zero.'),
+            )
+
+        int_int_supplier = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('supplier.partner_type', '=', 'internal'),
+            ('order_id.partner_type', '=', 'internal'),
+            ('order_id.procurement_request', '=', False),
+        ], count=True, context=context)
+        if int_int_supplier:
+            raise osv.except_osv(
+                _('Warning'),
+                _('You cannot confirm the sourcing of a line to an internal customer with an internal supplier.'),
+            )
+
         order_to_check = {}
         for line in self.read(cr, uid, ids, ['order_id', 'estimated_delivery_date'], context=context):
             order_proc = order_obj.read(cr, uid, line['order_id'][0], ['procurement_request'], context=context)['procurement_request']
@@ -1294,12 +1339,19 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         sellerId = False
         po_cft = False
         l_type = 'type' in result['value'] and result['value']['type']
+
+        line = None
+        if ids:
+            line = self.browse(cr, uid, ids[0])
+
         if product and type:
             seller = product_obj.browse(cr, uid, product).seller_id
             sellerId = (seller and seller.id) or False
 
             if l_type == 'make_to_order':
                 po_cft = 'po'
+                if line and line.product_id and line.product_id.type in ('service', 'service_recep') and line.order_id and not line.order_id.procurement_request:
+                    po_cft = 'dpo'
 
             result['value'].update({
                 'supplier': sellerId,
@@ -1349,6 +1401,14 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         res = {'value': value, 'warning': warning}
 
         line = self.browse(cr, uid, line_id, context=context)
+
+        if line.product_id.type in ('service', 'service_recep') and not line.order_id.procurement_request and po_cft == 'po':
+            res['warning'] = {
+                'title': _('Warning'),
+                'message': _("""'Purchase Order' is not allowed to source a 'Service' product."""),
+            }
+            res['value'].update({'po_cft': 'dpo'})
+
         partner_id = 'supplier' in value and value['supplier'] or partner_id
         if line_id and partner_id and line.product_id:
             check_fnct = product_obj._on_change_restriction_error
@@ -1403,7 +1463,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             line = self.browse(cr, uid, line_id, context=context)
             if line.product_id.type in ('consu', 'service', 'service_recep') and l_type == 'make_to_stock':
                 product_type = line.product_id.type == 'consu' and 'non stockable' or 'service'
-                value['l_type'] = 'make_to_order'
+                value['type'] = 'make_to_order'
                 message.update({
                     'title': _('Warning'),
                     'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type,

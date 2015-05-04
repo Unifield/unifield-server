@@ -25,6 +25,8 @@ import base64
 from os.path import join as opj
 from tools.translate import _
 import tools
+import os
+import logging
 
 class ir_model_data(osv.osv):
     _inherit = 'ir.model.data'
@@ -45,6 +47,23 @@ class ir_model_data(osv.osv):
         mod_ids = mod_obj.search(cr, uid, [('name', '=', 'export_import_lang')])
         if mod_ids and mod_obj.read(cr, uid, mod_ids, ['state'])[0]['state'] == 'uninstalled':
             mod_obj.write(cr, uid, mod_ids[0], {'state': 'to install'})
+
+    def us_203_sync_down_donor(self, cr, uid, *a, **b):
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        sql_file = opj('msf_profile', 'data', 'us_203.sql')
+        if c and c.instance_id and c.instance_id.level == 'section':
+            logger = logging.getLogger('update')
+            try:
+                fp = tools.file_open(sql_file, 'r')
+                logger.warn('Execute us-203 sql')
+                cr.execute(fp.read())
+                logger.warn('Sql done')
+                os.rename(fp.name, "%sold" % fp.name)
+                logger.warn('Sql file renamed')
+                fp.close()
+            except IOError, e:
+                # file does not exist
+                pass
 
 ir_model_data()
 

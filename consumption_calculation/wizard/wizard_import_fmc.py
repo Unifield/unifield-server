@@ -39,13 +39,15 @@ class wizard_import_fmc(osv.osv_memory):
     
     _defaults = {
         'message': lambda *a : _("""
-        IMPORTANT : The first line will be ignored by the system.
+        IMPORTANT : The fourth first lines will be ignored by the system.
         
         The file should be in Excel xml 2003 format.
         The columns should be in this order :
           * Product Code
           * Product Description
+          * UoM (not imported)
           * FMC
+          * Safety Stock (qty) - (not imported)
           * Valid until (DD-MMM-YYYY)
         """)
     }
@@ -91,8 +93,12 @@ class wizard_import_fmc(osv.osv_memory):
         
         # ignore the first row
         rows.next()
+        rows.next()
+        rows.next()
+        rows.next()
         line_num = 1
         to_write = {}
+        error = ''
         for row in rows:
             # default values
             to_write = {
@@ -101,14 +107,13 @@ class wizard_import_fmc(osv.osv_memory):
                 'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
                 'uom_id': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1],
             }
-            error = ''
             fmc = 0
             valid_until = False
             line_num += 1
             # Check length of the row
-            if len(row) != 5:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
-Product Code*, Product Description*, AMC, FMC, Valid Until"""))
+            if len(row) != 7:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order:
+Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Until"""))
 
             # Cell 0: Product Code
             p_value = {}
@@ -120,26 +125,26 @@ Product Code*, Product Description*, AMC, FMC, Valid Until"""))
                 error += _('Line %s in your Excel file ignored: Product Code [%s] not found ! Details: %s \n') % (line_num, row[0], p_value['error_list'])
 
             # Cell 3: Quantity (FMC)
-            if row.cells[3] and row.cells[3].data:
+            if row.cells[4] and row.cells[4].data:
                 if row.cells[3].type in ('int', 'float'):
-                    fmc = row.cells[3].data
-                elif isinstance(row.cells[3].data, (int, long, float)):
-                    fmc = row.cells[3].data
+                    fmc = row.cells[4].data
+                elif isinstance(row.cells[4].data, (int, long, float)):
+                    fmc = row.cells[4].data
                 else:
-                    error += _("Line %s in your Excel file ignored: FMC should be a number and not %s \n") % (line_num, row.cells[3].data)
+                    error += _("Line %s in your Excel file ignored: FMC should be a number and not %s \n") % (line_num, row.cells[4].data)
 
-            # Cell 4: Date (Valid Until)
-            if row[4] and row[4].data:
-                if row[4].type in ('datetime', 'date'):
-                    valid_until = row[4].data
+            # Cell 5: Date (Valid Until)
+            if row[6] and row[6].data:
+                if row[6].type in ('datetime', 'date'):
+                    valid_until = row[6].data
                 else:
                     try:
-                        valid_until = time.strftime('%Y-%m-%d', time.strptime(str(row[4]), '%d/%m/%Y'))
+                        valid_until = time.strftime('%Y-%m-%d', time.strptime(str(row[6]), '%d/%m/%Y'))
                     except ValueError:
                         try:
-                            valid_until = time.strftime('%Y-%b-%d', time.strptime(str(row[4]), '%d/%b/%Y'))
+                            valid_until = time.strftime('%Y-%b-%d', time.strptime(str(row[6]), '%d/%b/%Y'))
                         except ValueError as e:
-                            error += _("Line %s in your Excel file: expiry date %s has a wrong format. Details: %s' \n") % (line_num, row[4], e)
+                            error += _("Line %s in your Excel file: expiry date %s has a wrong format. Details: %s' \n") % (line_num, row[6], e)
 
             error += '\n'.join(to_write['error_list'])
             if error:

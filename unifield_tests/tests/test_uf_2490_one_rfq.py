@@ -131,7 +131,11 @@ class UF2490IROneRfQ(UF2490OneRfQ):
         self.pr = True
         super(UF2490IROneRfQ, self).setUp()
 
+    def test_create_order_cancel_po_leave_order(self):
+        pass
 
+    def test_create_order_cancel_po_close_order(self):
+        pass
 
 
 def get_test_suite():

@@ -24,6 +24,7 @@ import time
 from osv import osv, fields
 from osv.orm import browse_record
 from tools.translate import _
+from order_types.stock import check_rw_warning
 
 
 class stock_picking_processing_info(osv.osv_memory):
@@ -957,10 +958,10 @@ class stock_picking(osv.osv):
                         continue
 
                     # Check if we must re-compute the price of the product
-                    compute_average = picking.type == 'in' and line.product_id.cost_method and not move.location_dest_id.cross_docking_location_ok
+                    compute_average = picking.type == 'in' and line.product_id.cost_method
                     if values.get('location_dest_id', False):
                         dest_loc = loc_obj.browse(cr, uid, values['location_dest_id'], context=context)
-                        compute_average = picking.type == 'in' and line.product_id.cost_method == 'average' and not dest_loc.cross_docking_location_ok
+                        compute_average = picking.type == 'in' and line.product_id.cost_method == 'average'
 
                     if compute_average:
                         average_values = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
@@ -1132,10 +1133,21 @@ class stock_picking(osv.osv):
                     })
 
                 backorder_id = self.copy(cr, uid, picking.id, initial_vals_copy, context=context)
+
+                back_order_post_copy_vals = {}
                 if usb_entity == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
                     new_name = context.get('rw_backorder_name')
                     del context['rw_backorder_name']
-                    self.write(cr, uid, backorder_id, {'name': new_name}, context=context)
+                    back_order_post_copy_vals['name'] = new_name
+
+                if picking.purchase_id:
+                    # US-111: in case of partial reception invoice was not linked to PO
+                    # => analytic_distribution_supply/stock.py _invoice_hook
+                    #    picking.purchase_id was False
+                    back_order_post_copy_vals['purchase_id'] = picking.purchase_id.id
+
+                if back_order_post_copy_vals:
+                    self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
 
                 for bo_move, bo_qty, av_values, data_back in backordered_moves:
                     if bo_move.product_qty != bo_qty:
@@ -1283,6 +1295,7 @@ class stock_picking(osv.osv):
     def _manual_create_rw_messages(self, cr, uid, context=None):
         return
 
+    @check_rw_warning
     def enter_reason(self, cr, uid, ids, context=None):
         '''
         open reason wizard

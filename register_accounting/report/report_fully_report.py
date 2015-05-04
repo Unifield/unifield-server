@@ -29,25 +29,84 @@ class report_fully_report(report_sxw.rml_parse):
         self.localcontext.update({
             'getMoveLines': self.getMoveLines,
             'getAnalyticLines': self.getAnalyticLines,
+            'getImportedMoveLines': self.getImportedMoveLines,
         })
-        return
 
-    def getMoveLines(self, move_ids):
+    def filter_regline(self, regline_br):
         """
-        Fetch all lines except the partner counterpart one
+        :param regline_br: browsed regline
+        :return: True to show detail of the reg line False to not display
         """
-        res = []
-        if not move_ids:
-            return res
-        if isinstance(move_ids, (int, long)):
-            move_ids = [move_ids]
+        # US-69
+
+        # exclude ALL detail of register line of account of given user_type
+        # (redondencies of invoice detail)
+        # http://jira.unifield.org/browse/US-69?focusedCommentId=38845&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38845
+        excluded_acc_type_codes = [
+            'tax',
+            'cash',
+            'receivables',
+        ]
+        if regline_br and regline_br.account_id and \
+            regline_br.account_id.user_type:
+                if regline_br.account_id.user_type.code and \
+                    regline_br.account_id.user_type.code in \
+                    excluded_acc_type_codes:
+                    return False
+        return True
+
+    def get_move_lines(self, move_ids):
         # We need move lines linked to the given move ID. Except the invoice counterpart.
         #+ Lines that have is_counterpart to True is the invoice counterpart. We do not need it.
+        res = []
+        if  not move_ids:
+            return res
+
         aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
-        aml_ids = aml_obj.search(self.cr, self.uid, [('move_id', 'in', move_ids), ('is_counterpart', '=', False)])
+        domain = [
+            ('move_id', 'in', move_ids),
+            ('is_counterpart', '=', False)
+        ]
+        aml_ids = aml_obj.search(self.cr, self.uid, domain)
         if aml_ids:
             res = aml_obj.browse(self.cr, self.uid, aml_ids)
+
         return sorted(res, key=lambda x: x.line_number)
+
+    def getMoveLines(self, move_brs, regline_br):
+        """
+        Fetch all lines except the partner counterpart one
+        :param move_brs: browsed moves (JIs)
+        :type move_brs: list
+        :param regline_br: browsed regline
+        """
+        if not move_brs:
+            return []
+        if not self.filter_regline(regline_br):
+            return []  # not any detail for this reg line
+        return self.get_move_lines([m.id for m in move_brs])
+
+    def getImportedMoveLines(self, ml_brs, regline_br):
+        """
+        Fetch all lines except the partner counterpart one
+        :param ml_brs: list of browsed move lines
+        :type ml_brs: list
+        :param regline_br: browsed regline
+        """
+        if not self.filter_regline(regline_br):
+            return []  # not any detail for this reg line
+        if not ml_brs:
+            return []
+
+        # exclude detail for Balance/Sheet entries (whatever the Account type) booked in a HR journal are imported in a register
+        # http://jira.unifield.org/browse/US-69?focusedCommentId=38845&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38845
+        move_ids = [
+            ml.move_id.id for ml in ml_brs if not ( \
+                ml.journal_id and ml.journal_id.type == 'hr' and \
+                ml.account_id and ml.account_id.user_type and \
+                ml.account_id.user_type.report_type in ('asset', 'liability', ))
+        ]
+        return self.get_move_lines(move_ids)
 
     def getAnalyticLines(self, analytic_ids):
         """

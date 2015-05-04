@@ -427,6 +427,10 @@ class tender(osv.osv):
                             'product_qty': line.qty,
                             'price_unit': line.price_unit,
                             'product_uos_qty': line.qty}
+                    if line.product_id.type in ('service', 'service_recep'):
+                        if not tender.sale_order_id.procurement_request:
+                            vals['po_cft'] = 'dpo'
+
                     if line.sale_order_line_id and line.sale_order_line_id.procurement_id:
                         proc_id = line.sale_order_line_id.procurement_id.id
                         proc_obj.write(cr, uid, [proc_id], vals, context=context)
@@ -1269,6 +1273,7 @@ class procurement_order(osv.osv):
         rfq_obj = self.pool.get('purchase.order')
         rfq_line_obj = self.pool.get('purchase.order.line')
         partner_obj = self.pool.get('res.partner')
+        prsd_obj = self.pool.get('procurement.request.sourcing.document')
 
         if not context:
             context = {}
@@ -1317,6 +1322,13 @@ class procurement_order(osv.osv):
                                                   'order_type': sale_order.order_type,
                                                   'origin': sale_order.name,}, context=context)
 
+            prsd_obj.chk_create(cr, uid, {
+                'order_id': sale_order.id,
+                'sourcing_document_id': rfq_id,
+                'sourcing_document_model': 'purchase.order',
+                'sourcing_document_type': 'rfq',
+            }, context=context)
+
             # add a line to the RfQ
             rfq_line_id = rfq_line_obj.create(cr, uid, {'product_id': proc.product_id.id,
                                                         'comment': sale_order_line.comment,
@@ -1347,6 +1359,7 @@ class procurement_order(osv.osv):
         '''
         tender_obj = self.pool.get('tender')
         tender_line_obj = self.pool.get('tender.line')
+        prsd_obj = self.pool.get('procurement.request.sourcing.document')
         # find the corresponding sale order id for tender
         for proc in self.browse(cr, uid, ids, context=context):
             if proc.tender_id:
@@ -1370,6 +1383,12 @@ class procurement_order(osv.osv):
                                                         'warehouse_id': sale_order.shop_id.warehouse_id.id,
                                                         'requested_date': proc.date_planned,
                                                         }, context=context)
+            prsd_obj.chk_create(cr, uid, {
+                'order_id': sale_order.id,
+                'sourcing_document_id': tender_id,
+                'sourcing_document_model': 'tender',
+                'sourcing_document_type': 'tender',
+            }, context=context)
             # add a line to the tender
             tender_line_id = tender_line_obj.create(cr, uid, {'product_id': proc.product_id.id,
                                                               'comment': sale_order_line.comment,
@@ -1736,7 +1755,8 @@ price. Please set unit price on these lines or cancel them'''),
             if rfq.from_procurement:
                 for line in rfq.order_line:
                     if line.procurement_id:
-                        self.pool.get('procurement.order').write(cr, uid, [line.procurement_id.id], {'price_unit': line.price_unit}, context=context)
+                        vals = {'price_unit': line.price_unit}
+                        self.pool.get('procurement.order').write(cr, uid, [line.procurement_id.id], vals, context=context)
 #                    elif not rfq.tender_id:
 #                        prep_lt = fields_tools.get_field_from_company(cr, uid, object='sale.order', field='preparation_lead_time', context=context)
 #                        rts = datetime.strptime(rfq.sale_order_id.ready_to_ship_date, db_date_format)
