@@ -2290,7 +2290,8 @@ class sale_order_line(osv.osv):
             picking_ids = set()
             move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel']), ('in_out_updated', '=', False)], context=context)
             for move in move_obj.read(cr, uid, move_ids, ['picking_id'], context=context):
-                picking_ids.add(move['picking_id'][0])
+                if move['picking_id']:
+                    picking_ids.add(move['picking_id'][0])
 
             if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
                 move_obj.write(cr, uid, move_ids, {'state': 'draft'}, context=context)
