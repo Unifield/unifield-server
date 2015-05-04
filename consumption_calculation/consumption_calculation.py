@@ -430,10 +430,12 @@ class real_average_consumption(osv.osv):
                                                                         product['uom_id'], product['prodlot_id'], context=context)['value']
 
                 values.update(v)
-                if batch_mandatory:
+                if batch_mandatory and not product['prodlot_id']:
                     values.update({'remark': 'You must assign a batch number'})
-                if date_mandatory:
+                elif date_mandatory and not product['expired_date']:
                     values.update({'remark': 'You must assign an expiry date'})
+                else:
+                    values.update({'remark': ''})
                 if product['prodlot_id']:
                     product_qty = self.pool.get('stock.production.lot')._get_stock(cr, uid, product['prodlot_id'], [], None, context=context)
                     values.update({'product_qty':product_qty[product['prodlot_id']]})
@@ -447,7 +449,7 @@ class real_average_consumption(osv.osv):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
-                'view_mode': 'form',
+                'view_mode': 'form,tree',
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
@@ -458,7 +460,7 @@ class real_average_consumption(osv.osv):
         '''
         if context is None:
             context = {}
-        self.write(cr, uid, ids, {'created_ok': True})    
+        self.write(cr, uid, ids, {'created_ok': True})
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
