@@ -48,6 +48,7 @@ class BackupConfig(osv.osv):
         'aftermanualsync':fields.boolean('Backup after manual sync'),
         'afterautomaticsync':fields.boolean('Backup after automatic sync'),
         'scheduledbackup':fields.boolean('Scheduled backup'),
+        'beforepatching': fields.boolean('Before patching'),
     }
 
     _defaults = {
@@ -56,6 +57,7 @@ class BackupConfig(osv.osv):
         'beforeautomaticsync' : True,
         'aftermanualsync' : True,
         'afterautomaticsync' : True,
+        'beforepatching': True,
     }
 
     def _set_pg_psw_env_var(self):
@@ -71,16 +73,27 @@ class BackupConfig(osv.osv):
         context = context or {}
         logger = context.get('logger')
         bkp_ids = self.search(cr, uid, [(state, '=', True)], context=context)
+
+        suffix = ''
+        if state == 'beforepatching':
+            suffix = '-BP'
+        elif state.startswith('before'):
+            suffix = '-B'
+        elif state.startswith('after'):
+            suffix = '-A'
+
         if bkp_ids:
             if logger:
                 logger.append("Database %s backup started.." % state)
                 logger.write()
-            self.exp_dump(cr, uid, bkp_ids, context)
+            self.exp_dump(cr, uid, bkp_ids, suffix, context)
             if logger:
                 logger.append("Database %s backup successful" % state)
                 logger.write()
 
-    def exp_dump(self, cr, uid, ids, context=None):
+    def exp_dump(self, cr, uid, ids, suffix='', context=None):
+        if context is None:
+            context = {}
         bkp = self.browse(cr, uid, ids, context)
         if bkp and bkp[0]:
             bck = bkp[0]
@@ -102,7 +115,7 @@ class BackupConfig(osv.osv):
             if res:
                 raise Exception, "Couldn't dump database"
             self._unset_pg_psw_env_var()
-            outfile = os.path.join(bck.name, "%s-%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"), get_server_version()))
+            outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"), suffix, get_server_version()))
             bkpfile = open(outfile,"wb")
             bkpfile.write(data)
             bkpfile.close()
