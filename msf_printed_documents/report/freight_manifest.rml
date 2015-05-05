@@ -313,19 +313,19 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].shipper_address ]]</para>
+                    <para style="TextInformation3">[[ objects[0].shipper_address ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].carrier_address ]]</para>
+                    <para style="TextInformation3">[[ objects[0].carrier_address ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].consignee_address ]]</para>
+                    <para style="TextInformation3">[[ objects[0].consignee_address ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>

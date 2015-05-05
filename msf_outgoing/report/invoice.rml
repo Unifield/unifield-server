@@ -118,13 +118,11 @@
             </td>
             <td>
                 <para style="HeaderInfosTitle">Shipper:</para>
-                <para style="HeaderInfosValue">[[ getCompanyInfo('name') ]]</para>
-                <para style="HeaderInfosValue">[[ getCompanyInfo('addr_name') ]]</para>
-                <para style="HeaderInfosValue">[[ getCompanyInfo('street') ]]</para>
-                <para style="HeaderInfosValue">[[ getCompanyInfo('street2') ]]</para>
-                <para style="HeaderInfosValue">[[ getCompanyInfo('city') ]]</para>
-                <para style="HeaderInfosValue">[[ getCompanyInfo('country') ]]</para>
-                <para style="HeaderInfosValue">[[ getCompanyInfo('phone') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_name or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_contact or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_address or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_phone or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_other or removeParentNode('para') ]]</para>
             </td>
             <td>
                 <para style="HeaderInfosTitle">Final destination of goods:</para>

@@ -125,13 +125,11 @@
                         <td>
                             <para style="HeaderInfosTitle"><br /></para>
                             <para style="HeaderInfosTitle">Shipper:</para>
-                            <para style="HeaderInfosValue">[[ getCompany('name') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('addr_name') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('street') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('street2') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('city') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('country') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('phone') ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_name or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_contact or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_address or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_phone or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_other or '' ]]</para>
                         </td>
                         <td>
                             <para style="HeaderInfosTitle"><br /></para>
