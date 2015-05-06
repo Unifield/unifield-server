@@ -115,26 +115,45 @@ class ir_translation(osv.osv):
                 self._get_source.clear_cache(cr.dbname, uid, name, tt, lang, tr[res_id])
         self._get_source.clear_cache(cr.dbname, uid, name, tt, lang)
         self._get_ids.clear_cache(cr.dbname, uid, name, tt, lang, ids)
+        context = {}
+
+        # BKLG-52 Change delete/create for Update
+        for id in ids:
+            args = [('lang', '=', lang), ('type', '=', tt),
+                    ('name', '=', name), ('res_id', '=', id)]
+            translation_ids = self.search(cr, uid, args, offset=0,
+                                          limit=None, order=None,
+                                          context=context, count=False)
+            if translation_ids:
+                values = {'value': value, 'src': src}
+                self.write(cr, uid, translation_ids[0], values, context=context)
+            else:
+                self.create(cr, uid, {
+                    'lang': lang,
+                    'type': tt,
+                    'name': name,
+                    'res_id': id,
+                    'value': value,
+                    'src': src,
+                    })
+        """
+        cr.execute('delete from ir_translation ' \
+                'where lang=%s ' \
+                    'and type=%s ' \
+                    'and name=%s ' \
+                    'and res_id IN %s',
+                (lang,tt,name,tuple(ids),))
 
         for id in ids:
-            # BKLG-52 Change delete/create for Update
-            # If translation exist, update field
-            cr.execute("UPDATE ir_translation \
-                        SET value = %s, src = %s \
-                        WHERE lang = %s AND type = %s \
-                        AND name = %s AND res_id = %s",
-                       (value, src, lang, tt, name, id))
-
-            # If translation desn't exist, create line
-            cr.execute("INSERT INTO ir_translation \
-                        (lang, type, name, res_id, value, src) \
-                        SELECT %s, %s, %s, %s, %s, %s \
-                        WHERE NOT EXISTS \
-                        (SELECT 1 FROM ir_translation \
-                        WHERE lang = %s AND type = %s \
-                        AND name = %s AND res_id = %s)",
-                       (lang, tt, name, id, value, src, lang, tt, name, id))
-
+            self.create(cr, uid, {
+                'lang':lang,
+                'type':tt,
+                'name':name,
+                'res_id':id,
+                'value':value,
+                'src':src,
+                })
+        """
         return len(ids)
 
     @tools.cache(skiparg=3)
