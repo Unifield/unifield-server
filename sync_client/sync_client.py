@@ -237,7 +237,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
             finally:
                 # gotcha!
                 all_status = logger.info.values()
-                if 'ok' in all_status and step != 'status' and logger.info.get(step) == 'failed':
+                if 'ok' in all_status and (step != 'status' and logger.info.get(step) in ('failed', 'aborted') or step == 'status' and logger.info.get(step) == 'aborted'):
                     self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'after%ssync' % context.get('sync_type', 'manual'), context=context)
                 sync_lock.release()
                 if make_log:
