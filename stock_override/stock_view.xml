@@ -1057,7 +1057,7 @@
                                 <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
                                 <field name="prod_lot_id"
                                     on_change="change_lot(location_id,product_id,prod_lot_id,product_uom,parent.date)"
-                                    context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory, 'search_default_real': True}"
+                                    context="{'location_id':location_id, 'product_id': product_id, 'search_default_real': True}"
                                     domain="[('check_type','=', True), ('product_id', '=?', product_id)]"
                                     attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
                                 <field name="expiry_date"
