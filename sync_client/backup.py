@@ -91,6 +91,9 @@ class BackupConfig(osv.osv):
                 logger.append("Database %s backup successful" % state)
                 logger.write()
 
+    def button_exp_dump(self, cr, uid, ids, context=None):
+        return self.exp_dump(cr, uid, ids, context=context)
+
     def exp_dump(self, cr, uid, ids, suffix='', context=None):
         if context is None:
             context = {}
