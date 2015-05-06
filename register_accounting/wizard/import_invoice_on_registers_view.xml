@@ -33,7 +33,7 @@
                 <form string="Import Entries">
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
-                        <field name="line_ids" domain="[('ready_for_import_in_register','=',True), ('currency_id', '=', currency_id), ('invoice_line_id', '=', False)]" 
+                        <field name="line_ids" domain="[('ready_for_import_in_register','=',True), ('currency_id', '=', currency_id), ('invoice_line_id', '=', False)]"
                           context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1">
                             <tree string="Account Entry Lines" editable="top" noteditable="True">
                                 <field name="invoice"/>
@@ -91,7 +91,7 @@
                 <form string="Import Entries">
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
-                        <field name="line_ids" domain="[('ready_for_import_in_register','=',True), ('currency_id', '=', currency_id)]" 
+                        <field name="line_ids" domain="[('ready_for_import_in_register','=',True), ('currency_id', '=', currency_id)]"
                           context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1">
                             <tree string="Account Entry Lines" editable="top" noteditable="True">
                                 <field name="invoice"/>

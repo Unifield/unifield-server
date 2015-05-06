@@ -110,6 +110,62 @@
             </field>
         </record>
 
+        <record id="register_view_account_move_line_filter" model="ir.ui.view">
+            <field name="name">Journal Items</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_line_filter"/>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+                <xpath expr="/search" position="replace">
+                    <search string="Search Journal Items">
+                        <group col='10' colspan='4'>
+                            <filter icon="terp-document-new" string="Unbalanced" domain="[('state','=','draft')]" help="Unbalanced Journal Items"/>
+                            <separator orientation="vertical"/>
+                            <filter icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
+                            <filter name="posted" icon="terp-camera_test" string="Posted" domain="[('move_id.state','=','posted')]" help="Posted Journal Items"/>
+                            <separator orientation="vertical"/>
+                            <filter
+                                icon="terp-dolar_ok!"
+                                string="Unreconciled"
+                                domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
+                                name="unreconciled"/>
+                            <separator orientation="vertical"/>
+                            <field name="move_id" select="1" string="Number (Move)"/>
+                            <field name="date" select='1'/>
+                            <field name="account_id" select='1'/>
+                            <field name="partner_id" select='1'>
+                                <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
+                            </field>
+                        </group>
+                        <newline/>
+                        <group col="10" colspan="4">
+                            <field name="instance_id"/>
+                            <field name="journal_id" widget="selection" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
+                            <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                        </group>
+                        <newline/>
+                        <group expand="0" string="Extended Filters...">
+                            <field name="ref" select="1" string="Reference"/>
+                            <field name="name" select="1"/>
+                            <field name="narration" select="1"/>
+                            <field name="balance" string="Debit/Credit" select='1'/>
+                        </group>
+                        <newline/>
+                        <group expand="0" string="Group By..." colspan="12" col="10">
+                            <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                            <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                        </group>
+                        <newline/>
+                    </search>
+                </xpath>
+            </field>
+        </record>
+
     <!-- Account move line search view -->
         <record id="mcdb_view_account_move_line_filter" model="ir.ui.view">
             <field name="name">Journal Items</field>
@@ -239,9 +295,9 @@
                 <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1" hide_delete_button="1" >
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
-                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard"
                         attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
-                    <button name="button_open_corrections" type="object" string="Open corrections history" 
+                    <button name="button_open_corrections" type="object" string="Open corrections history"
                         attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
                     <field name="instance_id" readonly="1"/>
                     <field name="journal_id"/>
