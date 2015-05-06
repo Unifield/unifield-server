@@ -32,6 +32,16 @@ class hq_entries_unsplit(osv.osv_memory):
         'line_ids': fields.many2many('hq.entries', 'hq_entries_unsplit_rel', 'wizard_id', 'line_id', "Selected lines", help="Lines previously selected by the user", readonly=True),
         'process_ids': fields.many2many('hq.entries', 'hq_entries_unsplit_process_rel', 'wizard_id', 'line_id', "Valid lines", help="Lines that would be processed", readonly=True),
     }
+       
+    def create(self, cr, uid, vals, context=None):
+        # BKLG-77: check transation at wiz creation (done by hq.entries model)
+        line_ids = context and context.get('active_ids', []) or []
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+        self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
+            line_ids, self._name, context=context)
+        return super(hq_entries_unsplit, self).create(cr, uid, vals,
+            context=context)
 
     def button_validate(self, cr, uid, ids, context=None):
         """
