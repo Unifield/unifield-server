@@ -70,7 +70,7 @@ class ir_translation(osv.osv):
     def _auto_init(self, cr, context={}):
         super(ir_translation, self)._auto_init(cr, context)
 
-        # FIXME: there is a size limit on btree indexed values so we can't index src column with normal btree. 
+        # FIXME: there is a size limit on btree indexed values so we can't index src column with normal btree.
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_ltns',))
         if cr.fetchone():
             #temporarily removed: cr.execute('CREATE INDEX ir_translation_ltns ON ir_translation (name, lang, type, src)')
@@ -116,21 +116,25 @@ class ir_translation(osv.osv):
         self._get_source.clear_cache(cr.dbname, uid, name, tt, lang)
         self._get_ids.clear_cache(cr.dbname, uid, name, tt, lang, ids)
 
-        cr.execute('delete from ir_translation ' \
-                'where lang=%s ' \
-                    'and type=%s ' \
-                    'and name=%s ' \
-                    'and res_id IN %s',
-                (lang,tt,name,tuple(ids),))
         for id in ids:
-            self.create(cr, uid, {
-                'lang':lang,
-                'type':tt,
-                'name':name,
-                'res_id':id,
-                'value':value,
-                'src':src,
-                })
+            # BKLG-52 Change delete/create for Update
+            # If translation exist, update field
+            cr.execute("UPDATE ir_translation \
+                        SET value = %s, src = %s \
+                        WHERE lang = %s AND type = %s \
+                        AND name = %s AND res_id = %s",
+                       (value, src, lang, tt, name, id))
+
+            # If translation desn't exist, create line
+            cr.execute("INSERT INTO ir_translation \
+                        (lang, type, name, res_id, value, src) \
+                        SELECT %s, %s, %s, %s, %s, %s \
+                        WHERE NOT EXISTS \
+                        (SELECT 1 FROM ir_translation \
+                        WHERE lang = %s AND type = %s \
+                        AND name = %s AND res_id = %s)",
+                       (lang, tt, name, id, value, src, lang, tt, name, id))
+
         return len(ids)
 
     @tools.cache(skiparg=3)
@@ -155,10 +159,10 @@ class ir_translation(osv.osv):
         if isinstance(types, basestring):
             types = (types,)
         if source:
-            query = """SELECT value 
-                       FROM ir_translation 
-                       WHERE lang=%s 
-                        AND type in %s 
+            query = """SELECT value
+                       FROM ir_translation
+                       WHERE lang=%s
+                        AND type in %s
                         AND src=%s"""
             params = (lang or '', types, tools.ustr(source))
             if name:
@@ -227,4 +231,3 @@ class ir_translation(osv.osv):
 ir_translation()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
