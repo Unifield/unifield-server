@@ -192,6 +192,9 @@ class account_invoice_refund(osv.osv_memory):
                     refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
                     for tmpline in  refund.move_id.line_id:
                         if tmpline.account_id.id == inv.account_id.id:
+                            if tmpline.invoice_line_id and tmpline.invoice_line_id.invoice_id.id == refund.id:
+                                # US-254: in case of invoice line with same account as header: do not reconcile it (will generated FXA entries...)
+                                continue
                             to_reconcile_ids[tmpline.account_id.id].append(tmpline.id)
                     for account in to_reconcile_ids:
                         account_m_line_obj.reconcile(cr, uid, to_reconcile_ids[account],
