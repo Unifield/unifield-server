@@ -1077,17 +1077,27 @@ class account_bank_statement_line(osv.osv):
         move_ids = self._get_move_ids(cr, uid, ids, context=context)
         # Search valid ids
         domain = [('account_id.category', '=', 'FUNDING'), ('move_id.move_id', 'in', move_ids)]
-        # For cash advance register lines, filtering on names (as amount can be splitted, account changed, etc.). The name remains.
-        advance_names = []
-        for absl in self.browse(cr, uid, ids, context=context):
-            if absl.from_cash_return:
-                advance_names.append(absl.name)
-        if advance_names:
-            name_len = len(advance_names)
-            if name_len > 1:
-                domain += ['|' for x in range(0,name_len - 1)]
-            for name in advance_names:
-                domain.append(('name', '=ilike', '%%%s' % name))
+        alternate_domain = []
+        
+        # BKLG-60: for cash advance register lines, filtering on new
+        # cash_return_move_line_id link field
+        absl_brs = self.browse(cr, uid, ids, context=context)
+        if len(ids) == 1:
+            if absl_brs[0].account_id and \
+                not absl_brs[0].account_id.is_analytic_addicted:
+                    # one register line selected from cash return
+                    # but not a debit one (closing_op adv line)
+                    # => no AJIs to display
+                    alternate_domain = [('id', '=', 0)]  # fake no result domain
+        if not alternate_domain:
+            cash_adv_return_move_line_ids = [
+                absl.cash_return_move_line_id.id \
+                for absl in absl_brs \
+                if absl.from_cash_return and absl.cash_return_move_line_id 
+            ]
+            if cash_adv_return_move_line_ids:
+                domain.append(('move_id', 'in', cash_adv_return_move_line_ids))
+ 
         context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
         return {
             'name': _('Analytic Journal Items'),
@@ -1096,7 +1106,7 @@ class account_bank_statement_line(osv.osv):
             'view_type': 'form',
             'view_mode': 'tree,form',
             'context': context,
-            'domain': domain,
+            'domain': alternate_domain or domain,
             'target': 'current',
         }
 
