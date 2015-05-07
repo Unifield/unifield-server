@@ -98,6 +98,30 @@ class msf_language_import(osv.osv_memory):
                     if not obj_ids:
                         rejected.append(_('Line %s Record %s not found') % (line+1, row['src'].decode('utf-8')))
                         continue
+                    
+                    # BKLG-52: If the translation for a data entry exists already in ir.translation, then just update the new translation, no need to delete-recreate!
+                    # This is then avoid having the delete sync to send to other instances 
+                    for trans_id in obj_ids:
+                        name = '%s,%s' % (obj, field)
+                        args = [('lang', '=', import_data.name), ('type', '=', 'model'),
+                                ('name', '=', name), ('res_id', '=', trans_id)]
+                        translation_ids = trans_obj.search(cr, uid, args, offset=0, limit=None, order=None, context=context, count=False)
+                        # if the translation existed for this record, then just update it, otherwise create a new one
+                        if translation_ids:
+                            values = {'value': row['value']}
+                            trans_obj.write(cr, uid, translation_ids[0], values, context=context)
+                        else:
+                            trans_obj.create(cr, uid, {
+                                'lang': import_data.name,
+                                'type': 'model',
+                                'name': name,
+                                'res_id': trans_id,
+                                'value': row['value'],
+                                'src': row['src'],
+                                })
+                    '''
+                    BKLG-52: The following block in no more in use, instead use the one above to just edit if the translation item existed
+                    
                     cr.execute("""delete from ir_translation
                         where
                             lang=%s and
@@ -115,6 +139,7 @@ class msf_language_import(osv.osv_memory):
                             'value': row['value'],
                             'type': 'model'
                         })
+                    '''
                     cr.commit()
                 except Exception, e:
                     cr.rollback()
