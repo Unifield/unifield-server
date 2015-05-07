@@ -24,7 +24,7 @@
                         <separator colspan="6" string="Period of consumption" />
                         <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
                         <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
-                        <group colspan="6" col="6" name="import" string="Import lines">
+                        <group colspan="6" col="6" name="import" string="Import lines" attrs="{'invisible': [('created_ok', '=', True)]}">
                             <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="3" />
                             <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="3" type="object" />
                         </group>
