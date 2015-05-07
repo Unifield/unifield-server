@@ -26,17 +26,41 @@ from zipfile import is_zipfile
 import py7zlib
 from osv import osv
 from osv import fields
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile,mkdtemp
 import csv
 from base64 import decodestring
 from time import strftime
 from tools.misc import ustr
+from tools.which import which
 from tools.translate import _
 from lxml import etree
+import subprocess
+import os
+import shutil
+
 try:
     from io import BytesIO
 except ImportError:
     from cStringIO import StringIO as BytesIO
+
+
+def get_7z():
+    if os.name == 'nt':
+        try:
+            import _winreg
+            registry_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\7-zip", _winreg.KEY_READ)
+            value, regtype = _winreg.QueryValueEx(registry_key, "Path")
+            _winreg.CloseKey(registry_key)
+            exe = os.path.join(value, '7z.exe')
+            if not os.path.isfile(exe):
+                raise Exception('7z.exe not found')
+            return exe
+        except:
+            raise osv.except_osv(_('Error'), _('7-zip is not installed on the server. Please install 7-zip on the server from http://www.7-zip.org/'))
+    try:
+        return which('7z')
+    except:
+        raise osv.except_osv(_('Error'), _('7z is not installed on the server. Please install the package p7zip-full'))
 
 
 
@@ -449,6 +473,17 @@ class hr_payroll_employee_import(osv.osv_memory):
                     res.append(new_line)
         return res
 
+    def _extract_7z(self, cr, uid, filename):
+        tmp_dir = mkdtemp()
+        passwd = self.pool.get('hr.payroll.import')._get_homere_password(cr, uid, pass_type='permois')
+        szexe = get_7z()
+        devnull = open(os.devnull, 'w')
+        szret = subprocess.call([szexe, 'x', '-p%s' % passwd, '-o%s' % tmp_dir, '-y', filename], stdout=devnull)
+        devnull.close()
+        if szret != 0:
+            raise osv.except_osv(_('Error'), _('Error when extracting the file with 7-zip'))
+        return tmp_dir
+
     def read_files(self, cr, uid, filename):
         staff_file = 'staff.csv'
         contract_file = 'contrat.csv'
@@ -456,6 +491,8 @@ class hr_payroll_employee_import(osv.osv_memory):
         job_reader =False
         contract_reader = False
         staff_reader = False
+        desc_to_close = []
+        tmpdir = False
         if is_zipfile(filename):
             zipobj = zf(filename)
             if zipobj.namelist() and job_file in zipobj.namelist():
@@ -469,26 +506,30 @@ class hr_payroll_employee_import(osv.osv_memory):
                 # Doublequote and escapechar avoid some problems
                 staff_reader = csv.DictReader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
         else:
-            try:
-                sevenzip = py7zlib.Archive7z(open(filename, 'rb'))
-            except py7zlib.FormatError:
-                raise osv.except_osv(_('Error'), _('Given file is not a zip file'))
-            file_list = sevenzip.getnames()
-            if job_file in file_list:
-                buffer_job = BytesIO(sevenzip.getmember(job_file).read())
-                job_reader = csv.DictReader(buffer_job, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
-            if contract_file in file_list:
-                buffer_contract = BytesIO(sevenzip.getmember(contract_file).read())
-                contract_reader = csv.DictReader(buffer_contract, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
-            if staff_file in file_list:
-                buffer_staff = BytesIO(sevenzip.getmember(staff_file).read())
-                staff_reader = csv.DictReader(buffer_staff, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+            tmpdir = self._extract_7z(cr, uid, filename)
+            job_file_name = os.path.join(tmpdir, job_file)
+            if os.path.isfile(job_file_name):
+                job_file_desc = open(job_file_name, 'rb')
+                desc_to_close.append(job_file_desc)
+                job_reader = csv.DictReader(job_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+
+            contract_file_name = os.path.join(tmpdir, contract_file)
+            if os.path.isfile(contract_file_name):
+                contract_file_desc = open(contract_file_name, 'rb')
+                desc_to_close.append(contract_file_desc)
+                contract_reader = csv.DictReader(contract_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+
+            staff_file_name = os.path.join(tmpdir, staff_file)
+            if os.path.isfile(staff_file_name):
+                staff_file_desc = open(staff_file_name, 'rb')
+                desc_to_close.append(staff_file_desc)
+                staff_reader = csv.DictReader(staff_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
 
         if not contract_reader:
             raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (contract_file,))
         if not staff_reader:
             raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (staff_file,))
-        return (job_reader, contract_reader, staff_reader)
+        return (job_reader, contract_reader, staff_reader, desc_to_close, tmpdir)
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -518,7 +559,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             # now we determine the file format
             filename = fileobj.name
             fileobj.close()
-            job_reader, contract_reader, staff_reader = self.read_files(cr, uid, filename)
+            job_reader, contract_reader, staff_reader, desc_to_close, tmpdir = self.read_files(cr, uid, filename)
             filename = wiz.filename or ""
 
             job_ids = False
@@ -573,6 +614,10 @@ class hr_payroll_employee_import(osv.osv_memory):
             # Delete previous created lines for employee's contracts
             if contract_ids:
                 self.pool.get('hr.contract.msf').unlink(cr, uid, contract_ids)
+            for to_close in desc_to_close:
+                to_close.close()
+            if tmpdir:
+                shutil.rmtree(tmpdir)
         if res:
             message = _("Employee import successful.")
         else:

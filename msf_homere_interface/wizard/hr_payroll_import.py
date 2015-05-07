@@ -221,7 +221,7 @@ class hr_payroll_import(osv.osv_memory):
             created += 1
         return True, amount, created
 
-    def _get_homere_password(self, cr, uid):
+    def _get_homere_password(self, cr, uid, pass_type='payroll'):
         if sys.platform.startswith('win'):
             homere_file = os.path.join(config['root_path'], 'homere.conf')
         else:
@@ -233,8 +233,10 @@ class hr_payroll_import(osv.osv_memory):
         # Read homere file
         homere_file_data = open(homere_file, 'rb')
         pwd = homere_file_data.readline()
+        if pass_type == 'permois':
+            pwd = homere_file_data.readline()
         if not pwd:
-            raise osv.except_osv(_("Error"), _("File '%s' is empty !") % (homere_file,))
+            raise osv.except_osv(_("Error"), _("File '%s' does not contain the password !") % (homere_file,))
         homere_file_data.close()
         return pwd.decode('base64')
 
@@ -260,7 +262,7 @@ class hr_payroll_import(osv.osv_memory):
         created = 0
         processed = 0
 
-        xyargv = self._get_homere_password(cr, uid)
+        xyargv = self._get_homere_password(cr, uid, pass_type='payroll')
 
         filename = ""
         # Browse all given wizard
