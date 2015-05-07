@@ -1909,6 +1909,7 @@ class account_bank_statement_line(osv.osv):
             'transfer_amount': False,
             'transfer_currency': False,
             'down_payment_id': False,
+            'cash_return_move_line_id': False,  # BKLG-60
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]
