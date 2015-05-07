@@ -222,6 +222,7 @@ class hr_payroll_import(osv.osv_memory):
         return True, amount, created
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
+        ##### UPDATE HOMERE.CONF FILE #####
         if sys.platform.startswith('win'):
             homere_file = os.path.join(config['root_path'], 'homere.conf')
         else:
