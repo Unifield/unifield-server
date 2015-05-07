@@ -48,19 +48,20 @@ class ir_model_data(osv.osv):
         if mod_ids and mod_obj.read(cr, uid, mod_ids, ['state'])[0]['state'] == 'uninstalled':
             mod_obj.write(cr, uid, mod_ids[0], {'state': 'to install'})
 
-    def us_203_sync_down_donor(self, cr, uid, *a, **b):
+    def us_254_fix_reconcile(self, cr, uid, *a, **b):
         c = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        sql_file = opj('msf_profile', 'data', 'us_203.sql')
-        if c and c.instance_id and c.instance_id.level == 'section':
+        sql_file = opj('msf_profile', 'data', 'us_254.sql')
+        instance_name = c and c.instance_id and c.instance_id.name
+        if instance_name in ['OCBKE101', 'OCBKE141', 'OCBHQ']:
             logger = logging.getLogger('update')
             try:
                 fp = tools.file_open(sql_file, 'r')
-                logger.warn('Execute us-203 sql')
+                logger.warn('Execute us-254 sql')
                 cr.execute(fp.read())
+                fp.close()
                 logger.warn('Sql done')
                 os.rename(fp.name, "%sold" % fp.name)
                 logger.warn('Sql file renamed')
-                fp.close()
             except IOError, e:
                 # file does not exist
                 pass
