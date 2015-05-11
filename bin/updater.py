@@ -395,6 +395,10 @@ def do_prepare(cr, revision_ids):
     logger.info("Server update prepared. Need to restart to complete the upgrade.")
     return ('success', 'Restart required', {})
 
+def dump_db(cr, pool):
+    bck_obj = pool.get('backup.config')
+    if bck_obj:
+        bck_obj.exp_dump_for_state(cr, 1, 'beforepatching')
 
 def do_upgrade(cr, pool):
     """Start upgrade process (called by login method and restore)"""
@@ -411,6 +415,7 @@ def do_upgrade(cr, pool):
         revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
         res = do_prepare(cr, revision_ids)
         if res[0] == 'success':
+            dump_db(cr, pool)
             import tools
             os.chdir( tools.config['root_path'] )
             restart_server()
@@ -418,6 +423,7 @@ def do_upgrade(cr, pool):
             return False
 
     elif db_lack_versions:
+        dump_db(cr, pool)
         base_module_upgrade(cr, pool, upgrade_now=True)
         # Note: There is no need to update the db versions, the `def init()' of the object do that for us
 
