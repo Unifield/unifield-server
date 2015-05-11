@@ -1343,6 +1343,7 @@ stock moves which are already processed : '''
         move_obj = self.pool.get('stock.move')
         proc_obj = self.pool.get('procurement.order')
         pick_obj = self.pool.get('stock.picking')
+        uom_obj = self.pool.get('product.uom')
         ad_obj = self.pool.get('analytic.distribution')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
@@ -1450,6 +1451,32 @@ stock moves which are already processed : '''
 
                             continue
 
+                        minus_qty = 0.00
+                        bo_moves = []
+                        if out_move_id.picking_id and out_move_id.picking_id.backorder_id:
+                            bo_moves = move_obj.search(cr, uid, [
+                                ('picking_id', '=', out_move_id.picking_id.backorder_id.id),
+                                ('sale_line_id', '=', out_move_id.sale_line_id.id),
+                                ('state', '=', 'done'),
+                            ], context=context)
+                            while bo_moves:
+                                boms = move_obj.browse(cr, uid, bo_moves, context=context)
+                                bo_moves = []
+                                for bom in boms:
+                                    if bom.product_uom.id != out_move_id.product_uom.id:
+                                        minus_qty += uom_obj._compute_qty(cr, uid, bom.product_uom.id, bom.product_qty, out_move_id.product_uom.id)
+                                    else:
+                                        minus_qty += bom.product_qty
+                                        if bom.picking_id and bom.picking_id.backorder_id:
+                                            bo_moves.extend(move_obj.search(cr, uid, [
+                                                ('picking_id', '=', bom.picking_id.backorder_id.id),
+                                                ('sale_line_id', '=', bom.sale_line_id.id),
+                                                ('state', '=', 'done'),
+                                            ], context=context))
+
+                        if out_move_id.product_uom.id != line.product_uom.id:
+                            minus_qty = uom_obj._compute_qty(cr, uid, out_move_id.product_uom.id, minus_qty, line.product_uom.id)
+
                         if out_move_id.state == 'assigned':
                             move_obj.cancel_assign(cr, uid, [out_move_id.id])
                         elif out_move_id.state in ('cancel', 'done'):
@@ -1459,8 +1486,8 @@ stock moves which are already processed : '''
                                 'name': line.name,
                                 'product_uom': line.product_uom and line.product_uom.id or False,
                                 'product_uos': line.product_uom and line.product_uom.id or False,
-                                'product_qty': line.product_qty,
-                                'product_uos_qty': line.product_qty,
+                                'product_qty': line.product_qty - minus_qty,
+                                'product_uos_qty': line.product_qty - minus_qty,
                             }
                             if line.product_id:
                                 move_dic['product_id'] = line.product_id.id
