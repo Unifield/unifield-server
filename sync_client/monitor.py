@@ -211,9 +211,16 @@ class sync_monitor(osv.osv):
     def _is_syncing(self, cr, uid, ids, name, arg, context=None):
         res = dict.fromkeys(ids, "not_syncing")
         is_syncing = self.pool.get('sync.client.entity').is_syncing()
-        for monitor in self.browse(cr, uid, ids, context=context):
-            if monitor.status == 'in-progress' and is_syncing:
-                res[monitor.id] = "syncing"
+        max_id = 0
+        if is_syncing:
+            for monitor in self.browse(cr, uid, ids, context=context):
+                if monitor.status == 'in-progress' and monitor.id > max_id:
+                    max_id = monitor.id
+        if max_id:
+            if self.pool.get('sync.client.entity').aborting:
+                res[max_id] = "aborting"
+            else:
+                res[max_id] = "syncing"
 
         return res
 
@@ -240,7 +247,7 @@ class sync_monitor(osv.osv):
         'msg_push_send' : fields.selection(status_dict.items(), string="MP Send", readonly=True),
         'status' : fields.selection(status_dict.items(), string="Status", readonly=True),
         'error' : fields.text("Messages", readonly=True),
-        'state' : fields.function(_is_syncing, method=True, type='selection', string="Is Syncing", selection=[('syncing', 'Syncing'), ('not_syncing', 'Done')]),
+        'state' : fields.function(_is_syncing, method=True, type='selection', string="Is Syncing", selection=[('syncing', 'Syncing'), ('not_syncing', 'Done'), ('aborting', 'Aborting')]),
 
         'instance_id': fields.many2one('msf.instance', 'Instance', select=1),
         'my_instance': fields.function(_get_my_instance, method=True, type='boolean', fnct_search=_search_my_instance, string="My Instance"),

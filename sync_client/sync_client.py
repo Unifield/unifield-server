@@ -942,6 +942,7 @@ class Entity(osv.osv):
                 raise already_syncing_error
             return True
         self.sync_lock.release()
+        self.aborting = False
         return False
 
     def get_status(self, cr, uid, context=None):
@@ -949,6 +950,8 @@ class Entity(osv.osv):
             return "Not Connected"
 
         if self.is_syncing():
+            if self.aborting:
+                return "Aborting..."
             return "Syncing..."
 
         monitor = self.pool.get("sync.monitor")
@@ -961,10 +964,11 @@ class Entity(osv.osv):
 
     def interrupt_sync(self, cr, uid, context=None):
         if self.is_syncing():
-            try:
-                self._renew_sync_lock()
-            except StandardError:
-                return False
+            #try:
+            #    self._renew_sync_lock()
+            #except StandardError:
+            #    return False
+            self.aborting = True
             self.sync_cursor.close()
         return True
 
