@@ -70,7 +70,7 @@ class ir_translation(osv.osv):
     def _auto_init(self, cr, context={}):
         super(ir_translation, self)._auto_init(cr, context)
 
-        # FIXME: there is a size limit on btree indexed values so we can't index src column with normal btree. 
+        # FIXME: there is a size limit on btree indexed values so we can't index src column with normal btree.
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_ltns',))
         if cr.fetchone():
             #temporarily removed: cr.execute('CREATE INDEX ir_translation_ltns ON ir_translation (name, lang, type, src)')
@@ -115,22 +115,27 @@ class ir_translation(osv.osv):
                 self._get_source.clear_cache(cr.dbname, uid, name, tt, lang, tr[res_id])
         self._get_source.clear_cache(cr.dbname, uid, name, tt, lang)
         self._get_ids.clear_cache(cr.dbname, uid, name, tt, lang, ids)
+        context = {}
 
-        cr.execute('delete from ir_translation ' \
-                'where lang=%s ' \
-                    'and type=%s ' \
-                    'and name=%s ' \
-                    'and res_id IN %s',
-                (lang,tt,name,tuple(ids),))
+        # BKLG-52 Change delete/create for Update
         for id in ids:
-            self.create(cr, uid, {
-                'lang':lang,
-                'type':tt,
-                'name':name,
-                'res_id':id,
-                'value':value,
-                'src':src,
-                })
+            args = [('lang', '=', lang), ('type', '=', tt),
+                    ('name', '=', name), ('res_id', '=', id)]
+            translation_ids = self.search(cr, uid, args, offset=0,
+                                          limit=None, order=None,
+                                          context=context, count=False)
+            if translation_ids:
+                values = {'value': value, 'src': src}
+                self.write(cr, uid, translation_ids[0], values, context=context)
+            else:
+                self.create(cr, uid, {
+                    'lang': lang,
+                    'type': tt,
+                    'name': name,
+                    'res_id': id,
+                    'value': value,
+                    'src': src,
+                    })
         return len(ids)
 
     @tools.cache(skiparg=3)
@@ -155,10 +160,10 @@ class ir_translation(osv.osv):
         if isinstance(types, basestring):
             types = (types,)
         if source:
-            query = """SELECT value 
-                       FROM ir_translation 
-                       WHERE lang=%s 
-                        AND type in %s 
+            query = """SELECT value
+                       FROM ir_translation
+                       WHERE lang=%s
+                        AND type in %s
                         AND src=%s"""
             params = (lang or '', types, tools.ustr(source))
             if name:
@@ -183,6 +188,19 @@ class ir_translation(osv.osv):
     def create(self, cursor, user, vals, context=None):
         if not context:
             context = {}
+
+        # SP-193 : translation must limited to object limitation
+        if ',' in vals['name']:
+            model_name = vals['name'].split(",")[0]
+            field = vals['name'].split(",")[1]
+            if field:
+                model_obj = self.pool.get(model_name)
+                if hasattr(model_obj, 'fields_get'):
+                    field_obj = model_obj.fields_get(cursor, user, context=context)[field]
+                    if 'size' in field_obj:
+                        size = field_obj['size']
+                        vals['value'] = vals['value'][:size]
+
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
             self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
@@ -214,4 +232,3 @@ class ir_translation(osv.osv):
 ir_translation()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
