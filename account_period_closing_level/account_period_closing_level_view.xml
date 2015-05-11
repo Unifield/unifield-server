@@ -12,6 +12,15 @@
                     <button name="create_period" position="replace"/>
                     <button name="create_period3" position="replace"/>
                     <field name="end_journal_period_id" position="replace"/>
+                    
+                    <xpath expr="//group[2]" position="after">
+                        <field name="is_closable" invisible="1" />
+                        <group
+                            attrs="{'invisible': [('is_closable', '=', False)]}">
+                            <button name="uf_close_fy" type="object"
+                                string="Close (HQ)" icon="gtk-go-forward"/>
+                        </group>
+                    </xpath>
                 </data>
             </field>
         </record>
