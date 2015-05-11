@@ -52,7 +52,7 @@ class ir_model_data(osv.osv):
         c = self.pool.get('res.users').browse(cr, uid, uid).company_id
         sql_file = opj('msf_profile', 'data', 'us_254.sql')
         instance_name = c and c.instance_id and c.instance_id.name
-        if instance_name in ['OCBKE101', 'OCBKE141', 'OCBHQ']:
+        if instance_name in ['OCBHT101', 'OCBHT143', 'OCBHQ']:
             logger = logging.getLogger('update')
             try:
                 fp = tools.file_open(sql_file, 'r')
