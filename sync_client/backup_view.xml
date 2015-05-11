@@ -12,6 +12,7 @@
           <field name="beforeautomaticsync"/>
           <field name="aftermanualsync"/>
           <field name="afterautomaticsync"/>
+          <field name="beforepatching"/>
           <field name="scheduledbackup"/>
         </tree>
       </field>
@@ -31,9 +32,10 @@
             <field name="beforeautomaticsync"/>
             <field name="aftermanualsync"/>
             <field name="afterautomaticsync"/>
+            <field name="beforepatching"/>
             <field name="scheduledbackup"/>
             </group>
-            <button type="object" string="Backup" name="exp_dump" />
+            <button type="object" string="Backup" name="button_exp_dump" />
         </form>
       </field>
     </record>

@@ -236,6 +236,9 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     logger.append(res, step)
             finally:
                 # gotcha!
+                all_status = logger.info.values()
+                if 'ok' in all_status and (step != 'status' and logger.info.get(step) in ('failed', 'aborted') or step == 'status' and logger.info.get(step) == 'aborted'):
+                    self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'after%ssync' % context.get('sync_type', 'manual'), context=context)
                 sync_lock.release()
                 if make_log:
                     logger.close()
@@ -870,6 +873,9 @@ class Entity(osv.osv):
         """
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
+        if context is None:
+            context = {}
+        context['sync_type'] = 'automatic'
         #Check for a backup before automatic sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync', context=context)
         self.sync_recover(cr, uid, context=context)
@@ -882,6 +888,9 @@ class Entity(osv.osv):
         """
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
+        if context is None:
+            context = {}
+        context['sync_type'] = 'manual'
         #Check for a backup before automatic sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
         self.sync_recover(cr, uid, context=context)
@@ -912,6 +921,9 @@ class Entity(osv.osv):
         """
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
+        if context is None:
+            context = {}
+        context['sync_type'] = 'automatic'
         #Check for a backup before automatic sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync', context=context)
         self.sync(cr, uid, context=context)
@@ -925,6 +937,9 @@ class Entity(osv.osv):
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
         #Check for a backup before automatic sync
+        if context is None:
+            context = {}
+        context['sync_type'] = 'manual'
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
         self.sync(cr, uid, context=context)
         #Check for a backup after automatic sync
