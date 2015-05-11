@@ -292,8 +292,9 @@ class product_template(osv.osv):
     _name = 'product.template'
     _inherit = 'product.template'
 
+    #SP-193 : Change field size 60 to 128 digits
     _columns = {
-        'name': fields.char(size=60, string='DESCRIPTION', required=True, translate=True),
+        'name': fields.char(size=128, string='DESCRIPTION', required=True, translate=True),
     }
 product_template()
 
