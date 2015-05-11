@@ -101,6 +101,9 @@
           <field name="create_date"/>
           <field name="execution_date"/>
           <newline/>
+          <field name="sdref"  colspan="3"/>
+          <field name="values"/>
+          <newline/>
           <filter string="Not Run" icon="terp-check"
                   domain="[('run','=',False)]" name="current"/>
           <newline/>
@@ -199,6 +202,9 @@
           <field name="sent_date"/>
           <field name="model"/>
           <field name="rule_id"/>
+          <newline/>
+          <field name="sdref"  colspan="3"/>
+          <field name="values"/>
           <newline/>
           <filter string="Not Run" icon="terp-check"
                   domain="[('sent','=',False)]" name="current"/>
