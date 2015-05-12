@@ -126,6 +126,9 @@ class ir_model_data(osv.osv):
             move_prefix = c.instance_id.move_prefix
 
             for move in account_move_obj.browse(cr, uid, move_ids_to_fix):
+                if move.instance_id.id == instance_id:
+                    # fix already applied
+                    continue
                 seq_name = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': move.period_id.fiscalyear_id.id})
                 reference = '%s-%s-%s' % (move_prefix, journal.code, seq_name)
 
