@@ -227,9 +227,9 @@
 
         
         
-        <!-- US-258: THE FOLLOWING REPORT MUST BE REMOVED, OTHERWISE IT CAUSES THE ERROR WITH GROUP BY OF THIS MODEL -->
-        
-        <!-- record id="stock.view_stock_tree2" model="ir.ui.view">
+        <!-- US-258: THE FOLLOWING REPORT MUST BE REMOVED, OTHERWISE IT CAUSES THE ERROR WITH GROUP BY OF THIS MODEL
+        I set the priority to 20, this list view will not be used but the one at the begin of this file will be used -->
+        <record id="stock.view_stock_tree2" model="ir.ui.view">
             <field name="name">report.stock.move.tree2</field>
             <field name="model">report.stock.move</field>
             <field name="type">tree</field>
@@ -261,7 +261,7 @@
                     <field name="currency_id" invisible="1" />
                 </tree>
             </field>
-        </record -->
+        </record>
 
         <report
             id="report_stock_move_xls"
