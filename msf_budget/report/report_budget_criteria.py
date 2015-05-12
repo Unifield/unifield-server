@@ -42,6 +42,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'companyCurrency': self.getCompanyCurrency,
             'process': self.process,
             'getAccountName': self.getAccountName,
+            'getAccountNameEx': self.getAccountNameEx,
             'currencyTable': self.getCurrencyTable,
         })
         return
@@ -246,13 +247,18 @@ class report_budget_actual_2(report_sxw.rml_parse):
         """
         Do a separation between accont code and account name
         """
+        return self.getAccountNameEx(name, ' ')
+        
+    def getAccountNameEx(self, name, separator):
+        """
+        Do a separation between accont code and account name
+        """
         res = ''
         if name:
-            split = name.split(' ')
+            split = name.split(separator)
             if len(split) and len(split) > 1:
                 res = ' '.join(split[1:])
         return res
-
     def process(self, budget_line_ids, add_commitment=False, currency_table=False):
         """
         Permit to process all lines in one transaction to improve report generation.

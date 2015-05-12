@@ -291,8 +291,9 @@
   if line.line_type == 'view':
     level = len(name)
     if 0 < level < 4:
-        name_style_suffix += "level%d" % (level, )
-        style_suffix += "level%d" % (level, )
+        level_pattern = "level%d" % (level, )
+        style_suffix += level_pattern
+        name_style_suffix += level_pattern
   elif line.line_type == 'destination':
     name_style_suffix += 'right'
     name = line.destination_id.code
