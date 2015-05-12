@@ -817,7 +817,7 @@
   <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
   <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
 % if by_month:
-  % for x in range(end_month + 1):
+  % for x in range(end_month):
     <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
     % if is_comm:
       <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
