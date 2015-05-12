@@ -143,6 +143,7 @@
      </Borders>
      <Interior ss:Color="#B8CEE4" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s39level2">
      <Borders>
@@ -153,6 +154,7 @@
      </Borders>
      <Interior ss:Color="#C4D79B" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s39level3">
      <Borders>
@@ -163,6 +165,18 @@
      </Borders>
      <Interior ss:Color="#D49694" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
+   </Style>
+   <Style ss:ID="s39level4">
+     <Borders>
+       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+       <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+     </Borders>
+     <Interior ss:Pattern="Solid"/>
+     <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s41" ss:Parent="s20">
      <Borders>
@@ -183,6 +197,7 @@
      </Borders>
      <Interior ss:Color="#B8CEE4" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0%"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s41level2" ss:Parent="s20">
      <Borders>
@@ -193,6 +208,7 @@
      </Borders>
      <Interior ss:Color="#C4D79B" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0%"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s41level3" ss:Parent="s20">
      <Borders>
@@ -203,6 +219,18 @@
      </Borders>
      <Interior ss:Color="#D49694" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0%"/>
+     <Font ss:Bold="1"/>
+   </Style>
+   <Style ss:ID="s41level4" ss:Parent="s20">
+     <Borders>
+       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+     </Borders>
+     <Interior ss:Pattern="Solid"/>
+     <NumberFormat ss:Format="#,##0%"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s46">
      <Borders>
@@ -272,6 +300,7 @@
      </Borders>
      <Interior ss:Color="#B8CEE4" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s68level2">
      <Borders>
@@ -281,6 +310,7 @@
      </Borders>
      <Interior ss:Color="#C4D79B" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s68level3">
      <Borders>
@@ -290,6 +320,17 @@
      </Borders>
      <Interior ss:Color="#D49694" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
+   </Style>
+   <Style ss:ID="s68level4">
+     <Borders>
+       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+     </Borders>
+     <Interior />
+     <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
 
    <Style ss:ID="s68a">
@@ -363,6 +404,7 @@
        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
      </Borders>
      <Interior ss:Color="#B8CEE4" ss:Pattern="Solid"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s76alevel2">
      <Borders>
@@ -370,6 +412,7 @@
        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
      </Borders>
      <Interior ss:Color="#C4D79B" ss:Pattern="Solid"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s76alevel3">
      <Borders>
@@ -377,6 +420,15 @@
        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
      </Borders>
      <Interior ss:Color="#D49694" ss:Pattern="Solid"/>
+     <Font ss:Bold="1"/>
+   </Style>
+   <Style ss:ID="s76alevel4">
+     <Borders>
+       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+     </Borders>
+     <Interior ss:Pattern="Solid"/>
+     <Font ss:Bold="1"/>
    </Style>
    
      <Style ss:ID="s76aright">
@@ -462,6 +514,7 @@
      </Borders>
      <Interior ss:Color="#B8CEE4" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s86level2">
      <Borders>
@@ -471,6 +524,7 @@
      </Borders>
      <Interior ss:Color="#C4D79B" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s86level3">
      <Borders>
@@ -480,6 +534,17 @@
      </Borders>
      <Interior ss:Color="#D49694" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
+   </Style>
+   <Style ss:ID="s86level4">
+     <Borders>
+       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+       <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+     </Borders>
+     <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+     <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
 
    <Style ss:ID="s86a">
@@ -509,6 +574,7 @@
      </Borders>
      <Interior ss:Color="#B8CEE4" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s87level2">
      <Borders>
@@ -518,6 +584,7 @@
      </Borders>
      <Interior ss:Color="#C4D79B" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s87level3">
      <Borders>
@@ -527,6 +594,17 @@
      </Borders>
      <Interior ss:Color="#D49694" ss:Pattern="Solid"/>
      <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
+   </Style>
+   <Style ss:ID="s87level4">
+     <Borders>
+       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+     </Borders>
+     <Interior ss:Color="#CCFFCC" ss:Pattern="Solid"/>
+     <NumberFormat ss:Format="#,##0"/>
+     <Font ss:Bold="1"/>
    </Style>
    <Style ss:ID="s88">
      <Borders>
@@ -590,18 +668,6 @@
        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
      </Borders>
      <Font  ss:Bold="1"/>
-   </Style>
-   
-   <Style ss:ID="level0">
-   </Style>
-   <Style ss:ID="level1">
-    <Interior ss:Color="#B8CEE4" ss:Pattern="Solid"/>
-   </Style>
-   <Style ss:ID="level2">
-    <Interior ss:Color="#C4D79B" ss:Pattern="Solid"/>
-   </Style>
-   <Style ss:ID="level3">
-    <Interior ss:Color="#D49694" ss:Pattern="Solid"/>
    </Style>
  </Styles>
 
@@ -711,6 +777,8 @@
         level = len(account_code)
         if 0 < level < 4:
             level = "level%d" % (level, )
+    elif line_type == 'normal':
+            level = "level4"
     elif line_type == 'destination':
         account_code = 'destination_id' in line and line['destination_id'] and line['destination_id'][1] or ''
         account_code_style_suffix = 'right'
