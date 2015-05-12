@@ -270,6 +270,15 @@
      </Borders>
      <Interior  ss:Pattern="Solid"/>
    </Style>
+   
+     <Style ss:ID="s76aright">
+     <Borders>
+       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+       <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+     </Borders>
+     <Interior  ss:Pattern="Solid"/>
+     <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   </Style>
 
    <Style ss:ID="s77">
      <Borders>
@@ -494,9 +503,6 @@
 
 <Row ss:AutoFitHeight="0" ss:Height="24" ss:StyleID="s26">
   <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
-% if granularity_code == 'all':
-  <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Destination')}</Data></Cell>
-% endif
   <Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
 
 % if by_month:
@@ -519,12 +525,21 @@
 </Row>
 
 % for line in process(o.budget_line_ids, is_comm, currency_table):
+<%
+    account_code = line['account_code']
+    account_code_style_suffix = ''
+    
+    account_name = 'name' in line and getAccountName(line['name']) or ''
+    
+    if 'line_type' in line and line['line_type'] == 'destination':
+        account_code = 'destination_id' in line and line['destination_id'] and line['destination_id'][1] or ''
+        account_code_style_suffix = 'right'
+        
+        account_name = ''
+%>
 <Row>
-  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line['account_code'] )|x}</Data></Cell>
-% if granularity_code == 'all':
-  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( 'destination_id' in line and line['destination_id'] and line['destination_id'][1] or '' )|x}</Data></Cell>
-% endif
-  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( 'name' in line and getAccountName(line['name']) or '' )|x}</Data></Cell>
+  <Cell ss:StyleID="s76a${( account_code_style_suffix )|x}"><Data ss:Type="String">${( account_code )|x}</Data></Cell>
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( account_name )|x}</Data></Cell>
 % if by_month:
   % for monthAllocation in getMonthAllocation(line, cost_center_ids, date_start, date_stop, end_month, company_currency, is_comm, currency_table, context):
   <Cell ss:StyleID="s86"><Data ss:Type="Number">${( monthAllocation[0] )|x}</Data></Cell>
@@ -553,9 +568,6 @@
 
 <Row>
   <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-% if granularity_code == 'all':
-  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-% endif
   <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
 % if by_month:
   % for x in range(end_month + 1):
