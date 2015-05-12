@@ -6,6 +6,7 @@
             <field name="name">report.stock.move.tree</field>
             <field name="model">report.stock.move</field>
             <field name="type">tree</field>
+            <field name="priority" eval="1"/>
             <field name="arch" type="xml">
                 <tree string="Moves Analysis">
                     <field name="date" invisible="1"/>
@@ -232,6 +233,7 @@
             <field name="name">report.stock.move.tree2</field>
             <field name="model">report.stock.move</field>
             <field name="type">tree</field>
+            <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <tree string="Moves Analysis">
                     <field name="product_code" />
