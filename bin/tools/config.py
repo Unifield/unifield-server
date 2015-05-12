@@ -66,6 +66,7 @@ class configmanager(object):
             'load_language': None,
             'language': None,
             'pg_path': None,
+            'admin_default_passwd': 'admin',
             'admin_passwd': 'admin',
             'admin_dropdb_passwd': 'dropadmin',
             'admin_bkpdb_passwd': 'bkpadmin',

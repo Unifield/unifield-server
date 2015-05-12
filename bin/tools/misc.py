@@ -72,6 +72,8 @@ def init_db(cr):
     base_sql_file = file_open(f)
     try:
         cr.execute(base_sql_file.read())
+        if config.get('admin_default_passwd'):
+            cr.execute('update res_users set password=%s where id=1', (config['admin_default_passwd'], ))
         cr.commit()
     finally:
         base_sql_file.close()
