@@ -111,6 +111,7 @@ class ir_model_data(osv.osv):
             instance_id = c.instance_id.id
             account_move_obj = self.pool.get('account.move')
             analytic_obj = self.pool.get('account.analytic.line')
+            invoice_obj = self.pool.get('account.invoice')
 
             journal_id = journal_obj.search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])[0]
             journal = journal_obj.browse(cr, uid, journal_id)
@@ -129,10 +130,15 @@ class ir_model_data(osv.osv):
                 if move.instance_id.id == instance_id:
                     # fix already applied
                     continue
+
                 seq_name = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': move.period_id.fiscalyear_id.id})
                 reference = '%s-%s-%s' % (move_prefix, journal.code, seq_name)
 
                 cr.execute('update account_move set instance_id=%s, journal_id=%s, name=%s where id=%s', (instance_id, journal_id, reference, move.id))
+                invoice_ids = invoice_obj.search(cr, uid, [('move_id', '=', move.id)])
+                if invoice_ids:
+                    cr.execute('update account_invoice set journal_id=%s, number=%s where id=%s', (journal_id, reference, invoice_ids[0]))
+
                 self._us_268_gen_message(cr, uid, account_move_obj, move.id,
                     ['instance_id', 'journal_id', 'name'], [instance_xml_id, journal_xml_id, reference]
                 )
