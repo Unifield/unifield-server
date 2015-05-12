@@ -47,6 +47,16 @@
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
   </Style>
+  
+  <Style ss:ID="s22noboldright">
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+  </Style>
 
   <Style ss:ID="s22bold">
     <Borders>
@@ -56,6 +66,39 @@
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
     <Font ss:Bold="1"/>
+  </Style>
+  
+  <Style ss:ID="s22boldlevel1">
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Font ss:Bold="1"/>
+    <Interior ss:Color="#B8CEE4" ss:Pattern="Solid"/>
+  </Style>
+  
+  <Style ss:ID="s22boldlevel2">
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Font ss:Bold="1"/>
+    <Interior ss:Color="#C4D79B" ss:Pattern="Solid"/>
+  </Style>
+  
+  <Style ss:ID="s22boldlevel3">
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Font ss:Bold="1"/>
+    <Interior ss:Color="#D49694" ss:Pattern="Solid"/>
   </Style>
 
   <Style ss:ID="s23">
@@ -87,6 +130,42 @@
     </Borders>
     <NumberFormat ss:Format="#,##0"/>
     <Font ss:Bold="1"/>
+  </Style>
+  
+  <Style ss:ID="s23boldlevel1">
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <NumberFormat ss:Format="#,##0"/>
+    <Font ss:Bold="1"/>
+    <Interior ss:Color="#B8CEE4" ss:Pattern="Solid"/>
+  </Style>
+  
+  <Style ss:ID="s23boldlevel2">
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <NumberFormat ss:Format="#,##0"/>
+    <Font ss:Bold="1"/>
+    <Interior ss:Color="#C4D79B" ss:Pattern="Solid"/>
+  </Style>
+  
+  <Style ss:ID="s23boldlevel3">
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <NumberFormat ss:Format="#,##0"/>
+    <Font ss:Bold="1"/>
+    <Interior ss:Color="#D49694" ss:Pattern="Solid"/>
   </Style>
 
   <Style ss:ID="s24">
@@ -204,30 +283,38 @@
 
 % for line in o.budget_line_ids:
 <% 
-  isBold = False
   name = line.account_code
+  account_name = line.account_id and line.account_id.name or ''
+    
+  style_suffix = 'bold' if line.line_type in ('view', 'normal') else 'nobold'
+  name_style_suffix = style_suffix
   if line.line_type == 'view':
-    isBold = True
+    level = len(name)
+    if 0 < level < 4:
+        name_style_suffix += "level%d" % (level, )
+        style_suffix += "level%d" % (level, )
   elif line.line_type == 'destination':
-    name += ' - ' + line.destination_id.code
+    name_style_suffix += 'right'
+    name = line.destination_id.code
+    account_name = ''
 %>
     <Row>
-      <Cell ss:StyleID="${"%s"%( isBold and 's22bold' or 's22nobold')|x}" ><Data ss:Type="String">${( name )|x}</Data></Cell>
+      <Cell ss:StyleID="s22${name_style_suffix|x}"><Data ss:Type="String">${( name )|x}</Data></Cell>
 
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="String">${( line.account_id.name )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month1 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month2 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month3 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month4 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month5 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month6 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month7 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month8 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month9 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month10 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month11 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month12 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.total )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="String">${( account_name )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month1 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month2 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month3 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month4 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month5 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month6 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month7 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month8 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month9 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month10 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month11 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.month12 )|x}</Data></Cell>
+      <Cell ss:StyleID="s23${style_suffix|x}"><Data ss:Type="Number">${( line.total )|x}</Data></Cell>
     </Row>
 % endfor
 
