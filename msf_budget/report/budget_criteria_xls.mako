@@ -782,6 +782,7 @@
     elif line_type == 'destination':
         account_code = 'destination_id' in line and line['destination_id'] and line['destination_id'][1] or ''
         account_code_style_suffix = 'right'
+        account_name = ''
 %>
 <Row>
   <Cell ss:StyleID="s76a${( account_code_style_suffix )|x}${( level )|x}"><Data ss:Type="String">${( account_code )|x}</Data></Cell>
