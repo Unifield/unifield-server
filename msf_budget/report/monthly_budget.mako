@@ -222,42 +222,42 @@
     <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
 
     <Row>
-      <Cell ss:StyleID="s22">
+      <Cell ss:StyleID="s22bold">
         <Data ss:Type="String">${_('Budget name:')}</Data>
       </Cell>
       <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.name or '' )|x}</Data></Cell>
     </Row>
 
     <Row>
-      <Cell ss:StyleID="s22">
+      <Cell ss:StyleID="s22bold">
         <Data ss:Type="String">${_('Budget code:')}</Data>
       </Cell>
       <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.code or '' )|x}</Data></Cell>
     </Row>
 
     <Row>
-      <Cell ss:StyleID="s22">
+      <Cell ss:StyleID="s22bold">
         <Data ss:Type="String">${_('Fiscal year:')}</Data>
       </Cell>
       <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.fiscalyear_id and o.fiscalyear_id.name or '' )|x}</Data></Cell>
     </Row>
 
     <Row>
-      <Cell ss:StyleID="s22">
+      <Cell ss:StyleID="s22bold">
         <Data ss:Type="String">${_('Cost center:')}</Data>
       </Cell>
       <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.cost_center_id and o.cost_center_id.name or '' )|x}</Data></Cell>
     </Row>
 
     <Row>
-      <Cell ss:StyleID="s22">
+      <Cell ss:StyleID="s22bold">
         <Data ss:Type="String">${_('Decision moment:')}</Data>
       </Cell>
       <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.decision_moment_id and o.decision_moment_id.name or '' )|x}</Data></Cell>
     </Row>
 
     <Row>
-      <Cell ss:StyleID="s22">
+      <Cell ss:StyleID="s22bold">
         <Data ss:Type="String">${_('Version:')}</Data>
       </Cell>
       <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.version or '' )|x}</Data></Cell>
