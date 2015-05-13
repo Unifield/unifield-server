@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            auto="False"
+            id="sync_client_logs_content"
+            model="sync.client.logs"
+            name="sync.client.logs.content"
+            string="Log File"
+            />
+    </data>
+</openerp>

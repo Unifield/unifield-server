@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data>
+
+    <record id="debugger_form" model="ir.ui.view">
+      <field name="name">sync.client.debugger.form</field>
+      <field name="model">sync.client.debugger</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form col="1"  hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+          <group col="4">
+            <field name="release_version"/>
+          </group>
+          <separator string="Log files available"/>
+          <field name="log_ids" nolabel="1" readonly="1" editable="top">
+            <tree string="Select a file to download" editable="top">
+              <field name="name"/>
+              <field name="mtime"/>
+              <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward"/>
+            </tree>
+          </field>
+        </form>
+      </field>
+    </record>
+
+    <record id="sync_client_debugger_open_wiz" model="ir.actions.server">
+        <field name="name">Get log files</field>
+        <field name="model_id" ref="model_sync_client_debugger"/>
+        <field name="state">code</field>
+        <field name="code">action = obj.open_wiz()</field>
+    </record>
+
+    <record id="debugger_menu" model="ir.ui.menu">
+        <field name="name">Get log files</field>
+        <field name="sequence" eval="30"/>
+        <field name="parent_id" ref="sync_client.mon_menu"/>
+        <field name="action" ref="sync_client_debugger_open_wiz"/>
+    </record>
+
+  </data>
+</openerp>
+<!--
+    vim:expandtab:smartindent:tabstop=2:softtabstop=2:shiftwidth=2:
+-->
