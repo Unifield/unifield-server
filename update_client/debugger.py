@@ -22,7 +22,7 @@ class wizard(osv.osv_memory):
         nids = self.search(cr, uid, [], limit=1, context=context)
         if not nids:
             nids = [self.create(cr, uid, {}, context=context)]
-        self.action_populate(cr, uid, nids, context=context)
+        self.action_populate(cr, 1, nids, context=context)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'sync.client.debugger',
@@ -54,7 +54,6 @@ class debugger(osv.osv_memory):
         if ids:
             for logfile in self.read(cr, user, ids, ['path']):
                 all_file[logfile['path']] = logfile['id']
-        ids = []
         for baseFilename in [h.baseFilename for h in logging.Logger.manager.root.handlers if hasattr(h, 'baseFilename')]:
             if os.sep in baseFilename:
                 path, filename = baseFilename.rsplit(os.sep, 1)
@@ -67,27 +66,36 @@ class debugger(osv.osv_memory):
                         os.listdir(path))):
                 if os.path.isfile(filepath):
                     stat = os.stat(filepath)
+                    data = {'mtime': time.strftime("%F %T", time.localtime(stat.st_mtime))}
                     if filepath not in all_file:
-                        ids.append( self.create(cr, user, {
-                            'wizard_id' : wizard_id,
-                            'name'      : filename,
-                            'path'      : filepath,
-                            'mtime'     : time.strftime("%F %T",
-                                time.localtime(stat.st_mtime)),
-                        }, context=context) )
+                        data.update({
+                            'wizard_id': wizard_id,
+                            'name': filename,
+                            'path': filepath
+                        })
+                        self.create(cr, user, data, context=context)
+                    else:
+                        self.write(cr, user, [user, all_file[filepath]], data)
+                        del(all_file[filepath])
         if os.path.isfile(updater.log_file):
             full_path = os.path.abspath(updater.log_file)
             path, filename = full_path.rsplit(os.sep, 1)
             stat = os.stat(updater.log_file)
+            data = {'mtime': time.strftime("%F %T", time.localtime(stat.st_mtime))}
             if full_path not in all_file:
-                ids.append( self.create(cr, user, {
-                    'wizard_id' : wizard_id,
-                    'name'      : filename,
-                    'path'      : full_path,
-                    'mtime'     : time.strftime("%F %T",
-                        time.localtime(stat.st_mtime)),
-                }, context=context) )
-        return ids
+                data.update({
+                    'wizard_id': wizard_id,
+                    'name': filename,
+                    'path': full_path
+                })
+                self.create(cr, user, data, context=context)
+            else:
+                self.write(cr, user, [all_file[full_path]], data, context=context)
+                del(all_file[full_path])
+
+        if all_file:
+            self.unlink(cr, user, all_file.values(), context=context)
+        return True
 
     def get_content(self, cr, uid, ids, context=None):
         name = self.read(cr, uid, ids[0], ['name'])['name']
