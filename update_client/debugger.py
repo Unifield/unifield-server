@@ -3,53 +3,32 @@ import updater
 import release
 from report import report_sxw
 import pooler
+import zipfile
+import tempfile
 
 import logging
 import os
 import time
 
 
-class wizard(osv.osv_memory):
-    _name = 'sync.client.debugger'
-
-    def action_populate(self, cr, uid, ids, context=None):
-        self.pool.get('sync.client.logs').populate(cr, uid, ids[0], context=context)
-        return {}
+class debugger(osv.osv):
+    _name = 'sync.client.logs'
+    _order = "mtime desc, id"
+    _description = 'Log files'
 
     def open_wiz(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        nids = self.search(cr, uid, [], limit=1, context=context)
-        if not nids:
-            nids = [self.create(cr, uid, {}, context=context)]
-        self.action_populate(cr, 1, nids, context=context)
+        self.populate(cr, 1, context=context)
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'sync.client.debugger',
+            'res_model': 'sync.client.logs',
             'view_type': 'form',
-            'view_mode': 'form',
-            'res_id': nids[0],
-            'target': 'crush',
+            'view_mode': 'tree,form',
         }
 
-
-    _columns = {
-        'release_version' : fields.char("Unifield Version",
-            size=64, readonly=True),
-        'log_ids' : fields.one2many('sync.client.logs', 'wizard_id',
-            string="Log Files", readonly=True),
-    }
-
-    _defaults = {
-        'release_version' : release.version[:-16] or release.version,
-    }
-
-
-class debugger(osv.osv_memory):
-    _name = 'sync.client.logs'
-
-    def populate(self, cr, user, wizard_id, context=None):
-        ids = self.search(cr, user, [('wizard_id', '=', wizard_id)], context=context)
+    def populate(self, cr, user, context=None):
+        ids = self.search(cr, user, [], context=context)
         all_file = {}
         if ids:
             for logfile in self.read(cr, user, ids, ['path']):
@@ -66,25 +45,23 @@ class debugger(osv.osv_memory):
                         os.listdir(path))):
                 if os.path.isfile(filepath):
                     stat = os.stat(filepath)
-                    data = {'mtime': time.strftime("%F %T", time.localtime(stat.st_mtime))}
+                    data = {'mtime': time.strftime("%F %T", time.localtime(stat.st_mtime)), 'type': 'server'}
                     if filepath not in all_file:
                         data.update({
-                            'wizard_id': wizard_id,
                             'name': filename,
                             'path': filepath
                         })
                         self.create(cr, user, data, context=context)
                     else:
-                        self.write(cr, user, [user, all_file[filepath]], data)
+                        self.write(cr, user, [all_file[filepath]], data)
                         del(all_file[filepath])
         if os.path.isfile(updater.log_file):
             full_path = os.path.abspath(updater.log_file)
             path, filename = full_path.rsplit(os.sep, 1)
             stat = os.stat(updater.log_file)
-            data = {'mtime': time.strftime("%F %T", time.localtime(stat.st_mtime))}
+            data = {'mtime': time.strftime("%F %T", time.localtime(stat.st_mtime)), 'type': 'update'}
             if full_path not in all_file:
                 data.update({
-                    'wizard_id': wizard_id,
                     'name': filename,
                     'path': full_path
                 })
@@ -105,30 +82,36 @@ class debugger(osv.osv_memory):
             'datas': {'ids': [ids[0]], 'target_filename': name, 'force_attach': 1}
         }
 
-        result = {}
-
     _columns = {
-        'wizard_id' : fields.many2one('sync.client.debugger', string="Debugger"),
-        'name' : fields.char("File name", size=64, readonly=True),
-        'path' : fields.text("File path", readonly=True),
-        'mtime' : fields.datetime("Modification Time", readonly=True),
+        'name': fields.char("File name", size=64, readonly=True),
+        'path': fields.text("File path", readonly=True),
+        'mtime': fields.datetime("Modification Time", readonly=True),
+        'type': fields.selection([('update', 'Update'), ('server', 'Server')], string='Type', readonly=True),
     }
 
-    _order = "mtime desc"
 
 
 debugger()
-wizard()
 
 class export_log_content(report_sxw.report_sxw):
     def create(self, cr, uid, ids, data, context=None):
         log = pooler.get_pool(cr.dbname).get('sync.client.logs')
-        for rec in log.read(cr, uid, ids, ['path'], context=context):
-            f = open(rec['path'], 'rb')
-            try:
-                result = (f.read(), 'txt')
-            finally:
-                f.close()
+        if len(ids) == 1 and data.get('force_attach') == 1:
+            for rec in log.read(cr, uid, ids, ['path'], context=context):
+                f = open(rec['path'], 'rb')
+                try:
+                    result = (f.read(), 'txt')
+                finally:
+                    f.close()
+        else:
+            null1, tmpzipname = tempfile.mkstemp()
+            zf = zipfile.ZipFile(tmpzipname, 'w')
+            for rec in log.read(cr, uid, ids, ['path', 'name'], context=context):
+                zf.write(rec['path'], rec['name'], compress_type=zipfile.ZIP_DEFLATED)
+            zf.close()
+            result = (file(tmpzipname, 'rb').read(), 'zip')
+            os.close(null1)
+            os.unlink(tmpzipname)
         return result
 
 export_log_content('report.sync.client.logs.content', 'sync.client.logs', False, parser=False)

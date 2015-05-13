@@ -6,7 +6,7 @@
             id="sync_client_logs_content"
             model="sync.client.logs"
             name="sync.client.logs.content"
-            string="Log File"
+            string="Get Files"
             />
     </data>
 </openerp>
