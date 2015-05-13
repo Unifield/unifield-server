@@ -45,7 +45,7 @@ class debugger(osv.osv):
                         os.listdir(path))):
                 if os.path.isfile(filepath):
                     stat = os.stat(filepath)
-                    data = {'mtime': time.strftime("%F %T", time.localtime(stat.st_mtime)), 'type': 'server'}
+                    data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime)), 'type': 'server'}
                     if filepath not in all_file:
                         data.update({
                             'name': filename,
@@ -59,7 +59,7 @@ class debugger(osv.osv):
             full_path = os.path.abspath(updater.log_file)
             path, filename = full_path.rsplit(os.sep, 1)
             stat = os.stat(updater.log_file)
-            data = {'mtime': time.strftime("%F %T", time.localtime(stat.st_mtime)), 'type': 'update'}
+            data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime)), 'type': 'update'}
             if full_path not in all_file:
                 data.update({
                     'name': filename,
