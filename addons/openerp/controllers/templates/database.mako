@@ -75,6 +75,8 @@
         <script type="text/javascript">
             jQuery('#filename').change(function() {
                 var choosen_filename = jQuery(this).val();
+                choosen_filename = choosen_filename.split('\\');
+                choosen_filename = choosen_filename[choosen_filename.length-1];
                 var matches = /^(.*)-[0-9]{8}-[0-9]{6}(-.*)?.dump$/.exec(choosen_filename);
                 if (!matches) {
                     // show jquery alert
