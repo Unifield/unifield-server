@@ -1118,4 +1118,33 @@ class account_invoice_line(osv.osv):
         return self.pool.get('account.analytic.line').button_open_analytic_corrections(cr, uid, al_ids, context=context)
 
 account_invoice_line()
+
+
+class res_partner(osv.osv):
+    _description='Partner'
+    _inherit = "res.partner"
+    
+
+    def name_search(self, cr, uid, name='', args=None, operator='ilike',
+        context=None, limit=100):
+        # BKLG-50: IN/OUT invoice/refund partner autocompletion filter
+        # regarding supplier/customer
+        if context is None:
+            context = {}
+            
+        alternate_domain = False
+        type = context.get('type', False)
+        if type:
+            if type in ('in_invoice', 'in_refund', ):
+                alternate_domain = [('supplier', '=', True)]
+            elif type in ('out_invoice', 'out_refund', ):
+                alternate_domain = [('customer', '=', True)]
+        if alternate_domain:
+            args += alternate_domain
+            
+        return super(res_partner, self).name_search(cr, uid, name=name,
+            args=args, operator=operator, context=context, limit=limit)
+
+res_partner()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
