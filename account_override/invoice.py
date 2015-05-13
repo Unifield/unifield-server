@@ -1172,11 +1172,11 @@ class res_partner(osv.osv):
             context = {}
             
         alternate_domain = False
-        type = context.get('type', False)
-        if type:
-            if type in ('in_invoice', 'in_refund', ):
+        invoice_type = context.get('type', False)
+        if invoice_type:
+            if invoice_type in ('in_invoice', 'in_refund', ):
                 alternate_domain = [('supplier', '=', True)]
-            elif type in ('out_invoice', 'out_refund', ):
+            elif invoice_type in ('out_invoice', 'out_refund', ):
                 alternate_domain = [('customer', '=', True)]
         if alternate_domain:
             args += alternate_domain
