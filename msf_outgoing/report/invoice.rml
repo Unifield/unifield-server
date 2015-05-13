@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-    
+
     <template pageSize="(842.0,595.0)" title="Shipment Proforma Invoice" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
             <frame id="first" x1="0.0" y1="0.0" width="842" height="560" />
@@ -17,25 +17,25 @@
             </pageGraphics>
         </pageTemplate>
     </template>
-    
+
     <stylesheet>
         <blockTableStyle id="HeaderInfos">
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
         </blockTableStyle>
-        
+
         <blockTableStyle id="ItemsInfos">
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
         </blockTableStyle>
-        
+
         <blockTableStyle id="ItemsHeaderGrey">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
             <blockBackground colorName="#c0c0c0" />
             <lineStyle kind="LINEABOVE" colorName="black" />
         </blockTableStyle>
-        
+
         <blockTableStyle id="ItemsLineHeader">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
@@ -65,7 +65,7 @@
         <paraStyle name="TotalInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
         <paraStyle name="TotalInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" />
     </stylesheet>
-  
+
   <story>
     <para style="HeaderInfosTitle">[[ repeatIn(getInvoice(objects[0]), 'pl') ]]</para>
     <pto>
@@ -94,7 +94,7 @@
     <para style="HeaderInfosTitle">
         <font color="white"> </font>
     </para>
-    
+
     <!-- header: ref fields -->
     <blockTable colWidths="100.0,220.0,170,170,172" style="HeaderInfos">
         <tr>
@@ -122,7 +122,7 @@
                 <para style="HeaderInfosValue">[[ getCompanyInfo('addr_name') ]]</para>
                 <para style="HeaderInfosValue">[[ getCompanyInfo('street') ]]</para>
                 <para style="HeaderInfosValue">[[ getCompanyInfo('street2') ]]</para>
-                <para style="HeaderInfosValue">[[ getCompanyInfo('city') ]]</para>
+                <para style="HeaderInfosValue">[[ getCompanyInfo('city')]]</para>
                 <para style="HeaderInfosValue">[[ getCompanyInfo('country') ]]</para>
                 <para style="HeaderInfosValue">[[ getCompanyInfo('phone') ]]</para>
             </td>
@@ -138,7 +138,7 @@
             </td>
         </tr>
     </blockTable>
-    
+
     <!-- items: stock moves -->
     <para style="HeaderInfosTitle">
         <font color="white"> </font>
@@ -262,6 +262,6 @@
         </td>
       </tr>
     </blockTable>
- 
+
   </story>
 </document>
