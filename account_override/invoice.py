@@ -1149,12 +1149,13 @@ class res_partner(osv.osv):
             return res
             
         invoice_type = context.get('type', False)
-        if invoice_type in ('in_invoice', 'in_refund', ):
-            # in invoices: only supplier partner
-            res = [('supplier', '=', True)]
-        elif invoice_type in ('out_invoice', 'out_refund', ):
-            # out invoices: only customer partner
-            res = [('customer', '=', True)]
+        if invoice_type:
+            if invoice_type in ('in_invoice', 'in_refund', ):
+                # in invoices: only supplier partner
+                res = [('supplier', '=', True)]
+            elif invoice_type in ('out_invoice', 'out_refund', ):
+                # out invoices: only customer partner
+                res = [('customer', '=', True)]
 
         return res
     
