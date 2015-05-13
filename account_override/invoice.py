@@ -1124,6 +1124,44 @@ class res_partner(osv.osv):
     _description='Partner'
     _inherit = "res.partner"
     
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+        
+    def _get_search_by_invoice_type(self, cr, uid, obj, name, args,
+        context=None):
+        res = []
+        if not len(args):
+            return res
+        if len(args) != 1:
+            msg = _("Domain %s not suported") % (str(args), )
+            raise osv.except_osv(_('Error'), msg)
+        if args[0][1] != '=':
+            msg = _("Operator '%s' not suported") % (args[0][1], )
+            raise osv.except_osv(_('Error'), msg)
+        if not args[0][2]:
+            return res
+            
+        invoice_type = context.get('type', False)
+        if invoice_type in ('in_invoice', 'in_refund', ):
+            # in invoices: only supplier partner
+            res = [('supplier', '=', True)]
+        elif invoice_type in ('out_invoice', 'out_refund', ):
+            # out invoices: only customer partner
+            res = [('customer', '=', True)]
+
+        return res
+    
+    _columns = {
+        'by_invoice_type': fields.function(_get_fake, type='boolean',
+            fnct_search=_get_search_by_invoice_type, method=True),
+    }
 
     def name_search(self, cr, uid, name='', args=None, operator='ilike',
         context=None, limit=100):
