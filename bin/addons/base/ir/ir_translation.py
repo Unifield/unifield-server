@@ -190,15 +190,15 @@ class ir_translation(osv.osv):
             context = {}
 
         # SP-193 : translation must limited to object limitation
-        if ',' in vals['name']:
+        if ',' in vals['name'] and vals.get('type') == 'model':
             model_name = vals['name'].split(",")[0]
             field = vals['name'].split(",")[1]
             if field:
                 model_obj = self.pool.get(model_name)
                 if hasattr(model_obj, 'fields_get'):
-                    field_obj = model_obj.fields_get(cursor, user, context=context)[field]
-                    if 'size' in field_obj:
-                        size = field_obj['size']
+                    field_obj = model_obj.fields_get(cursor, user, context=context)
+                    if 'size' in field_obj.get(field, {}):
+                        size = field_obj[field]['size']
                         vals['value'] = vals['value'][:size]
 
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
