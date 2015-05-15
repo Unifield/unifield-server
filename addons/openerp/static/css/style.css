@@ -523,6 +523,10 @@ table.errorbox {
     padding: 5px;
 }
 
+#badregional {
+    margin-top: 2px;
+}
+
 td.popup_header,
 table.popup_header {
 	background-color: #bbbbbb;
