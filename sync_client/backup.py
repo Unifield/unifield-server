@@ -57,7 +57,7 @@ class BackupConfig(osv.osv):
         'beforeautomaticsync' : True,
         'aftermanualsync' : True,
         'afterautomaticsync' : True,
-        'beforepatching': True,
+        'beforepatching': False,
     }
 
     def _set_pg_psw_env_var(self):
