@@ -143,6 +143,10 @@ def secured(fn):
             if action == 'login' and login_ret == -2:
                 return login(cherrypy.request.path_info, message=_('Database newer than UniField version'),
                     db=db, user=user, action=action, origArgs=get_orig_args(kw))
+            if action == 'login' and login_ret == -3:
+                nb_mod = rpc.session.number_update_modules(db) or ''
+                return login(cherrypy.request.path_info, message=_('The server is updating %s modules, please wait ...') % (nb_mod,),
+                    db=db, user=user, action=action, origArgs=get_orig_args(kw))
             elif login_ret <= 0:
                 # Bad login attempt
                 if action == 'login':
