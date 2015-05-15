@@ -190,7 +190,7 @@ class ir_translation(osv.osv):
             context = {}
 
         # SP-193 : translation must limited to object limitation
-        if ',' in vals['name'] and vals.get('type') == 'model':
+        if ',' in vals['name'] and vals.get('type') == 'model' and vals.get('value'):
             model_name = vals['name'].split(",")[0]
             field = vals['name'].split(",")[1]
             if field:
@@ -199,7 +199,7 @@ class ir_translation(osv.osv):
                     field_obj = model_obj.fields_get(cursor, user, context=context)
                     if 'size' in field_obj.get(field, {}):
                         size = field_obj[field]['size']
-                        vals['value'] = vals['value'][:size]
+                        vals['value'] = tools.ustr(vals['value'])[:size]
 
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
