@@ -25,9 +25,9 @@
             <field name="arch" type="xml">
                 <form string="Instance Form">
                     <separator string="Connection information" colspan="4"/>
-                    <field name="host" required="1"/>
+                    <field name="host" required="1" on_change="change_host(host, protocol)"/>
                     <field name="port" required="1"/>
-                    <field name="protocol" required="1"/>
+                    <field name="protocol" required="1" on_change="change_protocol(host, protocol)"/>
                     <field name="database" required="1"/>
                     <field name="login" required="1"/>
                     <field name="password" required="1" password="1"/>
