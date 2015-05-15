@@ -401,6 +401,10 @@ def dump_db(cr, pool):
         bck_obj.exp_dump_for_state(cr, 1, 'beforepatching')
 
 def test_do_upgrade(cr):
+    cr.execute("select count(1) from pg_class where relkind='r' and relname='sync_client_version'")
+    if not cr.fetchone()[0]:
+        return False
+
     cr.execute("select sum from sync_client_version where state='installed'")
     db_versions = []
     for ver in cr.fetchall():
