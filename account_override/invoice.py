@@ -660,7 +660,11 @@ class account_invoice(osv.osv):
         if inv.move_id and inv.register_line_ids:
             ml_obj = self.pool.get('account.move.line')
             # First search move line that becomes from invoice
-            res_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', inv.move_id.id), ('account_id', '=', inv.account_id.id)])
+            res_ml_ids = ml_obj.search(cr, uid, [
+                ('move_id', '=', inv.move_id.id),
+                ('account_id', '=', inv.account_id.id),
+                ('invoice_line_id', '=', False),  # US-254: do not seek invoice line's JIs (if same account as header)
+            ])
             if len(res_ml_ids) > 1:
                 raise osv.except_osv(_('Error'), _('More than one journal items found for this invoice.'))
             invoice_move_line_id = res_ml_ids[0]
