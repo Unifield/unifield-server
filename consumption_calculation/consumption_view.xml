@@ -34,7 +34,7 @@
                     confirm="Are you sure that you want to remove all lines?" invisible="1"/>
                     <button colspan="4" icon="gtk-go-down" string="Copy all" type="object" name="copy_all" attrs="{'invisible': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" />
                     <field name="hide_column_error_ok" invisible="1" />
-                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': ['|', ('state', '=', 'cancel), ('created_ok', '=', True)]}"
+                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
                         <tree string="Products" editable="top" colors="red: consumed_qty>0 and (inactive_product or to_correct_ok or consumed_qty > product_qty or (batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date));blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok and not inactive_product">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
