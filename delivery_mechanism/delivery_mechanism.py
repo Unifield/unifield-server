@@ -958,6 +958,7 @@ class stock_picking(osv.osv):
                 data_back = move_obj.create_data_back(move)
                 mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                 out_moves = mirror_data['moves']
+                print out_moves, move.product_id.name, move.line_number
                 average_values = {}
 
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
@@ -1081,7 +1082,7 @@ class stock_picking(osv.osv):
                             remaining_out_qty -= out_qty
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
-                            remaining_out_qty = 0.00
+                            #remaining_out_qty = 0.00
                         else:
                             # Just update the data of the initial out move
                             processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty or out_move.product_qty

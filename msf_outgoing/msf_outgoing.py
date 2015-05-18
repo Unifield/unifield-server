@@ -431,8 +431,10 @@ class shipment(osv.osv):
             carrier_addr_id = partner_obj.address_get(cr, uid, carrier_id)['default']
             carrier_addr = addr_obj.browse(cr, uid, carrier_addr_id, context=context)
 
-            addr = carrier_addr.street
-            addr += ' '
+            addr = ''
+            if carrier_addr.street:
+                addr += carrier_addr.street
+                addr += ' '
             if carrier_addr.street2:
                 addr += carrier_addr.street2
                 addr += ' '
