@@ -1761,8 +1761,8 @@ class stock_picking(osv.osv):
             ids = [ids]
         cr.execute('''select p.id, sum(m.product_qty)
             from stock_picking p, stock_move m
-            where m.picking_id = p.id
-            group by p.id''')
+            where m.picking_id = p.id and m.picking_id in %s
+            group by p.id''', (tuple(ids,),))
         for i in cr.fetchall():
             result[i[0]] = i[1] or 0
         return result
