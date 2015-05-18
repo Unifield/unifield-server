@@ -17,7 +17,7 @@
                         <button name="change_cons_location_id" string="Change location" icon="gtk-preferences" type="object" attrs="{'readonly': ['|', '|', ('state', '=', 'cancel'), ('id', '=', 0), ('created_ok', '=', True)]}" />
                         <group colspan="3" col="2">
                             <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
-                            <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
+                            <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"/>
                         </group>
                         <field name="activity_id" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
                         <button name="export_rac" colspan="3" string="Export lines" icon="terp-mail-forward" type="object" />
