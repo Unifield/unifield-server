@@ -252,8 +252,6 @@ class res_partner(osv.osv):
         """
         Put the good pricelist on the good field
         """
-        import pdb
-        pdb.set_trace()
         pricelist_obj = self.pool.get('product.pricelist')
         pppp_id = vals.get('property_product_pricelist_purchase', False)
         ppp_id = vals.get('property_product_pricelist', False)
