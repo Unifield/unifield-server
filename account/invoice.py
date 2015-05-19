@@ -340,6 +340,9 @@ class account_invoice(osv.osv):
         if view_type == 'form' and context.get('type', 'out_invoice') == 'in_refund':
             doc = etree.XML(res['arch'])
             doc.attrib['string'] = _('Supplier Refund')
+            nodes = doc.xpath("//field[@name='amount_to_pay']")
+            for node in nodes:
+                node.set('string', _('Amount to be refunded'))
             res['arch'] = etree.tostring(doc)
 
         if view_type == 'tree':
