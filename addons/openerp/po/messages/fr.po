@@ -125,6 +125,18 @@ msgstr "Créer"
 msgid "Super admin password:"
 msgstr "Mot de passe super administrateur :"
 
+#: controllers/database.py:87
+msgid "Drop password:"
+msgstr "Mot de passe de suppression :"
+
+#: controllers/database.py:95
+msgid "Backup password:"
+msgstr "Mot de passe de sauvegarde :"
+
+#: controllers/database.py:103
+msgid "Restore password:"
+msgstr "Mot de passe de restauration :"
+
 #: controllers/database.py:68
 msgid ""
 "This is the password of the user that have the rights to administer "
