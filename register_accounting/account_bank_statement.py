@@ -1830,11 +1830,12 @@ class account_bank_statement_line(osv.osv):
 
         if not context.get('sync_update_execution', False):
             if 'cheque_number' in values and values.get('cheque_number', False):
-                cr.execute('SELECT id \
-                            FROM account_bank_statement_line \
-                            WHERE cheque_number = %s \
-                            AND statement_id IN ' + statement_ids,
-                           (values['cheque_number']))
+                sql = 'SELECT id \
+                       FROM account_bank_statement_line \
+                       WHERE cheque_number=\'' + values['cheque_number'] + '\' \
+                       AND statement_id IN ' + statement_ids
+                print sql
+                cr.execute(sql)
 
                 for row in cr.dictfetchall():
                     msg = 'This cheque number has already been used'
