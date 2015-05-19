@@ -80,7 +80,7 @@ class freight_manifest(report_sxw.rml_parse):
     def getTotKg(self):
         return self.formatLang(self.kgtot and self.kgtot or 0.)
 
-    def get_lines(self, o): 
+    def get_lines(self, o):
         return o[0].pack_family_memory_ids
 
     def getEtd(self, o):
@@ -98,8 +98,7 @@ class freight_manifest(report_sxw.rml_parse):
         return ligne and ligne.ppl_id and ligne.ppl_id.name or False
 
     def getDataDescr(self, ligne):
-        #return ligne.description and ligne.description or 'Pas de description'
-        return False        
+        return ligne and ligne.ppl_id and ligne.ppl_id.description_ppl or False
 
     def getDataKg(self, ligne):
         self.kgtot += ligne.total_weight
@@ -135,7 +134,7 @@ class freight_manifest(report_sxw.rml_parse):
                 return 'X'
         return ''
 
-    def get_additional_items(self, o): 
+    def get_additional_items(self, o):
         return o[0].additional_items_ids
 
     def getadditional_items_name(self, line):
@@ -166,4 +165,3 @@ class freight_manifest(report_sxw.rml_parse):
 report_sxw.report_sxw('report.msf.freight_manifest', 'shipment', 'addons/msf_printed_documents/report/freight_manifest.rml', parser=freight_manifest, header=False,)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
