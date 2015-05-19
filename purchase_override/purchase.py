@@ -1390,13 +1390,26 @@ stock moves which are already processed : '''
                     price_unit_converted = self.pool.get('res.currency').compute(cr, uid, line.currency_id.id,
                                                                                  sol.currency_id.id, line.price_unit or 0.0,
                                                                                  round=False, context=date_context)
+                    line_qty = line.product_qty
+                    if line.procurement_id:
+                        other_po_lines = pol_obj.search(cr, uid, [
+                            ('procurement_id', '=', line.procurement_id.id),
+                            ('order_id.state', 'in', ['sourced', 'approved']),
+                            ('id', '!=', line.id),
+                        ], context=context)
+                        for opl in pol_obj.browse(cr, uid, other_po_lines, context=context):
+                            if opl.product_uom.id != line.product_uom.id:
+                                line_qty += uom_obj._compute_qty(cr, uid, opl.product_uom.id, opl.product_qty, line.product_uom.id)
+                            else:
+                                line_qty += opl.product_qty
+
                     fields_dic = {'product_id': line.product_id and line.product_id.id or False,
                                   'name': line.name,
                                   'default_name': line.default_name,
                                   'default_code': line.default_code,
-                                  'product_uom_qty': line.product_qty,
+                                  'product_uom_qty': line_qty,
                                   'product_uom': line.product_uom and line.product_uom.id or False,
-                                  'product_uos_qty': line.product_qty,
+                                  'product_uos_qty': line_qty,
                                   'product_uos': line.product_uom and line.product_uom.id or False,
                                   'price_unit': price_unit_converted,
                                   'nomenclature_description': line.nomenclature_description,
@@ -1486,8 +1499,8 @@ stock moves which are already processed : '''
                                 'name': line.name,
                                 'product_uom': line.product_uom and line.product_uom.id or False,
                                 'product_uos': line.product_uom and line.product_uom.id or False,
-                                'product_qty': line.product_qty - minus_qty,
-                                'product_uos_qty': line.product_qty - minus_qty,
+                                'product_qty': line_qty - minus_qty,
+                                'product_uos_qty': line_qty - minus_qty,
                             }
                             if line.product_id:
                                 move_dic['product_id'] = line.product_id.id
