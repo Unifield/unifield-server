@@ -287,7 +287,7 @@ class MultipleGroup(List):
         super(MultipleGroup, self).__init__(
             name=name, model=model, view=view, ids=self.ids, domain=self.domain,
             parent_group=parent_group, group_level=group_level, groups=groups, context=self.context, limit=self.limit,
-            count=self.count,offset=self.offset, editable=self.editable,
+            count=self.count,offset=self.offset, editable=self.editable, pageable=1,
             selectable=self.selectable, sort_order=sort_order, sort_key=sort_key)
 
         self.group_by_no_leaf = self.context.get('group_by_no_leaf', 0)

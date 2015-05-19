@@ -192,7 +192,7 @@ class List(SecuredController):
         group_level = ast.literal_eval(group_level)
         groups = ast.literal_eval(groups)
 
-        offset = 0
+        offset = params.offset or 0
         limit = params.limit or 20
         args = {'editable': editable,
                 'view_mode': ['tree', 'form', 'calendar', 'graph'],

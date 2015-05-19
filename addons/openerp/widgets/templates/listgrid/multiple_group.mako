@@ -118,8 +118,38 @@ background = '#F5F5F5'
 % endfor
 
 % else: # display only resulting rows
-
 % for j, grp_row in enumerate(grp_childs):
+% if pageable:
+ <tr parent="${grp_row.get('group_by_id')}">
+<%
+lenh = len(headers)
+if editable:
+    lenh += 2
+elif selector:
+    lenh += 1
+%>
+    <td colspan="${lenh}" class="pager"><span class="paging" style="float: left;">
+   % if pager.prev:
+        <a href="#prev" onclick="next_p(this, '${name}', ${group_by_no_leaf}, ${pager.limit}, -1); return false;">
+   % endif
+
+        <span class="prev nav${' ' if pager.prev else ' inactive'}">${_("< Previous")}</span>
+   % if pager.prev:
+        </a>
+   % endif
+   ${pager.page_info} ${_('of')} ${pager.count}
+   % if pager.next:
+        <a href="#next" onclick="next_p(this, '${name}', ${group_by_no_leaf}, ${pager.limit}, 1); return false;">
+   % endif
+
+        <span class="next nav${' ' if pager.next else ' inactive'}">${_("Next >")}</span>
+   % if pager.next:
+        </a>
+   % endif
+   </span>
+   </td>
+ </tr>
+% endif
   % for ch in grp_row.get('child_rec'):
   <tr class="grid-row grid-row-group" id="${grp_row.get('groups_id')}" parent="${grp_row.get('group_by_id')}"
       record="${ch.get('id')}" style="cursor: pointer;">

@@ -310,7 +310,7 @@ MochiKit.Base.update(ListView.prototype, {
         this.expand_all = 0;
         $('#expand_all').hide();
     },
-    group_by: function(id, record, no_leaf, group) {
+    group_by: function(id, record, no_leaf, group, offset, remove) {
         var $group_record = jQuery('[records="' + record + '"]');
         var group_by_context = $group_record.attr('grp_context');
         var domain = $group_record.attr('grp_domain');
@@ -319,6 +319,7 @@ MochiKit.Base.update(ListView.prototype, {
         var check_order = eval(total_groups);
         var sort_order;
         var sort_key;
+        offset = offset || 0;
         for(var i in check_order) {
             var $img = $header.find('th[id="'+'grid-data-column/'+check_order[i]+'"] img');
             if($img.length) {
@@ -332,7 +333,6 @@ MochiKit.Base.update(ListView.prototype, {
             sort_order = this.sort_order;
             sort_key = this.sort_key;
         }
-
         if (jQuery(group).hasClass('group-expand')) {
             // get listview selectable value, so we know if we are in
             // simple or multiple selection mode
@@ -356,12 +356,16 @@ MochiKit.Base.update(ListView.prototype, {
                         '_terp_editable': openobject.dom.get('_terp_editable').value,
                         '_terp_selectable': selectable,
                         '_terp_context': openobject.dom.get('_terp_context').value,
+                        '_terp_offset': offset,
 		    //'_terp_offset': openobject.dom.get('_terp_offset').value, // we force offset to 0 for multiple_groupby calls
 		    '_terp_limit': openobject.dom.get('_terp_limit').value,
 	    },
                 dataType: 'html',
                 success: function(xmlHttp) {
                     $group_record.after(xmlHttp);
+                    if (remove) {
+                        remove.remove();
+                    }
                 }
             });
         } else {
@@ -1119,3 +1123,17 @@ function listgridValidation(_list, o2m, record_id) {
         }
     }
 }
+
+function next_p(el, name, no_leaf, limit, way) {
+    pr = jQuery(el).parent().parent().parent().prev('.grid-row-group');
+    offset = pr.attr('offset') || 0
+    offset = parseInt(offset)
+    offset = offset + way * limit
+    pr.attr('offset', offset)
+    grp_by = pr.attr('grp_by_id');
+    pr.toggleClass('group-expand', true);
+    records = pr.attr('records');
+    to_remove = pr.siblings('[parent="'+records+'"]');
+    new ListView(name).group_by(grp_by, records, no_leaf, pr, offset, to_remove);
+}
+

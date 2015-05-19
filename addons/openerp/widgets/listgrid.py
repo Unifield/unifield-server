@@ -101,7 +101,6 @@ class List(TinyWidget):
         self.o2m = kw.get('o2m', 0)
         self.concurrency_info = None
         self.selector = None
-        
 
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
