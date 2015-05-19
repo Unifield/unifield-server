@@ -1814,11 +1814,28 @@ class account_bank_statement_line(osv.osv):
         if not distrib_id:
             values = self.update_employee_analytic_distribution(cr, uid,
                                                                 values=values)
+
+        # US-75 Statement_ids is for check bank_statement_lines journal_ids
+        statement_obj = self.pool.get('account.bank.statement')
+        statement = statement_obj.browse(cr, uid, values['statement_id'])
+        args = [('journal_id', '=', statement['journal_id']['id'])]
+        statement_ids_arr = statement_obj.search(cr, uid, args, context=context)
+        # Creation statement_ids array for SQL
+        statement_ids = "("
+        for statement_id in statement_ids_arr:
+            if statement_id is not statement_ids_arr[0]:
+                statement_ids += ", "
+            statement_ids += str(statement_id)
+        statement_ids += ")"
+
         if not context.get('sync_update_execution', False):
             if 'cheque_number' in values and values.get('cheque_number', False):
-                cr.execute('SELECT id FROM account_bank_statement_line \
-                            WHERE cheque_number = %s AND instance_id = %s',
-                           (values['cheque_number'], values['instance_id'],))
+                cr.execute('SELECT id \
+                            FROM account_bank_statement_line \
+                            WHERE cheque_number = %s \
+                            AND statement_id IN ' + statement_ids,
+                           (values['cheque_number']))
+
                 for row in cr.dictfetchall():
                     msg = 'This cheque number has already been used'
                     raise osv.except_osv(_('Info'), (msg))
