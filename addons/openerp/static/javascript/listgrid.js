@@ -331,6 +331,7 @@ MochiKit.Base.update(ListView.prototype, {
         if (group_by_context == '[]' && this.sort_order) {
             sort_order = this.sort_order;
             sort_key = this.sort_key;
+        }
 
         if (jQuery(group).hasClass('group-expand')) {
             // get listview selectable value, so we know if we are in
@@ -366,6 +367,9 @@ MochiKit.Base.update(ListView.prototype, {
         } else {
             jQuery('[parent="' + record + '"]').each(function() {
                 var parent_id = jQuery('[parent="' + record + '"]').attr('records');
+                if (jQuery('[parent="' + parent_id + '"]').length > 0) {
+                    jQuery('[parent="' + parent_id + '"]').remove();
+                }
                 jQuery(this).remove();
             })
 
