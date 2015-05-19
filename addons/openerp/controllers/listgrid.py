@@ -184,16 +184,20 @@ class List(SecuredController):
         view = cache.fields_view_get(model, view_id, view_type, rpc.session.context.copy())
         group_by = ast.literal_eval(group_by)
         domain = grp_domain
+        params = TinyDict(**kw)
+        editable = params.editable
+        selectable = params.selectable or 2
+        context = params.context or {}
+        context.update({'group_by_no_leaf': int(no_leaf), 'group_by': group_by, '__domain': domain})
         group_level = ast.literal_eval(group_level)
         groups = ast.literal_eval(groups)
 
         offset = 0
         limit = params.limit or 20
-        context = {'group_by_no_leaf': int(no_leaf), 'group_by': group_by, '__domain': domain}
-        args = {'editable': True,
+        args = {'editable': editable,
                 'view_mode': ['tree', 'form', 'calendar', 'graph'],
                 'nolinks': 1, 'group_by_ctx': group_by,
-                'selectable': 2,
+                'selectable': selectable,
                 'multiple_group_by': True,
                 'offset': offset, 'limit': limit,
                 'sort_key': kw.get('sort_key'),
