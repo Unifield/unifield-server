@@ -40,7 +40,7 @@ class financing_contract_format(osv.osv):
         'funding_pool_ids': fields.one2many('financing.contract.funding.pool.line', 'contract_id', 'Funding Pools'),
         'cost_center_ids': fields.many2many('account.analytic.account', 'financing_contract_cost_center', 'contract_id', 'cost_center_id', string='Cost Centers'),
         
-        'instance_id': fields.many2one('msf.instance','Proprietary Instance'),
+        'hidden_instance_id': fields.many2one('msf.instance','Proprietary Instance'),
     }
 
     _defaults = {

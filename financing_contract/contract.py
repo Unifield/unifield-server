@@ -58,9 +58,9 @@ class financing_contract_funding_pool_line(osv.osv):
         return True
 
     def create(self, cr, uid, vals, context=None):
-        # US-180: Check if the call is from sync update  
+        # US-113: Check if the call is from sync update  
         if context.get('sync_update_execution') and vals.get('contract_id', False):
-            # US-180: and if there is any financing contract existed for this format, if no, then ignore this call
+            # US-113: and if there is any financing contract existed for this format, if no, then ignore this call
             exist = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', vals['contract_id'])])
             if not exist:
                 return None            
@@ -645,12 +645,13 @@ class financing_contract_contract(osv.osv):
         format_obj = self.pool.get('financing.contract.format')
         format_line_obj = self.pool.get('financing.contract.format.line')
         format_browse = format_obj.browse(cr, uid, format.id, context=context)
+        fcfpl_line_obj = self.pool.get('financing.contract.funding.pool.line')
         
         # US-113: Populate the instance_id down to format, format line and also funding pool line
         instance_id = vals.get('instance_id', False)
         if instance_id:
-            if not format.instance_id or format.instance_id.id != instance_id:
-                format_obj.write(cr, uid, format.id, {'instance_id': instance_id}, context=context)
+            if not format.hidden_instance_id or format.hidden_instance_id.id != instance_id:
+                format_obj.write(cr, uid, format.id, {'hidden_instance_id': instance_id}, context=context)
         
         for format_line in format_browse.actual_line_ids:
             account_quadruplet_ids = [account_quadruplet.id for account_quadruplet in format_line.account_quadruplet_ids]
@@ -664,6 +665,16 @@ class financing_contract_contract(osv.osv):
                     list_to_update['instance_id'] = instance_id
             if len(list_to_update) > 0:    
                 format_line_obj.write(cr, uid, format_line.id, list_to_update, context=context)
+        
+        # populate the instance_id to the funding pool lines
+        if instance_id:
+            for fpid in format.funding_pool_ids:
+                list_to_update = {}
+                if not fpid.instance_id or fpid.instance_id.id != instance_id:
+                    list_to_update['instance_id'] = instance_id
+                if len(list_to_update) > 0:    
+                    fcfpl_line_obj.write(cr, uid, fpid.id, list_to_update, context=context)
+                
         return res
 
     def _check_grant_amount_proxy(self, cr, uid, ids, signal, context=None):
@@ -725,6 +736,31 @@ class financing_contract_contract(osv.osv):
             }
 
         return False
+
+    # US-113: unlink all relevant objects of this FC, because it's not automatic and would left orphan data, also impact to the sync 
+    def unlink(self, cr, uid, ids, context=None):
+        format_obj = self.pool.get('financing.contract.format')
+        format_line_obj = self.pool.get('financing.contract.format.line')
+        fcfpl_line_obj = self.pool.get('financing.contract.funding.pool.line')
+
+        format =  self.browse(cr,uid,ids,context=context)[0].format_id
+        format_browse = format_obj.browse(cr, uid, format.id , context=context)
+        
+        # unlink the format lines
+        for format_line in format_browse.actual_line_ids:
+            format_line_obj.unlink(cr, uid, format_line.id, context)
+        
+        # unlink the funding pool lines
+        for fpid in format.funding_pool_ids:
+            fcfpl_line_obj.unlink(cr, uid, fpid.id, context)
+
+        # the FC itself
+        res = super(financing_contract_contract, self).unlink(cr, uid, ids, context)
+        
+        # then finally the format line attached to this FC
+        format_obj.unlink(cr, uid, format.id, context)        
+        
+        return res
 
 financing_contract_contract()
 
