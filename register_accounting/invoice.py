@@ -368,6 +368,7 @@ class account_invoice(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        context['direct_invoice_view'] = 1
         self._check_analytic_distribution_state(cr, uid, ids, context)
         self._direct_invoice_updated(cr, uid, ids, context)
 
