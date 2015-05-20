@@ -127,7 +127,8 @@
     ],
     "function": [
         ('user.access.configurator', 'do_update_after_module_install'),
-        ('ir.model.data', 'us_254_fix_reconcile'),
+#        ('ir.model.data', 'us_254_fix_reconcile'),
+#        ('ir.model.data', 'us_268_fix_seq'),
     ],
 # add this to function to apply patch13 AND REMOVE export_import_lang FROM depends ('ir.model.data', 'patch13_install_export_import_lang')],
     "test": [
