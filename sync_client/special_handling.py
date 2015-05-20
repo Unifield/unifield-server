@@ -29,6 +29,8 @@
 
 from osv import fields, osv
 from tools.translate import _
+from sync_common import xmlid_to_sdref
+
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
@@ -232,3 +234,47 @@ class account_move_line(osv.osv):
                     done[t] = True
 
 account_move_line()
+
+class ir_model_data(osv.osv):
+    _inherit = 'ir.model.data'
+    _name = 'ir.model.data'
+
+    def _query_from_sync(self, cr, uid, source, obj, xmlid, fields, value, context=None):
+        if context is None:
+            context = {}
+        if not context.get('sync_message_execution'):
+            raise osv.except_osv(_('Error !'), _("Can't execute this method"))
+
+        pool_obj = self.pool.get(obj)
+        if not pool_obj:
+            raise osv.except_osv(_('Error !'), _('Object %s not found') % obj)
+
+        obj_id = pool_obj.find_sd_ref(cr, uid, xmlid_to_sdref(xmlid))
+        if not obj_id:
+            raise osv.except_osv(_('Error !'), _('Target object %s not found') % xmlid)
+
+        all_fields = pool_obj.fields_get(cr, uid, context=context)
+        value_to_write = []
+        to_replace = []
+        for i, field in enumerate(fields):
+            if all_fields[field]['type'] in ('one2many', 'many2many'):
+                raise osv.except_osv(_('Error !'), _('Field %s: type %s not supported') % (field, all_fields[field]['type']))
+            elif all_fields[field]['type'] == 'many2one':
+                to_replace.append('%s')
+                if value[i] and value[i] != 'NULL':
+                    rel_id = self.pool.get(all_fields[field]['relation']).find_sd_ref(cr, uid, xmlid_to_sdref(value[i]))
+                    if not rel_id:
+                        raise osv.except_osv(_('Error !'), _('Field %s, xmlid %s not found') % (field, value[i]))
+                    value_to_write.append(rel_id)
+                else:
+                    value_to_write.append('NULL')
+            else:
+                to_replace.append('%s')
+                value_to_write.append(value[i])
+
+        value_to_write.append(obj_id)
+        cr.execute('UPDATE '+pool_obj._table+' SET ('+','.join(fields)+') = ('+','.join(to_replace)+') WHERE id=%s', tuple(value_to_write))
+        return True
+
+
+ir_model_data()
