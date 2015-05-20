@@ -47,7 +47,7 @@
                                 <tree string="Products" editable="bottom" colors="red: err_msg!=''">
                                     <field name="product_id" 
                                            domain="[('type', 'not in', ('consu', 'service', 'service_recep'))]" 
-                                           context="available_for_restriction={'location_id': location_id}, search_default_not_restricted=1"
+                                           context="available_for_restriction={'location_id': location_id}, search_default_not_restricted=1, 'location': location_id"
                                            on_change="product_change(product_id, location_id, 'product_id', True,  prod_lot_id)" />
                                     <field name="average_cost" />
                                     <field name="currency_id" />
