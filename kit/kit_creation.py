@@ -1248,7 +1248,7 @@ class stock_move(osv.osv):
             # hidden_state
             result[obj.id].update({'hidden_state': obj.state})
             # hidden_prodlot_id
-            result[obj.id].update({'hidden_prodlot_id': obj.prodlot_id.id})
+            result[obj.id].update({'hidden_prodlot_id': obj.lot_check})
             # hidden_exp_check
             result[obj.id].update({'hidden_exp_check': obj.exp_check})
             # hidden_asset_check
@@ -1273,12 +1273,12 @@ class stock_move(osv.osv):
                 'original_from_process_stock_move': fields.boolean(string='Original', readonly=True),
                 # functions
                 'hidden_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=SELECTION, string='Hidden State', multi='get_vals_kit_creation', store=False, readonly=True),
-                'hidden_prodlot_id': fields.function(_vals_get_kit_creation, method=True, type='many2one', relation='stock.production.lot', string='Hidden Prodlot', multi='get_vals_kit_creation', store=False, readonly=True),
+                'hidden_prodlot_id': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Prodlot', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_exp_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Expiry Check', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_asset_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Asset Check', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_creation_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=KIT_CREATION_STATE, string='Hidden Creation State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'assigned_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Assigned Qty', multi='get_vals_kit_creation', store=False, readonly=True),
-                'hidden_creation_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='integer', string='Hidden Creation Qty', multi='get_vals_kit_creation', store=False, readonly=True),
+                'hidden_creation_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Hidden Creation Qty', multi='get_vals_kit_creation', store=False, readonly=True),
                 'kol_lot_manual': fields.boolean(string='The batch is set manually'),
                 }
     
