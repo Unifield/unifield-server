@@ -415,7 +415,6 @@ class orm_template(object):
     # }
     _replace_exported_fields = {}
 
-
     CONCURRENCY_CHECK_FIELD = '__last_update'
     def log(self, cr, uid, id, message, secondary=False, context=None):
         return self.pool.get('res.log').create(cr, uid,
@@ -2022,6 +2021,29 @@ class orm_template(object):
                 fields.remove(fld_val)
 
         return fields
+
+    def filter_export_data_result(self, cr, uid, result, fields):
+        """
+        Override this method if you would like to filter the result of
+        export_data method of the object.
+        """
+        fld_indexes = []
+
+        for fld in self._replace_exported_fields.keys():
+            if fld in fields:
+                fld_indexes.append(fields.index(fld))
+
+        if fld_indexes:
+            fld_indexes.sort(reverse=True)
+            for r in result:
+                for fld_index in fld_indexes:
+                    del r[fld_index]
+
+            for fld_index in fld_indexes:
+                del fields[fld_index]
+
+        return result, fields
+
 
 class orm_memory(orm_template):
 
