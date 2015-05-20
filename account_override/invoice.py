@@ -441,6 +441,9 @@ class account_invoice(osv.osv):
         # Reset register_line_ids if not given in default
         if 'register_line_ids' not in default:
             default['register_line_ids'] = []
+        # US-267: Reset st_lines if not given in default, otherwise a new line in Reg will be added
+        if 'st_lines' not in default:
+            default['st_lines'] = []
         # Default behaviour
         new_id = super(account_invoice, self).copy(cr, uid, inv_id, default, context)
         # Case where you split an invoice
