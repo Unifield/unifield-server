@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+import related_sourcing
 import sale_order_line
 import wizard
 

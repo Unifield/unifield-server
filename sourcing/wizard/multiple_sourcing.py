@@ -49,6 +49,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
             _SELECTION_PO_CFT,
             string='PO/CFT',
         ),
+        'related_sourcing_id': fields.many2one(
+            'related.sourcing',
+            string='Group',
+        ),
         'location_id': fields.many2one(
             'stock.location',
             string='Location',
@@ -92,6 +96,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         res['po_cft'] = False
         loc = -1 # first location flag
         supplier = -1 # first location flag
+        group = None
         for line in self.pool.get('sale.order.line').browse(cr, uid, active_ids, context=context):
             if line.state == 'draft' and line.sale_order_state == 'validated':
                 res['line_ids'].append(line.id)
@@ -111,9 +116,20 @@ class multiple_sourcing_wizard(osv.osv_memory):
                         supplier = temp
                     elif supplier != temp:
                         supplier = False
+
+                if not line.related_sourcing_id:
+                    group = False
+                else:
+                    temp = line.related_sourcing_id.id
+                    if group is None:
+                        group = temp
+                    elif group != temp:
+                        group = False
+
             else:
                 # UTP-1021: Calculate the location to set into the wizard view if all lines are sourced from the same location
                 supplier = False # if source from stock, always set False to partner
+                group = False
                 temploc = line.location_id.id
                 if loc == -1: # first location
                     loc = temploc
@@ -125,6 +141,8 @@ class multiple_sourcing_wizard(osv.osv_memory):
             res['location_id'] = loc
         if supplier != -1:
             res['supplier_id'] = supplier
+        if group is not None:
+            res['related_sourcing_id'] = group
 
         if not res['line_ids']:
             raise osv.except_osv(_('Error'), _('No non-sourced lines are selected. Please select non-sourced lines'))
@@ -160,6 +178,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                         line_obj.write(cr, uid, [line.id], {'type': wiz.type,
                                                             'po_cft': wiz.po_cft,
                                                             'supplier': wiz.supplier_id and wiz.supplier_id.id or False,
+                                                            'related_sourcing_id': wiz.related_sourcing_id and wiz.related_sourcing_id.id or False,
                                                             'location_id': wiz.location_id.id and wiz.location_id.id or False},
                                                              context=context)
                     except osv.except_osv, e:

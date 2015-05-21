@@ -98,6 +98,8 @@
 					<field name="po_cft"
 					    on_change="onChangePoCft(po_cft, order_id, supplier)" 
                         attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+                    <field name="related_sourcing_id"
+                        attrs="{'readonly': ['|', '|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft'), ('po_cft', 'not in', ['po', 'dpo'])]}" />
                     <field name="location_id" 
                         widget="selection"
                         on_change="onChangeLocation(location_id, product_id, rts, order_id)"
@@ -191,7 +193,30 @@
 		    target="new"
             key2="client_action_multi"
             empty_ids="1"
-		    id="action_compute_schedulers_sourcing"/>
+            id="action_compute_schedulers_sourcing"/>
+
+        <!-- Related sourcing group -->
+        <record id="related_sourcing_search_view" model="ir.ui.view">
+            <field name="name">related.sourcing.search.view</field>
+            <field name="model">related.sourcing</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <search string="Related sourcing group">
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+        <record id="related_sourcing_form_view" model="ir.ui.view">
+            <field name="name">related.sourcing.form.view</field>
+            <field name="model">related.sourcing</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Related sourcing group">
+                    <field name="name" />
+                </form>
+            </field>
+        </record>
 
 	</data>
 </openerp>

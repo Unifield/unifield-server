@@ -419,6 +419,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'res.partner',
             'Supplier',
         ),
+        'related_sourcing_id': fields.many2one(
+            'related.sourcing',
+            string='Group',
+        ),
         'location_id': fields.many2one(
             'stock.location',
             string='Location',
