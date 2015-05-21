@@ -110,6 +110,19 @@
             </field>
         </record>
 
+        <record id="register_view_account_move_line_filter" model="ir.ui.view">
+            <field name="name">Journal Items</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_line_filter"/>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='journal_id']" position="before">
+                            <field name="instance_id"/>
+                </xpath>
+            </field>
+        </record>
+
     <!-- Account move line search view -->
         <record id="mcdb_view_account_move_line_filter" model="ir.ui.view">
             <field name="name">Journal Items</field>
@@ -239,9 +252,9 @@
                 <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1" hide_delete_button="1" >
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
-                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard"
                         attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
-                    <button name="button_open_corrections" type="object" string="Open corrections history" 
+                    <button name="button_open_corrections" type="object" string="Open corrections history"
                         attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
                     <field name="instance_id" readonly="1"/>
                     <field name="journal_id"/>
