@@ -23,6 +23,8 @@
 
 from osv import osv
 from osv import fields
+from register_tools import _populate_third_party_name
+
 
 class account_move(osv.osv):
     _name = "account.move"
@@ -57,5 +59,46 @@ class account_move(osv.osv):
     }
 
 account_move()
+
+class hr_employee(osv.osv):
+    _name = 'hr.employee'
+    _inherit = 'hr.employee'
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context = {}
+        
+        name = vals.get('name', False)
+        if name:
+            for id in ids:
+                oldname = self.browse(cr, uid, id, context=context).name
+                if name != oldname:
+                    # BKLG-80: Populate changes to account.move.line and account.analytic when the name got updated
+                    _populate_third_party_name(self, cr, uid, id, 'employee_id', name, context)
+                    
+        return super(hr_employee, self).write(cr, uid, ids, vals, context)
+    
+hr_employee()
+
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context = {}
+        
+        name = vals.get('name', False)
+        if name:
+            for id in ids:
+                oldname = self.browse(cr, uid, id, context=context).name
+                if name != oldname:
+                    # BKLG-80: Populate changes to account.move.line and account.analytic when the name got updated
+                    _populate_third_party_name(self, cr, uid, id, 'partner_id', name, context)
+        return super(res_partner, self).write(cr, uid, ids, vals, context)
+    
+res_partner()
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -40,7 +40,7 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=No
         elif st_line.partner_id:
             res[st_line.id] = {'third_parties': 'res.partner,%s' % st_line.partner_id.id}
             res[st_line.id]['partner_type'] = {'options': [('res.partner', 'Partner')], 'selection': 'res.partner,%s' % st_line.partner_id.id}
-        else:
+        else: 
             res[st_line.id] = {'third_parties': False}
             if st_line.account_id:
                 # Prepare some values
@@ -82,6 +82,33 @@ def _set_third_parties(self, cr, uid, obj_id, name=None, value=None, fnct_inv_ar
     elif name == 'partner_type' and not value:
         cr.execute("UPDATE %s SET employee_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, obj_id))
     return True
+
+
+def _populate_third_party_name(self, cr, uid, obj_id, field_name, name=None, context=None):
+    """
+    Populate changes to move line and analytic line when the employee or partner name got changed
+    
+    field_name must be 'employee_id' or partner_id (field of account_bank_statement_line)
+    """
+    absl_obj = self.pool.get('account.bank.statement.line')
+    aml_obj = self.pool.get('account.move.line')
+    aal_obj = self.pool.get('account.analytic.line')
+    
+    # search all register lines that linked to this employee
+    absl_ids = absl_obj.search(cr, uid, [(field_name, '=', obj_id)], context = context)
+    for absl in absl_obj.browse(cr, uid, absl_ids, context=context):
+        # perform changes to the account.analytic.line
+        for aal in absl.fp_analytic_lines:
+            if aal.partner_txt != name: # only call write if needed
+                aal_obj.write(cr, uid, aal.id, {'partner_txt': name}, context=context)
+         
+        # search for the account.move.line that linked to the given register_line to update the partner_txt field
+        aml_ids = aml_obj.search(cr, uid, [('move_id', '=', absl.id)], context = context)
+        for aml in aml_obj.browse(cr, uid, aml_ids, context=context):
+            if aml.partner_txt != name: # only call write if needed
+                aml_obj.write(cr, uid, aml.id, {'partner_txt': name}, context=context)
+    return True
+
 
 def _get_third_parties_name(self, cr, uid, vals, context=None):
     """
