@@ -56,7 +56,7 @@ class report_reception(report_sxw.rml_parse):
         })
 
     def getState(self, o):
-        return o.state.title()
+        return o.state
 
     def getOriginRef(self,o):
         return o and o.purchase_id and o.purchase_id.origin or False

@@ -11,10 +11,10 @@
             <drawString x="20" y="540.0">[[ '%s' % (objects[0].name) ]]</drawString>
 
 
-            <fill color="blue">[[ getState(objects[0]) == "Cancel" and removeParentNode('fill') ]]</fill>
-            <fill color="red">[[ getState(objects[0]) != "Cancel" and removeParentNode('fill') ]]</fill>
+            <fill color="blue">[[ getState(objects[0]) == "cancel" and removeParentNode('fill') ]]</fill>
+            <fill color="red">[[ getState(objects[0]) != "cancel" and removeParentNode('fill') ]]</fill>
 
-            <drawString x="20" y="520.0">[[ getState(objects[0]) ]]</drawString>
+            <drawString x="20" y="520.0">[[ getSel(objects[0], 'state') ]]</drawString>
 
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
