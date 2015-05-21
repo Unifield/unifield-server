@@ -218,7 +218,7 @@ class account_invoice(osv.osv):
         'internal_number': fields.char('Invoice Number', size=32, readonly=True, help="Unique number of the invoice, computed automatically when the invoice is created."),
         'reference': fields.char('Invoice Reference', size=64, help="The partner reference of this invoice."),
         'reference_type': fields.selection(_get_reference_type, 'Reference Type',
-            required=True, readonly=True, states={'draft':[('readonly',False)]}),
+            readonly=True, states={'draft':[('readonly',False)]}),
         'comment': fields.text('Additional Information'),
 
         'state': fields.selection([
