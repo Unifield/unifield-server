@@ -789,10 +789,11 @@ class product_product(osv.osv):
         to_overwrite = False
         # The first 2 cases: dup of default_code/xmlid_code not allow
         if context.get('from_import_menu') or context.get('sync_update_execution', False):
+            xmlid_code = vals.get('xmlid_code', default_code)
             if not default_code or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
             exist_dc = self.search(cr, uid, [('default_code', '=', default_code)], limit=1, context=context)
-            exist_xc = self.search(cr, uid, [('xmlid_code', '=', default_code)], limit=1, context=context)
+            exist_xc = self.search(cr, uid, [('xmlid_code', 'in', [default_code, xmlid_code])], limit=1, context=context)
             if exist_dc:  # if any of the code exists, report error!,
                 raise Exception, "Problem creating product: Duplicate default_code found"
             if exist_xc:  # if any of the code exists, report error!,
