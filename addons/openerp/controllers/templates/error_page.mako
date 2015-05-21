@@ -201,6 +201,15 @@ Choose:
                     % else:
                          <script type="text/javascript">
                             jQuery('.save_close:eq(0) button').removeAttr('disabled');
+
+                            function close_me() {
+                                if (typeof close_error_window !== 'undefined') {
+                                    return close_error_window();
+                                }
+                                if (parent.window) {
+                                    parent.window.close_this_frame();
+                                }
+                            }
                          </script>
                         <table class="errorbox" align="center">
                             <tr>
@@ -215,7 +224,7 @@ Choose:
                             <tr>
                                 <td colspan="2" align="right" style="padding: 1px">
                                     <a class="button-a" href="javascript: void(0)"
-                                       onclick="close_error_window()">OK</a>
+                                       onclick="close_me()">OK</a>
                                 </td>
                             </tr>
                         </table>
