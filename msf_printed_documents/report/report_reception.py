@@ -122,15 +122,15 @@ class report_reception(report_sxw.rml_parse):
         # Amount received in this IN only
         # REF-96: Don't count the shipped available IN
 
-        if o.state in ('assigned', 'shipped', 'cancel'):
+        if o.state in ('assigned', 'shipped'):
             val = 0
-        elif line.state in ('cancel'):
-            val = 0
+        elif line.state in ('cancel') or o.state in ('cancel'):
+            return '0' # US_275 Return 0 for cancel lines
         else:
             val = line.product_qty
 
         if val == 0:
-            return '0' # US_275: Return "0" instead blank
+            return ' ' # display blank instead 0
         return "{0:.2f}".format(val)
 
 
