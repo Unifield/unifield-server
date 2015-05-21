@@ -68,15 +68,20 @@ class hr_employee(osv.osv):
         if not context:
             context = {}
         
+        to_modify = []
         name = vals.get('name', False)
         if name:
             for id in ids:
                 oldname = self.browse(cr, uid, id, context=context).name
                 if name != oldname:
+                    to_modify.append(id)
                     # BKLG-80: Populate changes to account.move.line and account.analytic when the name got updated
-                    _populate_third_party_name(self, cr, uid, id, 'employee_id', name, context)
                     
-        return super(hr_employee, self).write(cr, uid, ids, vals, context)
+        res = super(hr_employee, self).write(cr, uid, ids, vals, context)
+        for id in to_modify:
+            _populate_third_party_name(self, cr, uid, id, 'employee_id', name, context)
+        
+        return res
     
 hr_employee()
 
@@ -89,14 +94,18 @@ class res_partner(osv.osv):
         if not context:
             context = {}
         
+        to_modify = []
         name = vals.get('name', False)
         if name:
             for id in ids:
                 oldname = self.browse(cr, uid, id, context=context).name
                 if name != oldname:
+                    to_modify.append(id)
                     # BKLG-80: Populate changes to account.move.line and account.analytic when the name got updated
-                    _populate_third_party_name(self, cr, uid, id, 'partner_id', name, context)
-        return super(res_partner, self).write(cr, uid, ids, vals, context)
+        res = super(res_partner, self).write(cr, uid, ids, vals, context)
+        for id in to_modify:
+            _populate_third_party_name(self, cr, uid, id, 'partner_id', name, context)        
+        return res
     
 res_partner()
 
