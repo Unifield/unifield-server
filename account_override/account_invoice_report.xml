@@ -13,6 +13,16 @@
         auto="False"
         menu="True"/>
 
+        <report id="allocation_invoices"
+        string="Allocation Invoices"
+        model="account.invoice"
+        name="allocation.invoices"
+        target_filename="Allocation_Invoices_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
+        file="account_override/report/allocation_invoices_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"/>
     </data>
 </openerp>
 
