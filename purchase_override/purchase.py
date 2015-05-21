@@ -161,6 +161,9 @@ class purchase_order(osv.osv):
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
 
+        if not default.get('related_sourcing_id', False):
+            default['related_sourcing_id'] = False
+
         return super(purchase_order, self).copy(cr, uid, p_id, default, context=context)
 
     # @@@purchase.purchase_order._invoiced
