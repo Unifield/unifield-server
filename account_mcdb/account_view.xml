@@ -239,9 +239,9 @@
                 <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1" hide_delete_button="1" >
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
-                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard"
                         attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
-                    <button name="button_open_corrections" type="object" string="Open corrections history" 
+                    <button name="button_open_corrections" type="object" string="Open corrections history"
                         attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
                     <field name="instance_id" readonly="1"/>
                     <field name="journal_id"/>
