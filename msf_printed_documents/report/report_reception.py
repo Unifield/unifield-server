@@ -130,7 +130,7 @@ class report_reception(report_sxw.rml_parse):
             val = line.product_qty
 
         if val == 0:
-            return ' ' # Set blank instead of 0.0
+            return '0' # US_275: Return "0" instead blank
         return "{0:.2f}".format(val)
 
 
