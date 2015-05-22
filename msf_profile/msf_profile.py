@@ -51,7 +51,7 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(a, b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
-    def update_us_133(self, cr, uid, *a, *b):
+    def update_us_133(self, cr, uid, *a, **b):
         p_obj = self.pool.get('res.partner')
         p_ids = p_obj.search(cr, uid, [])
         fields = [
