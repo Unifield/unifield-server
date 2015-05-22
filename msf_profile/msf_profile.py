@@ -48,7 +48,7 @@ class patch_scripts(osv.osv):
         for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
             method = ps['method']
             model_obj = self.pool.get(ps['model'])
-            getattr(model_obj, method)(a, b)
+            getattr(model_obj, method)(cr, uid, a, b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
     def update_us_133(self, cr, uid, *a, **b):
