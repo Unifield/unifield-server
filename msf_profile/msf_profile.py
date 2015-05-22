@@ -42,6 +42,15 @@ class ir_model_data(osv.osv):
         ctx['update_mode'] = mode
         return super(ir_model_data, self)._update(cr, uid, model, module, values, xml_id, store, noupdate, mode, res_id, ctx)
 
+    def patch_us_133(self, cr, uid, *a, **b):
+        p_obj = self.pool.get('res.partner')
+        partner_ids = p_obj.search(cr, uid, [], context=context)
+        for partner in p_obj.read(cr, uid, partner_ids, ['property_product_pricelist_purchase', 'property_product_pricelist'], context=context):
+            p_obj.write(cr, uid, [partner.id], {
+                'property_product_pricelist_purchase': partner['property_product_pricelist_purchase'],
+                'property_product_pricelist': partner['property_product_pricelist'],
+            }, context=context)
+
     def patch13_install_export_import_lang(self, cr, uid, *a, **b):
         mod_obj = self.pool.get('ir.module.module')
         mod_ids = mod_obj.search(cr, uid, [('name', '=', 'export_import_lang')])
