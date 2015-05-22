@@ -1149,6 +1149,31 @@ class Connection(osv.osv):
         self._uid = False
         return super(Connection, self).write(*args, **kwargs)
 
+    def change_host(self, cr, uid, ids, host, proto, context=None):
+        if host in ('127.0.0.1', 'localhost'):
+            return self.change_protocol(cr, uid, ids, host, proto, context=context)
+        return {}
+
+    def change_protocol(self, cr, uid, ids, host, proto, context=None):
+        xmlrpc = 8069
+        xmlrpcs = 8071
+        netrpc = 8070
+        if host in ('127.0.0.1', 'localhost'):
+            xmlrpc = tools.config.get('xmlrpc_port')
+            xmlrpcs = tools.config.get('xmlrpcs_port')
+            netrpc = tools.config.get('netrpc_port')
+        ports = {
+            'xmlrpc': xmlrpc,
+            'gzipxmlrpc': xmlrpc,
+            'xmlrpcs': xmlrpcs,
+            'gzipxmlrpcs': xmlrpcs,
+            'netrpc': netrpc,
+            'netrpc_gzip': netrpc,
+        }
+        if ports.get(proto):
+            return {'value': {'port': ports[proto]}}
+        return {}
+
     _sql_constraints = [
         ('active', 'UNIQUE(active)', 'The connection parameter is unique; you cannot create a new one')
     ]
