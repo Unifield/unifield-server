@@ -972,8 +972,8 @@ class Entity(osv.osv):
         monitor = self.pool.get("sync.monitor")
         last_log = monitor.last_status
         if last_log:
-            return "Last Sync: %s at %s" \
-                % (_(monitor.status_dict[last_log[0]]), last_log[1])
+            return "Last Sync: %s at %s, Not runs (upd / msg): %s / %s" \
+                % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
 
         return "Connected"
 
