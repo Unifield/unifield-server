@@ -11,3 +11,4 @@
 "sync_read_monitor_id","sync_read_monitor","sync.monitor","True","","","","sync_common.sync_read_group"
 "sync_read_log_sale_purchase_id","sync_read_log_sale_purchase","sync.client.log_sale_purchase","True","","","","sync_common.sync_read_group"
 "sync_backup","sync_backup","backup.config","True","True","True","True",""
+"sync_backup_download","sync_backup_download","backup.download","True","","","",""

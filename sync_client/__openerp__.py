@@ -34,6 +34,7 @@ Synchronization Engine - Client Module
     'data': [
         'sync_client_view.xml',
         'backup_view.xml',
+        'backup_report.xml',
         'update_view.xml',
         'message_view.xml',
         'hq_monitor_view.xml',
