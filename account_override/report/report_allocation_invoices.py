@@ -47,7 +47,7 @@ class report_allocation_invoices(report_sxw.rml_parse):
             WHERE i.invoice_id=%s
             GROUP BY n3.code, ac.code, n2.code, n1.code
             UNION ALL
-            SELECT n3.code, ac.code, n2.code, n1.code, SUM(coalesce(amount, price_subtotal*percentage/100)) as amount
+            SELECT n3.code, ac.code, n2.code, n1.code, ROUND(SUM(price_subtotal*percentage/100), 2)
             FROM funding_pool_distribution_line a
             INNER JOIN account_invoice s ON s.analytic_distribution_id = a.distribution_id
             LEFT JOIN account_invoice_line i ON i.invoice_id = s.id AND i.analytic_distribution_id IS NULL
