@@ -37,11 +37,8 @@
   <Style ss:ID="s63">
    <NumberFormat ss:Format="Standard"/>
   </Style>
-  <Style ss:ID="s65">
-   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom" ss:Indent="2"/>
-  </Style>
   <Style ss:ID="s66">
-   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom" ss:Indent="3"/>
+   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom" ss:Indent="1"/>
   </Style>
   <Style ss:ID="s67">
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
@@ -122,31 +119,19 @@
    % if level(row) == 1:
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s99"><Data ss:Type="String">${(row[0])|x}</Data></Cell>
-    <Cell ss:StyleID="s100"><Data ss:Type="Number">${(row[4])|x}</Data></Cell>
+    <Cell ss:StyleID="s100"><Data ss:Type="Number">${(row[2])|x}</Data></Cell>
    </Row>
    % endif
    % if level(row) == 2:
    <Row ss:AutoFitHeight="0">
-    <Cell ss:StyleID="s69"><Data ss:Type="String">${(row[1])|x}</Data></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="Number">${(row[4])|x}</Data></Cell>
-   </Row>
-   % endif
-   % if level(row) == 3:
-   <Row ss:AutoFitHeight="0">
-    <Cell ss:StyleID="s65"><Data ss:Type="String">${(row[2])|x}</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="Number">${(row[4])|x}</Data></Cell>
-   </Row>
-   % endif
-   % if level(row) == 4:
-   <Row ss:AutoFitHeight="0">
-    <Cell ss:StyleID="s66"><Data ss:Type="String">${(row[3])|x}</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="Number">${(row[4])|x}</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">${(row[1])|x}</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">${(row[2])|x}</Data></Cell>
    </Row>
    % endif
    % if level(row) == -1:
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s75"><Data ss:Type="String">Grand Total</Data></Cell>
-    <Cell ss:StyleID="s76"><Data ss:Type="Number">${(row[4])|x}</Data></Cell>
+    <Cell ss:StyleID="s76"><Data ss:Type="Number">${(row[2])|x}</Data></Cell>
    </Row>
    % endif
    % endfor

@@ -1,4 +1,4 @@
 import account_chart_export
 import account_print_invoice
 import report_open_invoices
-import report_allocation_invoices
+import report_allocation_synthesis_invoices
