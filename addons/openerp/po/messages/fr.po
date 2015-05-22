@@ -250,12 +250,12 @@ msgid "Change Password"
 msgstr "Changer de mot de passe"
 
 #: controllers/database.py:108
-msgid "Old Password:"
-msgstr "Ancien mot de passe:"
+msgid "Old super admin password:"
+msgstr "Ancien mot de passe super admin:"
 
 #: controllers/database.py:109
-msgid "New Password:"
-msgstr "Nouveau mot de passe:"
+msgid "New super admin password:"
+msgstr "Nouveau mot de passe super admin:"
 
 #: controllers/database.py:110
 msgid "Confirm Password:"
@@ -443,6 +443,16 @@ msgstr "L'enregistrement parent n'existe pas..."
 #: controllers/preferences.py:35
 msgid "Change your password"
 msgstr "Changer de mot de passe"
+
+#: controllers/preferences.py:64 controllers/templates/header.mako:59
+#: controllers/preferences.py:37
+msgid "Old Password:"
+msgstr "Ancien mot de passe:"
+
+#: controllers/preferences.py:38
+msgid "New Password:"
+msgstr "Nouveau mot de passe:"
+
 
 #: controllers/preferences.py:65 controllers/templates/header.mako:59
 msgid "Preferences"

@@ -248,12 +248,12 @@ msgid "Change Password"
 msgstr "Cambiar contraseña"
 
 #: controllers/database.py:108
-msgid "Old Password:"
-msgstr "Contraseña anterior:"
+msgid "Old super admin password:"
+msgstr "Contraseña de super administrador anterior:"
 
 #: controllers/database.py:109
-msgid "New Password:"
-msgstr "Contraseña nueva:"
+msgid "New super admin password:"
+msgstr "Contraseña de super administrador nueva:"
 
 #: controllers/database.py:110
 msgid "Confirm Password:"
@@ -438,6 +438,15 @@ msgstr "Registro padre no existe..."
 #: controllers/preferences.py:35
 msgid "Change your password"
 msgstr "Cambiar su contraseña"
+
+#: controllers/preferences.py:64 controllers/templates/header.mako:59
+#: controllers/preferences.py:37
+msgid "Old Password:"
+msgstr "Contraseña anterior:"
+
+#: controllers/preferences.py:38
+msgid "New Password:"
+msgstr "Contraseña nueva:"
 
 #: controllers/preferences.py:65 controllers/templates/header.mako:59
 msgid "Preferences"
