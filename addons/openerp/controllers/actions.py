@@ -123,6 +123,7 @@ PRINT_FORMATS = {
      'rtf' : 'application/rtf',
      'txt' : 'text/plain',
      'zip' : 'application/zip',
+     'dump': 'application/octet-stream',
 }
 
 def _print_data(data):
@@ -179,13 +180,14 @@ def execute_report(name, **data):
                 report_name = proxy.read(res[0], ['filename'], read_ctx)['filename']
 
         report_name = report_name.replace('Print ', '')
-
         if not ids or not datas.get('id') or not datas.get('model'):
             if datas.get('target_filename'):
                 report_name = datas['target_filename']
             elif datas.get('context', {}).get('_terp_view_name'):
                 report_name = datas['context']['_terp_view_name']
-        
+        attachment = ''
+        if datas.get('force_attach'):
+            attachment = 'attachment;'
         if background_id:
             bg_report = rpc.session.execute('object', 'execute', 'memory.background.report', 'write', [background_id], {'report_id': background_id, 'report_name': report_name})
 
@@ -209,7 +211,7 @@ def execute_report(name, **data):
         cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
         report_type = val['format']
 
-        cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name.decode('utf-8') + '.' + report_type + '"'
+        cherrypy.response.headers['Content-Disposition'] = '%sfilename="' % attachment + report_name.decode('utf-8') + '.' + report_type + '"'
 
         return _print_data(val)
 
