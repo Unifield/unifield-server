@@ -1073,7 +1073,6 @@ class stock_picking(osv.osv):
                             remaining_out_qty -= out_qty
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
-                            remaining_out_qty = 0.00
                         else:
                             # Just update the data of the initial out move
                             processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty or out_move.product_qty
