@@ -587,7 +587,7 @@ class account_invoice(osv.osv):
                 supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
                 local_ctx.update({'journal_type': 'purchase',
                                 'view_id': supplier_view_id})
-            elif local_ctx.get('journal_type', False) == 'purchase': # UFTP-166: The wrong context saved in log
+            elif local_ctx.get('direct_invoice_view', False): # UFTP-166: The wrong context saved in log
                 supplier_view_id = supplier_direct_invoice_res and supplier_direct_invoice_res[1] or False
                 local_ctx = {'journal_type': 'purchase',
                              'view_id': supplier_view_id}
