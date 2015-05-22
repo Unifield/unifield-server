@@ -1394,8 +1394,8 @@ stock moves which are already processed : '''
                     if line.procurement_id:
                         other_po_lines = pol_obj.search(cr, uid, [
                             ('procurement_id', '=', line.procurement_id.id),
-                            ('order_id.state', 'in', ['sourced', 'approved']),
                             ('id', '!=', line.id),
+                            '|', ('order_id.id', '=', line.order_id.id), ('order_id.state', 'in', ['sourced', 'approved']),
                         ], context=context)
                         for opl in pol_obj.browse(cr, uid, other_po_lines, context=context):
                             if opl.product_uom.id != line.product_uom.id:
