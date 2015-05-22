@@ -61,7 +61,7 @@ class account_move_line(osv.osv):
                 account_ids.append(j.get('default_credit_account_id')[0])
 
         # Skip to next element if the line is set to False
-        for ml in self.browse(cr, uid, ids, context=context):
+        for ml in self.browse(cr, 1, ids, context=context):
             res[ml.id] = True
             # False if account type is transfer
             if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
