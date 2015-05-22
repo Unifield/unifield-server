@@ -28,6 +28,45 @@ import tools
 import os
 import logging
 
+
+class patch_scripts(osv.osv):
+    _name = 'patch.scripts'
+
+    _columns = {
+        'model': fields.text(string='Model', required=True),
+        'method': fields.text(string='Method', required=True),
+        'run': fields.boolean(string='Is ran ?'),
+    }
+
+    _defaults = {
+        'model': lambda *a: 'patch.scripts',
+    }
+
+    def launch_patch_scripts(self, cr, uid, *a, **b):
+        ps_obj = self.pool.get('patch.scripts')
+        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
+        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
+            method = ps['method']
+            model_obj = self.pool.get(ps['model'])
+            getattr(model_obj, method)(a, b)
+            self.write(cr, uid, [ps['id']], {'run': True})
+
+    def update_us_133(self, cr, uid, *a, *b):
+        p_obj = self.pool.get('res.partner')
+        p_ids = p_obj.search(cr, uid, [])
+        fields = [
+            'property_product_pricelist_purchase',
+            'property_product_pricelist',
+        ]
+        for p in p_obj.read(cr, uid, p_ids, fields):
+            p_obj.write(cr, uid, [p['id']], {
+                'property_product_pricelist_purchase': p['property_product_pricelist_purchase'],
+                'property_product_pricelist': p['property_product_pricelist'],
+            })
+
+patch_scripts()
+
+
 class ir_model_data(osv.osv):
     _inherit = 'ir.model.data'
     _name = 'ir.model.data'

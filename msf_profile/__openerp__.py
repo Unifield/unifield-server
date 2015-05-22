@@ -122,13 +122,15 @@
         "unifield_version_view.xml",
         'view/group_view.xml',
         'view/email_configuration_view.xml',
+        "data/patches.xml",
     ],
     "demo_xml": [
     ],
     "function": [
         ('user.access.configurator', 'do_update_after_module_install'),
-        ('ir.model.data', 'patch_us_133'),
-#        ('ir.model.data', 'us_203_sync_down_donor'),
+        ('patch.scripts', 'launch_patch_scripts'),
+#        ('ir.model.data', 'us_254_fix_reconcile'),
+#        ('ir.model.data', 'us_268_fix_seq'),
     ],
 # add this to function to apply patch13 AND REMOVE export_import_lang FROM depends ('ir.model.data', 'patch13_install_export_import_lang')],
     "test": [
