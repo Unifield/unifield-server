@@ -60,8 +60,8 @@ class patch_scripts(osv.osv):
         ]
         for p in p_obj.read(cr, uid, p_ids, fields):
             p_obj.write(cr, uid, [p['id']], {
-                'property_product_pricelist_purchase': p['property_product_pricelist_purchase'],
-                'property_product_pricelist': p['property_product_pricelist'],
+                'property_product_pricelist_purchase': p['property_product_pricelist_purchase'][0],
+                'property_product_pricelist': p['property_product_pricelist'][0],
             })
 
 patch_scripts()
