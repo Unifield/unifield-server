@@ -123,6 +123,7 @@ PRINT_FORMATS = {
      'rtf' : 'application/rtf',
      'txt' : 'text/plain',
      'zip' : 'application/zip',
+     'dump': 'application/octet-stream',
 }
 
 def _print_data(data):
