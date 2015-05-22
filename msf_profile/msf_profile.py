@@ -44,12 +44,12 @@ class ir_model_data(osv.osv):
 
     def patch_us_133(self, cr, uid, *a, **b):
         p_obj = self.pool.get('res.partner')
-        partner_ids = p_obj.search(cr, uid, [], context=context)
-        for partner in p_obj.read(cr, uid, partner_ids, ['property_product_pricelist_purchase', 'property_product_pricelist'], context=context):
+        partner_ids = p_obj.search(cr, uid, [])
+        for partner in p_obj.read(cr, uid, partner_ids, ['property_product_pricelist_purchase', 'property_product_pricelist']):
             p_obj.write(cr, uid, [partner.id], {
                 'property_product_pricelist_purchase': partner['property_product_pricelist_purchase'],
                 'property_product_pricelist': partner['property_product_pricelist'],
-            }, context=context)
+            })
 
     def patch13_install_export_import_lang(self, cr, uid, *a, **b):
         mod_obj = self.pool.get('ir.module.module')
