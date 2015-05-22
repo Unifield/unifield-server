@@ -489,6 +489,10 @@ msgstr "Vous devez enregistrer la ressource avant d'ajouter des traductions."
 msgid "No resource selected"
 msgstr "Aucune ressource sélectionnée"
 
+#: controllers/utils.py:52
+msgid "On the server system user account must have English (United States) as Format in the regional settings"
+msgstr "Sur le serveur le compte utilisateur système doit avoir Anglais (États-Unis) comme Format des options régionales et linguistiques"
+
 #: controllers/utils.py:43
 msgid "Could not connect to server"
 msgstr "Impossible de se connecter au serveur"

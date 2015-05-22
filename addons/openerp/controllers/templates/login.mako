@@ -75,6 +75,10 @@
                     <div class="login_error_message" id="message">${message}</div>
                 % endif
 
+                % if bad_regional:
+                    <div class="login_error_message" id="badregional">${bad_regional}</div>
+                % endif
+
                 % if info:
                     <div class="information">${info|n}</div>
                 % endif

@@ -19,6 +19,7 @@
 #
 ###############################################################################
 import re
+import os
 
 import cherrypy
 from openerp.utils import rpc
@@ -38,6 +39,19 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
     url = str(url[:-1])
 
     dblist = []
+
+    bad_regional = ''
+    if os.name == 'nt':
+        try:
+            import _winreg
+            reg = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
+                "Control Panel\\International", 0, _winreg.KEY_READ)
+            value, regtype = _winreg.QueryValueEx(reg, "LocaleName")
+            _winreg.CloseKey(reg)
+            if value != 'en-US':
+                bad_regional = _("On the server system user account must have English (United States) as Format in the regional settings")
+        except:
+            pass
     try:
         dblist = rpc.session.listdb()
     except:
@@ -78,7 +92,7 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
     except:
         pass
     return dict(target=target, url=url, dblist=dblist, db=db, user=user, password=password,
-            action=action, message=message, origArgs=origArgs, info=info)
+            action=action, message=message, origArgs=origArgs, info=info, bad_regional=bad_regional)
 
 def secured(fn):
     """A Decorator to make a SecuredController controller method secured.

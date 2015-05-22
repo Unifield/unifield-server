@@ -61,7 +61,7 @@ version = release.version
                 <li>
                     <a href="${py.url('/openerp/unifield_version')}" class="info"></a>
                     <ul>
-                        <li class="first last"><a href="${py.url('/openerp')}" target="_blank">${_("Version")}</a></li>
+                        <li class="first last"><a href="${py.url('/openerp/unifield_version')}">${_("Version")}</a></li>
                     </ul>
                 </li>
 
