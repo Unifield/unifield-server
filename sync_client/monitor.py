@@ -92,7 +92,7 @@ class MonitorLogger(object):
         self.info[step] = status
         if step == 'status' and status != 'in-progress':
             self.info['end'] = fields.datetime.now()
-            self.monitor.last_status = (status, self.info['end'])
+            self.monitor.last_status = (status, self.info['end'], self.info['nb_data_not_run'], self.info['nb_msg_not_run'])
 
     def update_sale_purchase_logger(self):
         # UTP-1200: Moved to this method and call this right after the message pull is done, not need to wait until 
@@ -144,11 +144,11 @@ class sync_monitor(osv.osv):
                    [self._table])
         if not cr.fetchone(): return
         # check rows existence
-        monitor_ids = self.search(cr, 1, [], limit=1, order='sequence_number desc')
+        monitor_ids = self.search(cr, 1, [('status', '!=', False)], limit=1, order='sequence_number desc')
         if not monitor_ids: return
         # get the status of the last row
-        row = self.read(cr, 1, monitor_ids, ['status', 'end'])[0]
-        self.last_status = (row['status'], row['end'])
+        row = self.read(cr, 1, monitor_ids, ['status', 'end', 'nb_data_not_run', 'nb_msg_not_run'])[0]
+        self.last_status = (row['status'], row['end'], row['nb_data_not_run'], row['nb_msg_not_run'])
 
     def _get_default_sequence_number(self, cr, uid, context=None):
         return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.monitor'))
