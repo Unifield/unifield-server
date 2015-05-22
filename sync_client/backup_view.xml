@@ -111,5 +111,59 @@ action = {
             <field name="model">ir.ui.menu</field>
             <field eval="ref('ir_ui_menu_cron_synchrobackup')" name="res_id"/>
         </record>
+
+    <record id="backup_download_tree" model="ir.ui.view">
+      <field name="name">backup.download.tree</field>
+      <field name="model">backup.download</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree string="Select a file to download" hide_new_button="1" hide_delete_button="1" hide_edit_button="1">
+          <field name="name"/>
+          <field name="mtime"/>
+          <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="backup_download_form" model="ir.ui.view">
+      <field name="name">backup.download.form</field>
+      <field name="model">backup.download</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Select a file to download" editable="top" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+          <group colspan="4" col="6">
+              <field name="name"/>
+              <field name="mtime"/>
+              <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward"/>
+         </group>
+        </form>
+      </field>
+    </record>
+
+    <record id="backup_download_search" model="ir.ui.view">
+      <field name="name">backup.download.search</field>
+      <field name="model">backup.download</field>
+      <field name="type">search</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="name"/>
+          <field name="mtime"/>
+        </search>
+      </field>
+    </record>
+
+    <record id="backup_download_open_wiz" model="ir.actions.server">
+        <field name="name">Get dump</field>
+        <field name="model_id" ref="model_backup_download"/>
+        <field name="state">code</field>
+        <field name="code">action = obj.open_wiz()</field>
+    </record>
+
+    <record id="backup_download_menu" model="ir.ui.menu">
+        <field name="name">Get backup files</field>
+        <field name="sequence" eval="50"/>
+        <field name="parent_id" ref="syncback_menu"/>
+        <field name="action" ref="backup_download_open_wiz"/>
+    </record>
     </data>
 </openerp>

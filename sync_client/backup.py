@@ -27,6 +27,7 @@ from datetime import datetime
 from tools.translate import _
 import release
 import re
+import time
 
 def get_server_version():
     version = release.version or ""
@@ -167,3 +168,69 @@ class ir_cron(osv.osv):
         return toret
 
 ir_cron()
+
+class backup_download(osv.osv):
+    _name = 'backup.download'
+    _order = "mtime desc, id"
+    _description = "Backup Files"
+
+    _columns = {
+        'name': fields.char("File name", size=128, readonly=True),
+        'path': fields.text("File path", readonly=True),
+        'mtime': fields.datetime("Modification Time", readonly=True),
+    }
+
+    def _get_bck_path(self, cr, uid, context=None):
+        res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'backup_config_default')
+        path = self.pool.get('backup.config').read(cr, uid, res[1], ['name'], context=context)
+        if os.path.isdir(path['name']):
+            return path['name']
+        return False
+
+    def populate(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+
+        all_bck_ids = self.search(cr, uid, [], context=context)
+        all_bck = {}
+        for bck in self.read(cr, uid, all_bck_ids, ['path'], context=context):
+            all_bck[bck['path']] = bck['id']
+        path = self._get_bck_path(cr, uid, context)
+        if path:
+            for f in os.listdir(path):
+                if f.endswith('.dump'):
+                    full_name = os.path.join(path, f)
+                    if os.path.isfile(full_name):
+                        stat = os.stat(full_name)
+                        data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime))}
+                        if full_name in all_bck:
+                            self.write(cr, uid, [all_bck[full_name]], data, context=context)
+                            del all_bck[full_name]
+                        else:
+                            data.update({'name': f, 'path': full_name})
+                            self.create(cr, uid, data, context=context)
+        if all_bck:
+            self.unlink(cr, uid, all_bck.values(), context=context)
+        return True
+
+    def open_wiz(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        self.populate(cr, 1, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'backup.download',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+        }
+
+    def get_content(self, cr, uid, ids, context=None):
+        name = self.read(cr, uid, ids[0], ['name'], context=context)['name']
+        name = name.replace('.dump', '')
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'backup.download',
+            'datas': {'ids': [ids[0]], 'target_filename': name}
+        }
+
+backup_download()
