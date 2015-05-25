@@ -249,8 +249,8 @@ class account_analytic_account(osv.osv):
 account_analytic_account()
 
 
+#US-113: Sync only to the mission with attached prop instance 
 class financing_contract_contract(osv.osv):
-
     _inherit = 'financing.contract.contract'
 
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
@@ -274,6 +274,81 @@ class financing_contract_contract(osv.osv):
 
 financing_contract_contract()
 
+#US-113: Sync only to the mission with attached prop instance 
+class financing_contract_funding_pool_line(osv.osv):
+  
+    _inherit = 'financing.contract.funding.pool.line'
+
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
+        if dest_field == 'instance_id':
+            ## Check if it is *financing contract* created at HQ
+            res = dict.fromkeys(ids, False)
+            for target_line in self.browse(cr, uid, ids, context=context):
+                if target_line.instance_id:
+                    instance = target_line.instance_id
+                    if instance.state == 'active':
+                        res_data = [instance.instance]
+                        # if it is a coordo instance, send it to its active projects as well
+                        if instance.level == 'coordo':
+                            for project in instance.child_ids:
+                                if project.state == 'active':
+                                    res_data.append(project.instance)
+                        res[target_line.id] = res_data
+            return res
+        return super(financing_contract_funding_pool_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+
+financing_contract_funding_pool_line()
+
+#US-113: Sync only to the mission with attached prop instance 
+class financing_contract_format(osv.osv):
+  
+    _inherit = 'financing.contract.format'
+
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
+        if dest_field == 'hidden_instance_id':
+            ## Check if it is *financing contract* created at HQ
+            res = dict.fromkeys(ids, False)
+            for target_line in self.browse(cr, uid, ids, context=context):
+                if target_line.hidden_instance_id:
+                    instance = target_line.hidden_instance_id
+                    if instance.state == 'active':
+                        res_data = [instance.instance]
+                        # if it is a coordo instance, send it to its active projects as well
+                        if instance.level == 'coordo':
+                            for project in instance.child_ids:
+                                if project.state == 'active':
+                                    res_data.append(project.instance)
+                        res[target_line.id] = res_data
+            return res
+        return super(financing_contract_format, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+
+financing_contract_format()
+
+#US-113: Sync only to the mission with attached prop instance 
+class financing_contract_format_line(osv.osv):
+    _inherit = 'financing.contract.format.line'
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
+        if dest_field == 'instance_id':
+            ## Check if it is *financing contract* created at HQ
+            res = dict.fromkeys(ids, False)
+            for target_line in self.browse(cr, uid, ids, context=context):
+                if target_line.instance_id:
+                    instance = target_line.instance_id
+                    if instance.state == 'active':
+                        res_data = [instance.instance]
+                        # if it is a coordo instance, send it to its active projects as well
+                        if instance.level == 'coordo':
+                            for project in instance.child_ids:
+                                if project.state == 'active':
+                                    res_data.append(project.instance)
+                        res[target_line.id] = res_data
+            return res
+        return super(financing_contract_format_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+
+financing_contract_format_line()
 
 class msf_instance(osv.osv):
 
