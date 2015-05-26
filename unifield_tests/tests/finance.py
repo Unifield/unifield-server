@@ -958,5 +958,45 @@ class FinanceTest(UnifieldTest):
         # Validate the journal entry
         move_obj.button_validate([move_id]) # WARNING: we use button_validate so that it check the analytic distribution validity/presence
         return move_id, aml_expense_id, aml_counterpart_id
+    
+    def get_period_id(db, month, year=0):
+        year = datetime.now().year if year == 0 else year
+        period_obj = db.get('account.period')
+        
+        ids = period_obj.search([
+            ('date_start', '=', "%04d-%02d-01" % (year, month, )),
+        ])
+        return ids and ids[0] or False
+    
+    def period_close_reopen(db, level, month, year=0, reopen=False):
+        """
+        close period at given level
+        :param level: 'f', 'm' or 'h' for 'field', 'mission' or 'hq'
+        """
+        period_id = self.get_period_id(month, year=year)
+        if not period_id:
+            raise FinanceTestException(
+                "period %02d/%04d not found" % (year, month, ))
+               
+        period_obj = db.get('account.period')
+        
+        if level =='f':
+            if reopen:
+                period_obj.action_reopen_field([period_id])
+            else:
+                period_obj.action_close_field([period_id])
+        elif level == 'm':
+            if reopen:
+                period_obj.action_reopen_mission([period_id])
+            else:
+                period_obj.action_close_mission([period_id])
+        elif level == 'h':
+            if reopen:
+                period_obj.action_open_period([period_id])
+            else:
+                period_obj.action_close_hq([period_id])
+        else:
+            raise FinanceTestException(
+                "invalid level value 'f', 'm' or 'h' expected"
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
