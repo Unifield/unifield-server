@@ -1093,7 +1093,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             )
 
         order_to_check = {}
-        for line in self.read(cr, uid, ids, ['order_id', 'estimated_delivery_date'], context=context):
+        for line in self.read(cr, uid, ids, ['order_id', 'estimated_delivery_date', 'price_unit', 'product_uom_qty'], context=context):
             order_proc = order_obj.read(cr, uid, line['order_id'][0], ['procurement_request'], context=context)['procurement_request']
             state_to_use = order_proc and 'confirmed' or 'sourced'
             self.write(cr, uid, [line['id']], {
@@ -1102,6 +1102,12 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             }, context=context)
             if line['order_id'][0] not in order_to_check:
                 order_to_check.update({line['order_id'][0]: state_to_use})
+
+            if not order_proc and line['price_unit'] * line['product_uom_qty'] < 0.01:
+                raise osv.except_osv(
+                    _('Warning'),
+                    _('You cannot confirm the sourcing of a line with a subtotal of zero.'),
+                )
 
         order_to_process = {}
         for order_id, state_to_use in order_to_check.iteritems():

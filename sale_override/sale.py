@@ -855,14 +855,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # 1/ Check validity of analytic distribution
         self.analytic_distribution_checks(cr, uid, order_brw_list)
 
-        no_price_lines = line_obj.search(cr, uid, [
-            ('order_id', '=', ids),
-            ('price_unit', '=', 0.00),
-        ])
+        no_price_lines = []
+        cr.execute('SELECT line_number FROM sale_order_line WHERE (price_unit*product_uom_qty < 0.01 OR price_unit = 0.00) AND order_id in %s', (tuple(ids),))
+        line_errors = cr.dictfetchall()
+        for l_id in line_errors:
+            if l_id not in no_price_lines:
+                no_price_lines.append(l_id['line_number'])
+
         if no_price_lines:
+            errors = ' / '.join(str(x) for x in no_price_lines)
             raise osv.except_osv(
                 _('Warning'),
-                _('FO cannot be validated as line cannot have unit price of zero.'),
+                _('FO cannot be validated as line cannot have unit price of zero or subtotal of zero. Lines in exception: %s') % errors,
             )
 
         for order in order_brw_list:
