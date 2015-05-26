@@ -53,6 +53,10 @@ class patch_scripts(osv.osv):
 
     def update_us_133(self, cr, uid, *a, **b):
         p_obj = self.pool.get('res.partner')
+        po_obj = self.pool.get('purchase.order')
+        pl_obj = self.pool.get('product.pricelist')
+
+        # Take good pricelist on existing partners
         p_ids = p_obj.search(cr, uid, [])
         fields = [
             'property_product_pricelist_purchase',
@@ -63,6 +67,28 @@ class patch_scripts(osv.osv):
                 'property_product_pricelist_purchase': p['property_product_pricelist_purchase'][0],
                 'property_product_pricelist': p['property_product_pricelist'][0],
             })
+
+        # Take good pricelist on existing POs
+        pl_dict = {}
+        po_ids = po_obj.search(cr, uid, [
+            ('pricelist_id.type', '=', 'sale'),
+        ])
+        for po in self.read(cr, uid, po_ids, ['pricelist_id']):
+            vals = {}
+            if po['pricelist_id'][0] in pl_dict:
+                vals['pricelist_id'] = pl_dict[po['pricelist_id'][0]]
+            else:
+                pl_currency = pl_obj.read(cr, uid, po['pricelist_id'], ['currency_id'])
+                p_pl_ids = pl_obj.search(cr, uid, [
+                    ('currency_id', '=', pl_currency['currency_id'][0]),
+                    ('type', '=', 'purchase'),
+                ])
+                if p_pl_ids:
+                    pl_dict[po['pricelist_id'][0]] = p_pl_ids[0]
+                    vals['pricelist_id'] = p_pl_ids[0]
+
+            if vals:
+                po_obj.write(cr, uid, [po['id']], vals)
 
 patch_scripts()
 
