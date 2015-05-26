@@ -476,8 +476,8 @@ class hq_entries(osv.osv):
         domain = [('id', 'in', ids), ('user_validated', '=', True)]
         if self.search(cr, uid, domain, context=context, count=True):
             raise osv.except_osv(_("Warning"),
-                _("You can not do the transaction on a validate HQ Entry" \
-                    " (please use 'To Validate' filter)"))
+                _("You can not perform this action on a validated HQ Entry" \
+                    " (please use the 'To Validate' filter in the HQ Entries list)")
 
 hq_entries()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
