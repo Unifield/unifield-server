@@ -48,7 +48,7 @@ def get_7z():
     if os.name == 'nt':
         try:
             import _winreg
-            registry_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\7-zip", _winreg.KEY_READ)
+            registry_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\7-zip", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_32KEY)
             value, regtype = _winreg.QueryValueEx(registry_key, "Path")
             _winreg.CloseKey(registry_key)
             exe = os.path.join(value, '7z.exe')
