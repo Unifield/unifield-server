@@ -76,7 +76,7 @@ class purchase_order(osv.osv):
             LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id)
             LEFT JOIN account_invoice as inv ON (pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel'))
             LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s)
-            WHERE po.state in ('confirm_waiting', 'approved', 'done')
+            WHERE po.state in ('confirmed_wait', 'approved', 'done')
             AND po.pricelist_id = prod.id
             AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc'))
             AND po.order_type in ('regular', 'purchase_list', 'direct')
