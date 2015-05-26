@@ -35,6 +35,16 @@ class hq_entries_validation(osv.osv_memory):
         'line_ids': fields.many2many('hq.entries', 'hq_entries_validation_rel', 'wizard_id', 'line_id', "Selected lines", help="Lines previously selected by the user", readonly=True),
         'process_ids': fields.many2many('hq.entries', 'hq_entries_validation_process_rel', 'wizard_id', 'line_id', "Valid lines", help="Lines that would be processed", readonly=True),
     }
+    
+    def create(self, cr, uid, vals, context=None):
+        # BKLG-77: check transation before showing wizard
+        line_ids = context and context.get('active_ids', []) or []
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+        self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
+            line_ids, self._name, context=context)
+        return super(hq_entries_validation, self).create(cr, uid, vals,
+            context=context)
 
     # UTP-1101: Extract the method to create AD for being called also for the REV move
     def create_distribution_id(self, cr, uid, currency_id, line, account):
