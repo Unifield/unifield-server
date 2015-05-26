@@ -1864,28 +1864,27 @@ class account_bank_statement_line(osv.osv):
                 if not 'statement_id' in values:
                     values.update({'statement_id': line.get('statement_id')[0]})
                     
-                old_distrib = line.get('analytic_distribution_id')[0] 
+                old_distrib = False
+                if line.get('analytic_distribution_id', False):
+                    old_distrib = line.get('analytic_distribution_id')[0] 
                 values = self.update_employee_analytic_distribution(cr, uid, values)
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 res.append(tmp)
                 
                 new_distrib = values.get('analytic_distribution_id', False) 
-                if old_distrib != new_distrib:
-                    first_move_line_id = []
-                    if line.get('first_move_line_id', False):
-                        first_move_line_id = line.get('first_move_line_id')[0]
-                    move_ids = []
-                    if line.get('move_ids', False):
-                        move_ids = line.get('move_ids')[0]
+                if old_distrib != new_distrib and line.get('first_move_line_id', False) and line.get('move_ids', False):
+                    first_move_line_id = line.get('first_move_line_id')[0]
+                    move_ids = line.get('move_ids')[0]
                     if isinstance(move_ids, (int, long)):
                         move_ids = [move_ids] 
                     
                     # US-289: If there is a change in the DA, then populate it to the move line (and thus analytic lines)
                     ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', account_id), ('id', 'not in', [first_move_line_id]), ('move_id', 'in', move_ids)])
-                    # copy distribution
-                    new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, new_distrib, {}, context=context)
-                    # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
-                    self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': account_id}, check=False, update_check=False)
+                    if ml_ids:
+                        # copy distribution
+                        new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, new_distrib, {}, context=context)
+                        # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
+                        self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': account_id}, check=False, update_check=False)
                 
         # US-289: The following block is moved down after the employee update, so that the call to _update_move_from_st_line will also update 
         # the distribution analytic in case there is a change of this value on the reg line, issued from the new block right above
