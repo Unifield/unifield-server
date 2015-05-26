@@ -78,7 +78,7 @@ class patch_scripts(osv.osv):
             if po['pricelist_id'][0] in pl_dict:
                 vals['pricelist_id'] = pl_dict[po['pricelist_id'][0]]
             else:
-                pl_currency = pl_obj.read(cr, uid, po['pricelist_id'], ['currency_id'])
+                pl_currency = pl_obj.read(cr, uid, po['pricelist_id'][0], ['currency_id'])
                 p_pl_ids = pl_obj.search(cr, uid, [
                     ('currency_id', '=', pl_currency['currency_id'][0]),
                     ('type', '=', 'purchase'),
