@@ -24,6 +24,7 @@ from osv import fields, osv
 class financing_contract_format(osv.osv):
 
     _name = "financing.contract.format"
+    _rec_name = 'format_name'
 
     _columns = {
         'format_name': fields.char('Name', size=64, required=True),

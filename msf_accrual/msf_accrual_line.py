@@ -26,6 +26,7 @@ from dateutil.relativedelta import relativedelta
 
 class msf_accrual_line(osv.osv):
     _name = 'msf.accrual.line'
+    _rec_name = 'date'
     
     def onchange_period(self, cr, uid, ids, period_id, context=None):
         if period_id is False:

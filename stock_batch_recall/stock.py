@@ -86,6 +86,7 @@ stock_batch_recall()
 
 class report_batch_recall(osv.osv):
     _name = 'report.batch.recall'
+    _rec_name = 'product_id'
     _description = 'Batch Recall'
     _auto = False
     _columns = {

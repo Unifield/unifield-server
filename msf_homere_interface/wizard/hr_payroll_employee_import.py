@@ -157,6 +157,7 @@ hr_payroll_import_confirmation()
 
 class hr_payroll_employee_import_errors(osv.osv):
     _name = 'hr.payroll.employee.import.errors'
+    _rec_name = 'wizard_id'
     _description = 'Employee Import Errors'
 
     _columns = {

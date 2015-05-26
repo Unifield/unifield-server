@@ -398,6 +398,7 @@ stock_warehouse_order_cycle()
 
 class stock_warehouse_order_cycle_line(osv.osv):
     _name = 'stock.warehouse.order.cycle.line'
+    _rec_name = 'product_id'
     _description = 'Products to replenish'
 
     def _get_data(self, cr, uid, ids, field_name, args, context=None):
