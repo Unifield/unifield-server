@@ -1859,11 +1859,6 @@ class account_bank_statement_line(osv.osv):
             must_return = True
             for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'statement_id', 'first_move_line_id', 'move_ids']):
                 account_id = line.get('account_id')[0]
-                first_move_line_id = line.get('first_move_line_id')[0]
-                move_ids = line.get('move_ids')[0]
-                if isinstance(move_ids, (int, long)):
-                    move_ids = [move_ids]              
-                      
                 if not 'account_id' in values:
                     values.update({'account_id': account_id})
                 if not 'statement_id' in values:
@@ -1876,6 +1871,15 @@ class account_bank_statement_line(osv.osv):
                 
                 new_distrib = values.get('analytic_distribution_id', False) 
                 if old_distrib != new_distrib:
+                    first_move_line_id = []
+                    if line.get('first_move_line_id', False):
+                        first_move_line_id = line.get('first_move_line_id')[0]
+                    move_ids = []
+                    if line.get('move_ids', False):
+                        move_ids = line.get('move_ids')[0]
+                    if isinstance(move_ids, (int, long)):
+                        move_ids = [move_ids] 
+                    
                     # US-289: If there is a change in the DA, then populate it to the move line (and thus analytic lines)
                     ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', account_id), ('id', 'not in', [first_move_line_id]), ('move_id', 'in', move_ids)])
                     # copy distribution
