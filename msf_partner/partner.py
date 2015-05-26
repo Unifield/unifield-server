@@ -436,6 +436,10 @@ class res_partner(osv.osv):
         if not context:
             context = {}
 
+        #US-126: when it's an update from the sync, then just remove the forced 'active' parameter
+        if context.get('sync_update_execution', False) and 'active' in vals:
+            del vals['active']
+
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
         bro = bro_uid.company_id
