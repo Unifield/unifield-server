@@ -467,5 +467,17 @@ class hq_entries(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot delete original entries!'))
         return super(hq_entries, self).unlink(cr, uid, ids, context)
 
+    def check_hq_entry_transaction(self, cr, uid, ids, wizard_model,
+        context=None):
+        if not ids:
+            raise osv.except_osv(_("Warning"),
+                _("No HQ Entry selected for transaction"))
+
+        domain = [('id', 'in', ids), ('user_validated', '=', True)]
+        if self.search(cr, uid, domain, context=context, count=True):
+            raise osv.except_osv(_("Warning"),
+                _("You can not perform this action on a validated HQ Entry" \
+                    " (please use the 'To Validate' filter in the HQ Entries list)"))
+
 hq_entries()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

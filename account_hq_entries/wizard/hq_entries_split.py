@@ -199,6 +199,16 @@ class hq_entries_split(osv.osv_memory):
         'line_ids': fields.one2many('hq.entries.split.lines', 'wizard_id', "Split lines"),
     }
 
+    def create(self, cr, uid, vals, context=None):
+        # BKLG-77: check transation at wiz creation (done by hq.entries model)
+        line_ids = context and context.get('active_ids', []) or []
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+        self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
+            line_ids, self._name, context=context)
+        return super(hq_entries_split, self).create(cr, uid, vals,
+            context=context)
+
     # UFTP-200: Add the correct funding pool domain to the split line based on the account_id and cost_center
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
