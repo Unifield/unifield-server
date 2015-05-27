@@ -768,7 +768,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             }
             if distrib_id:
                 cor_vals['analytic_distribution_id'] = distrib_id
-            else:
+            elif ml.analytic_distribution_id:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
             # UF-2231: Remove the update to the statement line
