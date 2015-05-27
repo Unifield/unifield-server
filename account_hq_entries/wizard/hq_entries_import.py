@@ -47,7 +47,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             pdate = time.strptime(date, '%d/%m/%Y')
         return time.strftime('%Y-%m-%d', pdate)
 
-    def update_hq_entries(self, cr, uid, line):
+    def update_hq_entries(self, cr, uid, line, context=None):
         """
         Import hq entry regarding all elements given in "line"
         """
@@ -239,6 +239,28 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Fetch amount
         if booking_amount:
             vals.update({'amount': booking_amount,})
+            
+        # BKLG-63: unicity check
+        # Description (name), Reference (ref), Posting date (date),
+        # Document date (document_date), Amount (amount),
+        # and Account (account_id)
+        unicity_fields = (
+            'name', 'ref', 'date', 'document_date', 'amount', 'account_id', 
+        )
+        
+        unicity_domain = [
+            (f, '=', vals.get(f, False)) for f in unicity_fields ]
+        
+        if hq_obj.search(cr, uid, unicity_domain, limit=1, context=context):
+            # raise unicity check failure
+            # (fields listed like in csv order for user info)
+            pattern = _("Entry already imported: %s / %s/ %s (doc) /" \
+                " %s (posting) / %s (account) / %s (amount)")
+            raise osv.except_osv(_('Error'), pattern % (
+                description, reference, document_date, date,
+                    account_description, booking_amount, )
+            )
+        
         # Line creation
         res = hq_obj.create(cr, uid, vals)
         if res:
@@ -302,7 +324,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 nbline += 1
                 processed += 1
                 try:
-                    self.update_hq_entries(cr, uid, line)
+                    self.update_hq_entries(cr, uid, line, context=context)
                     created += 1
                 except osv.except_osv, e:
                     errors.append('Line %s, %s'%(nbline, e.value))
