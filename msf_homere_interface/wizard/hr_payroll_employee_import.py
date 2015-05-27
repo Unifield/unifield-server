@@ -31,6 +31,7 @@ import csv
 from base64 import decodestring
 from time import strftime
 from tools.misc import ustr
+from addons import get_module_resource
 from tools.which import which
 from tools.translate import _
 from lxml import etree
@@ -46,17 +47,7 @@ except ImportError:
 
 def get_7z():
     if os.name == 'nt':
-        try:
-            import _winreg
-            registry_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\7-zip", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_32KEY)
-            value, regtype = _winreg.QueryValueEx(registry_key, "Path")
-            _winreg.CloseKey(registry_key)
-            exe = os.path.join(value, '7z.exe')
-            if not os.path.isfile(exe):
-                raise Exception('7z.exe not found')
-            return exe
-        except:
-            raise osv.except_osv(_('Error'), _('7-zip is not installed on the server. Please install 7-zip on the server from http://www.7-zip.org/'))
+        return get_module_resource('msf_homere_interface', 'wizard', '7za.exe')
     try:
         return which('7z')
     except:
