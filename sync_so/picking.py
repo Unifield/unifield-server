@@ -265,6 +265,7 @@ class stock_picking(osv.osv):
             partial_datas = {}
             partial_datas[in_id] = {}
             context['InShipOut'] = "IN"  # asking the IN object to be logged
+            already_set_moves = []
             for line in pack_data:
                 line_data = pack_data[line]
 
@@ -285,7 +286,7 @@ class stock_picking(osv.osv):
                         self._logger.info(message)
                         continue
 
-                    search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
+                    search_move = [('id', 'not in', already_set_moves), ('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
 
                     original_qty_partial = data.get('original_qty_partial')
                     orig_qty = data.get('quantity')
@@ -294,6 +295,10 @@ class stock_picking(osv.osv):
                         orig_qty = original_qty_partial
 
                     move_ids = move_obj.search(cr, uid, search_move, context=context)
+                    if not move_ids:
+                        del search_move[0]
+                        move_ids = move_obj.search(cr, uid, search_move, context=context)
+
                     if not move_ids and original_qty_partial != -1:
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial)]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
@@ -342,6 +347,7 @@ class stock_picking(osv.osv):
                     ], context=context)
                     data['move_id'] = move_id
                     data['wizard_id'] = in_processor
+                    already_set_moves.append(move_id)
                     if not line_proc_ids:
                         data['ordered_quantity'] = data['quantity']
                         self.pool.get('stock.move.in.processor').create(cr, uid, data, context=context)
