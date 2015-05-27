@@ -25,34 +25,6 @@ from osv import osv
 from datetime import datetime
 
 
-class account_commitment_board(osv.osv):
-    _name = 'account.commitment'
-    _inherit = 'account.commitment'
-
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        if context is not None and "board_view" in context and context['board_view'] is True:
-            limit = 5
-
-        res = super(account_commitment_board, self)\
-            .search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
-        return res
-account_commitment_board()
-
-
-class account_invoice_board(osv.osv):
-    _name = 'account.invoice'
-    _inherit = 'account.invoice'
-
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        if context is not None and "board_view" in context and context['board_view'] is True:
-            limit = 5
-
-        res = super(account_invoice_board, self)\
-            .search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
-        return res
-account_invoice_board()
-
-
 class account_board_liquidity(osv.osv):
     _name = 'account.bank.statement'
     _inherit = 'account.bank.statement'

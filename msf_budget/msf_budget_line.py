@@ -409,6 +409,8 @@ class msf_budget_line(osv.osv):
         if context and "board_view" in context and "budget" in context["board_view"]:
             res = []
             where = "WHERE LENGTH(account_code) = 2"
+            if 'budget_id' not in args:
+                return []
             for arg in args:
                 where += " AND " + str(arg[0]) + " " + str(arg[1]) + " " + str(arg[2])
             sql = "SELECT id FROM msf_budget_line " + where

@@ -40,35 +40,72 @@
         </record>
 
         <!-- DashBoard -->
-
+        <record id="account_board_commitment_voucher_view" model="ir.ui.view">
+            <field name="name">account.commitment</field>
+            <field name="model">account.commitment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Statement" limit="5">
+                    <field name="date"/>
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="purchase_id"/>
+                    <field name="currency_id"/>
+                    <field name="type"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
         <record id="account_board_commitment_voucher" model="ir.actions.act_window">
 			<field name="name">Commitment Voucher</field>
 			<field name="res_model">account.commitment</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar,graph</field>
-			<field eval="False" name="view_id"/>
 			<field name="domain">[('state', 'in', ('draft','open'))]</field>
             <field name="context">{'board_view': True}</field>
+            <field ref="account_board_commitment_voucher_view" name="view_id"/>
+            <field name="limit">5</field>
 		</record>
 
+        <record id="account_board_supplier_invoice_draft_view" model="ir.ui.view">
+            <field name="name">account.invoice</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Statement" limit="5">
+                    <field name="document_date"/>
+                    <field name="date_invoice"/>
+                    <field name="number"/>
+                    <field name="partner_id"/>
+                    <field name="name"/>
+                    <field name="date_due"/>
+                    <field name="origin"/>
+                    <field name="currency_id"/>
+                    <field name="amount_to_pay"/>
+                    <field name="amount_total"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
         <record id="account_board_supplier_invoice_draft" model="ir.actions.act_window">
 			<field name="name">Suppliers invoices pending validation</field>
 			<field name="res_model">account.invoice</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar,graph</field>
-			<field eval="False" name="view_id"/>
 			<field name="domain">[('state', '=', 'draft')]</field>
             <field name="context">{'board_view': True}</field>
+            <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
+            <field name="limit">5</field>
 		</record>
-
         <record id="account_board_supplier_invoice_open" model="ir.actions.act_window">
 			<field name="name">Suppliers invoices pending payment</field>
 			<field name="res_model">account.invoice</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar,graph</field>
-			<field eval="False" name="view_id"/>
 			<field name="domain">[('state', '=', 'open')]</field>
             <field name="context">{'board_view': True}</field>
+            <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
+            <field name="limit">5</field>
 		</record>
 
         <record id="account_board_liquidity_view" model="ir.ui.view">
