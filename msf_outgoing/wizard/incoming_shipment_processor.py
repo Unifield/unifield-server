@@ -155,6 +155,7 @@ class stock_incoming_processor(osv.osv):
         in_proc_obj = self.pool.get('stock.move.in.processor')
         picking_obj = self.pool.get('stock.picking')
         data_obj = self.pool.get('ir.model.data')
+        wizard_obj = self.pool.get('stock.incoming.processor')
 
         if context is None:
             context = {}
@@ -164,6 +165,9 @@ class stock_incoming_processor(osv.osv):
                 _('Error'),
                 _('No wizard found !'),
             )
+
+        # Delete drafts
+        wizard_obj.write(cr, uid, ids, {'draft': False}, context=context)
 
         to_unlink = []
 
