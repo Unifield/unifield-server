@@ -202,7 +202,7 @@
         <tr>
             [[ repeatIn(pl.moves, 'move') ]]
             <td>
-              <para style="ItemsLineValueRight">[[ move[0] ]]</para>
+              <para style="ItemsLineValueRight">[[ move[1].sale_line_id and move[1].sale_line_id.line_number or move[1].line_number ]]</para>
             </td>
             <td>
               <para style="ItemsLineValue">[[ move[1].product_id.code or '' ]]</para>
