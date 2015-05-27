@@ -113,7 +113,8 @@
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Statement">
+                <tree string="Statement" colors="red: balance_negative_board!='False'">
+                    <field name="balance_negative_board"/>
                     <field name="instance_id"/>
                     <field name="journal_id" string="Register Code"/>
                     <field name="name"/>

@@ -55,7 +55,8 @@ class account_board_liquidity(osv.osv):
                 if 'cheque' in account['journal_id']['type']:
                     amount = 0
                     for line in account['line_ids']:
-                        amount += line['amount']
+                        if not line['direct_invoice_move_id'] and not line['direct_invoice']:
+                            amount += line['amount_out']
                     res[account_id] = amount
                 else:
                     res[account_id] = account['balance_end']
@@ -81,12 +82,24 @@ class account_board_liquidity(osv.osv):
             res[account_id] = ccy.name
         return res
 
+    def _get_balance_negative_board(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for account_id in ids:
+            res[account_id] = 'False'
+            accounts = self.browse(cr, uid, [account_id], context=context)
+            for account in accounts:
+                if account.current_board_balance < 0:
+                    res[account_id] = 'True'
+        return res
+
     _columns = {
+        'balance_negative_board': fields.function(_get_balance_negative_board,
+                                                 method=True, type='string', string='Is negative balance', readonly=True),
         'current_board_balance': fields.function(_get_current_balance,
-                                                 method=True, type='float', string='current balance', readonly=True),
+                                                 method=True, type='float', string='Balance / Outstanding cheque amount', readonly=True),
         'current_board_balance_func': fields.function(_get_current_board_balance_func,
                                                       method=True, type='float',
-                                                      string='current balance in func. ccy', readonly=True),
+                                                      string='Balance / Outstanding cheque amount in func. ccy', readonly=True),
         'current_board_currency_func': fields.function(_get_current_board_currency_func,
                                                        method=True, type='string',
                                                        string='Functional currency', readonly=True),
