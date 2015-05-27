@@ -372,8 +372,8 @@ class shipment(osv.osv):
         partner_obj = self.pool.get('res.partner')
         addr_obj = self.pool.get('res.partner.address')
 
-        if vals.get('partner_id') and not context.get('create_shipment'):
-            consignee_partner = partner_obj.browse(cr, uid, vals.get('partner_id'), context=context)
+        if vals.get('partner_id2') and not context.get('create_shipment'):
+            consignee_partner = partner_obj.browse(cr, uid, vals.get('partner_id2'), context=context)
             consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
             consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id, context=context)
 

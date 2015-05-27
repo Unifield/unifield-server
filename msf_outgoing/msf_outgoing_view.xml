@@ -1307,7 +1307,8 @@
 							</group>
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
 								<separator string="Consignee" colspan="2" />
-								<field name="consignee_name" />
+                                <field name="consignee_name" />
+                                <field name="consignee_contact" />
 								<field name="consignee_address" />
 								<field name="consignee_phone" />
 								<field name="consignee_email" />
