@@ -995,7 +995,7 @@ class account_bank_statement_line(osv.osv):
         for out in self.browse(cr, uid, ids, context=context):
             type_for_register = out.account_id.type_for_register
             if type_for_register in ['advance','transfer_same','down_payment','transfer']:
-                if out.partner_id.id is False and out.employee_id.id is False and out.transfer_journal_id.id is False: 
+                if out.partner_id.id is False and out.employee_id.id is False and out.transfer_journal_id.id is False:
                     result[out.id]['red_on_supplier'] = True
         return result
 
@@ -1812,12 +1812,25 @@ class account_bank_statement_line(osv.osv):
         if 'analytic_distribution_id' in values and values.get('analytic_distribution_id') != False:
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
-            values = self.update_employee_analytic_distribution(cr, uid, values=values)
-        if not context.get('sync_update_execution',False):
-            if 'cheque_number' in values and values.get('cheque_number', False):
-                cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (values['cheque_number'], ))
+            values = self.update_employee_analytic_distribution(cr, uid,
+                                                                values=values)
+
+        if not context.get('sync_update_execution', False):
+            if 'cheque_number' in values and values.get('cheque_number', False) and values.get('statement_id'):
+                statement_obj = self.pool.get('account.bank.statement')
+                statement = statement_obj.read(cr, uid, values['statement_id'], ['journal_id'])
+                journal_id = statement['journal_id'][0]
+                sql = '''SELECT l.id
+                       FROM account_bank_statement_line l
+                       LEFT JOIN account_bank_statement s ON l.statement_id = s.id
+                       WHERE l.cheque_number=%s
+                       AND s.journal_id=%s
+                '''
+                cr.execute(sql, (values['cheque_number'], journal_id))
+
                 for row in cr.dictfetchall():
-                    raise osv.except_osv(_('Info'),_('This cheque number has already been used'))
+                    msg = _('This cheque number has already been used')
+                    raise osv.except_osv(_('Info'), (msg))
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
         return absl
