@@ -24,6 +24,7 @@ from analytic_distribution.destination_tools import many2many_sorted
 
 class financing_contract_account_quadruplet(osv.osv):
     _name = 'financing.contract.account.quadruplet'
+    _rec_name = 'cost_center_id'
     _description = 'FP / CC / destination valid values view'
     _auto = False
 

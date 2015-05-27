@@ -33,6 +33,7 @@ from purchase_override import ORDER_CATEGORY, PURCHASE_ORDER_STATE_SELECTION
 class purchase_order_line_allocation_report(osv.osv):
     _name = 'purchase.order.line.allocation.report'
     _table = 'purchase_order_line_allocation_report'
+    _rec_name = 'order_id'
     _auto = False
 
     _replace_exported_fields = {

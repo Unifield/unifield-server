@@ -2694,6 +2694,7 @@ sale_order_line()
 
 class sale_order_line_cancel(osv.osv):
     _name = 'sale.order.line.cancel'
+    _rec_name = 'sync_order_line_db_id'
 
     _columns = {
         'sync_order_line_db_id': fields.text(string='Sync order line DB ID', required=True),
@@ -2709,6 +2710,7 @@ sale_order_line_cancel()
 
 class expected_sale_order_line(osv.osv):
     _name = 'expected.sale.order.line'
+    _rec_name = 'order_id'
 
     _columns = {
         'order_id': fields.many2one(

@@ -1820,6 +1820,7 @@ class report_stock_inventory(osv.osv):
     UF-565: add group by expired_date
     '''
     _inherit = "report.stock.inventory"
+    _rec_name = 'date'
 
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'report_stock_inventory')

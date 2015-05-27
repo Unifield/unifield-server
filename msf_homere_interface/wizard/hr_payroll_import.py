@@ -38,6 +38,7 @@ from account_override import ACCOUNT_RESTRICTED_AREA
 class hr_payroll_import_period(osv.osv):
     _name = 'hr.payroll.import.period'
     _description = 'Payroll Import Periods'
+    _rec_name = 'field'
 
     _columns = {
         'field': fields.char('Field', size=255, readonly=True, required=True),

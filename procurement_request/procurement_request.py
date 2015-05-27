@@ -29,6 +29,7 @@ from msf_order_date.order_dates import compute_rts
 
 class procurement_request_sourcing_document(osv.osv):
     _name = 'procurement.request.sourcing.document'
+    _rec_name = 'order_id'
 
     def _get_doc_name(self, cr, uid, ids, field_name, args, context=None):
         """

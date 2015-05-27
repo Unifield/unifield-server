@@ -35,6 +35,7 @@ from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_FOR_IMPORT as columns_for
 
 class wizard_import_product_list(osv.osv):
     _name = 'wizard.import.product.list'
+    _rec_name = 'list_id'
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}

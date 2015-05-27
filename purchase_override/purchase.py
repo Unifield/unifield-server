@@ -39,6 +39,7 @@ from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 class purchase_order_confirm_wizard(osv.osv):
     _name = 'purchase.order.confirm.wizard'
+    _rec_name = 'order_id'
 
     _columns = {
             'order_id': fields.many2one('purchase.order', string='Purchase Order', readonly=True),
