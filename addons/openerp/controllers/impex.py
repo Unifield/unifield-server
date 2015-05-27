@@ -481,6 +481,7 @@ class ImpEx(SecuredController):
                 process_data(data_line)
             result = self.get_grp_data(result_tmp, flds)
 
+            result, params.fields2 = rpc_obj.filter_export_data_result(result, params.fields2)
             if export_format == "excel":
                 return self.export_html(params.fields2, result, view_name)
             return export_csv(params.fields2, result)
