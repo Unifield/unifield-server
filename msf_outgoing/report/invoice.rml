@@ -114,7 +114,7 @@
                 <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.name or '-' ]]</para>
                 <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.name or '-' ]]</para>
                 <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.previous_step_id and pl.ppl_id.previous_step_id.date and len(pl.ppl_id.previous_step_id.date) >= 10 and formatLang(pl.ppl_id.previous_step_id.date[:10], date=True) or '-' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.transport_type or '-' ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and getSel(pl.shipment_id, 'transport_type') or '-' ]]</para>
             </td>
             <td>
                 <para style="HeaderInfosTitle">Shipper:</para>

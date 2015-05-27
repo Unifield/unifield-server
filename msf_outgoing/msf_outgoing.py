@@ -25,6 +25,7 @@ import netsvc
 from datetime import datetime, date
 
 from order_types.stock import check_cp_rw
+from msf_order_date import TRANSPORT_TYPE
 
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
@@ -247,8 +248,8 @@ class shipment(osv.osv):
                 'date': fields.datetime(string='Creation Date'),
                 'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
                 'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
-                'transport_type': fields.selection([('by_road', 'By road')],
-                                                   string="Transport Type", readonly=True),
+                'transport_type': fields.selection(TRANSPORT_TYPE,
+                                                   string="Transport Type", readonly=False),
                 'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
                 'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
                 # cargo manifest things
@@ -348,7 +349,7 @@ class shipment(osv.osv):
             ship_proc_vals = {
                 'shipment_id': shipment.id,
                 'address_id': shipment.address_id.id,
-
+                'transport_type': shipment.transport_type,
             }
             ship_proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
             ship_proc_obj.create_lines(cr, uid, ship_proc_id, context=context)
@@ -403,6 +404,7 @@ class shipment(osv.osv):
                 'shipment_expected_date': shipment.shipment_expected_date,
                 'shipment_actual_date': shipment.shipment_actual_date,
                 'parent_id': shipment.id,
+                'transport_type': shipment.transport_type,
             }
 
             shipment_id = self.create(cr, uid, ship_val, context=context)
@@ -2563,6 +2565,7 @@ class stock_picking(osv.osv):
                                   'partner_id2': partner_id,
                                   'shipment_expected_date': rts,
                                   'shipment_actual_date': rts,
+                                  'transport_type': sale_id and self.pool.get('sale.order').read(cr, uid, [sale_id], ['transport_type'], context=context)[0]['transport_type'] or False,
                                   'sequence_id': self.create_sequence(cr, uid, {'name':name,
                                                                                 'code':name,
                                                                                 'prefix':'',
