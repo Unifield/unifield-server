@@ -144,8 +144,18 @@ class report_stock_lines_date(osv.osv):
     _columns = {
         'id': fields.integer('Inventory Line Id', readonly=True),
         'product_id': fields.many2one('product.product', 'Product', readonly=True, select=True),
+        'product_code': fields.related('product_id', 'default_code', type='char', readonly=True),
+        'product_name': fields.related('product_id', 'name', type='char', readonly=True),
         'date': fields.datetime('Latest Inventory Date'),
     }
+
+    _replace_exported_fields = {
+        'product_id': [
+            (['product_code', 'Product Code'], 10),
+            (['product_name', 'Product Name'], 20),
+        ],
+    }
+
     def init(self, cr):
         drop_view_if_exists(cr, 'report_stock_lines_date')
         cr.execute("""
