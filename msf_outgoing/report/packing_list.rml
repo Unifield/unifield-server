@@ -168,7 +168,7 @@
                         <font color="white"> </font>
                     </para>
 
-                    <blockTable colWidths="110.0,150.0,150.0,170.0,230.0" style="ParcelHeaderGrey" keepWithNext="1">
+                    <blockTable colWidths="100.0,150.0,150.0,170.0,170.0,70.0" style="ParcelHeaderGrey" keepWithNext="1">
                         <tr>
                             <td>
                                 <para style="ParcelInfos">Parcel No: [[ pf.from_pack ]] to [[ pf.to_pack ]]</para>
@@ -183,11 +183,14 @@
                                 <para style="ParcelInfos">Total volume [[ formatLang(pf.total_volume or 0.00) ]] dm³</para>
                             </td>
                             <td>
-                                <para style="ParcelInfosRight">Containing:</para>
+                                <para style="ParcelInfosRight">Containing</para>
+                            </td>
+                            <td>
+                                <para style="ParcelInfos">Description</para>
                             </td>
                         </tr>
                     </blockTable>
-                    <blockTable colWidths="30.0,80.0,210.0,210.0,85.0,70.0,65.0,20.0,20.0,20.0" style="ParcelLineHeader" keepWithNext="1">
+                    <blockTable colWidths="20.0,80.0,190.0,190.0,75.0,60.0,60.0,20.0,20.0,20.0,70.0" style="ParcelLineHeader" keepWithNext="1">
                         <tr>
                             <td>
                                 <para style="ParcelLineTitle">Item</para>
@@ -218,6 +221,9 @@
                             </td>
                             <td>
                                 <para style="ParcelLineTitle">NP</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">[[ pf.description_ppl or ' ' ]]</para>
                             </td>
                         </tr>
                         <tr>
@@ -251,6 +257,9 @@
                             </td>
                             <td>
                                 <para style="ParcelLineValue">[[ m.np_check and 'X' or ' ' ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue"></para>
                             </td>
                         </tr>
                     </blockTable>

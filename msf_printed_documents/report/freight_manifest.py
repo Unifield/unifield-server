@@ -98,7 +98,7 @@ class freight_manifest(report_sxw.rml_parse):
         return ligne and ligne.ppl_id and ligne.ppl_id.name or False
 
     def getDataDescr(self, ligne):
-        return ligne and ligne.ppl_id and ligne.ppl_id.description_ppl or False
+        return ligne and ligne.description_ppl or False
 
     def getDataKg(self, ligne):
         self.kgtot += ligne.total_weight
