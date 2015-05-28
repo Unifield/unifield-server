@@ -335,8 +335,9 @@ class shipment(osv.osv):
         instance_addr = addr_obj.browse(cr, uid, instance_addr_id, context=context)
 
         addr = ''
-        addr += instance_addr.street
-        addr += ' '
+        if instance_addr.street:
+            addr += instance_addr.street
+            addr += ' '
         if instance_addr.street2:
             addr += instance_addr.street2
             addr += ' '
@@ -379,8 +380,9 @@ class shipment(osv.osv):
             consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id, context=context)
 
             addr = ''
-            addr += consignee_addr.street
-            addr += ' '
+            if consignee_addr.street:
+                addr += consignee_addr.street
+                addr += ' '
             if consignee_addr.street2:
                 addr += consignee_addr.street2
                 addr += ' '
