@@ -428,7 +428,10 @@ def do_upgrade(cr, pool):
         revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
         res = do_prepare(cr, revision_ids)
         if res[0] == 'success':
-            dump_db(cr, pool)
+            try:
+                dump_db(cr, pool)
+            except Exception, e:
+                logger.error('Can\'t create backup before patching: %s' % (unicode(e),))
             import tools
             os.chdir( tools.config['root_path'] )
             restart_server()
@@ -436,7 +439,10 @@ def do_upgrade(cr, pool):
             return False
 
     elif db_lack_versions:
-        dump_db(cr, pool)
+        try:
+            dump_db(cr, pool)
+        except Exception, e:
+            logger.error('Can\'t create backup before patching: %s' % (unicode(e),))
         base_module_upgrade(cr, pool, upgrade_now=True)
         # Note: There is no need to update the db versions, the `def init()' of the object do that for us
 
