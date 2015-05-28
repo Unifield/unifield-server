@@ -243,8 +243,12 @@ class account_analytic_account(osv.osv):
         return super(account_analytic_account, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        account = self.browse(cr, uid, res_id)
-        return get_valid_xml_name(account.category, account.code, account.name)
+        account = self.read(cr, uid, res_id, ['code', 'name', 'category'])
+        if account['code'] in ( 'OC', 'cc-intermission', 'FUNDING', 'FREE1', 'FREE2',
+            'PF', 'DEST', 'OPS', 'SUP', 'NAT', 'EXP'):
+            # specific account created on each instances by xml data file, should have the same xmlid
+            return get_valid_xml_name(account['category'], account['code'], account['name'])
+        return super(account_analytic_account, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
 
 account_analytic_account()
 
