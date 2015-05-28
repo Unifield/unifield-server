@@ -753,7 +753,8 @@ class ir_model_data(osv.osv):
         else:
             if mode=='init' or (mode=='update' and xml_id):
                 res_id = model_obj.create(cr, uid, values, context=context)
-                if xml_id:
+                # US-180: Only create ir model data if res_id is valid
+                if xml_id and res_id:
                     self.create(cr, uid, {
                         'name': xml_id,
                         'model': model,
