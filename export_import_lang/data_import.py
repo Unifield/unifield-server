@@ -106,13 +106,21 @@ class msf_language_import(osv.osv_memory):
                         
                     obj, field = row['name'].split(',', 1)
                     obj = obj.strip()
+                    search_obj = obj
                     field = field.strip()
+                    search_field = field
+                    src = row['src']
+                    search_src = src
                     if obj == 'product.product' and field == 'name':
+                        # search for product code in product.product but work
+                        # with translated field name in product.template
                         obj = 'product.template'
+                        search_field = 'default_code'
+                        search_src = row.get('Notes')
 
-                    obj_ids = self.pool.get(obj).search(cr, uid, [(field, '=', row['src'])], context={'lang': 'en_US', 'active_test': False})
+                    obj_ids = self.pool.get(search_obj).search(cr, uid, [(search_field, '=', search_src)], context={'lang': 'en_US', 'active_test': False})
                     if not obj_ids:
-                        rejected.append(_('Line %s Record %s not found') % (line+1, row['src'].decode('utf-8')))
+                        rejected.append(_('Line %s Record %s not found') % (line+1, src_search.decode('utf-8')))
                         continue
                     # BKLG-52: If the translation for a data entry exists already in ir.translation, then just update the new translation, no need to delete-recreate!
                     # This is then avoid having the delete sync to send to other instances 
@@ -126,13 +134,19 @@ class msf_language_import(osv.osv_memory):
                             values = {'value': row['value']}
                             trans_obj.write(cr, uid, translation_ids[0], values, context=context)
                         else:
+                            if is_product_name_import:
+                                # ALWAYS get english original src name ('en_US' in context)
+                                # as now default_code is the key in csv file
+                                src = self.pool.get(obj).read(cr, uid,
+                                    [trans_id], ['name'],
+                                    context={'lang': 'en_US', })[0]['name']
                             trans_obj.create(cr, uid, {
                                 'lang': import_data.name,
                                 'type': 'model',
                                 'name': name,
                                 'res_id': trans_id,
                                 'value': row['value'],
-                                'src': row['src'],
+                                'src': src,
                                 })
                     cr.commit()
                 except Exception, e:
