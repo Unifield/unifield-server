@@ -109,6 +109,8 @@
             <td class="grid-cell">
                 ${buttons[field_attrs-1].display(parent_grid=name, **buttons[field_attrs-1].params_from(data))}
             </td>
+        % elif field == 'separator':
+            <td class="grid-cell"><b>|</b></td>
         % else:
             <td class="grid-cell ${field_attrs.get('type', 'char')}"
                 style="${(data[field].color or None) and 'color: ' + data[field].color};"
