@@ -337,6 +337,14 @@ class account_invoice(osv.osv):
                 journal_select = journal_obj._name_search(cr, uid, '', [('type', '=', type)], context=context, limit=None, name_get_uid=1)
                 res['fields'][field]['selection'] = journal_select
 
+        if view_type == 'form' and context.get('type', 'out_invoice') == 'in_refund':
+            doc = etree.XML(res['arch'])
+            doc.attrib['string'] = _('Supplier Refund')
+            nodes = doc.xpath("//field[@name='amount_to_pay']")
+            for node in nodes:
+                node.set('string', _('Amount to be refunded'))
+            res['arch'] = etree.tostring(doc)
+
         if view_type == 'tree':
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='partner_id']")
@@ -862,7 +870,7 @@ class account_invoice(osv.osv):
 
             # one move line per tax line
             iml += ait_obj.move_line_get(cr, uid, inv.id)
-            # UFTP-380: If the name is empty or a space character, by default it is set to '/', otherwise it will cause problem for the sync on destination instance 
+            # UFTP-380: If the name is empty or a space character, by default it is set to '/', otherwise it will cause problem for the sync on destination instance
             for il in iml:
                 if not il['name']:
                     il['name'] = '/'
