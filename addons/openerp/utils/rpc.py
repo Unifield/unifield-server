@@ -132,6 +132,8 @@ class RPCGateway(object):
                     common.warning(err.data)
             elif err.code.startswith('updater.py'):
                 common.error('updater.py', err.code)
+            elif err.code.startswith('ServerUpdate'):
+                common.error('ServerUpdate', err.code)
             elif err.code.startswith('AccessDenied'):
                 raise openobject.errors.AccessDenied(err.code, _('Access Denied'))
             else:
@@ -288,6 +290,9 @@ class RPCSession(object):
                 return None
             raise
 
+    def number_update_modules(self, db):
+        return self.execute_noauth('common', 'number_update_modules', db)
+
     def login(self, db, user, password):
 
         if not (db and user and password):
@@ -298,6 +303,8 @@ class RPCSession(object):
         except Exception, e:
             if e.title == 'updater.py':
                 return -2
+            elif e.title == 'ServerUpdate':
+                return -3
             return -1
 
         if uid <= 0:
