@@ -99,15 +99,23 @@
    <Column ss:Width="121.5"/>
    <Column ss:Width="96"/>
    <Row ss:AutoFitHeight="0">
-    <Cell><Data ss:Type="String">${(title(o))|x}</Data></Cell>
+    <Cell><Data ss:Type="String">Invoice :</Data></Cell>
     <Cell><Data ss:Type="String">${(o.number or ' ')|x}</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="String">Type :</Data></Cell>
+    <Cell><Data ss:Type="String">${(title(o))|x}</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="String">Supplier :</Data></Cell>
     <Cell><Data ss:Type="String">${(o.partner_id.name)|x}</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="String">Posting date :</Data></Cell>
     <Cell><Data ss:Type="String">${(o.date_invoice or ' ')|x}</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
-    <Cell><Data ss:Type="String">Currency</Data></Cell>
+    <Cell><Data ss:Type="String">Currency :</Data></Cell>
     <Cell><Data ss:Type="String">${(o.currency_id.name)|x}</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0"/>

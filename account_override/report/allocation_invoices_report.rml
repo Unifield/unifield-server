@@ -43,6 +43,7 @@
 
   </stylesheet>
   <story>
+    <pto>
     <para style="Standard">[[repeatIn(objects,'o')]]</para>
     <!--<para style="Standard">[[ setLang(o.partner_id.lang) ]]</para>-->
 
@@ -63,7 +64,7 @@
 
    <!-- GENERAL INFORMATION -->
 
-   <blockTable colWidths="162.0,162.0,162.0" style="InformationTable">
+   <blockTable colWidths="162.0,162.0,162.0,162.0" style="InformationTable">
         <tr>
             <td>
                 <para style="InformationHeader">Invoice</para>
@@ -74,11 +75,14 @@
             <td>
                 <para style="InformationHeader">Type</para>
             </td>
+            <td>
+                <para style="InformationHeader"></para>
+            </td>
         </tr>
 
         <tr>
             <td>
-                <para style="Information">[[ o.name ]]</para>
+                <para style="Information">[[ o.number ]]</para>
             </td>
             <td>
                 <para style="Information">[[ o.partner_id.name ]]</para>
@@ -86,10 +90,13 @@
             <td>
             	<para style="Information">[[ getSel(o, 'type') ]]</para>
             </td>
+            <td>
+                <para style="Information"></para>
+            </td>
         </tr>
     </blockTable>
 
-	<blockTable colWidths="162.0,162.0,162.0" style="InformationTable">
+	<blockTable colWidths="162.0,162.0,162.0,162.0" style="InformationTable">
         <tr>
             <td>
                 <para style="InformationHeader">Creation date</para>
@@ -100,17 +107,23 @@
             <td>
                 <para style="InformationHeader">State</para>
             </td>
+            <td>
+                <para style="InformationHeader">Currency</para>
+            </td>
         </tr>
 
         <tr>
             <td>
-                <para style="Information">[[ formatLang(o.date_order, date=True) ]]</para>
+                <para style="Information">[[ formatLang(o.date_invoice, date=True) ]]</para>
             </td>
             <td>
-                <para style="Information">[[ o.create_uid.name ]]</para>
+                <para style="Information">[[ o.user_id.name ]]</para>
             </td>
             <td>
-            	<para style="Information">[[ getSel(o, 'state') ]]</para>
+                <para style="Information">[[ getSel(o, 'state') ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.currency_id.name ]]</para>
             </td>
         </tr>
    </blockTable>
@@ -122,7 +135,46 @@
 
 
     <!-- LINES LIST -->
-    <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
+        <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
+        <tr>
+            <td>
+                <para style="InformationHeader">Line</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Product</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Description</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Account</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Qty</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Unit Price</para>
+            </td>
+            <td>
+                <para style="InformationHeader">%</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Subtotal</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Destination</para>
+            </td>
+
+            <td>
+                <para style="InformationHeader">Cost Center</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Funding Pool</para>
+            </td>
+        </tr>
+   </blockTable>
+    <pto_header>
+    <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
         <tr>
             <td>
                 <para style="InformationHeader">Line</para>
@@ -150,10 +202,6 @@
             </td>
 
             <td>
-                <para style="InformationHeader">Currency</para>
-            </td>
-
-            <td>
                 <para style="InformationHeader">Destination</para>
             </td>
 
@@ -165,11 +213,11 @@
             </td>
         </tr>
    </blockTable>
-
+   </pto_header>
 
    <section>
    [[ repeatIn(get_data(o.id), 'line') ]]
-   <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
+   <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
         <tr>
             <td>
                 <para style="Information">[[ line[0] ]]</para>
@@ -196,9 +244,6 @@
                 <para style="Information">[[ formatLang(line[7]) ]]</para>
             </td>
             <td>
-                <para style="Information">[[ line[8] ]]</para>
-            </td>
-            <td>
                 <para style="Information">[[ line[9] ]]</para>
             </td>
             <td>
@@ -214,6 +259,6 @@
     <para style="Standard">
       <font color="white"> </font>
     </para>
-
+  </pto>
   </story>
 </document>

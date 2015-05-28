@@ -53,13 +53,14 @@ class report_allocation_synthesis_invoices(report_sxw.rml_parse):
             INNER JOIN account_analytic_account n2 ON n2.id = a.cost_center_id
             WHERE s.id=%s
             GROUP BY ac.code, n2.code)
-            SELECT L1,L2, amount FROM t
+            SELECT L1, L2, SUM(amount) as amount FROM t
+            GROUP BY L1, L2
             UNION ALL
-            SELECT L1,'',SUM(amount) FROM t
+            SELECT L1, '', SUM(amount) FROM t
             GROUP BY L1
             UNION ALL
-            SELECT NULL,'',SUM(amount) FROM t
-            ORDER BY L1,L2""", (invoice_id, invoice_id))
+            SELECT NULL, '', SUM(amount) FROM t
+            ORDER BY L1, L2""", (invoice_id, invoice_id))
 
         return self._cr.fetchall()
 
