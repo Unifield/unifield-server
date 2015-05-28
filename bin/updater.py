@@ -400,6 +400,19 @@ def dump_db(cr, pool):
     if bck_obj:
         bck_obj.exp_dump_for_state(cr, 1, 'beforepatching')
 
+def test_do_upgrade(cr):
+    cr.execute("select count(1) from pg_class where relkind='r' and relname='sync_client_version'")
+    if not cr.fetchone()[0]:
+        return False
+
+    cr.execute("select sum from sync_client_version where state='installed'")
+    db_versions = []
+    for ver in cr.fetchall():
+        db_versions.append(ver[0])
+    if set(server_version) - set(db_versions) - set([base_version]):
+        return True
+    return False
+
 def do_upgrade(cr, pool):
     """Start upgrade process (called by login method and restore)"""
     versions = pool.get('sync_client.version')

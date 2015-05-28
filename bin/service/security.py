@@ -21,6 +21,8 @@
 
 import pooler
 import tools
+import threading
+import updater
 
 # When rejecting a password, hide the traceback
 class ExceptionNoTb(Exception):
@@ -28,7 +30,38 @@ class ExceptionNoTb(Exception):
         super(ExceptionNoTb, self).__init__(msg)
         self.traceback = ('','','')
 
+def number_update_modules(db):
+    cr = pooler.get_db_only(db).cursor()
+    n = _get_number_modules(cr)
+    cr.close()
+    return n
+
+def _get_number_modules(cr, testlogin=False):
+    ready = True
+    if testlogin and cr.dbname in pooler.pool_dic:
+        if pooler.pool_dic[cr.dbname]._ready:
+            return False
+        ready = False
+    cr.execute("select count(id) from ir_module_module where state in ('to install', 'to upgrade')")
+    n = cr.fetchone()
+    if n and n[0]:
+        return n[0]
+    if not ready:
+        # when loading the trans. modules are installed but db is not ready
+        return True
+    return False
+
 def login(db, login, password):
+    cr = pooler.get_db_only(db).cursor()
+    nb = _get_number_modules(cr, testlogin=True)
+    to_update = False
+    if not nb:
+        to_update = updater.test_do_upgrade(cr)
+    cr.close()
+    if nb or to_update:
+        s = threading.Thread(target=pooler.get_pool, args=(db,))
+        s.start()
+        raise Exception("ServerUpdate: Server is updating modules ...")
     pool = pooler.get_pool(db)
     user_obj = pool.get('res.users')
     return user_obj.login(db, login, password)

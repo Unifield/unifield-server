@@ -395,6 +395,8 @@ class common(_ObjectService):
             # TODO log the client ip address..
             logger.notifyChannel("web-service", netsvc.LOG_INFO, "%s from '%s' using database '%s'" % (msg, params[1], params[0].lower()))
             return res or False
+        elif method == 'number_update_modules':
+            return security.number_update_modules(params[0])
         elif method == 'logout':
             if auth:
                 auth.logout(params[1])
