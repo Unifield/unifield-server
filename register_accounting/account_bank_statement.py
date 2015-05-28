@@ -235,8 +235,14 @@ class account_bank_statement(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Verify that previous register is open, unless this register is the first register
-        return self.write(cr, uid, ids, {'state': 'open'})
+        registers = self.browse(cr, uid, ids, context=context)
+        for register in registers:
+            if register['period_id']['state'] in ['field-closed',
+                                                  'mission-closed', 'done']:
+                raise osv.except_osv(_('Error'),
+                                     _('The associated period is closed'))
+            else:
+                return self.write(cr, uid, ids, {'state': 'open'})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
         """
