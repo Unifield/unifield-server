@@ -327,6 +327,12 @@ class analytic_account(osv.osv):
             cr.execute("select analytic_account_id from project_project")
             project_ids = [x[0] for x in cr.fetchall()]
             return self.name_get(cr, uid, project_ids, context=context)
+
+        if not context and operator == '=':
+            # US-116: we are in the import
+            account = self.search(cr, uid, [('code', '=', name)]+args, limit=limit, context=context)
+            if account:
+                return self.name_get(cr, uid, account, context=context)
         account = self.search(cr, uid, ['|', ('code', 'ilike', '%%%s%%' % name), ('name', 'ilike', '%%%s%%' % name)]+args, limit=limit, context=context)
         return self.name_get(cr, uid, account, context=context)
 
