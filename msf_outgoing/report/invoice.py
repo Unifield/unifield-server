@@ -120,7 +120,10 @@ class invoice(report_sxw.rml_parse):
             elif field == 'street2':
                 res = addr.street2
             elif field == 'city':
-                res = '%s %s' % (addr.zip, addr.city)
+                zip = ""
+                if addr.zip is not False:
+                    zip = addr.zip
+                res = '%s %s' % (zip, addr.city)
             elif field == 'country':
                 res = addr.country_id and addr.country_id.name or ''
             elif field == 'phone':
