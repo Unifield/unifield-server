@@ -81,13 +81,29 @@ class msf_language_import(osv.osv_memory):
             for row in reader:
                 line += 1
                 try:
-                    if not row.get('src') or not row.get('value') or not row.get('name'):
-                        rejected.append(_('Line %s, incorrect column number src, value and name should not be empty.') % (line+1, ))
+                    if not row.get('value') or not row.get('name'):
+                        rejected.append(_('Line %s, incorrect column number value and name should not be empty.') % (line+1, ))
                         continue
-
                     if ',' not in row['name']:
                         rejected.append(_('Line %s, Column B: Incorrect format') % (line+1, ))
                         continue
+                        
+                    # US-145: regular import or specific product description ?
+                    is_product_name_import = True if row['name'] == 'product.product,name' else False
+                    if not is_product_name_import:
+                        # regular import
+                        if not row.get('src'):
+                            rejected.append(_('Line %s, incorrect column number src should not be empty.') % (line+1, ))
+                            continue
+                    else:
+                        # specific product description (default_code as key)
+                        # src not mandatory for a product description translation (only a referential)...
+                        # http://jira.unifield.org/browse/US-145?focusedCommentId=39852&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-39852
+                        # ...BUT 'Notes' mandatory: the product code
+                        if not row.get('Notes'):
+                            rejected.append(_('Line %s, incorrect column number Notes should not be empty for a product description translation: contains the product code.') % (line+1, ))
+                            continue
+                        
                     obj, field = row['name'].split(',', 1)
                     obj = obj.strip()
                     field = field.strip()
