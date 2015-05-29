@@ -220,7 +220,7 @@ class ir_translation(osv.osv):
                             vals['value'] = tools.ustr(vals['value'])[:size]
 
     def create(self, cursor, user, vals, context=None):
-        if not context:
+        if context is None:
             context = {}
 
         # SP-193 : translation must limited to object limitation
@@ -233,7 +233,7 @@ class ir_translation(osv.osv):
         return ids
 
     def write(self, cursor, user, ids, vals, context=None):
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -259,7 +259,7 @@ class ir_translation(osv.osv):
         return result
 
     def unlink(self, cursor, user, ids, context=None):
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
