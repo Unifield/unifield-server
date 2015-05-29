@@ -224,7 +224,9 @@ class ir_translation(osv.osv):
             context = {}
 
         # SP-193 : translation must limited to object limitation
-        self._truncate_value_size(cursor, user, vals, id=None, context=context)
+        # (no need to check when syncing as already checked for regular create)
+        if not context.get('sync_update_execution'):
+            self._truncate_value_size(cursor, user, vals, id=None, context=context)
         
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
@@ -239,19 +241,23 @@ class ir_translation(osv.osv):
             ids = [ids]
         
         # US-145 : translation must limited to object limitation
-        if not 'name' in vals or not 'type' in vals:
-            # in case of missing vals needed for limitation check,
-            # need to read them record per record
-            result = True
-            for id in ids:
-                self._truncate_value_size(cursor, user, vals, id=id, context=context)
-                res = super(ir_translation, self).write(cursor, user, [id], vals, context=context)
-                if not res:
-                    result = False
-        else:
-            # no missing vals for limitation check: do check per transaction
-            self._truncate_value_size(cursor, user, vals, id=None, context=context)
+        # (no need to check when syncing as already checked for regular write)
+        if context.get('sync_update_execution'):
             result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
+        else:
+            if not 'name' in vals or not 'type' in vals:
+                # in case of missing vals needed for limitation check,
+                # need to read them record per record
+                result = True
+                for id in ids:
+                    self._truncate_value_size(cursor, user, vals, id=id, context=context)
+                    res = super(ir_translation, self).write(cursor, user, [id], vals, context=context)
+                    if not res:
+                        result = False
+            else:
+                # no missing vals for limitation check: do check per transaction
+                self._truncate_value_size(cursor, user, vals, id=None, context=context)
+                result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
         
         for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):
             self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
