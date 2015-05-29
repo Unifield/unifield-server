@@ -1402,7 +1402,7 @@ stock moves which are already processed : '''
                     price_unit_converted = self.pool.get('res.currency').compute(cr, uid, line.currency_id.id,
                                                                                  sol.currency_id.id, line.price_unit or 0.0,
                                                                                  round=False, context=date_context)
-                    if price_unit_converted < 0.00001:
+                    if so.order_type == 'regular' and price_unit_converted < 0.00001:
                         price_unit_converted = 0.00001
                     fields_dic = {'product_id': line.product_id and line.product_id.id or False,
                                   'name': line.name,
