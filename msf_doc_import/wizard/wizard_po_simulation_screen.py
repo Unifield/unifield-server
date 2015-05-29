@@ -1329,7 +1329,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Check unit price * quantity
             err_msg = _('The price subtotal must be greater than or equal to 0.01')
-            if write_vals['imp_price'] and write_vals['imp_qty']:
+            if line.po_line_id.order_id.order_type == 'regular' and write_vals['imp_price'] and write_vals['imp_qty']:
                 if write_vals['imp_price'] * write_vals['imp_qty'] < 0.01:
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'

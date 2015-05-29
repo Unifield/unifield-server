@@ -1076,11 +1076,12 @@ stock moves which are already processed : '''
 
         for po in self.browse(cr, uid, ids, context=context):
             line_error = []
-            cr.execute('SELECT line_number FROM purchase_order_line WHERE (price_unit*product_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (po.id,))
-            line_errors = cr.dictfetchall()
-            for l_id in line_errors:
-                if l_id not in line_error:
-                    line_error.append(l_id['line_number'])
+            if po.order_type == 'regular':
+                cr.execute('SELECT line_number FROM purchase_order_line WHERE (price_unit*product_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (po.id,))
+                line_errors = cr.dictfetchall()
+                for l_id in line_errors:
+                    if l_id not in line_error:
+                        line_error.append(l_id['line_number'])
 
             if len(line_error) > 0:
                 errors = ' / '.join(str(x) for x in line_error)
