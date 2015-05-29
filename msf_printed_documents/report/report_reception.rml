@@ -9,6 +9,13 @@
             <drawString x="20" y="560.0">Reception</drawString>
             <fill color="blue"/>
             <drawString x="20" y="540.0">[[ '%s' % (objects[0].name) ]]</drawString>
+
+
+            <fill color="blue">[[ getState(objects[0]) == "cancel" and removeParentNode('fill') ]]</fill>
+            <fill color="red">[[ getState(objects[0]) != "cancel" and removeParentNode('fill') ]]</fill>
+
+            <drawString x="20" y="520.0">[[ getSel(objects[0], 'state') ]]</drawString>
+
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
@@ -108,7 +115,7 @@
         <blockTableStyle id="OrderInformations3">
             <blockAlignment value="CENTER" />
             <blockVAlign value="CENTER" />
-            <blockTopPadding value="0" />  
+            <blockTopPadding value="0" />
             <blockBottomPadding value="0" />
 
             <lineStyle kind="LINEBEFORE" colorName="black"  start="2,0" thickness="0.5" />
@@ -248,7 +255,7 @@
         </initialize>
 
         <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
-        
+
 		<!-- Header font style -->
         <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
@@ -853,5 +860,5 @@
 
 
     </story>
-    
+
 </document>
