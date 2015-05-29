@@ -739,7 +739,7 @@ class shipment(osv.osv):
                         'from_pack': family.from_pack,
                         'to_pack': family.to_pack,
                     })
-                counter = counter + 1 
+                counter = counter + 1
 
                 # Update initial move
                 if family.selected_number == int(family.num_of_packs):
@@ -818,7 +818,7 @@ class shipment(osv.osv):
         self.complete_finished(cr, uid, shipment_ids, context=context)
 
         #UF-2531: Create manually the message for the return pack of the ship
-        if shipment and shipment.id: 
+        if shipment and shipment.id:
             self._manual_create_rw_shipment_message(cr, uid, shipment.id, return_info, 'usb_shipment_return_packs_shipment_draft', context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
@@ -968,7 +968,7 @@ class shipment(osv.osv):
                         'return_from': family.return_from,
                         'return_to': family.return_to,
                     })
-                counter = counter + 1 
+                counter = counter + 1
 
                 # Search the corresponding moves
                 move_ids = move_obj.search(cr, uid, [
@@ -1081,7 +1081,7 @@ class shipment(osv.osv):
         # if everything is allright (all draft packing are finished) the shipment is done also
         self.complete_finished(cr, uid, shipment_ids, context=context)
 
-        #UF-2531: Create manually the message for the return pack of the ship 
+        #UF-2531: Create manually the message for the return pack of the ship
         if shipment and shipment.id:
             self._manual_create_rw_shipment_message(cr, uid, shipment.id, return_info, 'usb_shipment_return_packs', context=context)
 
@@ -1517,6 +1517,8 @@ class shipment(osv.osv):
 
         return True
 
+
+
 shipment()
 
 
@@ -1670,6 +1672,9 @@ class stock_picking(osv.osv):
                 pass
 
         return super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+    def change_description_save(self, cr, uid, ids, context=None):
+        return {'type': 'ir.actions.act_window_close'}
 
     # This method is empty for non-Remote Warehouse instances, to be implemented at RW module
     def _get_usb_entity_type(self, cr, uid, context=None):
@@ -3253,7 +3258,7 @@ class stock_picking(osv.osv):
             # A sequence for each draft picking ticket is used for the picking ticket
 
             #UF-2531: Use the name of the PICK sent from the RW sync if it's the case
-            pick_name = False 
+            pick_name = False
             already_replicated = False
             if 'associate_pick_name' in context:
                 pick_name = context.get('associate_pick_name', False)
@@ -3941,7 +3946,7 @@ class stock_picking(osv.osv):
         if isinstance(wizard_ids, (int, long)):
             wizard_ids = [wizard_ids]
 
-        counter = 0 
+        counter = 0
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             picking = wizard.picking_id
             draft_picking_id = picking.previous_step_id.backorder_id.id
@@ -3956,7 +3961,7 @@ class stock_picking(osv.osv):
                         'line_number': line.line_number,
                         'ordered_quantity': line.ordered_quantity,
                     })
-                counter = counter + 1 
+                counter = counter + 1
 
                 initial_qty = max(line.move_id.product_qty - return_qty, 0)
 
@@ -4575,6 +4580,30 @@ class pack_family_memory(osv.osv):
     )
     ''')
 
+    def change_description(self, cr, uid, ids, context=None):
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        mod_obj = self.pool.get('ir.model.data')
+        res = mod_obj.get_object_reference(cr, uid, 'msf_outgoing',
+                                           'view_change_desc_wizard')
+        pack_obj = self.browse(cr, uid, ids, context=context)
+        for pack in pack_obj:
+            res_id = pack['draft_packing_id']['id']
+            return {
+                'name': 'Change description',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [res and res[1] or False],
+                'res_model': 'stock.picking',
+                'context': "{}",
+                'type': 'ir.actions.act_window',
+                'target': 'new',
+                'res_id': res_id or False,
+                }
+        return {}
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -4668,4 +4697,3 @@ class procurement_order(osv.osv):
         return message
 
 procurement_order()
-

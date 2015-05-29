@@ -10,7 +10,7 @@
                 <form string="Process Document">
                     <!-- Invisible fields -->
                     <field name="date" invisible="1" />
-                    
+
                     <button name="select_all" string="Copy all" colspan="2" type="object" icon="gtk-jump-to" />
                     <button name="deselect_all" string="Clear all" colspan="2" type="object" icon="gtk-undo" />
                     <separator colspan="4" string="Products" />
@@ -22,13 +22,13 @@
                </form>
            </field>
         </record>
-        
+
         <record id="return_shipment_family_processor_tree_view" model="ir.ui.view">
             <field name="name">return.shipment.family.processor.tree.view</field>
             <field name="model">return.shipment.family.processor</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree 
+                <tree
                     editable="bottom"
                     hide_new_button="1"
                     hide_delete_button="1"

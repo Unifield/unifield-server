@@ -114,7 +114,7 @@ class freight_manifest(report_sxw.rml_parse):
                     'np': 0
                 }
 
-            # line_obj[line_ref][line_pl]['desc'] += ""
+            line_obj[line_ref][line_pl]['desc'] = line.description_ppl or ''
             line_obj[line_ref][line_pl]['parcels'] += line.num_of_packs or 0
             line_obj[line_ref][line_pl]['kgs'] += line.total_weight or 0.0
             line_obj[line_ref][line_pl]['m3'] += line.total_volume/1000.0 or 0.0
