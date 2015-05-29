@@ -63,12 +63,15 @@ class stock_incoming_processor(osv.osv):
         'direct_incoming': fields.boolean(
             string='Direct to Requesting Location',
         ),
+        'draft': fields.boolean('Draft')
     }
 
     _defaults = {
         'dest_type': 'default',
         'direct_incoming': True,
+        'draft': lambda *a: False,
     }
+
 
     # Models methods
     def create(self, cr, uid, vals, context=None):
@@ -152,6 +155,7 @@ class stock_incoming_processor(osv.osv):
         in_proc_obj = self.pool.get('stock.move.in.processor')
         picking_obj = self.pool.get('stock.picking')
         data_obj = self.pool.get('ir.model.data')
+        wizard_obj = self.pool.get('stock.incoming.processor')
 
         if context is None:
             context = {}
@@ -161,6 +165,9 @@ class stock_incoming_processor(osv.osv):
                 _('Error'),
                 _('No wizard found !'),
             )
+
+        # Delete drafts
+        wizard_obj.write(cr, uid, ids, {'draft': False}, context=context)
 
         to_unlink = []
 
@@ -294,6 +301,41 @@ class stock_incoming_processor(osv.osv):
             }
 
         return result
+
+    def do_reset(self, cr, uid, ids, context=None):
+        incoming_obj = self.pool.get('stock.incoming.processor')
+        stock_p_obj = self.pool.get('stock.picking')
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+        incoming_ids = incoming_obj.browse(cr, uid, ids, context=context)
+        res_id = []
+        for incoming in incoming_ids:
+            res_id = incoming['picking_id']['id']
+        incoming_obj.write(cr, uid, ids, {'draft': False}, context=context)
+        return stock_p_obj.action_process(cr, uid, res_id, context=context)
+
+    def do_save_draft(self, cr, uid, ids, context=None):
+        incoming_obj = self.pool.get('stock.incoming.processor')
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+             _('Processing Error'),
+             _('No data to process !'),
+            )
+        incoming_obj.write(cr, uid, ids, {'draft': True}, context=context)
+        return {}
 
     def force_process(self, cr, uid, ids, context=None):
         '''
@@ -710,4 +752,3 @@ class stock_move_in_processor(osv.osv):
 stock_move_in_processor()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
