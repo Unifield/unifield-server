@@ -204,7 +204,8 @@ class setup_remote_warehouse(osv.osv_memory):
     
     def _revert_central_platform(self, cr, uid, entity_id, context=None):
         self._set_entity_type(cr, uid, entity_id, "", context=context)
-        self._set_sequence_suffix(cr, uid, suffix="-RW", context=context)
+        #US-208: Do not change the suffixes of the documents
+        self._set_sequence_suffix(cr, uid, suffix="", context=context)
         
     def _get_db_dump(self, database_name):
         """ Makes a dump of database_name and returns the base64 SQL """

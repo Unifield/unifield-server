@@ -126,10 +126,18 @@ class purchase_order_rw(osv.osv):
             if rec_id:
                 header_result['partner_id'] = rec_id
                 partner = self.pool.get('res.partner').browse(cr, uid, rec_id, context=context)
-                if partner.property_product_pricelist_purchase:
+                
+                # US-208: Retrieve the pricelist: if it's provided from sync, then use it
+                if 'pricelist_id' in so_dict and so_dict.get('pricelist_id', True):
+                    pl_xmlid = so_dict.get('pricelist_id')['id']
+                    if pl_xmlid:
+                        header_result['pricelist_id'] = self.pool.get('product.pricelist').find_sd_ref(cr, uid, xmlid_to_sdref(pl_xmlid), context=context)
+                elif partner.property_product_pricelist_purchase:
                     header_result['pricelist_id'] = partner.property_product_pricelist_purchase.id
+                # In any case, if the code does not enter in the block above, the default pricelist_id is still used 
         
         header_result['cross_docking_ok'] = so_dict.get('cross_docking_ok', False)
+        
         # check whether this FO has already been sent before! if it's the case, then just update the existing PO, and not creating a new one
         partner_ref = source + "." + sync_values.name
         existing_ids = self.search(cr, uid, [('name', '=', po_name), ('partner_ref', '=', partner_ref), ('state', '=', 'rw')], context=context)
@@ -155,7 +163,6 @@ class purchase_order_rw(osv.osv):
             line.update({'order_id': po_id})
             so_po_common.create_rw_xml_for_line(cr, uid, line_obj,line, context =context)
             
-        name = self.browse(cr, uid, po_id, context=context).name
         message = "The PO " + po_name + " has been well replicated at " + cr.dbname
         self._logger.info(message)
         return message
