@@ -117,7 +117,7 @@ class account_invoice(osv.osv):
             ('reconciled','=',False),
             ('state', '=', 'open'),
             ('type', '=', 'out_invoice'),
-            ('journal_id.type', 'in', ['sale']),
+            ('journal_id.type', 'not in', ['migration']),
             ('partner_id.partner_type', '=', 'section'),
         ]
         return dom1+[('is_debit_note', '=', False)]
