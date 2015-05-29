@@ -858,7 +858,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         for order in order_brw_list:
             no_price_lines = []
             if order.order_type == 'regular':
-                cr.execute('SELECT line_number FROM sale_order_line WHERE (price_unit*product_uom_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (order.id),))
+                cr.execute('SELECT line_number FROM sale_order_line WHERE (price_unit*product_uom_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (order.id,))
                 line_errors = cr.dictfetchall()
                 for l_id in line_errors:
                     if l_id not in no_price_lines:
