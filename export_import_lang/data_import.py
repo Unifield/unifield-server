@@ -120,7 +120,7 @@ class msf_language_import(osv.osv_memory):
 
                     obj_ids = self.pool.get(search_obj).search(cr, uid, [(search_field, '=', search_src)], context={'lang': 'en_US', 'active_test': False})
                     if not obj_ids:
-                        rejected.append(_('Line %s Record %s not found') % (line+1, src_search.decode('utf-8')))
+                        rejected.append(_('Line %s Record %s not found') % (line+1, search_src.decode('utf-8')))
                         continue
                     # BKLG-52: If the translation for a data entry exists already in ir.translation, then just update the new translation, no need to delete-recreate!
                     # This is then avoid having the delete sync to send to other instances 
