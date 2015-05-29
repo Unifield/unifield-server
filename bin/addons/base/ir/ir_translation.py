@@ -185,21 +185,48 @@ class ir_translation(osv.osv):
             return tools.ustr(source)
         return trad
 
+    def _truncate_value_size(self, cursor, user, vals, id=None, context=None):
+        # SP-193 / US-145 : translation must limited to object limitation
+        if not 'value' in vals:
+            return  # nothing to truncate
+
+        other_vals = {}  # other vals than 'value' required to check limitation
+        wanted_other_vals = ('name', 'type', )
+        for wv in wanted_other_vals:
+            if wv in vals:
+                other_vals[wv] = vals[wv]
+
+        if id is not None:
+            # from a write: read potential missing vals
+            fields_to_load = [
+                wv for wv in wanted_other_vals if not wv in vals ]
+            if fields_to_load:
+                r = self.read(cursor, user, [id], fields_to_load,
+                    context=context)[0]
+                for ftl in fields_to_load:
+                    other_vals[ftl] = r[ftl]
+
+        # truncate value if required
+        if ',' in other_vals['name'] and other_vals.get('type') == 'model' \
+            and vals.get('value'):
+                model_name = other_vals['name'].split(",")[0]
+                field = other_vals['name'].split(",")[1]
+                if field:
+                    model_obj = self.pool.get(model_name)
+                    if hasattr(model_obj, 'fields_get'):
+                        field_obj = model_obj.fields_get(cursor, user, context=context)
+                        if 'size' in field_obj.get(field, {}):
+                            size = field_obj[field]['size']
+                            vals['value'] = tools.ustr(vals['value'])[:size]
+
     def create(self, cursor, user, vals, context=None):
-        if not context:
+        if context is None:
             context = {}
 
         # SP-193 : translation must limited to object limitation
-        if ',' in vals['name'] and vals.get('type') == 'model' and vals.get('value'):
-            model_name = vals['name'].split(",")[0]
-            field = vals['name'].split(",")[1]
-            if field:
-                model_obj = self.pool.get(model_name)
-                if hasattr(model_obj, 'fields_get'):
-                    field_obj = model_obj.fields_get(cursor, user, context=context)
-                    if 'size' in field_obj.get(field, {}):
-                        size = field_obj[field]['size']
-                        vals['value'] = tools.ustr(vals['value'])[:size]
+        # (no need to check when syncing as already checked for regular create)
+        if not context.get('sync_update_execution'):
+            self._truncate_value_size(cursor, user, vals, id=None, context=context)
 
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
@@ -208,18 +235,37 @@ class ir_translation(osv.osv):
         return ids
 
     def write(self, cursor, user, ids, vals, context=None):
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
+
+        # US-145 : translation must limited to object limitation
+        # (no need to check when syncing as already checked for regular write)
+        if context.get('sync_update_execution'):
+            result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
+        else:
+            if not 'name' in vals or not 'type' in vals:
+                # in case of missing vals needed for limitation check,
+                # need to read them record per record
+                result = True
+                for id in ids:
+                    self._truncate_value_size(cursor, user, vals, id=id, context=context)
+                    res = super(ir_translation, self).write(cursor, user, [id], vals, context=context)
+                    if not res:
+                        result = False
+            else:
+                # no missing vals for limitation check: do check per transaction
+                self._truncate_value_size(cursor, user, vals, id=None, context=context)
+                result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
+
         for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):
             self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
             self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
         return result
 
     def unlink(self, cursor, user, ids, context=None):
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
