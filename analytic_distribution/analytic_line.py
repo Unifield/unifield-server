@@ -82,7 +82,7 @@ class analytic_line(osv.osv):
             context = {}
         res = {}
         for l in self.browse(cr, uid, ids, context):
-            if l.entry_sequence: 
+            if l.entry_sequence:
                 res[l.id] = l.entry_sequence
             else:
                 res[l.id] = ''
@@ -283,7 +283,8 @@ class analytic_line(osv.osv):
                 # Update account
                 self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
             # Set line as corrected upstream if we are in COORDO/HQ instance
-            self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [aline.move_id.id], context=context)
+            if aline.move_id:
+                self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [aline.move_id.id], context=context)
         return True
 
     def check_analytic_account(self, cr, uid, ids, account_id, context=None):
@@ -396,7 +397,7 @@ class analytic_line(osv.osv):
                 res.append((id, entry_sequence, ''))
                 return False
 
-            # check cost center with general account 
+            # check cost center with general account
             dest_ids = [d.id for d in general_account_br.destination_ids]
             if not new_dest_id in dest_ids:
                 # not compatible with general account
