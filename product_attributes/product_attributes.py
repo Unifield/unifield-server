@@ -147,6 +147,7 @@ product_supply_source()
 
 class product_justification_code(osv.osv):
     _name = "product.justification.code"
+    _rec_name = 'code'
     _columns = {
         'code': fields.char('Justification Code', size=32, required=True, translate=True),
         'description': fields.char('Justification Description', size=256, required=True),
@@ -424,6 +425,8 @@ class product_attributes(osv.osv):
         'fit_value': fields.text(string='Form', translate=True),
         'function_value': fields.text(string='Form', translate=True),
         'standard_ok': fields.boolean(string='Standard'),
+        'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
+        'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 

@@ -1207,12 +1207,12 @@
 							<field name="date" readonly="True" />
 							<field name="shipment_actual_date" />
 							<field name="shipment_expected_date" attrs="{'readonly': [('state', 'not in', ('draft', 'packed'))]}" />
-							<field name="transport_type" />
+                            <field name="transport_type" attrs="{'readonly': [('state', 'in', ('done', 'delivered', 'cancel'))]}" />
 							<field name="backshipment_id" readonly="True" />
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                                 required="1"
 								attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-							<field name="address_id" context="{'contact_display':'partner'}" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}" />
+							<field name="address_id" context="{'contact_display':'partner'}" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}" />
 							<field name="in_ref" readonly="True" />
 						</group>
 					</group>
@@ -1291,40 +1291,46 @@
 						    </field>
 						</page>
 						<page string="Document Information">
-							<field name="cargo_manifest_reference" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}" />
-							<field name="date_of_departure" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-							<field name="planned_date_of_arrival" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-							<field name="transit_via" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-							<field name="registration" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-							<field name="driver_name" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+							<group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
+								<field name="cargo_manifest_reference" />
+								<field name="date_of_departure" />
+								<field name="planned_date_of_arrival" />
+								<field name="transit_via" />
+								<field name="registration" />
+								<field name="driver_name" />
+							</group>
 						</page>
 						<page string="Transport Information">
-							<group col="2" colspan="1">
+                            <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
 								<separator string="Shipper" colspan="2" />
-								<field name="shipper_name" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="shipper_address" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="shipper_phone" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="shipper_email" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="shipper_other" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="shipper_date" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="shipper_name"/>
+								<field name="shipper_address" />
+								<field name="shipper_phone" />
+								<field name="shipper_email" />
+								<field name="shipper_other" />
+								<field name="shipper_date" />
 							</group>
-							<group col="2" colspan="1">
-								<separator string="Carrier" colspan="2" />
-								<field name="carrier_name" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="carrier_address" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="carrier_phone" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="carrier_email" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="carrier_other" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="carrier_date" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+
+                            <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
+                                <separator string="Carrier" colspan="2" />
+                                <field name="carrier_id" on_change="selected_carrier(carrier_id)" />
+                                <field name="carrier_name" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_address" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_phone" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_email" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_other" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+								<field name="carrier_date" />
 							</group>
-							<group col="2" colspan="1">
+
+                            <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
 								<separator string="Consignee" colspan="2" />
-								<field name="consignee_name" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="consignee_address" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="consignee_phone" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="consignee_email" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="consignee_other" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
-								<field name="consignee_date" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+                                <field name="consignee_name" />
+                                <field name="consignee_contact" />
+								<field name="consignee_address" />
+								<field name="consignee_phone" />
+								<field name="consignee_email" />
+								<field name="consignee_other" />
+								<field name="consignee_date" />
 							</group>
 						</page>
 					</notebook>

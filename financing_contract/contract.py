@@ -26,12 +26,14 @@ import netsvc
 class financing_contract_funding_pool_line(osv.osv):
     _name = "financing.contract.funding.pool.line"
     _description = "Funding pool line"
+    _rec_name = 'contract_id'
 
     _columns = {
         'contract_id': fields.many2one('financing.contract.format', 'Contract', required=True),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding pool name', required=True),
         'funded': fields.boolean('Earmarked'),
         'total_project': fields.boolean('Total project'),
+        'instance_id': fields.many2one('msf.instance','Proprietary Instance'),
     }
 
     _defaults = {
@@ -57,6 +59,13 @@ class financing_contract_funding_pool_line(osv.osv):
         return True
 
     def create(self, cr, uid, vals, context=None):
+        # US-113: Check if the call is from sync update
+        if context.get('sync_update_execution') and vals.get('contract_id', False):
+            # US-113: and if there is any financing contract existed for this format, if no, then ignore this call
+            exist = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', vals['contract_id'])])
+            if not exist:
+                return None
+
         result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
         # when a new funding pool is added to contract, then add all of the cost centers to the cost center tab, unless
         # the cost center is already there. No action is taken when a cost center is deleted
@@ -92,6 +101,15 @@ class financing_contract_funding_pool_line(osv.osv):
         """
         if context is None:
             context = {}
+
+        # US-180: Check if it comes from the sync update, and if any contract  
+        if context.get('sync_update_execution') and vals.get('format_id', False):
+            # Check if this format line belongs to any financing contract/format
+            ctr_obj = self.pool.get('financing.contract.contract')
+            exist = ctr_obj.search(cr, uid, [('format_id', '=', vals['format_id'])])
+            if not exist:
+                return True
+
         res = super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
         self.check_fp(cr, uid, ids)
         return res
@@ -591,8 +609,6 @@ class financing_contract_contract(osv.osv):
         if 'funding_pool_ids' in vals: # When the FP is added into the contract, then set this flag into the database
             vals['fp_added_flag'] = True
 
-
-
         # check if the flag has been set TRUE in the previous save
         fp_added_flag = self.browse(cr, uid, ids[0], context=context).fp_added_flag
         if 'format_id' in vals and fp_added_flag: # if the flag is TRUE, and there is a format
@@ -630,12 +646,36 @@ class financing_contract_contract(osv.osv):
         format_obj = self.pool.get('financing.contract.format')
         format_line_obj = self.pool.get('financing.contract.format.line')
         format_browse = format_obj.browse(cr, uid, format.id, context=context)
+        fcfpl_line_obj = self.pool.get('financing.contract.funding.pool.line')
+
+        # US-113: Populate the instance_id down to format, format line and also funding pool line
+        instance_id = vals.get('instance_id', False)
+        if instance_id:
+            if not format.hidden_instance_id or format.hidden_instance_id.id != instance_id:
+                format_obj.write(cr, uid, format.id, {'hidden_instance_id': instance_id}, context=context)
+
         for format_line in format_browse.actual_line_ids:
             account_quadruplet_ids = [account_quadruplet.id for account_quadruplet in format_line.account_quadruplet_ids]
             filtered_quads = [x for x in account_quadruplet_ids if x in valid_quad_ids]
             list_diff = set(account_quadruplet_ids).symmetric_difference(set(filtered_quads))
+            list_to_update = {}
             if list_diff:
-                ret = format_line_obj.write(cr, uid, format_line.id, {'account_quadruplet_ids': [(6, 0, filtered_quads)]}, context=context)
+                list_to_update['account_quadruplet_ids'] = [(6, 0, filtered_quads)]
+            if instance_id:
+                if not format_line.instance_id or format_line.instance_id.id != instance_id:
+                    list_to_update['instance_id'] = instance_id
+            if len(list_to_update) > 0:
+                format_line_obj.write(cr, uid, format_line.id, list_to_update, context=context)
+
+        # populate the instance_id to the funding pool lines
+        if instance_id:
+            for fpid in format.funding_pool_ids:
+                list_to_update = {}
+                if not fpid.instance_id or fpid.instance_id.id != instance_id:
+                    list_to_update['instance_id'] = instance_id
+                if len(list_to_update) > 0:
+                    fcfpl_line_obj.write(cr, uid, fpid.id, list_to_update, context=context)
+
         return res
 
     def _check_grant_amount_proxy(self, cr, uid, ids, signal, context=None):
@@ -697,6 +737,30 @@ class financing_contract_contract(osv.osv):
             }
 
         return False
+
+    # US-113: unlink all relevant objects of this FC, because it's not automatic and would left orphan data, also impact to the sync 
+    def unlink(self, cr, uid, ids, context=None):
+        format_obj = self.pool.get('financing.contract.format')
+        format_line_obj = self.pool.get('financing.contract.format.line')
+        fcfpl_line_obj = self.pool.get('financing.contract.funding.pool.line')
+
+        format_to_del = []
+        for fcc in self.browse(cr,uid,ids,context=context):
+            format_to_del.append(fcc.format_id.id)
+            for format_line in fcc.format_id.actual_line_ids:
+                format_line_obj.unlink(cr, uid, format_line.id, context)
+
+            for fpid in fcc.format_id.funding_pool_ids:
+                fcfpl_line_obj.unlink(cr, uid, fpid.id, context)
+
+        # the FC itself
+        res = super(financing_contract_contract, self).unlink(cr, uid, ids, context)
+
+        # then finally the format line attached to this FC
+        if format_to_del:
+            format_obj.unlink(cr, uid, format_to_del, context)
+
+        return res
 
 financing_contract_contract()
 

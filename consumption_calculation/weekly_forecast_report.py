@@ -49,7 +49,7 @@ class weekly_forecast_report(osv.osv):
     '''
     _name = 'weekly.forecast.report'
     _description = 'Stock forecast by week'
-    _rec_name = 'id'
+    _rec_name = 'location_id'
     _order = 'requestor_date desc, id'
 
     _columns = {

@@ -25,6 +25,7 @@ from decimal_precision import decimal_precision as dp
 
 class procurement_rules_report(osv.osv):
     _name = 'procurement.rules.report'
+    _rec_name = 'product_id'
     _auto = False
     _order = 'product_reference, product_name, product_id, location_id'
     

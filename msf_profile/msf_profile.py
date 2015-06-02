@@ -28,6 +28,71 @@ import tools
 import os
 import logging
 
+
+class patch_scripts(osv.osv):
+    _name = 'patch.scripts'
+
+    _columns = {
+        'model': fields.text(string='Model', required=True),
+        'method': fields.text(string='Method', required=True),
+        'run': fields.boolean(string='Is ran ?'),
+    }
+
+    _defaults = {
+        'model': lambda *a: 'patch.scripts',
+    }
+
+    def launch_patch_scripts(self, cr, uid, *a, **b):
+        ps_obj = self.pool.get('patch.scripts')
+        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
+        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
+            method = ps['method']
+            model_obj = self.pool.get(ps['model'])
+            getattr(model_obj, method)(cr, uid, *a, **b)
+            self.write(cr, uid, [ps['id']], {'run': True})
+
+    def update_us_133(self, cr, uid, *a, **b):
+        p_obj = self.pool.get('res.partner')
+        po_obj = self.pool.get('purchase.order')
+        pl_obj = self.pool.get('product.pricelist')
+
+        # Take good pricelist on existing partners
+        p_ids = p_obj.search(cr, uid, [])
+        fields = [
+            'property_product_pricelist_purchase',
+            'property_product_pricelist',
+        ]
+        for p in p_obj.read(cr, uid, p_ids, fields):
+            p_obj.write(cr, uid, [p['id']], {
+                'property_product_pricelist_purchase': p['property_product_pricelist_purchase'][0],
+                'property_product_pricelist': p['property_product_pricelist'][0],
+            })
+
+        # Take good pricelist on existing POs
+        pl_dict = {}
+        po_ids = po_obj.search(cr, uid, [
+            ('pricelist_id.type', '=', 'sale'),
+        ])
+        for po in po_obj.read(cr, uid, po_ids, ['pricelist_id']):
+            vals = {}
+            if po['pricelist_id'][0] in pl_dict:
+                vals['pricelist_id'] = pl_dict[po['pricelist_id'][0]]
+            else:
+                pl_currency = pl_obj.read(cr, uid, po['pricelist_id'][0], ['currency_id'])
+                p_pl_ids = pl_obj.search(cr, uid, [
+                    ('currency_id', '=', pl_currency['currency_id'][0]),
+                    ('type', '=', 'purchase'),
+                ])
+                if p_pl_ids:
+                    pl_dict[po['pricelist_id'][0]] = p_pl_ids[0]
+                    vals['pricelist_id'] = p_pl_ids[0]
+
+            if vals:
+                po_obj.write(cr, uid, [po['id']], vals)
+
+patch_scripts()
+
+
 class ir_model_data(osv.osv):
     _inherit = 'ir.model.data'
     _name = 'ir.model.data'
@@ -65,6 +130,101 @@ class ir_model_data(osv.osv):
             except IOError, e:
                 # file does not exist
                 pass
+
+    def _us_268_gen_message(self, cr, uid, obj, id, fields, values):
+        msg_obj = self.pool.get("sync.client.message_to_send")
+        xmlid = obj.get_sd_ref(cr, uid, id)
+        data = {
+            'identifier': 'us_268_fix_%s_%s' % (obj._name, id),
+            'sent': False,
+            'generate_message': True,
+            'remote_call': "ir.model.data._query_from_sync",
+            'arguments':"['%s', '%s', %r, %r]" % (obj._name, xmlid, fields, values),
+            'destination_name': 'OCBHQ',
+        }
+        msg_obj.create(cr, uid, data)
+
+    def us_268_fix_seq(self, cr, uid, *a, **b):
+        msg_obj = self.pool.get("sync.client.message_to_send")
+        if not msg_obj:
+            return True
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        instance_name = c and c.instance_id and c.instance_id.name
+        touch_file = opj('msf_profile', 'data', 'us_268.sql')
+        # TODO: set as done
+        if instance_name == 'OCBHT143':
+            logger = logging.getLogger('update')
+            try:
+                fp = tools.file_open(touch_file, 'r')
+                logger.warn('Execute us-268 sql')
+                cr.execute(fp.read())
+                fp.close()
+                logger.warn('Sql done')
+                os.rename(fp.name, "%sold" % fp.name)
+                logger.warn('Sql file renamed')
+            except IOError, e:
+                # file does not exist
+                pass
+
+        elif instance_name == 'OCBHT101' and msg_obj:
+            logger = logging.getLogger('update')
+            try:
+                fp = tools.file_open(touch_file, 'r')
+                fp.close()
+            except IOError, e:
+                return True
+            logger.warn('Execute US-268 queries')
+            journal_obj = self.pool.get('account.journal')
+            instance_id = c.instance_id.id
+            account_move_obj = self.pool.get('account.move')
+            analytic_obj = self.pool.get('account.analytic.line')
+            invoice_obj = self.pool.get('account.invoice')
+
+            journal_id = journal_obj.search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])[0]
+            journal = journal_obj.browse(cr, uid, journal_id)
+
+            analytic_journal_id = journal.analytic_journal_id.id
+
+            move_ids_to_fix = [453, 1122, 1303]
+
+            instance_xml_id = self.pool.get('msf.instance').get_sd_ref(cr, uid, instance_id)
+            journal_xml_id = journal_obj.get_sd_ref(cr, uid, journal_id)
+            analytic_journal_xml_id = self.pool.get('account.analytic.journal').get_sd_ref(cr, uid, analytic_journal_id)
+
+            move_prefix = c.instance_id.move_prefix
+
+            for move in account_move_obj.browse(cr, uid, move_ids_to_fix):
+                if move.instance_id.id == instance_id:
+                    # fix already applied
+                    continue
+
+                seq_name = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': move.period_id.fiscalyear_id.id})
+                reference = '%s-%s-%s' % (move_prefix, journal.code, seq_name)
+
+                cr.execute('update account_move set instance_id=%s, journal_id=%s, name=%s where id=%s', (instance_id, journal_id, reference, move.id))
+                invoice_ids = invoice_obj.search(cr, uid, [('move_id', '=', move.id)])
+                if invoice_ids:
+                    cr.execute('update account_invoice set journal_id=%s, number=%s where id=%s', (journal_id, reference, invoice_ids[0]))
+
+                self._us_268_gen_message(cr, uid, account_move_obj, move.id,
+                    ['instance_id', 'journal_id', 'name'], [instance_xml_id, journal_xml_id, reference]
+                )
+                for line in move.line_id:
+                    cr.execute('update account_move_line set instance_id=%s, journal_id=%s where id=%s', (instance_id, journal_id, line.id))
+                    self._us_268_gen_message(cr, uid, self.pool.get('account.move.line'), line.id,
+                        ['instance_id', 'journal_id'], [instance_xml_id, journal_xml_id]
+                    )
+
+                    analytic_ids = analytic_obj.search(cr, uid, [('move_id', '=', line.id)])
+
+                    for analytic_id in analytic_ids:
+                        cr.execute('update account_analytic_line set instance_id=%s, entry_sequence=%s, journal_id=%s where id=%s', (instance_id, reference, analytic_journal_id, analytic_id))
+                        self._us_268_gen_message(cr, uid, analytic_obj, analytic_id,
+                            ['instance_id', 'entry_sequence', 'journal_id'], [instance_xml_id, reference, analytic_journal_xml_id]
+                        )
+            os.rename(fp.name, "%sold" % fp.name)
+            logger.warn('Set US-268 as executed')
+
 
 ir_model_data()
 

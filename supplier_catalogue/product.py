@@ -362,7 +362,7 @@ class product_product(osv.osv):
             catalogue_ids = set()
             catalogue_line_ids = line_obj.search(cr, uid, [('product_id', '=', product.id)], context=context)
             for line in line_obj.read(cr, uid, catalogue_line_ids, ['catalogue_id'], context=context):
-                catalogue_ids.add(line['catalogue_id'])
+                catalogue_ids.add(line['catalogue_id'][0])
 
             res[product.id] = list(catalogue_ids)
 

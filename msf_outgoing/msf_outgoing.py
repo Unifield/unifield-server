@@ -25,6 +25,7 @@ import netsvc
 from datetime import datetime, date
 
 from order_types.stock import check_cp_rw
+from msf_order_date import TRANSPORT_TYPE
 
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
@@ -247,8 +248,8 @@ class shipment(osv.osv):
                 'date': fields.datetime(string='Creation Date'),
                 'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
                 'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
-                'transport_type': fields.selection([('by_road', 'By road')],
-                                                   string="Transport Type", readonly=True),
+                'transport_type': fields.selection(TRANSPORT_TYPE,
+                                                   string="Transport Type", readonly=False),
                 'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
                 'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
                 # cargo manifest things
@@ -260,6 +261,7 @@ class shipment(osv.osv):
                 'driver_name': fields.char(string='Driver Name', size=1024),
                 # -- shipper
                 'shipper_name': fields.char(string='Name', size=1024),
+                'shipper_contact': fields.char(string='Contact', size=1024),
                 'shipper_address': fields.char(string='Address', size=1024),
                 'shipper_phone': fields.char(string='Phone', size=1024),
                 'shipper_email': fields.char(string='Email', size=1024),
@@ -267,6 +269,7 @@ class shipment(osv.osv):
                 'shipper_date': fields.date(string='Date'),
                 'shipper_signature': fields.char(string='Signature', size=1024),
                 # -- carrier
+                'carrier_id': fields.many2one('res.partner', string='Carrier', domain=[('transporter', '=', True)]),
                 'carrier_name': fields.char(string='Name', size=1024),
                 'carrier_address': fields.char(string='Address', size=1024),
                 'carrier_phone': fields.char(string='Phone', size=1024),
@@ -276,6 +279,7 @@ class shipment(osv.osv):
                 'carrier_signature': fields.char(string='Signature', size=1024),
                 # -- consignee
                 'consignee_name': fields.char(string='Name', size=1024),
+                'consignee_contact': fields.char(string='Contact', size=1024),
                 'consignee_address': fields.char(string='Address', size=1024),
                 'consignee_phone': fields.char(string='Phone', size=1024),
                 'consignee_email': fields.char(string='Email', size=1024),
@@ -316,12 +320,148 @@ class shipment(osv.osv):
         ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
         return self.pool.get('ir.model.data').browse(cr, uid, ir_id).res_id
 
+    def default_get(self, cr, uid, fields, context=None):
+        """
+        The 'Shipper' fields must be filled automatically with the
+        default address of the current instance
+        """
+        user_obj = self.pool.get('res.users')
+        partner_obj = self.pool.get('res.partner')
+        addr_obj = self.pool.get('res.partner.address')
+
+        res = super(shipment, self).default_get(cr, uid, fields, context=context)
+
+        instance_partner = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id
+        instance_addr_id = partner_obj.address_get(cr, uid, instance_partner.id)['default']
+        instance_addr = addr_obj.browse(cr, uid, instance_addr_id, context=context)
+
+        addr = ''
+        if instance_addr.street:
+            addr += instance_addr.street
+            addr += ' '
+        if instance_addr.street2:
+            addr += instance_addr.street2
+            addr += ' '
+        if instance_addr.zip:
+            addr += instance_addr.zip
+            addr += ' '
+        if instance_addr.city:
+            addr += instance_addr.city
+            addr += ' '
+        if instance_addr.country_id:
+            addr += instance_addr.country_id.name
+
+        res.update({
+            'shipper_name': instance_partner.name,
+            'shipper_contact': 'Supply responsible',
+            'shipper_address': addr,
+            'shipper_phone': instance_addr.phone,
+            'shipper_email': instance_addr.email,
+        })
+
+        return res
+
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'sequence_id': _get_sequence,
         'in_ref': False,
     }
     _order = 'name desc'
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Update the consignee values by default
+        """
+        partner_obj = self.pool.get('res.partner')
+        addr_obj = self.pool.get('res.partner.address')
+
+        if vals.get('partner_id2') and not context.get('create_shipment'):
+            consignee_partner = partner_obj.browse(cr, uid, vals.get('partner_id2'), context=context)
+            consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
+            consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id, context=context)
+
+            addr = ''
+            if consignee_addr.street:
+                addr += consignee_addr.street
+                addr += ' '
+            if consignee_addr.street2:
+                addr += consignee_addr.street2
+                addr += ' '
+            if consignee_addr.zip:
+                addr += consignee_addr.zip
+                addr += ' '
+            if consignee_addr.city:
+                addr += consignee_addr.city
+                addr += ' '
+            if consignee_addr.country_id:
+                addr += consignee_addr.country_id.name
+
+            vals.update({
+                'consignee_name': consignee_partner.name,
+                'consignee_contact': consignee_partner.partner_type == 'internal' and 'Supply responsible' or consignee_addr.name,
+                'consignee_address': addr,
+                'consignee_phone': consignee_addr.phone,
+                'consignee_email': consignee_addr.email,
+            })
+
+        return super(shipment, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Force values for carrier if carrier_id is filled
+        """
+        if vals.get('carrier_id'):
+            test_fields = [
+                'carrier_name', 'carrier_address',
+                'carrier_phone', 'carrier_email',
+            ]
+
+            sel_vals = self.selected_carrier(cr, uid, ids, vals.get('carrier_id'), context=context)['value']
+            for f in test_fields:
+                if not vals.get(f):
+                    vals[f] = sel_vals.get(f, False)
+
+        return super(shipment, self).write(cr, uid, ids, vals, context=context)
+
+
+    def selected_carrier(self, cr, uid, ids, carrier_id, context=None):
+        """
+        Update the different carrier fields if a carrier is selected
+        """
+        partner_obj = self.pool.get('res.partner')
+        addr_obj = self.pool.get('res.partner.address')
+
+        if carrier_id:
+            carrier = partner_obj.browse(cr, uid, carrier_id, context=context)
+            carrier_addr_id = partner_obj.address_get(cr, uid, carrier_id)['default']
+            carrier_addr = addr_obj.browse(cr, uid, carrier_addr_id, context=context)
+
+            addr = ''
+            if carrier_addr.street:
+                addr += carrier_addr.street
+                addr += ' '
+            if carrier_addr.street2:
+                addr += carrier_addr.street2
+                addr += ' '
+            if carrier_addr.zip:
+                addr += carrier_addr.zip
+                addr += ' '
+            if carrier_addr.city:
+                addr += carrier_addr.city
+                addr += ' '
+            if carrier_addr.country_id:
+                addr += carrier_addr.country_id.name
+
+            return {
+                'value': {
+                    'carrier_name': carrier.name,
+                    'carrier_address': addr,
+                    'carrier_phone': carrier_addr.phone,
+                    'carrier_email': carrier_addr.email,
+                },
+            }
+
+        return {}
 
     @check_cp_rw
     def create_shipment(self, cr, uid, ids, context=None):
@@ -348,7 +488,7 @@ class shipment(osv.osv):
             ship_proc_vals = {
                 'shipment_id': shipment.id,
                 'address_id': shipment.address_id.id,
-
+                'transport_type': shipment.transport_type,
             }
             ship_proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
             ship_proc_obj.create_lines(cr, uid, ship_proc_id, context=context)
@@ -383,6 +523,16 @@ class shipment(osv.osv):
         if isinstance(wizard_ids, (int, long)):
             wizard_ids = wizard_ids
 
+        cp_fields = [
+            'consignee_name', 'consignee_contact', 'consignee_address',
+            'consignee_phone', 'consignee_email', 'consignee_other',
+            'consignee_date', 'shipper_name', 'shipper_contact',
+            'shipper_address', 'shipper_phone', 'shipper_email',
+            'shipper_other', 'shipper_date', 'carrier_name',
+            'carrier_address', 'carrier_phone', 'carrier_email',
+            'carrier_other', 'carrier_date',
+        ]
+
         for wizard in ship_proc_obj.browse(cr, uid, wizard_ids, context=context):
             shipment = wizard.shipment_id
             sequence = shipment.sequence_id
@@ -403,9 +553,15 @@ class shipment(osv.osv):
                 'shipment_expected_date': shipment.shipment_expected_date,
                 'shipment_actual_date': shipment.shipment_actual_date,
                 'parent_id': shipment.id,
+                'transport_type': shipment.transport_type,
+                'carrier_id': shipment.carrier_id and shipment.carrier_id.id or False,
             }
+            for cpf in cp_fields:
+                ship_val[cpf] = shipment[cpf]
 
+            context['create_shipment'] = True
             shipment_id = self.create(cr, uid, ship_val, context=context)
+            del context['create_shipment']
 
             context['shipment_id'] = shipment_id
             if source_shipment_address_id:
@@ -1766,8 +1922,8 @@ class stock_picking(osv.osv):
             ids = [ids]
         cr.execute('''select p.id, sum(m.product_qty)
             from stock_picking p, stock_move m
-            where m.picking_id = p.id
-            group by p.id''')
+            where m.picking_id = p.id and m.picking_id in %s
+            group by p.id''', (tuple(ids,),))
         for i in cr.fetchall():
             result[i[0]] = i[1] or 0
         return result
@@ -2568,6 +2724,7 @@ class stock_picking(osv.osv):
                                   'partner_id2': partner_id,
                                   'shipment_expected_date': rts,
                                   'shipment_actual_date': rts,
+                                  'transport_type': sale_id and self.pool.get('sale.order').read(cr, uid, [sale_id], ['transport_type'], context=context)[0]['transport_type'] or False,
                                   'sequence_id': self.create_sequence(cr, uid, {'name':name,
                                                                                 'code':name,
                                                                                 'prefix':'',
@@ -4425,8 +4582,8 @@ class pack_family_memory(osv.osv):
 
     def change_description(self, cr, uid, ids, context=None):
 
-        if isinstance(ids, int) or isinstance(ids, long):
-            ids = ids[0]
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         mod_obj = self.pool.get('ir.model.data')
         res = mod_obj.get_object_reference(cr, uid, 'msf_outgoing',

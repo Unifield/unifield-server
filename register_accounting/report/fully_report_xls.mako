@@ -621,8 +621,13 @@ endif
 % endfor
 
 <!-- Display analytic lines linked to this register line -->
-% if line.fp_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
-% for ana_line in sorted(line.fp_analytic_lines, key=lambda x: x.id):
+<%
+a_lines = False
+if line.fp_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
+    a_lines = line.cash_return_move_line_id and line.cash_return_move_line_id.analytic_lines or line.fp_analytic_lines
+%>
+% if a_lines:
+% for ana_line in sorted(a_lines, key=lambda x: x.id):
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:

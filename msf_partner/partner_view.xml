@@ -47,6 +47,7 @@
                     </xpath>
                     <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
                         <field name="manufacturer" />
+                        <field name="transporter" on_change="transporter_ticked(transporter)" />
                     </xpath>
                     <xpath expr="/form/group/group/field[@name='zone']" position="after">
                         <field name="active"/>
@@ -68,6 +69,7 @@
                             <filter string="Suppliers" name="supplier" icon="terp-personal" domain="[('supplier','=',1)]" help="Supplier Partners"/>
                             <filter string="Customers" name="customer" icon="terp-personal" domain="[('customer','=',1)]" help="Customer Partners"/>
                             <filter string="Manufacturers" name="manufacturer" icon="terp-personal" domain="[('manufacturer','=',1)]" help="Manufacturer Partners"/>
+                            <filter string="Transporters" name="transporter" icon="terp-personal" domain="[('transporter','=',1)]" help="Transporter Partners"/>
                             <separator orientation="vertical" />
                             <filter string="International" name="international" icon="gtk-dnd" domain="[('zone','=','international')]" help="International Partners"/>
                             <filter string="National" name="national" icon="gtk-dnd-multiple" domain="[('zone','=','national')]" help="National Partners"/>

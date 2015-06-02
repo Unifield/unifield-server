@@ -26,6 +26,7 @@ import tools
 
 class local_transport_cost_report(osv.osv):
     _name = 'local.transport.cost.report'
+    _rec_name = 'order_id'
     _description = 'Local Transport Costs'
     _auto = False
     _order = 'date_order desc, delivery_confirmed_date desc, partner_id, transport_mode'

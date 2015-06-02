@@ -26,6 +26,7 @@ from osv import fields
 from lxml import etree
 from tools.translate import _
 
+
 class hq_analytic_reallocation(osv.osv_memory):
     _name = 'hq.analytic.reallocation'
     _description = 'Analytic HQ reallocation wizard'
@@ -37,6 +38,16 @@ class hq_analytic_reallocation(osv.osv_memory):
         'free_1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
     }
+
+    def default_get(self, cr, uid, fields, context=None):
+        # BKLG-77: check transation before showing wizard
+        line_ids = context and context.get('active_ids', []) or []
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+        self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
+            line_ids, self._name, context=context)
+        return super(hq_analytic_reallocation, self).default_get(cr, uid, fields,
+            context=context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -129,6 +140,16 @@ class hq_reallocation(osv.osv_memory):
     _columns = {
         'account_id': fields.many2one('account.account', string="Account", required=True, domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"),
     }
+
+    def default_get(self, cr, uid, fields, context=None):
+        # BKLG-77: check transation before showing wizard
+        line_ids = context and context.get('active_ids', []) or []
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+        self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
+            line_ids, self._name, context=context)
+        return super(hq_reallocation, self).default_get(cr, uid, fields,
+            context=context)
 
     def button_validate(self, cr, uid ,ids, context=None):
         """
