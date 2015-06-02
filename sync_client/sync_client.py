@@ -236,9 +236,13 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     logger.append(res, step)
             finally:
                 # gotcha!
-                all_status = logger.info.values()
-                if 'ok' in all_status and (step != 'status' and logger.info.get(step) in ('failed', 'aborted') or step == 'status' and logger.info.get(step) == 'aborted'):
-                    self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'after%ssync' % context.get('sync_type', 'manual'), context=context)
+                if make_log:
+                    all_status = logger.info.values()
+                    if 'ok' in all_status and step == 'status' and logger.info.get(step) in ('failed', 'aborted'):
+                        try:
+                            self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'after%ssync' % context.get('sync_type', 'manual'), context=context)
+                        except Exception, e:
+                            self._logger.exception("Can't create backup %s" % tools.ustr(e))
                 sync_lock.release()
                 if make_log:
                     logger.close()
@@ -375,6 +379,7 @@ class Entity(osv.osv):
     def __init__(self, *args, **kwargs):
         self.renew_lock = Lock()
         self._renew_sync_lock()
+        self.aborting = False
         super(Entity, self).__init__(*args, **kwargs)
 
     def _renew_sync_lock(self):
