@@ -1165,9 +1165,9 @@
 			<field name="model">stock.picking</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-                <form string="Change description shipment line">
+				<form string="Change description shipment line">
 					<field name="description_ppl"/>
-					<button name="change_description_save" string="Save description" icon="gtk-save" type="object" />
+					<button name="change_description_save" string="Save description" icon="gtk-save" type="object"/>
 				</form>
 			</field>
 		</record>
@@ -1212,7 +1212,7 @@
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                                 required="1"
 								attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-							<field name="address_id" context="{'contact_display':'partner'}" />
+							<field name="address_id" context="{'contact_display':'partner'}" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}" />
 							<field name="in_ref" readonly="True" />
 						</group>
 					</group>
@@ -1224,7 +1224,7 @@
 									<field name="sale_order_id"/>
 									<field name="ppl_id" />
                                     <field name="description_ppl" />
-									<button name="change_description" string="Change description" icon="gtk-edit" type="object" />
+									<button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('state', 'not in', ['Available', 'Draft'])]}" />
 									<field name="from_pack"/>
 									<field name="to_pack"/>
 									<field name="num_of_packs" />
@@ -1291,40 +1291,40 @@
 						    </field>
 						</page>
 						<page string="Document Information">
-							<field name="cargo_manifest_reference" />
-							<field name="date_of_departure" />
-							<field name="planned_date_of_arrival" />
-							<field name="transit_via" />
-							<field name="registration" />
-							<field name="driver_name" />
+							<field name="cargo_manifest_reference" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}" />
+							<field name="date_of_departure" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+							<field name="planned_date_of_arrival" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+							<field name="transit_via" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+							<field name="registration" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+							<field name="driver_name" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
 						</page>
 						<page string="Transport Information">
 							<group col="2" colspan="1">
 								<separator string="Shipper" colspan="2" />
-								<field name="shipper_name" />
-								<field name="shipper_address" />
-								<field name="shipper_phone" />
-								<field name="shipper_email" />
-								<field name="shipper_other" />
-								<field name="shipper_date" />
+								<field name="shipper_name" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="shipper_address" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="shipper_phone" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="shipper_email" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="shipper_other" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="shipper_date" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
 							</group>
 							<group col="2" colspan="1">
 								<separator string="Carrier" colspan="2" />
-								<field name="carrier_name" />
-								<field name="carrier_address" />
-								<field name="carrier_phone" />
-								<field name="carrier_email" />
-								<field name="carrier_other" />
-								<field name="carrier_date" />
+								<field name="carrier_name" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="carrier_address" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="carrier_phone" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="carrier_email" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="carrier_other" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="carrier_date" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
 							</group>
 							<group col="2" colspan="1">
 								<separator string="Consignee" colspan="2" />
-								<field name="consignee_name" />
-								<field name="consignee_address" />
-								<field name="consignee_phone" />
-								<field name="consignee_email" />
-								<field name="consignee_other" />
-								<field name="consignee_date" />
+								<field name="consignee_name" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="consignee_address" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="consignee_phone" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="consignee_email" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="consignee_other" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
+								<field name="consignee_date" attrs="{'readonly': [('state', 'in', ['Closed', 'Delivered'])]}"/>
 							</group>
 						</page>
 					</notebook>
