@@ -24,6 +24,14 @@
             <blockValign value="TOP" />
         </blockTableStyle>
 
+        <blockTableStyle id="HeaderInfos_2">
+            <blockAlignment value="LEFT" />
+            <blockValign value="TOP" />
+            <blockSpan start="2,0" stop="2,6"/>
+            <blockSpan start="3,0" stop="3,6"/>
+            <blockSpan start="4,0" stop="4,6"/>
+        </blockTableStyle>
+
         <blockTableStyle id="ItemsInfos">
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
@@ -51,9 +59,9 @@
 
         <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="13" textColor="blue" />
 
-        <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="HeaderInfosTitle" leading="8.0" fontName="Helvetica" fontSize="8.0" />
         <paraStyle name="HeaderInfosTitleRight" fontName="Helvetica" fontSize="8.0"  alignment="right" />
-        <paraStyle name="HeaderInfosValue" fontName="Helvetica" fontSize="8.0" textColor="blue" />
+        <paraStyle name="HeaderInfosValue" leading="10.0" fontName="Helvetica" fontSize="8.0" textColor="blue" />
 
         <paraStyle name="ItemsInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
         <paraStyle name="ItemsInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" alignment="right" />
@@ -96,26 +104,10 @@
     </para>
 
     <!-- header: ref fields -->
-    <blockTable colWidths="100.0,220.0,170,170,172" style="HeaderInfos">
+    <blockTable colWidths="100.0,220.0,170,170,172" style="HeaderInfos_2">
         <tr>
-            <td>
-                <para style="HeaderInfosTitle">Our ref:</para>
-                <para style="HeaderInfosTitle">FO Date:</para>
-                <para style="HeaderInfosTitle">Your Ref:</para>
-                <para style="HeaderInfosTitle">Ship ref:</para>
-                <para style="HeaderInfosTitle">Packing ref:</para>
-                <para style="HeaderInfosTitle">Invoice date:</para>
-                <para style="HeaderInfosTitle">Transport mode:</para>
-            </td>
-            <td>
-                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.name or '-' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.date_order and formatLang(pl.ppl_id.sale_id.date_order, date=True) or '-' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.client_order_ref or '-' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.name or '-' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.name or '-' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.previous_step_id and pl.ppl_id.previous_step_id.date and len(pl.ppl_id.previous_step_id.date) >= 10 and formatLang(pl.ppl_id.previous_step_id.date[:10], date=True) or '-' ]]</para>
-                <para style="HeaderInfosValue">[[ pl.shipment_id and getSel(pl.shipment_id, 'transport_type') or '-' ]]</para>
-            </td>
+            <td><para style="HeaderInfosTitle">Our ref:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.name or '-' ]]</parawrap></td>
             <td>
                 <para style="HeaderInfosTitle">Shipper:</para>
                 <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_name or removeParentNode('para') ]]</para>
@@ -135,6 +127,49 @@
                 <para style="ItemsInfos"><font color="white"> </font></para>
             </td>
         </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">FO Date:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.date_order and formatLang(pl.ppl_id.sale_id.date_order, date=True) or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Your Ref:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.client_order_ref or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Ship ref:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.name or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Packing ref:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.name or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Invoice date:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.previous_step_id and pl.ppl_id.previous_step_id.date and len(pl.ppl_id.previous_step_id.date) >= 10 and formatLang(pl.ppl_id.previous_step_id.date[:10], date=True) or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Transport mode:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.shipment_id and getSel(pl.shipment_id, 'transport_type') or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
     </blockTable>
 
     <!-- items: stock moves -->
