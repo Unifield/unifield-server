@@ -1591,7 +1591,7 @@ class account_bank_statement_line(osv.osv):
                 # UTP-1097: If ref is given in "values"
                 if 'ref' in values:
                     ref = values.get('ref', False)
-                    if st_line.ref and not ref and register_line.move_id:
+                    if not ref and register_line.move_id:
                         # UTP-1097 ref field is cleared (a value to empty/False)
                         # ref of JIs/AJIs is not properly cleared in this case
                         aml_ids = acc_move_line_obj.search(cr, uid,
