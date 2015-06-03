@@ -29,7 +29,7 @@
         <Alignment ss:Vertical="Top" ss:WrapText="1"/>
         <Font ss:Color="#0000FF" />
     </Style>
-    
+
     <!-- File header -->
     <Style ss:ID="big_header">
         <Font x:Family="Swiss" ss:Size="14" ss:Bold="1"/>
@@ -38,7 +38,7 @@
         <Font ss:Size="9" />
         <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
     </Style>
-    
+
     <!-- Order header -->
     <Style ss:ID="order_header_first">
         <Borders>
@@ -63,7 +63,7 @@
         <Font ss:Size="9"/>
         <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
     </Style>
-    
+
     <!-- Line header -->
     <Style ss:ID="line_header_first">
         <Alignment ss:Horizontal="Left" ss:Vertical="Bottom" />
@@ -178,13 +178,13 @@
         <Column ss:AutoFitWidth="1" ss:Width="50" />
         ## RTS Date
         <Column ss:AutoFitWidth="1" ss:Width="50" />
-        
+
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header"><Data ss:Type="String">FIELD ORDER FOLLOW-UP per CLIENT</Data><NamedCell ss:Name="Print_Area"/></Cell>
         </Row>
-        
+
         <Row ss:Height="10"></Row>
-        
+
         ## WORKSHEET HEADER
         <Row>
             <Cell ss:StyleID="file_header" ss:MergeAcross="2"><Data ss:Type="String">${_('Instance information')|x}</Data></Cell>
@@ -282,8 +282,8 @@
                 % else:
                 <Cell ss:StyleID="line_first"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-')|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
                 % if line.get('ordered_qty'):
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                 % else:
@@ -320,7 +320,7 @@
                 % endif
             </Row>
             % endfor
-            
+
             <Row>
                 <Cell ss:StyleID="line_bottom" ss:MergeAcross="12"><Data ss:Type="String"></Data></Cell>
             </Row>
