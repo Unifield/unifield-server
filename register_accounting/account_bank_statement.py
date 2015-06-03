@@ -1378,7 +1378,7 @@ class account_bank_statement_line(osv.osv):
                 if third and third[0] and third[0] != "hr.employee":
                     return res
                 emp_id = third and third[1] or False
-            employee = self.pool.get('hr.employee').read(cr, uid, int(emp_id), ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id'])
+            employee = self.pool.get('hr.employee').read(cr, uid, int(emp_id), ['destination_id', 'cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id'])
             if is_expense and employee.get('cost_center_id', False):
                 # Create a distribution
                 destination_id = (employee.get('destination_id', False) and employee.get('destination_id')[0]) or (account.get('default_destination_id', False) and account.get('default_destination_id')[0]) or False
