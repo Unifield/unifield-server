@@ -327,6 +327,7 @@ class so_po_common(osv.osv_memory):
         update_lines = []
         rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
 
+        split_cancel_line = {}
         line_vals_dict = line_values.to_dict()
         if 'order_line' not in line_vals_dict:
             return []
@@ -432,6 +433,9 @@ class so_po_common(osv.osv_memory):
                     values['link_so_id'] = so_ids[0]
 
             if line_dict.get('cancel_split_ok'):
+                if line_dict.get('line_number'):
+                    split_cancel_line.setdefault(line_dict.get('line_number'), 0.00)
+                    split_cancel_line[line_dict.get('line_number')] += line_dict.get('cancel_split_ok')
                 continue
 
             if line_dict.get('id'): # Only used for Remote Warehouse when creating a new order line, this xmlid will be used and not the local one 
@@ -483,7 +487,11 @@ class so_po_common(osv.osv_memory):
                 for existing_line in existing_line_ids:
                     if existing_line not in update_lines:
                         if po_id:
-                            self.pool.get('purchase.order.line').fake_unlink(cr, uid, [existing_line], context=context)
+                            el = self.pool.get('purchase.order.line').read(cr, uid, existing_line, ['line_number', 'product_qty'], context=context)
+                            if split_cancel_line.get(el['line_number']) and split_cancel_line.get(el['line_number']) < el['product_qty']:
+                                self.pool.get('purchase.order.line').write(cr, uid, [existing_line], {'product_qty': el['product_qty'] - split_cancel_line[el['line_number']]}, context=context)
+                            else:
+                                self.pool.get('purchase.order.line').fake_unlink(cr, uid, [existing_line], context=context)
                             #UFTP-242: Log if there is lines deleted for this PO
                             context.update({'deleted_line_po_id': po_id})
                         elif so_id:
