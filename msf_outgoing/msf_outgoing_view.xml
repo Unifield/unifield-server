@@ -1212,7 +1212,7 @@
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                                 required="1"
 								attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-							<field name="address_id" context="{'contact_display':'partner'}" />
+							<field name="address_id" context="{'contact_display':'partner'}" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}" />
 							<field name="in_ref" readonly="True" />
 						</group>
 					</group>
@@ -1221,10 +1221,11 @@
 						<page string="Pack Families">
 							<field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" readonly="True">
 								<tree string="Pack Families" colors="red: not_shipped">
+									<field name="fake_state" invisible="True" />
 									<field name="sale_order_id"/>
 									<field name="ppl_id" />
                                     <field name="description_ppl" />
-									<button name="change_description" string="Change description" icon="gtk-edit" type="object" />
+									<button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
 									<field name="from_pack"/>
 									<field name="to_pack"/>
 									<field name="num_of_packs" />
@@ -1291,12 +1292,14 @@
 						    </field>
 						</page>
 						<page string="Document Information">
-							<field name="cargo_manifest_reference" />
-							<field name="date_of_departure" />
-							<field name="planned_date_of_arrival" />
-							<field name="transit_via" />
-							<field name="registration" />
-							<field name="driver_name" />
+							<group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
+								<field name="cargo_manifest_reference" />
+								<field name="date_of_departure" />
+								<field name="planned_date_of_arrival" />
+								<field name="transit_via" />
+								<field name="registration" />
+								<field name="driver_name" />
+							</group>
 						</page>
 						<page string="Transport Information">
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
@@ -1312,11 +1315,11 @@
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
                                 <separator string="Carrier" colspan="2" />
                                 <field name="carrier_id" on_change="selected_carrier(carrier_id)" />
-                                <field name="carrier_name" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
-                                <field name="carrier_address" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
-                                <field name="carrier_phone" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
-                                <field name="carrier_email" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
-                                <field name="carrier_other" attrs="{'readonly': [('carrier_id', '!=',  False)]}" />
+                                <field name="carrier_name" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_address" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_phone" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_email" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_other" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
 								<field name="carrier_date" />
 							</group>
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
