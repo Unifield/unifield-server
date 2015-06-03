@@ -4604,6 +4604,13 @@ class pack_family_memory(osv.osv):
                 }
         return {}
 
+    def _get_state(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        objs = self.browse(cr, uid, ids, context=context)
+        for obj in objs:
+            result[obj.id] = obj.state
+        return result
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -4650,6 +4657,7 @@ class pack_family_memory(osv.osv):
         'weight' : fields.float(digits=(16, 2), string='Weight p.p [kg]'),
         # functions
         'move_lines': fields.function(_vals_get, method=True, type='one2many', relation='stock.move', string='Stock Moves', multi='get_vals',),
+        'fake_state': fields.function(_get_state, method=True, type='char', String='Fake state'),
         'state': fields.selection(selection=[
             ('draft', 'Draft'),
             ('assigned', 'Available'),
