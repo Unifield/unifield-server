@@ -2201,7 +2201,8 @@ class sale_order_line(osv.osv):
                 'created_by_rfq_line': fields.many2one('purchase.order.line', string='Created by RfQ line'),
                 'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
                 'sync_sourced_origin': fields.char(string='Sync. Origin', size=256),
-                'cancel_split_ok': fields.boolean(
+                'cancel_split_ok': fields.float(
+                    digits=(16,2),
                     string='Cancel split',
                     help='If the line has been canceled/removed on the splitted FO',
                 ),
@@ -2313,7 +2314,8 @@ class sale_order_line(osv.osv):
                     pick_obj.validate(cr, uid, [pick.id])
 
             if line.original_line_id:
-                self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': True}, context=context)
+                cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
+                self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
 
             # UFTP-82:
             # do not delete cancelled IR line from PO cancelled
