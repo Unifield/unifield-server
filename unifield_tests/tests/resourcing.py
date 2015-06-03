@@ -293,23 +293,26 @@ No split of FO found !""")
         :param po_ids: List of ID of purchase.order to validate
         :return The list of ID of purchase.order validated
         """
+        po_obj = db.get('purchase.order')
+        pol_obj = db.get('purchase.order.line')
+
         # Add an analytic distribution on PO lines that have no
-        no_ana_line_ids = self.pol_obj.search([
+        no_ana_line_ids = pol_obj.search([
             ('order_id', 'in', po_ids),
             ('analytic_distribution_id', '=', False),
         ])
-        self.pol_obj.write(no_ana_line_ids, {
+        pol_obj.write(no_ana_line_ids, {
             'analytic_distribution_id': self.get_record(db, 'distrib_1'),
         })
 
         # Check if the PO is draft
         for po_id in po_ids:
-            po_state = self.po_obj.read(po_id, ['state'])['state']
+            po_state = po_obj.read(po_id, ['state'])['state']
             self.assert_(po_state == 'draft', msg="""
 The state of the generated PO is %s - Should be 'draft'""" % po_state)
             # Validate the PO
             db.exec_workflow('purchase.order', 'purchase_confirm', po_id)
-            po_state = self.po_obj.browse(po_id).state
+            po_state = po_obj.browse(po_id).state
             self.assert_(po_state == 'confirmed', msg="""
 The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
 
@@ -325,16 +328,18 @@ The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
         :param dcd: Delivery confirmed date to set
         :return: The list of ID of purchase.order confirmed
         """
+        po_obj = db.get('purchase.order')
+
         if not dcd:
             dcd = time.strftime('%Y-%m-%d')
 
-        self.po_obj.write(po_ids, {'delivery_confirmed_date': dcd})
+        po_obj.write(po_ids, {'delivery_confirmed_date': dcd})
 
         for po_id in po_ids:
             """
             1/ Check if the PO are in 'confirmed' state
             """
-            po_state = self.po_obj.read(po_id, ['state'])['state']
+            po_state = po_obj.read(po_id, ['state'])['state']
             self.assert_(
                 po_state == 'confirmed',
                 "The state of the generated PO is %s - Should be 'confirmed'" % po_state,
@@ -342,11 +347,11 @@ The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
             """
             2/ Confirm the PO
             """
-            self.po_obj.confirm_button([po_id])
+            po_obj.confirm_button([po_id])
             """
             3/ Check if all PO are now in 'approved' state
             """
-            po_state = self.po_obj.read(po_id, ['state'])['state']
+            po_state = po_obj.read(po_id, ['state'])['state']
             self.assert_(
                 po_state == 'approved',
                 "The state of the generated PO is %s - Should be 'approved'" % po_state,
