@@ -650,6 +650,12 @@ class financing_contract_contract(osv.osv):
 
         # US-113: Populate the instance_id down to format, format line and also funding pool line
         instance_id = vals.get('instance_id', False)
+        if not instance_id:
+            # US-330: If the prop instance is not in vals, still check in the FC
+            instance_id =  self.browse(cr,uid,ids,context=context)[0].instance_id
+            if instance_id:
+                instance_id = instance_id.id
+
         if instance_id:
             if not format.hidden_instance_id or format.hidden_instance_id.id != instance_id:
                 format_obj.write(cr, uid, format.id, {'hidden_instance_id': instance_id}, context=context)
