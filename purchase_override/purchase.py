@@ -1216,6 +1216,7 @@ stock moves which are already processed : '''
                     'created_by_rfq_line': l.order_id.rfq_ok and l.id or False,
                     'po_cft': l.order_id.rfq_ok and 'rfq' or 'po',
                     'sync_sourced_origin': l.instance_sync_order_ref and l.instance_sync_order_ref.name or False,
+                    #'is_line_split': l.is_line_split,
                     'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name)}
 
             new_line_id = sol_obj.create(cr, uid, vals, context=context)
@@ -1444,6 +1445,7 @@ stock moves which are already processed : '''
                                   'nomen_sub_4': line.nomen_sub_4 and line.nomen_sub_4.id or False,
                                   'nomen_sub_5': line.nomen_sub_5 and line.nomen_sub_5.id or False,
                                   'confirmed_delivery_date': line_confirmed,
+                                  #'is_line_split': line.is_line_split,
                                   }
                     """
                     UFTP-336: Update the analytic distribution at FO line when
