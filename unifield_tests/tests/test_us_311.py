@@ -625,17 +625,19 @@ class US311Test(ResourcingTest):
         prd1_qty = 0.00
         prd2_qty = 0.00
         prd3_qty = 0.00
-        ir_name = self.p_so_obj.read(self.p_in_id, ['name'])['name']
-        p_in_ids = self.p_pick_obj.search([
-            ('type', '=, in'),
+        ir_name = self.p_so_obj.read(self.p_ir_id, ['name'])['name']
+        self.p_in_ids = self.p_pick_obj.search([
+            ('type', '=', 'in'),
             ('origin', 'like', ir_name),
         ])
-        for pick in self.p_pick_obj.browse(p_in_ids):
+        for pick in self.p_pick_obj.browse(self.p_in_ids):
             for move in pick.move_lines:
                 if move.product_id.id == self.p_prd1_id:
                     prd1_qty += move.product_qty
                 elif move.product_id.id == self.p_prd2_id:
                     prd2_qty += move.product_qty
+                elif move.product_id.id == self.p_prd3_id:
+                    prd3_qty += move.product_qty
 
         self.assert_(
             prd1_qty == 18.00 and prd2_qty == 15.00 and prd3_qty == 10.00,
@@ -646,18 +648,22 @@ class US311Test(ResourcingTest):
         prd1_qty = 0.00
         prd2_qty = 0.00
         prd3_qty = 0.00
-        out_ids = self.p_pick_obj.search([('sale_id', '=', self.p_ir_id), ('type', '=', 'out')])
-        for pick in self.p_pick_obj.browse(out_ids):
+        self.out_ids = self.p_pick_obj.search([('sale_id', '=', self.p_ir_id), ('type', '=', 'out')])
+        for pick in self.p_pick_obj.browse(self.out_ids):
             for move in pick.move_lines:
                 if move.product_id.id == self.p_prd1_id:
                     prd1_qty += move.product_qty
                 elif move.product_id.id == self.p_prd2_id:
                     prd2_qty += move.product_qty
+                elif move.product_id.id == self.p_prd3_id:
+                    prd3_qty += move.product_qty
 
         self.assert_(
             prd1_qty == 18.00 and prd2_qty == 15.00 and prd3_qty == 10.00,
             "The quantities on OUT moves are not good. (PRD1: %s - PRD2: %s - PRD3: %s)" % (prd1_qty, prd2_qty, prd3_qty),
         )
+
+        self.close_flow()
 
 def get_test_class():
     return US311Test
