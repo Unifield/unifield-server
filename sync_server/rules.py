@@ -78,6 +78,7 @@ class sync_rule(osv.osv):
 
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
+    _trace = True
 
     _logger = logging.getLogger('sync.server')
 
@@ -515,6 +516,7 @@ class message_rule(osv.osv):
 
     _name = "sync_server.message_rule"
     _description = "Message Rule"
+    _trace = True
 
     _logger = logging.getLogger('sync.server')
 
