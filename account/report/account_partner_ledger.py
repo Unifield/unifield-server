@@ -147,6 +147,12 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         objects = obj_partner.browse(self.cr, self.uid, new_ids)
         res = super(third_party_ledger, self).set_context(objects, data, new_ids, report_type)
         common_report_header._set_context(self, data)
+        
+        if data['model'] == 'ir.ui.menu':
+            # US-324: use of user LG instead of each partner in the report
+            lang_dict = self.pool.get('res.users').read(self.cr,self.uid,self.uid,['context_lang'])
+            data['lang'] = lang_dict.get('context_lang') or False
+        
         return res
 
     def comma_me(self, amount):
