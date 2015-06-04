@@ -3199,6 +3199,9 @@ class stock_picking(osv.osv):
             delivered_pack = self.browse(cr, uid, delivered_pack_id, context=context)
             res[picking.id] = {'delivered_picking': delivered_pack.id or False}
 
+            if picking.type == 'out' and picking.sale_id and picking.sale_id.procurement_request:
+                wf_service.trg_write(uid, 'sale.order', picking.sale_id.id, cr)
+
         return res
 
     @check_cp_rw
