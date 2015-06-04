@@ -57,10 +57,12 @@ def check_validated(f):
 class entity_group0(osv.osv):
     """ OpenERP group of entities """
     _name = "sync.server.entity_group"
+    _trace = True
 entity_group0()
 
 class entity0(osv.osv):
     _name = "sync.server.entity"
+    _trace = True
 entity0()
 
 class group_type(osv.osv):

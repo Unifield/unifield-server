@@ -52,11 +52,11 @@
   Track sync_server.entity
 -
   !python {model: audittrail.rule}: |
-    name = 'Sync server, entity '
+    name = 'Sync server, entity'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync.server.entity')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['message_last', 'update_last', 'usb_instance_type']
+        fields = ['name']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sync.server.entity'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
