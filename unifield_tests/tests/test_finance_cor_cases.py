@@ -339,8 +339,6 @@ class FinanceTestCorCases(FinanceTest):
         db = self.c1
         self._set_start_register(db)
         
-        absl_obj = db.get('account.bank.statement.line')
-        
         reg_id = self._get_register(db, browse=False)
         if reg_id:
             regl_id, distrib_id, ji_id = self.create_register_line(
@@ -375,8 +373,6 @@ class FinanceTestCorCases(FinanceTest):
         db = self.c1
         self._set_start_register(db)
         
-        absl_obj = db.get('account.bank.statement.line')
-        
         reg_id = self._get_register(db, browse=False)
         if reg_id:
             regl_id, distrib_id, ji_id = self.create_register_line(
@@ -409,8 +405,6 @@ class FinanceTestCorCases(FinanceTest):
         
         db = self.c1
         self._set_start_register(db)
-        
-        absl_obj = db.get('account.bank.statement.line')
         
         reg_id = self._get_register(db, browse=False)
         if reg_id:
@@ -446,8 +440,6 @@ class FinanceTestCorCases(FinanceTest):
         db = self.c1
         self._set_start_register(db)
         
-        absl_obj = db.get('account.bank.statement.line')
-        
         reg_id = self._get_register(db, browse=False)
         if reg_id:
             regl_id, distrib_id, ji_id = self.create_register_line(
@@ -481,8 +473,6 @@ class FinanceTestCorCases(FinanceTest):
         
         db = self.c1
         self._set_start_register(db)
-        
-        absl_obj = db.get('account.bank.statement.line')
         
         reg_id = self._get_register(db, browse=False)
         if reg_id:
@@ -525,8 +515,6 @@ class FinanceTestCorCases(FinanceTest):
         db = self.c1
         self._set_start_register(db, ccy_name='USD')
         
-        absl_obj = db.get('account.bank.statement.line')
-        
         reg_id = self._get_register(db, browse=False, ccy_name='USD')
         if reg_id:
             ad = [
@@ -552,8 +540,8 @@ class FinanceTestCorCases(FinanceTest):
             self.simulation_correction_wizard(db, ji_id,
                     cor_date=get_orm_fy_date(2, 7),  # 7 Feb of this year
                     new_account_code=False,
-                    new_ad_breakdown_data=new_ad,
-                    ad_replace_data=False
+                    new_ad_breakdown_data=False,
+                    ad_replace_data={ 'per': [(60., 70.), (40., 30.), ] }
             )
             
             self.check_ji_correction(db, ji_id,
@@ -572,8 +560,6 @@ class FinanceTestCorCases(FinanceTest):
         db = self.c1
         self._set_start_register(db, ccy_name='USD')
         
-        absl_obj = db.get('account.bank.statement.line')
-        
         reg_id = self._get_register(db, browse=False, ccy_name='USD')
         if reg_id:
             ad = [
@@ -589,7 +575,7 @@ class FinanceTestCorCases(FinanceTest):
                 do_hard_post=True
             )
             
-            # CLOSE PERIOD Januar (MISSIONp
+            # CLOSE PERIOD Januar (MISSION)
             self.period_close_reopen(db, 'm', 1, reopen=True)
             
             new_ad=[
@@ -608,6 +594,46 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad=ad,
                 expected_ad_rev=new_ad,
                 expected_ad_cor=new_ad,
+            )
+            
+    def test_cor1_8(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_8
+        """
+        self._setup()
+        
+        db = self.c1
+        self._set_start_register(db)
+        
+        reg_id = self._get_register(db, browse=False)
+        if reg_id:
+            ad = [
+                (10., 'OPS', 'HT101', 'PF'),
+                (90., 'OPS', 'HT101', 'FP1'),
+            ]
+            
+            regl_id, distrib_id, ji_id = self.create_register_line(
+                db, reg_id,
+                '60010', self.get_random_amount(True),
+                ad_breakdown_data=ad,
+                date=False, document_date=False,
+                do_hard_post=True
+            )
+            
+            # CLOSE PERIOD Januar (MISSION)
+            self.period_close_reopen(db, 'm', 1, reopen=True)
+ 
+            self.simulation_correction_wizard(db, ji_id,
+                    new_account_code='13310',
+                    new_ad_breakdown_data=new_ad,
+                    ad_replace_data=False
+            )
+            
+            self.check_ji_correction(db, ji_id,
+                '60010', new_account_code='13310',
+                expected_ad=ad,
+                expected_ad_rev=ad,
+                expected_ad_cor=ad,
             )
 
 def get_test_class():
