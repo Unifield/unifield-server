@@ -273,8 +273,8 @@
     <images/>
   </stylesheet>
   <story>
+    <para style="terp_default_8">[[ setLang(data['lang']) ]]</para>
     <para style="terp_default_8">[[ repeatIn(objects, 'p') ]]</para>
-    <para style="terp_default_8">[[ setLang(p.lang) ]]</para>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>

@@ -297,6 +297,7 @@
         <para style="terp_default_8">
             <font color="white"> </font>
         </para>
+        <para style="terp_default_8">[[ setLang(data['lang']) ]]</para>
         <para style="terp_header_Centre">Partner Ledger</para>
         <para style="terp_default_8">
             <font color="white"> </font>
@@ -458,7 +459,6 @@
                 <font face="Helvetica">[[ display_currency(data) == False and ' ' or removeParentNode('section') ]]</font>
             </para>
             <para style="terp_default_8">[[ repeatIn(objects, 'p') ]]</para>
-            <para style="terp_default_8">[[ setLang(p.lang) ]]</para>
             <blockTable colWidths="332.0,64.0,64.0,79.0" style="Table3">
                 <tr>
                     <td>
@@ -573,7 +573,6 @@
                 <font face="Helvetica">[[ display_currency(data) == True and ' ' or removeParentNode('section') ]]</font>
             </para>
             <para style="terp_default_8">[[ repeatIn(objects, 'p') ]]</para>
-            <para style="terp_default_8">[[ setLang(p.lang) ]]</para>
             <blockTable colWidths="42.0,31.0,62.0,62.0,62.0,64.0,64.0,79.0,71.0" style="Table8">
                 <tr>
                     <td>
