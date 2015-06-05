@@ -709,6 +709,15 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_rev=False,
                 expected_ad_cor=False,
             )
+            
+    def test_cor1_11(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_11
+        """
+        db = self.c1
+        
+        self.create_supplier_invoice(db, date=False, partner_id=False,
+            ad_header_breakdown_data=False, lines_data=False)
 
 
 def get_test_class():

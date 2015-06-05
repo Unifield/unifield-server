@@ -999,19 +999,23 @@ class FinanceTest(UnifieldTest):
             raise FinanceTestException(
                 "invalid level value 'f', 'm' or 'h' expected")
                 
-    def create_supplier_invoice(self, db, date, partner_id=False,
+    def create_supplier_invoice(self, db, date=False, partner_id=False,
         ad_header_breakdown_data=False, lines_data=False):
         """
         create a supplier invoice
+        :param date: today if False
         :param partner_id: Local Market if False
         :param ad_header_breakdown_data: see create_analytic_distribution
         :param lines_data: [{}]
         """
-        itype = 'in_invoice'
+        ai_obj = db.get('account.invoice')
         
         # simulate menu context
         context = { 'type': 'in_invoice', 'journal_type': 'purchase', }
         
+        # vals
+        itype = 'in_invoice'
+        date = date or self.get_orm_date_now()
         vals = {
             'type': itype,
             
@@ -1028,9 +1032,10 @@ class FinanceTest(UnifieldTest):
         # via on_change: will set journal
         # company_id = db.get('res.users').browse(cr, uid, [uid]).company_id.id
         company_id = db.user.company_id.id
-        res = onchange_company_id(
+        vals['company_id'] = company_id
+        res = ai_obj.onchange_company_id(
             False,  # ids
-            db.user.company_id.id,
+            company_id,
             False,  # partner id
             itype,  # invoice type
             False,  # invoice line,
@@ -1045,26 +1050,36 @@ class FinanceTest(UnifieldTest):
                 ('supplier', '=', True),
                 ('name', '=', 'Local Market'),
             ]
-            partner_id = self.get('res_partner').search(domain)
+            partner_id = db.get('res.partner').search(domain)
             if not partner_id:
                 raise FinanceTestException("Partner %s not found" % (
                     str(domain), ))
             partner_id = partner_id[0]
+            vals['partner_id'] = partner_id
             
-            res = onchange_partner_id(
+            res = ai_obj.onchange_partner_id(
                 False,  # ids
-                itype, # invoice type
+                itype,  # invoice type
                 partner_id,
-                date_invoice=False,
-                payment_term=False,
-                partner_bank_id=False,
-                company_id=False,
-                is_inkind_donation=False,
-                is_intermission=False,
-                is_debit_note=False,
-                is_direct_invoice=False)
+                False,  # date_invoice
+                False,  # payment_term
+                False,  # partner_bank_id
+                False,  # company_id
+                False,  #  is_inkind_donation
+                False,  # is_intermission
+                False,  # is_debit_note
+                False)  # is_direct_invoice
             if res and res['value']:
                 vals.update(res['value'])
+                
+        # header ad
+        if ad_header_breakdown_data:
+            ad_id = self.create_analytic_distribution(db,
+                breakdown_data=ad_header_breakdown_data)
+            vals['analytic_distribution_id'] = ad_id
+            
+        # save header
+        ai_obj.create(vals, context)
                 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
