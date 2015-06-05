@@ -1000,13 +1000,14 @@ class FinanceTest(UnifieldTest):
                 "invalid level value 'f', 'm' or 'h' expected")
                 
     def create_supplier_invoice(self, db, date=False, partner_id=False,
-        ad_header_breakdown_data=False, lines_accounts=[]):
+        ad_header_breakdown_data=False, lines_accounts=[], validate=False):
         """
         create a supplier invoice
         :param date: today if False
         :param partner_id: Local Market if False
         :param ad_header_breakdown_data: see create_analytic_distribution
         :param lines_accounts: list of account codes for each line to generate
+        :param validate: True to validate the invoice once created
         """
         ai_obj = db.get('account.invoice')
         
@@ -1023,8 +1024,8 @@ class FinanceTest(UnifieldTest):
             'is_inkind_donation': False,
             'is_debit_note': False,
             'is_intermission': False,
- 
-            'date': date,
+            
+            'date_invoice': date,  # posting date
             'document_date': date,
         }
         
@@ -1092,5 +1093,26 @@ class FinanceTest(UnifieldTest):
                 }) for i, a in list(enumerate(lines_accounts))
             ]
             ai_obj.write([id], {'invoice_line': line_vals}, context)
+            
+        if validate:
+            self.validate_invoice(db, [id])
+            
+    def validate_invoice(self, db, ids):
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+        ai_model_name = 'account.invoice'
+        ai_obj = db.get(ai_model_name)
+        
+        for ai in ai_obj.browse(ids):
+            if ai.state == 'draft':
+                # - open it
+                # - force doc date to posting date (as by default to cur date)
+                vals = {
+                    'document_date': self.date2orm(ai.date_invoice),
+                }
+                if not ai.check_total:
+                    vals['check_total'] = ai.amount_total
+                ai_obj.write([ai.id], vals)
+                db.exec_workflow(ai_model_name, 'invoice_open', ai.id)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

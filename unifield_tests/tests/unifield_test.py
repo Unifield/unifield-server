@@ -296,6 +296,14 @@ class UnifieldTest(unittest.TestCase):
         """
         return db.get(model).search(domain, 0, 1)  # domain, offset, limit
         
+    def date2orm(self, dt):
+        """
+        convert date to orm format
+        :type dt: DateTime
+        :rtype: str YYYY-MM-DD
+        """
+        return dt.strftime('%Y-%m-%d')
+        
     def get_orm_date_fy_start(self):
         return "%04d-01-01" % (datetime.now().year, )
         
@@ -352,5 +360,21 @@ class UnifieldTest(unittest.TestCase):
         int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
         random_second = random.randrange(int_delta)
         return (start + timedelta(seconds=random_second))
+        
+    def get_iter_item(self, iterable, index):
+        """
+        get iterable item at given index
+        used to get a specific item of an oerplib browsed list's item
+        :param iter: iterable to get item from
+        :param index: index of the wanted item
+        :type index: int
+        :return item or None
+        """
+        i = 0
+        for item in iterable:
+            if i == index:
+                return item
+            i += 1
+        return None
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
