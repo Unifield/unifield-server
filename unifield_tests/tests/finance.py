@@ -999,10 +999,11 @@ class FinanceTest(UnifieldTest):
             raise FinanceTestException(
                 "invalid level value 'f', 'm' or 'h' expected")
                 
-    def create_supplier_invoice(self, db, date=False, partner_id=False,
-        ad_header_breakdown_data=False, lines_accounts=[], validate=False):
+    def create_supplier_invoice(self, db, is_refund=False, date=False,
+        partner_id=False, ad_header_breakdown_data=False, lines_accounts=[],
+        validate=False):
         """
-        create a supplier invoice
+        create a supplier invoice or refund
         :param date: today if False
         :param partner_id: Local Market if False
         :param ad_header_breakdown_data: see create_analytic_distribution
@@ -1015,7 +1016,7 @@ class FinanceTest(UnifieldTest):
         context = { 'type': 'in_invoice', 'journal_type': 'purchase', }
         
         # vals
-        itype = 'in_invoice'
+        itype = 'in_refund' if refund else 'in_invoice'
         date = date or self.get_orm_date_now()
         vals = {
             'type': itype,
