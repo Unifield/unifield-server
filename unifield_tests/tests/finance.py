@@ -90,7 +90,7 @@ class FinanceTest(UnifieldTest):
             else 'account.account'
         return db.get(model).browse(id).code
         
-    def get_random_amount(self, is_expense):
+    def get_random_amount(self, is_expense=False):
         amount = float(randrange(100, 10000))
         if is_expense:
             amount *= -1.
@@ -1000,13 +1000,13 @@ class FinanceTest(UnifieldTest):
                 "invalid level value 'f', 'm' or 'h' expected")
                 
     def create_supplier_invoice(self, db, date=False, partner_id=False,
-        ad_header_breakdown_data=False, lines_data=False):
+        ad_header_breakdown_data=False, lines_accounts=[]):
         """
         create a supplier invoice
         :param date: today if False
         :param partner_id: Local Market if False
         :param ad_header_breakdown_data: see create_analytic_distribution
-        :param lines_data: [{}]
+        :param lines_accounts: list of account codes for each line to generate
         """
         ai_obj = db.get('account.invoice')
         
@@ -1079,7 +1079,18 @@ class FinanceTest(UnifieldTest):
             vals['analytic_distribution_id'] = ad_id
             
         # save header
-        ai_obj.create(vals, context)
-                
+        id = ai_obj.create(vals, context)
+        
+        # save lines
+        if lines_accounts:
+            line_vals = [
+                (0, 0, {
+                    'account_id': self.get_account_from_code(db, a),
+                    'name': "L%03d %s" % (i + 1, a, ),
+                    'price_unit': float(randrange(1, 10)),
+                    'quantity': float(randrange(10, 100)),
+                }) for i, a in list(enumerate(lines_accounts))
+            ]
+            ai_obj.write([id], {'invoice_line': line_vals}, context)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
