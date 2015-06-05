@@ -501,7 +501,7 @@ class FinanceTestCorCases(FinanceTest):
             
             self.check_ji_correction(db, ji_id,
                 '60010', new_account_code='60000',
-                expected_ad=ad,
+                expected_ad=new_ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
             )
@@ -530,7 +530,7 @@ class FinanceTestCorCases(FinanceTest):
                 do_hard_post=True
             )
             
-            # CLOSE PERIOD Januar (MISSIONp
+            # CLOSE PERIOD Januar (MISSION)
             self.period_close_reopen(db, 'm', 1)
             
             new_ad=[
@@ -546,9 +546,9 @@ class FinanceTestCorCases(FinanceTest):
             
             self.check_ji_correction(db, ji_id,
                 '60010', new_account_code=False,
-                expected_ad=ad,
-                expected_ad_rev=new_ad,
-                expected_ad_cor=new_ad,
+                expected_ad=new_ad,
+                expected_ad_rev=ad,
+                expected_ad_cor=ad,
             )
             
     def test_cor1_7(self):
@@ -575,25 +575,22 @@ class FinanceTestCorCases(FinanceTest):
                 do_hard_post=True
             )
             
-            # CLOSE PERIOD Januar (MISSION)
-            self.period_close_reopen(db, 'm', 1, reopen=True)
-            
             new_ad=[
                 (70., 'OPS', 'HT101', 'PF'),
                 (30., 'OPS', 'HT101', 'PF'),
             ]
             self.simulation_correction_wizard(db, ji_id,
                     cor_date=get_orm_fy_date(2, 7),  # 7 Feb of this year
-                    new_account_code='60000',
+                    new_account_code='60030',
                     new_ad_breakdown_data=new_ad,
                     ad_replace_data=False
             )
             
             self.check_ji_correction(db, ji_id,
-                '60010', new_account_code='60000',
-                expected_ad=ad,
-                expected_ad_rev=new_ad,
-                expected_ad_cor=new_ad,
+                '60010', new_account_code='60030',
+                expected_ad=new_ad,
+                expected_ad_rev=ad,
+                expected_ad_cor=ad,
             )
             
     def test_cor1_8(self):
@@ -619,22 +616,98 @@ class FinanceTestCorCases(FinanceTest):
                 date=False, document_date=False,
                 do_hard_post=True
             )
-            
-            # CLOSE PERIOD Januar (MISSION)
-            self.period_close_reopen(db, 'm', 1, reopen=True)
  
             self.simulation_correction_wizard(db, ji_id,
+                    cor_date=False,
+                    new_account_code='13300',
+                    new_ad_breakdown_data=False,
+                    ad_replace_data=False
+            
+            self.check_ji_correction(db, ji_id,
+                '60010', new_account_code='13300',
+                expected_ad=ad,
+                expected_ad_rev=ad,
+                expected_ad_cor=False,  # bc new account not an expense one
+            )
+            
+    def test_cor1_9(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_9
+        """
+        self._setup()
+        
+        db = self.c1
+        self._set_start_register(db)
+        
+        reg_id = self._get_register(db, browse=False)
+        if reg_id:
+            regl_id, distrib_id, ji_id = self.create_register_line(
+                db, reg_id,
+                '13300', self.get_random_amount(True),
+                date=False, document_date=False,
+                do_hard_post=True
+            )
+            
+            self.simulation_correction_wizard(db, ji_id,
+                    cor_date=False,
                     new_account_code='13310',
+                    new_ad_breakdown_data=False,
+                    ad_replace_data=False
+            
+            self.check_ji_correction(db, ji_id,
+                '13300', new_account_code='13310',
+                expected_ad=False,
+                expected_ad_rev=False,
+                expected_ad_cor=False,
+            )
+            
+        def test_cor1_10(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_10
+        """
+        self._setup()
+        
+        db = self.c1
+        self._set_start_register(db)
+        
+        reg_id = self._get_register(db, browse=False)
+        if reg_id:
+            regl_id, distrib_id, ji_id = self.create_register_line(
+                db, reg_id,
+                '13300', self.get_random_amount(True),
+                date=False, document_date=False,
+                do_hard_post=True
+            )
+            
+            # TODO
+            # should deny unit test when no ad provided from not expense account
+            # to expense one
+            """self.simulation_correction_wizard(db, ji_id,
+                    cor_date=False,
+                    new_account_code='61000',
+                    new_ad_breakdown_data=False
+                    ad_replace_data=False
+            )"""
+ 
+            new_ad=[
+                (30., 'OPS', 'HT101', 'PF'),
+                (30., 'OPS', 'HT101', 'PF1'),
+                (40., 'OPS', 'HT120', 'PF1'),
+            ]
+            self.simulation_correction_wizard(db, ji_id,
+                    cor_date=False,
+                    new_account_code='61000',
                     new_ad_breakdown_data=new_ad,
                     ad_replace_data=False
             )
             
             self.check_ji_correction(db, ji_id,
-                '60010', new_account_code='13310',
-                expected_ad=ad,
-                expected_ad_rev=ad,
-                expected_ad_cor=ad,
+                '13300', new_account_code='61000',
+                expected_ad=new_ad,
+                expected_ad_rev=False,
+                expected_ad_cor=False,
             )
+
 
 def get_test_class():
     return FinanceTestCorCases
