@@ -717,7 +717,8 @@ class FinanceTestCorCases(FinanceTest):
         db = self.c1
         
         self.create_supplier_invoice(db, date=False, partner_id=False,
-            ad_header_breakdown_data=False, lines_data=False)
+            ad_header_breakdown_data=[(100., 'OPS', False, False)],
+            lines_data=False)
 
 
 def get_test_class():
