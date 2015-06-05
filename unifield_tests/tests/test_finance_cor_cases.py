@@ -622,6 +622,7 @@ class FinanceTestCorCases(FinanceTest):
                     new_account_code='13300',
                     new_ad_breakdown_data=False,
                     ad_replace_data=False
+            )
             
             self.check_ji_correction(db, ji_id,
                 '60010', new_account_code='13300',
@@ -653,6 +654,7 @@ class FinanceTestCorCases(FinanceTest):
                     new_account_code='13310',
                     new_ad_breakdown_data=False,
                     ad_replace_data=False
+            )
             
             self.check_ji_correction(db, ji_id,
                 '13300', new_account_code='13310',
@@ -661,7 +663,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,
             )
             
-        def test_cor1_10(self):
+    def test_cor1_10(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_10
         """

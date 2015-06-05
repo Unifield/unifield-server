@@ -997,6 +997,74 @@ class FinanceTest(UnifieldTest):
                 period_obj.action_close_hq([period_id])
         else:
             raise FinanceTestException(
-                "invalid level value 'f', 'm' or 'h' expected"
+                "invalid level value 'f', 'm' or 'h' expected")
+                
+    def create_supplier_invoice(self, db, date, partner_id=False,
+        ad_header_breakdown_data=False, lines_data=False):
+        """
+        create a supplier invoice
+        :param partner_id: Local Market if False
+        :param ad_header_breakdown_data: see create_analytic_distribution
+        :param lines_data: [{}]
+        """
+        itype = 'in_invoice'
+        
+        # simulate menu context
+        context = { 'type': 'in_invoice', 'journal_type': 'purchase', }
+        
+        vals = {
+            'type': itype,
+            
+            'is_direct_invoice': False,
+            'is_inkind_donation': False,
+            'is_debit_note': False,
+            'is_intermission': False,
+ 
+            'date': date,
+            'document_date': date,
+        }
+        
+        # company 
+        # via on_change: will set journal
+        # company_id = db.get('res.users').browse(cr, uid, [uid]).company_id.id
+        company_id = db.user.company_id.id
+        res = onchange_company_id(
+            False,  # ids
+            db.user.company_id.id,
+            False,  # partner id
+            itype,  # invoice type
+            False,  # invoice line,
+            False)  # ccy id
+        if res and res['value']:
+            vals.update(res['value'])
+            
+        # partner
+        # via on_change: will set account_id, currency_id
+        if not partner_id:
+            domain = [
+                ('supplier', '=', True),
+                ('name', '=', 'Local Market'),
+            ]
+            partner_id = self.get('res_partner').search(domain)
+            if not partner_id:
+                raise FinanceTestException("Partner %s not found" % (
+                    str(domain), ))
+            partner_id = partner_id[0]
+            
+            res = onchange_partner_id(
+                False,  # ids
+                itype, # invoice type
+                partner_id,
+                date_invoice=False,
+                payment_term=False,
+                partner_bank_id=False,
+                company_id=False,
+                is_inkind_donation=False,
+                is_intermission=False,
+                is_debit_note=False,
+                is_direct_invoice=False)
+            if res and res['value']:
+                vals.update(res['value'])
+                
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
