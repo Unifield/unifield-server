@@ -330,6 +330,9 @@ class FinanceTestCorCases(FinanceTest):
         # HQ level: set financing contract + sync down
         set_financing_contract()
         
+        # activate USD and sync (will be use in Jan, Feb)
+        # TODO
+        
     def test_cor1_1(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_1
@@ -714,12 +717,50 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_11
         """
+        # TODO: finish this use case
         db = self.c1
         
-        self.create_supplier_invoice(db, date=False, partner_id=False,
-            ad_header_breakdown_data=[(100., 'OPS', False, False)],
-            lines_accounts=['60000', '60010', ],
-            validate=True)
+        self.create_supplier_invoice(db,
+            ccy_code=False, date=False, partner_id=False,
+            ad_header_breakdown_data=[
+                (50., 'NAT', 'HT101', 'PF'),
+                (50., 'NAT', 'HT120', 'FP1'),
+            ],
+            lines_accounts=['60002', '60003', '60004', ],
+            validate=True
+        )
+            
+        # TODO
+        # close financing contract FC1 and soft-close it
+        
+        # select ALL boocked AJI of FP1, correction wizard: change FP1 to PF
+        
+        # repoen FC1
+        
+        # select ALL boocked AJI of FP1, correction wizard:
+        # => change AD
+        # - 50% NAT, HT101, PF
+        # - 50% NAT, HT120, PF
+        # => funding pool is modified by the AJI initially selected
+        
+    def test_cor1_12(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_12
+        """
+        # TODO: finish this use case
+        db = self.c1
+        
+        self.create_supplier_invoice(db,
+            ccy_code='USD',
+            date=self.get_orm_fy_date(1, 8),
+            partner_id=False,
+            ad_header_breakdown_data=[
+                (60., 'OPS', 'HT101', 'PF'),
+                (40., 'OPS', 'HT120', 'PF'),
+            ],
+            lines_accounts=['60010', '60020', '60030', ],
+            validate=True
+        )
 
 
 def get_test_class():

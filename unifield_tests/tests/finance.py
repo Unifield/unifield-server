@@ -999,11 +999,13 @@ class FinanceTest(UnifieldTest):
             raise FinanceTestException(
                 "invalid level value 'f', 'm' or 'h' expected")
                 
-    def create_supplier_invoice(self, db, is_refund=False, date=False,
-        partner_id=False, ad_header_breakdown_data=False, lines_accounts=[],
-        validate=False):
+    def create_supplier_invoice(self, db, ccy_code=False, is_refund=False,
+        date=False, partner_id=False, ad_header_breakdown_data=False, 
+        lines_accounts=[], validate=False):
         """
-        create a supplier invoice or refund
+        create a supplier invoice or
+        :param ccy_code: ccy code (partner ccy if not set)
+        :param is_refund: is a refund ? False for a regular invoice
         :param date: today if False
         :param partner_id: Local Market if False
         :param ad_header_breakdown_data: see create_analytic_distribution
@@ -1016,7 +1018,7 @@ class FinanceTest(UnifieldTest):
         context = { 'type': 'in_invoice', 'journal_type': 'purchase', }
         
         # vals
-        itype = 'in_refund' if refund else 'in_invoice'
+        itype = 'in_refund' if is_refund else 'in_invoice'
         date = date or self.get_orm_date_now()
         vals = {
             'type': itype,
@@ -1074,6 +1076,14 @@ class FinanceTest(UnifieldTest):
             if res and res['value']:
                 vals.update(res['value'])
                 
+        if ccy_code:
+            # specific ccy instead of partner one
+            ccy_ids = db.get('res.currency').search([('name', '=', ccy_code)])
+            if not ccy_ids:
+                raise FinanceTestException("'%s' currency not found" % (
+                    ccy_code, ))
+            vals['currency_id'] = ccy_ids[0]
+                    
         # header ad
         if ad_header_breakdown_data:
             ad_id = self.create_analytic_distribution(db,
