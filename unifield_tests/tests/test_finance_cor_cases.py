@@ -746,7 +746,6 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_12
         """
-        # TODO: finish this use case
         db = self.c1
         
         ad = [
@@ -798,6 +797,97 @@ class FinanceTestCorCases(FinanceTest):
             new_ad_breakdown_data=False,
             ad_replace_data=False
         )"""
+        
+    def test_cor1_13(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_13
+        """
+        db = self.c1
+        aml_obj = db.get('account.move.line')
+        
+        
+        ad = [
+            (55., 'OPS', 'HT101', 'PF'),
+            (45., 'OPS', 'HT120', 'PF'),
+        ]
+        
+        ji_ids = self.validate_invoice(db, self.create_supplier_invoice(db,
+            ccy_code=False,
+            date=False,
+            partner_id=False,
+            ad_header_breakdown_data=ad,
+            lines_accounts=['60010', '60020', ]
+        ))
+ 
+        # cor of the 1fst invoice line
+
+        new_ad = [ (100., 'OPS', 'HT120', 'PF'), ]
+        
+        # simu of cor if 1st invoice line
+        ji_ids = [ji_ids[0]]
+        ji_records = db.get('account.move.line').read(ji_ids, ['account_id'])
+        for ji_id in ji_ids:
+            self.simulation_correction_wizard(db, ji_id,
+                cor_date=False,
+                new_account_code='60000',
+                new_ad_breakdown_data=new_ad,
+                ad_replace_data=False
+            )
+                
+            self.check_ji_correction(db, ji_id,
+                ji_records[ji_id]['account_id'], new_account_code='60000',
+                expected_ad=new_ad,
+                expected_ad_rev=ad,
+                expected_ad_cor=new_ad,
+            )
+            
+        # 13.7: cor the cor
+        # get the COR JI of the corrected JI
+        cor_ids = aml_obj.search([('corrected_line_id', '=', ji_ids[0])])
+        if not cor_ids:
+            raise FinanceTestCorCasesException('COR1 JI not found!')
+        
+        # simu cor of the cor and check
+        new_ad2 = [ (100., 'OPS', 'HT120', 'FP1'), ]
+        self.simulation_correction_wizard(db, cor_ids[0],
+            cor_date=False,
+            new_account_code='60030',
+            new_ad_breakdown_data=new_ad2,
+            ad_replace_data=False
+        )
+            
+        self.check_ji_correction(db, cor_ids[0],
+            '60000', new_account_code='60030',
+            expected_ad=new_ad2,
+            expected_ad_rev=new_ad,
+            expected_ad_cor=new_ad2
+        )
+            
+        # 13.8: cor the cor of cor
+        # get the cor of cor
+        cor_ids = aml_obj.search([('corrected_line_id', '=', cor_ids[0])])
+        if not cor_ids:
+            raise FinanceTestCorCasesException('COR2 JI not found!')
+        
+        # simu cor the cor of cor and check
+        new_ad3 = [
+            (70., 'OPS', 'HT120', 'FP2'),
+            (30., 'OPS', 'HT101', 'FP2'),
+        ]
+        self.simulation_correction_wizard(db, cor_ids[0],
+            cor_date=False,
+            new_account_code='60050',
+            new_ad_breakdown_data=new_ad3,
+            ad_replace_data=False
+        )
+            
+        self.check_ji_correction(db, cor_ids[0],
+            '60030', new_account_code='60050',
+            expected_ad=new_ad3,
+            expected_ad_rev=new_ad2,
+            expected_ad_cor=new_ad3
+        )
+        
 
 def get_test_class():
     return FinanceTestCorCases
