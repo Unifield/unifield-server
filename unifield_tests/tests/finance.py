@@ -349,13 +349,23 @@ class FinanceTest(UnifieldTest):
         else:
             distrib_id = False
         if do_hard_post:
-            absl_obj.button_hard_posting([regl_id], {})
+            self.register_line_hard_post(db, [regl_id])
             
         if regl_id:
             regl_br = absl_obj.browse(regl_id)
-            ji = self.get_first(regl_br.move_ids)    
+            ji = self.get_first(regl_br.move_ids)
         
         return (regl_id, distrib_id, ji and ji.id or False, )
+        
+    def register_line_temp_post(self, db, reg_ids):
+        if isinstance(reg_ids, (int, long, )):
+            reg_ids = [reg_ids]
+        db.get('account.bank.statement.line').button_temp_posting(reg_ids, {})
+        
+    def register_line_hard_post(self, db, reg_ids):
+        if isinstance(reg_ids, (int, long, )):
+            reg_ids = [reg_ids]
+        db.get('account.bank.statement.line').button_hard_posting(reg_ids, {})
         
     def create_analytic_distribution(self, db,
         breakdown_data=[(100., 'OPS', False, False)]):

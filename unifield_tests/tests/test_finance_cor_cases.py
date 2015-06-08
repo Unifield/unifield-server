@@ -805,7 +805,6 @@ class FinanceTestCorCases(FinanceTest):
         db = self.c1
         aml_obj = db.get('account.move.line')
         
-        
         ad = [
             (55., 'OPS', 'HT101', 'PF'),
             (45., 'OPS', 'HT120', 'PF'),
@@ -887,6 +886,30 @@ class FinanceTestCorCases(FinanceTest):
             expected_ad_rev=new_ad2,
             expected_ad_cor=new_ad3
         )
+        
+    def test_cor1_14(self):
+        """
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_13
+        """
+        db = self.c1
+        
+        self._set_start_register(db)
+        
+        reg_id = self._get_register(db, browse=False)
+        if reg_id:       
+            regl_id, distrib_id, ji_id = self.create_register_line(
+                db, reg_id,
+                '60000', self.get_random_amount(),
+                ad_breakdown_data=[ (100., 'OPS', 'HT101', 'PF'), ]  ,
+                date=False, document_date=False,
+                do_hard_post=False
+            )
+            
+            # temp post
+            self.register_line_temp_post(db, [regl_id])
+            
+            # 14.4 correction wizard should not be available
+            # TODO
         
 
 def get_test_class():
