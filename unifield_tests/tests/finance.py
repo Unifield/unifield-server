@@ -959,7 +959,7 @@ class FinanceTest(UnifieldTest):
         move_obj.button_validate([move_id]) # WARNING: we use button_validate so that it check the analytic distribution validity/presence
         return move_id, aml_expense_id, aml_counterpart_id
     
-    def get_period_id(db, month, year=0):
+    def get_period_id(self, db, month, year=0):
         year = datetime.now().year if year == 0 else year
         period_obj = db.get('account.period')
         
@@ -968,12 +968,12 @@ class FinanceTest(UnifieldTest):
         ])
         return ids and ids[0] or False
     
-    def period_close_reopen(db, level, month, year=0, reopen=False):
+    def period_close_reopen(self, db, level, month, year=0, reopen=False):
         """
         close period at given level
         :param level: 'f', 'm' or 'h' for 'field', 'mission' or 'hq'
         """
-        period_id = self.get_period_id(month, year=year)
+        period_id = self.get_period_id(db, month, year=year)
         if not period_id:
             raise FinanceTestException(
                 "period %02d/%04d not found" % (year, month, ))
@@ -1010,8 +1010,10 @@ class FinanceTest(UnifieldTest):
         :param partner_id: Local Market if False
         :param ad_header_breakdown_data: see create_analytic_distribution
         :param lines_accounts: list of account codes for each line to generate
-        :param validate: True to validate the invoice once created
+        :return : id of invoice
         """
+        res = {}
+        
         ai_obj = db.get('account.invoice')
         
         # simulate menu context
@@ -1104,17 +1106,33 @@ class FinanceTest(UnifieldTest):
                 }) for i, a in list(enumerate(lines_accounts))
             ]
             ai_obj.write([id], {'invoice_line': line_vals}, context)
-            
-        if validate:
-            self.validate_invoice(db, [id])
+        
+        return id
             
     def validate_invoice(self, db, ids):
+        """
+        validate the invoice and return its expense JIs ids list
+        :return : {id: [ji_id, ...]} if ids is a list else return [ji_id, ...]
+        """
+        
         if isinstance(ids, (int, long, )):
             ids = [ids]
+            is_single_ids = True
+            res = []
+        else:
+            is_single_ids = False
+            res = {}
+            
         ai_model_name = 'account.invoice'
         ai_obj = db.get(ai_model_name)
+        aml_obj = db.get('account.move.line')
+        
+        validated_ids = []
         
         for ai in ai_obj.browse(ids):
+            if not is_single_ids:
+                res[ai.id] = []
+                
             if ai.state == 'draft':
                 # - open it
                 # - force doc date to posting date (as by default to cur date)
@@ -1125,5 +1143,17 @@ class FinanceTest(UnifieldTest):
                     vals['check_total'] = ai.amount_total
                 ai_obj.write([ai.id], vals)
                 db.exec_workflow(ai_model_name, 'invoice_open', ai.id)
+                validated_ids.append(ai.id)
+                
+        for ai in ai_obj.browse(validated_ids):
+            # get invoice JIs from invoice reference 
+            # (reference obtained once invoice is validated)
+            ji_ids = aml_obj.search([('reference', '=', ai.number)])
+            if is_single_ids:
+                res = ji_ids or []
+            else:
+                res[ai.id] = ji_ids or []
+                
+        return res
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

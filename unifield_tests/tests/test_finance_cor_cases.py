@@ -720,15 +720,14 @@ class FinanceTestCorCases(FinanceTest):
         # TODO: finish this use case
         db = self.c1
         
-        self.create_supplier_invoice(db,
+        self.validate_invoice(db, self.create_supplier_invoice(db,
             ccy_code=False, date=False, partner_id=False,
             ad_header_breakdown_data=[
                 (50., 'NAT', 'HT101', 'PF'),
                 (50., 'NAT', 'HT120', 'FP1'),
             ],
             lines_accounts=['60002', '60003', '60004', ],
-            validate=True
-        )
+        ))
             
         # TODO
         # close financing contract FC1 and soft-close it
@@ -750,18 +749,55 @@ class FinanceTestCorCases(FinanceTest):
         # TODO: finish this use case
         db = self.c1
         
-        self.create_supplier_invoice(db,
+        ad = [
+            (60., 'OPS', 'HT101', 'PF'),
+            (40., 'OPS', 'HT120', 'PF'),
+        ]
+        
+        ji_ids = self.validate_invoice(db, self.create_supplier_invoice(db,
             ccy_code='USD',
             date=self.get_orm_fy_date(1, 8),
             partner_id=False,
-            ad_header_breakdown_data=[
-                (60., 'OPS', 'HT101', 'PF'),
-                (40., 'OPS', 'HT120', 'PF'),
-            ],
+            ad_header_breakdown_data=ad,
             lines_accounts=['60010', '60020', '60030', ],
-            validate=True
-        )
-
+        ))
+        
+        # CLOSE PERIOD Januar (MISSION)
+        self.period_close_reopen(db, 'm', 1)
+        
+        new_ad = [
+            (70., 'OPS', 'HT101', 'PF'),
+            (30., 'OPS', 'HT120', 'PF'),
+        ],
+        
+        # simu of cor for each invoice JIs
+        ji_records = db.get('account.move.line').read(ji_ids, ['account_id'])
+        for ji_id in ji_ids:
+            self.simulation_correction_wizard(db, ji_id,
+                cor_date=self.get_orm_fy_date(2, 7),
+                new_account_code=False,
+                new_ad_breakdown_data=new_ad,
+                    ad_replace_data=False
+            )
+                
+            self.check_ji_correction(db, ji_id,
+                ji_records[ji_id]['account_id'], new_account_code=False,
+                expected_ad=new_ad,
+                expected_ad_rev=ad,
+                expected_ad_cor=new_ad,
+            )
+            
+        # TODO
+        # 1s invoice line correction date self.get_orm_fy_date(2, 10)
+        # change account (to 60000) account field should be grayed 
+        # (entry has been analytically already corrected)
+        """
+        self.simulation_correction_wizard(db, ji_records[0],
+            cor_date=self.get_orm_fy_date(2, 10),
+            new_account_code='60000',
+            new_ad_breakdown_data=False,
+            ad_replace_data=False
+        )"""
 
 def get_test_class():
     return FinanceTestCorCases
