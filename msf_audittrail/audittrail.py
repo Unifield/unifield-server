@@ -56,6 +56,12 @@ class sale_order(osv.osv):
 
 sale_order()
 
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+    _trace = True
+
+product_product()
 
 class sale_order_line(osv.osv):
     _name = 'sale.order.line'
@@ -144,7 +150,7 @@ class account_bank_statement_line(osv.osv):
 
 account_bank_statement_line()
 
-class account_cashbox_line(osv.osv): 
+class account_cashbox_line(osv.osv):
     _name = 'account.cashbox.line'
     _inherit = 'account.cashbox.line'
     _trace = True
