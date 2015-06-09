@@ -24,8 +24,6 @@ class FinanceTestCorCases(FinanceTest):
         #instances = [ 'HQ1', 'HQ1C1',  'HQ1C1P1', 'HQ1C1P2', 'HQ1C2',
         #   'HQ1C2P1',]
         
-        ccs = [ 'HT112', 'HT120', 'HT122', 'HT220', ]
-    
         # TODO EUR expected
         #functional_ccy = 'EUR'
         functional_ccy = 'CHF'
@@ -35,6 +33,14 @@ class FinanceTestCorCases(FinanceTest):
             #'CHF': [ 0.95476, 0.965, ],  # TODO for EUR as functional
             'USD': [ 1.24, 1.28, ],
         }
+        
+        # new COST CENTERS (and related target instances)
+        ccs = {
+            'HT112': [ 'HQ1C1P1', ],
+            'HT120': [ 'HQ1C1', ],
+            #'HT122': [ 'HQ1C1P2', ],  # TODO: uncomment it
+            #'HT220': [ 'HQ1C2', ],  # TODO: uncomment it
+        }
     
         # C1 FPs and relating CCs
         c1_fp_ccs = {
@@ -42,8 +48,8 @@ class FinanceTestCorCases(FinanceTest):
             'FP2': [ 'HT101', ],
         }
         
+        # financing contracts
         donor = 'DONOR',
-    
         financing_contrats = {
             'FC1': { 'ccs' : [ 'HT101', 'HT120', ], 'fps': [ 'FP1', 'FP2', ], },
         }
@@ -116,11 +122,13 @@ class FinanceTestCorCases(FinanceTest):
             company = self.get_company(db)
             model = 'account.analytic.account'
             parent_cc_ids = {}
+            any_set = False
             
             for cc in meta.ccs:
                 if self.record_exists(db, model, 
                     [('code', '=', cc), ('category', '=', 'OC')]):
                     continue
+                any_set = True
                 
                 # get parent (parent code: 3 first caracters (HT1, HT2, ...))
                 parent_code = cc[:3]  
@@ -148,10 +156,34 @@ class FinanceTestCorCases(FinanceTest):
                         'category': 'OC',
                         'instance_id': company.instance_id.id,
                     }
-                    db.get(model).create(vals)
+                    cc_id = db.get(model).create(vals)
                 else:
                     raise FinanceTestCorCasesException(
                         "parent cost center not found '%s'" % (parent_code,))
+                        
+                # set target instance
+                target_instance_codes = [
+                    self.get_db_name_from_suffix(ti) for ti in meta.ccs[cc] ]
+                instance_ids = db.get('msf.instance').search(
+                    [('code', 'in', target_instance_codes)])
+                if not instance_ids:
+                    # default dev instance
+                    target_instance_codes = [
+                        'se_' + ti for ti in meta.ccs[cc] ]
+                    instance_ids = db.get('msf.instance').search(
+                        [('code', 'in', target_instance_codes)])
+                    if not instance_ids:
+                        raise FinanceTestCorCasesException(
+                            "instances not found")
+                atcc_obj = db.get('account.target.costcenter')
+                for ins_id in instance_ids:
+                    atcc_obj.create({
+                        'instance_id': ins_id,
+                        'cost_center_id': cc_id,
+                        'is_target': True
+                    })
+ 
+            return any_set
                         
         def set_funding_pool():
             db = self.hq1
@@ -277,12 +309,12 @@ class FinanceTestCorCases(FinanceTest):
             activate_currencies(db, [ccy_name for ccy_name in meta.rates])
                 
         # set default rates: at HQ then sync down
-        set_default_currency_rates(self.hq1)
-        self._sync_down()
+        #set_default_currency_rates(self.hq1)
+        #self._sync_down()
             
         # HQ level: set cost centers + sync down
-        #set_cost_centers()
-        #self._sync_down()
+        if set_cost_centers():
+            self._sync_down()
             
         # HQ level: set funding pool + sync up/down
         #set_funding_pool()
