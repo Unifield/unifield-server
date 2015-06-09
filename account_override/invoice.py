@@ -117,7 +117,7 @@ class account_invoice(osv.osv):
             ('reconciled','=',False),
             ('state', '=', 'open'),
             ('type', '=', 'out_invoice'),
-            ('journal_id.type', 'in', ['sale']),
+            ('journal_id.type', 'not in', ['migration']),
             ('partner_id.partner_type', '=', 'section'),
         ]
         return dom1+[('is_debit_note', '=', False)]
@@ -441,6 +441,9 @@ class account_invoice(osv.osv):
         # Reset register_line_ids if not given in default
         if 'register_line_ids' not in default:
             default['register_line_ids'] = []
+        # US-267: Reset st_lines if not given in default, otherwise a new line in Reg will be added
+        if 'st_lines' not in default:
+            default['st_lines'] = []
         # Default behaviour
         new_id = super(account_invoice, self).copy(cr, uid, inv_id, default, context)
         # Case where you split an invoice
@@ -584,7 +587,7 @@ class account_invoice(osv.osv):
                 supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
                 local_ctx.update({'journal_type': 'purchase',
                                 'view_id': supplier_view_id})
-            elif local_ctx.get('journal_type', False) == 'purchase': # UFTP-166: The wrong context saved in log
+            elif local_ctx.get('direct_invoice_view', False): # UFTP-166: The wrong context saved in log
                 supplier_view_id = supplier_direct_invoice_res and supplier_direct_invoice_res[1] or False
                 local_ctx = {'journal_type': 'purchase',
                              'view_id': supplier_view_id}
@@ -660,7 +663,11 @@ class account_invoice(osv.osv):
         if inv.move_id and inv.register_line_ids:
             ml_obj = self.pool.get('account.move.line')
             # First search move line that becomes from invoice
-            res_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', inv.move_id.id), ('account_id', '=', inv.account_id.id)])
+            res_ml_ids = ml_obj.search(cr, uid, [
+                ('move_id', '=', inv.move_id.id),
+                ('account_id', '=', inv.account_id.id),
+                ('invoice_line_id', '=', False),  # US-254: do not seek invoice line's JIs (if same account as header)
+            ])
             if len(res_ml_ids) > 1:
                 raise osv.except_osv(_('Error'), _('More than one journal items found for this invoice.'))
             invoice_move_line_id = res_ml_ids[0]
@@ -1114,4 +1121,74 @@ class account_invoice_line(osv.osv):
         return self.pool.get('account.analytic.line').button_open_analytic_corrections(cr, uid, al_ids, context=context)
 
 account_invoice_line()
+
+
+class res_partner(osv.osv):
+    _description='Partner'
+    _inherit = "res.partner"
+
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _get_search_by_invoice_type(self, cr, uid, obj, name, args,
+        context=None):
+        res = []
+        if not len(args):
+            return res
+        if context is None:
+            context = {}
+        if len(args) != 1:
+            msg = _("Domain %s not suported") % (str(args), )
+            raise osv.except_osv(_('Error'), msg)
+        if args[0][1] != '=':
+            msg = _("Operator '%s' not suported") % (args[0][1], )
+            raise osv.except_osv(_('Error'), msg)
+        if not args[0][2]:
+            return res
+
+        invoice_type = context.get('type', False)
+        if invoice_type:
+            if invoice_type in ('in_invoice', 'in_refund', ):
+                # in invoices: only supplier partner
+                res = [('supplier', '=', True)]
+            elif invoice_type in ('out_invoice', 'out_refund', ):
+                # out invoices: only customer partner
+                res = [('customer', '=', True)]
+
+        return res
+
+    _columns = {
+        'by_invoice_type': fields.function(_get_fake, type='boolean',
+            fnct_search=_get_search_by_invoice_type, method=True),
+    }
+
+    def name_search(self, cr, uid, name='', args=None, operator='ilike',
+        context=None, limit=100):
+        # BKLG-50: IN/OUT invoice/refund partner autocompletion filter
+        # regarding supplier/customer
+        if context is None:
+            context = {}
+
+        alternate_domain = False
+        invoice_type = context.get('type', False)
+        if invoice_type:
+            if invoice_type in ('in_invoice', 'in_refund', ):
+                alternate_domain = [('supplier', '=', True)]
+            elif invoice_type in ('out_invoice', 'out_refund', ):
+                alternate_domain = [('customer', '=', True)]
+        if alternate_domain:
+            args += alternate_domain
+
+        return super(res_partner, self).name_search(cr, uid, name=name,
+            args=args, operator=operator, context=context, limit=limit)
+
+res_partner()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

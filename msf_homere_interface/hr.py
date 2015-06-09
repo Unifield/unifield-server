@@ -29,6 +29,7 @@ from tools.translate import _
 class hr_employee(osv.osv):
     _name = 'hr.employee'
     _inherit = 'hr.employee'
+    _rec_name = 'name_resource'
 
     _order = 'name_resource'
 

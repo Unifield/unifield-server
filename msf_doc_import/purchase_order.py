@@ -489,6 +489,7 @@ wizard_export_po_validated()
 class purchase_order_simu_import_file(osv.osv):
     _name = 'purchase.order.simu.import.file'
     _order = 'timestamp'
+    _rec_name = 'order_id'
 
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Order', required=True),

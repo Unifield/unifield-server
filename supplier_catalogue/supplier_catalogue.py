@@ -750,6 +750,7 @@ supplier_catalogue()
 
 class supplier_catalogue_line(osv.osv):
     _name = 'supplier.catalogue.line'
+    _rec_name = 'line_number'
     _description = 'Supplier catalogue line'
     _table = 'supplier_catalogue_line'
     # Inherits of product.product to an easier search of lines

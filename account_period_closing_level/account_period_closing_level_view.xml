@@ -12,6 +12,15 @@
                     <button name="create_period" position="replace"/>
                     <button name="create_period3" position="replace"/>
                     <field name="end_journal_period_id" position="replace"/>
+
+                    <xpath expr="//group[2]" position="after">
+                        <field name="is_closable" invisible="1" />
+                        <group
+                            attrs="{'invisible': [('is_closable', '=', False)]}">
+                            <button name="uf_close_fy" type="object"
+                                string="Close (HQ)" icon="gtk-go-forward"/>
+                        </group>
+                    </xpath>
                 </data>
             </field>
         </record>
@@ -49,7 +58,7 @@
                             <button name="action_close_mission" confirm="Are you sure you want to close this period?" string="Close period (Mission)" type="object" icon="gtk-go-forward" colspan="1"/>
                         </group>
                         <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'mission-closed')]}">
-                            <button name="action_close_field" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" colspan="1"/>
+                            <button name="action_close_field_reopen" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" colspan="1"/>
                             <button name="action_close_hq" confirm="Are you sure you want to close this period?" string="Close period (HQ)" type="object" icon="gtk-go-forward" colspan="1"/>
                         </group>
                         <newline/>

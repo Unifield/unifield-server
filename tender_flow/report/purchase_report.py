@@ -61,6 +61,8 @@ class purchase_report(osv.osv):
         'day': fields.char('Day', size=128, readonly=True),
         'state': fields.selection(STATE_SELECTION, 'Order State', readonly=True),
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
+        'product_code': fields.char(size=256, string='Product Code', readonly=True),
+        'product_name': fields.char(size=512, string='Product Name', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse', readonly=True),
         'partner_id':fields.many2one('res.partner', 'Supplier', readonly=True),
         'partner_zone': fields.selection(ZONE_SELECTION, string='Supplier Zone', readonly=True),
@@ -128,6 +130,8 @@ class purchase_report(osv.osv):
                     s.create_uid as user_id,
                     s.company_id as company_id,
                     l.product_id,
+                    pp.default_code as product_code,
+                    pt.name as product_name,
                     t.nomen_manda_2 as category_id,
                     s.name as order_name,
                     s.order_type as order_type,
@@ -168,6 +172,8 @@ class purchase_report(osv.osv):
                     left join cost_center_distribution_line cc on cc.distribution_id = d.id
                     left join product_uom u on (u.id=l.product_uom)
                     left join product_pricelist ppl on (ppl.id = s.pricelist_id)
+                    left join product_product pp on l.product_id = pp.id
+                    left join product_template pt on pp.product_tmpl_id = pt.id
                     left join res_partner part on (part.id = s.partner_id)
                     left join res_currency_rate rcr_fr on rcr_fr.currency_id = ppl.currency_id 
                         AND rcr_fr.id IN (SELECT rcrd.id from res_currency_rate rcrd WHERE rcrd.currency_id = ppl.currency_id AND rcrd.name <= COALESCE(s.date_approve,NOW()) ORDER BY name desc LIMIT 1 )
@@ -176,6 +182,8 @@ class purchase_report(osv.osv):
                     s.company_id,
                     s.create_uid,
                     l.product_qty,
+                    pp.default_code,
+                    pt.name,
                     u.factor,
                     cc.analytic_id,
                     cc.percentage,
@@ -212,6 +220,13 @@ class purchase_report(osv.osv):
                     rcr_fr.rate
             )
         """)
+
+    _replace_exported_fields = {
+        'product_id': [
+            (['product_code', 'Product Code'], 10),
+            (['product_name', 'Product Name'], 20),
+        ],
+    }
         
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
         '''
@@ -232,8 +247,12 @@ class purchase_report(osv.osv):
                             product_id = x[2]
 
                 if product_id:
-                    uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id
-                    data.update({'product_uom': (uom.id, uom.name)})
+                    product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+                    data.update({
+                        'product_uom': (product.uom_id.id, product.uom_id.name),
+                        'product_code': product.default_code,
+                        'product_name': product.name,
+                    })
 
                 if not product_id and 'quantity' in data:
                     data.update({'quantity': ''})

@@ -204,7 +204,7 @@
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>
 							<field name="stock_journal_id" widget="selection" invisible="True" />
-							<field name="min_date" string="Expected Pick Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" 
+							<field name="min_date" string="Expected Pick Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
 								   on_change="change_min_date()" required="1" />
                             <field name="min_date_manually" invisible="1" />
 							<field name="sale_id" invisible="True" />
@@ -215,12 +215,12 @@
 					<notebook colspan="4">
 						<page string="Products">
 							<field name="from_wkf" invisible="1"/>
-							<field colspan="4" 
-								name="move_lines" 
-								nolabel="1" 
-								widget="one2many_list" 
-								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}" 
-							    on_change="onchange_move()"  
+							<field colspan="4"
+								name="move_lines"
+								nolabel="1"
+								widget="one2many_list"
+								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
+							    on_change="onchange_move()"
 							    >
 								<tree string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True"
 								colors="red: inactive_product==True">
@@ -311,7 +311,7 @@
 											<field name="np_check" />
 										</group>
 										<field name="reason_type_id"
-										       domain="[('outgoing_ok', '=', True)]" 
+										       domain="[('outgoing_ok', '=', True)]"
 										       attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
 									</group>
 									<group colspan="2" col="2">
@@ -471,9 +471,9 @@
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('state', '=', 'draft')]</field>
 			<field name="context">{'contact_display':'partner_address',
-								   'picking_type': 'picking_ticket', 
-				                   'search_default_sale_id':1, 
-				                   'group_by_no_leaf':0, 
+								   'picking_type': 'picking_ticket',
+				                   'search_default_sale_id':1,
+				                   'group_by_no_leaf':0,
 				                   'group_by':'origin'}</field>
 			<field name="search_view_id" ref="view_picking_ticket_search"/>
 			<field name="help">This is the list of draft picking tickets.</field>
@@ -637,9 +637,9 @@
 									<group colspan="2" col="4">
 										<separator colspan="4" string="Move Information"/>
 										<field name="name" invisible="1" colspan="4" />
-                                        <field name="product_id" 
-                                               context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" 
-                                               on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type,purchase_line_id,True)" 
+                                        <field name="product_id"
+                                               context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
+                                               on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type,purchase_line_id,True)"
                                                colspan="4" />
                                         <field name="composition_list_id" invisible="True" />
 										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
@@ -761,7 +761,7 @@
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'ppl')]</field>
 			<field name="context">{'contact_display': 'partner_address', 'ppl_screen':True,
-								   'picking_type': 'picking_ticket', 
+								   'picking_type': 'picking_ticket',
 								   'search_default_available':1}</field>
 			<!-- <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'group_by':'origin', 'search_default_available':1}</field> -->
 			<field name="search_view_id" ref="view_ppl_search"/>
@@ -891,7 +891,7 @@
 			<field name="name">Shipment preparation</field>
 			<field name="res_model">stock.picking</field>
 			<field name="type">ir.actions.act_window</field>
-			<field name="view_type">form</field> 
+			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('type','=','out'), ( 'subtype', 'in', ['picking','ppl'] )]</field>
 			<field name="context">{'group_by':'origin,state' }</field>
@@ -1160,6 +1160,18 @@
 		<!--<menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>-->
 
 		<!-- Shipment -->
+		<record id="view_change_desc_wizard" model="ir.ui.view">
+			<field name="name">stock.picking.wizard</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+                <form string="Change description shipment line">
+					<field name="description_ppl"/>
+					<button name="change_description_save" string="Save description" icon="gtk-save" type="object" />
+				</form>
+			</field>
+		</record>
+
 		<record id="view_shipment_tree" model="ir.ui.view">
 			<field name="name">shipment.tree</field>
 			<field name="model">shipment</field>
@@ -1195,22 +1207,25 @@
 							<field name="date" readonly="True" />
 							<field name="shipment_actual_date" />
 							<field name="shipment_expected_date" attrs="{'readonly': [('state', 'not in', ('draft', 'packed'))]}" />
-							<field name="transport_type" />
+                            <field name="transport_type" attrs="{'readonly': [('state', 'in', ('done', 'delivered', 'cancel'))]}" />
 							<field name="backshipment_id" readonly="True" />
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                                 required="1"
 								attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-							<field name="address_id" context="{'contact_display':'partner'}" />
+							<field name="address_id" context="{'contact_display':'partner'}" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}" />
 							<field name="in_ref" readonly="True" />
 						</group>
 					</group>
+
 					<notebook colspan="4">
 						<page string="Pack Families">
 							<field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" readonly="True">
 								<tree string="Pack Families" colors="red: not_shipped">
+									<field name="fake_state" invisible="True" />
 									<field name="sale_order_id"/>
 									<field name="ppl_id" />
                                     <field name="description_ppl" />
+									<button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
 									<field name="from_pack"/>
 									<field name="to_pack"/>
 									<field name="num_of_packs" />
@@ -1268,7 +1283,7 @@
 								<button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo" />
                                 <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                                 <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
-								<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': [('state', '!=', 'done')]}" 
+								<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': [('state', '!=', 'done')]}"
 								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
 							</group>
 						</page>
@@ -1277,35 +1292,40 @@
 						    </field>
 						</page>
 						<page string="Document Information">
-							<field name="cargo_manifest_reference" />
-							<field name="date_of_departure" />
-							<field name="planned_date_of_arrival" />
-							<field name="transit_via" />
-							<field name="registration" />
-							<field name="driver_name" />
+							<group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
+								<field name="cargo_manifest_reference" />
+								<field name="date_of_departure" />
+								<field name="planned_date_of_arrival" />
+								<field name="transit_via" />
+								<field name="registration" />
+								<field name="driver_name" />
+							</group>
 						</page>
 						<page string="Transport Information">
-							<group col="2" colspan="1">
+                            <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
 								<separator string="Shipper" colspan="2" />
-								<field name="shipper_name" />
+                                <field name="shipper_name" />
+                                <field name="shipper_contact" />
 								<field name="shipper_address" />
 								<field name="shipper_phone" />
 								<field name="shipper_email" />
 								<field name="shipper_other" />
 								<field name="shipper_date" />
 							</group>
-							<group col="2" colspan="1">
-								<separator string="Carrier" colspan="2" />
-								<field name="carrier_name" />
-								<field name="carrier_address" />
-								<field name="carrier_phone" />
-								<field name="carrier_email" />
-								<field name="carrier_other" />
+                            <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
+                                <separator string="Carrier" colspan="2" />
+                                <field name="carrier_id" on_change="selected_carrier(carrier_id)" />
+                                <field name="carrier_name" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_address" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_phone" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_email" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_other" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
 								<field name="carrier_date" />
 							</group>
-							<group col="2" colspan="1">
+                            <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
 								<separator string="Consignee" colspan="2" />
-								<field name="consignee_name" />
+                                <field name="consignee_name" />
+                                <field name="consignee_contact" />
 								<field name="consignee_address" />
 								<field name="consignee_phone" />
 								<field name="consignee_email" />

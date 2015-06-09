@@ -3,16 +3,35 @@
     <data>
 
         <report id="open_invoices_2"
-        string="Open Invoices"
-        model="account.invoice"
-        name="open.invoices.2"
-        target_filename="Open Invoices_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
-        file="account_override/report/open_invoices_xls.mako"
-        report_type="webkit"
-        header="False"
-        auto="False"
-        menu="True"/>
+            string="Open Invoices"
+            model="account.invoice"
+            name="open.invoices.2"
+            target_filename="Open Invoices_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
+            file="account_override/report/open_invoices_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"/>
 
+        <report id="synthesis_invoices_report"
+            string="Allocation synthesis"
+            model="account.invoice"
+            name="allocation.synthesis.invoices"
+            target_filename="Allocation_synthesis_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
+            file="account_override/report/allocation_synthesis_invoices_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"/>
+
+        <report id="allocation_invoices_report"
+            model="account.invoice"
+            name="allocation.invoices.report"
+            target_filename="Allocation_report_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
+            rml="account_override/report/allocation_invoices_report.rml"
+            header="False"
+            auto="False"
+            string="Invoice allocation"/>
     </data>
 </openerp>
 

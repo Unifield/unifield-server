@@ -240,13 +240,45 @@ class res_partner(osv.osv):
         'price_currency': fields.function(_get_price_info, method=True, type='many2one', relation='res.currency', string='Currency', multi='info'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'is_instance': fields.function(_get_is_instance, fnct_search=_get_is_instance_search, method=True, type='boolean', string='Is current instance partner id'),
+        'transporter': fields.boolean(string='Transporter'),
     }
 
     _defaults = {
         'manufacturer': lambda *a: False,
+        'transporter': lambda *a: False,
         'partner_type': lambda *a: 'external',
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
+
+    def check_pricelists_vals(self, cr, uid, vals, context=None):
+        """
+        Put the good pricelist on the good field
+        """
+        pricelist_obj = self.pool.get('product.pricelist')
+        pppp_id = vals.get('property_product_pricelist_purchase', False)
+        ppp_id = vals.get('property_product_pricelist', False)
+
+        if pppp_id:
+            pppp = pricelist_obj.browse(cr, uid, pppp_id, context=context)
+            if pppp.type != 'purchase':
+                purchase_pricelists = pricelist_obj.search(cr, uid, [
+                    ('currency_id', '=', pppp.currency_id.id),
+                    ('type', '=', 'purchase'),
+                ], context=context)
+                if purchase_pricelists:
+                    vals['property_product_pricelist_purchase'] = purchase_pricelists[0]
+
+        if ppp_id:
+            ppp = pricelist_obj.browse(cr, uid, ppp_id, context=context)
+            if ppp.type != 'sale':
+                sale_pricelists = pricelist_obj.search(cr, uid, [
+                    ('currency_id', '=', ppp.currency_id.id),
+                    ('type', '=', 'sale'),
+                ], context=context)
+                if sale_pricelists:
+                    vals['property_product_pricelist'] = sale_pricelists[0]
+
+        return vals
 
     def unlink(self, cr, uid, ids, context=None):
         """
@@ -312,6 +344,15 @@ class res_partner(osv.osv):
 
     _constraints = [
     ]
+
+    def transporter_ticked(self, cr, uid, ids, transporter, context=None):
+        """
+        If the transporter box is ticked, automatically ticked the supplier
+        box.
+        """
+        if transporter:
+            return {'value': {'supplier': True}}
+        return {}
 
     def get_objects_for_partner(self, cr, uid, ids, context):
         """
@@ -431,10 +472,15 @@ class res_partner(osv.osv):
         )
 
     def write(self, cr, uid, ids, vals, context=None):
+        vals = self.check_pricelists_vals(cr, uid, vals, context=context)
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not context:
             context = {}
+
+        #US-126: when it's an update from the sync, then just remove the forced 'active' parameter
+        if context.get('sync_update_execution', False) and 'active' in vals:
+            del vals['active']
 
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
@@ -459,6 +505,7 @@ class res_partner(osv.osv):
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
+        vals = self.check_pricelists_vals(cr, uid, vals, context=context)
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')

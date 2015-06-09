@@ -26,6 +26,7 @@ from osv import fields
 
 class hr_contract_msf(osv.osv):
     _name = 'hr.contract.msf'
+    _rec_name = 'homere_codeterrain'
     _description = 'MSF Employee contract from Homère'
 
     _columns = {

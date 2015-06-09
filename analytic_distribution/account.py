@@ -100,6 +100,7 @@ account_destination_link()
 class account_destination_summary(osv.osv):
     _name = 'account.destination.summary'
     _description = 'Destinations by accounts'
+    _rec_name = 'account_id'
     _auto = False
 
     _columns = {

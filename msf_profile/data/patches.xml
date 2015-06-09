@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="us_133_patch" model="patch.scripts">
+            <field name="method">update_us_133</field>
+        </record>
+
+    </data>
+</openerp>

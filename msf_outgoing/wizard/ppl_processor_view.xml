@@ -22,7 +22,7 @@
                 </form>
             </field>
         </record>
-        
+
         <record id="ppl_processor_step2_form_view" model="ir.ui.view">
             <field name="name">ppl.processor.step2.form.view</field>
             <field name="model">ppl.processor</field>
@@ -43,7 +43,7 @@
                 </form>
             </field>
         </record>
-        
+
         <record id="ppl_move_processor_tree_view" model="ir.ui.view">
             <field name="name">ppl.move.processor.tree.view</field>
             <field name="model">ppl.move.processor</field>
@@ -57,7 +57,7 @@
                       >
                     <!-- Invisible fields -->
                     <field name="ssl_check" invisible="1" />
-                    
+
                     <field name="line_number"
                            string="Line"
                            readonly="1"
@@ -73,7 +73,7 @@
                            readonly="1"
                            />
                     <field name="uom_id"
-                           string="UOM" 
+                           string="UOM"
                            readonly="True"
                            />
                     <field name="prodlot_id" readonly="1" />
@@ -94,7 +94,7 @@
                 </tree>
             </field>
         </record>
-        
+
         <record id="ppl_family_processor_tree_view" model="ir.ui.view">
             <field name="name">ppl.family.processor.tree.view</field>
             <field name="model">ppl.family.processor</field>
@@ -117,6 +117,6 @@
                 </tree>
             </field>
         </record>
-        
+
     </data>
 </openerp>

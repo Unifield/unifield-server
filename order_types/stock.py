@@ -45,7 +45,7 @@ def cp_rw_warning(func, rw_flag, *args, **kwargs):
 
         text = "remote warehouse"
         this_instance = "central platform"
-        if rw_flag == pick_obj.REMOTE_WAREHOUSE:    
+        if rw_flag == pick_obj.REMOTE_WAREHOUSE:
             text = "central platform"
             this_instance = "remote warehouse"
 
@@ -314,8 +314,23 @@ class stock_picking(osv.osv):
                 else:
                     wizard_obj = self.pool.get('internal.picking.processor')
 
-                proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
-                wizard_obj.create_lines(cr, uid, proc_id, context=context)
+                # US-148
+                if pick.type == 'in':
+                    args = [('picking_id', '=', pick.id),
+                            ('draft', '=', True)]
+                    wiz_ids = wizard_obj.search(cr, uid, args=args,
+                                                context=context)
+                    if wiz_ids:
+                        proc_id = wiz_ids[0]
+                    else:
+                        proc_id = wizard_obj.create(cr, uid,
+                                                    {'picking_id': pick.id})
+                        wizard_obj.create_lines(cr, uid, proc_id,
+                                                context=context)
+                else:
+                    proc_id = wizard_obj.create(cr, uid,
+                                                {'picking_id': pick.id})
+                    wizard_obj.create_lines(cr, uid, proc_id, context=context)
 
                 res = {
                     'type': 'ir.actions.act_window',
@@ -327,8 +342,9 @@ class stock_picking(osv.osv):
                     }
 
                 if not context.get('force_process', False) and pick.type == 'in' \
+                   and not pick.in_dpo \
                    and pick.state != 'shipped' and pick.partner_id.partner_type == 'internal':
-                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
                         'msf_outgoing', 'stock_incoming_processor_internal_warning_form_view')[1]
                     res['view_id'] = [view_id]
 

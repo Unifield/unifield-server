@@ -219,10 +219,15 @@ class account_move_line(osv.osv):
             context = {}
         if not args:
             return []
+
         if args[0][2] and args[0][2] == True:
             return ['|', ('reconcile_partial_id', '!=', False), ('reconcile_id', '!=', False)]
         elif args[0] and args[0][2] in [False, 0]:
-            return [('reconcile_partial_id', '=', False), ('reconcile_id', '=', False)]
+            # Add account_id.reconcile in #BKLG-70
+            return [('reconcile_id', '=', False),
+                    ('account_id.reconcile', '!=', False)
+                    ]
+
         return []
 
     _columns = {
@@ -325,12 +330,16 @@ class account_move_line(osv.osv):
                 raise osv.except_osv(_('Error !'), _('The selected account is not active: %s.') % (account.code or '',))
         return super(account_move_line, self)._check_date(cr, uid, vals, context, check)
 
-    def _check_document_date(self, cr, uid, ids, vals=None):
+    def _check_document_date(self, cr, uid, ids, vals=None, context=None):
         """
         Check that document's date is done BEFORE posting date
         """
         if not vals:
             vals = {}
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and not vals.get('date') and not vals.get('document_date'):
+            return True
         for aml in self.browse(cr, uid, ids):
             dd = aml.document_date
             date = aml.date
@@ -420,7 +429,7 @@ class account_move_line(osv.osv):
                     vals.update({'date': m.date})
                     context.update({'date': m.date})
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
-        self._check_document_date(cr, uid, ids, vals)
+        self._check_document_date(cr, uid, ids, vals, context=context)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
         if context.get('from_web_menu', False) and not vals.get('reference', False):
