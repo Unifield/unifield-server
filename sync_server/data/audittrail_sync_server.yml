@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync_server.sync_rule')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name', 'active', 'model_ref', 'direction', 'direction_usb', 'domain']
+        fields = ['included_fields', 'included_fields_set', 'active', 'applies_to_type', 'can_delete', 'direction_usb', 'direction', 'domain', 'type_id', 'model_id', 'owner_field', 'name', 'status', 'forced_values', 'sequence_number']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sync_server.sync_rule'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
@@ -31,7 +31,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync_server.message_rule')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name', 'destination_name', 'type_id', 'direction_usb', 'active', 'domain', 'arguments', 'remote_call']
+        fields = ["id", "active", "applies_to_type", "arguments", "domain", "destination_name", "type_id", "remote_call", "model_id", "name", "sequence_number"]
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sync_server.message_rule'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
@@ -56,7 +56,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync.server.entity')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name', 'email', 'state']
+        fields = ['name', 'email', 'state', 'children_ids', 'parent_id']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sync.server.entity'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
