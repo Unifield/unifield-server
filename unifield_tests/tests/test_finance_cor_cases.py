@@ -27,12 +27,14 @@ class FinanceTestCorCases(FinanceTest):
         ccs = [ 'HT112', 'HT120', 'HT122', 'HT220', ]
     
         # TODO EUR expected
-        #functional_ccy: 'EUR',
-        functional_ccy: 'CHF',
+        #functional_ccy = 'EUR'
+        functional_ccy = 'CHF'
     
         rates = { # from Januar
-            'USD': [ 1.24, 1.28, ],  
-        },
+            #'EUR': [ 1., 1., ],  # TODO for EUR as functional
+            #'CHF': [ 0.95476, 0.965, ],  # TODO for EUR as functional
+            'USD': [ 1.24, 1.28, ],
+        }
     
         # C1 FPs and relating CCs
         c1_fp_ccs = {
@@ -44,7 +46,7 @@ class FinanceTestCorCases(FinanceTest):
     
         financing_contrats = {
             'FC1': { 'ccs' : [ 'HT101', 'HT120', ], 'fps': [ 'FP1', 'FP2', ], },
-        },
+        }
         
         register = 'BNK'
     # end of dataset Meta
@@ -71,22 +73,19 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCases.test_cor_dataset
         correction test cases dataset
         """
-        meta = DataSetMeta()
+        def activate_currencies(db, codes):
+            if isinstance(codes, (str, unicode, )):
+                codes = [codes]
+                
+            ccy_obj = db.get('res.currency')
+            ccy_ids = ccy_obj.search([
+                ('name', 'in', codes),
+                ('active', '=', False),
+            ])
+            if ccy_ids:  # to active
+                ccy_obj.write(ccy_ids, {'active': True})
         
-        def set_default_currency_rates(db):
-            def activate_ccy(codes):
-                if isinstance(codes, (str, unicode, )):
-                    codes = [codes]
-                hq_ccy_obj = self.hq1.get('res.currency')
-                ccy_ids = hq_ccy_obj.search([
-                    ('name', 'in', codes),
-                    ('active', '=', 'f'),
-                ])
-                if ccy_ids:  # to active
-                    hq_ccy_obj.write(ccy_ids, {'active': True})
-                    
-            activate_ccy([ccy_name for ccy_name in meta.rates])
-            
+        def set_default_currency_rates(db):            
             for ccy_name in meta.rates:
                 ccy_ids = db.get('res.currency').search([
                     ('name', '=', ccy_name),
@@ -257,6 +256,8 @@ class FinanceTestCorCases(FinanceTest):
                     """
                     
         # ---------------------------------------------------------------------
+        meta = self.DataSetMeta()
+        
         year = datetime.now().year
         date_fy_start = self.get_orm_date_fy_start()
         date_fy_stop = self.get_orm_date_fy_stop()
@@ -267,18 +268,19 @@ class FinanceTestCorCases(FinanceTest):
             db = self.get_db_from_name(self.get_db_name_from_suffix(i))
             company = self.get_company(db)
             
-            # check functional currency
-            self.assertEqual(
-                company.currency_id.name, meta.functional_ccy,
-                "Functional %s currency expected :: %s" % (
-                    meta.functional_ccy, db.colored_name, )
-            )
+            if company.currency_id.name != meta.functional_ccy:
+                raise FinanceTestCorCasesException(
+                    "wrong functionnal ccy: '%s' expected" % (
+                    meta.functional_ccy, ))
+                    
+            # activate currencies (if required)
+            activate_currencies(db, [ccy_name for ccy_name in meta.rates])
                 
-            # set default rates
-            set_default_currency_rates(db)
+        # set default rates: at HQ then sync down
+        set_default_currency_rates(self.hq1)
         self._sync_down()
             
-        # HQ level: set financing contract + sync down
+        # HQ level: set cost centers + sync down
         #set_cost_centers()
         #self._sync_down()
             
@@ -338,6 +340,13 @@ class FinanceTestCorCases(FinanceTest):
     # -------------------------------------------------------------------------
     # FLOW
     # -------------------------------------------------------------------------
+        
+    def test_cor1_0(self):
+        """
+        for dataset testing
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_0
+        """
+        return
         
     def test_cor1_1(self):
         """
