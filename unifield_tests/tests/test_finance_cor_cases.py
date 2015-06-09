@@ -49,9 +49,12 @@ class FinanceTestCorCases(FinanceTest):
         }
         
         # financing contracts
-        donor = 'DONOR',
-        financing_contrats = {
-            'FC1': { 'ccs' : [ 'HT101', 'HT120', ], 'fps': [ 'FP1', 'FP2', ], },
+        financing_contracts_donor = 'DONOR',
+        financing_contracts = {
+            ('HQ1C1', 'FC1'): { 
+                'ccs' : [ 'HT101', 'HT120', ],
+                'fps': [ 'FP1', 'FP2', ],
+            },
         }
         
         register = 'BNK'
@@ -89,7 +92,7 @@ class FinanceTestCorCases(FinanceTest):
                 [('code', 'in', target_instance_codes)])
             if not instance_ids:
                 # default dev instance
-                target_instance_codes = [ 'se_' + ti for c in codes ]
+                target_instance_codes = [ 'se_' + c for c in codes ]
                 instance_ids = db.get('msf.instance').search(
                         [('code', 'in', target_instance_codes)])
                 if not instance_ids:
@@ -191,7 +194,7 @@ class FinanceTestCorCases(FinanceTest):
  
             return any_set
                         
-        def set_funding_pool():
+        def set_funding_pools():
             db = self.hq1
             aaa_model = 'account.analytic.account'
             aaa_obj = db.get(aaa_model)
@@ -236,26 +239,30 @@ class FinanceTestCorCases(FinanceTest):
                         vals['cost_center_ids'] = [(6, 0, cc_ids)]
                     aaa_obj.create(vals)
                 
-        def set_financing_contract():
-            db = self.hq1
-            company = self.get_company(db)
+        def set_financing_contracts():
             model = 'financing.contract.contract'
             model_fcd = 'financing.contract.donor'
             model_fcfpl = 'financing.contract.funding.pool.line'
             model_aaa = 'account.analytic.account'
             
-            # set donor
-            vals = {
-                'code': meta.donor,
-                'name': meta.donor,
-                'reporting_currency': company.currency_id.id,
-            }
-            donor_ids = db.get(model_fcd).search(
-                self.dfv(vals, include=('code', )))
-            if not donor_ids:
-                donor_ids = [db.get(model_fcd).create(vals), ]
-            
-            for fc in meta.financing_contrats:
+            for instance, fc in meta.financing_contracts:
+                db = self.get_db_from_name(
+                    self.get_db_name_from_suffix(instance))
+                company = self.get_company(db)
+                
+                # set donor
+                donor_code = "%s_%s" % (
+                    instance, meta.financing_contracts_donor, )
+                vals = {
+                    'code': donor_code,
+                    'name': donor_code.replace('_', ' '),
+                    'reporting_currency': company.currency_id.id,
+                }
+                donor_ids = db.get(model_fcd).search(
+                    self.dfv(vals, include=('code', )))
+                if not donor_ids:
+                    donor_ids = [db.get(model_fcd).create(vals), ]
+                
                 vals = {
                     'code': fc,
                     'name': fc,
@@ -269,8 +276,9 @@ class FinanceTestCorCases(FinanceTest):
                 }
                 if not self.record_exists(db, model,
                     self.dfv(vals, include=('code', ))):
-                    # set CCS
-                    cc_codes = meta.financing_contrats[fc].get('ccs', False)
+                    # set cost centers
+                    cc_codes = meta.financing_contracts[(instance, fc)].get(
+                        'ccs', False)
                     if cc_codes:
                         cc_ids = db.get(model_aaa).search([
                             ('category', '=', 'OC'),
@@ -281,10 +289,9 @@ class FinanceTestCorCases(FinanceTest):
                     
                     contract_id = db.get(model).create(vals)
                     
-                    # set FPs
-                    # TODO
-                    """
-                    fp_codes = meta.financing_contrats[fc].get('fps', False)
+                    # set funding pools
+                    fp_codes = meta.financing_contracts[(instance, fc)].get(
+                        'fps', False)
                     if fp_codes:
                         fp_ids = db.get(model_aaa).search([
                             ('category', '=', 'FUNDING'),
@@ -297,9 +304,9 @@ class FinanceTestCorCases(FinanceTest):
                                     'funding_pool_id': fp_id,
                                     'funded': True,
                                     'total_project': True,
+                                    'instance_id': company.instance_id.id,
                                 }
-                                db.get(model_fcfpl).create(vals)
-                    """
+                                db.get(model_fcfpl).create(vals, {'fake': 1})
                     
         # ---------------------------------------------------------------------
         meta = self.DataSetMeta()
@@ -323,20 +330,20 @@ class FinanceTestCorCases(FinanceTest):
             activate_currencies(db, [ccy_name for ccy_name in meta.rates])
                 
         # set default rates: at HQ then sync down
-        #set_default_currency_rates(self.hq1)
-        #self._sync_down()
+        set_default_currency_rates(self.hq1)
+        self._sync_down()
             
         # HQ level: set cost centers + sync down
-        #if set_cost_centers():
-        #    self._sync_down()
+        if set_cost_centers():
+            self._sync_down()
             
-        # HQ level: set funding pool + sync up/down
-        #set_funding_pool()
-        #self._sync_c1()
+        # set funding pool + sync up/down (from c1)
+        set_funding_pools()
+        self._sync_c1()
         
-        # HQ level: set financing contract + sync down
-        #set_financing_contract()
-        #self._sync_down()
+        # set financing contract + sync up/down (from c1)
+        set_financing_contracts()
+        self._sync_c1()
         
     # -------------------------------------------------------------------------
     # PRIVATE TOOLS FUNCTIONS (for flow)
