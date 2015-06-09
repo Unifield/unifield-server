@@ -31,6 +31,24 @@ class analytic_account(osv.osv):
     _name = "account.analytic.account"
     _inherit = "account.analytic.account"
 
+
+    def copy_data(self, cr, uid, a_id, default=None, context=None):
+        """
+        Copy global distribution and give it to new invoice line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not default:
+            default = {}
+            
+        #US-348: Reset some values when duplicating an analytic account
+        default['tuple_destination_account_ids'] = []
+        default['destination_ids'] = []
+
+        # Copy analytic distribution
+        return super(analytic_account, self).copy_data(cr, uid, a_id, default, context)
+
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         '''
         If date out of date_start/date of given analytic account, then account is inactive.
