@@ -42,10 +42,10 @@ class FinanceTestCorCases(FinanceTest):
             #'HT220': [ 'HQ1C2', ],  # TODO: uncomment it
         }
     
-        # C1 FPs and relating CCs
-        c1_fp_ccs = {
-            'FP1': [ 'HT101', 'HT120', ],
-            'FP2': [ 'HT101', ],
+        # new FUNDING POOLS (and related cost centers)
+        fp_ccs = {
+            ('HQ1C1', 'FP1'): [ 'HT101', 'HT120', ],
+            ('HQ1C1', 'FP2'): [ 'HT101', ],
         }
         
         # financing contracts
@@ -79,6 +79,23 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCases.test_cor_dataset
         correction test cases dataset
         """
+        def get_instance_ids_from_code(codes):
+            if isinstance(codes, (str, unicode, )):
+                codes = [codes]
+                
+            target_instance_codes = [
+                self.get_db_name_from_suffix(c) for c in codes ]
+            instance_ids = db.get('msf.instance').search(
+                [('code', 'in', target_instance_codes)])
+            if not instance_ids:
+                # default dev instance
+                target_instance_codes = [ 'se_' + ti for c in codes ]
+                instance_ids = db.get('msf.instance').search(
+                        [('code', 'in', target_instance_codes)])
+                if not instance_ids:
+                    raise FinanceTestCorCasesException("instances not found")
+            return instance_ids
+        
         def activate_currencies(db, codes):
             if isinstance(codes, (str, unicode, )):
                 codes = [codes]
@@ -162,19 +179,8 @@ class FinanceTestCorCases(FinanceTest):
                         "parent cost center not found '%s'" % (parent_code,))
                         
                 # set target instance
-                target_instance_codes = [
-                    self.get_db_name_from_suffix(ti) for ti in meta.ccs[cc] ]
-                instance_ids = db.get('msf.instance').search(
-                    [('code', 'in', target_instance_codes)])
-                if not instance_ids:
-                    # default dev instance
-                    target_instance_codes = [
-                        'se_' + ti for ti in meta.ccs[cc] ]
-                    instance_ids = db.get('msf.instance').search(
-                        [('code', 'in', target_instance_codes)])
-                    if not instance_ids:
-                        raise FinanceTestCorCasesException(
-                            "instances not found")
+                instance_ids = get_instance_ids_from_code(
+                    [ti for ti in meta.ccs[cc]])
                 atcc_obj = db.get('account.target.costcenter')
                 for ins_id in instance_ids:
                     atcc_obj.create({
@@ -187,18 +193,26 @@ class FinanceTestCorCases(FinanceTest):
                         
         def set_funding_pool():
             db = self.hq1
+            aaa_model = 'account.analytic.account'
+            aaa_obj = db.get(aaa_model)
             company = self.get_company(db)
-            model = 'account.analytic.account'
             
-            parent_ids = db.get(model).search([
-                ('code', '=', 'FUNDING'),
-                ('type', '=', 'view')
-            ])
-            if not parent_ids:
-                raise FinanceTestCorCasesException(
-                    'parent funding pool not found')
-            
-            for fp in meta.c1_fp_ccs:
+            for instance, fp in meta.fp_ccs:
+                db = self.get_db_from_name(
+                    self.get_db_name_from_suffix(instance))
+                aaa_model = 'account.analytic.account'
+                aaa_obj = db.get(aaa_model)
+                
+                company = self.get_company(db)
+                
+                parent_ids = aaa_obj.search([
+                    ('code', '=', 'FUNDING'),
+                    ('type', '=', 'view')
+                ])
+                if not parent_ids:
+                    raise FinanceTestCorCasesException(
+                        'parent funding pool not found')
+        
                 vals = {
                     'code': fp,
                     'description': fp,
@@ -211,16 +225,16 @@ class FinanceTestCorCases(FinanceTest):
                     'category': 'FUNDING',
                     'instance_id': company.instance_id.id,
                 }
-                if not self.record_exists(db, model, 
+                if not self.record_exists(db, aaa_model, 
                         self.dfv(vals, include=('code', 'instance_id', ))):
                     # get related CCs and set them
-                    cc_ids = db.get(model).search([
+                    cc_ids = aaa_obj.search([
                         ('category', '=', 'OC'),
-                        ('code', 'in', meta.c1_fp_ccs[fp]),
+                        ('code', 'in', meta.fp_ccs[(instance, fp)]),
                     ])
                     if cc_ids:
                         vals['cost_center_ids'] = [(6, 0, cc_ids)]
-                    db.get(model).create(vals)
+                    aaa_obj.create(vals)
                 
         def set_financing_contract():
             db = self.hq1
@@ -313,12 +327,12 @@ class FinanceTestCorCases(FinanceTest):
         #self._sync_down()
             
         # HQ level: set cost centers + sync down
-        if set_cost_centers():
-            self._sync_down()
+        #if set_cost_centers():
+        #    self._sync_down()
             
         # HQ level: set funding pool + sync up/down
         #set_funding_pool()
-        #self._sync_down()
+        #self._sync_c1()
         
         # HQ level: set financing contract + sync down
         #set_financing_contract()
@@ -332,6 +346,12 @@ class FinanceTestCorCases(FinanceTest):
         self.synchronize(self.hq1)
         self.synchronize(self.c1)
         self.synchronize(self.c1)
+        self.synchronize(self.p1)
+        #self.synchronize(self.p12)
+        
+    def _sync_c1(self):
+        self.synchronize(self.c1)
+        self.synchronize(self.hq1)
         self.synchronize(self.p1)
         #self.synchronize(self.p12)
            
