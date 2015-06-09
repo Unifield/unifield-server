@@ -63,6 +63,13 @@ class product_product(osv.osv):
 
 product_product()
 
+class product_supplier(osv.osv):
+    _name = 'product.supplierinfo'
+    _inherit = 'product.supplierinfo'
+    _trace = True
+
+product_supplier()
+
 class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
