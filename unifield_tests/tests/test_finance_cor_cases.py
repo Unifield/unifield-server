@@ -21,6 +21,8 @@ class FinanceTestCorCasesException(UnifieldTestException):
 class FinanceTestCorCases(FinanceTest):
     class DataSetMeta(object):
         instances = [ 'HQ1', 'HQ1C1',  'HQ1C1P1', ]
+        #instances = [ 'HQ1', 'HQ1C1',  'HQ1C1P1', 'HQ1C1P2', 'HQ1C2',
+        #   'HQ1C2P1',]
         
         ccs = [ 'HT112', 'HT120', 'HT122', 'HT220', ]
     
@@ -263,7 +265,6 @@ class FinanceTestCorCases(FinanceTest):
         for i in meta.instances:
             # check instance dataset
             db = self.get_db_from_name(self.get_db_name_from_suffix(i))
-            
             company = self.get_company(db)
             
             # check functional currency
@@ -278,16 +279,16 @@ class FinanceTestCorCases(FinanceTest):
         self._sync_down()
             
         # HQ level: set financing contract + sync down
-        set_cost_centers()
-        self._sync_down()
+        #set_cost_centers()
+        #self._sync_down()
             
         # HQ level: set funding pool + sync up/down
-        set_funding_pool()
-        self._sync_down()
+        #set_funding_pool()
+        #self._sync_down()
         
         # HQ level: set financing contract + sync down
-        set_financing_contract()
-        self._sync_down()
+        #set_financing_contract()
+        #self._sync_down()
         
     # -------------------------------------------------------------------------
     # PRIVATE TOOLS FUNCTIONS (for flow)
