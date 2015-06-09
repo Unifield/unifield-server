@@ -398,7 +398,10 @@ def do_prepare(cr, revision_ids):
 def dump_db(cr, pool):
     bck_obj = pool.get('backup.config')
     if bck_obj:
-        bck_obj.exp_dump_for_state(cr, 1, 'beforepatching')
+        # test if column exists
+        cr.execute("SELECT attr.attname FROM pg_attribute attr, pg_class class WHERE attr.attrelid = class.oid AND class.relname = 'backup_config' AND attr.attname='beforepatching'")
+        if cr.fetchall():
+            bck_obj.exp_dump_for_state(cr, 1, 'beforepatching')
 
 def test_do_upgrade(cr):
     cr.execute("select count(1) from pg_class where relkind='r' and relname='sync_client_version'")
