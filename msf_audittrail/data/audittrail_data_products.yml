@@ -1,0 +1,75 @@
+-
+  For Products, rule for the updates
+-
+  !python {model: audittrail.rule}: |
+    name = 'Stock Picking CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'stock.picking')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['name']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.picking'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('type', '=', 'in')]",
+                'log_write': True,
+                'log_unlink': False,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+-
+  For Products
+-
+  !python {model: audittrail.rule}: |
+    name = 'Product_product rule'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.product')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['default_code', 'name', 'old_code', 'new_code', 'type', 'subtype', 'categ_id', 'international_status', 'state', 'active', 'perishable', 'batch_management', 'uom_id', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods', 'standard_ok', 'justification_code_id', 'restricted_country', 'country_restriction', 'form_value', 'fit_value', 'function_value', 'procure_delay']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.product'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[]",
+                'log_write': True,
+                'log_unlink': True,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+
+-
+  For Products suppliersinfos
+-
+  !python {model: audittrail.rule}: |
+    name = 'Product_supplierinfo rule'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.supplierinfo')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['name']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.supplierinfo'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[]",
+                'log_write': True,
+                'log_unlink': True,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
