@@ -327,6 +327,11 @@ class FinanceTestCorCases(FinanceTest):
         date_fy_stop = self.get_orm_date_fy_stop()
         date_now = self.get_orm_date_now()
         
+        # activate all analytic account (date start) from HQ (will be synced
+        # later here)
+        self.activate_analytic_account_since(db.hq1,
+            self.get_orm_fy_date(1, 1))
+        
         for i in meta.instances:
             # check instance dataset
             db = self.get_db_from_name(self.get_db_name_from_suffix(i))

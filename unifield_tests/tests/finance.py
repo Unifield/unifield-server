@@ -1165,5 +1165,14 @@ class FinanceTest(UnifieldTest):
                 res[ai.id] = ji_ids or []
                 
         return res
+        
+    def activate_analytic_account_since(self, db, date):
+        aaa_obj = db.get('account.analytic.account')
+        aaa_ids = aaa_obj.search([('parent_id', '!=', False)])
+        for aaa_br in aaa_obj.browse(aaa_ids):
+            aaa_obj.write(aaa_br.id, {
+                'parent_id': aaa_br.parent_id.id,
+                'date_start': date,
+            })
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
