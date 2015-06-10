@@ -9,9 +9,13 @@ from finance import FinanceTest
 import time
 from datetime import datetime
 
-# set it to True to simulate a sync P1 sync down failure for any test
+
 #TEST_THE_TEST = True
 TEST_THE_TEST = False
+
+# when dbs are coming from a given RB, et the db prefix to retrieve
+# prop instances correctly (not from local db names)
+RBDB_PREFIX = 'cor-test'
 
 
 class FinanceTestCorCasesException(UnifieldTestException):
@@ -24,13 +28,11 @@ class FinanceTestCorCases(FinanceTest):
         #instances = [ 'HQ1', 'HQ1C1',  'HQ1C1P1', 'HQ1C1P2', 'HQ1C2',
         #   'HQ1C2P1',]
         
-        # TODO EUR expected
-        #functional_ccy = 'EUR'
-        functional_ccy = 'CHF'
+        functional_ccy = 'EUR'
     
         rates = { # from Januar
-            #'EUR': [ 1., 1., ],  # TODO for EUR as functional
-            #'CHF': [ 0.95476, 0.965, ],  # TODO for EUR as functional
+            'EUR': [ 1., 1., ],
+            'CHF': [ 0.95476, 0.965, ],
             'USD': [ 1.24, 1.28, ],
         }
         
@@ -38,8 +40,8 @@ class FinanceTestCorCases(FinanceTest):
         ccs = {
             'HT112': [ 'HQ1C1P1', ],
             'HT120': [ 'HQ1C1', ],
-            #'HT122': [ 'HQ1C1P2', ],  # TODO: uncomment it
-            #'HT220': [ 'HQ1C2', ],  # TODO: uncomment it
+            #'HT122': [ 'HQ1C1P2', ],  # TODO uncomment when instances activated
+            #'HT220': [ 'HQ1C2', ],  # TODO uncomment when instances activated
         }
     
         # new FUNDING POOLS (and related cost centers)
@@ -91,8 +93,9 @@ class FinanceTestCorCases(FinanceTest):
             instance_ids = db.get('msf.instance').search(
                 [('code', 'in', target_instance_codes)])
             if not instance_ids:
-                # default dev instance
-                target_instance_codes = [ 'se_' + c for c in codes ]
+                # default dev instance (db/prop instances name from a RB)
+                target_instance_codes = [
+                    "%s_%s" % (RBDB_PREFIX, c, ) for c in codes ]
                 instance_ids = db.get('msf.instance').search(
                         [('code', 'in', target_instance_codes)])
                 if not instance_ids:
