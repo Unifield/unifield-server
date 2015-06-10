@@ -9,6 +9,9 @@ from finance import FinanceTest
 import time
 from datetime import datetime
 
+# TODO active again when dev/testing is finished
+#DATASET = True
+DATASET = False
 
 #TEST_THE_TEST = True
 TEST_THE_TEST = False
@@ -59,7 +62,12 @@ class FinanceTestCorCases(FinanceTest):
             },
         }
         
-        register = 'BNK'
+        register_prefix = 'BNK'
+        
+    def _get_dataset_meta(self):
+        if not hasattr(self, 'dataset_meta'):
+            self.dataset_meta = self.DataSetMeta()
+        return self.dataset_meta
     # end of dataset Meta
     
     # -------------------------------------------------------------------------
@@ -67,7 +75,7 @@ class FinanceTestCorCases(FinanceTest):
     # -------------------------------------------------------------------------
     
     def setUp(self):
-        dataset_applied = hasattr(self, 'dataset_applied') and \
+        dataset_applied = DATASET and hasattr(self, 'dataset_applied') and \
             self.dataset_applied or False
         if not dataset_applied:
             self._set_dataset()
@@ -312,7 +320,7 @@ class FinanceTestCorCases(FinanceTest):
                                 db.get(model_fcfpl).create(vals, {'fake': 1})
                     
         # ---------------------------------------------------------------------
-        meta = self.DataSetMeta()
+        meta = self._get_dataset_meta()
         
         year = datetime.now().year
         date_fy_start = self.get_orm_date_fy_start()
@@ -365,18 +373,18 @@ class FinanceTestCorCases(FinanceTest):
         self.synchronize(self.p1)
         #self.synchronize(self.p12)
            
-    def _set_start_register(self, db, period_id=1, ccy_name=False):
+    def _register_set(self, db, period_id=1, ccy_name=False):
+        dataset_meta = self._get_dataset_meta()
+        
         db = self.c1
         aj_obj = db.get('account.journal')
         abs_obj = db.get('account.bank.statement')
         
         if not ccy_name:
-            ccy_name = self._data_set.get('functional_ccy', 'EUR')
+            ccy_name = dataset_meta.functional_ccy
         
         # set Januar bank journal/register and open it
-        journal_code = self._data_set['register']
-        if ccy:
-            journal_code += ' ' + ccy_name
+        journal_code = dataset_meta.register_prefix + ' ' + ccy_name
         if not self.record_exists(db, 'account.journal',
             [('code', '=', journal_code)]):
             reg_id, journal_id = self.create_register(db, journal_code,
@@ -385,15 +393,21 @@ class FinanceTestCorCases(FinanceTest):
             abs_obj.write([reg_id], {'period_id': period_id})
             abs_obj.button_open_bank([reg_id])
                 
-    def _get_register(self, db, browse=False):
+    def _register_get(self, db, ccy_name=False, browse=False):
         """
         :param browse: to return browsed object instead of id
         """
+        dataset_meta = self._get_dataset_meta()
+        
         abs_obj = db.get('account.bank.statement')
-        ids = abs_obj.search([('name', '=', self._data_set['register'])])
+        if not ccy_name:
+            ccy_name = dataset_meta.functional_ccy
+        journal_code = dataset_meta.register_prefix + ' ' + ccy_name
+        
+        ids = abs_obj.search([('name', '=', journal_code)])
         if not ids:
             raise FinanceTestCorCasesException('register %s not found' % (
-                 self._data_set['register'], ))
+                journal_code, ))
         if browse:
             return abs_obj.browse([ids[0]])[0]
         else:
@@ -415,14 +429,16 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_1
         """
         db = self.c1
-        self._set_start_register(db)
+        self._register_set(db)
         
-        reg_id = self._get_register(db, browse=False)
+        reg_id = self._register_get(db, browse=False)
         if reg_id:
+            ad = [(100., 'OPS', 'HT101', 'PF'), ]
+            
             regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
                 '60010', self.get_random_amount(True),
-                ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF'), ],
+                ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True
             )
@@ -434,7 +450,6 @@ class FinanceTestCorCases(FinanceTest):
                     ad_replace_data=False,
             )
             
-            ad = [(100., 'OPS', 'HT101', 'PF'), ]
             self.check_ji_correction(db, ji_id,
                 '60010', new_account_code='60020',
                 expected_ad=ad,
@@ -447,9 +462,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_2
         """
         db = self.c1
-        self._set_start_register(db)
+        self._register_set(db)
         
-        reg_id = self._get_register(db, browse=False)
+        reg_id = self._register_get(db, browse=False)
         if reg_id:
             regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
@@ -478,9 +493,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_3
         """
         db = self.c1
-        self._set_start_register(db)
+        self._register_set(db)
         
-        reg_id = self._get_register(db, browse=False)
+        reg_id = self._register_get(db, browse=False)
         if reg_id:
             regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
@@ -510,9 +525,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_4
         """
         db = self.c1
-        self._set_start_register(db)
+        self._register_set(db)
         
-        reg_id = self._get_register(db, browse=False)
+        reg_id = self._register_get(db, browse=False)
         if reg_id:
             regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
@@ -542,9 +557,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_5
         """
         db = self.c1
-        self._set_start_register(db)
+        self._register_set(db)
         
-        reg_id = self._get_register(db, browse=False)
+        reg_id = self._register_get(db, browse=False)
         if reg_id:
             ad = [(100., 'OPS', 'HT101', 'PF'), ]
             
@@ -581,9 +596,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_6
         """
         db = self.c1
-        self._set_start_register(db, ccy_name='USD')
+        self._register_set(db, ccy_name='USD')
         
-        reg_id = self._get_register(db, browse=False, ccy_name='USD')
+        reg_id = self._register_get(db, browse=False, ccy_name='USD')
         if reg_id:
             ad = [
                 (60., 'OPS', 'HT101', 'PF'),
@@ -624,9 +639,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_7
         """
         db = self.c1
-        self._set_start_register(db, ccy_name='USD')
+        self._register_set(db, ccy_name='USD')
         
-        reg_id = self._get_register(db, browse=False, ccy_name='USD')
+        reg_id = self._register_get(db, browse=False, ccy_name='USD')
         if reg_id:
             ad = [
                 (60., 'OPS', 'HT101', 'PF'),
@@ -664,9 +679,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_8
         """    
         db = self.c1
-        self._set_start_register(db)
+        self._register_set(db)
         
-        reg_id = self._get_register(db, browse=False)
+        reg_id = self._register_get(db, browse=False)
         if reg_id:
             ad = [
                 (10., 'OPS', 'HT101', 'PF'),
@@ -700,9 +715,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_9
         """
         db = self.c1
-        self._set_start_register(db)
+        self._register_set(db)
         
-        reg_id = self._get_register(db, browse=False)
+        reg_id = self._register_get(db, browse=False)
         if reg_id:
             regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
@@ -730,9 +745,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_10
         """
         db = self.c1
-        self._set_start_register(db)
+        self._register_set(db)
         
-        reg_id = self._get_register(db, browse=False)
+        reg_id = self._register_get(db, browse=False)
         if reg_id:
             regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
@@ -950,9 +965,9 @@ class FinanceTestCorCases(FinanceTest):
         """
         db = self.c1
         
-        self._set_start_register(db)
+        self._register_set(db)
         
-        reg_id = self._get_register(db, browse=False)
+        reg_id = self._register_get(db, browse=False)
         if reg_id:       
             regl_id, distrib_id, ji_id = self.create_register_line(
                 db, reg_id,
