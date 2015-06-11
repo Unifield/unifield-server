@@ -100,24 +100,32 @@ def _populate_third_party_name(self, cr, uid, obj_id, field_name, name=None, con
         # http://jira.unifield.org/browse/BKLG-80?focusedCommentId=39205&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-39205
         ('state', '=', 'temp'),
     ]
+    
     absl_ids = absl_obj.search(cr, uid, domain, context=context)
     for absl in absl_ids:
         # search for the account.move.line that linked to the given
-        # register_line to update the partner_txt field
+        je_ids = absl_obj._get_move_ids(cr, uid, [absl], context=context)
         domain = [
-            ('move_id', '=', absl),
-            ('partner_txt', '!=', name),  # only records with previous name
+            ('move_id', 'in', je_ids),
+            # just in case of posted JIs returned by _get_move_ids
+            ('move_id.state', '=', 'draft'),
+            # only records with previous name
+            ('partner_txt', '!=', name),  
         ]
         aml_ids = aml_obj.search(cr, uid, domain, context=context)
         
         if aml_ids:
-            # using write to send sync messages
+            # register_line to update the partner_txt field
+            # (using write to send sync messages)
             aml_obj.write(cr, uid, aml_ids, {'partner_txt': name},
                 context=context)
 
-            # get JIs AJIs
-            aal_ids = aal_obj.search(cr, uid, [('move_id', 'in', aml_ids)],
-                context=context)
+            # get reg line AJIs
+            domain = [
+                ('account_id.category', 'in', ('FUNDING', 'FREE1', 'FREE2')),
+                ('move_id', 'in', aml_ids),
+            ]
+            aal_ids = aal_obj.search(cr, uid, domain, context=context)
             
             if aal_ids:
                 """
