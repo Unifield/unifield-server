@@ -294,7 +294,8 @@ class UnifieldTest(unittest.TestCase):
         :param model: model name
         :rtype: boolean
         """
-        return db.get(model).search(domain, 0, 1)  # domain, offset, limit
+        #return db.get(model).search(domain, 0, 1)  # domain, offset, limit
+        return db.get(model).search(domain)  # domain, offset, limit
         
     def date2orm(self, dt):
         """

@@ -10,8 +10,8 @@ import time
 from datetime import datetime
 
 # TODO active again when dev/testing is finished
-DATASET = True
-#DATASET = False
+#DATASET = True
+DATASET = False
 
 #TEST_THE_TEST = True
 TEST_THE_TEST = False
@@ -75,9 +75,9 @@ class FinanceTestCorCases(FinanceTest):
     # -------------------------------------------------------------------------
     
     def setUp(self):
-        dataset_applied = DATASET and hasattr(self, 'dataset_applied') and \
+        dataset_applied = hasattr(self, 'dataset_applied') and \
             self.dataset_applied or False
-        if not dataset_applied:
+        if DATASET and not dataset_applied:
             self._set_dataset()
 
     def tearDown(self):
