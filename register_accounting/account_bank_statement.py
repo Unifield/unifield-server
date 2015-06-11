@@ -1906,7 +1906,8 @@ class account_bank_statement_line(osv.osv):
         # Then update analytic distribution
         res = []
         must_return = False
-        if 'employee_id' or 'partner_type' in values:
+        # US-351: fixed the wrong condition
+        if 'employee_id' in values or 'partner_type' in values:
             must_return = True
             for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'statement_id', 'first_move_line_id', 'move_ids']):
                 account_id = line.get('account_id')[0]
@@ -1922,8 +1923,9 @@ class account_bank_statement_line(osv.osv):
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 res.append(tmp)
 
-                new_distrib = values.get('analytic_distribution_id', False) 
-                if old_distrib != new_distrib and line.get('first_move_line_id', False) and line.get('move_ids', False):
+                new_distrib = values.get('analytic_distribution_id', False)
+                # US-351: Fixed the wrong condition 
+                if new_distrib and old_distrib != new_distrib and line.get('first_move_line_id', False) and line.get('move_ids', False):
                     first_move_line_id = line.get('first_move_line_id')[0]
                     move_ids = line.get('move_ids')[0]
                     if isinstance(move_ids, (int, long)):
