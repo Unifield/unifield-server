@@ -94,8 +94,13 @@ def _populate_third_party_name(self, cr, uid, obj_id, field_name, name=None, con
     aal_obj = self.pool.get('account.analytic.line')
 
     # search all register lines that linked to this employee/partner
-    absl_ids = absl_obj.search(cr, uid, [(field_name, '=', obj_id)],
-        context=context)
+    domain = [
+        (field_name, '=', obj_id),
+        # FIX of BKLG-80: only temp posted
+        # http://jira.unifield.org/browse/BKLG-80?focusedCommentId=39205&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-39205
+        ('state', '=', 'temp'),
+    ]
+    absl_ids = absl_obj.search(cr, uid, domain, context=context)
     for absl in absl_ids:
         # search for the account.move.line that linked to the given
         # register_line to update the partner_txt field
