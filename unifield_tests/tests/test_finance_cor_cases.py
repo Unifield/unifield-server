@@ -10,8 +10,8 @@ import time
 from datetime import datetime
 
 # TODO active again when dev/testing is finished
-#DATASET = True
-DATASET = False
+DATASET = True
+#DATASET = False
 
 #TEST_THE_TEST = True
 TEST_THE_TEST = False
@@ -329,7 +329,7 @@ class FinanceTestCorCases(FinanceTest):
         
         # activate all analytic account (date start) from HQ (will be synced
         # later here)
-        self.activate_analytic_account_since(db.hq1,
+        self.activate_analytic_account_since(self.hq1,
             self.get_orm_fy_date(1, 1))
         
         for i in meta.instances:
