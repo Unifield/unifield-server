@@ -329,7 +329,7 @@ class FinanceTestCorCases(FinanceTest):
         
         # activate all analytic account (date start) from HQ (will be synced
         # later here)
-        self.activate_analytic_account_since(self.hq1,
+        self.analytic_distribution_create(self.hq1,
             self.get_orm_fy_date(1, 1))
         
         for i in meta.instances:
@@ -392,7 +392,7 @@ class FinanceTestCorCases(FinanceTest):
         journal_code = dataset_meta.register_prefix + ' ' + ccy_name
         if not self.record_exists(db, 'account.journal',
             [('code', '=', journal_code)]):
-            reg_id, journal_id = self.create_register(db, journal_code,
+            reg_id, journal_id = self.register_create(db, journal_code,
                 journal_code, 'bank', '10200', ccy_name)
             # update period
             abs_obj.write([reg_id], {'period_id': period_id})
@@ -441,7 +441,7 @@ class FinanceTestCorCases(FinanceTest):
         if reg_id:
             ad = [(100., 'OPS', 'HT101', 'PF'), ]
             
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '60010', self.get_random_amount(True),
                 ad_breakdown_data=ad,
@@ -473,7 +473,7 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._register_get(db, browse=False)
         if reg_id:
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '60010', self.get_random_amount(True),
                 ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF'), ],
@@ -505,7 +505,7 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._register_get(db, browse=False)
         if reg_id:
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '60010', self.get_random_amount(True),
                 ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF'), ],
@@ -537,7 +537,7 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._register_get(db, browse=False)
         if reg_id:
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '60010', self.get_random_amount(True),
                 ad_breakdown_data=[(100., 'OPS', 'HT101', 'PF'), ],
@@ -571,7 +571,7 @@ class FinanceTestCorCases(FinanceTest):
         if reg_id:
             ad = [(100., 'OPS', 'HT101', 'PF'), ]
             
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '60010', self.get_random_amount(True),
                 ad_breakdown_data=ad,
@@ -613,7 +613,7 @@ class FinanceTestCorCases(FinanceTest):
                 (40., 'OPS', 'HT120', 'PF'),
             ]
             
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '60010', 100,
                 ad_breakdown_data=ad,
@@ -622,6 +622,7 @@ class FinanceTestCorCases(FinanceTest):
             )
             
             # CLOSE PERIOD Januar (MISSION)
+            self.register_close(db, reg_id)
             self.period_close_reopen(db, 'm', 1)
             
             new_ad=[
@@ -629,7 +630,7 @@ class FinanceTestCorCases(FinanceTest):
                 (30., 'OPS', 'HT101', 'PF'),
             ]
             self.simulation_correction_wizard(db, ji_id,
-                    cor_date=get_orm_fy_date(2, 7),  # 7 Feb of this year
+                    cor_date=self.get_orm_fy_date(2, 7),  # 7 Feb of this year
                     new_account_code=False,
                     new_ad_breakdown_data=False,
                     ad_replace_data={ 'per': [(60., 70.), (40., 30.), ] }
@@ -639,12 +640,13 @@ class FinanceTestCorCases(FinanceTest):
                 '60010', new_account_code=False,
                 expected_ad=new_ad,
                 expected_ad_rev=ad,
-                expected_ad_cor=ad,
+                expected_ad_cor=new_ad,
             )
             
     def test_cor1_7(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_7
+        G/L ACCOUNT 60010=>60030
         """
         db = self.c1
         self._register_set(db, ccy_name='USD')
@@ -656,7 +658,7 @@ class FinanceTestCorCases(FinanceTest):
                 (40., 'OPS', 'HT120', 'PF'),
             ]
             
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '60010', 100,
                 ad_breakdown_data=ad,
@@ -669,7 +671,7 @@ class FinanceTestCorCases(FinanceTest):
                 (30., 'OPS', 'HT101', 'PF'),
             ]
             self.simulation_correction_wizard(db, ji_id,
-                    cor_date=get_orm_fy_date(2, 7),  # 7 Feb of this year
+                    cor_date=self.get_orm_fy_date(2, 7),  # 7 Feb of this year
                     new_account_code='60030',
                     new_ad_breakdown_data=new_ad,
                     ad_replace_data=False
@@ -677,9 +679,9 @@ class FinanceTestCorCases(FinanceTest):
             
             self.check_ji_correction(db, ji_id,
                 '60010', new_account_code='60030',
-                expected_ad=new_ad,
+                expected_ad=ad,
                 expected_ad_rev=ad,
-                expected_ad_cor=ad,
+                expected_ad_cor=new_ad,
             )
             
     def test_cor1_8(self):
@@ -696,7 +698,7 @@ class FinanceTestCorCases(FinanceTest):
                 (90., 'OPS', 'HT101', 'FP1'),
             ]
             
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '60010', self.get_random_amount(True),
                 ad_breakdown_data=ad,
@@ -727,7 +729,7 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._register_get(db, browse=False)
         if reg_id:
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '13300', self.get_random_amount(True),
                 date=False, document_date=False,
@@ -757,7 +759,7 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._register_get(db, browse=False)
         if reg_id:
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '13300', self.get_random_amount(True),
                 date=False, document_date=False,
@@ -800,7 +802,7 @@ class FinanceTestCorCases(FinanceTest):
         # TODO: finish this use case
         db = self.c1
         
-        self.validate_invoice(db, self.create_supplier_invoice(db,
+        self.invoice_validate(db, self.invoice_invoice_create_supplier_invoice(db,
             ccy_code=False, date=False, partner_id=False,
             ad_header_breakdown_data=[
                 (50., 'NAT', 'HT101', 'PF'),
@@ -833,7 +835,7 @@ class FinanceTestCorCases(FinanceTest):
             (40., 'OPS', 'HT120', 'PF'),
         ]
         
-        ji_ids = self.validate_invoice(db, self.create_supplier_invoice(db,
+        ji_ids = self.invoice_validate(db, self.invoice_invoice_create_supplier_invoice(db,
             ccy_code='USD',
             date=self.get_orm_fy_date(1, 8),
             partner_id=False,
@@ -890,7 +892,7 @@ class FinanceTestCorCases(FinanceTest):
             (45., 'OPS', 'HT120', 'PF'),
         ]
         
-        ji_ids = self.validate_invoice(db, self.create_supplier_invoice(db,
+        ji_ids = self.invoice_validate(db, self.invoice_invoice_create_supplier_invoice(db,
             ccy_code=False,
             date=False,
             partner_id=False,
@@ -977,7 +979,7 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._register_get(db, browse=False)
         if reg_id:       
-            regl_id, distrib_id, ji_id = self.create_register_line(
+            regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
                 '60000', self.get_random_amount(),
                 ad_breakdown_data=[ (100., 'OPS', 'HT101', 'PF'), ]  ,

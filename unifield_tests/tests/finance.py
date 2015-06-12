@@ -96,7 +96,7 @@ class FinanceTest(UnifieldTest):
             amount *= -1.
         return amount
         
-    def create_journal(self, db, name, code, journal_type,
+    def journal_create(self, db, name, code, journal_type,
         analytic_journal_id=False, account_code=False, currency_name=False,
         bank_journal_id=False):
         """
@@ -202,11 +202,11 @@ class FinanceTest(UnifieldTest):
         # create the journal
         return aj_obj.create(vals)
         
-    def create_register(self, db, name, code, register_type, account_code,
+    def register_create(self, db, name, code, register_type, account_code,
         currency_name, bank_journal_id=False):
         """
         create a register in the current period.
-        (use create_journal)
+        (use journal_create)
         
         :type db: oerplib object
         :param name: register name (used as journal's name)
@@ -236,7 +236,7 @@ class FinanceTest(UnifieldTest):
             tpl = "analytic journal code %s not found"
             raise FinanceTestException(tpl % (aaj_code, ))
 
-        j_id = self.create_journal(db, name, code, register_type,
+        j_id = self.journal_create(db, name, code, register_type,
             account_code=account_code, currency_name=currency_name,
             bank_journal_id=bank_journal_id,
             analytic_journal_id=aaj_ids[0])
@@ -244,7 +244,7 @@ class FinanceTest(UnifieldTest):
         reg_ids = abs_obj.search([('journal_id', '=', j_id)])
         return reg_ids and reg_ids[0] or False, j_id
         
-    def create_register_line(self, db, regbr_or_id, account_code_or_id, amount,
+    def register_create_line(self, db, regbr_or_id, account_code_or_id, amount,
             ad_breakdown_data=False,
             date=False, document_date=False,
             third_partner_id=False, third_employee_id=False,
@@ -258,7 +258,7 @@ class FinanceTest(UnifieldTest):
         :param account_code_or_id: account code to search or account_id
         :type code_or_id: str/int/long
         :param amount: > 0 amount IN, < 0 amount OUT
-        :param ad_breakdown_data: (optional) see create_analytic_distribution 
+        :param ad_breakdown_data: (optional) see analytic_distribution_create 
             breakdown_data param help
         :param datetime date: posting date
         :param datetime document_date: document date
@@ -342,7 +342,7 @@ class FinanceTest(UnifieldTest):
         
         # optional AD
         if ad_breakdown_data and account_br.is_analytic_addicted:
-            distrib_id = self.create_analytic_distribution(db,
+            distrib_id = self.analytic_distribution_create(db,
                 breakdown_data=ad_breakdown_data)
             absl_obj.write([regl_id],
                 {'analytic_distribution_id': distrib_id}, {})
@@ -367,7 +367,27 @@ class FinanceTest(UnifieldTest):
             reg_ids = [reg_ids]
         db.get('account.bank.statement.line').button_hard_posting(reg_ids, {})
         
-    def create_analytic_distribution(self, db,
+    def register_close(self, db, ids):
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+        abs_obj = db.get('account.bank.statement')
+        wcb_obj = db.get('wizard.confirm.bank')
+        
+        for abs_br in abs_obj.browse(ids):
+            abs_ids = [abs_br.id]
+            # set fake balance amount...
+            abs_obj.write(abs_ids, {
+                'balance_end_real': abs_br.balance_end,
+            })
+            abs_obj.button_confirm_closing_bank_balance(abs_ids)
+            
+            # ...then close
+            abs_obj.write(abs_ids, {
+                'state': 'confirm',
+                'closing_date': self.get_orm_date_now(),
+            })
+        
+    def analytic_distribution_create(self, db,
         breakdown_data=[(100., 'OPS', False, False)]):
         """
         create analytic distribution
@@ -553,15 +573,16 @@ class FinanceTest(UnifieldTest):
             ad_replace_data_by_id = {}
             if ad_replace_data:                
                 for k in ad_replace_data:
-                    old_new_values = [] 
-                    for old, new in ad_replace_data[k]:
-                        old_new_values.append((
-                            self.get_account_from_code(db, old,
-                                is_analytic=True),
-                            self.get_account_from_code(db, new,
-                                is_analytic=True),
-                        ))
-                    ad_replace_data_by_id[k] = old_new_values
+                    if k != 'per':
+                        old_new_values = [] 
+                        for old, new in ad_replace_data[k]:
+                            old_new_values.append((
+                                self.get_account_from_code(db, old,
+                                    is_analytic=True),
+                                self.get_account_from_code(db, new,
+                                    is_analytic=True),
+                            ))
+                        ad_replace_data_by_id[k] = old_new_values
                 
                 fields = [
                     'percentage',
@@ -593,9 +614,9 @@ class FinanceTest(UnifieldTest):
                                     ad_line_val['analytic_id'] = new
                                     break
                                     
-                        if 'per' in ad_replace_data_by_id:
+                        if 'per' in ad_replace_data:
                             # percentage replace
-                            for old, new in ad_replace_data_by_id['per']:
+                            for old, new in ad_replace_data['per']:
                                 if percent == old:
                                     percent = new
                                     break
@@ -619,6 +640,7 @@ class FinanceTest(UnifieldTest):
                     for adwl_r in wizard_adfpl_obj.read(fp_line_ids, fields):
                         ad_line_val = {}
                         percent = adwl_r['percentage']
+                        is_percent_replaced = False
                         
                         if 'dest' in ad_replace_data_by_id:
                             # destination replace
@@ -641,14 +663,15 @@ class FinanceTest(UnifieldTest):
                                     ad_line_val['analytic_id'] = new
                                     break
                                               
-                        if 'per' in ad_replace_data_by_id:
+                        if 'per' in ad_replace_data:
                             # percentage replace
-                            for old, new in ad_replace_data_by_id['per']:
+                            for old, new in ad_replace_data['per']:
                                 if percent == old:
                                     percent = new
+                                    is_percent_replaced = True
                                     break
                                     
-                        if ad_line_val:
+                        if ad_line_val or is_percent_replaced:
                             ad_line_val['percentage'] = percent  # line write workarround (always needed percentage in vals)
                             wizard_adfpl_obj.write([adwl_r['id']], ad_line_val)
                                               
@@ -837,12 +860,11 @@ class FinanceTest(UnifieldTest):
             match_count = 0
             for aal_br in aal_obj.browse(ids):
                 for percent, dest, cc, fp in expected_ad:
-                    aji_amount = (ji_amount * percent) / 100.  # percent match ?
                     if aal_br.general_account_id.id == account_id and \
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
-                        aal_br.amount_currency == aji_amount:
+                        aal_br.amount_currency == ((ji_amount * percent) / 100.):  # percent match ?
                         match_count += 1
                         break
                         
@@ -870,13 +892,11 @@ class FinanceTest(UnifieldTest):
             match_count = 0
             for aal_br in aal_obj.browse(ids):
                 for percent, dest, cc, fp in expected_ad_rev:
-                    aji_amount = (ji_amount * percent) / 100.  # percent match ?
-                    aji_amount *= -1  # reversal amount
                     if aal_br.general_account_id.id == account_id and \
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
-                        aal_br.amount_currency == aji_amount:
+                        aal_br.amount_currency == (((ji_amount * percent) / 100.) * -1):
                         match_count += 1
                         break
                         
@@ -905,14 +925,13 @@ class FinanceTest(UnifieldTest):
             match_count = 0
             for aal_br in aal_obj.browse(ids):
                 for percent, dest, cc, fp in expected_ad_cor:
-                    aji_amount = (ji_amount * percent) / 100.  # percent match ?
                     # COR with new account
                     gl_account_id = new_account_id or account_id
                     if aal_br.general_account_id.id == gl_account_id and \
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
-                        aal_br.amount_currency == aji_amount:
+                        aal_br.amount_currency == ((ji_amount * percent) / 100.):  # percent match ?
                         match_count += 1
                         break
                         
@@ -923,7 +942,7 @@ class FinanceTest(UnifieldTest):
                         ji_br.name, ji_amount, db.colored_name, )
                 )
         
-    def create_journal_entry(self, database):
+    def journal_create_entry(self, database):
         '''
         Create a journal entry (account.move) with 2 lines: 
           - an expense one (with an analytic distribution)
@@ -1026,7 +1045,7 @@ class FinanceTest(UnifieldTest):
             raise FinanceTestException(
                 "invalid level value 'f', 'm' or 'h' expected")
                 
-    def create_supplier_invoice(self, db, ccy_code=False, is_refund=False,
+    def invoice_create_supplier_invoice(self, db, ccy_code=False, is_refund=False,
         date=False, partner_id=False, ad_header_breakdown_data=False, 
         lines_accounts=[], validate=False):
         """
@@ -1035,7 +1054,7 @@ class FinanceTest(UnifieldTest):
         :param is_refund: is a refund ? False for a regular invoice
         :param date: today if False
         :param partner_id: Local Market if False
-        :param ad_header_breakdown_data: see create_analytic_distribution
+        :param ad_header_breakdown_data: see analytic_distribution_create
         :param lines_accounts: list of account codes for each line to generate
         :return : id of invoice
         """
@@ -1115,7 +1134,7 @@ class FinanceTest(UnifieldTest):
                     
         # header ad
         if ad_header_breakdown_data:
-            ad_id = self.create_analytic_distribution(db,
+            ad_id = self.analytic_distribution_create(db,
                 breakdown_data=ad_header_breakdown_data)
             vals['analytic_distribution_id'] = ad_id
             
@@ -1136,7 +1155,7 @@ class FinanceTest(UnifieldTest):
         
         return id
             
-    def validate_invoice(self, db, ids):
+    def invoice_validate(self, db, ids):
         """
         validate the invoice and return its expense JIs ids list
         :return : {id: [ji_id, ...]} if ids is a list else return [ji_id, ...]
@@ -1183,7 +1202,7 @@ class FinanceTest(UnifieldTest):
                 
         return res
         
-    def activate_analytic_account_since(self, db, date):
+    def analytic_account_activate_since(self, db, date):
         aaa_obj = db.get('account.analytic.account')
         aaa_ids = aaa_obj.search([('parent_id', '!=', False)])
         for aaa_br in aaa_obj.browse(aaa_ids):
