@@ -432,6 +432,7 @@ class FinanceTestCorCases(FinanceTest):
     def test_cor1_1(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_1
+        G/L ACCOUNT 60010=>60020
         """
         db = self.c1
         self._register_set(db)
@@ -465,6 +466,7 @@ class FinanceTestCorCases(FinanceTest):
     def test_cor1_2(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_2
+        DEST REPLACE OPS=>NAT NO REV/COR
         """
         db = self.c1
         self._register_set(db)
@@ -496,6 +498,7 @@ class FinanceTestCorCases(FinanceTest):
     def test_cor1_3(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_3
+        CC REPLACE HT101=>HT120 NO REV/COR
         """
         db = self.c1
         self._register_set(db)
@@ -517,7 +520,6 @@ class FinanceTestCorCases(FinanceTest):
                     ad_replace_data={ 'cc': [('HT101', 'HT120')] },
             )
             
-            ji_id = 1
             self.check_ji_correction(db, ji_id,
                 '60010', new_account_code=False,
                 expected_ad=[(100., 'OPS', 'HT120', 'PF'), ],
@@ -528,6 +530,7 @@ class FinanceTestCorCases(FinanceTest):
     def test_cor1_4(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_4
+        FP REPLACE PF=>FP1 NO REV/COR
         """
         db = self.c1
         self._register_set(db)
@@ -549,7 +552,6 @@ class FinanceTestCorCases(FinanceTest):
                     ad_replace_data={ 'fp': [('PF', 'FP1')] },
             )
             
-            ji_id = 1
             self.check_ji_correction(db, ji_id,
                 '60010', new_account_code=False,
                 expected_ad=[(100., 'OPS', 'HT101', 'FP1'), ],
