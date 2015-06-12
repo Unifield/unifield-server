@@ -562,6 +562,7 @@ class FinanceTestCorCases(FinanceTest):
     def test_cor1_5(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_5
+        G/L ACCOUNT 60010=>60000 and new AD 
         """
         db = self.c1
         self._register_set(db)
@@ -593,7 +594,7 @@ class FinanceTestCorCases(FinanceTest):
             
             self.check_ji_correction(db, ji_id,
                 '60010', new_account_code='60000',
-                expected_ad=new_ad,
+                expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
             )

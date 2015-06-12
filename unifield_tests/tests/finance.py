@@ -771,8 +771,13 @@ class FinanceTest(UnifieldTest):
             
         account_id = self.get_account_from_code(db, account_code,
             is_analytic=False)
-        new_account_id = self.get_account_from_code(db, new_account_code,
-            is_analytic=False)
+        new_account_id = False
+        if new_account_code:
+            new_account_id = self.get_account_from_code(db, new_account_code,
+                is_analytic=False)
+            if not new_account_id:
+                raise FinanceTestException("new account '%s' not found" % (
+                    new_account_id, ))
         
         ji_br = aml_obj.browse(ji_id)
         ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
@@ -813,11 +818,12 @@ class FinanceTest(UnifieldTest):
                 )
                 
         base_aji_ids = []  # ids of AJIs not rev/cor (not in correction journal)
-        if expected_ad:
+        if expected_ad:         
             # check AJIs
             ids = aal_obj.search([
                 ('move_id', '=', ji_id),
                 ('journal_id', 'not in', aod_journal_ids),
+                ('general_account_id', '=', account_id),
             ])
             base_aji_ids = ids
             if len(ids) != len(expected_ad):
@@ -849,6 +855,7 @@ class FinanceTest(UnifieldTest):
             ids = aal_obj.search([
                 ('reversal_origin', 'in', base_aji_ids),
                 ('journal_id', 'in', aod_journal_ids),
+                ('general_account_id', '=', account_id),
             ])
             if len(ids) != len(expected_ad_rev):
                 raise FinanceTestException(
@@ -880,6 +887,7 @@ class FinanceTest(UnifieldTest):
             ids = aal_obj.search([
                 ('last_corrected_id', 'in', base_aji_ids),
                 ('journal_id', 'in', aod_journal_ids),
+                ('general_account_id', '=', new_account_id or account_id),
             ])
             if len(ids) != len(expected_ad_cor):
                 raise FinanceTestException(
@@ -892,7 +900,8 @@ class FinanceTest(UnifieldTest):
                 for percent, dest, cc, fp in expected_ad_cor:
                     aji_amount = (ji_amount * percent) / 100.  # percent match ?
                     # COR with new account
-                    if aal_br.general_account_id.id == new_account_id and \
+                    gl_account_id = new_account_id or account_id
+                    if aal_br.general_account_id.id == gl_account_id and \
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
