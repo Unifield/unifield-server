@@ -641,6 +641,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad=new_ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
+                expected_cor_rev_ajis_total_func_amount=80.65,
             )
             
     def test_cor1_7(self):
@@ -682,6 +683,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
+                expected_cor_rev_ajis_total_func_amount=80.65,
             )
             
     def test_cor1_8(self):
