@@ -798,7 +798,7 @@ class FinanceTest(UnifieldTest):
             rev_ids = aml_obj.search(domain)
             if not rev_ids:
                 raise FinanceTestException(
-                    "no JI REV found for %s %f:: %s" % (
+                    "no JI REV found for %s %s %f:: %s" % (account_code,
                         ji_br.name, ji_amount, db.colored_name, )
                 )
             
@@ -811,9 +811,10 @@ class FinanceTest(UnifieldTest):
                 ('account_id', '=', new_account_id),
                 (cor_rev_amount_field, '=', abs(cor_rev_amount)),
             ]
+            rev_ids = aml_obj.search(domain)
             if not rev_ids:
                 raise FinanceTestException(
-                    "no JI COR found for %s %f:: %s" % (
+                    "no JI COR found for %s %s %f:: %s" % (new_account_code,
                         ji_br.name, ji_amount, db.colored_name, )
                 )
                 
@@ -828,7 +829,8 @@ class FinanceTest(UnifieldTest):
             base_aji_ids = ids
             if len(ids) != len(expected_ad):
                 raise FinanceTestException(
-                    "expected AJIs count do not match for JI %s %f:: %s" % (
+                    "expected AJIs count do not match for JI %s %s %f:: %s" % (
+                        new_account_code or account_code,
                         ji_br.name, ji_amount, db.colored_name, )
                 )
             
@@ -859,7 +861,9 @@ class FinanceTest(UnifieldTest):
             ])
             if len(ids) != len(expected_ad_rev):
                 raise FinanceTestException(
-                    "expected REV AJIs count do not match for JI %s %f:: %s" % (
+                    "expected REV AJIs count do not match for JI" \
+                        " %s %s %f:: %s" % (
+                        new_account_code or account_code,
                         ji_br.name, ji_amount, db.colored_name, )
                 )
             
@@ -878,7 +882,8 @@ class FinanceTest(UnifieldTest):
                         
             if len(ids) != match_count:
                 raise FinanceTestException(
-                    "expected REV AJIs do not match for JI %s %f:: %s" % (
+                    "expected REV AJIs do not match for JI %s %s %f:: %s" % (
+                        new_account_code or account_code,
                         ji_br.name, ji_amount, db.colored_name, )
                 )
                 
@@ -891,8 +896,10 @@ class FinanceTest(UnifieldTest):
             ])
             if len(ids) != len(expected_ad_cor):
                 raise FinanceTestException(
-                    "expected COR AJIs count do not match for JI %s %f:: %s" % (
-                        ji_br.name, amount, db.colored_name, )
+                    "expected COR AJIs count do not match for JI" \
+                        " %s %s %f:: %s" % (
+                        new_account_code or account_code,
+                        ji_br.name, ji_amount, db.colored_name, )
                 )
             
             match_count = 0
@@ -911,7 +918,8 @@ class FinanceTest(UnifieldTest):
                         
             if len(ids) != match_count:
                 raise FinanceTestException(
-                    "expected COR AJIs do not match for JI %s %f:: %s" % (
+                    "expected COR AJIs do not match for JI %s %s %f:: %s" % (
+                        new_account_code or account_code,
                         ji_br.name, ji_amount, db.colored_name, )
                 )
         
