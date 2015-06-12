@@ -6,7 +6,7 @@ __author__ = 'qt'
 from resourcing import ResourcingTest
 
 
-class US311Test(ResourcingTest):
+class US311Test(object):
 
     def setUp(self):
         """
@@ -407,6 +407,18 @@ class US311Test(ResourcingTest):
             "Not all needed PO lines are found",
         )
 
+    def cancel_po_line(self):
+        """
+        Cancel the PO line
+        """
+        # Cancel the PO line
+        res = self.c_pol_obj.ask_unlink(self.c_pol_15)
+        self.assert_(
+            res.get('res_id', False) and res.get('res_model', False) == 'purchase.order.line.unlink.wizard',
+            "There is no wizard displayed when cancel a PO line that sources a FO/IR line",
+        )
+        w_res = self.c1.get('purchase.order.line.unlink.wizard').just_cancel(res.get('res_id'))
+
     def test_simple_split_1(self):
         """
         #1 Split the PO line
@@ -785,7 +797,7 @@ class US311Test(ResourcingTest):
 
         self.close_flow()
 
-class US311TestCancelNewLine(US311Test):
+class US311TestCancelNewLine(US311Test, ResourcingTest):
     """
     Split the PO line at coordo side, then cancel the new created line.
     """
@@ -812,7 +824,7 @@ class US311TestCancelNewLine(US311Test):
         )
         w_res = self.c1.get('purchase.order.line.unlink.wizard').just_cancel(res.get('res_id'))
 
-class US311TestCancelOldLine(US311Test):
+class US311TestCancelOldLine(US311Test, ResourcingTest):
     """
     Split the PO line at coordo side, then cancel the old line.
     """
@@ -839,7 +851,7 @@ class US311TestCancelOldLine(US311Test):
         )
         w_res = self.c1.get('purchase.order.line.unlink.wizard').just_cancel(res.get('res_id'))
 
-class US311TestCancelNewLineMoreOnNewLine(US311TestCancelNewLine):
+class US311TestCancelNewLineMoreOnNewLine(US311TestCancelNewLine, ResourcingTest):
     """
     Split the PO line at coordo side, add more than the initial quantity
     then cancel the splitted line.
@@ -880,6 +892,90 @@ class US311TestCancelNewLineMoreOnOldLine(US311TestCancelNewLine):
         super(US311TestCancelNewLineMoreOnOldLine, self).split_po_line()
         # Add quantities on new line
         self.c_pol_obj.write(self.c_pol_10, {'product_qty': 50.0})
+
+class US311TestCancelNewLineLessOnNewLine(US311TestCancelNewLine, ResourcingTest):
+    """
+    Split the PO line at coordo side, reduce the initial quantity
+    then cancel the splitted line.
+    """
+    def setUp(self):
+        super(US311TestCancelNewLineLessOnNewLine, self).setUp()
+        self.simple_vals = {
+            self.p_prd1_id: 18.00,
+            self.p_prd2_id: 23.00,
+        }
+        self.ir_vals = {
+            self.p_prd1_id: 18.00,
+            self.p_prd2_id: 10.00,
+        }
+
+    def split_po_line(self):
+        super(US311TestCancelNewLineLessOnNewLine, self).split_po_line()
+        # Add quantities on new line
+        self.c_pol_obj.write(self.c_pol_15, {'product_qty': 13.0})
+
+class US311TestCancelNewLineLessOnOldLine(US311TestCancelNewLine):
+    """
+    Split the PO line at coordo side, reduce the initial quantity
+    then cancel the splitted line.
+    """
+    def setUp(self):
+        super(US311TestCancelNewLineLessOnOldLine, self).setUp()
+        self.simple_vals = {
+            self.p_prd1_id: 18.00,
+            self.p_prd2_id: 20.00,
+        }
+        self.ir_vals = {
+            self.p_prd1_id: 18.00,
+            self.p_prd2_id: 5.00,
+        }
+
+    def split_po_line(self):
+        super(US311TestCancelNewLineLessOnOldLine, self).split_po_line()
+        # Add quantities on new line
+        self.c_pol_obj.write(self.c_pol_10, {'product_qty': 5.0})
+
+class US311TestCancelOldLineLessOnOldLine(US311TestCancelOldLine):
+    """
+    Split the PO line at coordo side, reduce the inital quantity
+    then cancel the new created line.
+    """
+    def setUp(self):
+        super(US311TestCancelOldLineLessOnOldLine, self).setUp()
+        self.simple_vals = {
+            self.p_prd1_id: 18.00,
+            self.p_prd2_id: 20.00,
+        }
+        self.ir_vals = {
+            self.p_prd1_id: 18.00,
+            self.p_prd2_id: 15.00,
+        }
+
+    def split_po_line(self):
+        super(US311TestCancelOldLineLessOnOldLine, self).split_po_line()
+        # Add quantities on new line
+        self.c_pol_obj.write(self.c_pol_10, {'product_qty': 5.0})
+
+class US311TestCancelOldLineLessOnNewLine(US311TestCancelOldLine):
+    """
+    Split the PO line at coordo side, reduce the inital quantity
+    then cancel the new created line.
+    """
+    def setUp(self):
+        super(US311TestCancelOldLineLessOnNewLine, self).setUp()
+        self.simple_vals = {
+            self.p_prd1_id: 18.00,
+            self.p_prd2_id: 23.00,
+        }
+        self.ir_vals = {
+            self.p_prd1_id: 18.00,
+            self.p_prd2_id: 13.00,
+        }
+
+    def split_po_line(self):
+        super(US311TestCancelOldLineLessOnNewLine, self).split_po_line()
+        # Add quantities on new line
+        self.c_pol_obj.write(self.c_pol_15, {'product_qty': 13.0})
 
 class US311TestCancelOldLineMoreOnOldLine(US311TestCancelOldLine):
     """
@@ -923,7 +1019,7 @@ class US311TestCancelOldLineMoreOnNewLine(US311TestCancelOldLine):
         # Add quantities on new line
         self.c_pol_obj.write(self.c_pol_15, {'product_qty': 50.0})
 
-class US311TestCancelAllLines(US311Test):
+class US311TestCancelAllLines(US311Test, ResourcingTest):
     """
     Split the PO line at coordo side, then cancel the old line and the new line
     """
