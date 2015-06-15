@@ -145,7 +145,7 @@ class FinanceTest(UnifieldTest):
         :rtype: int
         """
         # checks
-        self._assert(
+        self.assert_(
             name and code and journal_type,
             "name or/and code or/and journal type missing"
         )

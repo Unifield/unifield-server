@@ -661,7 +661,7 @@ class FinanceTestCorCases(FinanceTest):
             
             self.check_ji_correction(db, ji_id,
                 account, new_account_code=False,
-                expected_ad=new_ad,
+                expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
                 expected_cor_rev_ajis_total_func_amount=80.65,
@@ -844,7 +844,7 @@ class FinanceTestCorCases(FinanceTest):
         # TODO finish scenario
         db = self.c1
         
-        invoice_lines_accounts=[ '60002', '60003', '60004', ]
+        invoice_lines_accounts = [ '60002', '60003', '60004', ]
         for a in invoice_lines_accounts:
             self.analytic_distribution_set_fp_account_dest(db, 'FP1', a, 'NAT')
                 
@@ -884,7 +884,7 @@ class FinanceTestCorCases(FinanceTest):
         """
         db = self.c1
         
-        invoice_lines_accounts=[ '60010', '60020', '60030', ]
+        invoice_lines_accounts = [ '60010', '60020', '60030', ]
         
         ad = [
             (60., 'OPS', 'HT101', 'PF'),
@@ -910,13 +910,8 @@ class FinanceTestCorCases(FinanceTest):
             (30., 'OPS', 'HT120', 'PF'),
         ]
         
-        first_invoice_ji_id = False
-        
         # simu of cor for each invoice JIs
         for ji_br in db.get('account.move.line').browse(ji_ids):
-            if ji_br.account_id.code == invoice_lines_accounts[0]:
-                first_invoice_ji_id = ji_br.id
-            
             self.simulation_correction_wizard(db, ji_br.id,
                 cor_date=self.get_orm_fy_date(2, 7),
                 new_account_code=False,
@@ -933,26 +928,28 @@ class FinanceTestCorCases(FinanceTest):
             
         # 1st invoice line change account to 60000 for 10th Feb
         # should be deny as already analytically corrected
-        if first_invoice_ji_id:
-            ji_br = db.get('account.move.line').browse(first_invoice_ji_id)
-            self.assert_(
-                ji_br.last_cor_was_only_analytic == True,
-                "JI %s %s %f should not be g/l account corrected as already" \
-                    " analytically corrected " % (ji_br.account_id.code,
-                    ji_br.name, ji_br.debit_currency, )
-            )
+        ji_br = db.get('account.move.line').browse(ji_ids[0])
+        self.assert_(
+            ji_br.last_cor_was_only_analytic == True,
+            "JI %s %s %f should not be g/l account corrected as already" \
+                " analytically corrected " % (ji_br.account_id.code,
+                ji_br.name, ji_br.debit_currency, )
+        )
         
     def test_cor1_13(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_13
         """
         db = self.c1
-        aml_obj = db.get('account.move.line')
+        
+        invoice_lines_accounts = [ '60010', '60020', ]
         
         ad = [
             (55., 'OPS', 'HT101', 'PF'),
             (45., 'OPS', 'HT120', 'PF'),
         ]
+        
+        aml_obj = db.get('account.move.line')
         
         ji_ids = self.invoice_validate(db,
             self.invoice_create_supplier_invoice(db,
@@ -960,76 +957,81 @@ class FinanceTestCorCases(FinanceTest):
                 date=False,
                 partner_id=False,
                 ad_header_breakdown_data=ad,
-                lines_accounts=['60010', '60020', ]
+                lines_accounts=invoice_lines_accounts
             )
         )
  
-        # cor of the 1fst invoice line
-
+        # 13.4 account/ad correction of 1st invoice line
+        new_account = '60000'
         new_ad = [ (100., 'OPS', 'HT120', 'PF'), ]
+        ji_br = db.get('account.move.line').browse(ji_ids[0])
         
-        # simu of cor if 1st invoice line
-        ji_ids = [ji_ids[0]]
-        ji_records = db.get('account.move.line').read(ji_ids, ['account_id'])
-        for ji_id in ji_ids:
-            self.simulation_correction_wizard(db, ji_id,
-                cor_date=False,
-                new_account_code='60000',
-                new_ad_breakdown_data=new_ad,
-                ad_replace_data=False
-            )
-                
-            self.check_ji_correction(db, ji_id,
-                ji_records[ji_id]['account_id'], new_account_code='60000',
-                expected_ad=new_ad,
-                expected_ad_rev=ad,
-                expected_ad_cor=new_ad,
-            )
-            
-        # 13.7: cor the cor
-        # get the COR JI of the corrected JI
-        cor_ids = aml_obj.search([('corrected_line_id', '=', ji_ids[0])])
-        self.assert_(cor_ids != False, 'COR1 JI not found!')
-        
-        # simu cor of the cor and check
-        new_ad2 = [ (100., 'OPS', 'HT120', 'FP1'), ]
-        self.simulation_correction_wizard(db, cor_ids[0],
+        self.simulation_correction_wizard(db, ji_ids[0],
             cor_date=False,
-            new_account_code='60030',
+            new_account_code=new_account,
+            new_ad_breakdown_data=new_ad,
+            ad_replace_data=False
+        )
+                
+        self.check_ji_correction(db, ji_ids[0],
+            ji_br.account_id.code, new_account_code=new_account,
+            expected_ad=ad,
+            expected_ad_rev=ad,
+            expected_ad_cor=new_ad,
+        )
+        
+        # 13.6/7: correction of COR-1 => will generate COR-2
+        cor1_ids = aml_obj.search([('corrected_line_id', '=', ji_ids[0])])
+        self.assert_(cor1_ids != False, 'COR-1 JI not found!')
+        
+        new_account2 = '60030'
+        new_ad2 = [ (100., 'OPS', 'HT120', 'FP1'), ]
+        self.analytic_distribution_set_fp_account_dest(db, 'FP2', new_account2,
+            'OPS')
+        
+        self.simulation_correction_wizard(db, cor1_ids[0],
+            cor_date=False,
+            new_account_code=new_account2,
             new_ad_breakdown_data=new_ad2,
             ad_replace_data=False
         )
-            
-        self.check_ji_correction(db, cor_ids[0],
-            '60000', new_account_code='60030',
-            expected_ad=new_ad2,
-            expected_ad_rev=new_ad,
-            expected_ad_cor=new_ad2
-        )
-            
-        # 13.8: cor the cor of cor
-        # get the cor of cor
-        cor_ids = aml_obj.search([('corrected_line_id', '=', cor_ids[0])])
-        self.assert_(cor_ids != False, 'COR2 JI not found!')
         
-        # simu cor the cor of cor and check
+        self.check_ji_correction(db, cor1_ids[0],
+            new_account, new_account2,
+            expected_ad=new_ad,
+            expected_ad_rev=new_ad,
+            expected_ad_cor=new_ad2,
+        )
+        return  # TODO remove to test cor of COR-2
+            
+        # 13.8/9:
+        # correction of the correction of correction
+        # correction of COR-2 => will generate COR-3
+        cor2_ids = aml_obj.search([('corrected_line_id', '=', cor1_ids[0])])
+        self.assert_(cor2_ids != False, 'COR-2 JI not found!')
+
+        new_account3 = '60050'
         new_ad3 = [
             (70., 'OPS', 'HT120', 'FP2'),
             (30., 'OPS', 'HT101', 'FP2'),
         ]
-        self.simulation_correction_wizard(db, cor_ids[0],
+        self.analytic_distribution_set_fp_account_dest(db, 'FP2', new_account3,
+            'OPS')
+ 
+        self.simulation_correction_wizard(db, cor2_ids[0],
             cor_date=False,
-            new_account_code='60050',
+            new_account_code=new_account3,
             new_ad_breakdown_data=new_ad3,
             ad_replace_data=False
         )
             
-        self.check_ji_correction(db, cor_ids[0],
-            '60030', new_account_code='60050',
-            expected_ad=new_ad3,
+        self.check_ji_correction(db, cor2_ids[0],
+            new_account2, new_account_code=new_account2,
+            expected_ad=new_ad2,
             expected_ad_rev=new_ad2,
             expected_ad_cor=new_ad3
         )
+        # TODO check COR with a description COR-3
         
     def test_cor1_14(self):
         """
