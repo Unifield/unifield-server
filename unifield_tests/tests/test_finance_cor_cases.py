@@ -730,28 +730,32 @@ class FinanceTestCorCases(FinanceTest):
     def test_cor1_9(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_9
+        G/L ACCOUNT 13000=>13010
         """
         db = self.c1
         self._register_set(db)
         
         reg_id = self._register_get(db, browse=False)
         if reg_id:
+            account = '13300'
+            new_account = '13310'
+            
             regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
-                '13300', self.get_random_amount(True),
+                account, self.get_random_amount(True),
                 date=False, document_date=False,
                 do_hard_post=True
             )
             
             self.simulation_correction_wizard(db, ji_id,
                     cor_date=False,
-                    new_account_code='13310',
+                    new_account_code=new_account,
                     new_ad_breakdown_data=False,
                     ad_replace_data=False
             )
             
             self.check_ji_correction(db, ji_id,
-                '13300', new_account_code='13310',
+                account, new_account_code=new_account,
                 expected_ad=False,
                 expected_ad_rev=False,
                 expected_ad_cor=False,
