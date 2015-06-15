@@ -953,9 +953,10 @@ class FinanceTest(UnifieldTest):
         if expected_ad_cor:
             # check COR AJIs
             ids = aal_obj.search([
-                ('last_corrected_id', 'in', base_aji_ids),
+                #('last_corrected_id', 'in', base_aji_ids),
                 ('journal_id', 'in', aod_journal_ids),
                 ('general_account_id', '=', new_account_id or account_id),
+                ('name', '=', 'COR1 - ' + ji_br.name),
             ])
             if len(ids) != len(expected_ad_cor):
                 raise FinanceTestException(
@@ -1064,17 +1065,23 @@ class FinanceTest(UnifieldTest):
             ('date_start', '=', "%04d-%02d-01" % (year, month, )),
         ])
         return ids and ids[0] or False
+        
+    def period_close(self, db, level, month, year=0):
+        self._period_close_reopen(db, level, month, year=year, reopen=False)
+        
+    def period_reopen(self, db, level, month, year=0):
+        self._period_close_reopen(db, level, month, year=year, reopen=True)
     
-    def period_close_reopen(self, db, level, month, year=0, reopen=False):
+    def _period_close_reopen(self, db, level, month, year=0, reopen=False):
         """
-        close period at given level
+        close/reopen period at given level
         :param level: 'f', 'm' or 'h' for 'field', 'mission' or 'hq'
         """
         period_id = self.get_period_id(db, month, year=year)
         if not period_id:
             raise FinanceTestException(
                 "period %02d/%04d not found" % (year, month, ))
-               
+            
         period_obj = db.get('account.period')
         
         if level =='f':
@@ -1243,9 +1250,13 @@ class FinanceTest(UnifieldTest):
                 validated_ids.append(ai.id)
                 
         for ai in ai_obj.browse(validated_ids):
-            # get invoice JIs from invoice reference 
+            # get invoice EXPENSE JIs from invoice reference 
             # (reference obtained once invoice is validated)
-            ji_ids = aml_obj.search([('reference', '=', ai.number)])
+            ji_ids = aml_obj.search([
+                ('reference', '=', ai.number),
+                # only expense JIs
+                ('account_id.is_analytic_addicted', '=', True),
+            ])
             if is_single_ids:
                 res = ji_ids or []
             else:

@@ -643,7 +643,8 @@ class FinanceTestCorCases(FinanceTest):
             
             # CLOSE PERIOD Januar (MISSION)
             self.register_close(db, reg_id)
-            self.period_close_reopen(db, 'm', 1)
+            self.period_close(db, 'f', 1)
+            self.period_close(db, 'm', 1)
             
             new_ad=[
                 (70., 'OPS', 'HT101', 'PF'),
@@ -793,38 +794,43 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._register_get(db, browse=False)
         if reg_id:
+            account = '13300'
+            new_account = '61000'
+            
             regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
-                '13300', self.get_random_amount(True),
+                account, self.get_random_amount(True),
                 date=False, document_date=False,
                 do_hard_post=True
             )
             
-            # TODO
-            # should deny unit test when no ad provided from not expense account
-            # to expense one
+            # TODO simulate wizard correction validation deny bc no AD selected
+            # when changing from not expense account to expense one
             """self.simulation_correction_wizard(db, ji_id,
                     cor_date=False,
-                    new_account_code='61000',
+                    new_account_code=new_account,
                     new_ad_breakdown_data=False
                     ad_replace_data=False
             )"""
  
-            new_ad=[
+            ad=[
                 (30., 'OPS', 'HT101', 'PF'),
-                (30., 'OPS', 'HT101', 'PF1'),
-                (40., 'OPS', 'HT120', 'PF1'),
+                (30., 'OPS', 'HT101', 'FP1'),
+                (40., 'OPS', 'HT120', 'FP1'),
             ]
+            self.analytic_distribution_set_fp_account_dest(db, 'FP1',
+                new_account, 'OPS')
+            
             self.simulation_correction_wizard(db, ji_id,
                     cor_date=False,
-                    new_account_code='61000',
-                    new_ad_breakdown_data=new_ad,
+                    new_account_code=new_account,
+                    new_ad_breakdown_data=ad,
                     ad_replace_data=False
             )
             
             self.check_ji_correction(db, ji_id,
-                '13300', new_account_code='61000',
-                expected_ad=new_ad,
+                account, new_account_code=new_account,
+                expected_ad=ad,
                 expected_ad_rev=False,
                 expected_ad_cor=False,
             )
@@ -833,30 +839,42 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_11
         """
-        # TODO: finish this use case
+        # TODO finish scenario
         db = self.c1
         
-        self.invoice_validate(db, self.invoice_invoice_create_supplier_invoice(db,
-            ccy_code=False, date=False, partner_id=False,
-            ad_header_breakdown_data=[
-                (50., 'NAT', 'HT101', 'PF'),
-                (50., 'NAT', 'HT120', 'FP1'),
-            ],
-            lines_accounts=['60002', '60003', '60004', ],
-        ))
+        invoice_lines_accounts=[ '60002', '60003', '60004', ]
+        for a in invoice_lines_accounts:
+            self.analytic_distribution_set_fp_account_dest(db, 'FP1', a, 'NAT')
+                
+        self.invoice_validate(db,
+            self.invoice_create_supplier_invoice(
+                db, ccy_code=False, date=False, partner_id=False,
+                ad_header_breakdown_data=[
+                    (50., 'NAT', 'HT101', 'PF'),
+                    (50., 'NAT', 'HT120', 'FP1'),
+                ],
+                lines_accounts=invoice_lines_accounts
+            )
+        )
             
-        # TODO
-        # close financing contract FC1 and soft-close it
+        # close financing contract FC1: soft-close it
+        fcc_obj = db.get('financing.contract.contract')
+        fc_id = self.get_id_from_key(db, 'financing.contract.contract', 'FC1',
+            raise_if_no_ids=True)
+        fcc_obj.contract_soft_closed([fc_id])
         
         # select ALL boocked AJI of FP1, correction wizard: change FP1 to PF
+        # TODO
         
         # repoen FC1
+        # TODO
         
         # select ALL boocked AJI of FP1, correction wizard:
         # => change AD
         # - 50% NAT, HT101, PF
         # - 50% NAT, HT120, PF
         # => funding pool is modified by the AJI initially selected
+        # TODO
         
     def test_cor1_12(self):
         """
@@ -864,55 +882,63 @@ class FinanceTestCorCases(FinanceTest):
         """
         db = self.c1
         
+        invoice_lines_accounts=[ '60010', '60020', '60030', ]
+        
         ad = [
             (60., 'OPS', 'HT101', 'PF'),
             (40., 'OPS', 'HT120', 'PF'),
         ]
         
-        ji_ids = self.invoice_validate(db, self.invoice_invoice_create_supplier_invoice(db,
-            ccy_code='USD',
-            date=self.get_orm_fy_date(1, 8),
-            partner_id=False,
-            ad_header_breakdown_data=ad,
-            lines_accounts=['60010', '60020', '60030', ],
-        ))
+        ji_ids = self.invoice_validate(db,
+            self.invoice_create_supplier_invoice(db,
+                ccy_code='USD',
+                date=self.get_orm_fy_date(1, 8),
+                partner_id=False,
+                ad_header_breakdown_data=ad,
+                lines_accounts=invoice_lines_accounts,
+            )
+        )
         
         # CLOSE PERIOD Januar (MISSION)
-        self.period_close_reopen(db, 'm', 1)
+        self.period_close(db, 'f', 1)
+        self.period_close(db, 'm', 1)
         
         new_ad = [
             (70., 'OPS', 'HT101', 'PF'),
             (30., 'OPS', 'HT120', 'PF'),
-        ],
+        ]
+        
+        first_invoice_ji_id = False
         
         # simu of cor for each invoice JIs
-        ji_records = db.get('account.move.line').read(ji_ids, ['account_id'])
-        for ji_id in ji_ids:
-            self.simulation_correction_wizard(db, ji_id,
+        for ji_br in db.get('account.move.line').browse(ji_ids):
+            if ji_br.account_id.code == invoice_lines_accounts[0]:
+                first_invoice_ji_id = ji_br.id
+            
+            self.simulation_correction_wizard(db, ji_br.id,
                 cor_date=self.get_orm_fy_date(2, 7),
                 new_account_code=False,
                 new_ad_breakdown_data=new_ad,
-                    ad_replace_data=False
+                ad_replace_data=False
             )
                 
-            self.check_ji_correction(db, ji_id,
-                ji_records[ji_id]['account_id'], new_account_code=False,
-                expected_ad=new_ad,
+            self.check_ji_correction(db, ji_br.id,
+                ji_br.account_id.code, new_account_code=False,
+                expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
             )
             
-        # TODO
-        # 1s invoice line correction date self.get_orm_fy_date(2, 10)
-        # change account (to 60000) account field should be grayed 
-        # (entry has been analytically already corrected)
-        """
-        self.simulation_correction_wizard(db, ji_records[0],
-            cor_date=self.get_orm_fy_date(2, 10),
-            new_account_code='60000',
-            new_ad_breakdown_data=False,
-            ad_replace_data=False
-        )"""
+        # 1st invoice line change account to 60000 for 10th Feb
+        # should be deny as already analytically corrected
+        if first_invoice_ji_id:
+            ji_br = db.get('account.move.line').browse(first_invoice_ji_id)
+            self.assert_(
+                ji_br.last_cor_was_only_analytic == True,
+                "JI %s %s %f should not be g/l account corrected as already" \
+                    " analytically corrected " % (ji_br.account_id.code,
+                    ji_br.name, ji_br.debit_currency, )
+            )
         
     def test_cor1_13(self):
         """
@@ -926,13 +952,15 @@ class FinanceTestCorCases(FinanceTest):
             (45., 'OPS', 'HT120', 'PF'),
         ]
         
-        ji_ids = self.invoice_validate(db, self.invoice_invoice_create_supplier_invoice(db,
-            ccy_code=False,
-            date=False,
-            partner_id=False,
-            ad_header_breakdown_data=ad,
-            lines_accounts=['60010', '60020', ]
-        ))
+        ji_ids = self.invoice_validate(db,
+            self.invoice_create_supplier_invoice(db,
+                ccy_code=False,
+                date=False,
+                partner_id=False,
+                ad_header_breakdown_data=ad,
+                lines_accounts=['60010', '60020', ]
+            )
+        )
  
         # cor of the 1fst invoice line
 
