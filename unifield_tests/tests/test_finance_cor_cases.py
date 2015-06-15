@@ -106,8 +106,7 @@ class FinanceTestCorCases(FinanceTest):
                     "%s_%s" % (RBDB_PREFIX, c, ) for c in codes ]
                 instance_ids = db.get('msf.instance').search(
                         [('code', 'in', target_instance_codes)])
-                if not instance_ids:
-                    raise FinanceTestCorCasesException("instances not found")
+                self.assert_(instance_ids != False, "instances not found")
             return instance_ids
         
         def activate_currencies(db, codes):
@@ -173,24 +172,24 @@ class FinanceTestCorCases(FinanceTest):
                     parent_cc_ids[parent_code] = parent_id
                 else:
                     parent_id = parent_cc_ids.get(parent_code, False)
+                self.assert_(
+                    parent_id != False,
+                    "parent cost center not found '%s'" % (parent_code, )
+                )
                     
-                if parent_id:
-                    vals = {
-                        'code': cc,
-                        'description': cc,
-                        'currency_id': company.currency_id.id,
-                        'name': cc,
-                        'date_start': date_fy_start,
-                        'parent_id': parent_id,
-                        'state': 'open',
-                        'type': 'normal', 
-                        'category': 'OC',
-                        'instance_id': company.instance_id.id,
-                    }
-                    cc_id = db.get(model).create(vals)
-                else:
-                    raise FinanceTestCorCasesException(
-                        "parent cost center not found '%s'" % (parent_code,))
+                vals = {
+                    'code': cc,
+                    'description': cc,
+                    'currency_id': company.currency_id.id,
+                    'name': cc,
+                    'date_start': date_fy_start,
+                    'parent_id': parent_id,
+                    'state': 'open',
+                    'type': 'normal', 
+                    'category': 'OC',
+                    'instance_id': company.instance_id.id,
+                }
+                cc_id = db.get(model).create(vals)
                         
                 # set target instance
                 instance_ids = get_instance_ids_from_code(
@@ -223,9 +222,10 @@ class FinanceTestCorCases(FinanceTest):
                     ('code', '=', 'FUNDING'),
                     ('type', '=', 'view')
                 ])
-                if not parent_ids:
-                    raise FinanceTestCorCasesException(
-                        'parent funding pool not found')
+                self.assert_(
+                    parent_ids != False,
+                    'parent funding pool not found'
+                )
         
                 vals = {
                     'code': fp,
@@ -337,10 +337,11 @@ class FinanceTestCorCases(FinanceTest):
             db = self.get_db_from_name(self.get_db_name_from_suffix(i))
             company = self.get_company(db)
             
-            if company.currency_id.name != meta.functional_ccy:
-                raise FinanceTestCorCasesException(
-                    "wrong functionnal ccy: '%s' expected" % (
-                    meta.functional_ccy, ))
+            self.assert_(
+                company.currency_id.name == meta.functional_ccy,
+                 "wrong functionnal ccy: '%s' is expected" % (
+                    meta.functional_ccy, )
+            )
                     
             # activate currencies (if required)
             activate_currencies(db, [ccy_name for ccy_name in meta.rates])
@@ -410,9 +411,10 @@ class FinanceTestCorCases(FinanceTest):
         journal_code = dataset_meta.register_prefix + ' ' + ccy_name
         
         ids = abs_obj.search([('name', '=', journal_code)])
-        if not ids:
-            raise FinanceTestCorCasesException('register %s not found' % (
-                journal_code, ))
+        self.assert_(
+            ids != False,
+            'register %s not found' % (journal_code, )
+        )
         if browse:
             return abs_obj.browse([ids[0]])[0]
         else:
@@ -860,7 +862,7 @@ class FinanceTestCorCases(FinanceTest):
         # close financing contract FC1: soft-close it
         fcc_obj = db.get('financing.contract.contract')
         fc_id = self.get_id_from_key(db, 'financing.contract.contract', 'FC1',
-            raise_if_no_ids=True)
+            assert_if_no_ids=True)
         fcc_obj.contract_soft_closed([fc_id])
         
         # select ALL boocked AJI of FP1, correction wizard: change FP1 to PF
@@ -987,8 +989,7 @@ class FinanceTestCorCases(FinanceTest):
         # 13.7: cor the cor
         # get the COR JI of the corrected JI
         cor_ids = aml_obj.search([('corrected_line_id', '=', ji_ids[0])])
-        if not cor_ids:
-            raise FinanceTestCorCasesException('COR1 JI not found!')
+        self.assert_(cor_ids != False, 'COR1 JI not found!')
         
         # simu cor of the cor and check
         new_ad2 = [ (100., 'OPS', 'HT120', 'FP1'), ]
@@ -1009,8 +1010,7 @@ class FinanceTestCorCases(FinanceTest):
         # 13.8: cor the cor of cor
         # get the cor of cor
         cor_ids = aml_obj.search([('corrected_line_id', '=', cor_ids[0])])
-        if not cor_ids:
-            raise FinanceTestCorCasesException('COR2 JI not found!')
+        self.assert_(cor_ids != False, 'COR2 JI not found!')
         
         # simu cor the cor of cor and check
         new_ad3 = [

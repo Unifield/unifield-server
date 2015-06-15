@@ -225,7 +225,7 @@ class UnifieldTest(unittest.TestCase):
         return inst and inst.id or False
 
     def get_id_from_key(self, db, model_name, search_val, key_field='name',
-        raise_if_no_ids=False):
+        assert_if_no_ids=False):
         """
         get record id from model and record name
         :param db: db
@@ -233,18 +233,20 @@ class UnifieldTest(unittest.TestCase):
         :param search_val: value to search in
         :param key_field: field for criteria name (default name)
         :type key_field: str
-        :param raise_if_no_ids: raise a test error if not found (Failed Test)
-        :type raise_if_no_ids: boolan
+        :param assert_if_no_ids: raise a test error if not found (Failed Test)
+        :type assert_if_no_ids: boolan
         :return: id
         :rtype: int/long
         """
         ids = db.get(model_name).search([(key_field, '=', search_val)])
         if ids:
             return ids[0]
-        if raise_if_no_ids:
-            msg = "'%s' not found in '%s' :: %s" % (search_val, model_name,
-                db.colored_name, )
-            raise UnifieldTestException(msg)
+        if assert_if_no_ids:
+            assert(
+                ids != False,
+                "'%s' not found in '%s' :: %s" % (search_val, model_name,
+                    db.colored_name, )
+            )
         return False
         
     def get_db_name_from_suffix(self, suffix):
@@ -257,8 +259,7 @@ class UnifieldTest(unittest.TestCase):
             return self.c1
         elif self.p1.db_name == db_name:
             return self.p1
-        raise UnifieldTestException("'%s' database not found" % (
-            db_name, ))
+        raise UnifieldTestException("'%s' database not found" % (db_name, ))
             
     def are_same_db(self, db1, db2):
         return db1.db_name == db2.db_name or False

@@ -46,10 +46,14 @@ class FinanceTest(UnifieldTest):
             period_obj = database.get('account.period')
             # Fiscal years
             fy_ids = fy_obj.search([('date_start', '<=', today), ('date_stop', '>=', today)])
-            if not fy_ids:
-                raise Exception('error', 'No fiscalyear found!')
+            self.assert_(fy_ids != False, 'No fiscalyear found!')
+
             # Sort periods by number
-            periods = period_obj.search([('fiscalyear_id', 'in', fy_ids), ('number', '<=', month), ('state', '=', 'created')], 0, 16, 'number')
+            periods = period_obj.search([
+                ('fiscalyear_id', 'in', fy_ids),
+                ('number', '<=', month),
+                ('state', '=', 'created')
+            ], 0, 16, 'number')
             for period in periods:
                 try:
                     period_obj.action_set_state(period, context={'state': 'draft'})
@@ -74,9 +78,10 @@ class FinanceTest(UnifieldTest):
             domain.append(('is_current_instance', '=', True))
     
         ids = db.get(model).search(domain)
-        if not ids:
-            raise FinanceTestException("no %s journal(s) found" % (
-                journal_type, ))
+        self.assert_(
+            ids != False,
+            "no %s journal(s) found" % (journal_type, )
+        )
         return ids
         
     def get_account_from_code(self, db, code, is_analytic=False):
@@ -140,23 +145,24 @@ class FinanceTest(UnifieldTest):
         :rtype: int
         """
         # checks
-        if not name:
-            raise FinanceTestException("name missing")
-        if not code:
-            raise FinanceTestException("code missing")
-        if not journal_type:
-            raise FinanceTestException("journal type missing")
+        self._assert(
+            name and code and journal_type,
+            "name or/and code or/and journal type missing"
+        )
         # bank/cash/cheque
         if journal_type in ('bank', 'cheque', 'cash', ):
-            if not account_code or not currency_name:
-                tpl = "bank/cash/cheque: account code and a currency" \
-                      " required. account: '%s', currency: '%s'"
-                raise FinanceTestException(tpl % (account_code or '',
-                    currency_name or '', ))
+            self.assert_(
+                account_code and currency_name,
+                "bank/cash/cheque: account code and currency required." \
+                    " account: '%s', currency: '%s'" % (
+                        account_code or '', currency_name or '', )
+            )
         # cheque journal
-        if journal_type == 'cheque' and not bank_journal_id:
-            tpl = "bank journal mandatory for cheque journal"
-            raise FinanceTestException(tpl)
+        if journal_type == 'cheque':
+            self.assert_(
+                bank_journal_id != False,
+                "bank journal mandatory for cheque journal"
+            )
             
         aaj_obj = db.get('account.analytic.journal')
         aa_obj = db.get('account.account')
@@ -169,9 +175,11 @@ class FinanceTest(UnifieldTest):
             if journal_type in ('bank', 'cheque', ):
                 analytic_journal_type = 'cash'
             aaj_ids = aaj_obj.search([('type', '=', analytic_journal_type)])
-            if not aaj_ids:
-                tpl = "no analytic journal found with this type: %s"
-                raise FinanceTestException(tpl % (journal_type, ))
+            self.assert_(
+                aaj_ids != False,
+                "no analytic journal found with this type: %s" % (
+                    journal_type, )
+            )
             analytic_journal_id = aaj_ids[0]
 
         # prepare values
@@ -183,9 +191,10 @@ class FinanceTest(UnifieldTest):
         }
         if account_code:
             a_ids = aa_obj.search([('code', '=', account_code)])
-            if not a_ids:
-                tpl = "no account found for the given code: %s"
-                raise FinanceTestException(tpl % (account_code, ))
+            self.assert_(
+                a_ids != False,
+                "no account found for the given code: %s" % (account_code, )
+            )
             account_id = a_ids[0]
             vals.update({
                 'default_debit_account_id': account_id,
@@ -193,9 +202,10 @@ class FinanceTest(UnifieldTest):
             })
         if currency_name:
             c_ids = ccy_obj.search([('name', '=', currency_name)])
-            if not c_ids:
-                tpl = "currency not found: %s"
-                raise FinanceTestException(tpl % (currency_name, ))
+            self.assert_(
+                c_ids != False,
+                "currency not found: %s" % (currency_name, )
+            )
             vals.update({'currency': c_ids[0]})
         if bank_journal_id:
             vals['bank_journal_id'] = bank_journal_id
@@ -232,9 +242,10 @@ class FinanceTest(UnifieldTest):
         }
         aaj_code = analytic_journal_code_map[register_type]
         aaj_ids = aaj_obj.search([('code', '=', aaj_code)])
-        if not aaj_ids:
-            tpl = "analytic journal code %s not found"
-            raise FinanceTestException(tpl % (aaj_code, ))
+        self.assert_(
+            aaj_ids != False,
+            "analytic journal code %s not found" % (aaj_code, )
+        )
 
         j_id = self.journal_create(db, name, code, register_type,
             account_code=account_code, currency_name=currency_name,
@@ -269,8 +280,7 @@ class FinanceTest(UnifieldTest):
         :rtype: tuple (register_line_id, ad_id/False, ji_id)
         """
         # register
-        if not regbr_or_id:
-            raise FinanceTestException("register missing")
+        self.assert_(regbr_or_id != False, "register missing")
             
         abs_obj = db.get('account.bank.statement')
         absl_obj = db.get('account.bank.statement.line')
@@ -289,14 +299,16 @@ class FinanceTest(UnifieldTest):
                 ('name', 'ilike', account_code_or_id),
                 ('code', 'ilike', account_code_or_id)]
             )
-            if not code_ids:
-                raise FinanceTestException(
-                    "error searching for this account code: %s" % (
-                        account_code_or_id), )
-            if len(code_ids) > 1:
-                raise FinanceTestException(
-                    "error more than 1 account with code: %s" % (
-                        account_code_or_id), )
+            self.assert_(
+                code_ids != False,
+                "error searching for this account code: %s" % (
+                    account_code_or_id, )
+            )
+            self.assert_(
+                len(code_ids) == 1,
+                "error more than 1 account with code: %s" % (
+                    account_code_or_id, )
+            )
             account_id = code_ids[0]
         else:
             account_id = account_code_or_id
@@ -306,10 +318,11 @@ class FinanceTest(UnifieldTest):
         if not date:
             date_start = register_br.period_id.date_start or False
             date_stop = register_br.period_id.date_stop or False
-            if not date_start or not date_stop:
-                tpl = "no date found for the period %s"
-                raise FinanceTestException(tpl % (
-                    register_br.period_id.name, ))
+            self.assert_(
+                date_start and date_stop,
+                "no date found for the period %s" % (
+                    register_br.period_id.name, )
+            )
             random_date = self.random_date(
                 datetime.strptime(str(date_start), '%Y-%m-%d'),
                 datetime.strptime(str(date_stop), '%Y-%m-%d')
@@ -394,21 +407,27 @@ class FinanceTest(UnifieldTest):
         """
         if fp_name and fp_name == 'PF':
             return  # nothing to do
-        if not fp_name or not acccount_code or not dest_code:
-            raise FinanceTestException(
-                "you must give fp name and account/dest codes")
-        
+        self.assert_(
+            fp_name and acccount_code and dest_code,
+            "you must give fp name and account/dest codes"
+        )
+                
         fp_id = self.get_account_from_code(db, fp_name, is_analytic=True)
-        if not fp_id:
-            raise FinanceTestException("FP '%s' not found" % (fp_name, ))
+        self.assert_(
+            fp_id != False,
+            "FP '%s' not found" % (fp_name, )
+        )
         acccount_id = self.get_account_from_code(db, acccount_code,
             is_analytic=False)
-        if not acccount_id:
-            raise FinanceTestException("account '%s' not found" % (
-                acccount_code, ))
+        self.assert_(
+            acccount_id != False,
+            "account '%s' not found" % (acccount_code, )
+        )
         dest_id = self.get_account_from_code(db, dest_code, is_analytic=True)
-        if not dest_id:
-            raise FinanceTestException("dest '%s' not found" % (dest_code, ))
+        self.assert_(
+            dest_id != False,
+            "dest '%s' not found" % (dest_code, )
+        )
             
         aaa_obj = db.get('account.analytic.account')
         # TODO
@@ -443,9 +462,7 @@ class FinanceTest(UnifieldTest):
         company = comp_obj.browse(comp_obj.search([])[0])
         funding_pool_pf_id = self.get_record_id_from_xmlid(db,
             'analytic_distribution', 'analytic_account_msf_private_funds', )
-        if not funding_pool_pf_id:
-            if not dest_id:
-                raise FinanceTestException('PF funding pool not found')
+        self.assert_(funding_pool_pf_id != False, 'PF funding pool not found')
 
         # DEST/CC/FP
         if not breakdown_data:
@@ -461,9 +478,10 @@ class FinanceTest(UnifieldTest):
                 ('type', '=', 'normal'),
                 ('code', '=', dest),
             ])
-            if not dest_id:
-                raise FinanceTestException('no destination found %s' % (
-                    dest, ))
+            self.assert_(
+                dest_id != False,
+                'no destination found %s' % (dest, )
+            )
             dest_id = dest_id[0]
             
             if cc:
@@ -472,27 +490,29 @@ class FinanceTest(UnifieldTest):
                     ('type', '=', 'normal'),
                     ('code', '=', cc),
                 ])
-                if not cost_center_id:
-                    raise FinanceTestException('no cost center found %s' % (
-                        cc, ))
+                self.assert_(
+                    cost_center_id != False,
+                    'no cost center found %s' % (cc, )
+                )
                 cost_center_id = cost_center_id[0]
             else:
                 cost_center_id = company.instance_id.top_cost_center_id \
                     and company.instance_id.top_cost_center_id.id or False
-                if not cost_center_id:
-                    raise FinanceTestException(
-                        'no top cost center found for instance %s' % (
-                        company.name or '', ))
-    
+                self.assert_(
+                    cost_center_id != False,
+                    'no top cost center found for instance %s' % (
+                        company.name or '', )
+                )
             if fp:
                 funding_pool_id = aaa_obj.search([
                     ('category', '=', 'FUNDING'),
                     ('type', '=', 'normal'),
                     ('code', '=', fp),
                 ])
-                if not funding_pool_id:
-                    raise FinanceTestException('no funding pool found %s' % (
-                        fp, ))
+                self.assert_(
+                    funding_pool_id != False,
+                    'no funding pool found %s' % (fp, )
+                )
                 funding_pool_id = funding_pool_id[0]
             else:
                 funding_pool_id = funding_pool_pf_id  # default PF
@@ -541,32 +561,38 @@ class FinanceTest(UnifieldTest):
         aaa_obj = db.get('account.analytic.account')
     
         # check valid correction
-        if not new_account_code and not new_ad_breakdown_data and \
-            not ad_replace_data:
-            raise FinanceTestException(
-                'no correction changes: required G/L or AD or both')
+        self.assert_(
+            new_account_code or new_ad_breakdown_data or ad_replace_data,
+            'no correction changes: required G/L or AD or both'
+        )
         # check valid correction
-        if new_ad_breakdown_data and ad_replace_data:
-            raise FinanceTestException(
-                'you can not both redifine full AD and replace attributes')
+        self.assert_(
+            not (new_ad_breakdown_data and ad_replace_data),
+            'you can not both redefine full AD and replace attributes'
+        )
                 
         # get new account id for a G/L correction
         new_account_id = False
         if new_account_code:
             account_ids = aa_obj.search([('code', '=', new_account_code)])
-            if not account_ids:
-                raise FinanceTestException(
-                    'account %s for a G/L correction not found' % (
-                        new_account_code, ))
+            self.assert_(
+                account_ids != False,
+                'account %s for a G/L correction not found' % (
+                    new_account_code, )
+            )
             new_account_id = account_ids[0]
                 
         # get ji and checks
         ji_br = aml_obj.browse(ji_to_correct_id)
-        if not ji_br:
-            raise FinanceTestException('journal item not found')
-        if new_account_code and ji_br.account_id.code == new_account_code:
-            raise FinanceTestException('you can not do a G/L correction with' \
-                ' same account code')
+        self.assert_(
+            ji_br != False,
+            'journal item not found'
+        )
+        if new_account_code:
+            self.assert_(
+                ji_br.account_id.code != new_account_code,
+                'you can not do a G/L correction with same account code'
+            )
         old_account_id = ji_br.account_id and ji_br.account_id.id or False
         ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
             ji_br.credit_currency
@@ -582,8 +608,10 @@ class FinanceTest(UnifieldTest):
 
         # set the generated correction line
         wiz_cor_line = self.get_first(wiz_br.to_be_corrected_ids)
-        if not wiz_cor_line:
-            raise FinanceTestException('error generating a correction line')
+        self.assert_(
+            wiz_cor_line != False,
+            'error generating a correction line'
+        )
             
         vals = {}
         if new_account_id:  # G/L correction
@@ -597,11 +625,11 @@ class FinanceTest(UnifieldTest):
             # read the AD wizard
             wizard_ad_id = action['res_id'][0]
             wizard_ad_br = wizard_ad_obj.browse(wizard_ad_id)
-            if not wizard_ad_br:
-                raise FinanceTestException(
-                    "error getting AD wizard record from action: %s" % (
-                        str(action), )
-                    )
+            self.assert_(
+                wizard_ad_br != False,
+                "error getting AD wizard record from action: %s" % (
+                    str(action), )
+            )
             
             total_amount = 0.
             ad_replace_data_by_id = {}
@@ -833,9 +861,10 @@ class FinanceTest(UnifieldTest):
         if new_account_code:
             new_account_id = self.get_account_from_code(db, new_account_code,
                 is_analytic=False)
-            if not new_account_id:
-                raise FinanceTestException("new account '%s' not found" % (
-                    new_account_id, ))
+            self.assert_(
+                new_account_id != False,
+                "new account '%s' not found" % (new_account_id, )
+            )
         
         ji_br = aml_obj.browse(ji_id)
         ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
@@ -854,11 +883,11 @@ class FinanceTest(UnifieldTest):
                 (cor_rev_amount_field, '=', abs(cor_rev_amount)),
             ]
             rev_ids = aml_obj.search(domain)
-            if not rev_ids:
-                raise FinanceTestException(
-                    "no JI REV found for %s %s %f:: %s" % (account_code,
-                        ji_br.name, ji_amount, db.colored_name, )
-                )
+            self.assert_(
+                rev_ids != False,
+                "no JI REV found for %s %s %f:: %s" % (account_code,
+                    ji_br.name, ji_amount, db.colored_name, )
+            )
             
             # check JI COR
             cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
@@ -870,11 +899,11 @@ class FinanceTest(UnifieldTest):
                 (cor_rev_amount_field, '=', abs(cor_rev_amount)),
             ]
             rev_ids = aml_obj.search(domain)
-            if not rev_ids:
-                raise FinanceTestException(
-                    "no JI COR found for %s %s %f:: %s" % (new_account_code,
-                        ji_br.name, ji_amount, db.colored_name, )
-                )
+            self.assert_(
+                rev_ids != False,
+                "no JI COR found for %s %s %f:: %s" % (new_account_code,
+                    ji_br.name, ji_amount, db.colored_name, )
+            )
                 
         # ids of AJIs not rev/cor (not in correction journal)
         base_aji_ids = aal_obj.search([
@@ -885,12 +914,12 @@ class FinanceTest(UnifieldTest):
         
         if expected_ad:         
             # check AJIs
-            if len(base_aji_ids) != len(expected_ad):
-                raise FinanceTestException(
-                    "expected AJIs count do not match for JI %s %s %f:: %s" % (
-                        new_account_code or account_code,
-                        ji_br.name, ji_amount, db.colored_name, )
-                )
+            self.assert_(
+                len(base_aji_ids) == len(expected_ad),
+                "expected AJIs count do not match for JI %s %s %f:: %s" % (
+                    new_account_code or account_code,
+                    ji_br.name, ji_amount, db.colored_name, )
+            )
             
             match_count = 0
             for aal_br in aal_obj.browse(base_aji_ids):
@@ -903,11 +932,11 @@ class FinanceTest(UnifieldTest):
                         match_count += 1
                         break
                         
-            if len(base_aji_ids) != match_count:
-                raise FinanceTestException(
-                    "expected AJIs do not match for JI %s %f:: %s" % (
-                        ji_br.name, ji_amount, db.colored_name, )
-                )
+            self.assert_(
+                len(base_aji_ids) == match_count,
+                "expected AJIs do not match for JI %s %f:: %s" % (
+                    ji_br.name, ji_amount, db.colored_name, )
+            )
                 
         if expected_ad_rev:
             # check REV AJIs
@@ -916,13 +945,12 @@ class FinanceTest(UnifieldTest):
                 ('journal_id', 'in', aod_journal_ids),
                 ('general_account_id', '=', account_id),
             ])
-            if len(ids) != len(expected_ad_rev):
-                raise FinanceTestException(
-                    "expected REV AJIs count do not match for JI" \
-                        " %s %s %f:: %s" % (
-                        new_account_code or account_code,
-                        ji_br.name, ji_amount, db.colored_name, )
-                )
+            self.assert_(
+                len(ids) == len(expected_ad_rev),
+                "expected REV AJIs count do not match for JI %s %s %f:: %s" % (
+                    new_account_code or account_code,
+                    ji_br.name, ji_amount, db.colored_name, )
+            )
             
             match_count = 0
             total_func_amount = 0
@@ -937,17 +965,18 @@ class FinanceTest(UnifieldTest):
                         match_count += 1
                         break
                         
-            if len(ids) != match_count:
-                raise FinanceTestException(
-                    "expected REV AJIs do not match for JI %s %s %f:: %s" % (
-                        new_account_code or account_code,
-                        ji_br.name, ji_amount, db.colored_name, )
-                )
-            if expected_cor_rev_ajis_total_func_amount and \
-                expected_cor_rev_ajis_total_func_amount != total_func_amount:
-                raise FinanceTestException(
+            self.assert_(
+                len(ids) == match_count,
+                "expected REV AJIs do not match for JI %s %s %f:: %s" % (
+                    new_account_code or account_code,
+                    ji_br.name, ji_amount, db.colored_name, )
+            )
+            if expected_cor_rev_ajis_total_func_amount:
+                self.assert_(
+                    expected_cor_rev_ajis_total_func_amount == total_func_amount,
                     "expected REV AJIs total func amount %f not found:: %s" % (
-                        expected_cor_rev_ajis_total_func_amount, db.colored_name, )
+                        expected_cor_rev_ajis_total_func_amount,
+                        db.colored_name, )
                 )
                 
         if expected_ad_cor:
@@ -958,13 +987,12 @@ class FinanceTest(UnifieldTest):
                 ('general_account_id', '=', new_account_id or account_id),
                 ('name', '=', 'COR1 - ' + ji_br.name),
             ])
-            if len(ids) != len(expected_ad_cor):
-                raise FinanceTestException(
-                    "expected COR AJIs count do not match for JI" \
-                        " %s %s %f:: %s" % (
-                        new_account_code or account_code,
-                        ji_br.name, ji_amount, db.colored_name, )
-                )
+            self.assert_(
+                len(ids) == len(expected_ad_cor),
+                "expected COR AJIs count do not match for JI %s %s %f:: %s" % (
+                    new_account_code or account_code,
+                    ji_br.name, ji_amount, db.colored_name, )
+            )
             
             match_count = 0
             total_func_amount += 0
@@ -981,17 +1009,18 @@ class FinanceTest(UnifieldTest):
                         match_count += 1
                         break
                         
-            if len(ids) != match_count:
-                raise FinanceTestException(
-                    "expected COR AJIs do not match for JI %s %s %f:: %s" % (
-                        new_account_code or account_code,
-                        ji_br.name, ji_amount, db.colored_name, )
-                )
-            if expected_cor_rev_ajis_total_func_amount and \
-                expected_cor_rev_ajis_total_func_amount != total_func_amount:
-                raise FinanceTestException(
+            self.assert_(
+                len(ids) == match_count,
+                "expected COR AJIs do not match for JI %s %s %f:: %s" % (
+                    new_account_code or account_code,
+                    ji_br.name, ji_amount, db.colored_name, )
+            )
+            if expected_cor_rev_ajis_total_func_amount:
+                self.assert_(
+                    expected_cor_rev_ajis_total_func_amount == total_func_amount,
                     "expected COR AJIs total func amount %f not found:: %s" % (
-                        expected_cor_rev_ajis_total_func_amount, db.colored_name, )
+                        expected_cor_rev_ajis_total_func_amount,
+                        db.colored_name, )
                 )
         
     def journal_create_entry(self, database):
@@ -1029,7 +1058,10 @@ class FinanceTest(UnifieldTest):
             'status': 'manu',
         }
         move_id = move_obj.create(move_vals)
-        self.assert_(move_id != False, "Move creation failed with these values: %s" % move_vals)
+        self.assert_(
+            move_id != False,
+            "Move creation failed with these values: %s" % move_vals
+        )
         # Create some move lines
         account_ids = account_obj.search([('is_analytic_addicted', '=', True), ('code', '=', '6101-expense-test')])
         random_account = randint(0, len(account_ids) - 1)
@@ -1077,10 +1109,16 @@ class FinanceTest(UnifieldTest):
         close/reopen period at given level
         :param level: 'f', 'm' or 'h' for 'field', 'mission' or 'hq'
         """
+        self.assert_(
+            level in ('f', 'm', 'h', ),
+            "invalid level value 'f', 'm' or 'h' expected"
+        )
+        
         period_id = self.get_period_id(db, month, year=year)
-        if not period_id:
-            raise FinanceTestException(
-                "period %02d/%04d not found" % (year, month, ))
+        self.assert_(
+            period_id != False,
+            "period %02d/%04d not found" % (year, month, )
+        )
             
         period_obj = db.get('account.period')
         
@@ -1099,9 +1137,6 @@ class FinanceTest(UnifieldTest):
                 period_obj.action_open_period([period_id])
             else:
                 period_obj.action_close_hq([period_id])
-        else:
-            raise FinanceTestException(
-                "invalid level value 'f', 'm' or 'h' expected")
                 
     def invoice_create_supplier_invoice(self, db, ccy_code=False, is_refund=False,
         date=False, partner_id=False, ad_header_breakdown_data=False, 
@@ -1161,9 +1196,10 @@ class FinanceTest(UnifieldTest):
                 ('name', '=', 'Local Market'),
             ]
             partner_id = db.get('res.partner').search(domain)
-            if not partner_id:
-                raise FinanceTestException("Partner %s not found" % (
-                    str(domain), ))
+            self.assert_(
+                partner_id != False,
+                "Partner %s not found" % (str(domain), )
+            )
             partner_id = partner_id[0]
             vals['partner_id'] = partner_id
             
@@ -1185,9 +1221,10 @@ class FinanceTest(UnifieldTest):
         if ccy_code:
             # specific ccy instead of partner one
             ccy_ids = db.get('res.currency').search([('name', '=', ccy_code)])
-            if not ccy_ids:
-                raise FinanceTestException("'%s' currency not found" % (
-                    ccy_code, ))
+            self.assert_(
+                ccy_ids != False,
+                "'%s' currency not found" % (ccy_code, )
+            )
             vals['currency_id'] = ccy_ids[0]
                     
         # header ad
