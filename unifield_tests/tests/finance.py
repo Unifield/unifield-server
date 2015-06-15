@@ -386,6 +386,40 @@ class FinanceTest(UnifieldTest):
                 'state': 'confirm',
                 'closing_date': self.get_orm_date_now(),
             })
+            
+    def analytic_distribution_set_fp_account_dest(self, db,
+        fp_name, acccount_code, dest_code):
+        """
+        add account/dest tuple to FP
+        """
+        if fp_name and fp_name == 'PF':
+            return  # nothing to do
+        if not fp_name or not acccount_code or not dest_code:
+            raise FinanceTestException(
+                "you must give fp name and account/dest codes")
+        
+        fp_id = self.get_account_from_code(db, fp_name, is_analytic=True)
+        if not fp_id:
+            raise FinanceTestException("FP '%s' not found" % (fp_name, ))
+        acccount_id = self.get_account_from_code(db, acccount_code,
+            is_analytic=False)
+        if not acccount_id:
+            raise FinanceTestException("account '%s' not found" % (
+                acccount_code, ))
+        dest_id = self.get_account_from_code(db, dest_code, is_analytic=True)
+        if not dest_id:
+            raise FinanceTestException("dest '%s' not found" % (dest_code, ))
+            
+        aaa_obj = db.get('account.analytic.account')
+        # TODO
+        """aaa_obj.write([fp_id] , {
+            'tuple_destination_account_ids': [
+                    (0, 0, {
+                        'acccount_id': acccount_id,
+                        'destination_id': dest_id,
+                    }),
+            ],
+        })"""
         
     def analytic_distribution_create(self, db,
         breakdown_data=[(100., 'OPS', False, False)]):
@@ -842,16 +876,16 @@ class FinanceTest(UnifieldTest):
                         ji_br.name, ji_amount, db.colored_name, )
                 )
                 
-        base_aji_ids = []  # ids of AJIs not rev/cor (not in correction journal)
+        # ids of AJIs not rev/cor (not in correction journal)
+        base_aji_ids = aal_obj.search([
+            ('move_id', '=', ji_id),
+            ('journal_id', 'not in', aod_journal_ids),
+            ('general_account_id', '=', account_id),
+        ]) or []
+        
         if expected_ad:         
             # check AJIs
-            ids = aal_obj.search([
-                ('move_id', '=', ji_id),
-                ('journal_id', 'not in', aod_journal_ids),
-                ('general_account_id', '=', account_id),
-            ])
-            base_aji_ids = ids
-            if len(ids) != len(expected_ad):
+            if len(base_aji_ids) != len(expected_ad):
                 raise FinanceTestException(
                     "expected AJIs count do not match for JI %s %s %f:: %s" % (
                         new_account_code or account_code,
@@ -859,7 +893,7 @@ class FinanceTest(UnifieldTest):
                 )
             
             match_count = 0
-            for aal_br in aal_obj.browse(ids):
+            for aal_br in aal_obj.browse(base_aji_ids):
                 for percent, dest, cc, fp in expected_ad:
                     if aal_br.general_account_id.id == account_id and \
                         aal_br.destination_id.code == dest and \
@@ -869,7 +903,7 @@ class FinanceTest(UnifieldTest):
                         match_count += 1
                         break
                         
-            if len(ids) != match_count:
+            if len(base_aji_ids) != match_count:
                 raise FinanceTestException(
                     "expected AJIs do not match for JI %s %f:: %s" % (
                         ji_br.name, ji_amount, db.colored_name, )
@@ -909,8 +943,8 @@ class FinanceTest(UnifieldTest):
                         new_account_code or account_code,
                         ji_br.name, ji_amount, db.colored_name, )
                 )
-            if expected_cor_rev_ajis_total_func_amount:
-                and expected_cor_rev_ajis_total_func_amount != total_func_amount:
+            if expected_cor_rev_ajis_total_func_amount and \
+                expected_cor_rev_ajis_total_func_amount != total_func_amount:
                 raise FinanceTestException(
                     "expected REV AJIs total func amount %f not found:: %s" % (
                         expected_cor_rev_ajis_total_func_amount, db.colored_name, )
@@ -952,8 +986,8 @@ class FinanceTest(UnifieldTest):
                         new_account_code or account_code,
                         ji_br.name, ji_amount, db.colored_name, )
                 )
-            if expected_cor_rev_ajis_total_func_amount:
-                and expected_cor_rev_ajis_total_func_amount != total_func_amount:
+            if expected_cor_rev_ajis_total_func_amount and \
+                expected_cor_rev_ajis_total_func_amount != total_func_amount:
                 raise FinanceTestException(
                     "expected COR AJIs total func amount %f not found:: %s" % (
                         expected_cor_rev_ajis_total_func_amount, db.colored_name, )

@@ -695,14 +695,19 @@ class FinanceTestCorCases(FinanceTest):
         
         reg_id = self._register_get(db, browse=False)
         if reg_id:
+            account = '60010'
+            new_account = '13310'
+            
             ad = [
                 (10., 'OPS', 'HT101', 'PF'),
                 (90., 'OPS', 'HT101', 'FP1'),
             ]
+            self.analytic_distribution_set_fp_account_dest(db, 'FP1', account,
+                'OPS')
             
             regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
-                '60010', self.get_random_amount(True),
+                account, self.get_random_amount(True),
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True
@@ -710,14 +715,14 @@ class FinanceTestCorCases(FinanceTest):
  
             self.simulation_correction_wizard(db, ji_id,
                     cor_date=False,
-                    new_account_code='13300',
+                    new_account_code=new_account,
                     new_ad_breakdown_data=False,
                     ad_replace_data=False
             )
             
             self.check_ji_correction(db, ji_id,
-                '60010', new_account_code='13300',
-                expected_ad=ad,
+                account, new_account_code=new_account,
+                expected_ad=False,  # bc new account not an expense one
                 expected_ad_rev=ad,
                 expected_ad_cor=False,  # bc new account not an expense one
             )
