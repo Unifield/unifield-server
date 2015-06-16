@@ -50,7 +50,7 @@ class FinanceTestCorCases(FinanceTest):
         # new FUNDING POOLS (and related cost centers)
         fp_ccs = {
             ('HQ1C1', 'FP1'): [ 'HT101', 'HT120', ],
-            ('HQ1C1', 'FP2'): [ 'HT101', ],
+            ('HQ1C1', 'FP2'): [ 'HT101', 'HT120'],
         }
         
         # financing contracts
@@ -979,7 +979,7 @@ class FinanceTestCorCases(FinanceTest):
             expected_ad_rev=ad,
             expected_ad_cor=new_ad,
         )
-        
+   
         # 13.6/7: correction of COR-1 => will generate COR-2
         cor1_ids = aml_obj.search([('corrected_line_id', '=', ji_ids[0])])
         self.assert_(cor1_ids != False, 'COR-1 JI not found!')
@@ -998,11 +998,11 @@ class FinanceTestCorCases(FinanceTest):
         
         self.check_ji_correction(db, cor1_ids[0],
             new_account, new_account2,
-            expected_ad=new_ad,
-            expected_ad_rev=new_ad,
+            expected_ad=False,  
+            expected_ad_rev=False,  
             expected_ad_cor=new_ad2,
+            cor_level=2, ji_origin_id=ji_ids[0]
         )
-        return  # TODO remove to test cor of COR-2
             
         # 13.8/9:
         # correction of the correction of correction
@@ -1010,7 +1010,7 @@ class FinanceTestCorCases(FinanceTest):
         cor2_ids = aml_obj.search([('corrected_line_id', '=', cor1_ids[0])])
         self.assert_(cor2_ids != False, 'COR-2 JI not found!')
 
-        new_account3 = '60050'
+        new_account3 = '60100'
         new_ad3 = [
             (70., 'OPS', 'HT120', 'FP2'),
             (30., 'OPS', 'HT101', 'FP2'),
@@ -1026,12 +1026,12 @@ class FinanceTestCorCases(FinanceTest):
         )
             
         self.check_ji_correction(db, cor2_ids[0],
-            new_account2, new_account_code=new_account2,
-            expected_ad=new_ad2,
-            expected_ad_rev=new_ad2,
-            expected_ad_cor=new_ad3
+            new_account2, new_account_code=new_account3,
+            expected_ad=False,
+            expected_ad_rev=False,
+            expected_ad_cor=new_ad3,
+            cor_level=3, ji_origin_id=ji_ids[0]
         )
-        # TODO check COR with a description COR-3
         
     def test_cor1_14(self):
         """

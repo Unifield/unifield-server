@@ -838,7 +838,12 @@ class FinanceTest(UnifieldTest):
     def check_ji_correction(self, db, ji_id,
         account_code, new_account_code=False,
         expected_ad=False, expected_ad_rev=False, expected_ad_cor=False,
-        expected_cor_rev_ajis_total_func_amount=False):
+        expected_cor_rev_ajis_total_func_amount=False,
+        cor_level=1, ji_origin_id=False):
+        """
+        ji_origin_id: 1st ji corrected for cor cascade
+        cor_level: cor level for cor cascade
+        """
         
         def get_rev_cor_amount_and_field(base_amount, is_rev):
             if is_rev:
@@ -867,6 +872,8 @@ class FinanceTest(UnifieldTest):
             )
         
         ji_br = aml_obj.browse(ji_id)
+        ji_origin = ji_origin_id and aml_obj.browse(ji_origin_id).name or \
+            ji_br.name
         ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
             ji_br.credit_currency
         
@@ -985,7 +992,7 @@ class FinanceTest(UnifieldTest):
                 #('last_corrected_id', 'in', base_aji_ids),
                 ('journal_id', 'in', aod_journal_ids),
                 ('general_account_id', '=', new_account_id or account_id),
-                ('name', '=', 'COR1 - ' + ji_br.name),
+                ('name', '=', "COR%d - %s" % (cor_level, ji_origin, )),
             ])
             self.assert_(
                 len(ids) == len(expected_ad_cor),
@@ -995,7 +1002,7 @@ class FinanceTest(UnifieldTest):
             )
             
             match_count = 0
-            total_func_amount += 0
+            total_func_amount = 0
             for aal_br in aal_obj.browse(ids):
                 total_func_amount += aal_br.amount
                 for percent, dest, cc, fp in expected_ad_cor:
