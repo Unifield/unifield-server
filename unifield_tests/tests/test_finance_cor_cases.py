@@ -998,7 +998,7 @@ class FinanceTestCorCases(FinanceTest):
         
         self.check_ji_correction(db, cor1_ids[0],
             new_account, new_account2,
-            expected_ad=False,  
+            expected_ad=new_ad,  
             expected_ad_rev=new_ad,  
             expected_ad_cor=new_ad2,
             cor_level=2, ji_origin_id=ji_ids[0]
@@ -1027,7 +1027,7 @@ class FinanceTestCorCases(FinanceTest):
             
         self.check_ji_correction(db, cor2_ids[0],
             new_account2, new_account_code=new_account3,
-            expected_ad=False,
+            expected_ad=new_ad2,
             expected_ad_rev=new_ad2,
             expected_ad_cor=new_ad3,
             cor_level=3, ji_origin_id=ji_ids[0]
