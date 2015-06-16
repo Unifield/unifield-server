@@ -11,11 +11,12 @@ from oerplib import error
 
 FINANCE_TEST_MASK = {
     'register': "%s %s",
-    'register_line': "regl %s",
+    'register_line': "%d/%d %s",  # "(register_id)/(date) uuid"
     'je': "JE %s",
     'ji': "JI %s",
     'ad': "AD %s",
     'cheque_number': "cheque %s",
+    'invoice_line': "%d/L%03d %s",  # "(invoice id)/L(line number) (account)"
 }
 
 class FinanceTestException(UnifieldTestException):
@@ -338,7 +339,8 @@ class FinanceTest(UnifieldTest):
             'document_date': document_date,
             'date': date,
             'amount': amount,
-            'name': FINANCE_TEST_MASK['register_line'] % (date, ),
+            'name': FINANCE_TEST_MASK['register_line'] % (register_br.id,
+                date, self.get_uuid(), )
         }
         if third_partner_id:
             vals['partner_id'] = third_partner_id
@@ -1248,7 +1250,7 @@ class FinanceTest(UnifieldTest):
             line_vals = [
                 (0, 0, {
                     'account_id': self.get_account_from_code(db, a),
-                    'name': "L%03d %s" % (i + 1, a, ),
+                    'name': FINANCE_TEST_MASK['invoice_line'] % (id, i + 1, a),
                     'price_unit': float(randrange(1, 10)),
                     'quantity': float(randrange(10, 100)),
                 }) for i, a in list(enumerate(lines_accounts))
