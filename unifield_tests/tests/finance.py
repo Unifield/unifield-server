@@ -432,11 +432,18 @@ class FinanceTest(UnifieldTest):
         )
             
         aaa_obj = db.get('account.analytic.account')
-        # TODO
+        fp_br = aaa_obj.browse(fp_id)
+        
+        # search account/dest tuple in FP ?
+        for tda in fp_br.tuple_destination_account_ids:
+            if tda.acccount_id.id == acccount_id and \
+                tda.destination_id.id == dest_id:
+                    return  # account/dest tuple already in FP
+        
         """aaa_obj.write([fp_id] , {
             'tuple_destination_account_ids': [
                     (0, 0, {
-                        'acccount_id': acccount_id,
+                        'account_id': acccount_id,
                         'destination_id': dest_id,
                     }),
             ],
