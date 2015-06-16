@@ -949,11 +949,15 @@ class FinanceTest(UnifieldTest):
                 
         if expected_ad_rev:
             # check REV AJIs
-            ids = aal_obj.search([
-                ('reversal_origin', 'in', base_aji_ids),
+            domain = [
                 ('journal_id', 'in', aod_journal_ids),
                 ('general_account_id', '=', account_id),
-            ])
+            ]
+            if cor_level == 1:
+                domain.append(('reversal_origin', 'in', base_aji_ids))
+            else:
+                domain.append(('name', '=', "REV - %s" % (ji_br.name, )))
+            ids = aal_obj.search(domain)
             self.assert_(
                 len(ids) == len(expected_ad_rev),
                 "expected REV AJIs count do not match for JI %s %s %f:: %s" % (
