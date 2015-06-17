@@ -366,11 +366,16 @@ class FinanceTest(UnifieldTest):
         if do_hard_post:
             self.register_line_hard_post(db, [regl_id])
             
+        ji_id = False
         if regl_id:
             regl_br = absl_obj.browse(regl_id)
-            ji = self.get_first(regl_br.move_ids)
+            # get first expense JI
+            for ji in regl_br.move_ids:
+                if ji.account_id.is_analytic_addicted:
+                    ji_id = ji.id
+                    break
         
-        return (regl_id, distrib_id, ji and ji.id or False, )
+        return (regl_id, distrib_id, ji_id, )
         
     def register_line_temp_post(self, db, reg_ids):
         if isinstance(reg_ids, (int, long, )):

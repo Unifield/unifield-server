@@ -1055,8 +1055,14 @@ class FinanceTestCorCases(FinanceTest):
             self.register_line_temp_post(db, [regl_id])
             
             # 14.4 correction wizard should not be available
-            # TODO
-        
+            aml_obj = db.get('account.move.line')
+            aml_br = aml_obj.browse(ji_id)
+            self.assert_(
+                aml_br.is_corrigible  == False,
+                'Expense JI of the reg line should not be corrigible as ' \
+                    'temp posted'
+            )
+
 
 def get_test_class():
     return FinanceTestCorCases
