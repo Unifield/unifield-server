@@ -13,10 +13,9 @@ from datetime import datetime
 TODO NOTES:
 - required:
     - [TASK] replay dataset (HT120 added to HT120 for cases)
-    - [FIX] AD analytic_distribution_set_fp_account_dest
-    - [IMP] each case should delete data and reopen register and period
 - options:
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
+    - [IMP] each case should delete some data
 """
 
 
@@ -678,7 +677,11 @@ class FinanceTestCorCases(FinanceTest):
                 expected_cor_rev_ajis_total_func_amount=80.65,
             )
             
-            # TODO reopen register and period for over cases
+            # REOPEN reopen register and period for over cases flows
+            self.register_reopen(db, reg_id)
+            self.period_reopen(db, 'm', 1)
+            self.period_reopen(db, 'f', 1)
+
             
     def test_cor1_7(self):
         """
@@ -882,7 +885,7 @@ class FinanceTestCorCases(FinanceTest):
         # TODO
         
         # repoen FC1
-        # TODO
+        fcc_obj.contract_open([fc_id])
         
         # select ALL boocked AJI of FP1, correction wizard:
         # => change AD
@@ -890,8 +893,6 @@ class FinanceTestCorCases(FinanceTest):
         # - 50% NAT, HT120, PF
         # => funding pool is modified by the AJI initially selected
         # TODO
-        
-        # TODO reopen financing contract
         
     def test_cor1_12(self):
         """
@@ -951,7 +952,9 @@ class FinanceTestCorCases(FinanceTest):
                 ji_br.name, ji_br.debit_currency, )
         )
         
-        # TODO reopen register and period for over cases
+        # REOPEN reopen register and period for over cases flows
+        self.period_reopen(db, 'm', 1)
+        self.period_reopen(db, 'f', 1)
         
     def test_cor1_13(self):
         """

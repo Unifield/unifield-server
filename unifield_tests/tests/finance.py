@@ -418,7 +418,13 @@ class FinanceTest(UnifieldTest):
                 'closing_date': self.get_orm_date_now(),
             })
             
-    """def register_reopn(self, db, ids):"""
+    def register_reopen(self, db, ids):
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+        db.get('account.bank.statement').write(ids, {
+                'state': 'open',
+                'closing_date': False,
+            })
             
     def analytic_distribution_set_fp_account_dest(self, db,
         fp_name, account_code, dest_code):
