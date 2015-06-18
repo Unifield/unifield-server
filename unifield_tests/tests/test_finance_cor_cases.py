@@ -9,6 +9,17 @@ from finance import FinanceTest
 import time
 from datetime import datetime
 
+"""
+TODO NOTES:
+- required:
+    - [TASK] replay dataset (HT120 added to HT120 for cases)
+    - [FIX] AD analytic_distribution_set_fp_account_dest
+    - [IMP] each case should delete data and reopen register and period
+- options:
+    - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
+"""
+
+
 # TODO active again when dev/testing is finished
 #DATASET = True
 DATASET = False
