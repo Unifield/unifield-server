@@ -26,6 +26,8 @@ from osv import fields
 from tools.translate import _
 from ..register_tools import _get_date_in_period
 from time import strftime
+import time
+
 
 class wizard_import_cheque_lines(osv.osv_memory):
     """
@@ -71,6 +73,7 @@ class wizard_import_cheque(osv.osv_memory):
         'date': fields.date('Posting Date', required=False),
         'document_date': fields.date('Document Date', required=False),
         'journal_id': fields.many2one('account.journal', string="Cheque journal to use", required=True, help="The journal the wizard will use to display lines to import"),
+        'import_date': fields.integer("Import date"),
     }
 
     _defaults = {
@@ -90,11 +93,21 @@ class wizard_import_cheque(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.line_ids:
             raise osv.except_osv(_('Error'), _('No entries ! Please select some entries then click on Import button.'))
+
+        # US-212: If multi-click on import button, we check
+        # if the same file was imported in the 1 last seconds
+        date = time.time() - 1
+        date_import = wizard.import_date
+
+        if date_import >= date:
+            return {}
+
         imported_lines = [x.line_id.id for x in wizard.imported_lines_ids]
         new_lines = []
         date = wizard.date or None
         document_date = wizard.document_date or None
         for line in wizard.line_ids:
+
             if line.id not in imported_lines:
                 if not date:
                     date = line.date
@@ -118,9 +131,8 @@ class wizard_import_cheque(osv.osv_memory):
                     'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or None,
                 }
                 new_lines.append((0, 0, vals))
-
         # Add lines to the imported_lines, flush them from the first tree and change state of the wizard
-        self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': '', 'document_date': '',}, context=context)
+        self.write(cr, uid, ids, {'import_date': time.time(), 'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': '', 'document_date': '',}, context=context)
         # Refresh wizard to display changes
         return {
          'type': 'ir.actions.act_window',
