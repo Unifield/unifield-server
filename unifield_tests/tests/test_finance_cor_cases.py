@@ -678,6 +678,8 @@ class FinanceTestCorCases(FinanceTest):
                 expected_cor_rev_ajis_total_func_amount=80.65,
             )
             
+            # TODO reopen register and period for over cases
+            
     def test_cor1_7(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_7
@@ -889,6 +891,8 @@ class FinanceTestCorCases(FinanceTest):
         # => funding pool is modified by the AJI initially selected
         # TODO
         
+        # TODO reopen financing contract
+        
     def test_cor1_12(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_12
@@ -947,6 +951,8 @@ class FinanceTestCorCases(FinanceTest):
                 ji_br.name, ji_br.debit_currency, )
         )
         
+        # TODO reopen register and period for over cases
+        
     def test_cor1_13(self):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_13
@@ -997,7 +1003,7 @@ class FinanceTestCorCases(FinanceTest):
         
         new_account2 = '60030'
         new_ad2 = [ (100., 'OPS', 'HT120', 'FP1'), ]
-        self.analytic_distribution_set_fp_account_dest(db, 'FP2', new_account2,
+        self.analytic_distribution_set_fp_account_dest(db, 'FP1', new_account2,
             'OPS')
         
         self.simulation_correction_wizard(db, cor1_ids[0],
@@ -1026,6 +1032,8 @@ class FinanceTestCorCases(FinanceTest):
             (70., 'OPS', 'HT120', 'FP2'),
             (30., 'OPS', 'HT101', 'FP2'),
         ]
+        self.analytic_distribution_set_fp_account_dest(db, 'FP1', new_account3,
+            'OPS')
         self.analytic_distribution_set_fp_account_dest(db, 'FP2', new_account3,
             'OPS')
  

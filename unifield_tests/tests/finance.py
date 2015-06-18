@@ -418,15 +418,17 @@ class FinanceTest(UnifieldTest):
                 'closing_date': self.get_orm_date_now(),
             })
             
+    """def register_reopn(self, db, ids):"""
+            
     def analytic_distribution_set_fp_account_dest(self, db,
-        fp_name, acccount_code, dest_code):
+        fp_name, account_code, dest_code):
         """
         add account/dest tuple to FP
         """
         if fp_name and fp_name == 'PF':
             return  # nothing to do
         self.assert_(
-            fp_name and acccount_code and dest_code,
+            fp_name and account_code and dest_code,
             "you must give fp name and account/dest codes"
         )
                 
@@ -435,11 +437,11 @@ class FinanceTest(UnifieldTest):
             fp_id != False,
             "FP '%s' not found" % (fp_name, )
         )
-        acccount_id = self.get_account_from_code(db, acccount_code,
+        account_id = self.get_account_from_code(db, account_code,
             is_analytic=False)
         self.assert_(
-            acccount_id != False,
-            "account '%s' not found" % (acccount_code, )
+            account_id != False,
+            "account '%s' not found" % (account_code, )
         )
         dest_id = self.get_account_from_code(db, dest_code, is_analytic=True)
         self.assert_(
@@ -452,18 +454,12 @@ class FinanceTest(UnifieldTest):
         
         # search account/dest tuple in FP ?
         for tda in fp_br.tuple_destination_account_ids:
-            if tda.acccount_id.id == acccount_id and \
+            if tda.account_id.id == account_id and \
                 tda.destination_id.id == dest_id:
                     return  # account/dest tuple already in FP
         
-        """aaa_obj.write([fp_id] , {
-            'tuple_destination_account_ids': [
-                    (0, 0, {
-                        'account_id': acccount_id,
-                        'destination_id': dest_id,
-                    }),
-            ],
-        })"""
+        aaa_obj.unit_test_add_account_destination_to_fp(account_id, dest_id,
+            fp_id, {'unit_test': 1})
         
     def analytic_distribution_create(self, db,
         breakdown_data=[(100., 'OPS', False, False)]):
@@ -1345,6 +1341,6 @@ class FinanceTest(UnifieldTest):
             aaa_obj.write(aaa_br.id, {
                 'parent_id': aaa_br.parent_id.id,
                 'date_start': date,
-            })
+            })        
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
