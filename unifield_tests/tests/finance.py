@@ -11,7 +11,7 @@ from oerplib import error
 
 FINANCE_TEST_MASK = {
     'register': "%s %s",
-    'register_line': "%d/%d %s",  # "(register_id)/(date) uuid"
+    'register_line': "%d/%s %s",  # "(register_id)/(date) uuid"
     'je': "JE %s",
     'ji': "JI %s",
     'ad': "AD %s",
@@ -260,7 +260,8 @@ class FinanceTest(UnifieldTest):
             ad_breakdown_data=False,
             date=False, document_date=False,
             third_partner_id=False, third_employee_id=False,
-            third_journal_id=False, do_hard_post=False):
+            third_journal_id=False,
+            do_temp_post=False, do_hard_post=False):
         """
         create a register line in the given register
         
@@ -277,11 +278,16 @@ class FinanceTest(UnifieldTest):
         :param third_partner_id: partner id
         :param third_employee_id: emp id (operational advance)
         :param third_journal_id: journal id (internal transfer)
-        :return: register line id and AD id
+        :return: register line id and AD id and first expense ji 
+            (expense ji given if hard host or temp post)
         :rtype: tuple (register_line_id, ad_id/False, ji_id)
         """
         # register
         self.assert_(regbr_or_id != False, "register missing")
+        self.assert_(
+            not (do_hard_post and do_temp_post) ,
+            "you can not temp post and hard post at the same time"
+        )
             
         abs_obj = db.get('account.bank.statement')
         absl_obj = db.get('account.bank.statement.line')
@@ -333,14 +339,15 @@ class FinanceTest(UnifieldTest):
             document_date = date
 
         # vals
+        name = FINANCE_TEST_MASK['register_line'] % (register_br.id, date,
+            self.get_uuid(), )
         vals = {
             'statement_id': register_br.id,
             'account_id': account_id,
             'document_date': document_date,
             'date': date,
             'amount': amount,
-            'name': FINANCE_TEST_MASK['register_line'] % (register_br.id,
-                date, self.get_uuid(), )
+            'name': name,
         }
         if third_partner_id:
             vals['partner_id'] = third_partner_id
@@ -363,29 +370,33 @@ class FinanceTest(UnifieldTest):
                 {'analytic_distribution_id': distrib_id}, {})
         else:
             distrib_id = False
+        
+        expense_ji_id = False
+        if do_temp_post:
+            self.register_line_temp_post(db, regl_id)
         if do_hard_post:
-            self.register_line_hard_post(db, [regl_id])
-            
-        ji_id = False
-        if regl_id:
-            regl_br = absl_obj.browse(regl_id)
-            # get first expense JI
-            for ji in regl_br.move_ids:
-                if ji.account_id.is_analytic_addicted:
-                    ji_id = ji.id
-                    break
+            self.register_line_hard_post(db, regl_id)
+        if do_temp_post or do_hard_post:
+            expense_ji_id = self.register_line_get_first_expense_ji(db, regl_id)
+ 
+        return (regl_id, distrib_id, expense_ji_id, )
         
-        return (regl_id, distrib_id, ji_id, )
+    def register_line_temp_post(self, db, regl_id):
+        db.get('account.bank.statement.line').button_temp_posting([regl_id], {})
         
-    def register_line_temp_post(self, db, reg_ids):
-        if isinstance(reg_ids, (int, long, )):
-            reg_ids = [reg_ids]
-        db.get('account.bank.statement.line').button_temp_posting(reg_ids, {})
+    def register_line_hard_post(self, db, regl_id):
+        db.get('account.bank.statement.line').button_hard_posting([regl_id], {})
         
-    def register_line_hard_post(self, db, reg_ids):
-        if isinstance(reg_ids, (int, long, )):
-            reg_ids = [reg_ids]
-        db.get('account.bank.statement.line').button_hard_posting(reg_ids, {})
+    def register_line_get_first_expense_ji(self, db, regl_id):
+        """ the reg line need to be temp or hard posted """
+        absl_obj = db.get('account.bank.statement.line')
+        aml_obj = db.get('account.move.line')
+        
+        aml_ids = aml_obj.search([
+            ('name', '=', absl_obj.browse(regl_id).name), 
+            ('account_id.is_analytic_addicted', '=', 'True')  # expense account
+        ])
+        return aml_ids and aml_ids[0] or False
         
     def register_close(self, db, ids):
         if isinstance(ids, (int, long, )):

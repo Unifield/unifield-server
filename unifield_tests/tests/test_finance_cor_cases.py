@@ -1035,7 +1035,7 @@ class FinanceTestCorCases(FinanceTest):
         
     def test_cor1_14(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_13
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_14
         """
         db = self.c1
         
@@ -1048,19 +1048,18 @@ class FinanceTestCorCases(FinanceTest):
                 '60000', self.get_random_amount(),
                 ad_breakdown_data=[ (100., 'OPS', 'HT101', 'PF'), ]  ,
                 date=False, document_date=False,
-                do_hard_post=False
+                do_temp_post=True, do_hard_post=False
             )
-            
-            # temp post
-            self.register_line_temp_post(db, [regl_id])
             
             # 14.4 correction wizard should not be available
             aml_obj = db.get('account.move.line')
-            aml_br = aml_obj.browse(ji_id)
+            ji_br = aml_obj.browse(ji_id)
             self.assert_(
-                aml_br.is_corrigible  == False,
-                'Expense JI of the reg line should not be corrigible as ' \
-                    'temp posted'
+                ji_br.is_corrigible  == False,
+                "Expense JI of the reg line should not be corrigible as ' \
+                    'temp posted. %s %s %f:: %s" % (
+                    ji_br.account_id.code, ji_br.name, ji_br.amount_currency,
+                    db.colored_name, )
             )
 
 
