@@ -11,12 +11,12 @@ from oerplib import error
 
 FINANCE_TEST_MASK = {
     'register': "%s %s",
-    'register_line': "%d/%s %s",  # "(register_id)/(date) uuid"
+    'register_line': "[%s] %d/%s %s",  # "[tag] (register_id)/(date) uuid"
     'je': "JE %s",
     'ji': "JI %s",
     'ad': "AD %s",
     'cheque_number': "cheque %s",
-    'invoice_line': "%d/L%03d %s",  # "(invoice id)/L(line number) (account)"
+    'invoice_line': "[%s] %d/L%03d %s",  # "[tag] (invoice id)/L(line number) (account)"
 }
 
 AMOUNT_TOTAL_DIFF_DELTA = 0.01
@@ -263,7 +263,8 @@ class FinanceTest(UnifieldTest):
             date=False, document_date=False,
             third_partner_id=False, third_employee_id=False,
             third_journal_id=False,
-            do_temp_post=False, do_hard_post=False):
+            do_temp_post=False, do_hard_post=False,
+            tag="UNIT_TEST"):
         """
         create a register line in the given register
         
@@ -341,7 +342,7 @@ class FinanceTest(UnifieldTest):
             document_date = date
 
         # vals
-        name = FINANCE_TEST_MASK['register_line'] % (register_br.id, date,
+        name = FINANCE_TEST_MASK['register_line'] % (tag, register_br.id, date,
             self.get_uuid(), )
         vals = {
             'statement_id': register_br.id,
@@ -1196,7 +1197,7 @@ class FinanceTest(UnifieldTest):
                 
     def invoice_create_supplier_invoice(self, db, ccy_code=False, is_refund=False,
         date=False, partner_id=False, ad_header_breakdown_data=False, 
-        lines_accounts=[], validate=False):
+        lines_accounts=[], validate=False, tag="UNIT_TEST"):
         """
         create a supplier invoice or
         :param ccy_code: ccy code (partner ccy if not set)
@@ -1297,7 +1298,8 @@ class FinanceTest(UnifieldTest):
             line_vals = [
                 (0, 0, {
                     'account_id': self.get_account_from_code(db, a),
-                    'name': FINANCE_TEST_MASK['invoice_line'] % (id, i + 1, a),
+                    'name': FINANCE_TEST_MASK['invoice_line'] % (tag, id, i + 1,
+                        a, ),
                     'price_unit': float(randrange(1, 10)),
                     'quantity': float(randrange(10, 100)),
                 }) for i, a in list(enumerate(lines_accounts))
