@@ -11,8 +11,21 @@ from datetime import datetime
 
 """
 TODO NOTES:
-- required:
-    - [TASK] replay dataset (HT120 added to HT120 for cases)
+- Cases done:
+    X 1
+    X 2
+    X 3
+    X 4
+    X 5
+      6 (replace ad to fix (no rev/cor)
+    X 7
+    X 8
+    X 9
+      10
+      11
+    X 12
+    X 13
+    X 14
 - options:
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
     - [IMP] each case should delete some data
@@ -20,8 +33,8 @@ TODO NOTES:
 
 
 # TODO active again when dev/testing is finished
-#DATASET = True
 DATASET = False
+#DATASET = True
 
 #TEST_THE_TEST = True
 TEST_THE_TEST = False
@@ -337,9 +350,9 @@ class FinanceTestCorCases(FinanceTest):
         date_fy_stop = self.get_orm_date_fy_stop()
         date_now = self.get_orm_date_now()
         
-        # activate all analytic account (date start) from HQ (will be synced
-        # later here)
-        self.analytic_distribution_create(self.hq1,
+        # activate all analytic account (date start) from HQ
+        # (will be synced later here)
+        self.analytic_account_activate_since(self.hq1,
             self.get_orm_fy_date(1, 1))
         
         for i in meta.instances:
