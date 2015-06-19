@@ -482,7 +482,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_01"
+                tag="C1_01"
             )
             
             # 60010 -> 60020
@@ -519,7 +519,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=[(100., dest, 'HT101', 'PF'), ],
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_02"
+                tag="C1_02"
             )
             
             # correction dest from OPS to NAT
@@ -556,7 +556,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=[(100., 'OPS', cc, 'PF'), ],
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_03"
+                tag="C1_03"
             )
             
             # correction CC from HT101 to HT120
@@ -593,7 +593,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=[(100., 'OPS', 'HT101', fp), ],
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_04"
+                tag="C1_04"
             )
             
             # correction FP from PF to FP1
@@ -631,7 +631,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_05"
+                tag="C1_05"
             )
             
             # 60010 -> 60000
@@ -676,7 +676,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_06"
+                tag="C1_06"
             )
             
             # CLOSE PERIOD Januar (MISSION)
@@ -733,7 +733,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_07"
+                tag="C1_07"
             )
             
             new_ad=[
@@ -780,7 +780,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_08"
+                tag="C1_08"
             )
  
             self.simulation_correction_wizard(db, ji_id,
@@ -815,7 +815,7 @@ class FinanceTestCorCases(FinanceTest):
                 account, self.get_random_amount(True),
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_09"
+                tag="C1_09"
             )
             
             self.simulation_correction_wizard(db, ji_id,
@@ -849,7 +849,7 @@ class FinanceTestCorCases(FinanceTest):
                 account, self.get_random_amount(True),
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="SINGLE_10"
+                tag="C1_10"
             )
  
             ad=[
@@ -892,7 +892,7 @@ class FinanceTestCorCases(FinanceTest):
                     (50., 'NAT', 'HT120', 'FP1'),
                 ],
                 lines_accounts=invoice_lines_accounts,
-                tag="SINGLE_11"
+                tag="C1_11"
             )
         )
             
@@ -936,7 +936,7 @@ class FinanceTestCorCases(FinanceTest):
                 partner_id=False,
                 ad_header_breakdown_data=ad,
                 lines_accounts=invoice_lines_accounts,
-                tag="SINGLE_12"
+                tag="C1_12"
             )
         )
         
@@ -1001,7 +1001,7 @@ class FinanceTestCorCases(FinanceTest):
                 partner_id=False,
                 ad_header_breakdown_data=ad,
                 lines_accounts=invoice_lines_accounts,
-                tag="SINGLE_13"
+                tag="C1_13"
             )
         )
  
@@ -1095,7 +1095,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=[ (100., 'OPS', 'HT101', 'PF'), ]  ,
                 date=False, document_date=False,
                 do_temp_post=True, do_hard_post=False,
-                tag="SINGLE_14"
+                tag="C1_14"
             )
             
             # 14.4 correction wizard should not be available

@@ -11,7 +11,7 @@ from oerplib import error
 
 FINANCE_TEST_MASK = {
     'register': "%s %s",
-    'register_line': "[%s] %d/%s %s",  # "[tag] (register_id)/(date) uuid"
+    'register_line': "[%s] %s",  # "[tag] uuid"
     'je': "JE %s",
     'ji': "JI %s",
     'ad': "AD %s",
@@ -342,8 +342,7 @@ class FinanceTest(UnifieldTest):
             document_date = date
 
         # vals
-        name = FINANCE_TEST_MASK['register_line'] % (tag, register_br.id, date,
-            self.get_uuid(), )
+        name = FINANCE_TEST_MASK['register_line'] % (tag, self.get_uuid(), )
         vals = {
             'statement_id': register_br.id,
             'account_id': account_id,
