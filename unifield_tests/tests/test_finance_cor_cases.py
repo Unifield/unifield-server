@@ -680,7 +680,6 @@ class FinanceTestCorCases(FinanceTest):
             )
             
             # CLOSE PERIOD Januar (MISSION)
-            self.register_close(db, reg_id)
             self.period_close(db, 'f', 1)
             self.period_close(db, 'm', 1)
             
@@ -703,8 +702,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_cor_rev_ajis_total_func_amount=80.65,
             )
             
-            # REOPEN reopen register and period for over cases flows
-            self.register_reopen(db, reg_id)
+            # REOPEN period for over cases flows
             self.period_reopen(db, 'm', 1)
             self.period_reopen(db, 'f', 1)
 
@@ -975,7 +973,7 @@ class FinanceTestCorCases(FinanceTest):
                 ji_br.name, ji_br.debit_currency, )
         )
         
-        # REOPEN reopen register and period for over cases flows
+        # REOPEN period for over cases flows
         self.period_reopen(db, 'm', 1)
         self.period_reopen(db, 'f', 1)
         

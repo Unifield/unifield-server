@@ -1177,11 +1177,30 @@ class FinanceTest(UnifieldTest):
         )
             
         period_obj = db.get('account.period')
+        abs_obj = db.get('account.bank.statement')
         
         if level =='f':
             if reopen:
+                # reopen relating registers
+                reg_ids = abs_obj.search([
+                    ('state', '!=', 'open'),
+                    ('period_id', '=', period_id),
+                ])
+                if reg_ids:
+                    for id in reg_ids:
+                        self.register_reopen(db, id)
+                    
                 period_obj.action_reopen_field([period_id])
             else:
+                # close relating registers
+                reg_ids = abs_obj.search([
+                    ('state', '!=', 'confirm'),
+                    ('period_id', '=', period_id),
+                ])
+                if reg_ids:
+                    for id in reg_ids:
+                        self.register_close(db, id)
+                    
                 period_obj.action_close_field([period_id])
         elif level == 'm':
             if reopen:
