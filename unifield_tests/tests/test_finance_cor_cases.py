@@ -11,18 +11,23 @@ from datetime import datetime
 
 """
 TODO NOTES:
-- Cases done:
+- use case to check (unit test has failed):
+    10: seems to  create 3 COR AJIs in OD journal without regular AJIs
+
+- Cases developed:
     X 1
     X 2
     X 3
     X 4
     X 5
-      6 (replace ad to fix (no rev/cor)
+TODO  6 (replace ad to fix (no rev/cor)
     X 7
     X 8
     X 9
-      10
-      11
+    X 10
+TODO  11 select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
+         sytem deny as FC1 soft-closed
+         select ALL boocked AJI of FP1, correction wizard
     X 12
     X 13
     X 14
@@ -834,15 +839,6 @@ class FinanceTestCorCases(FinanceTest):
                 date=False, document_date=False,
                 do_hard_post=True
             )
-            
-            # TODO simulate wizard correction validation deny bc no AD selected
-            # when changing from not expense account to expense one
-            """self.simulation_correction_wizard(db, ji_id,
-                    cor_date=False,
-                    new_account_code=new_account,
-                    new_ad_breakdown_data=False
-                    ad_replace_data=False
-            )"""
  
             ad=[
                 (30., 'OPS', 'HT101', 'PF'),
@@ -870,10 +866,9 @@ class FinanceTestCorCases(FinanceTest):
         """
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_11
         """
-        # TODO finish scenario
         db = self.c1
         
-        invoice_lines_accounts = [ '60002', '60003', '60004', ]
+        invoice_lines_accounts = [ '66002', '66003', '66004', ]
         for a in invoice_lines_accounts:
             self.analytic_distribution_set_fp_account_dest(db, 'FP1', a, 'NAT')
                 
@@ -894,7 +889,8 @@ class FinanceTestCorCases(FinanceTest):
             assert_if_no_ids=True)
         fcc_obj.contract_soft_closed([fc_id])
         
-        # select ALL boocked AJI of FP1, correction wizard: change FP1 to PF
+        # select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
+        # sytem deny as FC1 soft-closed
         # TODO
         
         # repoen FC1
