@@ -10,11 +10,12 @@ import time
 from datetime import datetime
 
 """
-TODO NOTES:
-- use case to check (unit test has failed):
-    10: seems to  create 3 COR AJIs in OD journal without regular AJIs
+TODO NOTES
 
-- Cases developed:
+- use cases to check => unit test has failed:
+    10: seems to  create 3 COR AJIs in OD journal instead of regular AJIs
+
+- cases developed:
     X 1
     X 2
     X 3
@@ -31,6 +32,7 @@ TODO  11 select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
     X 12
     X 13
     X 14
+    
 - options:
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
     - [IMP] each case should delete some data
@@ -452,16 +454,16 @@ class FinanceTestCorCases(FinanceTest):
     # FLOW
     # -------------------------------------------------------------------------
         
-    def test_cor1_0(self):
+    def test_cor1_00(self):
         """
         for dataset testing
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_0
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_00
         """
         return
         
-    def test_cor1_1(self):
+    def test_cor1_01(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_1
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_01
         G/L ACCOUNT 60010=>60020
         """
         db = self.c1
@@ -497,9 +499,9 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=ad,
             )
             
-    def test_cor1_2(self):
+    def test_cor1_02(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_2
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_02
         DEST REPLACE OPS=>NAT NO REV/COR
         """
         db = self.c1
@@ -534,9 +536,9 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,
             )
             
-    def test_cor1_3(self):
+    def test_cor1_03(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_3
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_03
         CC REPLACE HT101=>HT120 NO REV/COR
         """
         db = self.c1
@@ -571,9 +573,9 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,
             )
             
-    def test_cor1_4(self):
+    def test_cor1_04(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_4
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_04
         FP REPLACE PF=>FP1 NO REV/COR
         """
         db = self.c1
@@ -608,9 +610,9 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,
             )
             
-    def test_cor1_5(self):
+    def test_cor1_05(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_5
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_05
         G/L ACCOUNT 60010=>60000 and new AD 
         """
         db = self.c1
@@ -652,9 +654,9 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=new_ad,
             )
             
-    def test_cor1_6(self):
+    def test_cor1_06(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_6
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_06
         """
         db = self.c1
         self._register_set(db, ccy_name='USD')
@@ -707,9 +709,9 @@ class FinanceTestCorCases(FinanceTest):
             self.period_reopen(db, 'f', 1)
 
             
-    def test_cor1_7(self):
+    def test_cor1_07(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_7
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_07
         G/L ACCOUNT 60010=>60030
         """
         db = self.c1
@@ -753,9 +755,9 @@ class FinanceTestCorCases(FinanceTest):
                 expected_cor_rev_ajis_total_func_amount=80.65,
             )
             
-    def test_cor1_8(self):
+    def test_cor1_08(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_8
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_08
         """    
         db = self.c1
         self._register_set(db)
@@ -795,9 +797,9 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,  # bc new account not an expense one
             )
             
-    def test_cor1_9(self):
+    def test_cor1_09(self):
         """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_9
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_09
         G/L ACCOUNT 13000=>13010
         """
         db = self.c1
@@ -1107,6 +1109,8 @@ class FinanceTestCorCases(FinanceTest):
                     db.colored_name, )
             )
 
+            # hard post to allow future period closing for over test flows
+            self.register_line_hard_post(db, regl_id)
 
 def get_test_class():
     return FinanceTestCorCases
