@@ -20,7 +20,7 @@ TODO NOTES
     X 2
     X 3
     X 4
-    X 5
+TODO  5 (AD raises 'No modification seen!' if played after cases 01)
 TODO  6 (replace ad to fix (no rev/cor)
     X 7
     X 8
@@ -864,6 +864,10 @@ class FinanceTestCorCases(FinanceTest):
                     new_ad_breakdown_data=ad,
                     ad_replace_data=False
             )
+            
+            # refresh 1st expense regline bc we correct from not expense account
+            # to an expense one
+            ji_id = self.register_line_get_first_expense_ji(db, regl_id)
             
             self.check_ji_correction(db, ji_id,
                 account, new_account_code=new_account,

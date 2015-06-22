@@ -5,6 +5,7 @@ from unifield_test import UnifieldTestException
 from unifield_test import UnifieldTest
 from datetime import datetime
 from time import strftime
+from time import sleep
 from random import randint
 from random import randrange
 from oerplib import error
@@ -655,7 +656,7 @@ class FinanceTest(UnifieldTest):
         if new_account_id:  # G/L correction
             wizard_corl_obj.write([wiz_cor_line.id],
                 {'account_id' : new_account_id})
-                
+               
         if new_ad_breakdown_data or ad_replace_data:
             # AD correction
             action = wizard_corl_obj.button_analytic_distribution(
@@ -786,7 +787,7 @@ class FinanceTest(UnifieldTest):
                 # replace full AD
                 
                 # delete previous AD
-                del_vals = {}
+                """del_vals = {}
                 if wizard_ad_br.line_ids:
                     # get del vals
                     del_vals['line_ids'] = [ (2, l.id, ) \
@@ -796,7 +797,13 @@ class FinanceTest(UnifieldTest):
                     del_vals['fp_line_ids'] = [ (2, l.id, ) \
                         for l in wizard_ad_br.fp_line_ids ]
                 if del_vals:
-                    wizard_ad_obj.write([wizard_ad_id], del_vals)
+                    wizard_ad_obj.write([wizard_ad_id], del_vals)"""
+                todel_ids = wizard_adl_obj.search([('wizard_id', '=', wizard_ad_br.id)])
+                if todel_ids:
+                    wizard_adl_obj.unlink(todel_ids)
+                todel_ids = wizard_adfpl_obj.search([('wizard_id', '=', wizard_ad_br.id)])
+                if todel_ids:
+                    wizard_adfpl_obj.unlink(todel_ids)
                     
                 # set the new AD
                 ccy_id = self.get_company(db).currency_id.id
@@ -848,6 +855,7 @@ class FinanceTest(UnifieldTest):
                 # set wizard header vals to update
                 ad_wiz_vals = {
                     'amount': total_amount,
+                    'state': 'correction',
                 }
                 if new_account_id:
                     # needed for AD wizard to process directly from it a G/L
@@ -856,22 +864,25 @@ class FinanceTest(UnifieldTest):
                         'old_account_id': old_account_id,
                         'account_id': new_account_id,
                     })
-                wizard_ad_obj.write([wizard_ad_id], ad_wiz_vals)
+                wizard_ad_obj.write([wizard_ad_id], ad_wiz_vals,
+                    {'unit_test': 1})
                 
                 # confirm the wizard with adoc context values to process a
                 # correction
                 context = {
                     'from': 'wizard.journal.items.corrections',
+                    'from_list_grid': 1,
                     'wiz_id': wizard_ad_id,
+                    'unit_test': 1,  # DO NOT REMOVE
                 }
                 wizard_ad_obj.button_confirm([wizard_ad_id], context)
-                return  # G/L account change already processed line above
+                return  # G/L account change already processed line above 
  
         if new_account_id:
             # G/L correction without AD correction: confirm wizard
             # (with an AD correction, cor is confirmed by AD wizard)
             # action_confirm(ids, context=None, distrib_id=False)
-            wizard_cor_obj.action_confirm([wiz_br.id], {'fake': 1}, False)
+            wizard_cor_obj.action_confirm([wiz_br.id], {'unit_test': 1}, False)
             
     def check_ji_correction(self, db, ji_id,
         account_code, new_account_code=False,
@@ -1374,7 +1385,7 @@ class FinanceTest(UnifieldTest):
                 res = ji_ids or []
             else:
                 res[ai.id] = ji_ids or []
-                
+
         return res
         
     def analytic_account_activate_since(self, db, date):
