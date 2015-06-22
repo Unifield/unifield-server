@@ -873,8 +873,13 @@ class FinanceTest(UnifieldTest):
                     'from': 'wizard.journal.items.corrections',
                     'from_list_grid': 1,
                     'wiz_id': wizard_ad_id,
-                    'unit_test': 1,  # DO NOT REMOVE
+                    'unit_test': { # DO NOT REMOVE
+                        'move_line_id': ji_to_correct_id,
+                        'diff': 1 if new_account_id else 4,
+                    }
                 }
+                if new_account_id:
+                    context['unit_test']['new_account_id'] = new_account_id
                 wizard_ad_obj.button_confirm([wizard_ad_id], context)
                 return  # G/L account change already processed line above 
  

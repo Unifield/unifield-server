@@ -472,7 +472,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     super(analytic_distribution_wizard, self).button_confirm(cr, uid, ids, context=context)
                     # Return to the default corrections wizard
                     self.pool.get('wizard.journal.items.corrections').write(cr, uid, [context.get('wiz_id')], {'date': wiz.date})
-                    return self.pool.get('wizard.journal.items.corrections').action_confirm(cr, uid, context.get('wiz_id'), distrib_id=new_distrib_id)
+                    new_context = {'unit_test': context['unit_test']} if 'unit_test' in context else {} # keep existing empty context for no impact but inject unit test context
+                    return self.pool.get('wizard.journal.items.corrections').action_confirm(cr, uid, context.get('wiz_id'), distrib_id=new_distrib_id, context=new_context)
                 # JUST Distribution have changed
                 else:
                     # Check all lines to proceed to change
