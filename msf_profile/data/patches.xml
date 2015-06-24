@@ -6,5 +6,9 @@
             <field name="method">update_us_133</field>
         </record>
 
+        <record id="us_394_patch" model="patch.scripts">
+            <field name="method">update_us_394</field>
+        </record>
+
     </data>
 </openerp>
