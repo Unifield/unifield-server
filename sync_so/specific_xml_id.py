@@ -268,8 +268,9 @@ class account_analytic_account(osv.osv):
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         account = self.read(cr, uid, res_id, ['code', 'name', 'category'])
-        if account['code'] in ( 'OC', 'cc-intermission', 'FUNDING', 'FREE1', 'FREE2',
-            'PF', 'DEST', 'OPS', 'SUP', 'NAT', 'EXP'):
+        if account and account['code'] in ('OC', 'cc-intermission', 'FUNDING',
+                                           'FREE1', 'FREE2', 'PF', 'DEST',
+                                           'OPS', 'SUP', 'NAT', 'EXP'):
             # specific account created on each instances by xml data file, should have the same xmlid
             return get_valid_xml_name(account['category'], account['code'], account['name'])
         return super(account_analytic_account, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
@@ -277,7 +278,7 @@ class account_analytic_account(osv.osv):
 account_analytic_account()
 
 
-#US-113: Sync only to the mission with attached prop instance 
+#US-113: Sync only to the mission with attached prop instance
 class financing_contract_contract(osv.osv):
     _inherit = 'financing.contract.contract'
 
@@ -302,9 +303,9 @@ class financing_contract_contract(osv.osv):
 
 financing_contract_contract()
 
-#US-113: Sync only to the mission with attached prop instance 
+#US-113: Sync only to the mission with attached prop instance
 class financing_contract_funding_pool_line(osv.osv):
-  
+
     _inherit = 'financing.contract.funding.pool.line'
 
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
@@ -328,9 +329,9 @@ class financing_contract_funding_pool_line(osv.osv):
 
 financing_contract_funding_pool_line()
 
-#US-113: Sync only to the mission with attached prop instance 
+#US-113: Sync only to the mission with attached prop instance
 class financing_contract_format(osv.osv):
-  
+
     _inherit = 'financing.contract.format'
 
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
@@ -354,7 +355,7 @@ class financing_contract_format(osv.osv):
 
 financing_contract_format()
 
-#US-113: Sync only to the mission with attached prop instance 
+#US-113: Sync only to the mission with attached prop instance
 class financing_contract_format_line(osv.osv):
     _inherit = 'financing.contract.format.line'
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
@@ -530,7 +531,7 @@ class account_analytic_line(osv.osv):
 
             ''' UTP-1128: If the correction is made with the following usecase, do not generate anything:
                 If the correction is to replace the cost center of the current instance, say P1 to the cc of P2, the deletion
-                must not be generated for P1, because if it got generated, this deletion will be spread up to Coordo, then resync 
+                must not be generated for P1, because if it got generated, this deletion will be spread up to Coordo, then resync
                 back to P1 making that P1 deletes also the line with cost center of P2 <--- this is wrong as stated in the ticket
             '''
 
@@ -560,7 +561,7 @@ class account_analytic_line(osv.osv):
                     send_msg = True
                     if instance_level == 'coordo':
                         """
-                        BKLG-19/5: not to delete AJIs with a not target CC at 
+                        BKLG-19/5: not to delete AJIs with a not target CC at
                         project level if these AJIs are tied to a project JI
 
                         use case:
