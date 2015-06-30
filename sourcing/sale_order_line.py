@@ -1068,13 +1068,14 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 _('Warning'),
                 _('A location must be chosen before sourcing the line.'),
             )
-        #US_376: If order type is loan, we accept unit price as zero
+        # US_376: If order type is loan, we accept unit price as zero
         no_price_ids = self.search(cr, uid, [
-            ('id', 'in', ids),
-            ('price_unit', '=', 0.00),
-            ('order_id.order_type', 'not in', ('loan', 'donation_st')),
-            ('order_id.procurement_request', '=', False),
-        ], limit=1, context=context)
+                                   ('id', 'in', ids),
+                                   ('price_unit', '=', 0.00),
+                                   ('order_id.order_type', 'not in',
+                                    ('loan', 'donation_st', 'donation_exp')),
+                                   ('order_id.procurement_request', '=', False),
+                                   ], limit=1, context=context)
 
         if no_price_ids:
             raise osv.except_osv(
