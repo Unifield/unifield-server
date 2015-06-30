@@ -3,6 +3,7 @@ import base64
 from zipfile import ZipFile
 from cStringIO import StringIO
 import csv
+import sys
 import copy
 import os
 from datetime import datetime
@@ -578,6 +579,18 @@ class Entity(osv.osv):
             # import rules if RW 
             if entity.usb_instance_type == 'remote_warehouse':
                 self.usb_pull_import_rules(cr, uid, zip_file, md5_data, context)
+            
+            # US-287: This is the quick&dirty code to increase the max size of csv reader to avoid problem of handling long text in csv file            
+            maxInt = sys.maxsize
+            decrement = True
+            while decrement:
+                # decrease the maxInt value by factor 10 as long as the OverflowError occurs.
+                decrement = False
+                try:
+                    csv.field_size_limit(maxInt)
+                except OverflowError:
+                    maxInt = int(maxInt/10)
+                    decrement = True
             
             # import updates
             data, updates_import_error, updates_ran, updates_run_error = self.usb_pull_import_updates(cr, uid, zip_file, md5_data, context)
