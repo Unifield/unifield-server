@@ -129,8 +129,8 @@ class account_analytic_line(osv.osv):
         Check that document's date is done BEFORE posting date
         """
         for aal in self.browse(cr, uid, ids):
-            if aal.document_date and aal.date and aal.date < aal.document_date:
-                raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (aal.date, aal.document_date))
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                aal.document_date, aal.date, show_date=True)
         return True
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -195,8 +195,10 @@ class account_analytic_line(osv.osv):
             if not context.get('sync_update_execution', False) or not vals.get('document_date', False):
                 logging.getLogger('init').info('AAL: set document_date')
                 vals['document_date'] = strftime('%Y-%m-%d')
-        if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
-            raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (vals.get('date', False), vals.get('document_date', False)))
+        if vals.get('document_date', False) and vals.get('date', False):
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                vals.get('document_date'), vals.get('date'), show_date=True,
+                context=context)
         # Default behaviour
         res = super(account_analytic_line, self).create(cr, uid, vals, context=context)
         # Check date
