@@ -28,9 +28,12 @@ import inspect
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+from datetime import date
 from decimal import Decimal, ROUND_UP
 
 import netsvc
+
+from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 
 class lang(osv.osv):
     '''
@@ -139,6 +142,24 @@ class date_tools(osv.osv):
             d_format = self.get_datetime_format(cr, uid)
             date = time.strptime(datetime, '%Y-%m-%d %H:%M:%S')
             return time.strftime(d_format, date)
+    
+    def orm2date(self, dt):
+        if isinstance(dt, str):
+            st = time.strptime(dt, DEFAULT_SERVER_DATE_FORMAT)
+            dt = date(st[0], st[1], st[2])
+        return dt
+    
+    def date2orm(self, dt):
+        return dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+    
+    def datetime2orm(self, dt):
+        return dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+    
+    def orm2datetime(self, dt):
+        if isinstance(dt, str):
+            st = time.strptime(dt, DEFAULT_SERVER_DATETIME_FORMAT)
+            dt = datetime(st[0], st[1], st[2], st[3], st[4], st[5])
+        return dt
     
 date_tools()
 
@@ -599,3 +620,89 @@ class product_uom(osv.osv):
         return result
 
 product_uom()
+
+
+class finance_tools(osv.osv):
+    """
+    finance tools
+    """
+    _name = 'finance.tools'
+                
+    def get_orm_date(self, day, month, year=False):
+        """
+        get date in ORM format
+        :type day: int
+        :type month: int
+        :type year: int (current FY if not provided)
+        """
+        return "%04d-%02d-%02d" % (year or datetime.now().year, month, day, )
+    
+    def check_document_date(self, cr, uid, document_date, posting_date,
+        context=None):
+        """
+        US-192 document date check rules
+        http://jira.unifield.org/browse/US-192?focusedCommentId=38911&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38911
+        
+        Document date should be included within the fiscal year of
+            the posting date it is tied with.
+
+        - If you are in January 20XX, you can still encode in
+            the December journal of 20XX-1 which is still open
+        - In the December 20XX-1 journal, the posting date will be in December
+            and the document date will be in December or before
+        - In the January 20XX journal, the posting date is in January 2015
+            and document date can't be in 20XX-1,
+            compulsory to be between 01/01/20XX and the posting date
+        """
+        if not document_date or not posting_date:
+            return
+            
+        # initial check that document_date <= posting_date
+        if posting_date < document_date:
+            raise osv.except_osv(
+                _('Error'),
+                # TODO
+                #_('Posting date should be later than Document Date.')
+                # tmp str to test we are well HERE
+                _('US-192 Posting date should be later than Document Date.')  
+            )
+            
+        # US-192 check
+        # http://jira.unifield.org/browse/US-192?focusedCommentId=38911&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38911
+        posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
+        check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
+        check_range_end = posting_date
+        now = datetime.now()
+        
+        if now.month == 1:
+            """
+            - If you are in January 20XX, you can still encode in
+                the December journal of 20XX-1 which is still open
+            - In the December 20XX-1 journal, the posting date will be in
+                December and the document date will be in December or before
+            """
+            # check posting date in FY-1 December ?
+            prev_dec_start = self.get_orm_date(1, 12, year=now.year-1)
+            prev_dec_end = self.get_orm_date(31, 12, year=now.year-1)
+        
+            if prev_dec_start <= posting_date <= prev_dec_end:
+                # check that December is open (regarding level instance)...
+                december_opened = False
+                # TODO
+                
+            if posting_date < prev_dec_start or not december_opened:
+                # can not encode entry in previous FY ex
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You can not encode for FY-1' \
+                        ' except if FY-1 December is open.')
+            )
+        
+        if not (check_range_start <= document_date <= check_range_end):
+            raise osv.except_osv(
+                _('Error'),
+                _('Document date should be in posting date FY')
+            )
+        
+finance_tools()
+        

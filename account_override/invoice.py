@@ -308,8 +308,8 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for i in self.browse(cr, uid, ids):
-            if i.document_date and i.date_invoice and i.date_invoice < i.document_date:
-                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                i.document_date, i.date_invoice)
         return True
 
     def _refund_cleanup_lines(self, cr, uid, lines):
