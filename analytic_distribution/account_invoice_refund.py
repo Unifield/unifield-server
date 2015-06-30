@@ -104,8 +104,8 @@ class account_invoice_refund(osv.osv_memory):
         Permits to adapt refund creation
         """
         if form.get('document_date', False):
-            if date < form['document_date']:
-                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                form['document_date'], date)
             return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, form['document_date'])
         else:
             return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id)
@@ -115,8 +115,8 @@ class account_invoice_refund(osv.osv_memory):
         Permits to adapt invoice creation
         """
         if form.get('document_date', False) and form.get('date', False):
-            if form['date'] < form['document_date']:
-                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                form['document_date'], date)
             data.update({'document_date': form['document_date']})
         return super(account_invoice_refund, self)._hook_create_invoice(cr, uid, data, form)
 
