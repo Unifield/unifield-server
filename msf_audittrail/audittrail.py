@@ -56,6 +56,7 @@ class sale_order(osv.osv):
 
 sale_order()
 
+
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
@@ -63,12 +64,22 @@ class product_product(osv.osv):
 
 product_product()
 
+
+class product_template(osv.osv):
+    _name = 'product.template'
+    _inherit = 'product.template'
+    _trace = True
+
+product_template()
+
+
 class product_supplier(osv.osv):
     _name = 'product.supplierinfo'
     _inherit = 'product.supplierinfo'
     _trace = True
 
 product_supplier()
+
 
 class sale_order_line(osv.osv):
     _name = 'sale.order.line'
@@ -512,7 +523,7 @@ class audittrail_rule(osv.osv):
                     })
                     log_line_obj.create(cr, uid, vals)
 
-                elif method in  ('write', 'create'):
+                elif method in ('write', 'create'):
                     if method == 'create':
                         vals.update({
                             'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
@@ -679,6 +690,34 @@ class audittrail_log_line(osv.osv):
                 res = [('field_description', 'in', field_names)]
 
         return res
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+               context={}, count=False):
+
+        search_ids = super(audittrail_log_line, self).search(cr, uid, args, offset=0,
+                                                             limit=None, order=order,
+                                                             context=context, count=count)
+        id_model_obj = self.pool.get('ir.model')
+        model_id = context['active_model']
+        current_obj = self.pool.get(model_id)
+        inherit = False
+        for obj_class in current_obj._inherits:
+            inherit = True
+            args_inherit = [('model', '=', obj_class)]
+            obj_inherit = id_model_obj.search(cr, uid, args_inherit, context=context)
+            new_args = [('object_id', '=', obj_inherit[0]),
+                        ('res_id', '=', context['active_id'])]
+            ids = super(audittrail_log_line, self).search(cr, uid, new_args, offset=0,
+                                                          limit=None, order=order,
+                                                          context=context, count=count)
+            search_ids = search_ids + ids
+
+        if inherit and not isinstance(search_ids, (int, long)):
+            args_final = [('id', 'in', search_ids)]
+            search_ids = super(audittrail_log_line, self).search(cr, uid, args_final, offset=offset,
+                                                                 limit=limit, order=order,
+                                                                 context=context, count=count)
+        return search_ids
 
 
     _columns = {
