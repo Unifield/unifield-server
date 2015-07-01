@@ -113,10 +113,10 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
-        <Data ss:Type="Number">${o.output_amount_debit or '0.0'}</Data>
+        <Data ss:Type="Number">${o.debit or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
-        <Data ss:Type="Number">${o.output_amount_credit or '0.0'}</Data>
+        <Data ss:Type="Number">${o.credit or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.output_currency and o.output_currency.name or '')|x}</Data>
