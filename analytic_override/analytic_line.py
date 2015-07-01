@@ -104,22 +104,25 @@ class account_analytic_line(osv.osv):
             context = {}
         if not 'account_id' in vals:
             raise osv.except_osv(_('Error'), _('No account_id found in given values!'))
-        if 'date' in vals and vals['date'] is not False:
+        
+        #US-287: Use the document date and not posting date when checking the validity of analytic account
+        # tech: replaced all date by document_date
+        if 'document_date' in vals and vals['document_date'] is not False:
             account_obj = self.pool.get('account.analytic.account')
-            date = vals['date']
+            document_date = vals['document_date']
             account = account_obj.browse(cr, uid, vals['account_id'], context=context)
             # FIXME: refactoring of next code
-            if date < account.date_start or (account.date != False and date >= account.date):
+            if document_date < account.date_start or (account.date != False and document_date >= account.date):
                 if 'from' not in context or context.get('from') != 'mass_reallocation':
                     raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (account.name or '',))
             if vals.get('cost_center_id', False):
                 cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
-                if date < cc.date_start or (cc.date != False and date >= cc.date):
+                if document_date < cc.date_start or (cc.date != False and document_date >= cc.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (cc.name or '',))
             if vals.get('destination_id', False):
                 dest = account_obj.browse(cr, uid, vals['destination_id'], context=context)
-                if date < dest.date_start or (dest.date != False and date >= dest.date):
+                if document_date < dest.date_start or (dest.date != False and document_date >= dest.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (dest.name or '',))
         return True
