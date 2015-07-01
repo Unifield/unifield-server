@@ -638,7 +638,7 @@ class finance_tools(osv.osv):
         return "%04d-%02d-%02d" % (year or datetime.now().year, month, day, )
     
     def check_document_date(self, cr, uid, document_date, posting_date,
-        show_date=False, context=None):
+        show_date=False, custom_msg=False, context=None):
         """
         US-192 document date check rules
         http://jira.unifield.org/browse/US-192?focusedCommentId=38911&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38911
@@ -657,21 +657,29 @@ class finance_tools(osv.osv):
         :type document_date: orm date
         :type posting_date: orm date
         :param show_date: True to display dates in message
+        :param custom_msg: str for custom basic message (will cancel show_date)
+        :type custom_msg: bool/str
         """
         if not document_date or not posting_date:
             return
+        if custom_msg:
+            show_date = False
             
         # initial check that document_date <= posting_date
         if posting_date < document_date:
             # TODO
             # REMOVE US-192 in messages 
             # (here to test we are well here)
-            if show_date:
-                msg = _('US-192 Posting date (%s) should be later than' \
-                    ' Document Date (%s).') % (posting_date, document_date, )
+            if custom_msg:
+                msg = custom_msg
             else:
-                msg = _(
-                    'US-192 Posting date should be later than Document Date.')
+                if show_date:
+                    msg = _('US-192 Posting date (%s) should be later than' \
+                        ' Document Date (%s).') % (posting_date, document_date)
+                else:
+                    msg = _(
+                        'US-192 Posting date should be later' \
+                            ' than Document Date.')
             raise osv.except_osv(_('Error'), msg)
             
         # US-192 check
