@@ -67,6 +67,12 @@ class procurement_order(osv.osv):
                 cr = pooler.get_db(use_new_cursor).cursor()
             wf_service = netsvc.LocalService("workflow")
 
+            if context.get('run_id'):
+                run_ids = self.pool.get('procurement.purchase.compute.all.running').search(cr, uid, [], context=context)
+                while len(run_ids) > 1:
+                    time.sleep(5)
+                    run_ids = self.pool.get('procurement.purchase.compute.all.running').search(cr, uid, [], context=context)
+
             procurement_obj = self.pool.get('procurement.order')
             if not ids:
                 ids = procurement_obj.search(cr, uid, [], order="date_planned")
@@ -160,6 +166,8 @@ class procurement_order(osv.osv):
                 self._hook_request_vals(cr, uid, request_vals=request_vals, context=context)
                 request.create(cr, uid, request_vals)
 
+            if context.get('run_id'):
+                self.pool.get('procurement.purchase.compute.all.running').unlink(cr, uid, [context.get('run_id')], context=context)
             if use_new_cursor:
                 cr.commit()
         finally:
