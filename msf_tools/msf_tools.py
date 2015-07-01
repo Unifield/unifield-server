@@ -667,19 +667,15 @@ class finance_tools(osv.osv):
             
         # initial check that document_date <= posting_date
         if posting_date < document_date:
-            # TODO
-            # REMOVE US-192 in messages 
-            # (here to test we are well here)
             if custom_msg:
-                msg = custom_msg
+                msg = custom_msg  # optional custom message
             else:
                 if show_date:
-                    msg = _('US-192 Posting date (%s) should be later than' \
+                    msg = _('Posting date (%s) should be later than' \
                         ' Document Date (%s).') % (posting_date, document_date)
                 else:
                     msg = _(
-                        'US-192 Posting date should be later' \
-                            ' than Document Date.')
+                        'Posting date should be later than Document Date.')
             raise osv.except_osv(_('Error'), msg)
             
         # US-192 check
