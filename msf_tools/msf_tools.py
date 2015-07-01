@@ -645,15 +645,8 @@ class finance_tools(osv.osv):
         
         Document date should be included within the fiscal year of
             the posting date it is tied with.
-
-        - If you are in January 20XX, you can still encode in
-            the December journal of 20XX-1 which is still open
-        - In the December 20XX-1 journal, the posting date will be in December
-            and the document date will be in December or before
-        - In the January 20XX journal, the posting date is in January 2015
-            and document date can't be in 20XX-1,
-            compulsory to be between 01/01/20XX and the posting date
-            
+        01/01/FY <= document date <= 31/12/FY
+       
         :type document_date: orm date
         :type posting_date: orm date
         :param show_date: True to display dates in message
@@ -665,50 +658,25 @@ class finance_tools(osv.osv):
         if custom_msg:
             show_date = False
             
-        # initial check that document_date <= posting_date
+        # initial check that not (posting_date < document_date)
+        # like was until 1.0-5
         if posting_date < document_date:
             if custom_msg:
                 msg = custom_msg  # optional custom message
             else:
                 if show_date:
                     msg = _('Posting date (%s) should be later than' \
-                        ' Document Date (%s).') % (posting_date, document_date)
+                        ' Document Date (%s).') % (posting_date, document_date,)
                 else:
                     msg = _(
                         'Posting date should be later than Document Date.')
             raise osv.except_osv(_('Error'), msg)
             
         # US-192 check
-        # http://jira.unifield.org/browse/US-192?focusedCommentId=38911&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38911
+        # 01/01/FY <= document date <= 31/12/FY
         posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
         check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
         check_range_end = posting_date
-        now = datetime.now()
-        
-        if now.month == 1:
-            """
-            - If you are in January 20XX, you can still encode in
-                the December journal of 20XX-1 which is still open
-            - In the December 20XX-1 journal, the posting date will be in
-                December and the document date will be in December or before
-            """
-            # check posting date in FY-1 December ?
-            prev_dec_start = self.get_orm_date(1, 12, year=now.year-1)
-            prev_dec_end = self.get_orm_date(31, 12, year=now.year-1)
-        
-            if prev_dec_start <= posting_date <= prev_dec_end:
-                # check that December is open (regarding level instance)...
-                december_opened = False
-                # TODO
-                
-            if posting_date < prev_dec_start or not december_opened:
-                # can not encode entry in previous FY ex
-                raise osv.except_osv(
-                    _('Error'),
-                    _('You can not encode for FY-1' \
-                        ' except if FY-1 December is open.')
-            )
-        
         if not (check_range_start <= document_date <= check_range_end):
             if show_date:
                 msg = _('Document date (%s) should be in posting date FY') % (
