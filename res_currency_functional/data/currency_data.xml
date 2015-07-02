@@ -904,6 +904,13 @@
             <field name="active" eval="False"/>
             <field name="currency_name">SURINAMESE DOLLAR</field>
         </record>
+        <record id="base.SSP" model="res.currency">
+            <field name="name">SSP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SOUTH SOUDAN</field>
+        </record>
         <record id="base.STD" model="res.currency">
             <field name="name">STD</field>
             <field name="rounding">0.01</field>
@@ -1094,7 +1101,8 @@
             <field name="currency_name">SOUTH AFRICAN RAND</field>
         </record>
         <record id="base.ZMK" model="res.currency">
-            <field name="name">ZMK</field>
+            <!-- US-315: Rename ZMK code to ZMW -->
+            <field name="name">ZMW</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
