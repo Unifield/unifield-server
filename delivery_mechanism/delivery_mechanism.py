@@ -1436,7 +1436,7 @@ class stock_picking(osv.osv):
                         ptc = self.browse(cr, uid, mirror_pick.id, context=context)
                         if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
                             ptc.action_done(context=context)
-                        elif mirror_pick.subtype == 'picking' and mirror_pick.state == 'draft':
+                        elif mirror_pick.subtype == 'picking' and ptc.state == 'draft':
                             # If there are still some lines available with qty 0, then check if any in progress PICK, if all complete, then close the PICK
                             self.validate(cr, uid, [mirror_pick.id], context=context)
 
