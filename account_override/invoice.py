@@ -499,10 +499,10 @@ class account_invoice(osv.osv):
                     if 'account_tax_id' in tax_line[2]:
                         args = [('price_include', '=', '1'),
                                 ('id', '=', tax_line[2]['account_tax_id'])]
-                        ids = tax_obj.search(cr, uid, args, context=context)
-                        if ids:
+                        tax_ids = tax_obj.search(cr, uid, args, context=context)
+                        if tax_ids:
                             raise osv.except_osv(_('Error'),
-                                                 _('You can not add include price tax.'))
+                                                 _('Tax included in price can not be tied to the whole invoice.'))
 
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
