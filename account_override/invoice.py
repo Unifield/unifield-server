@@ -255,7 +255,7 @@ class account_invoice(osv.osv):
             # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
             res['domain']['journal_id'] = [('id', 'in', journal_ids)]
         return res
-        
+
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
         date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False):
         """
@@ -485,10 +485,25 @@ class account_invoice(osv.osv):
         """
         Check document_date
         """
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        # US_286: Forbit possibility to add include price tax
+        # in bottom left corner
+        if 'tax_line' in vals:
+            tax_obj = self.pool.get('account.tax')
+            for tax_line in vals['tax_line']:
+                if tax_line[2]:
+                    if 'account_tax_id' in tax_line[2]:
+                        args = [('price_include', '=', '1'),
+                                ('id', '=', tax_line[2]['account_tax_id'])]
+                        ids = tax_obj.search(cr, uid, args, context=context)
+                        if ids:
+                            raise osv.except_osv(_('Error'),
+                                                 _('You can not add include price tax.'))
+
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
         return res
