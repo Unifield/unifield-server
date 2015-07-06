@@ -261,8 +261,8 @@
             ## ORDER HEADER LINE
             <Row>
                 <Cell ss:StyleID="order_header_first" ss:MergeAcross="2"><Data ss:Type="String">Order ref.: ${o.name|x}     Status: ${getSel(o, 'state')|x}</Data></Cell>
-                <Cell ss:StyleID="order_header" ss:MergeAcross="2"><Data ss:Type="String">Received: ${formatLang(o.date_order, date=True)|x}</Data></Cell>
-                <Cell ss:StyleID="order_header" ss:MergeAcross="2"><Data ss:Type="String">Req. Delivery date: ${o.delivery_requested_date and formatLang(o.delivery_requested_date, date=True) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="order_header" ss:MergeAcross="2"><Data ss:Type="String">Received: ${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
+                <Cell ss:StyleID="order_header" ss:MergeAcross="2"><Data ss:Type="String">Req. Delivery date: ${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
                 <Cell ss:StyleID="order_header"><Data ss:Type="String"># Items: ${len(getProducts(o))|x}</Data></Cell>
                 <Cell ss:StyleID="order_header_last" ss:MergeAcross="2"><Data ss:Type="String">Estimated amount: ${formatLang(o.amount_total or 0.00)|x} ${o.pricelist_id.currency_id.name|x}</Data></Cell>
             </Row>
