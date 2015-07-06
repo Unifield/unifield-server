@@ -1918,8 +1918,12 @@ class account_bank_statement_line(osv.osv):
 
                 old_distrib = False
                 if line.get('analytic_distribution_id', False):
-                    old_distrib = line.get('analytic_distribution_id')[0] 
-                values = self.update_employee_analytic_distribution(cr, uid, values)
+                    old_distrib = line.get('analytic_distribution_id')[0]
+
+                # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync  
+                if not context.get('sync_update_execution'):
+                    values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance 
+
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 res.append(tmp)
 
