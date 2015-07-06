@@ -576,7 +576,6 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
     def unlink(self, original_unlink, cr, uid, ids, context=None):
         if not ids: return True
         context = context or {}
-
         audit_rule_ids = self.check_audit(cr, uid, 'unlink')
         if audit_rule_ids:
             self.pool.get('audittrail.rule').audit_log(cr, uid, audit_rule_ids, self, ids, 'unlink', context=context)
@@ -604,6 +603,15 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             if hasattr(self, 'on_delete'):
                 self.on_delete(cr, uid, ids, context=context)
 
+        # US_394: Check if object have an ir.translation
+        if self._name is not 'ir.translation':
+            tr_obj = self.pool.get('ir.translation')
+            for obj_id in ids:
+                # Add commat for prevent delete other object
+                tr_name = str(self._name) + ',%'
+                args = [('name', 'like', tr_name), ('res_id', '=', obj_id)]
+                tr_ids = tr_obj.search(cr, uid, args)
+                tr_obj.unlink(cr, uid, tr_ids)
         return original_unlink(self, cr, uid, ids, context=context)
 
     def purge(self, cr, uid, ids, context=None):
