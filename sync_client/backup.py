@@ -28,6 +28,8 @@ from tools.translate import _
 import release
 import re
 import time
+from symbol import try_stmt
+import logging
 
 def get_server_version():
     version = release.version or ""
@@ -41,6 +43,8 @@ class BackupConfig(osv.osv):
     _name = "backup.config"
     _description = "Backup configuration"
     _pg_psw_env_var_is_set = False
+
+    _logger = logging.getLogger('sync.client')
 
     _columns = {
         'name' : fields.char('Path to backup to', size=254),
@@ -102,6 +106,18 @@ class BackupConfig(osv.osv):
         if bkp and bkp[0]:
             bck = bkp[0]
             self._set_pg_psw_env_var()
+            try:
+                # US-386: Check if file/path exists and raise exception, no need to prepare the backup, thus no pg_dump is executed
+                outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"), suffix, get_server_version()))
+                bkpfile = open(outfile,"wb")
+            except Exception, e:
+                # If there is exception with the opening of the file
+                if isinstance(e, IOError):
+                    error = "Backup Error: %s %s. Please provide the correct path or deactivate the backup feature." %(e.strerror, e.filename)
+                else:
+                    error = "Backup Error: %s. Please provide the correct path or deactivate the backup feature." % e
+                self._logger.exception('Cannot perform the backup %s' % error)
+                raise osv.except_osv(_('Error! Cannot perform the backup'), error)            
 
             cmd = ['pg_dump', '--format=c', '--no-owner']
             if tools.config['db_user']:
@@ -119,8 +135,6 @@ class BackupConfig(osv.osv):
             if res:
                 raise Exception, "Couldn't dump database"
             self._unset_pg_psw_env_var()
-            outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"), suffix, get_server_version()))
-            bkpfile = open(outfile,"wb")
             bkpfile.write(data)
             bkpfile.close()
             return "Backup done"
