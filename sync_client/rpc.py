@@ -284,6 +284,8 @@ class NetRPCConnector(Connector):
         while retry:
             try:
                 retry = False
+                #US-309: Reset value of error in the previous rounds, otherwise the system will raise exception regardless of the result of the next try!
+                error = False
                 socket = NetRPC(is_gzip=self.is_gzip, timeout=self.timeout)
                 socket.connect(self.hostname, self.port)
                 socket.mysend((service_name, method, )+args)
