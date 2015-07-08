@@ -1091,13 +1091,16 @@ class account_bank_statement_line(osv.osv):
         absl_brs = self.browse(cr, uid, ids, context=context)
         if len(ids) == 1:
             if not absl_brs[0].invoice_id and absl_brs[0].account_id and \
-                not absl_brs[0].account_id.is_analytic_addicted:
+                not absl_brs[0].account_id.is_analytic_addicted and \
+                not absl_brs[0].invoice_id and \
+                not absl_brs[0].imported_invoice_line_ids:
                     # one register line selected from cash return
                     # but not a debit one (closing_op adv line)
                     # => no AJIs to display
                     # NOTE: for imported invoices we let the default behaviour
                     # (display of invoice AJIs)
                     alternate_domain = [('id', '=', 0)]  # fake no result domain
+        alternate_domain = []
         if not alternate_domain:
             cash_adv_return_move_line_ids = [
                 absl.cash_return_move_line_id.id \
@@ -1109,7 +1112,7 @@ class account_bank_statement_line(osv.osv):
             ]
             if cash_adv_return_move_line_ids:
                 domain.append(('move_id', 'in', cash_adv_return_move_line_ids))
- 
+
         context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
         return {
             'name': _('Analytic Journal Items'),
@@ -1920,20 +1923,20 @@ class account_bank_statement_line(osv.osv):
                 if line.get('analytic_distribution_id', False):
                     old_distrib = line.get('analytic_distribution_id')[0]
 
-                # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync  
+                # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync
                 if not context.get('sync_update_execution'):
-                    values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance 
+                    values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance
 
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 res.append(tmp)
 
                 new_distrib = values.get('analytic_distribution_id', False)
-                # US-351: Fixed the wrong condition 
+                # US-351: Fixed the wrong condition
                 if new_distrib and old_distrib != new_distrib and line.get('first_move_line_id', False) and line.get('move_ids', False):
                     first_move_line_id = line.get('first_move_line_id')[0]
                     move_ids = line.get('move_ids')[0]
                     if isinstance(move_ids, (int, long)):
-                        move_ids = [move_ids] 
+                        move_ids = [move_ids]
 
                     # US-289: If there is a change in the DA, then populate it to the move line (and thus analytic lines)
                     ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', account_id), ('id', 'not in', [first_move_line_id]), ('move_id', 'in', move_ids)])
@@ -1943,7 +1946,7 @@ class account_bank_statement_line(osv.osv):
                         # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
                         self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': account_id}, check=False, update_check=False)
 
-        # US-289: The following block is moved down after the employee update, so that the call to _update_move_from_st_line will also update 
+        # US-289: The following block is moved down after the employee update, so that the call to _update_move_from_st_line will also update
         # the distribution analytic in case there is a change of this value on the reg line, issued from the new block right above
 
         # In case of Temp Posting, we also update attached account move lines
