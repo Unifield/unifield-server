@@ -29,12 +29,17 @@ from osv.orm import except_orm
 import pooler
 import tools
 from tools.translate import _
-
+from threading import Lock
+import logging
 
 class procurement_order(osv.osv):
     _inherit = 'procurement.order'
+    __lock = False
     
-    
+    def __init__(self, *a, **b):
+        self.__lock = Lock()
+        super(procurement_order, self).__init__(*a, **b)
+
     def _hook_request_vals(self, cr, uid, *args, **kwargs):
         '''
         Hook to change the request values
@@ -59,19 +64,21 @@ class procurement_order(osv.osv):
         @param context: A standard dictionary for contextual values
         @return:  Dictionary of values
         '''
+        logger = logging.getLogger('procure.confirm')
+
         if context is None:
             context = {}
 
+        locked = context.get('run_id')
         try:
             if use_new_cursor:
                 cr = pooler.get_db(use_new_cursor).cursor()
             wf_service = netsvc.LocalService("workflow")
 
-            if context.get('run_id'):
-                run_ids = self.pool.get('procurement.purchase.compute.all.running').search(cr, uid, [], context=context)
-                while len(run_ids) > 1:
-                    time.sleep(5)
-                    run_ids = self.pool.get('procurement.purchase.compute.all.running').search(cr, uid, [], context=context)
+            if locked:
+                logger.info('Start scheduler with lock, try to acquire lock')
+                self.__lock.acquire()
+                logger.info('Lock acquired')
 
             procurement_obj = self.pool.get('procurement.order')
             if not ids:
@@ -166,11 +173,12 @@ class procurement_order(osv.osv):
                 self._hook_request_vals(cr, uid, request_vals=request_vals, context=context)
                 request.create(cr, uid, request_vals)
 
-            if context.get('run_id'):
-                self.pool.get('procurement.purchase.compute.all.running').unlink(cr, uid, [context.get('run_id')], context=context)
             if use_new_cursor:
                 cr.commit()
         finally:
+            if locked:
+                self.__lock.release()
+                logger.info('Lock released')
             if use_new_cursor:
                 try:
                     cr.close()
