@@ -96,8 +96,8 @@ class wizard_import_cheque(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No entries ! Please select some entries then click on Import button.'))
 
         # US-212: If multi-click on import button, we check
-        # if the same file was imported in the 10 last seconds
-        date = time.time() - 10
+        # if the same file was imported in the 1 last seconds
+        date = time.time() - 1
         date_import = wizard.import_date
 
         if date_import >= date:
@@ -163,15 +163,13 @@ class wizard_import_cheque(osv.osv_memory):
         curr_date = strftime('%Y-%m-%d')
 
         # US-212: If multi-click on import button, we check
-        # if the same file was imported in the 10 lasts seconds
-        date = time.time() - 10
+        # if the same file was imported in the 1 last seconds
+        date = time.time() - 1
         date_import = wizard.import_date
 
         if date_import >= date:
             return {}
-        else:
-            self.write(cr, uid, ids, {'import_date': time.time()},
-                       context=context)
+
 
         # Process lines
         absl_lines = []
@@ -200,7 +198,7 @@ class wizard_import_cheque(osv.osv_memory):
 
         if not len(absl_lines):
             raise osv.except_osv(_('Warning'), _('No line created!'))
-
+        self.write(cr, uid, ids, {'import_date': time.time()}, context=context)
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines, 'o2m_refresh': 'line_ids'}
 
 wizard_import_cheque()
