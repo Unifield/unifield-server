@@ -74,6 +74,7 @@ class wizard_import_cheque(osv.osv_memory):
         'document_date': fields.date('Document Date', required=False),
         'journal_id': fields.many2one('account.journal', string="Cheque journal to use", required=True, help="The journal the wizard will use to display lines to import"),
         'import_date': fields.integer("Import date"),
+        'confirm_date': fields.integer("Confirm date"),
     }
 
     _defaults = {
@@ -155,10 +156,23 @@ class wizard_import_cheque(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
+
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         absl_obj = self.pool.get('account.bank.statement.line')
         curr_date = strftime('%Y-%m-%d')
+
+        # US-212: If multi-click on import button, we check
+        # if the same file was imported in the 1 last seconds
+        date = time.time() - 1
+        date_import = wizard.import_date
+
+        if date_import >= date:
+            return {}
+        else:
+            self.write(cr, uid, ids, {'import_date': time.time()},
+                       context=context)
+
         # Process lines
         absl_lines = []
         for imported_line in wizard.imported_lines_ids:
