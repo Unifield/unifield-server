@@ -56,7 +56,7 @@ class hq_report_oca(report_sxw.report_sxw):
         # method to create counterpart line
         return line[:2] + \
                ["20750",
-                line[3],  # expat employee identification or "0"
+                "0",  # before US-274/7 was expat EMP identification line[3]
                 "0",
                 line[5],  # expat employee name or "0"
                 line[6],
@@ -226,15 +226,15 @@ class hq_report_oca(report_sxw.report_sxw):
             first_result_lines.append(formatted_data)
 
             # For third report: add to corresponding sub
-            if move_line.journal_id \
-                and move_line.journal_id.type not in (
+            if journal and journal.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
                 if not account.shrink_entries_for_hq:
                     expat_identification = "0"
                     expat_employee = "0"
                     # Expat employees are the only third party in this report
                     if move_line.partner_txt and move_line.employee_id and move_line.employee_id.employee_type == 'ex':
-                        expat_identification = move_line.employee_id.identification_id
+                        if account.code == '15640':  # US-274/7
+                            expat_identification = move_line.employee_id.identification_id
                         expat_employee = move_line.partner_txt
                         
                     # US-274/1: for FXA entries output fonctional amount in balance
@@ -355,8 +355,7 @@ class hq_report_oca(report_sxw.report_sxw):
             third_report.append(line)
             third_report.append(self.create_counterpart(cr, uid, line))
 
-        if move_line.journal_id \
-            and move_line.journal_id.type not in (
+        if journal and journal.type not in (
                 exclude_jn_type_for_balance_and_expense_report):  # US-274/2
             for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
                 # create the sequence number for those lines
