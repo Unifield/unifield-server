@@ -225,6 +225,16 @@ class hq_report_oca(report_sxw.report_sxw):
                 if move_line.partner_txt and move_line.employee_id and move_line.employee_id.employee_type == 'ex':
                     expat_identification = move_line.employee_id.identification_id
                     expat_employee = move_line.partner_txt
+                    
+                # US-274/1: for FXA entries output fonctional amount in balance
+                # report
+                is_cur_adj_entry = move_line.journal_id \
+                    and move_line.journal_id.type == 'cur_adj' or False
+                output_debit = is_cur_adj_entry and move_line.debit \
+                    or move_line.debit_currency
+                output_credit = is_cur_adj_entry and move_line.credit \
+                    or move_line.credit_currency
+                    
                 other_formatted_data = ["01",
                                         country_code,
                                         account and account.code or "0",
@@ -233,8 +243,8 @@ class hq_report_oca(report_sxw.report_sxw):
                                         move_line.date and datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         currency and currency.name or "0",
                                         rate,
-                                        move_line.debit_currency != 0.0 and round(move_line.debit_currency, 2) or "",
-                                        move_line.credit_currency != 0.0 and round(move_line.credit_currency, 2) or "",
+                                        output_debit != 0.0 and round(output_debit, 2) or "",
+                                        output_credit != 0.0 and round(output_credit, 2) or "",
                                         move_line.move_id and move_line.move_id.name or "0",
                                         "",
                                         move_line.name or "0",
