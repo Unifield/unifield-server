@@ -96,8 +96,8 @@ class wizard_import_cheque(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No entries ! Please select some entries then click on Import button.'))
 
         # US-212: If multi-click on import button, we check
-        # if the same file was imported in the 1 last seconds
-        date = time.time() - 1
+        # if the same file was imported in the 10 last seconds
+        date = time.time() - 10
         date_import = wizard.import_date
 
         if date_import >= date:
@@ -163,8 +163,8 @@ class wizard_import_cheque(osv.osv_memory):
         curr_date = strftime('%Y-%m-%d')
 
         # US-212: If multi-click on import button, we check
-        # if the same file was imported in the 1 last seconds
-        date = time.time() - 1
+        # if the same file was imported in the 10 lasts seconds
+        date = time.time() - 10
         date_import = wizard.import_date
 
         if date_import >= date:
