@@ -260,7 +260,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                             output_credit != 0.0 and round(output_credit, 2) or "",
                                             move_line.move_id and move_line.move_id.name or "0",
                                             move_line.name or "0",
-                                            move_line.reference or "",
+                                            move_line.ref or "",
                                             expat_employee,
                                             move_line.document_date and datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                             move_line.ref or "0"]
