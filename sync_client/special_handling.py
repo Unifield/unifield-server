@@ -119,9 +119,7 @@ class sync_ir_translation(osv.osv):
                         target_ids = [target_ids]
                     target = self.pool.get(model_name)
                     if target:
-                        args = [('id', 'in', target_ids)]
-                        target_ids = target.search(cr, uid, args)
-                        if target_ids and hasattr(target, "get_sd_ref"):
+                        if hasattr(target, "get_sd_ref"):
                             sd_ref = target.get_sd_ref(cr, uid, target_ids)
                             if sd_ref:
                                 res[rec.id] = sd_ref.values()[0]
