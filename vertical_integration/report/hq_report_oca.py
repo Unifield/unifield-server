@@ -338,7 +338,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                         "0",
                                         rate,
                                         analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                        analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "0",
+                                        analytic_line.entry_sequence or "0",
                                         "0",
                                         analytic_line.name or "0",
                                         analytic_line.ref or "0",
