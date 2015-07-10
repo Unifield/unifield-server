@@ -52,6 +52,7 @@ class hq_report_oca(report_sxw.report_sxw):
         return "0"
 
     def create_counterpart(self, cr, uid, line):
+        """ third report: up balances """
         pool = pooler.get_pool(cr.dbname)
         # method to create counterpart line
         return line[:2] + \
@@ -67,6 +68,7 @@ class hq_report_oca(report_sxw.report_sxw):
     def create_subtotal(self, cr, uid, line_key,
         line_debit, line_functional_debit, line_functional_debit_no_ccy_adj,
         counterpart_date, country_code, sequence_number):
+        """ third report: up balances """
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
         if len(line_key) > 2 and line_debit != 0.0 and line_functional_debit != 0.0:
@@ -86,8 +88,8 @@ class hq_report_oca(report_sxw.report_sxw):
                      line_debit > 0 and round(line_debit, 2) or "",
                      line_debit < 0 and round(-line_debit, 2) or "",
                      sequence_number,
-                     "",
                      "Subtotal - " + line_key[0] + " - " + line_key[1] + " - " + line_key[2],
+                     "",
                      "0",
                      counterpart_date,
                      "0"]
@@ -102,8 +104,8 @@ class hq_report_oca(report_sxw.report_sxw):
                       line_debit < 0 and round(-line_debit, 2) or "",
                       line_debit > 0 and round(line_debit, 2) or "",
                       sequence_number,
-                      "",
                       "Automatic counterpart for " + line_key[0] + " - " + line_key[1] + " - " + line_key[2],
+                      "",
                       "0",
                       counterpart_date,
                       "0"]]
