@@ -145,8 +145,8 @@ class hq_report_oca(report_sxw.report_sxw):
         account_lines_functional_debit = {}
         # US-118: func debit with no FXA currency adjustement entries
         account_lines_functional_debit_no_ccy_adj = {}
-        journal_cur_adj_ids = pool.get('account.journal').search(cr, uid,
-            [('type', '=', 'cur_adj')], context=context)
+        journal_exclude_subtotal_ids = pool.get('account.journal').search(cr,
+            uid, [('type', 'in', ('cur_adj', 'revaluation'))], context=context)
         # General variables
         period = pool.get('account.period').browse(cr, uid, data['form']['period_id'])
         period_name = period and period.code or "0"
@@ -279,8 +279,8 @@ class hq_report_oca(report_sxw.report_sxw):
                     # compute subtotal line inverted rate with no FXA entry:
                     # no booking amount but funct one then cause a wrong balance
                     # for ccy inverted rate computation
-                    if not journal_cur_adj_ids or \
-                        move_line.journal_id.id not in journal_cur_adj_ids:
+                    if not journal_exclude_subtotal_ids or \
+                        move_line.journal_id.id not in journal_exclude_subtotal_ids:
                         account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] += funct_balance
 
         # UFTP-375: Do not include FREE1 and FREE2 analytic lines
