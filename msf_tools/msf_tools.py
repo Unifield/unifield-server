@@ -529,6 +529,9 @@ class ir_translation(osv.osv):
             domain.append(('name', '=', vals['name']))
         existing_ids = self.search(cr, uid, domain)
         if existing_ids:
+            # Can't update translation:
+            # ir.model.data:The following record has to be re-created
+            '''
             if len(existing_ids) > 1:
                 ids = existing_ids[0:1]
                 del_ids = existing_ids[1:]
@@ -537,8 +540,10 @@ class ir_translation(osv.osv):
                 ids = existing_ids
             self.write(cr, uid, ids, vals, context=context)
             return ids[0]
-        else:
-            return super(ir_translation, self).create(cr, uid, vals, context=context)
+            '''
+            self.unlink(cr, uid, existing_ids, context=context)
+        # else:
+        return super(ir_translation, self).create(cr, uid, vals, context=context)
 
     # US_394: remove orphean ir.translation lines
     def clean_translation(self, cr, uid, context=None):
