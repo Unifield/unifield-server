@@ -521,11 +521,11 @@ class ir_translation(osv.osv):
     # US_394: Remove duplicate lines for ir.translation
     def create(self, cr, uid, vals, context=None):
         domain = []
-        if vals['res_id']:
+        if vals.get('res_id'):
             domain.append(('res_id', '=', vals['res_id']))
-        if vals['lang']:
+        if vals.get('lang'):
             domain.append(('lang', '=', vals['lang']))
-        if vals['name']:
+        if vals.get('name'):
             domain.append(('name', '=', vals['name']))
         existing_ids = self.search(cr, uid, domain)
         if existing_ids:
@@ -535,7 +535,8 @@ class ir_translation(osv.osv):
                 self.unlink(cr, uid, del_ids, context=context)
             else:
                 ids = existing_ids
-            return self.write(cr, uid, ids, vals, context=context)
+            self.write(cr, uid, ids, vals, context=context)
+            return ids[0]
         else:
             return super(ir_translation, self).create(cr, uid, vals, context=context)
 
