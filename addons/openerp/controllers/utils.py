@@ -41,6 +41,8 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
     dblist = []
 
     bad_regional = ''
+    tz_offset = ''
+
     if os.name == 'nt':
         try:
             import _winreg
@@ -54,6 +56,7 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
             pass
     try:
         dblist = rpc.session.listdb()
+        tz_offset = rpc.session.gateway.execute_noauth('db', 'check_timezone')
     except:
         message = _("Could not connect to server")
 
@@ -92,7 +95,7 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
     except:
         pass
     return dict(target=target, url=url, dblist=dblist, db=db, user=user, password=password,
-            action=action, message=message, origArgs=origArgs, info=info, bad_regional=bad_regional)
+            action=action, message=message, origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset)
 
 def secured(fn):
     """A Decorator to make a SecuredController controller method secured.
