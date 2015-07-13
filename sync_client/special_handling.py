@@ -35,46 +35,47 @@ from sync_common import xmlid_to_sdref
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
     _inherit = 'account.analytic.line'
-    
+
     def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
 
-        # Check if the create request comes from the sync data and from some specific trigger 
-        # for example: the create/write of account.move, account.move.line from sync data must not 
-        # create this object, because this object is sync-ed on a separate rule 
+        # Check if the create request comes from the sync data and from some specific trigger
+        # for example: the create/write of account.move, account.move.line from sync data must not
+        # create this object, because this object is sync-ed on a separate rule
         # otherwise duplicate entries will be created and these entries will be messed up in the later update
         if 'do_not_create_analytic_line' in context:
             if context.get('sync_update_execution'):
                 return False
             del context['do_not_create_analytic_line']
-        
+
         # UF-2479: Block the creation of an AJI if the given period is not open, in sync context
         if context.get('sync_update_execution') and 'date' in vals:
             period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
             if not period_ids:
                 raise osv.except_osv(_('Warning'), _('No period found for the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
-            if period and period.state == 'created':
-                raise osv.except_osv(_('Error !'), _('Period \'%s\' of the given date %s is not open! No AJI is created') % (period.name, vals['date'] or ''))
+            # US_292: Allow the creation of an AJI if the given period is not open, in sync context
+            # if period and period.state == 'created':
+            #     raise osv.except_osv(_('Error !'), _('Period \'%s\' of the given date %s is not open! No AJI is created') % (period.name, vals['date'] or ''))
 
         # continue the create request if it comes from a normal requester
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
-    
+
 account_analytic_line()
 
 class account_move(osv.osv):
     _name = 'account.move'
     _inherit = 'account.move'
-    
+
     def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
-        
+
         # indicate to the account.analytic.line not to create such an object to avoid duplication
         context['do_not_create_analytic_line'] = True
         return super(account_move, self).create(cr, uid, vals, context=context)
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         if not context:
             context = {}
@@ -173,11 +174,11 @@ sync_ir_translation()
 class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
-    
+
     def create(self, cr, uid, vals, context=None, check=True):
         if not context:
             context = {}
-            
+
         # indicate to the account.analytic.line not to create such an object to avoid duplication
 #        context['do_not_create_analytic_line'] = True
 
@@ -191,13 +192,13 @@ class account_move_line(osv.osv):
         # UTP-632: re-add write(), but only for the check variable
         if not context:
             context = {}
-            
+
         sync_check = check
         if context.get('sync_update_execution', False):
             sync_check = False
 
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=sync_check, update_check=update_check)
-    
+
     def _hook_call_update_check(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
