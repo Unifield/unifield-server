@@ -35,6 +35,16 @@ import time
 import sys
 from account_override import ACCOUNT_RESTRICTED_AREA
 
+
+UF_SIDE_ROUNDING_LINE = {
+    'account_code': '67000',
+    'name': _('UF Payroll rounding'),
+    
+    'msg_ok': _('Import ready to process. Do you want to proceed ?'),
+    'msg_nb': _('Import file is not balanced. Do you want to proceed? (System will automatically generate a rounding line worth %f %d at import)'),
+}
+
+
 class hr_payroll_import_period(osv.osv):
     _name = 'hr.payroll.import.period'
     _description = 'Payroll Import Periods'
@@ -56,12 +66,22 @@ class hr_payroll_import(osv.osv_memory):
     _description = 'Payroll Import'
 
     _columns = {
+        'state': fields.char(string="State", size=10),
         'file': fields.binary(string="File", filters="*.zip", required=True),
         'filename': fields.char(string="Imported filename", size=256),
         'date_format': fields.selection([('%d/%m/%Y', 'dd/mm/yyyy'), ('%m-%d-%Y', 'mm-dd-yyyy'), ('%d-%m-%y', 'dd-mm-yy'), ('%d-%m-%Y', 'dd-mm-yyyy'), ('%d/%m/%y', 'dd/mm/yy'), ('%d.%m.%Y', 'dd.mm.yyyy')], "Date format", required=True, help="This is the date format used in the Homère file in order to recognize them."),
+        'msg': fields.text(string='Message', invisible=False,
+            states={'simu': [('invisible', True)]})
+    }
+    
+    _defaults = {
+        'state': 'simu',
     }
 
-    def update_payroll_entries(self, cr, uid, data='', field='', date_format='%d/%m/%Y', context=None):
+    def update_payroll_entries(self, cr, uid,
+        data='', field='', date_format='%d/%m/%Y',
+        wiz_state='simu',
+        context=None):
         """
         Import payroll entries regarding all elements given in "data"
         """
@@ -107,8 +127,10 @@ class hr_payroll_import(osv.osv_memory):
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         # Check that period have not been inserted in database yet
         period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id), ('field', '=', field)])
+        """ TODO RESTORE
         if period_validated_ids:
             raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for: %s in this period: "%s"!') % (field, period.name,))
+        """
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         # Check that account exists in OpenERP
         if not accounting_code or not accounting_code[0]:
@@ -158,7 +180,10 @@ class hr_payroll_import(osv.osv_memory):
                     employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
                     if not employee_ids:
                         employee_name = ustr(second_description[0]).replace(employee_identification_id, '')
+                        return
+                        """ TODO restore
                         raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
+                        """
                     if len(employee_ids) > 1:
                         raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
                     employee_id = employee_ids[0]
@@ -217,10 +242,14 @@ class hr_payroll_import(osv.osv_memory):
                 'free2_id': employee_data and employee_data.get('free2_id', False) and employee_data.get('free2_id')[0] or False,
             })
         # Write payroll entry
-        res = self.pool.get('hr.payroll.msf').create(cr, uid, vals, context={'from': 'import'})
-        if res:
+        if wiz_state != 'simu':
+            res = self.pool.get('hr.payroll.msf').create(cr, uid, vals,
+                context={'from': 'import'})
+            if res:
+                created += 1
+        else:
             created += 1
-        return True, amount, created
+        return True, amount, created, vals, currency
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
         ##### UPDATE HOMERE.CONF FILE #####
@@ -241,7 +270,49 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_("Error"), _("File '%s' does not contain the password !") % (homere_file,))
         homere_file_data.close()
         return pwd.decode('base64')
-
+        
+    def _create_uf_side_rounding_line(self, cr, uid, ids,
+            header_vals=None, amount=0.,
+            context=None):
+        """
+        US-201: no payroll rounding line, create a rounding payroll entry
+        UF side (has importer users can not update the Homere archive)
+        http://jira.unifield.org/browse/US-201?focusedCommentId=40713#comment-40713 case 2)
+        """
+        def err(account_code=False):
+            msg = _('UF side rounding line account not found')
+            if account_code:
+                msg += " %s" % (account_code, )
+            raise osv.except_osv(_('Error'), msg)
+            
+        if context is None:
+            context = {}
+        context['from'] = 'update'
+            
+        # get line account
+        account_code = UF_SIDE_ROUNDING_LINE \
+            and UF_SIDE_ROUNDING_LINE.get('account_code', False)
+        if not account_code:
+            err()
+        account_ids = self.pool.get('account.account').search(cr, uid, [
+                ('code', '=', account_code),
+            ], context=context)
+        if not account_ids:
+            err(account_code=account_code)
+        
+        # create lines
+        # TODO AD: destination SUP, CC Fx Gain Lost of instance
+        self.pool.get('hr.payroll.msf').create(cr, uid, {
+            'date': header_vals['date'],
+            'document_date': header_vals['date'],
+            'account_id': account_ids[0],
+            'period_id': header_vals['period_id'],
+            'name': header_vals.get('name', '') + '' + \
+                UF_SIDE_ROUNDING_LINE.get('name', False),
+            'currency_id': header_vals['currency_id'],
+            'state': 'draft',
+            'amount': amount,
+        }, context=context)
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -263,6 +334,8 @@ class hr_payroll_import(osv.osv_memory):
         res = False
         created = 0
         processed = 0
+        
+        header_vals = {}
 
         xyargv = self._get_homere_password(cr, uid, pass_type='payroll')
 
@@ -315,28 +388,69 @@ class hr_payroll_import(osv.osv_memory):
                     amount = 0.0
                     for line in reader:
                         processed += 1
-                        update, amount, nb_created = self.update_payroll_entries(cr, uid, line, field, wiz.date_format)
+                        update, amount, nb_created, vals, ccy = self.update_payroll_entries(
+                            cr, uid, data=line, field=field,
+                            date_format=wiz.date_format,
+                            wiz_state=wiz.state)
                         res_amount += round(amount, 2)
                         if not update:
                             res = False
+                        if created == 0:
+                            header_vals = vals
+                            header_vals['currency_code'] = ccy
                         created += nb_created
                     # Check balance
-                    if round(res_amount, 2) != 0.0:
+                    res_amount_rounded = round(res_amount, 2)
+                    if res_amount_rounded != 0.0:
                         # adapt difference by writing on payroll rounding line
-                        pr_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), ('name', '=', 'Payroll rounding')])
+                        pr_ids = self.pool.get('hr.payroll.msf').search(
+                            cr, uid, [
+                                ('state', '=', 'draft'),
+                                ('name', '=', 'Payroll rounding')
+                            ])
                         if not pr_ids:
-                            raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
-                        # Fetch Payroll rounding amount
-                        pr = self.pool.get('hr.payroll.msf').browse(cr, uid, pr_ids[0])
-                        # To compute new amount, you should:
-                        # - take payroll rounding amount
-                        # - take the opposite of res_amount (wich is the current difference)
-                        # - add both
-                        new_amount = round(pr.amount, 2) + (-1 * round(res_amount, 2))
-                        self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
+                            # no rounding line create one UF side
+                            # TODO check gap < 1€
+                            if wiz.state == 'simu':
+                                self.write(cr, uid, [wiz.id], {
+                                    'state': 'proceed',
+                                    'msg': UF_SIDE_ROUNDING_LINE['msg_nb'] % (
+                                        res_amount_rounded,
+                                        header_vals['currency_code'] , )
+                                })
+                            else:
+                                self._create_uf_side_rounding_line(cr, uid, ids,
+                                    context=context, header_vals=header_vals,
+                                    amount=res_amount_rounded)
+                            #raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
+                        else:
+                            # Fetch Payroll rounding amount line and update
+                            pr = self.pool.get('hr.payroll.msf').browse(cr, uid, pr_ids[0])
+                            # To compute new amount, you should:
+                            # - take payroll rounding amount
+                            # - take the opposite of res_amount (wich is the current difference)
+                            # - add both
+                            new_amount = round(pr.amount, 2) + (-1 * res_amount_rounded)
+                            self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
                 else:
                     raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
             fileobj.close()
+            
+        if wiz_state == 'simu' and wiz_id:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr,
+                uid, 'msf_homere_interface', 'payroll_import_wizard')
+            view_id = view_id and view_id[1] or False
+            
+            return {
+                'name': 'Payroll Import Confirmation',
+                'type': 'ir.actions.act_window',
+                'res_model': 'hr.payroll.import',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],
+                'context': context,
+            }
         
         if res:
             message = _("Payroll import successful")
@@ -349,7 +463,7 @@ class hr_payroll_import(osv.osv_memory):
         context.update({'from': 'payroll_import'})
         
         res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename,'created': created, 'total': processed, 'state': 'payroll'}, context=context)
-        
+            
         return {
             'name': 'Payroll Import Confirmation',
             'type': 'ir.actions.act_window',
