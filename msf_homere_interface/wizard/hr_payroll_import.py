@@ -44,7 +44,7 @@ UF_SIDE_ROUNDING_LINE = {
     'eur_gap_limit': 1.,  # EUR amount gap limit to not reach
     
     'msg_ok': _('Import ready to process. Do you want to proceed ?'),
-    'msg_nb': _('Import file is not balanced. Do you want to proceed? (System will automatically generate a rounding line worth %f %s at import)'),
+    'msg_nb': _('Import file is not balanced. Do you want to proceed ? (System will automatically generate a rounding line worth %f %s at import)'),
 }
 
 
@@ -129,10 +129,8 @@ class hr_payroll_import(osv.osv_memory):
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         # Check that period have not been inserted in database yet
         period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id), ('field', '=', field)])
-        """ TODO RESTORE
         if period_validated_ids:
             raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for: %s in this period: "%s"!') % (field, period.name,))
-        """
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         # Check that account exists in OpenERP
         if not accounting_code or not accounting_code[0]:
@@ -182,10 +180,7 @@ class hr_payroll_import(osv.osv_memory):
                     employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
                     if not employee_ids:
                         employee_name = ustr(second_description[0]).replace(employee_identification_id, '')
-                        return
-                        """ TODO restore
                         raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
-                        """
                     if len(employee_ids) > 1:
                         raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
                     employee_id = employee_ids[0]
