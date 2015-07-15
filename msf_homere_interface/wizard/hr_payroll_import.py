@@ -39,6 +39,7 @@ from account_override import ACCOUNT_RESTRICTED_AREA
 UF_SIDE_ROUNDING_LINE = {
     'account_code': '67000',
     'name': _('UF Payroll rounding'),
+    'destination_code': 'SUP',
     
     'msg_ok': _('Import ready to process. Do you want to proceed ?'),
     'msg_nb': _('Import file is not balanced. Do you want to proceed? (System will automatically generate a rounding line worth %f %s at import)'),
@@ -278,7 +279,7 @@ class hr_payroll_import(osv.osv_memory):
         UF side (has importer users can not update the Homere archive)
         http://jira.unifield.org/browse/US-201?focusedCommentId=40713#comment-40713 case 2)
         """
-        def err(account_code=False):
+        def err_account(account_code=False):
             msg = _('UF side rounding line account not found')
             if account_code:
                 msg += " %s" % (account_code, )
@@ -292,25 +293,55 @@ class hr_payroll_import(osv.osv_memory):
         account_code = UF_SIDE_ROUNDING_LINE \
             and UF_SIDE_ROUNDING_LINE.get('account_code', False)
         if not account_code:
-            err()
+            err_account()
         account_ids = self.pool.get('account.account').search(cr, uid, [
                 ('code', '=', account_code),
             ], context=context)
         if not account_ids:
-            err(account_code=account_code)
+            err_account(account_code=account_code)
+            
+        # get default AD values
+        # destination: from code
+        dest_ids = self.pool.get('account.analytic.account').search(cr, uid, [
+            ('category', '=', 'DEST'),
+            ('code', '=', UF_SIDE_ROUNDING_LINE['destination_code']),
+        ], context=context)
+        if not dest_ids:
+            msg = _("%s: No default destination found '%s'") % (
+                UF_SIDE_ROUNDING_LINE['name'],
+                UF_SIDE_ROUNDING_LINE['destination_code'],
+            )
+            raise osv.except_osv(_('Error'), msg)
+        
+        # cost center: 1st FX gain loss of instance
+        instance = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id
+        cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [
+            ('category', '=', 'OC'),
+            ('for_fx_gain_loss', '=', True),
+            ('instance_id', '=', instance.id),
+        ], context=context)
+        if not cc_ids:
+            msg = _("%s: No 'FX gain loss' cost center found" \
+                " for instance '%s'") % (UF_SIDE_ROUNDING_LINE['name'],
+                    instance.name, )
+            raise osv.except_osv(_('Error'), msg)
         
         # create lines
-        # TODO AD: destination SUP, CC Fx Gain Lost of instance
         self.pool.get('hr.payroll.msf').create(cr, uid, {
             'date': header_vals['date'],
             'document_date': header_vals['date'],
             'account_id': account_ids[0],
             'period_id': header_vals['period_id'],
-            'name': header_vals.get('name', '') + '' + \
-                UF_SIDE_ROUNDING_LINE.get('name', False),
+            'name': "%s %s" % (header_vals.get('name', ''),
+                UF_SIDE_ROUNDING_LINE.get('name', False), ),
             'currency_id': header_vals['currency_id'],
             'state': 'draft',
             'amount': amount,
+            
+            'cost_center_id': cc_ids[0],
+            'destination_id': dest_ids[0],
+            #'funding_pool_id':  # default is PF
         }, context=context)
         
     def button_simu(self, cr, uid, ids, context=None):
@@ -428,6 +459,9 @@ class hr_payroll_import(osv.osv_memory):
                                         header_vals['currency_code'] , )
                                 })
                             else:
+                                # >0 balance: debit > credit need to write credit JI
+                                # <0 balance: credit > debit need to write debit JI
+                                # => so just keep the balance sign amount as it
                                 self._create_uf_side_rounding_line(cr, uid, ids,
                                     context=context, header_vals=header_vals,
                                     amount=res_amount_rounded)
