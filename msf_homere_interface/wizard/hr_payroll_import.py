@@ -41,6 +41,8 @@ UF_SIDE_ROUNDING_LINE = {
     'name': _('UF Payroll rounding'),
     'destination_code': 'SUP',
     
+    'eur_gap_limit': 1.,  # EUR amount gap limit to not reach
+    
     'msg_ok': _('Import ready to process. Do you want to proceed ?'),
     'msg_nb': _('Import file is not balanced. Do you want to proceed? (System will automatically generate a rounding line worth %f %s at import)'),
 }
@@ -271,9 +273,51 @@ class hr_payroll_import(osv.osv_memory):
         homere_file_data.close()
         return pwd.decode('base64')
         
-    def _create_uf_side_rounding_line(self, cr, uid, ids,
-            header_vals=None, amount=0.,
-            context=None):
+    def _uf_side_rounding_line_check_gap(self, cr, uid,
+        currency_id, currency_code, posting_date, gap_amount, context=None):
+        """
+        US-201 check balance gap no more than 1 EUR
+        """
+        eur_gap_limit = UF_SIDE_ROUNDING_LINE.get('eur_gap_limit', 1.)
+        
+        eur_ids = self.pool.get('res.currency').search(cr, uid,
+            [('name', '=', 'EUR')], context=context)
+        if not eur_ids:
+            msg = _("%s: No EUR currency found") % (
+                UF_SIDE_ROUNDING_LINE['name'], )
+            raise osv.except_osv(_('Error'), msg)
+            
+        if eur_ids[0] != currency_id:
+            # booking <> EUR
+            new_ctx = context is not None and context.copy() or {}
+            new_ctx['date'] = posting_date
+            eur_amount = self.pool.get('res.currency').compute(cr, uid,
+                currency_id, eur_ids[0], gap_amount, round=True,
+                context=new_ctx)
+                
+            if abs(eur_amount) > eur_gap_limit:
+                msg = _("%s, import aborted, file is balanced with more than" \
+                        " %0.02f EUR: %0.02f EUR, %0.02f %s.") % (
+                            UF_SIDE_ROUNDING_LINE['name'],
+                            eur_gap_limit,
+                            eur_amount,
+                            gap_amount,
+                            currency_code,
+                        )
+                raise osv.except_osv(_('Error'), msg)
+        else:
+            # booking = EUR
+            if abs(gap_amount) > eur_gap_limit:
+                msg = _("%s, import aborted, file is balanced with more than" \
+                        " %0.02f EUR: %0.02f EUR") % (
+                            UF_SIDE_ROUNDING_LINE['name'],
+                            eur_gap_limit,
+                            gap_amount,
+                        )
+                raise osv.except_osv(_('Error'), msg)
+      
+    def _uf_side_rounding_line_create(self, cr, uid, ids,
+            header_vals=None, amount=0., context=None):
         """
         US-201: no payroll rounding line, create a rounding payroll entry
         UF side (has importer users can not update the Homere archive)
@@ -328,17 +372,21 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), msg)
         
         # create lines
+        name = "%s %s" % (
+            header_vals.get('name', ''),
+            UF_SIDE_ROUNDING_LINE.get('name', False),
+        )
         self.pool.get('hr.payroll.msf').create(cr, uid, {
             'date': header_vals['date'],
             'document_date': header_vals['date'],
             'account_id': account_ids[0],
             'period_id': header_vals['period_id'],
-            'name': "%s %s" % (header_vals.get('name', ''),
-                UF_SIDE_ROUNDING_LINE.get('name', False), ),
+            'name': name,
             'currency_id': header_vals['currency_id'],
             'state': 'draft',
             'amount': amount,
             
+            # AD
             'cost_center_id': cc_ids[0],
             'destination_id': dest_ids[0],
             #'funding_pool_id':  # default is PF
@@ -442,6 +490,13 @@ class hr_payroll_import(osv.osv_memory):
                     # Check balance
                     res_amount_rounded = round(res_amount, 2)
                     if res_amount_rounded != 0.0:
+                        self._uf_side_rounding_line_check_gap(cr, uid,
+                            header_vals['currency_id'],
+                            header_vals['currency_code'],
+                            header_vals['date'],
+                            res_amount_rounded,
+                            context=context)
+                        
                         # adapt difference by writing on payroll rounding line
                         pr_ids = self.pool.get('hr.payroll.msf').search(
                             cr, uid, [
@@ -449,8 +504,8 @@ class hr_payroll_import(osv.osv_memory):
                                 ('name', '=', 'Payroll rounding')
                             ])
                         if not pr_ids:
-                            # no rounding line create one UF side
-                            # TODO check gap < 1€
+                            # no SAGA BALANCE rounding line in file
+                            # => create one UF side (US-201)
                             if wiz.state == 'simu':
                                 self.write(cr, uid, [wiz.id], {
                                     'state': 'proceed',
@@ -462,7 +517,7 @@ class hr_payroll_import(osv.osv_memory):
                                 # >0 balance: debit > credit need to write credit JI
                                 # <0 balance: credit > debit need to write debit JI
                                 # => so just keep the balance sign amount as it
-                                self._create_uf_side_rounding_line(cr, uid, ids,
+                                self._uf_side_rounding_line_create(cr, uid, ids,
                                     context=context, header_vals=header_vals,
                                     amount=res_amount_rounded)
                             #raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
