@@ -43,11 +43,13 @@ class product_nomenclature(osv.osv):
             return []
         if context is None:
             context = {}
-        # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
-        lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
-        if not context.get('yml_test', False):
-            if lang_dict.get('context_lang'):
-                context['lang'] = lang_dict.get('context_lang')
+            
+        if not context.get('lang') or context.get('lang') == 'en_US':
+            # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
+            lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
+            if not context.get('yml_test', False):
+                if lang_dict.get('context_lang'):
+                    context['lang'] = lang_dict.get('context_lang')
 
         fields = ['name', 'parent_id']
         if context.get('withnum') == 1:
@@ -1208,7 +1210,7 @@ class product_uom_categ(osv.osv):
                 cat_id = data_obj.get_object_reference(
                     cr, uid, 'msf_doc_import', data_id)[1]
                 if cat_id in ids:
-                    uom_name = self.read(cr, uid, cat_id, ['name'])['name'] 
+                    uom_name = self.read(cr, uid, cat_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
                         _('''The UoM category '%s' is an Unifield internal
