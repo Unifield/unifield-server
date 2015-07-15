@@ -41,7 +41,7 @@ UF_SIDE_ROUNDING_LINE = {
     'name': _('UF Payroll rounding'),
     
     'msg_ok': _('Import ready to process. Do you want to proceed ?'),
-    'msg_nb': _('Import file is not balanced. Do you want to proceed? (System will automatically generate a rounding line worth %f %d at import)'),
+    'msg_nb': _('Import file is not balanced. Do you want to proceed? (System will automatically generate a rounding line worth %f %s at import)'),
 }
 
 
@@ -70,8 +70,7 @@ class hr_payroll_import(osv.osv_memory):
         'file': fields.binary(string="File", filters="*.zip", required=True),
         'filename': fields.char(string="Imported filename", size=256),
         'date_format': fields.selection([('%d/%m/%Y', 'dd/mm/yyyy'), ('%m-%d-%Y', 'mm-dd-yyyy'), ('%d-%m-%y', 'dd-mm-yy'), ('%d-%m-%Y', 'dd-mm-yyyy'), ('%d/%m/%y', 'dd/mm/yy'), ('%d.%m.%Y', 'dd.mm.yyyy')], "Date format", required=True, help="This is the date format used in the Homère file in order to recognize them."),
-        'msg': fields.text(string='Message', invisible=False,
-            states={'simu': [('invisible', True)]})
+        'msg': fields.text(string='Message'),
     }
     
     _defaults = {
@@ -249,7 +248,7 @@ class hr_payroll_import(osv.osv_memory):
                 created += 1
         else:
             created += 1
-        return True, amount, created, vals, currency
+        return True, amount, created, vals, currency[0]
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
         ##### UPDATE HOMERE.CONF FILE #####
@@ -313,8 +312,14 @@ class hr_payroll_import(osv.osv_memory):
             'state': 'draft',
             'amount': amount,
         }, context=context)
+        
+    def button_simu(self, cr, uid, ids, context=None):
+        return self._do_pass(cr, uid, ids, context=context)
+        
+    def button_proceed(self, cr, uid, ids, context=None):
+        return self._do_pass(cr, uid, ids, context=context)
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def _do_pass(self, cr, uid, ids, context=None):
         """
         Open ZIP file, take the CSV file into and parse it to import payroll entries
         """
@@ -340,10 +345,14 @@ class hr_payroll_import(osv.osv_memory):
         xyargv = self._get_homere_password(cr, uid, pass_type='payroll')
 
         filename = ""
+        wiz_state = False
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
+            if not wiz_state:
+                wiz_state = wiz.state
+                
             # Decode file string
             fileobj = NamedTemporaryFile('w+b', delete=False)
             fileobj.write(decodestring(wiz.file))
@@ -436,7 +445,7 @@ class hr_payroll_import(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
             fileobj.close()
             
-        if wiz_state == 'simu' and wiz_id:
+        if wiz_state == 'simu' and ids:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr,
                 uid, 'msf_homere_interface', 'payroll_import_wizard')
             view_id = view_id and view_id[1] or False
@@ -449,6 +458,7 @@ class hr_payroll_import(osv.osv_memory):
                 'view_type': 'form',
                 'view_id': [view_id],
                 'res_id': ids[0],
+                'target': 'new',
                 'context': context,
             }
         
