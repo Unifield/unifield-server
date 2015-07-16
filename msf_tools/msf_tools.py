@@ -28,9 +28,12 @@ import inspect
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+from datetime import date
 from decimal import Decimal, ROUND_UP
 
 import netsvc
+
+from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 
 class lang(osv.osv):
     '''
@@ -139,6 +142,24 @@ class date_tools(osv.osv):
             d_format = self.get_datetime_format(cr, uid)
             date = time.strptime(datetime, '%Y-%m-%d %H:%M:%S')
             return time.strftime(d_format, date)
+        
+    def orm2date(self, dt):
+        if isinstance(dt, str):
+            st = time.strptime(dt, DEFAULT_SERVER_DATE_FORMAT)
+            dt = date(st[0], st[1], st[2])
+        return dt
+    
+    def date2orm(self, dt):
+        return dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+    
+    def datetime2orm(self, dt):
+        return dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+    
+    def orm2datetime(self, dt):
+        if isinstance(dt, str):
+            st = time.strptime(dt, DEFAULT_SERVER_DATETIME_FORMAT)
+            dt = datetime(st[0], st[1], st[2], st[3], st[4], st[5])
+        return dt
     
 date_tools()
 
