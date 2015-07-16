@@ -759,6 +759,11 @@ class shipment(osv.osv):
 
                 # Update the moves, decrease the quantities
                 for move in move_obj.browse(cr, uid, move_ids, context=context):
+                    if move.state != 'assigned':
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('All returned lines must be \'Available\'. Please check this and re-try.')
+                        )
                     """
                     Stock moves are not canceled as for PPL return process
                     because this represents a draft packing, meaning some shipment could be canceled and
@@ -992,6 +997,12 @@ class shipment(osv.osv):
 
                 move_data = {}
                 for move in move_obj.browse(cr, uid, move_ids, context=context):
+                    if move.state != 'assigned':
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('One of the returned family is not \'Available\'. Check the state of the pack families and re-try.'),
+                        )
+
                     move_data.setdefault(move.id, {
                         'initial': move.product_qty,
                         'partial_qty': 0,
@@ -1241,8 +1252,17 @@ class shipment(osv.osv):
             # draft packing for this shipment - some draft packing can already be done for this shipment, so we filter according to state
             draft_packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'draft'), ], context=context)
             for draft_packing in pick_obj.browse(cr, uid, draft_packing_ids, context=context):
-                assert draft_packing.subtype == 'packing', 'draft packing which is not packing subtype - %s' % draft_packing.subtype
-                assert draft_packing.state == 'draft', 'draft packing which is not draft state - %s' % draft_packing.state
+                if draft_packing.subtype != 'packing':
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The draft packing must be a \'Packing\' subtype')
+                    )
+                if draft_packing.state != 'draft':
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The draft packing must be in \'Draft\' state')
+                    )
+
                 # we check if the corresponding draft packing can be moved to done.
                 # if all packing with backorder_id equal to draft are done or canceled
                 # and the quantity for each stock move (state != done) of the draft packing is equal to zero
@@ -1256,7 +1276,10 @@ class shipment(osv.osv):
                             treat_draft = False
                         elif move.from_pack or move.to_pack:
                             # qty = 0, from/to pack should have been set to zero
-                            assert False, 'stock moves with 0 quantity but part of pack family sequence'
+                            raise osv.except_osv(
+                                _('Error'),
+                                _('There are stock moves with 0 quantity on the pack family sequence')
+                            )
 
                 # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished
                 if treat_draft:
@@ -1473,7 +1496,11 @@ class shipment(osv.osv):
 
         for shipment in self.browse(cr, uid, ids, context=context):
             # validate should only be called on shipped shipments
-            assert shipment.state in ('shipped',), 'shipment state is not shipped'
+            if shipment.state != 'shipped':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The state of the shipment must be \'Shipped\'. Please check it and re-try.')
+                )
             # corresponding packing objects - only the distribution -> customer ones
             # we have to discard picking object with state done, because when we return from shipment
             # all object of a given picking object, he is set to Done and still belong to the same shipment_id
@@ -1509,7 +1536,11 @@ class shipment(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         for shipment in self.browse(cr, uid, ids, context=context):
             # validate should only be called on shipped shipments
-            assert shipment.state in ['done'], 'shipment state is not shipped'
+            if shipment.state != 'done':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The shipment must be \'Closed\'. Please check this and re-try')
+                )
             # gather the corresponding packing and trigger the corresponding function
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'done')], context=context)
             # set delivered all packings
@@ -3297,8 +3328,10 @@ class stock_picking(osv.osv):
             for line in wizard.move_ids:
                 move_data.setdefault(line.move_id.id, {
                     'initial_qty': line.move_id.product_qty,
+                    'line_number': line.move_id.line_number,
                     'processed_qty': 0.00,
                 })
+
 
                 if line.uom_id.id != line.move_id.product_uom.id:
                     processed_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.move_id.product_uom.id)
@@ -3327,6 +3360,11 @@ class stock_picking(osv.osv):
 
             # Update initial stock moves
             for move_id, move_vals in move_data.iteritems():
+                if move_vals['processed_qty'] > move_vals['initial_qty']:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Line %s :: You cannot processed more quantity than the quantity of the stock move - Maybe the line is already processed' % move_vals['line_number'])
+                    )
                 initial_qty = max(move_vals['initial_qty'] - move_vals['processed_qty'], 0.00)
                 wr_vals = {
                     'product_qty': initial_qty,
@@ -3381,6 +3419,12 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if self.read(cr, uid, ids[0], ['state'], context=context)['state'] != 'assigned':
+            raise osv.except_osv(
+                _('Error'),
+                _('The picking ticket is not in \'Available\' state. Please check this and re-try')
+            )
+
         processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
         proc_obj.create_lines(cr, uid, processor_id, context=context)
 
@@ -3426,6 +3470,12 @@ class stock_picking(osv.osv):
 
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             picking = wizard.picking_id
+
+            if picking.state != 'assigned':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The picking ticket is not in \'Available\' state. Please check this and re-try')
+                )
 
             move_data = {}
             for move in picking.move_lines:
@@ -3629,6 +3679,12 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if self.read(cr, uid, ids[0], ['state'], context=context)['state'] != 'assigned':
+            raise osv.except_osv(
+                _('Error'),
+                _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
+            )
+
         processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
         proc_obj.create_lines(cr, uid, processor_id, context=context)
 
@@ -3668,6 +3724,12 @@ class stock_picking(osv.osv):
 
         # Create the different pack families according to values in stock moves
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
+            if wizard.picking_id.state != 'assigned':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
+                )
+
             families_data = {}
 
             for line in wizard.move_ids:
@@ -3751,6 +3813,12 @@ class stock_picking(osv.osv):
 
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             picking = wizard.picking_id
+
+            if picking.state != 'assigned':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
+                )
 
             moves_data = {}
 
@@ -3956,6 +4024,12 @@ class stock_picking(osv.osv):
 
             for line in wizard.move_ids:
                 return_qty = line.quantity
+
+                if line.move_id.state != 'assigned':
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Line %s :: The move is not \'Available\'. Check the state of the stock move and re-try.') % line.move_id.line_number,
+                    )
 
                 # UF-2531: Store some important info for the return pack messages
                 return_info.setdefault(str(counter), {
