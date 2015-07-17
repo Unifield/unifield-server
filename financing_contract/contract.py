@@ -69,7 +69,10 @@ class financing_contract_funding_pool_line(osv.osv):
         result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
         # when a new funding pool is added to contract, then add all of the cost centers to the cost center tab, unless
         # the cost center is already there. No action is taken when a cost center is deleted
-        if 'contract_id' in vals and 'funding_pool_id' in vals:
+
+        #US-345: the following block cannot be executed in the sync context, because it would then reset all costcenters from the funding pools!
+        # making that the deleted costcenters from the sender were not taken into account
+        if not context.get('sync_update_execution') and 'contract_id' in vals and 'funding_pool_id' in vals:
             # get the cc ids from for this funding pool
             quad_obj = self.pool.get('financing.contract.account.quadruplet')
             quad_ids = quad_obj.search(cr, uid, [('funding_pool_id','=',vals['funding_pool_id'])],context=context)
