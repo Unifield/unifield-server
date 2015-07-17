@@ -152,7 +152,10 @@ class account_move_line_compute_currency(osv.osv):
             # US-236: default document and posting dates should belong to the
             # first open period found after the highest posting date involved in
             # the reconciliation
-            base_date = oldiest_date or time.strftime('%Y-%m-%d')
+            current_date = time.strftime('%Y-%m-%d')
+            current_date_dt = self.pool.get('date.tools').orm2date(current_date)
+            oldiest_date_dt = self.pool.get('date.tools').orm2date(oldiest_date)
+            base_date = oldiest_date or current_date
             base_date_dt = self.pool.get('date.tools').orm2date(base_date)
             
             # search first opened period since latest posting date
@@ -166,12 +169,19 @@ class account_move_line_compute_currency(osv.osv):
                 raise osv.except_osv(_('Warning'),
                     _('No open period found since this date: %s') % base_date)
             period_id = period_ids[0]
+            period_br = period_obj.browse(cr, uid, period_id, context=context)
             
-            # update base_date if finally found after the latest posting date
-            period_date_start = period_obj.browse(cr, uid, period_id,
-                context=context).date_start
-            if period_date_start > base_date:
-                base_date = period_date_start
+            if current_date_dt.year == oldiest_date_dt.year \
+                and current_date_dt.month == oldiest_date_dt.month \
+                and current_date_dt.day > oldiest_date_dt.day \
+                and period_br.date_start <= current_date <= period_br.date_stop:
+                # current date in 'opened period found': use it as 'base date'
+                base_date = current_date
+            elif period_br.date_start > base_date:
+                # opened period finally found after the latest posting date:
+                # use the period start date as 'base date'
+                if period_br.date_start > base_date:
+                    base_date = period_br.date_start
 
             # verify that a fx gain/loss account exists
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
