@@ -27,6 +27,9 @@ from tools.translate import _
 from collections import defaultdict
 from time import strftime
 from lxml import etree
+from datetime import datetime
+import threading
+import pooler
 
 class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
@@ -61,7 +64,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'process_in_progress': fields.boolean('Process in progress'),
     }
 
-    _default = {
+    _defaults = {
         'display_fp': lambda *a: False,
         'process_in_progress': lambda *a: False,
     }
@@ -88,7 +91,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids, context=context):
             values = {'process_in_progress': True}
-            super(mass_reallocation_verification_wizard, self).write(cr, uid, wiz.id, values, context=context)
+            super(mass_reallocation_verification_wizard, self).write(cr, uid, [wiz.id], values, context=context)
             cr.commit
             # If no supporteds_ids, raise an error
             if not wiz.process_ids:
@@ -110,7 +113,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
                     # Then update analytic line
                     self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, wiz.date, context=context)
             values = {'process_in_progress': False}
-            super(mass_reallocation_verification_wizard, self).write(cr, uid, wiz.id, values, context=context)
+            super(mass_reallocation_verification_wizard, self).write(cr, uid, [wiz.id], values, context=context)
             cr.commit
         print "Stop process_thread at " + str(datetime.now())
         cr.commit()
@@ -127,22 +130,16 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
             ids = [ids]
 
         # US_366: Check if a wizard is already in progress
-        print "Check proccess 2"
-        args = [('process_in_progress', '=', False)]
-
+        args = [('process_in_progress', '=', True)]
         wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
-        print wiz_mass_obj, args
-        print context
-        print uid
-        print wiz_mass_obj.fields_get(cr, uid, context=context)
         wiz_in_progress = wiz_mass_obj.search(cr, uid, args, context=context)
         if wiz_in_progress:
             raise osv.except_osv(_('Error'), _('A wizard is already \
                                                in progress'))
-            process = threading.Thread(None,
-                                       wiz_mass_obj.process_thread, None,
-                                       (cr, uid, ids), {'context': context})
-            process.start()
+        process = threading.Thread(None,
+                                   wiz_mass_obj.process_thread, None,
+                                   (cr, uid, ids), {'context': context})
+        process.start()
         return {'type': 'ir.actions.act_window_close'}
 
 mass_reallocation_verification_wizard()
@@ -150,6 +147,14 @@ mass_reallocation_verification_wizard()
 class mass_reallocation_wizard(osv.osv_memory):
     _name = 'mass.reallocation.wizard'
     _description = 'Mass Reallocation Wizard'
+
+    def _is_process_in_progress(self, cr, uid, fields, context=None):
+        args = [('process_in_progress', '=', True)]
+        wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
+        wiz_in_progress = wiz_mass_obj.search(cr, uid, args, context=context)
+        if wiz_in_progress:
+            return True
+        return False
 
     _columns = {
         'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
@@ -160,12 +165,14 @@ class mass_reallocation_wizard(osv.osv_memory):
         'display_fp': fields.boolean('Display FP'),
         'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_other_rel', 'wizard_id', 'analytic_line_id',
             string="Non eligible analytic journal items", required=False, readonly=True),
+        'is_process_in_progress': fields.boolean(string="Is process is in progress"),
     }
 
-    _default = {
+    _defaults = {
         'state': lambda *a: 'normal',
         'display_fp': lambda *a: False,
         'date': lambda *a: strftime('%Y-%m-%d'),
+        'is_process_in_progress': _is_process_in_progress,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -284,8 +291,6 @@ class mass_reallocation_wizard(osv.osv_memory):
             ids = [ids]
 
         # US_366: Check if a wizard is already in progress
-        print "Check proccess 1"
-        print uid
         args = [('process_in_progress', '=', True)]
         wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
         wiz_in_progress = wiz_mass_obj.search(cr, uid, args, context=context)
