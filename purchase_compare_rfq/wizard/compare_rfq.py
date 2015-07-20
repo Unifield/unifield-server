@@ -326,9 +326,13 @@ class wizard_compare_rfq_line(osv.osv_memory):
         '''
         t_obj = self.pool.get('tender')
         pol_obj = self.pool.get('purchase.order.line')
+        cur_obj = self.pool.get('res.currency')
+        user_obj = self.pool.get('res.users')
 
         if context is None:
             context = context
+
+        func_cur_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
 
         # Force the reading of some fields
         forced_flds = [
@@ -354,16 +358,23 @@ class wizard_compare_rfq_line(osv.osv_memory):
                     ('tender_line_id', '=', r['tender_line_id']),
                 ], context=context)
                 rfql = None
+                pu = 0.00
                 if rfql_ids:
-                    rfql = pol_obj.read(cr, uid, rfql_ids[0], [
-                        'price_unit',
-                        'comment',
-                    ], context=context)
+                    rfql = pol_obj.browse(cr, uid, rfql_ids[0], context=context)
+                    pu = rfql.price_unit
+                    same_cur = rfql.order_id.pricelist_id.currency_id.id == func_cur_id
+                    if not same_cur:
+                        pu = cur_obj.compute(
+                            cr, uid,
+                            rfql.order_id.pricelist_id.currency_id.id,
+                            func_cur_id,
+                            pu,
+                            round=True)
 
                 r.update({
                     'name_%s' % sid: sup.name,
-                    'unit_price_%s' % sid: rfql and rfql['price_unit'] or 0.00,
-                    'comment_%s' % sid: rfql and rfql['comment'] or '',
+                    'unit_price_%s' % sid: rfql and pu or 0.00,
+                    'comment_%s' % sid: rfql and rfql.comment or '',
                 })
 
         return res
@@ -385,7 +396,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
             submenu=submenu)
 
         if view_type == 'tree':
-            tree_view = """<tree string="Compared products" not_editable="True">
+            tree_view = """<tree string="Compared products" editable="top">
                 <field name="tender_line_id" invisible="1" />
                 <field name="product_code" readonly="1" />
                 <field name="product_name" readonly="1" />
@@ -401,7 +412,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
 
             for sup in s_ids:
                 tree_view += """
-                    <separator string="|" />
+                    <separator string="|" type="separator" />
                     <button
                         name="select_supplier_%(sid)s"
                         icon="terp-mail-forward"
@@ -423,7 +434,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
 
             if s_ids:
                 tree_view += """
-                    <separator string="|" readonly="1" />
+                    <separator string="|" editable="0" />
                     <field name="choosen_supplier_id" invisible="1" />
                     <button
                         name="reset_selection"
