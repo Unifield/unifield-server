@@ -232,9 +232,13 @@ class wizard_import_invoice(osv.osv_memory):
                 partial = False
                 if line.amount and line.amount_to_pay and line.amount < abs(line.amount_to_pay):
                     partial = ' - ' + _('partial pymt')
+                ref = line.ref
+                if not ref or ref == 'false':
+                    if line.line_ids and line.line_ids[0].move_id:
+                        ref = line.line_ids[0].move_id.name
                 register_vals = {
                     'name': '%s Imported Invoice(s)%s' % (line.number_invoices, partial or ''),
-                    'ref': line.ref,
+                    'ref': ref or '',
                     'date': line.date,
                     'document_date': line.document_date,
                     'statement_id': st_id,
@@ -243,6 +247,7 @@ class wizard_import_invoice(osv.osv_memory):
                     'amount': line.amount_currency < 0 and -line.amount or line.amount,
                     'imported_invoice_line_ids': [(4, x.id) for x in line.line_ids],
                 }
+                
                 # if we come from cheque, add a column for that
                 if cheque:
                     register_vals.update({'cheque_number': line.cheque_number})
