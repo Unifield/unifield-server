@@ -264,7 +264,7 @@
 
 <Row>
 <Cell ss:StyleID="s25b" >
-<Data ss:Type="String">${_('LIQUIDITY POSITION')}</Data>
+<Data ss:Type="String">${_('LIQUIDITY POSITION TEEST')}</Data>
 </Cell>
 </Row>
 <Row ss:Height="13.5"/>
@@ -378,7 +378,6 @@
 % endfor
 
 <Row>
-	<Cell ss:StyleID="s42"/>
 	<Cell ss:StyleID="s38">
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
