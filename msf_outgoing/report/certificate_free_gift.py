@@ -43,13 +43,15 @@ class certificate_free_gift(report_sxw.rml_parse):
             res['partner'] = company.partner_id and company.partner_id.name or False
             if company.partner_id and len(company.partner_id.address):
                 res['street'] = company.partner_id.address[0].street
-                res['street2'] = company.partner_id.address[0].street
-                res['zip'] = company.partner_id.address[0].street
-                res['city'] = company.partner_id.address[0].street
+                res['street2'] = company.partner_id.address[0].street2
+                if company.partner_id.address[0].zip is not False:
+                    res['zip'] = company.partner_id.address[0].zip
+                else:
+                    res['zip'] = ""
+                res['city'] = company.partner_id.address[0].city
                 res['country'] = company.partner_id.address[0].country_id and company.partner_id.address[0].country_id.name or False
 
         return res
-
 
     def set_context(self, objects, data, ids, report_type=None):
         '''
@@ -62,4 +64,3 @@ class certificate_free_gift(report_sxw.rml_parse):
         return super(certificate_free_gift, self).set_context(objects, data, ids, report_type=report_type)
 
 report_sxw.report_sxw('report.certificate.free.gift', 'shipment', 'addons/msf_outgoing/report/certificate_free_gift.rml', parser=certificate_free_gift, header="external")
-

@@ -443,8 +443,8 @@ class hq_report_ocb(report_sxw.report_sxw):
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
             'bs_entries': """
                 SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, 
-                       a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name, aml.debit, 
-                       aml.credit, cc.name, hr.identification_id as "Emplid"
+                       a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name,
+                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid"
                 FROM account_move_line aml left outer join hr_employee hr on hr.id = aml.employee_id, 
                      account_account AS a, 
                      res_currency AS c, 

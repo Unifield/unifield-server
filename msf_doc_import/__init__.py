@@ -34,6 +34,7 @@ ACCOUNTING_IMPORT_JOURNALS = [
     'correction',
     'hr',
     'migration',
+    'sale',  # US-70/3
 ]
 
 import tender

@@ -328,7 +328,7 @@ class account_move_line_compute_currency(osv.osv):
                 if not reconciled_line_ids:
                     continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
-                if total != 0.0:
+                if abs(total) > 10**-3:
                     # UTP-752: Do not make FX Adjustement line (addendum line) if the reconciliation comes from a multi instance and that we are in synchronization
                     multi_instance = reconciled.is_multi_instance
                     current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id

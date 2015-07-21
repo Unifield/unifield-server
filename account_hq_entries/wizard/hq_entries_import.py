@@ -30,6 +30,8 @@ from tools.translate import _
 import time
 #import locale
 from account_override import ACCOUNT_RESTRICTED_AREA
+from tools.misc import ustr
+
 
 class hq_entries_import_wizard(osv.osv_memory):
     _name = 'hq.entries.import'
@@ -47,7 +49,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             pdate = time.strptime(date, '%d/%m/%Y')
         return time.strftime('%Y-%m-%d', pdate)
 
-    def update_hq_entries(self, cr, uid, line):
+    def update_hq_entries(self, cr, uid, line, context=None):
         """
         Import hq entry regarding all elements given in "line"
         """
@@ -204,6 +206,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Search if 3RD party exists as employee
         emp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', third_party)])
         # If yes, get its analytic distribution
+        employee = False
         if len(emp_ids) and len(emp_ids) == 1:
             employee = self.pool.get('hr.employee').browse(cr, uid, emp_ids)[0]
             if employee.destination_id and employee.destination_id.id:
@@ -239,6 +242,38 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Fetch amount
         if booking_amount:
             vals.update({'amount': booking_amount,})
+
+        # BKLG-63/US-414: unicity check
+        # Description (name), Reference (ref), Posting date (date),
+        # Document date (document_date), Amount (amount),
+        # and Account (account_id) and 3rd Party and CC
+        unicity_fields = [
+            'name', 'ref', 'date', 'document_date', 'amount', 'account_id',
+            'cost_center_id',
+        ]
+
+        unicity_domain = [
+            (f, '=', vals.get(f, False)) for f in unicity_fields
+        ]
+        # US-414: add 3rd party for unicity check
+        unicity_domain.append(('partner_txt', '=', third_party or False))
+
+        if hq_obj.search(cr, uid, unicity_domain, limit=1, context=context):
+            # raise unicity check failure
+            # (fields listed like in csv order for user info)
+            emp_cc_id = employee and employee.cost_center_id
+
+            pattern = _("Entry already imported: %s / %s / %s (doc) /" \
+                " %s (posting) / %s (account) / %s (amount) / %s (3rd party) /" \
+                " %s (%s)")
+            raise osv.except_osv(_('Error'), pattern % (
+                description, reference, document_date, date,
+                account_description, booking_amount,
+                ustr(third_party),
+                emp_cc_id and emp_cc_id.name or cost_center,
+                emp_cc_id and 'Emp default CC' or 'CC'
+            ))
+
         # Line creation
         res = hq_obj.create(cr, uid, vals)
         if res:
@@ -302,7 +337,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 nbline += 1
                 processed += 1
                 try:
-                    self.update_hq_entries(cr, uid, line)
+                    self.update_hq_entries(cr, uid, line, context=context)
                     created += 1
                 except osv.except_osv, e:
                     errors.append('Line %s, %s'%(nbline, e.value))

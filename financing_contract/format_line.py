@@ -417,6 +417,7 @@ class financing_contract_format_line(osv.osv):
         'allocated_real': fields.function(_get_actual_amount, method=True, store=False, string="Funded - Actuals", type="float", readonly=True),
         'project_real': fields.function(_get_actual_amount, method=True, store=False, string="Total project - Actuals", type="float", readonly=True),
         'quadruplet_update': fields.text('Internal Use Only'),
+        'instance_id': fields.many2one('msf.instance','Proprietary Instance'),
     }
 
     _defaults = {
@@ -466,6 +467,13 @@ class financing_contract_format_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        # US-180: Check if it comes from the sync update
+        if context.get('sync_update_execution') and vals.get('format_id', False):
+            # US-180: and if the financing contract of the contract format does not exist, then just ignore this update
+            exist = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', vals['format_id'])])
+            if not exist: # No contract found for this format line
+                return True
 
         # calculate the quadruplet combination
         self.calculate_quaduplet(vals, context)

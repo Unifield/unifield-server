@@ -282,10 +282,17 @@ class account_journal(osv.osv):
             # 'from_journal_creation' in context permits to pass register creation that have a
             #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
             context.update({'from_journal_creation': True})
+
+            #BKLG-53 get the next draft period from today            
+            current_date = datetime.date.today().strftime('%Y-%m-%d')
+            periods = self.pool.get('account.period').search(cr, uid, [('date_stop','>=',current_date),('state','=','draft')], 
+                                                         context=context, limit=1, order='date_stop')                        
+            if not periods:
+                raise osv.except_osv(_('Warning'), _('Sorry, No open period for creating the register!'))
             self.pool.get('account.bank.statement') \
                 .create(cr, uid, {'journal_id': journal_id,
                                   'name': vals['name'],
-                                  'period_id': self.get_current_period(cr, uid, context),
+                                  'period_id': periods[0],
                                   'currency': vals.get('currency')}, \
                                   context=context)
         

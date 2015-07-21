@@ -17,6 +17,7 @@
                     </group>
                     <field name="contains_dg" invisible="1" />
                     <field name="contains_kc" invisible="1" />
+                    <field name="draft" invisible="1" />
                     <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), ('contains_kc', '=', False)]}">
                         <html>
                             <p style="text-align: center; v-align: middle;">
@@ -47,14 +48,16 @@
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree"
                         colspan="4" nolabel="1" />
-                    <group colspan="4" col="6" name="actions">
-                        <separator string="Actions" colspan="6" />
+                    <group colspan="8" col="8" name="actions">
+                        <separator string="Actions" colspan="8" />
                         <field name="dest_type"
                             on_change="onchange_dest_type(dest_type, picking_id)"
                             />
                         <field name="direct_incoming"
                             attrs="{'invisible': [('dest_type', 'not in', ['default', 'to_stock'])]}"
                             />
+                        <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
+                        <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
                         <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" />
                     </group>
@@ -145,7 +148,7 @@
                         attrs="{'readonly': [('lot_check', '=', False), ('exp_check', '=', False)]}"
                         on_change="change_lot(prodlot_id)"
                         />
-                    <field name="expiry_date" 
+                    <field name="expiry_date"
                         attrs="{'readonly': ['|', '&amp;', ('lot_check', '=', False), ('exp_check', '=', False), '&amp;', ('lot_check', '=', True), ('exp_check', '=', True)]}"
                         on_change="change_expiry(expiry_date, product_id, type_check)" />
                     <field name="lot_check" />

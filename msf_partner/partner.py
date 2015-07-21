@@ -240,10 +240,12 @@ class res_partner(osv.osv):
         'price_currency': fields.function(_get_price_info, method=True, type='many2one', relation='res.currency', string='Currency', multi='info'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'is_instance': fields.function(_get_is_instance, fnct_search=_get_is_instance_search, method=True, type='boolean', string='Is current instance partner id'),
+        'transporter': fields.boolean(string='Transporter'),
     }
 
     _defaults = {
         'manufacturer': lambda *a: False,
+        'transporter': lambda *a: False,
         'partner_type': lambda *a: 'external',
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
@@ -342,6 +344,15 @@ class res_partner(osv.osv):
 
     _constraints = [
     ]
+
+    def transporter_ticked(self, cr, uid, ids, transporter, context=None):
+        """
+        If the transporter box is ticked, automatically ticked the supplier
+        box.
+        """
+        if transporter:
+            return {'value': {'supplier': True}}
+        return {}
 
     def get_objects_for_partner(self, cr, uid, ids, context):
         """
@@ -466,6 +477,10 @@ class res_partner(osv.osv):
             ids = [ids]
         if not context:
             context = {}
+
+        #US-126: when it's an update from the sync, then just remove the forced 'active' parameter
+        if context.get('sync_update_execution', False) and 'active' in vals:
+            del vals['active']
 
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
