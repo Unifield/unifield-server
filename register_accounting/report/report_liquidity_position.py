@@ -28,6 +28,7 @@ class report_liquidity_position2(report_sxw.rml_parse):
         super(report_liquidity_position2, self).__init__(cr, uid, name, context=context)
         self.res = 0
         self.cal = 0
+        self.context = context
         self.registers = {}
         self.funcCur = ''
         self.iter = []
@@ -83,12 +84,12 @@ class report_liquidity_position2(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
 
         sql_register_ids = """
-            SELECT abs.id 
+            SELECT abs.id
             FROM account_bank_statement abs
             LEFT JOIN account_journal aj ON abs.journal_id = aj.id
-            WHERE aj.type != 'cheque' 
+            WHERE aj.type != 'cheque'
             AND abs.state != 'draft'
-            AND abs.period_number = (SELECT max(abs2.period_number) 
+            AND abs.period_number = (SELECT max(abs2.period_number)
                                        FROM account_bank_statement abs2
                                        LEFT JOIN account_journal aj2 ON abs2.journal_id = aj2.id
                                        WHERE aj2.type != 'cheque' AND abs2.state != 'draft'
@@ -100,8 +101,7 @@ class report_liquidity_position2(report_sxw.rml_parse):
         register_ids = [x[0] for x in self.cr.fetchall()]
 
         registers = {}
-
-        for register in pool.get('account.bank.statement').browse(self.cr, self.uid, register_ids):
+        for register in pool.get('account.bank.statement').browse(self.cr, self.uid, register_ids, context=self.context):
             ids.append(register)
             if registers.has_key(register.instance_id.id):
                 registers[register.instance_id.id] += [register]
