@@ -468,6 +468,9 @@
           <Data ss:Type="String">Ref</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Chk num</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Acct</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
@@ -514,6 +517,9 @@
         </Cell>
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.ref or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String">${line.cheque_number}</Data>
         </Cell>
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${line.account_id.code + ' ' + line.account_id.name|x}</Data>
@@ -566,6 +572,9 @@
           <Data ss:Type="String">${hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code + ' ' + inv_line.account_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -591,7 +600,7 @@ elif ana_line.last_corrected_id:
 endif
 %>
       <Row>
-        <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+        <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell>
