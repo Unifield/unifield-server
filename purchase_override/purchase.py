@@ -3016,6 +3016,13 @@ class purchase_order_line(osv.osv):
 
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                 diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line_qty, sol.product_uom.id)
+                # In case of the product qty of the PO line is decrease before the cancelation, check if there
+                # is some other PO lines related to this FO line, then cancel the whole line.
+                if sol.procurement_id:
+                    pol_ids = self.search(cr, uid, [('procurement_id', '=', sol.procurement_id.id)], context=context)
+                    if len(pol_ids) == 1 and pol_ids[0] == line.id:
+                        diff_qty = sol.product_uom_qty
+
                 sol_to_update.setdefault(sol.id, 0.00)
                 sol_to_update[sol.id] += diff_qty
                 if line.has_to_be_resourced:
