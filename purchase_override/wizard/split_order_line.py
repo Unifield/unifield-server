@@ -115,6 +115,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 # Change the qty of the old line
                 po_line_obj.write(cr, uid, [split.purchase_line_id.id], {'product_qty': split.original_qty - split.new_line_qty,
                                                                          'price_unit': split.purchase_line_id.price_unit,}, context=context)
+                # Change the qty on the linked procurement order
+                #if split.purchase_line_id.procurement_id:
+                #    proc_obj.write(cr, uid, [split.purchase_line_id.procurement_id.id], {'product_qty': split.original_qty - split.new_line_qty})
 
                 # we treat two different cases
                 # 1) the check box impact corresponding Fo is checked

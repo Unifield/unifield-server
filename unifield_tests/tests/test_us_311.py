@@ -6,7 +6,7 @@ __author__ = 'qt'
 from resourcing import ResourcingTest
 
 
-class US311Test(object):
+class US311Test(ResourcingTest):
 
     def setUp(self):
         """
@@ -206,6 +206,7 @@ class US311Test(object):
     def tearDown(self):
         """
         """
+        return
         super(US311Test, self).tearDown()
 
     def run_flow(self):
@@ -797,7 +798,7 @@ class US311Test(object):
 
         self.close_flow()
 
-class US311TestCancelNewLine(US311Test, ResourcingTest):
+class US311TestCancelNewLine(US311Test):
     """
     Split the PO line at coordo side, then cancel the new created line.
     """
@@ -805,7 +806,7 @@ class US311TestCancelNewLine(US311Test, ResourcingTest):
         super(US311TestCancelNewLine, self).setUp()
         self.simple_vals = {
             self.p_prd1_id: 18.00,
-            self.p_prd2_id: 25.00,
+           self.p_prd2_id: 25.00,
         }
         self.ir_vals = {
             self.p_prd1_id: 18.00,
@@ -824,7 +825,7 @@ class US311TestCancelNewLine(US311Test, ResourcingTest):
         )
         w_res = self.c1.get('purchase.order.line.unlink.wizard').just_cancel(res.get('res_id'))
 
-class US311TestCancelOldLine(US311Test, ResourcingTest):
+class US311TestCancelOldLine(US311Test):
     """
     Split the PO line at coordo side, then cancel the old line.
     """
@@ -851,7 +852,7 @@ class US311TestCancelOldLine(US311Test, ResourcingTest):
         )
         w_res = self.c1.get('purchase.order.line.unlink.wizard').just_cancel(res.get('res_id'))
 
-class US311TestCancelNewLineMoreOnNewLine(US311TestCancelNewLine, ResourcingTest):
+class US311TestCancelNewLineMoreOnNewLine(US311TestCancelNewLine):
     """
     Split the PO line at coordo side, add more than the initial quantity
     then cancel the splitted line.
@@ -893,7 +894,7 @@ class US311TestCancelNewLineMoreOnOldLine(US311TestCancelNewLine):
         # Add quantities on new line
         self.c_pol_obj.write(self.c_pol_10, {'product_qty': 50.0})
 
-class US311TestCancelNewLineLessOnNewLine(US311TestCancelNewLine, ResourcingTest):
+class US311TestCancelNewLineLessOnNewLine(US311TestCancelNewLine):
     """
     Split the PO line at coordo side, reduce the initial quantity
     then cancel the splitted line.
@@ -1019,7 +1020,7 @@ class US311TestCancelOldLineMoreOnNewLine(US311TestCancelOldLine):
         # Add quantities on new line
         self.c_pol_obj.write(self.c_pol_15, {'product_qty': 50.0})
 
-class US311TestCancelAllLines(US311Test, ResourcingTest):
+class US311TestCancelAllLines(US311Test):
     """
     Split the PO line at coordo side, then cancel the old line and the new line
     """
@@ -1047,5 +1048,8 @@ class US311TestCancelAllLines(US311Test, ResourcingTest):
         )
         w_res = self.c1.get('purchase.order.line.unlink.wizard').just_cancel(res.get('res_id'))
 
+#def get_test_class():
+#    return US311TestCancelNewLine
+
 def get_test_suite():
-    return US311TestCancelNewLine, US311TestCancelNewLineMoreOnNewLine, US311TestCancelOldLine, US311TestCancelOldLineMoreOnOldLine, US311TestCancelOldLineMoreOnNewLine, US311TestCancelAllLines
+    return US311TestCancelNewLine, US311TestCancelNewLineMoreOnNewLine, US311TestCancelNewLineMoreOnOldLine, US311TestCancelNewLineLessOnNewLine, US311TestCancelNewLineLessOnOldLine, US311TestCancelOldLine, US311TestCancelOldLineMoreOnNewLine, US311TestCancelOldLineMoreOnOldLine, US311TestCancelOldLineLessOnNewLine, US311TestCancelOldLineLessOnOldLine, US311TestCancelAllLines
