@@ -186,12 +186,13 @@ class mass_reallocation_wizard(osv.osv_memory):
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company and company.instance_id and company.instance_id.level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
+                    ('move_id', '=', False),
                     ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]
@@ -283,12 +284,13 @@ class mass_reallocation_wizard(osv.osv_memory):
             ]
             if level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
+                    ('move_id', '=', False),
                     ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]
