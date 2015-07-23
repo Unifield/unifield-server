@@ -73,12 +73,13 @@ class wizard_import_cheque(osv.osv_memory):
         'date': fields.date('Posting Date', required=False),
         'document_date': fields.date('Document Date', required=False),
         'journal_id': fields.many2one('account.journal', string="Cheque journal to use", required=True, help="The journal the wizard will use to display lines to import"),
-        'import_date': fields.integer("Import date"),
+        'is_imported': fields.boolean("is wizard already imported"),
         'confirm_date': fields.integer("Confirm date"),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
+        'is_imported': False,
     }
 
     def action_import(self, cr, uid, ids, context=None):
@@ -94,14 +95,6 @@ class wizard_import_cheque(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.line_ids:
             raise osv.except_osv(_('Error'), _('No entries ! Please select some entries then click on Import button.'))
-
-        # US-212: If multi-click on import button, we check
-        # if the same file was imported in the 10 last seconds
-        date = time.time() - 10
-        date_import = wizard.import_date
-
-        if date_import >= date:
-            return {}
 
         imported_lines = [x.line_id.id for x in wizard.imported_lines_ids]
         new_lines = []
@@ -133,7 +126,7 @@ class wizard_import_cheque(osv.osv_memory):
                 }
                 new_lines.append((0, 0, vals))
         # Add lines to the imported_lines, flush them from the first tree and change state of the wizard
-        self.write(cr, uid, ids, {'import_date': time.time(), 'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': '', 'document_date': '',}, context=context)
+        self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': '', 'document_date': '',}, context=context)
         # Refresh wizard to display changes
         return {
          'type': 'ir.actions.act_window',
@@ -162,14 +155,9 @@ class wizard_import_cheque(osv.osv_memory):
         absl_obj = self.pool.get('account.bank.statement.line')
         curr_date = strftime('%Y-%m-%d')
 
-        # US-212: If multi-click on import button, we check
-        # if the same file was imported in the 10 last seconds
-        date = time.time() - 10
-        date_import = wizard.import_date
-
-        if date_import >= date:
+        # US-212: If multi-click on import button, we import only the first
+        if wizard.is_imported:
             return {}
-
 
         # Process lines
         absl_lines = []
@@ -198,7 +186,7 @@ class wizard_import_cheque(osv.osv_memory):
 
         if not len(absl_lines):
             raise osv.except_osv(_('Warning'), _('No line created!'))
-        self.write(cr, uid, ids, {'import_date': time.time()}, context=context)
+        self.write(cr, uid, ids, {'is_imported': True}, context=context)
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines, 'o2m_refresh': 'line_ids'}
 
 wizard_import_cheque()
