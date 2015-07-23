@@ -312,15 +312,14 @@
         </record>
 
         <!-- US-431 -->
-        <record id="view_msf_budget_summary_line_tree" model="ir.ui.view">
+        <record id="view_msf_budget_summary_budget_line_tree" model="ir.ui.view">
             <field name="name">Budget Lines</field>
             <field name="model">msf.budget.summary.line</field>
             <field name="type">tree</field>
             <field name="field_parent">child_ids</field>
             <field name="arch" type="xml">
                 <tree string="Budget Status">
-                    <field name="code"/>
-                    <field name="name"/>
+                    <field name="name" string="Name_" />
                     <field name="budget_amount" digits="(24,0)"/>
                     <field name="actual_amount" digits="(24,0)"/>
                     <field name="balance_amount" digits="(24,0)"/>
@@ -351,7 +350,7 @@
         <!-- open AJIs from a budget line -->
         <record id="ir_open_budget_summary_ad" model="ir.values">
             <field name="key2">tree_but_open</field>
-            <field name="model">msf.budget.summary.line</field>
+            <field name="model">msf.budget.line</field>
             <field name="name">Open Analytic Lines</field>
             <field eval="'ir.actions.act_window,%d'%action_open_analytic_lines_budget_button" name="value"/>
             <field eval="True" name="object"/>

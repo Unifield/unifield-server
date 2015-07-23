@@ -124,23 +124,62 @@ class msf_budget_summary(osv.osv_memory):
         return res
         
     def action_open_budget_summary_budget_lines(self, cr, uid, ids, context=None):
-        # TODO do nothing if related budget is not a last level node
         res = {}
-        budget_id = context.get('active_id', False)
-        if budget_id:
+        if context is None:
+            context = {}
+            
+        mbs_obj = self.pool.get('msf.budget.summary')
+        mbsl_obj = self.pool.get('msf.budget.summary.line')
+            
+        # get summary line
+        summary_line_id = context.get('active_id', False)
+        if not summary_line_id:
+            return res
+        # search for the line to validate it truly exists as osv.memory
+        check_ids = mbs_obj.search(cr, uid, [
+            ('id', '=', summary_line_id),
+        ], context=context)
+        if not check_ids:
+            return res
+        
+        # get relating budget id
+        budget_id = mbs_obj.read(cr, uid, [summary_line_id], ['budget_id', ],
+            context=context)[0]['budget_id']
+        if not budget_id:
             return res
             
-        print 'action_open_budget_summary_budget_lines', context
+        # TODO do nothing if related budget is not a last level node
+        context['granularity'] = 'expense'
+ 
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+            'msf_budget', 'view_msf_budget_summary_budget_line_tree')[1]
+            
+        domain = [('budget_id', '=', 13)]  # TODO true budget
+            
+        """domain = [
+            ('budget_id', '=', budget_id),
+            #('line_type', 'in', ('view', 'normal')),
+        ],"""
+        print 'domain', domain
+        """count = self.pool.get('msf.budget.summary').search(cr, uid, domain,
+            count=True, context=context)
+        print 'count', count"""
         
-        return {
+        root_id = mbsl_obj.build_tree(cr, uid, budget_id, context=context)
+            
+        res = {
+            'name': 'Budget Lines',  # TODO action with budget name
             'type': 'ir.actions.act_window',
             'res_model': 'msf.budget.summary.line',
             'view_type': 'tree',
             'view_mode': 'tree',
+            'view_id': [view_id],
             #'target': 'current',
-            #'domain': [('id', '=', parent_line_id)],
+            'domain': [('id', '=', root_id)],
             'context': context
         }
+        print res  # TODO remove
+        return res
 
 msf_budget_summary()
 
@@ -149,14 +188,13 @@ class msf_budget_summary_line(osv.osv_memory):
     _name = "msf.budget.summary.line"
 
     _columns = {
+        'budget_id': fields.many2one('msf.budget', 'Budget', required=True),
         'budget_line_id': fields.many2one('msf.budget.line', 'Budget Line', required=True),
         
         'name': fields.related('budget_line_id', 'name', type="char", string="Budget Name", store=False),
-        'code': fields.related('budget_line_id', 'code', type="char", string="Budget Code", store=False),
-        
         'budget_amount': fields.related('budget_line_id', 'budget_amount', type="float", string="Budget Amount", store=False),
         'actual_amount': fields.related('budget_line_id', 'actual_amount', type="float", string="Actual Amount", store=False),
-        'balance_amount': fields.related('budget_line_id', 'balance_amount', type="float", string="Balance Amount", store=False),
+        'balance_amount': fields.related('budget_line_id', 'balance', type="float", string="Balance Amount", store=False),
  
         'parent_id': fields.many2one('msf.budget.summary.line', 'Parent'),
         'child_ids': fields.one2many('msf.budget.summary.line', 'parent_id', 'Children'),
@@ -166,18 +204,68 @@ class msf_budget_summary_line(osv.osv_memory):
         'parent_id': lambda *a: False
     }
 
-    def create(self, cr, uid, vals, context=None):
-        """
-        Create a summary line for each child of the cost center used by the budget given in vals
-        """
-        if context is None:
-            context = {}
-        summary_id = context.get('summary_id', False)
-        res = False
+    def build_tree(self, cr, uid, budget_id, context=None):
+        mbl_obj = self.pool.get('msf.budget.line')
         
-        print 'msf_budget_summary_line summary_id', summary_id
+        budget_lines_ids = mbl_obj.search(cr, uid, [
+            ('budget_id', '=', budget_id),
+            ('line_type', 'in', ('view', 'normal')),
+        ], context=context)
+        print 'len(budget_lines_ids)', len(budget_lines_ids)
         
-        return res
+        id = False
+        root_id = False
+        parent_level_ids = {}
+        for bl_r in mbl_obj.read(cr, uid, budget_lines_ids, ['name'],
+            context=context):
+                
+            parts = bl_r['name'].split(' ')
+            account = parts[0]
+            len_account = len(account)
+            
+            if account == '601':  # TODO REMOVE
+                break
+    
+            if len_account == 1:
+                parent_id = False
+            elif 1 < len_account < 4:
+                parent_id = parent_level_ids.get(len_account - 1, False)
+            elif len_account == 5:
+                parent_id = parent_level_ids.get(3, False)
+            else:
+                parent_id = False
+            
+            vals = {
+                'budget_id': budget_id,
+                'budget_line_id': bl_r['id'],
+                'parent_id': parent_id,
+            }
+            id = self.create(cr, uid, vals, context=context)
+            print 'account, id, parent_id', account, id, parent_id
+            if not id:
+                break
+            if not root_id:
+               root_id = id 
+                
+            if 1 <= len_account < 4:
+                parent_level_ids[len_account] = id
+                
+        return root_id
 
+"""
+domain [('budget_id', '=', 13)]
+len(budget_lines_ids) 175
+account, id, parent_id 6 1 False
+account, id, parent_id 60 2 1
+account, id, parent_id 600 3 2
+account, id, parent_id 60000 4 3
+account, id, parent_id 60010 5 3
+account, id, parent_id 60020 6 3
+account, id, parent_id 60030 7 3
+account, id, parent_id 601 8 2
+
+"""
+ 
 msf_budget_summary_line()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
