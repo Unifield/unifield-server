@@ -188,10 +188,17 @@ class hq_report_oca(report_sxw.report_sxw):
             func_currency = move_line.functional_currency_id
             rate = "0.00"
             if currency and func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line.date))
+                # US-274/9: accrual account (always refer to previous period)
+                # base on doc date instead posting in this case
+                # - 1st period accruals: doc date and posting same period
+                # - next accruals: doc date previous period (accrual of)
+                move_line_date = move_line.account_id.accrual_account \
+                    and move_line.document_date or move_line.date
+                
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line_date))
                 if cr.rowcount:
                     func_rate = cr.fetchall()[0][0]
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, move_line.date))
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, move_line_date))
                 if cr.rowcount:
                     curr_rate = cr.fetchall()[0][0]
                 if func_rate != 0.00:
