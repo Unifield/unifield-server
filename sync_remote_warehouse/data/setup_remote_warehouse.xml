@@ -13,7 +13,8 @@
         
         <record id="todo_remote_warehouse" model="ir.actions.todo">
     		<field name="action_id" ref="act_window_setup_remote_warehouse"/>
-		</record>
+    		<field name="state">done</field>
+    	</record>
         
     </data>
 </openerp>
