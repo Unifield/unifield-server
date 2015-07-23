@@ -20,6 +20,7 @@
 ##############################################################################
 from osv import fields, osv
 
+
 class msf_budget_summary(osv.osv_memory):
     _name = "msf.budget.summary"
 
@@ -77,11 +78,13 @@ class msf_budget_summary(osv.osv_memory):
 
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', required=True),
+        
         'name': fields.related('budget_id', 'name', type="char", string="Budget Name", store=False),
         'code': fields.related('budget_id', 'code', type="char", string="Budget Code", store=False),
         'budget_amount': fields.function(_get_amounts, method=True, store=False, string="Budget Amount", type="float", multi="all"),
         'actual_amount': fields.function(_get_amounts, method=True, store=False, string="Actual Amount", type="float", multi="all"),
         'balance_amount': fields.function(_get_amounts, method=True, store=False, string="Balance Amount", type="float", multi="all"),  # utp-857
+        
         'parent_id': fields.many2one('msf.budget.summary', 'Parent'),
         'child_ids': fields.one2many('msf.budget.summary', 'parent_id', 'Children'),
     }
@@ -119,6 +122,62 @@ class msf_budget_summary(osv.osv_memory):
                         child_budget_id = cr.fetchall()[0][0]
                         self.create(cr, uid, {'budget_id': child_budget_id, 'parent_id': res}, context=context)
         return res
+        
+    def action_open_budget_summary_budget_lines(self, cr, uid, ids, context=None):
+        # TODO do nothing if related budget is not a last level node
+        res = {}
+        budget_id = context.get('active_id', False)
+        if budget_id:
+            return res
+            
+        print 'action_open_budget_summary_budget_lines', context
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'msf.budget.summary.line',
+            'view_type': 'tree',
+            'view_mode': 'tree',
+            #'target': 'current',
+            #'domain': [('id', '=', parent_line_id)],
+            'context': context
+        }
 
 msf_budget_summary()
+
+
+class msf_budget_summary_line(osv.osv_memory):
+    _name = "msf.budget.summary.line"
+
+    _columns = {
+        'budget_line_id': fields.many2one('msf.budget.line', 'Budget Line', required=True),
+        
+        'name': fields.related('budget_line_id', 'name', type="char", string="Budget Name", store=False),
+        'code': fields.related('budget_line_id', 'code', type="char", string="Budget Code", store=False),
+        
+        'budget_amount': fields.related('budget_line_id', 'budget_amount', type="float", string="Budget Amount", store=False),
+        'actual_amount': fields.related('budget_line_id', 'actual_amount', type="float", string="Actual Amount", store=False),
+        'balance_amount': fields.related('budget_line_id', 'balance_amount', type="float", string="Balance Amount", store=False),
+ 
+        'parent_id': fields.many2one('msf.budget.summary.line', 'Parent'),
+        'child_ids': fields.one2many('msf.budget.summary.line', 'parent_id', 'Children'),
+    }
+
+    _defaults = {
+        'parent_id': lambda *a: False
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Create a summary line for each child of the cost center used by the budget given in vals
+        """
+        if context is None:
+            context = {}
+        summary_id = context.get('summary_id', False)
+        res = False
+        
+        print 'msf_budget_summary_line summary_id', summary_id
+        
+        return res
+
+msf_budget_summary_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
