@@ -123,6 +123,23 @@ purchase_order_report_xls('report.purchase.order_xls','purchase.order','addons/m
 class validated_purchase_order_report_xls(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
         super(validated_purchase_order_report_xls, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'maxADLines': self.get_max_ad_lines,
+            'need_ad': self.need_ad,
+        })
+
+    def need_ad(self):
+        return True
+
+    def get_max_ad_lines(self, order):
+        max_ad_lines = 0
+        for line in order.order_line:
+            if line.analytic_distribution_id:
+                if len(line.analytic_distribution_id.cost_center_lines) > max_ad_lines:
+                    max_ad_lines = len(line.analytic_distribution_id.cost_center_lines)
+
+        return max_ad_lines
 
 SpreadsheetReport('report.validated.purchase.order_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako', parser=validated_purchase_order_report_xls)
 
@@ -130,6 +147,19 @@ SpreadsheetReport('report.validated.purchase.order_xls', 'purchase.order', 'addo
 class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
         super(parser_validated_purchase_order_report_xml, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'maxADLines': self.get_max_ad_lines,
+        })
+
+    def get_max_ad_lines(self, order):
+        max_ad_lines = 0
+        for line in order.order_line:
+            if line.analytic_distribution_id:
+                if len(line.analytic_distribution_id.cost_center_lines) > max_ad_lines:
+                    max_ad_lines = len(line.analytic_distribution_id.cost_center_lines)
+
+        return max_ad_lines
 
 class validated_purchase_order_report_xml(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
