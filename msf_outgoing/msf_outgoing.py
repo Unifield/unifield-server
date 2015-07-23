@@ -1159,7 +1159,7 @@ class shipment(osv.osv):
             #assert shipment.state == 'packed', 'cannot ship a shipment which is not in correct state - packed - %s' % shipment.state
             if shipment.state != 'packed':
                 raise osv.except_osv(_('Error, packing in wrong state !'),
-                    _('Cannot make a shipment which is in a wrong correct state - should be "packed" but here it is - %s' % shipment.state))
+                    _('Cannot process a Shipment which is in an incorrect state'))
 
             # the state does not need to be updated - function
             # update actual ship date (shipment_actual_date) to today + time
