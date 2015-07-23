@@ -112,6 +112,16 @@ class account_cash_statement(osv.osv):
         self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('balance_end_real', False):
+            for id in ids:
+                args = [('prev_reg_id', '=', id)]
+                search_ids = self.search(cr, uid, args, context=context)
+                new_vals = {'balance_start': vals['balance_end_real']}
+                self.write(cr, uid, search_ids, new_vals, context=context)
+
+        return super(account_cash_statement, self).write(cr, uid, ids, vals, context=context)
+
     def button_open_cash(self, cr, uid, ids, context=None):
         if not context:
             context = {}
