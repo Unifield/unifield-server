@@ -59,6 +59,9 @@ class packing_list(report_sxw.rml_parse):
         '''
         res = {}
         for pf in shipment.pack_family_memory_ids:
+            # Don't display returned packs
+            if pf.not_shipped:
+                continue
             res.setdefault(pf.ppl_id.name, {
                 'ppl': pf.ppl_id,
                 'pf': [],
