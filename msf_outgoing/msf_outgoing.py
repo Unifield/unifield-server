@@ -4424,6 +4424,7 @@ class stock_move(osv.osv):
         '''
         pol_obj = self.pool.get('purchase.order.line')
         proc_obj = self.pool.get('procurement.order')
+        pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
 
@@ -4431,6 +4432,7 @@ class stock_move(osv.osv):
             context = {}
 
         move_to_done = []
+        pick_to_check = set()
 
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_qty == 0.00:
@@ -4460,6 +4462,9 @@ class stock_move(osv.osv):
             pick_subtype = move.picking_id.subtype
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
+
+            if pick_subtype == 'picking' and pick_state == 'draft':
+                pick_to_check.add(move.picking_id.id)
 
             if pick_type == 'in' and move.purchase_line_id:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
@@ -4512,6 +4517,13 @@ class stock_move(osv.osv):
                 wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_confirm', cr)
 #            else:
 #                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+
+        for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
+            if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
+                moves_to_done = self.search(cr, uid, [('picking_id', '=', ptc.id), ('product_qty', '=', 0.00), ('state', 'not in', ['done', 'cancel'])], context=context)
+                if moves_to_done:
+                    self.action_done(cr, uid, moves_to_done, context=context)
+                ptc.action_done(context=context)
 
         return res
 
