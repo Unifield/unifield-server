@@ -302,7 +302,7 @@ No split of FO found !""")
             ('analytic_distribution_id', '=', False),
         ])
         pol_obj.write(no_ana_line_ids, {
-            'analytic_distribution_id': self.get_record(db, 'distrib_1'),
+            'analytic_distribution_id': self.create_analytic_distribution(db),
         })
 
         # Check if the PO is draft
