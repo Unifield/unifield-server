@@ -140,26 +140,25 @@ class msf_budget_summary(osv.osv_memory):
         if not check_ids:
             return res
         
-        # get relating budget needed data (read for perfs)
-        summary_r = mbs_obj.read(cr, uid, [summary_line_id],
-            ['budget_id', 'child_ids', ], context=context)[0]
+        # get summary line data and do checks
+        summary_br = mbs_obj.browse(cr, uid, [summary_line_id],
+            context=context)[0]
         # abort if no budget found or not a last level summary node (perfs)
-        if not summary_r['budget_id']:
+        if not summary_br.budget_id:
             raise osv.except_osv(_('Error'), _('Budget not found'))
-        if summary_r['child_ids']:
+        if summary_br.child_ids:
             raise osv.except_osv(_('Warning'),
                 _('Only childest budget is drillable'))
-        budget_id = summary_r['budget_id']
-        budget_code = mb_obj.read(cr, uid, [budget_id], ['code', ],
-            context=context)[0]['code']
-        
+  
         # build tree
         context['granularity'] = 'expense'
-        root_id = mbsl_obj.build_tree(cr, uid, budget_id, context=context)
+        if 'commitment' in context:
+            del context['commitment']
+        root_id = mbsl_obj.build_tree(cr, uid, summary_br, context=context)
         
         # set action
         name = self._budget_summary_line_label_pattern.format(
-            budget_code=budget_code or '')
+            budget_code=summary_br.budget_id.code or '')
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
             'msf_budget', 'view_msf_budget_summary_budget_line_tree')[1]
         res = {
@@ -188,10 +187,13 @@ class msf_budget_summary_line(osv.osv_memory):
         if not ids:
             return res
             
-        for r in self.read(cr, uid, ids, ['name', ], context=context):
-            parts = r['name'].split(' ')
-            res[r['id']] = parts and parts[0] or ''
-
+        for r in self.read(cr, uid, ids, ['parent_id', 'name', ],
+            context=context):
+            if r['parent_id']:
+                parts = r['name'].split(' ')
+                res[r['id']] = parts and parts[0] or ''
+            else:
+                res[r['id']] = ''
         return res
 
     _columns = {
@@ -199,11 +201,11 @@ class msf_budget_summary_line(osv.osv_memory):
         'budget_line_id': fields.many2one('msf.budget.line', 'Budget Line', required=True),
         'account': fields.char('Account', size=5),
         
-        'name': fields.related('budget_line_id', 'name', type="char", string="Budget Name", store=False),
-        'budget_amount': fields.related('budget_line_id', 'budget_amount', type="float", string="Budget Amount", store=False),
-        'actual_amount': fields.related('budget_line_id', 'actual_amount', type="float", string="Actual Amount", store=False),
-        'balance_amount': fields.related('budget_line_id', 'balance', type="float", string="Balance Amount", store=False),
- 
+        'name': fields.char('Name', size=128),
+        'budget_amount': fields.float("Budget Amount"),
+        'actual_amount': fields.float("Actual Amount"),
+        'balance': fields.float("Balance Amount"),
+  
         'parent_id': fields.many2one('msf.budget.summary.line', 'Parent'),
         'child_ids': fields.one2many('msf.budget.summary.line', 'parent_id', 'Children'),
     }
@@ -211,36 +213,35 @@ class msf_budget_summary_line(osv.osv_memory):
     _defaults = {
         'parent_id': lambda *a: False
     }
-    
-    _float_fields_to_fix = [
-        'budget_amount',
-        'actual_amount',
-        'balance_amount',
-    ]
-    
-    def read(self, cr, uid, ids, fields, context=None, load='_classic_write'):
-        res = super(msf_budget_summary_line, self).read(cr, uid, ids, fields,
-            context=context, load=load)
-        
-        for r in res:
-            for f in self._float_fields_to_fix:
-                if f in r and not r[f]:
-                   r[f] = 0.
-        return res
 
-    def build_tree(self, cr, uid, budget_id, context=None):
+    def build_tree(self, cr, uid, summary_line_br, context=None):
         mbl_obj = self.pool.get('msf.budget.line')
         
+        # create root node
+        vals = {
+            'budget_id': summary_line_br.budget_id.code,
+            'budget_line_id': False,
+            
+            'name': summary_line_br.name,
+            'budget_amount': summary_line_br.budget_amount,
+            'actual_amount': summary_line_br.actual_amount,
+            'balance': summary_line_br.balance_amount,
+                
+            'parent_id': False,
+        }
+        root_id = self.create(cr, uid, vals, context=context)
+        
+        # build nodes from budget lines
         id = False
-        root_id = False
         parent_level_ids = {}
+        fields = ['name', 'budget_amount', 'actual_amount', 'balance', ]
         
         budget_lines_ids = mbl_obj.search(cr, uid, [
-            ('budget_id', '=', budget_id),
+            ('budget_id', '=', summary_line_br.budget_id.id),
             ('line_type', 'in', ('view', 'normal')),
         ], context=context)
- 
-        for bl_r in mbl_obj.read(cr, uid, budget_lines_ids, ['name', ],
+
+        for bl_r in mbl_obj.read(cr, uid, budget_lines_ids, fields,
             context=context):
                 
             # get account level
@@ -250,7 +251,9 @@ class msf_budget_summary_line(osv.osv_memory):
     
             # set parent from level
             if len_account == 1:
-                parent_id = False
+                # reinitialize parent level ids for accounts 6, 7, ...
+                parent_level_ids = {}  
+                parent_id = root_id
             elif 1 < len_account < 4:
                 parent_id = parent_level_ids.get(len_account - 1, False)
             elif len_account == 5:
@@ -260,17 +263,21 @@ class msf_budget_summary_line(osv.osv_memory):
             
             # set vals
             vals = {
-                'budget_id': budget_id,
+                'budget_id': summary_line_br.budget_id.id,
                 'budget_line_id': bl_r['id'],
                 'account': account,
                 
                 'parent_id': parent_id,
             }
+            for f in fields:
+                vals[f] = bl_r[f]
+                
+            # create node
             id = self.create(cr, uid, vals, context=context)
             if not id:
                 break
             if not root_id:
-               root_id = id 
+               root_id = id
                 
             # update parent for next iteration
             if 1 <= len_account < 4:
@@ -300,6 +307,9 @@ class msf_budget_summary_line(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
+        context['granularity'] = 'expense'
+        if 'commitment' in context:
+            del context['commitment']
             
         sl_br = self.browse(cr, uid, ids[0], context=context)
         name = self._aji_label_pattern.format(

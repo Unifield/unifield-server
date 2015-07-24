@@ -309,10 +309,10 @@
             <field name="field_parent">child_ids</field>
             <field name="arch" type="xml">
                 <tree string="Budget Status">
-                    <field name="name" string="Name_" />
+                    <field name="name" string="Name" />
                     <field name="budget_amount" digits="(24,0)"/>
                     <field name="actual_amount" digits="(24,0)"/>
-                    <field name="balance_amount" digits="(24,0)"/>
+                    <field name="balance" digits="(24,0)"/>
                     <field name="parent_id" invisible="1"/>
                 </tree>
             </field>
