@@ -19,9 +19,13 @@
 #
 ##############################################################################
 from osv import fields, osv
+from tools.translate import _
+
 
 class msf_budget_summary(osv.osv_memory):
     _name = "msf.budget.summary"
+    
+    _action_budget_summary_line_label = 'Budget lines'
 
     def _get_analytic_domain(self, cr, uid, summary_id, context=None):
         summary_line = self.browse(cr, uid, summary_id, context=context)
@@ -77,11 +81,13 @@ class msf_budget_summary(osv.osv_memory):
 
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', required=True),
+        
         'name': fields.related('budget_id', 'name', type="char", string="Budget Name", store=False),
         'code': fields.related('budget_id', 'code', type="char", string="Budget Code", store=False),
         'budget_amount': fields.function(_get_amounts, method=True, store=False, string="Budget Amount", type="float", multi="all"),
         'actual_amount': fields.function(_get_amounts, method=True, store=False, string="Actual Amount", type="float", multi="all"),
         'balance_amount': fields.function(_get_amounts, method=True, store=False, string="Balance Amount", type="float", multi="all"),  # utp-857
+        
         'parent_id': fields.many2one('msf.budget.summary', 'Parent'),
         'child_ids': fields.one2many('msf.budget.summary', 'parent_id', 'Children'),
     }
@@ -119,6 +125,149 @@ class msf_budget_summary(osv.osv_memory):
                         child_budget_id = cr.fetchall()[0][0]
                         self.create(cr, uid, {'budget_id': child_budget_id, 'parent_id': res}, context=context)
         return res
+        
+    def action_open_budget_summary_budget_lines(self, cr, uid, ids, context=None):
+        res = {}
+        if context is None:
+            context = {}
+            
+        mb_obj = self.pool.get('msf.budget')
+        mbs_obj = self.pool.get('msf.budget.summary')
+        mbsl_obj = self.pool.get('msf.budget.summary.line')
+            
+        # get summary line
+        summary_line_id = context.get('active_id', False)
+        if not summary_line_id:
+            return res
+        # search for the line to validate it truly exists as osv.memory
+        check_ids = mbs_obj.search(cr, uid, [
+            ('id', '=', summary_line_id),
+        ], context=context)
+        if not check_ids:
+            return res
+        
+        # get relating budget needed data (read for perfs)
+        summary_r = mbs_obj.read(cr, uid, [summary_line_id],
+            ['budget_id', 'child_ids', ], context=context)[0]
+        # abort if no budget found or not a last level summary node (perfs)
+        if not summary_r['budget_id']:
+            raise osv.except_osv(_('Error'), _('Budget not found'))
+        if summary_r['child_ids']:
+            raise osv.except_osv(_('Warning'),
+                _('Only childest budget is drillable'))
+        budget_id = summary_r['budget_id']
+        budget_code = mb_obj.read(cr, uid, [budget_id], ['code', ],
+            context=context)[0]['code']
+        
+        # build tree
+        context['granularity'] = 'expense'
+        root_id = mbsl_obj.build_tree(cr, uid, budget_id, context=context)
+        
+        # set action
+        name = budget_code or ''
+        name += self._action_budget_summary_line_label
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+            'msf_budget', 'view_msf_budget_summary_budget_line_tree')[1]
+        res = {
+            'name': name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'msf.budget.summary.line',
+            'view_type': 'tree',
+            'view_mode': 'tree',
+            'view_id': [view_id],
+            'domain': [('id', '=', root_id)],
+            'context': context,
+        }
+        
+        return res
 
 msf_budget_summary()
+
+
+class msf_budget_summary_line(osv.osv_memory):
+    _name = "msf.budget.summary.line"
+
+    _columns = {
+        'budget_id': fields.many2one('msf.budget', 'Budget', required=True),
+        'budget_line_id': fields.many2one('msf.budget.line', 'Budget Line', required=True),
+        
+        'name': fields.related('budget_line_id', 'name', type="char", string="Budget Name", store=False),
+        'budget_amount': fields.related('budget_line_id', 'budget_amount', type="float", string="Budget Amount", store=False),
+        'actual_amount': fields.related('budget_line_id', 'actual_amount', type="float", string="Actual Amount", store=False),
+        'balance_amount': fields.related('budget_line_id', 'balance', type="float", string="Balance Amount", store=False),
+ 
+        'parent_id': fields.many2one('msf.budget.summary.line', 'Parent'),
+        'child_ids': fields.one2many('msf.budget.summary.line', 'parent_id', 'Children'),
+    }
+
+    _defaults = {
+        'parent_id': lambda *a: False
+    }
+    
+    _float_fields_to_fix = [
+        'budget_amount',
+        'actual_amount',
+        'balance_amount',
+    ]
+    
+    def read(self, cr, uid, ids, fields, context=None, load='_classic_write'):
+        res = super(msf_budget_summary_line, self).read(cr, uid, ids, fields,
+            context=context, load=load)
+        
+        for r in res:
+            for f in self._float_fields_to_fix:
+                if f in r and not r[f]:
+                   r[f] = 0.
+        return res
+
+    def build_tree(self, cr, uid, budget_id, context=None):
+        mbl_obj = self.pool.get('msf.budget.line')
+        
+        id = False
+        root_id = False
+        parent_level_ids = {}
+        
+        budget_lines_ids = mbl_obj.search(cr, uid, [
+            ('budget_id', '=', budget_id),
+            ('line_type', 'in', ('view', 'normal')),
+        ], context=context)
+ 
+        for bl_r in mbl_obj.read(cr, uid, budget_lines_ids, ['name'],
+            context=context):
+                
+            # get account level                
+            parts = bl_r['name'].split(' ')
+            account = parts[0]
+            len_account = len(account)
+    
+            # set parent from level
+            if len_account == 1:
+                parent_id = False
+            elif 1 < len_account < 4:
+                parent_id = parent_level_ids.get(len_account - 1, False)
+            elif len_account == 5:
+                parent_id = parent_level_ids.get(3, False)
+            else:
+                parent_id = False
+            
+            # set vals
+            vals = {
+                'budget_id': budget_id,
+                'budget_line_id': bl_r['id'],
+                'parent_id': parent_id,
+            }
+            id = self.create(cr, uid, vals, context=context)
+            if not id:
+                break
+            if not root_id:
+               root_id = id 
+                
+            # update parent for next iteration
+            if 1 <= len_account < 4:
+                parent_level_ids[len_account] = id
+                
+        return root_id
+ 
+msf_budget_summary_line()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
