@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -29,16 +29,31 @@ class product_list_add_products(osv.osv_memory):
     _description = 'Add product to list'
 
     _columns = {
-        'list_id': fields.many2one('product.list', string='List', readonly=True),
-        'parent_list_id': fields.many2one('product.list', string='Parent List', readonly=True),
-        'product_ids': fields.many2many('product.product', 'product_add_product_list_rel', 
-                                        'wiz_list_id', 'product_id', string='Products'),
+        'list_id': fields.many2one(
+            'product.list',
+            string='List',
+            readonly=True,
+        ),
+        'parent_list_id': fields.many2one(
+            'product.list',
+            string='Parent List',
+            readonly=True,
+        ),
+        'product_ids': fields.many2many(
+            'product.product',
+            'product_add_product_list_rel',
+            'wiz_list_id',
+            'product_id',
+            string='Products',
+        ),
     }
 
     def default_get(self, cr, uid, fields, context=None):
         '''
         To get default values for the object.
         '''
+        list_obj = self.pool.get('product.list')
+
         if not context:
             context = {}
 
@@ -46,8 +61,12 @@ class product_list_add_products(osv.osv_memory):
         if not list_id:
             raise osv.except_osv(_('Error'), _('No list found !'))
 
-        res = super(product_list_add_products, self).default_get(cr, uid, fields, context=context)
-        res.update({'list_id': list_id, 'parent_list_id': self.pool.get('product.list').browse(cr, uid, list_id, context=context).parent_id.id})
+        res = super(product_list_add_products, self).\
+            default_get(cr, uid, fields, context=context)
+        res.update({
+            'list_id': list_id,
+            'parent_list_id': list_obj.browse(cr, uid, list_id, context=context).parent_id.id,
+        })
 
         return res
 
@@ -70,8 +89,10 @@ class product_list_add_products(osv.osv_memory):
 
             for product in wiz.product_ids:
                 if product.id not in products:
-                    line_obj.create(cr, uid, {'name': product.id,
-                                              'list_id': wiz.list_id.id}, context=context)
+                    line_obj.create(cr, uid, {
+                        'name': product.id,
+                        'list_id': wiz.list_id.id,
+                    }, context=context)
 
             context.update({'active_id': wiz.list_id.id})
 
