@@ -219,10 +219,10 @@ class msf_budget_summary_line(osv.osv_memory):
         
         # create root node
         vals = {
-            'budget_id': summary_line_br.budget_id.code,
+            'budget_id': summary_line_br.budget_id.id,
             'budget_line_id': False,
             
-            'name': summary_line_br.name,
+            'name': summary_line_br.code or '',
             'budget_amount': summary_line_br.budget_amount,
             'actual_amount': summary_line_br.actual_amount,
             'balance': summary_line_br.balance_amount,
