@@ -59,9 +59,6 @@ class packing_list(report_sxw.rml_parse):
         '''
         res = {}
         for pf in shipment.pack_family_memory_ids:
-            # Don't display returned packs
-            if pf.not_shipped:
-                continue
             res.setdefault(pf.ppl_id.name, {
                 'ppl': pf.ppl_id,
                 'pf': [],
@@ -70,10 +67,11 @@ class packing_list(report_sxw.rml_parse):
                 'total_weight': 0.00,
                 'nb_parcel': 0,
             })
-            res[pf.ppl_id.name]['pf'].append(pf)
-            res[pf.ppl_id.name]['total_volume'] += pf.total_volume
-            res[pf.ppl_id.name]['total_weight'] += pf.total_weight
-            res[pf.ppl_id.name]['nb_parcel'] += pf.num_of_packs
+            if not pf.not_shipped:
+                res[pf.ppl_id.name]['pf'].append(pf)
+                res[pf.ppl_id.name]['total_volume'] += pf.total_volume
+                res[pf.ppl_id.name]['total_weight'] += pf.total_weight
+                res[pf.ppl_id.name]['nb_parcel'] += pf.num_of_packs
 
         sort_keys = sorted(res.keys())
 
