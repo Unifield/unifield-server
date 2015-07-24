@@ -19,10 +19,13 @@
 #
 ##############################################################################
 from osv import fields, osv
+from tools.translate import _
 
 
 class msf_budget_summary(osv.osv_memory):
     _name = "msf.budget.summary"
+    
+    _action_budget_summary_line_label = 'Budget lines'
 
     def _get_analytic_domain(self, cr, uid, summary_id, context=None):
         summary_line = self.browse(cr, uid, summary_id, context=context)
@@ -128,6 +131,7 @@ class msf_budget_summary(osv.osv_memory):
         if context is None:
             context = {}
             
+        mb_obj = self.pool.get('msf.budget')
         mbs_obj = self.pool.get('msf.budget.summary')
         mbsl_obj = self.pool.get('msf.budget.summary.line')
             
@@ -142,43 +146,39 @@ class msf_budget_summary(osv.osv_memory):
         if not check_ids:
             return res
         
-        # get relating budget id
-        budget_id = mbs_obj.read(cr, uid, [summary_line_id], ['budget_id', ],
-            context=context)[0]['budget_id']
-        if not budget_id:
-            return res
-            
-        # TODO do nothing if related budget is not a last level node
+        # get relating budget needed data (read for perfs)
+        summary_r = mbs_obj.read(cr, uid, [summary_line_id],
+            ['budget_id', 'child_ids', ], context=context)[0]
+        # abort if no budget found or not a last level summary node (perfs)
+        if not summary_r['budget_id']:
+            raise osv.except_osv(_('Error'), _('Budget not found'))
+        if summary_r['child_ids']:
+            raise osv.except_osv(_('Warning'),
+                _('Only childest budget is drillable'))
+        budget_id = summary_r['budget_id']
+        budget_code = mb_obj.read(cr, uid, [budget_id], ['code', ],
+            context=context)[0]['code']
+        
+        # build tree
         context['granularity'] = 'expense'
- 
+        root_id = mbsl_obj.build_tree(cr, uid, budget_id, context=context)
+        
+        # set action
+        name = budget_code or ''
+        name += self._action_budget_summary_line_label
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
             'msf_budget', 'view_msf_budget_summary_budget_line_tree')[1]
-            
-        domain = [('budget_id', '=', 13)]  # TODO true budget
-            
-        """domain = [
-            ('budget_id', '=', budget_id),
-            #('line_type', 'in', ('view', 'normal')),
-        ],"""
-        print 'domain', domain
-        """count = self.pool.get('msf.budget.summary').search(cr, uid, domain,
-            count=True, context=context)
-        print 'count', count"""
-        
-        root_id = mbsl_obj.build_tree(cr, uid, budget_id, context=context)
-            
         res = {
-            'name': 'Budget Lines',  # TODO action with budget name
+            'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'msf.budget.summary.line',
             'view_type': 'tree',
             'view_mode': 'tree',
             'view_id': [view_id],
-            #'target': 'current',
             'domain': [('id', '=', root_id)],
-            'context': context
+            'context': context,
         }
-        print res  # TODO remove
+        
         return res
 
 msf_budget_summary()
@@ -203,29 +203,44 @@ class msf_budget_summary_line(osv.osv_memory):
     _defaults = {
         'parent_id': lambda *a: False
     }
+    
+    _float_fields_to_fix = [
+        'budget_amount',
+        'actual_amount',
+        'balance_amount',
+    ]
+    
+    def read(self, cr, uid, ids, fields, context=None, load='_classic_write'):
+        res = super(msf_budget_summary_line, self).read(cr, uid, ids, fields,
+            context=context, load=load)
+        
+        for r in res:
+            for f in self._float_fields_to_fix:
+                if f in r and not r[f]:
+                   r[f] = 0.
+        return res
 
     def build_tree(self, cr, uid, budget_id, context=None):
         mbl_obj = self.pool.get('msf.budget.line')
+        
+        id = False
+        root_id = False
+        parent_level_ids = {}
         
         budget_lines_ids = mbl_obj.search(cr, uid, [
             ('budget_id', '=', budget_id),
             ('line_type', 'in', ('view', 'normal')),
         ], context=context)
-        print 'len(budget_lines_ids)', len(budget_lines_ids)
-        
-        id = False
-        root_id = False
-        parent_level_ids = {}
+ 
         for bl_r in mbl_obj.read(cr, uid, budget_lines_ids, ['name'],
             context=context):
                 
+            # get account level                
             parts = bl_r['name'].split(' ')
             account = parts[0]
             len_account = len(account)
-            
-            if account == '601':  # TODO REMOVE
-                break
     
+            # set parent from level
             if len_account == 1:
                 parent_id = False
             elif 1 < len_account < 4:
@@ -235,36 +250,23 @@ class msf_budget_summary_line(osv.osv_memory):
             else:
                 parent_id = False
             
+            # set vals
             vals = {
                 'budget_id': budget_id,
                 'budget_line_id': bl_r['id'],
                 'parent_id': parent_id,
             }
             id = self.create(cr, uid, vals, context=context)
-            print 'account, id, parent_id', account, id, parent_id
             if not id:
                 break
             if not root_id:
                root_id = id 
                 
+            # update parent for next iteration
             if 1 <= len_account < 4:
                 parent_level_ids[len_account] = id
                 
         return root_id
-
-"""
-domain [('budget_id', '=', 13)]
-len(budget_lines_ids) 175
-account, id, parent_id 6 1 False
-account, id, parent_id 60 2 1
-account, id, parent_id 600 3 2
-account, id, parent_id 60000 4 3
-account, id, parent_id 60010 5 3
-account, id, parent_id 60020 6 3
-account, id, parent_id 60030 7 3
-account, id, parent_id 601 8 2
-
-"""
  
 msf_budget_summary_line()
 

@@ -311,7 +311,7 @@
             <field name="context">{'search_budget': 1, 'summary_id': active_id}</field>
         </record>
 
-        <!-- US-431 -->
+        <!-- US-431: new tree, for childest budget, budget lines drill browsing -->
         <record id="view_msf_budget_summary_budget_line_tree" model="ir.ui.view">
             <field name="name">Budget Lines</field>
             <field name="model">msf.budget.summary.line</field>
@@ -328,6 +328,7 @@
             </field>
         </record>
         
+        <!-- US-431: budget lines drill browsing from budget summary line action -->
         <record id="action_open_budget_summary_budget_lines"
             model="ir.actions.server">
             <field name="name">Budget Lines</field>
@@ -336,8 +337,6 @@
             <field name="state">code</field>
             <field name="code">action = self.pool.get('msf.budget.summary').action_open_budget_summary_budget_lines(cr, uid, object.id, context)</field>
         </record>
-                       
-        <!-- open budget lines from a budget (with no childs) -->
         <record id="ir_open_budget_summary_budget_lines" model="ir.values">
             <field name="key2">tree_but_open</field>
             <field name="model">msf.budget.summary</field>
@@ -347,7 +346,6 @@
             <field eval="True" name="object"/>
         </record>
         
-        <!-- open AJIs from a budget line -->
         <record id="ir_open_budget_summary_ad" model="ir.values">
             <field name="key2">tree_but_open</field>
             <field name="model">msf.budget.line</field>
