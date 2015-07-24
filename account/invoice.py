@@ -1686,7 +1686,7 @@ class account_invoice_tax(osv.osv):
         'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'factor_base': fields.function(_count_factor, method=True, string='Multipication factor for Base code', type='float', multi="all"),
         'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all"),
-        'account_tax_id': fields.many2one('account.tax', 'Tax')
+        'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)])
     }
 
 
