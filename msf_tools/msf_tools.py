@@ -22,7 +22,7 @@
 from osv import osv, fields
 
 import time
-
+import tools
 import inspect
 
 from tools.translate import _
@@ -518,32 +518,137 @@ class ir_translation(osv.osv):
             return name
         return tr
 
+
+    @tools.cache(skiparg=3, multi='ids')
+    def _get_ids(self, cr, uid, name, tt, lang, ids):
+        translations = dict.fromkeys(ids, False)
+        if ids:
+            translation_found = False
+            cr.execute('select res_id,value ' \
+                    'from ir_translation ' \
+                    'where lang=%s ' \
+                        'and type=%s ' \
+                        'and name=%s ' \
+                        'and res_id IN %s',
+                    (lang,tt,name,tuple(ids)))
+            for res_id, value in cr.fetchall():
+                translations[res_id] = value
+                translation_found = True
+            # US-394: If translation not found by res_id, search by xml_id
+
+            if not translation_found:
+                for id in ids:
+                    current_id = id
+                    # Get the model name
+                    if ',' in name:
+                        model_name = name.split(",")[0]
+                    else:
+                        model_name = name
+                    # product.template have not xml_id
+                    if "product.template" in model_name:
+                        model_name = 'product.product'
+                        cr.execute('SELECT id ' \
+                            'FROM product_product ' \
+                            'WHERE product_tmpl_id=%s',
+                            ([current_id])
+                        )
+                        for prod_id in cr.fetchall():
+                            current_id = prod_id
+
+                    # Search xml_id in ir_model_data
+                    cr.execute('SELECT name ' \
+                        'FROM ir_model_data ' \
+                        'WHERE model=%s and res_id=%s',
+                        (model_name, current_id)
+                    )
+                    for xml_id in cr.fetchall():
+                        # Search in translation by xml_id
+                        cr.execute('select res_id, value ' \
+                                'from ir_translation ' \
+                                'where lang=%s ' \
+                                    'and type=%s ' \
+                                    'and name=%s ' \
+                                    'and xml_id=%s',
+                                (lang,tt,name,xml_id))
+                        for res_id, value in cr.fetchall():
+                            translations[id] = value
+        return translations
+
+    def get_xml_id(self, cr, uid, vals, context=None):
+        res = None
+
+        if vals.get('name', False) and vals.get('res_id', False):
+            name = vals['name']
+            if ',' in name:
+                model_name = name.split(",")[0]
+            else:
+                model_name = name
+
+            if "ir.model.data" not in model_name:
+                target_ids = vals['res_id']
+
+                # product.template xml_id is not create, so we search the product.product xml_id
+                if "product.template" in model_name:
+                    target_ids = self.pool.get('product.product')\
+                            .search(cr, uid, [('product_tmpl_id', '=', target_ids)], context=context)
+                    model_name = 'product.product'
+
+                if isinstance(target_ids, (int, long)):
+                    target_ids = [target_ids]
+                target = self.pool.get(model_name)
+                if target:
+                    if hasattr(target, "get_sd_ref"):
+                        res = target.get_sd_ref(cr, uid, target_ids).values()[0]
+        return res
+
     # US_394: Remove duplicate lines for ir.translation
     def create(self, cr, uid, vals, context=None):
         domain = []
-        if vals.get('res_id'):
-            domain.append(('res_id', '=', vals['res_id']))
-        if vals.get('lang'):
-            domain.append(('lang', '=', vals['lang']))
-        if vals.get('name'):
-            domain.append(('name', '=', vals['name']))
-        existing_ids = self.search(cr, uid, domain)
-        if existing_ids:
-            # Can't update translation:
-            # ir.model.data:The following record has to be re-created
-            '''
-            if len(existing_ids) > 1:
-                ids = existing_ids[0:1]
-                del_ids = existing_ids[1:]
-                self.unlink(cr, uid, del_ids, context=context)
-            else:
-                ids = existing_ids
-            self.write(cr, uid, ids, vals, context=context)
-            return ids[0]
-            '''
-            self.unlink(cr, uid, existing_ids, context=context)
-        # else:
-        return super(ir_translation, self).create(cr, uid, vals, context=context)
+        # Search xml_id
+        if not vals.get('xml_id', False):
+            vals['xml_id'] = self.get_xml_id(cr, uid, vals, context=context)
+
+        if vals.get('xml_id') or vals.get('res_id'):
+            domain.append('&')
+            domain.append('&')
+
+            if vals.get('lang'):
+                domain.append(('lang', '=', vals['lang']))
+            if vals.get('name'):
+                domain.append(('name', '=', vals['name']))
+            if vals.get('xml_id') and vals.get('res_id'):
+                domain.append('|')
+                domain.append(('xml_id', '=', vals['xml_id']))
+                domain.append(('res_id', '=', vals['res_id']))
+            elif vals.get('res_id'):
+                domain.append(('res_id', '=', vals['res_id']))
+            elif vals.get('xml_id'):
+                domain.append(('xml_id', '=', vals['xml_id']))
+
+            existing_ids = self.search(cr, uid, domain)
+            if existing_ids:
+                if len(existing_ids) > 1:
+                    ids = existing_ids[0:1]
+                    del_ids = existing_ids[1:]
+                    self.unlink(cr, uid, del_ids, context=context)
+                else:
+                    ids = existing_ids
+                res = self.write(cr, uid, ids, vals, context=context)
+                return ids[0]
+        res = super(ir_translation, self).create(cr, uid, vals, context=context)
+        return res
+
+    # US_394: add xml_id for each lines
+    def add_xml_ids(self, cr, uid, context=None):
+        domain = [('type', '=', 'model')]
+        translation_ids = self.search(cr, uid, domain, context=context)
+        translation_obj = self.browse(cr, uid, translation_ids, context=context)
+        for translation in translation_obj:
+            if translation['xml_id'] is None:
+                xml_id = self.get_xml_id(cr, uid, translation, context=context)
+                vals = {'xml_id': xml_id}
+                self.write(cr, uid, translation['id'], vals, context=context)
+        return
 
     # US_394: remove orphean ir.translation lines
     def clean_translation(self, cr, uid, context=None):

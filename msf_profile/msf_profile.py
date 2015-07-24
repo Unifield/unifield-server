@@ -51,10 +51,11 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
-    def update_us_394(self, cr, uid, *a, **b):
+    def us_394_2_patch(self, cr, uid, *a, **b):
         print "Start patching ..."
         obj = self.pool.get('ir.translation')
         obj.clean_translation(cr, uid, context={})
+        obj.add_xml_ids(cr, uid, context={})
 
     def update_us_133(self, cr, uid, *a, **b):
         p_obj = self.pool.get('res.partner')
