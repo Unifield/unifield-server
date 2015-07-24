@@ -4430,7 +4430,12 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
+        move_to_done = []
+
         for move in self.browse(cr, uid, ids, context=context):
+            if move.product_qty == 0.00:
+                move_to_done.append(move.id)
+                ids.remove(move.id)
             """
             A stock move can be re-sourced but there are some conditions
 
@@ -4491,6 +4496,8 @@ class stock_move(osv.osv):
                             [move.sale_line_id.procurement_id.id],
                             {'move_id': other_out_move_ids[0]},
                             context=context)
+
+        self.action_done(cr, uid, move_to_done, context=context)
 
         # Search only non unlink move
         ids = self.search(cr, uid, [('id', 'in', ids)])
