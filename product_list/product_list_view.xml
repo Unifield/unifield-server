@@ -72,7 +72,8 @@
                         <field name="order_list_print_ok" />
                     </group>
                     <field name="reviewer_id" />
-                    <field name="parent_id" attrs="{'invisible': [('type', '!=', 'sublist')]}" />
+                    <field name="nb_products" invisible="1" />
+                    <field name="parent_id" attrs="{'invisible': [('type', '!=', 'sublist')], 'readonly': [('nb_products', '!=', 0)]}" />
                     <newline />
                     <field name="warehouse_id" attrs="{'required': [('type', '=', 'sublist'), ('location_id', '=', False)]}" />
                     <field name="location_id" attrs="{'required': [('type', '=', 'sublist'), ('warehouse_id', '=', False)]}" />
@@ -82,7 +83,7 @@
                             <group colspan="4" name="import" string="Import Lines" >
                                 <button name="%(action_add_product_in_list)d" type="action" string="Add multiple products" colspan="4" />
                             </group>
-                            <field name="product_ids" mode="tree" colspan="4" nolabel="1" on_change="change_product_line()">
+                            <field name="product_ids" mode="tree" colspan="4" nolabel="1" on_change="change_product_line(product_ids)">
                                 <tree string="Products" editable="top">
                                     <field name="name" domain="[('list_ids', '=', parent.parent_id)]" />
                                     <field name="comment" />

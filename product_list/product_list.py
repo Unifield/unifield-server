@@ -148,7 +148,7 @@ class product_list(osv.osv):
         ('name_uniq', 'unique (name)', 'A list or sublist with the same name already exists in the system!')
     ]
 
-    def change_product_line(self, cr, uid, ids, context=None):
+    def change_product_line(self, cr, uid, ids, product_ids, context=None):
         '''
         Refresh the old product list
         '''
@@ -159,6 +159,11 @@ class product_list(osv.osv):
                 old_products.append(old_line.id)
 
             res.update({'old_product_ids': old_products})
+
+        if product_ids:
+            res.update({'nb_products': len(product_ids[0][2])})
+        else:
+            res.update({'nb_products': 0})
 
         return {'value': res}
 
