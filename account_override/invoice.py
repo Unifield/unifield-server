@@ -185,6 +185,26 @@ class account_invoice(osv.osv):
             res[id] = vat_ok
 
         return res
+        
+    def _get_can_merge_lines(self, cr, uid, ids, field_name, args,
+        context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+        
+        for inv_br in self.browse(cr, uid, ids, context=context):
+            # US-357: allow merge of line only for draft SI
+            res[inv_br.id] = inv_br.state and inv_br.state == 'draft' \
+                and inv_br.invoice_line \
+                and inv_br.type == 'in_invoice' \
+                and not inv_br.is_direct_invoice \
+                and not inv_br.is_inkind_donation \
+                and not inv_br.is_debit_note \
+                and not inv_br.is_intermission
+        
+        return res
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
@@ -219,6 +239,7 @@ class account_invoice(osv.osv):
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'st_lines': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register lines", readonly=True, help="Register lines that have a link to this invoice."),
+        'can_merge_lines': fields.function(_get_can_merge_lines, method=True, type='boolean', string='Can merge lines ?'),
     }
 
     _defaults = {
@@ -230,6 +251,7 @@ class account_invoice(osv.osv):
         'is_intermission': lambda obj, cr, uid, c: c.get('is_intermission', False),
         'is_direct_invoice': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'can_merge_lines': lambda *a: False,
     }
 
     def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id):
@@ -894,6 +916,10 @@ class account_invoice(osv.osv):
 
     def button_dummy_compute_total(self, cr, uid, ids, context=None):
         return True
+        
+    def button_merge_lines(self, cr, uid, ids, context=None):
+        # US-357 merge lines (by account) button for draft SIs
+        return {}
 
 account_invoice()
 

@@ -56,6 +56,16 @@
                     <button name='invoice_open' position="after">
                         <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
                     </button>
+                    <xpath expr="//field[@name='invoice_line']" position="before">
+                        <!-- US-357 merge lines (by account) button for draft SIs -->
+                        <newline />
+                        <field name="can_merge_lines" invisible="1" />
+                        <button name="button_merge_lines" type="object"
+                            string="Merge Lines" icon="gtk-convert"
+                            confirm="You are about to MERGE invoice lines by account. THIS OPERATION IS IRREVERSIBLE. Are you sure you want to proceed ?"
+                            attrs="{'invisible': [('can_merge_lines', '=', True)]}"
+                        />
+                    </xpath>
                </data>
             </field>
         </record>
