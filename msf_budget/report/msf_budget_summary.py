@@ -311,7 +311,7 @@ class msf_budget_summary_line(osv.osv_memory):
             
         sl_br = self.browse(cr, uid, ids[0], context=context)
         name = self._aji_label_pattern.format(
-            budget_code=sl_br.budget_id.name or '',
+            budget_code=sl_br.budget_id.code or '',
             budget_line=sl_br.name or '')
         
         res = {
