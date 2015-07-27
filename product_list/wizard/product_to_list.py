@@ -60,6 +60,9 @@ class product_to_list(osv.osv_memory):
             string='Products to import',
             readonly=True,
         ),
+        'product_alert': fields.boolean(
+            string='Alert',
+        ),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -125,6 +128,47 @@ class product_to_list(osv.osv_memory):
             'view_mode': 'form,tree',
             'view_type': 'form',
         }
+
+    def list_type_change(self, cr, uid, ids,
+            list_type, list_id,
+            product_ids, context=None):
+        """
+        If the list where we want to put products are a sublist, check
+        if the selected products are in the parent list.
+        """
+        pl_obj = self.pool.get('product.list')
+        pll_obj = self.pool.get('product.list.line')
+        res = {
+            'value': {
+                'product_alert': False,
+            },
+        }
+
+        if list_type in ('exist', 'replace') and list_id:
+            plist = pl_obj.browse(cr, uid, list_id, context=context)
+            if plist.type == 'sublist' and plist.parent_id:
+                tmp_prd = product_ids[0][2]
+                pll_ids = pll_obj.search(cr, uid, [
+                    ('list_id', '=', plist.parent_id.id),
+                    ('name', 'in', product_ids[0][2]),
+                ], context=context)
+                for pll_rd in pll_obj.read(cr, uid, pll_ids, ['name'], context=context):
+                    tmp_prd.remove(pll_rd['name'][0])
+
+                if tmp_prd:
+                    res.update({
+                        'value': {
+                            'product_alert': True,
+                        },
+                        'warning': {
+                            'title': _('Error'),
+                            'message': _("""Some selected products are not in
+the parent list of the selected sublist. Please select only products thate are
+in the parent list."""),
+                        },
+                    })
+
+        return res
 
 product_to_list()
 
