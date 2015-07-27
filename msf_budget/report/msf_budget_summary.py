@@ -148,10 +148,9 @@ class msf_budget_summary(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Budget not found'))
         if summary_br.child_ids:
             raise osv.except_osv(_('Warning'),
-                _('Only childest budget is drillable'))
+                _('Only childest budgets are drillable'))
   
         # build tree
-        context['granularity'] = 'expense'
         if 'commitment' in context:
             del context['commitment']
         root_id = mbsl_obj.build_tree(cr, uid, summary_br, context=context)
@@ -307,7 +306,6 @@ class msf_budget_summary_line(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
-        context['granularity'] = 'expense'
         if 'commitment' in context:
             del context['commitment']
             
