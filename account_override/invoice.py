@@ -202,7 +202,8 @@ class account_invoice(osv.osv):
                 and not inv_br.is_direct_invoice \
                 and not inv_br.is_inkind_donation \
                 and not inv_br.is_debit_note \
-                and not inv_br.is_intermission
+                and not inv_br.is_intermission \
+                or False
         
         return res
 
@@ -919,7 +920,43 @@ class account_invoice(osv.osv):
         
     def button_merge_lines(self, cr, uid, ids, context=None):
         # US-357 merge lines (by account) button for draft SIs
-        return {}
+        def check(inv_br):
+            if not inv_br.can_merge_lines:
+                raise osv.except_osv(
+                    _('Error'),
+                    _("Invoice '%s' not eligible for lines merging") % (
+                        inv_br.name, )
+                )
+            
+            account_iterations = {}
+            for l in inv_br.invoice_line:
+                account_iterations[l.account_id.id] = \
+                    account_iterations.setdefault(l.account_id.id, 0) + 1
+            
+            any_to_merge = False
+            if account_iterations:
+                for a in account_iterations:
+                    if account_iterations[a] > 1:
+                        any_to_merge = True
+                        break
+                        
+            if not any_to_merge:
+                raise osv.except_osv(
+                    _('Error'),
+                    _("Invoice '%s' as no line to merge by account") % (
+                        inv_br.name, )
+                )        
+            
+        res = {}
+        if not ids:
+            return False
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+        
+        for inv_br in self.browse(cr, uid, ids, context=context):
+            check(inv_br)
+            
+        return res
 
 account_invoice()
 
