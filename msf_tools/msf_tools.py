@@ -518,26 +518,15 @@ class ir_translation(osv.osv):
             return name
         return tr
 
-
     @tools.cache(skiparg=3, multi='ids')
     def _get_ids(self, cr, uid, name, tt, lang, ids):
-        translations = dict.fromkeys(ids, False)
+        res = dict.fromkeys(ids, False)
+        res = super(ir_translation, self)._get_ids(cr, uid, name, tt, lang,
+                                                   ids)
         if ids:
-            translation_found = False
-            cr.execute('select res_id,value ' \
-                    'from ir_translation ' \
-                    'where lang=%s ' \
-                        'and type=%s ' \
-                        'and name=%s ' \
-                        'and res_id IN %s',
-                    (lang,tt,name,tuple(ids)))
-            for res_id, value in cr.fetchall():
-                translations[res_id] = value
-                translation_found = True
             # US-394: If translation not found by res_id, search by xml_id
-
-            if not translation_found:
-                for id in ids:
+            for id in ids:
+                if res[id] == False:
                     current_id = id
                     # Get the model name
                     if ',' in name:
@@ -571,8 +560,8 @@ class ir_translation(osv.osv):
                                     'and xml_id=%s',
                                 (lang,tt,name,xml_id))
                         for res_id, value in cr.fetchall():
-                            translations[id] = value
-        return translations
+                            res[id] = value
+        return res
 
     def get_xml_id(self, cr, uid, vals, context=None):
         res = None
