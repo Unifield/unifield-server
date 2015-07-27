@@ -69,14 +69,14 @@ class financing_contract_format_line(osv.osv):
             return False # Just make this condition to False
         elif len(account_destination_list) == 1:
             temp_domain = ['&',
-                    '&',
                     ('general_account_id', '=', account_destination_list[0].account_id.id),
                     ('destination_id', '=', account_destination_list[0].destination_id.id)]
 
-            cc_domain = eval(general_domain['cost_center_domain'])
-            if general_domain.get('funding_pool_domain', False):
-                return temp_domain + ['&'] + [cc_domain] + [eval(general_domain['funding_pool_domain'])]
-            return temp_domain + [cc_domain]
+            #US-385: cc_domain = eval(general_domain['cost_center_domain'])
+            #US-385: if general_domain.get('funding_pool_domain', False):
+            #US-385:     return temp_domain + ['&'] + [cc_domain] + [eval(general_domain['funding_pool_domain'])]
+            #US-385: return temp_domain + [cc_domain]
+            return temp_domain
         else:
             firstElement = self._create_account_couple_domain([account_destination_list[0]], general_domain)
             secondElement = self._create_account_couple_domain(account_destination_list[1:], general_domain)
@@ -224,18 +224,20 @@ class financing_contract_format_line(osv.osv):
             non_corrected_domain = [('is_reallocated', '=', False),('is_reversal', '=', False)]
             format = browse_line.format_id
             if format.eligibility_from_date and format.eligibility_to_date:
+                #### DUY US-385: MOVE THIS TO OUTSIDE OF THE ALL THE LOOPS
                 general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
+                
                 # Account + destination domain
                 account_destination_quadruplet_ids = self._get_accounts_couple_and_quadruplets(browse_line)
-                account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'], general_domain)
+                account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'], False)
                 # get the criteria for accounts of quadruplet mode
                 account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
 
-                date_domain = eval(general_domain['date_domain'])
+                #US-385: date_domain = eval(general_domain['date_domain'])
                 if not account_couple_domain and not account_quadruplet_domain:
                     return [('id', '=', '-1')]
 
-                accounts_criteria = ['&','&', '&', '&', ] + date_domain + non_corrected_domain
+                accounts_criteria = ['&', '&', ] + non_corrected_domain
                 if account_couple_domain and account_quadruplet_domain:
                     accounts_criteria += ['|'] + account_couple_domain + account_quadruplet_domain
                 elif account_couple_domain:

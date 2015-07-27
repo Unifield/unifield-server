@@ -188,14 +188,17 @@ class financing_contract_contract(osv.osv):
         return True
 
     def get_contract_domain(self, cr, uid, browse_contract, reporting_type=None, context=None):
-        # we update the context with the contract reporting type and currency
-        format_line_obj = self.pool.get('financing.contract.format.line')
         # Values to be set
         if reporting_type is None:
             reporting_type = browse_contract.reporting_type
 
         analytic_domain = False
         isFirst = True
+
+        format_line_obj = self.pool.get('financing.contract.format.line')
+        general_domain = format_line_obj._get_general_domain(cr, uid, browse_contract.format_id, reporting_type, context=context)
+        
+        
         # parse parent lines (either value or sum of children's values)
         for line in browse_contract.actual_line_ids:
             if not line.parent_id:
@@ -212,9 +215,26 @@ class financing_contract_contract(osv.osv):
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except Exception as e:
             fp_id = 0
+
+        temp_domain = []
+        cc_domain = eval(general_domain['cost_center_domain'])
+        if general_domain.get('funding_pool_domain', False):
+            temp_domain = ['&'] + [cc_domain] + [eval(general_domain['funding_pool_domain'])]
+        
         res = [('account_id', '!=', fp_id)]
         if analytic_domain:
-            res += analytic_domain
+            res = ['&'] + res + analytic_domain
+        
+        if temp_domain:
+            res = ['&'] + temp_domain + res
+             
+        print "----------------DUY --------------" + str(len(res))
+        i = 0
+        for aaa in res:
+            print "%s - %s" % (i, aaa,)
+            i=i+1
+        
+        print "----------------END --------------" + str(len(res))
         return res
 
     def _get_overhead_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
