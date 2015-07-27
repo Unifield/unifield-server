@@ -125,6 +125,8 @@ class product_list_import(osv.osv_memory):
                     for list_line in list_brw:
                         line_obj.unlink(cr, uid, list_line.id, context=context)
 
+            list_brw = self.browse(cr, uid, list_id, context=context)
+
             fileobj = TemporaryFile('w+')
             fileobj.write(base64.decodestring(file.file_to_import))
 
@@ -160,6 +162,15 @@ class product_list_import(osv.osv_memory):
                     continue
 
                 product_id = product_ids[0]
+                if list_brw.type == 'sublist' and list_brw.parent_id:
+                    pll_ids = line_obj.search(cr, uid, [
+                        ('list_id', '=', list_brw.parent_id.id),
+                        ('name', '=', product_id),
+                    ], context=context)
+                    if not pll_ids:
+                        error += 'Product [%s] %s is not in the parent list %s − Product not imported' % (line[0], line[1], list_brw.parent_id.name)
+                        error += '\n'
+                        continue
 
                 # Check if the product is already in list
                 prd_lines = line_obj.search(cr, uid, [
