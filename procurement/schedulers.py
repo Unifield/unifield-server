@@ -102,7 +102,6 @@ class procurement_order(osv.osv):
                 # Put a lock on procurement.order
                 procurement_obj.write(cr, uid, ids, {}, context=context)
                 for proc in procurement_obj.browse(cr, uid, ids, context=context):
-                    time.sleep(10)
                     if maxdate >= proc.date_planned:
                         try:
                             wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
