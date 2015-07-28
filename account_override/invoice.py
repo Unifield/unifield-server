@@ -945,7 +945,69 @@ class account_invoice(osv.osv):
                     _('Error'),
                     _("Invoice '%s' as no line to merge by account") % (
                         inv_br.name, )
-                )        
+                )
+                
+        def merge(inv_br):
+            # US-357 merge lines
+            # NOTES:
+            # - no impact on 'import_invoice_id', 'is_corrected' as the 
+            #   invoice is draft so not imported, and no accounting entries
+            # - for order_line_id and sale_order_line_id these m2o are used
+            #   for AD at line level but when merging we keep only AD
+            #   from header and user must set again the AD for other lines
+            index = 1
+            vals_template = {
+                'account_id': False,
+                'analytic_distribution_id': False,  # header AD forced
+                'company_id': inv_br.company_id.id,
+                'discount': 0.,
+                'invoice_id': inv_br.id,
+                'invoice_line_tax_id': None,  # m2m (None to distinguished False)
+                'line_number': index,
+                'name': '',
+                'partner_id': inv_br.partner_id.id,
+                'price_subtotal': 0.,
+                'price_unit': 0.,
+                'quantity': 1.,
+            }
+
+            by_account_vals = {}  # key: account_id
+            for l in inv_br.invoice_line:
+                # get current merge val for account or create new
+                if l.account_id.id in by_account_vals:
+                    vals = by_account_vals[l.account_id.id]
+                else:
+                    # new account to merge
+                    vals = vals_template.copy()
+                    vals.update({
+                        'code': l.account_id.code,  # TODO remove
+                        'account_id': l.account_id.id,
+                        'line_number': index,
+                    })
+                    index += 1
+                    
+                # merge line
+                vals.update({
+                   'discount': 0.,
+                })
+                vals['price_subtotal'] += l.price_subtotal
+                vals['price_unit'] += l.price_subtotal
+                if vals['invoice_line_tax_id'] is None:
+                    vals['invoice_line_tax_id'] = l.invoice_line_tax_id
+                else:
+                    # get rid of the product tax line if <> between merged lines
+                    if vals['invoice_line_tax_id'] and l.invoice_line_tax_id:
+                        tax_ids = [ t.id for t in l.invoice_line_tax_id ]
+                        if cmp(vals['invoice_line_tax_id'], tax_ids) == 0:
+                            vals['invoice_line_tax_id'] = tax_ids
+                        else:
+                            vals['invoice_line_tax_id'] = False
+                    else:
+                        vals['invoice_line_tax_id'] = False
+                print vals
+                    
+                # update merge line
+                by_account_vals[l.account_id.id] = vals
             
         res = {}
         if not ids:
@@ -955,6 +1017,7 @@ class account_invoice(osv.osv):
         
         for inv_br in self.browse(cr, uid, ids, context=context):
             check(inv_br)
+            merge(inv_br)
             
         return res
 
