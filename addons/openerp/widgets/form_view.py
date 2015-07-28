@@ -47,6 +47,7 @@ class ViewForm(Form):
         self.context_menu = params.get('context_menu')
         editable = params.editable
         readonly = params.readonly
+        hide_new_button = params.hide_new_button
 
         self.previously_selected = None
         self.previously_selected_length = 0
@@ -94,7 +95,7 @@ class ViewForm(Form):
         
         get_source = params.get_source or False
         self.screen = Screen(prefix='', hastoolbar=True, hassubmenu=True, editable=editable, readonly=readonly,
-                             selectable=params.selectable or 2, get_source=get_source)
+                             selectable=params.selectable or 2, get_source=get_source, hide_new_button=hide_new_button)
 
         if self.screen.widget and self.screen.view_type in ['form', 'tree']:
             self.logs = Logs()
