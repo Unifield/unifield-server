@@ -205,8 +205,9 @@ class financing_contract_contract(osv.osv):
                 # Calculate the all the children lines account domain
                 temp = format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, isFirst, context=context)
                 if analytic_domain:
-                    # if there exist already previous view, just add an OR operator
-                    analytic_domain = ['|'] + analytic_domain + temp
+                    if temp: # US-385: Added this check, otherwise there will be a extra "|" causing error! 
+                        # if there exist already previous view, just add an OR operator
+                        analytic_domain = ['|'] + analytic_domain + temp
                 else:
                     # first time
                     analytic_domain = temp
@@ -216,6 +217,7 @@ class financing_contract_contract(osv.osv):
         except Exception as e:
             fp_id = 0
 
+        #US-385: Move the funding pool and cost center outside the loop, put them at header of the domain
         temp_domain = []
         cc_domain = eval(general_domain['cost_center_domain'])
         if general_domain.get('funding_pool_domain', False):
@@ -227,14 +229,7 @@ class financing_contract_contract(osv.osv):
         
         if temp_domain:
             res = ['&'] + temp_domain + res
-             
-        print "----------------DUY --------------" + str(len(res))
-        i = 0
-        for aaa in res:
-            print "%s - %s" % (i, aaa,)
-            i=i+1
-        
-        print "----------------END --------------" + str(len(res))
+            
         return res
 
     def _get_overhead_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
