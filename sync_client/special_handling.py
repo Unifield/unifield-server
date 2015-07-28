@@ -195,3 +195,31 @@ class ir_model_data(osv.osv):
 
 
 ir_model_data()
+
+
+class sync_ir_translation(osv.osv):
+    _name = 'ir.translation'
+    _inherit = 'ir.translation'
+
+    def _reset_cache(self, cr, uid, ids, field_name, field_value, arg, context):
+        self._get_source.clear_cache(cr.dbname)
+        self._get_ids.clear_cache(cr.dbname)
+        return True
+
+    def _get_reset_cache_at_sync(self, cr, uid, ids, field_name, arg,
+                                 context=None):
+        self._get_source.clear_cache(cr.dbname)
+        self._get_ids.clear_cache(cr.dbname)
+        return True
+
+    _columns = {
+        'reset_cache_at_sync': fields.function(_get_reset_cache_at_sync,
+                                               fnct_inv=_reset_cache,
+                                               type="boolean", method=True,
+                                               store=False),
+    }
+
+    _defaults = {
+        'reset_cache_at_sync': True,
+    }
+sync_ir_translation()
