@@ -328,7 +328,7 @@
                                 colspan="4"
                                 nolabel="1"
                                 widget="one2many_list"
-                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'date_expected': min_date, 'reason_type_id': reason_type_id}"
+                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'date_expected': min_date, 'reason_type_id': reason_type_id, 'from_wkf': from_wkf}"
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
                                 >
@@ -581,7 +581,7 @@
                             <field name="from_wkf" invisible="1"/>
                             <field name="subtype" invisible="1" />
                             <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
-                                default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}"
+                                default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 on_change="onchange_move()"
                                 >
@@ -870,7 +870,7 @@
                                 colspan="4"
                                 nolabel="1"
                                 widget="one2many_list"
-                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'date_expected': min_date, 'reason_type_id': reason_type_id, 'partner_id': partner_id2}"
+                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'date_expected': min_date, 'reason_type_id': reason_type_id, 'partner_id': partner_id2, 'from_wkf': from_wkf}"
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date, 'partner_id': partner_id2}"
                                 on_change="onchange_move()"
                                 >
