@@ -61,7 +61,7 @@
                         <newline />
                         <field name="can_merge_lines" invisible="1" />
                         <button name="button_merge_lines" type="object"
-                            string="Merge Lines" icon="gtk-convert"
+                            string="Merge Lines by Account" icon="gtk-convert"
                             confirm="You are about to MERGE invoice lines by account. THIS OPERATION IS IRREVERSIBLE. Are you sure you want to proceed ?"
                             attrs="{'invisible': [('can_merge_lines', '!=', True)]}"
                         />

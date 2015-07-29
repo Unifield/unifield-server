@@ -145,14 +145,16 @@ class account_invoice(osv.osv):
             # Group by account (those from purchase order line)
             for invl in inv.invoice_line:
                 # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
-                if not invl.order_line_id \
-                    and not inv.purchase_ids:  # US-357 tolerate lines without order (merge lines)
-                    continue
-                # Fetch purchase order line account
                 if not invl.order_line_id:
+                    if not inv.is_merged_by_account:
+                        continue
+                    # US-357 tolerate merge lines without PO line link
+                        
+                # Fetch purchase order line account
+                if inv.is_merged_by_account:
                     if not invl.account_id:
                         continue
-                    # US-357: case of merged lines without product (get directly account)
+                    # US-357: lines without product (get directly account)
                     a = invl.account_id.id
                 else:
                     pol = invl.order_line_id

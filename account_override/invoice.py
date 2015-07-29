@@ -241,6 +241,7 @@ class account_invoice(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'st_lines': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register lines", readonly=True, help="Register lines that have a link to this invoice."),
         'can_merge_lines': fields.function(_get_can_merge_lines, method=True, type='boolean', string='Can merge lines ?'),
+        'is_merged_by_account': fields.boolean("Is merge by account"),
     }
 
     _defaults = {
@@ -253,6 +254,7 @@ class account_invoice(osv.osv):
         'is_direct_invoice': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'can_merge_lines': lambda *a: False,
+        'is_merged_by_account': lambda *a: False,
     }
 
     def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id):
@@ -1064,7 +1066,19 @@ class account_invoice(osv.osv):
                 if not self.pool.get('account.invoice.line').create(cr, uid,
                     vals, context=context):
                     break
+                    
+        def merge_invoice(inv_br):
+            check(inv_br)
+            res_vals = compute_merge(inv_br)
+            delete_lines(inv_br)
+            do_merge(inv_br, res_vals)
             
+            # set merged flag
+            inv_br.write({'is_merged_by_account': True}, context=context)
+            
+            # recompute taxes (reset not manual ones)
+            self.button_reset_taxes(cr, uid, [inv_br.id], context=context)
+                                
         res = {}
         if not ids:
             return False
@@ -1075,12 +1089,7 @@ class account_invoice(osv.osv):
         ad_obj = self.pool.get('analytic.distribution')
         
         for inv_br in self.browse(cr, uid, ids, context=context):
-            check(inv_br)
-            res_vals = compute_merge(inv_br)
-            delete_lines(inv_br)
-            do_merge(inv_br, res_vals)
-            # recompute taxes (reset not manual ones)
-            self.button_reset_taxes(cr, uid, [inv_br.id], context=context)
+            merge_invoice(inv_br)
             
         return res
 
