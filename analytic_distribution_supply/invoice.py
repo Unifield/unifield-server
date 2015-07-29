@@ -145,18 +145,25 @@ class account_invoice(osv.osv):
             # Group by account (those from purchase order line)
             for invl in inv.invoice_line:
                 # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
-                if not invl.order_line_id:
+                if not invl.order_line_id \
+                    and not inv.purchase_ids:  # US-357 tolerate lines without order (merge lines)
                     continue
                 # Fetch purchase order line account
-                pol = invl.order_line_id
-                if pol.product_id:
-                    a = pol.product_id.product_tmpl_id.property_account_expense.id
-                    if not a:
-                        a = pol.product_id.categ_id.property_account_expense_categ.id
-                    if not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id,))
+                if not invl.order_line_id:
+                    if not invl.account_id:
+                        continue
+                    # US-357: case of merged lines without product (get directly account)
+                    a = invl.account_id.id
                 else:
-                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+                    pol = invl.order_line_id
+                    if pol.product_id:
+                        a = pol.product_id.product_tmpl_id.property_account_expense.id
+                        if not a:
+                            a = pol.product_id.categ_id.property_account_expense_categ.id
+                        if not a:
+                            raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id,))
+                    else:
+                        a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
                 invoice_lines[a].append(invl)
             # Browse result
             diff_lines = []
