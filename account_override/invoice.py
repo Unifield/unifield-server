@@ -241,7 +241,7 @@ class account_invoice(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'st_lines': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register lines", readonly=True, help="Register lines that have a link to this invoice."),
         'can_merge_lines': fields.function(_get_can_merge_lines, method=True, type='boolean', string='Can merge lines ?'),
-        'is_merged_by_account': fields.boolean("Is merge by account"),
+        'is_merged_by_account': fields.boolean("Is merged by account"),
     }
 
     _defaults = {
