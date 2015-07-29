@@ -992,7 +992,8 @@ class account_invoice(osv.osv):
                 # merge line
                 vals['price_unit'] += l.price_subtotal  # qty 1 and price
                 if vals['invoice_line_tax_id'] is None:
-                    vals['invoice_line_tax_id'] = l.invoice_line_tax_id
+                    vals['invoice_line_tax_id'] = l.invoice_line_tax_id \
+                        and [ t.id for t in l.invoice_line_tax_id ] or False
                 else:
                     # get rid of the product tax line if <> between merged lines
                     if vals['invoice_line_tax_id'] is None:
@@ -1061,6 +1062,10 @@ class account_invoice(osv.osv):
                     and ad_obj.copy(cr, uid,
                         inv_br.analytic_distribution_id.id,
                         {}, context=context) or False
+                        
+                # post encode tax m2m
+                vals['invoice_line_tax_id'] = vals['invoice_line_tax_id'] \
+                    and [(6, 0, vals['invoice_line_tax_id'])] or False
                 
                 # create merge line
                 if not self.pool.get('account.invoice.line').create(cr, uid,
