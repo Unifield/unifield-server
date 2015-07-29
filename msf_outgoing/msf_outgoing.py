@@ -3233,6 +3233,10 @@ class stock_picking(osv.osv):
             if picking.type == 'out' and picking.sale_id and picking.sale_id.procurement_request:
                 wf_service.trg_write(uid, 'sale.order', picking.sale_id.id, cr)
 
+        # US-397: point 2) Generate RW messages manually and put into the queue when a partial OUT is done
+        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+            self._manual_create_rw_messages(cr, uid, context=context)
+        
         return res
 
     @check_cp_rw
