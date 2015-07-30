@@ -1343,11 +1343,11 @@ class stock_inventory(osv.osv):
         return super(stock_inventory, self).copy(cr, uid, inventory_id, defaults, context=context)
 
     _columns = {
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
     }
 
     _constraints = [

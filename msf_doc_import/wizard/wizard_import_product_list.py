@@ -52,7 +52,7 @@ class wizard_import_product_list(osv.osv):
                               The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order :
                               Product Code*, Product Description*, Comment"""),
         'message': fields.text(string='Message', readonly=True),
-        'list_id': fields.many2one('product.list', string='List', required=True),
+        'list_id': fields.many2one('product.list', string='List', required=True, ondelete='cascade'),
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
         'filename_template': fields.char('Templates', size=256),
