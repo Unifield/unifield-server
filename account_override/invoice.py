@@ -924,11 +924,8 @@ class account_invoice(osv.osv):
         # US-357 merge lines (by account) button for draft SIs
         def check(inv_br):
             if not inv_br.can_merge_lines:
-                raise osv.except_osv(
-                    _('Error'),
-                    _("Invoice '%s' not eligible for lines merging") % (
-                        inv_br.name, )
-                )
+                raise osv.except_osv(_('Error'),
+                    _("Invoice not eligible for lines merging"))
             
             account_iterations = {}
             for l in inv_br.invoice_line:
@@ -943,11 +940,8 @@ class account_invoice(osv.osv):
                         break
                         
             if not any_to_merge:
-                raise osv.except_osv(
-                    _('Error'),
-                    _("Invoice '%s' as no line to merge by account") % (
-                        inv_br.name, )
-                )
+                raise osv.except_osv(_('Error'),
+                    _("Invoice has no line to merge by account"))
                 
         def compute_merge(inv_br):
             """
