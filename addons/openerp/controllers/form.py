@@ -654,7 +654,7 @@ class Form(SecuredController):
                     current.ids.remove(current.id)
             params.count -= 1
             if not len(current.ids) and params.count > 0:
-                params.offset = params.offset - params.limit
+                params.offset = max(params.offset - params.limit, 0)
                 current.ids = proxy.search([], params.offset, params.limit,0, ctx)
                 idx = -1
             if idx == len(current.ids):
