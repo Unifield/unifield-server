@@ -71,7 +71,7 @@
                     &currency;
                     <group colspan="4" col="6">
                         <separator string="Third Party" colspan="6"/>
-                        <field name="partner_id" colspan="2"/>
+                        <field name="partner_id" colspan="2" context="{'show_button_show_inactive':1}" />
                         <field name="employee_id" colspan="2" context="{'disrupt_inactive': True}"/>
                         <field name="transfer_journal_id" colspan="2"/>
                     </group>
