@@ -1083,6 +1083,13 @@ class account_invoice(osv.osv):
             
             # recompute taxes (reset not manual ones)
             self.button_reset_taxes(cr, uid, [inv_br.id], context=context)
+            
+        def post_merge(inv_br):
+            inv_br.write({
+                # update check total for accurate check amount at validation
+                'check_total':
+                    inv_br.amount_total or inv_br.check_amount or 0.,
+            }, context=context)
                                 
         res = {}
         if not ids:
@@ -1093,8 +1100,13 @@ class account_invoice(osv.osv):
         ail_obj = self.pool.get('account.invoice.line')
         ad_obj = self.pool.get('analytic.distribution')
         
+        # merging
         for inv_br in self.browse(cr, uid, ids, context=context):
             merge_invoice(inv_br)
+            
+        # post processing (reload invoices)
+        for inv_br in self.browse(cr, uid, ids, context=context):
+            post_merge(inv_br)
             
         return res
 
