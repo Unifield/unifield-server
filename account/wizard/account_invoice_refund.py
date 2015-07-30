@@ -220,7 +220,7 @@ class account_invoice_refund(osv.osv_memory):
                             'number': False,
                             'invoice_line': invoice_lines,
                             'tax_line': tax_lines,
-                            'period_id': period,
+                            'period_id': False,
                             'name': description
                         })
                         for field in self._hook_fields_m2o_for_modify_refund(cr, uid):
