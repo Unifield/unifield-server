@@ -34,12 +34,7 @@ import logging
 
 class procurement_order(osv.osv):
     _inherit = 'procurement.order'
-    __lock = False
     
-    def __init__(self, *a, **b):
-        self.__lock = Lock()
-        super(procurement_order, self).__init__(*a, **b)
-
     def _hook_request_vals(self, cr, uid, *args, **kwargs):
         '''
         Hook to change the request values
@@ -69,16 +64,10 @@ class procurement_order(osv.osv):
         if context is None:
             context = {}
 
-        locked = context.get('run_id')
         try:
             if use_new_cursor:
                 cr = pooler.get_db(use_new_cursor).cursor()
             wf_service = netsvc.LocalService("workflow")
-
-            if locked:
-                logger.info('Start scheduler with lock, try to acquire lock')
-                self.__lock.acquire()
-                logger.info('Lock acquired')
 
             procurement_obj = self.pool.get('procurement.order')
             if not ids:
@@ -105,7 +94,6 @@ class procurement_order(osv.osv):
                     if maxdate >= proc.date_planned:
                         try:
                             wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
-                            cr.commit()
                         except except_orm, e:
                             ids.remove(proc.id)
                             continue
@@ -176,9 +164,6 @@ class procurement_order(osv.osv):
             if use_new_cursor:
                 cr.commit()
         finally:
-            if locked:
-                self.__lock.release()
-                logger.info('Lock released')
             if use_new_cursor:
                 try:
                     cr.close()
