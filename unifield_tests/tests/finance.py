@@ -723,14 +723,17 @@ class FinanceTest(UnifieldTest):
                                     break
                                     
                         if ad_line_val:
-                            ad_line_val['percentage'] = percent  # line write workarround (always needed percentage in vals)
+                            # line write workarround
+                            #(always needed percentage in vals)
+                            ad_line_val['percentage'] = percent  
                             wizard_adl_obj.write([adwl_r['id']], ad_line_val)
                             
                     # supply update amount from cc lines
                     # NOTE: for finance (state != 'cc') the amount is to be
                     # computed from amount of fp lines
                     if wizard_ad_br.state != 'cc':
-                        for adwl_r in wizard_adl_obj.read(line_ids, ['amount']):
+                        for adwl_r \
+                            in wizard_adl_obj.read(line_ids, ['amount']):
                             total_amount += adwl_r['amount']
             
                 if wizard_ad_br.fp_line_ids:
@@ -773,7 +776,9 @@ class FinanceTest(UnifieldTest):
                                     break
                                     
                         if ad_line_val or is_percent_replaced:
-                            ad_line_val['percentage'] = percent  # line write workarround (always needed percentage in vals)
+                            # line write workarround
+                            # (always needed percentage in vals)
+                            ad_line_val['percentage'] = percent  
                             wizard_adfpl_obj.write([adwl_r['id']], ad_line_val)
                                               
                     # finance update amount from fp lines
@@ -798,10 +803,12 @@ class FinanceTest(UnifieldTest):
                         for l in wizard_ad_br.fp_line_ids ]
                 if del_vals:
                     wizard_ad_obj.write([wizard_ad_id], del_vals)"""
-                todel_ids = wizard_adl_obj.search([('wizard_id', '=', wizard_ad_br.id)])
+                todel_ids = wizard_adl_obj.search(
+                    [('wizard_id', '=', wizard_ad_br.id)])
                 if todel_ids:
                     wizard_adl_obj.unlink(todel_ids)
-                todel_ids = wizard_adfpl_obj.search([('wizard_id', '=', wizard_ad_br.id)])
+                todel_ids = wizard_adfpl_obj.search(
+                    [('wizard_id', '=', wizard_ad_br.id)])
                 if todel_ids:
                     wizard_adfpl_obj.unlink(todel_ids)
                     
@@ -974,7 +981,8 @@ class FinanceTest(UnifieldTest):
         ]) or []
         # FIXME way of truely getting AJIs when cor of cor
         
-        if expected_ad and not cor_level > 1:  # FIXME remove and not cor_level > 1
+        # FIXME remove and not cor_level > 1
+        if expected_ad and not cor_level > 1:  
             # check AJIs
             self.assert_(
                 len(base_aji_ids) == len(expected_ad),
@@ -990,7 +998,8 @@ class FinanceTest(UnifieldTest):
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
-                        aal_br.amount_currency == ((ji_amount * percent) / 100.):  # percent match ?
+                        # percent match ?
+                        aal_br.amount_currency == ((ji_amount * percent) / 100.):  
                         match_count += 1
                         break
                         
@@ -1027,7 +1036,8 @@ class FinanceTest(UnifieldTest):
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
-                        aal_br.amount_currency == (((ji_amount * percent) / 100.) * -1):
+                        aal_br.amount_currency == \
+                            (((ji_amount * percent) / 100.) * -1):
                         match_count += 1
                         break
                         
@@ -1073,7 +1083,8 @@ class FinanceTest(UnifieldTest):
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
-                        aal_br.amount_currency == ((ji_amount * percent) / 100.):  # percent match ?
+                        aal_br.amount_currency == \
+                            ((ji_amount * percent) / 100.):  # percent match ?
                         match_count += 1
                         break
                         
@@ -1135,7 +1146,10 @@ class FinanceTest(UnifieldTest):
             "Move creation failed with these values: %s" % move_vals
         )
         # Create some move lines
-        account_ids = account_obj.search([('is_analytic_addicted', '=', True), ('code', '=', '6101-expense-test')])
+        account_ids = account_obj.search([
+            ('is_analytic_addicted', '=', True),
+            ('code', '=', '6101-expense-test')]
+        )
         random_account = randint(0, len(account_ids) - 1)
         vals = {
             'move_id': move_id,
@@ -1145,10 +1159,13 @@ class FinanceTest(UnifieldTest):
         }
         # Search analytic distribution
         distribution_ids = distrib_obj.search([('name', '=', 'DISTRIB 1')])
-        distribution_id = distrib_obj.copy(distribution_ids[0], {'name': 'distribution-test'})
+        distribution_id = distrib_obj.copy(distribution_ids[0],
+            {'name': 'distribution-test'})
         vals.update({'analytic_distribution_id': distribution_id})
         aml_expense_id = aml_obj.create(vals)
-        counterpart_ids = account_obj.search([('is_analytic_addicted', '=', False), ('code', '=', '401-supplier-test'), ('type', '!=', 'view')])
+        counterpart_ids = account_obj.search([
+            ('is_analytic_addicted', '=', False),
+            ('code', '=', '401-supplier-test'), ('type', '!=', 'view')])
         random_counterpart = randint(0, len(counterpart_ids) - 1)
         vals.update({
             'account_id': counterpart_ids[random_counterpart],
@@ -1158,7 +1175,9 @@ class FinanceTest(UnifieldTest):
         })
         aml_counterpart_id = aml_obj.create(vals)
         # Validate the journal entry
-        move_obj.button_validate([move_id]) # WARNING: we use button_validate so that it check the analytic distribution validity/presence
+        # WARNING: we use button_validate so that it check the analytic
+        # distribution validity/presence
+        move_obj.button_validate([move_id]) 
         return move_id, aml_expense_id, aml_counterpart_id
     
     def get_period_id(self, db, month, year=0):
@@ -1229,9 +1248,10 @@ class FinanceTest(UnifieldTest):
             else:
                 period_obj.action_close_hq([period_id])
                 
-    def invoice_create_supplier_invoice(self, db, ccy_code=False, is_refund=False,
-        date=False, partner_id=False, ad_header_breakdown_data=False, 
-        lines_accounts=[], validate=False, tag="UNIT_TEST"):
+    def invoice_create_supplier_invoice(self, db, ccy_code=False,
+        is_refund=False, date=False, partner_id=False,
+        ad_header_breakdown_data=False, lines_accounts=[], validate=False,
+        tag="UNIT_TEST"):
         """
         create a supplier invoice or
         :param ccy_code: ccy code (partner ccy if not set)
