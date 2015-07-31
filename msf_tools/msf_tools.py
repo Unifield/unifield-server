@@ -144,7 +144,7 @@ class date_tools(osv.osv):
             return time.strftime(d_format, date)
 
     def orm2date(self, dt):
-        if isinstance(dt, str):
+        if isinstance(dt, basestring):
             st = time.strptime(dt, DEFAULT_SERVER_DATE_FORMAT)
             dt = date(st[0], st[1], st[2])
         return dt
@@ -156,7 +156,7 @@ class date_tools(osv.osv):
         return dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
 
     def orm2datetime(self, dt):
-        if isinstance(dt, str):
+        if isinstance(dt, basestring):
             st = time.strptime(dt, DEFAULT_SERVER_DATETIME_FORMAT)
             dt = datetime(st[0], st[1], st[2], st[3], st[4], st[5])
         return dt
