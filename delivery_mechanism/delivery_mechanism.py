@@ -166,7 +166,8 @@ class stock_move(osv.osv):
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             # UF-1797: when we duplicate a doc we delete the link with the poline
-            defaults.update(purchase_line_id=False)
+            if 'purchase_line_id' not in defaults:
+                defaults.update(purchase_line_id=False)
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
                 input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
@@ -989,6 +990,7 @@ class stock_picking(osv.osv):
                         done_moves.append(move.id)
                     else:
                         values['state'] = 'assigned'
+                        values['purchase_line_id'] = move.purchase_line_id and move.purchase_line_id.id or False
                         context['keepLineNumber'] = True
                         new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                         context['keepLineNumber'] = False

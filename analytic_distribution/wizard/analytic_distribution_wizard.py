@@ -967,7 +967,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             # For funding pool analytic account, check is done on DOCUMENT date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
             if w.distribution_id and w.document_date:
                 # We only check funding pool distribution line on which there is funding pool analytic account
-                for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.posting_date}):
+                # US-419: Fixed the typo error, to use posting date instead of document date
+                for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.document_date}):
                     if not fpline.analytic_id.filter_active:
                         raise osv.except_osv(_('Error'), _('Funding Pool %s is not active at this date: %s') % (fpline.analytic_id.code or '', w.document_date))
         return True

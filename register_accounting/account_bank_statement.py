@@ -1906,7 +1906,8 @@ class account_bank_statement_line(osv.osv):
         # Then update analytic distribution
         res = []
         must_return = False
-        if 'employee_id' or 'partner_type' in values:
+        # US-351: fixed the wrong condition
+        if 'employee_id' in values or 'partner_type' in values:
             must_return = True
             for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'statement_id', 'first_move_line_id', 'move_ids']):
                 account_id = line.get('account_id')[0]
@@ -1917,13 +1918,18 @@ class account_bank_statement_line(osv.osv):
 
                 old_distrib = False
                 if line.get('analytic_distribution_id', False):
-                    old_distrib = line.get('analytic_distribution_id')[0] 
-                values = self.update_employee_analytic_distribution(cr, uid, values)
+                    old_distrib = line.get('analytic_distribution_id')[0]
+
+                # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync  
+                if not context.get('sync_update_execution'):
+                    values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance 
+
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 res.append(tmp)
 
-                new_distrib = values.get('analytic_distribution_id', False) 
-                if old_distrib != new_distrib and line.get('first_move_line_id', False) and line.get('move_ids', False):
+                new_distrib = values.get('analytic_distribution_id', False)
+                # US-351: Fixed the wrong condition 
+                if new_distrib and old_distrib != new_distrib and line.get('first_move_line_id', False) and line.get('move_ids', False):
                     first_move_line_id = line.get('first_move_line_id')[0]
                     move_ids = line.get('move_ids')[0]
                     if isinstance(move_ids, (int, long)):

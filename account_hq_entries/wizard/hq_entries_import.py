@@ -30,6 +30,8 @@ from tools.translate import _
 import time
 #import locale
 from account_override import ACCOUNT_RESTRICTED_AREA
+from tools.misc import ustr
+
 
 class hq_entries_import_wizard(osv.osv_memory):
     _name = 'hq.entries.import'
@@ -95,10 +97,8 @@ class hq_entries_import_wizard(osv.osv_memory):
         # [utp-928]
         # Make it impossible to import HQ entries where Doc Date > Posting Date,
         # it will spare trouble at HQ entry validation.
-        if dd and line_date and dd > line_date:
-            raise osv.except_osv(_('Error'),
-                                  _('Document date "%s" is greater than Posting date "%s"') % (document_date, line_date)
-            )
+        self.pool.get('finance.tools').check_document_date(cr, uid,
+            dd, line_date, show_date=True)
         # Retrieve account
         if account_description:
             account_data = account_description.split(' ')
@@ -204,6 +204,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Search if 3RD party exists as employee
         emp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', third_party)])
         # If yes, get its analytic distribution
+        employee = False
         if len(emp_ids) and len(emp_ids) == 1:
             employee = self.pool.get('hr.employee').browse(cr, uid, emp_ids)[0]
             if employee.destination_id and employee.destination_id.id:
@@ -240,27 +241,36 @@ class hq_entries_import_wizard(osv.osv_memory):
         if booking_amount:
             vals.update({'amount': booking_amount,})
 
-        # BKLG-63: unicity check
+        # BKLG-63/US-414: unicity check
         # Description (name), Reference (ref), Posting date (date),
         # Document date (document_date), Amount (amount),
-        # and Account (account_id)
-        unicity_fields = (
-            'name', 'ref', 'date', 'document_date', 'amount', 'account_id'
-        )
+        # and Account (account_id) and 3rd Party and CC
+        unicity_fields = [
+            'name', 'ref', 'date', 'document_date', 'amount', 'account_id',
+            'cost_center_id',
+        ]
 
         unicity_domain = [
             (f, '=', vals.get(f, False)) for f in unicity_fields
         ]
+        # US-414: add 3rd party for unicity check
+        unicity_domain.append(('partner_txt', '=', third_party or False))
 
         if hq_obj.search(cr, uid, unicity_domain, limit=1, context=context):
             # raise unicity check failure
             # (fields listed like in csv order for user info)
-            pattern = _("Entry already imported: %s / %s/ %s (doc) /" \
-                " %s (posting) / %s (account) / %s (amount)")
+            emp_cc_id = employee and employee.cost_center_id
+
+            pattern = _("Entry already imported: %s / %s / %s (doc) /" \
+                " %s (posting) / %s (account) / %s (amount) / %s (3rd party) /" \
+                " %s (%s)")
             raise osv.except_osv(_('Error'), pattern % (
                 description, reference, document_date, date,
-                    account_description, booking_amount, )
-            )
+                account_description, booking_amount,
+                ustr(third_party),
+                emp_cc_id and emp_cc_id.name or cost_center,
+                emp_cc_id and 'Emp default CC' or 'CC'
+            ))
 
         # Line creation
         res = hq_obj.create(cr, uid, vals)

@@ -164,12 +164,12 @@ class wizard_import_invoice(osv.osv_memory):
             amount_cur = 0
 
             for line in ordered_lines[key]:
-                    if line.journal_id.type in ['purchase_refund','sale_refund']:
-                        amount_cur -= line.amount_residual_import_inv
-                    else:
-                        amount_cur += line.amount_residual_import_inv
-                        
-                    total += line.amount_currency
+                residual = line.amount_residual_import_inv \
+                    if line.amount_currency > 0 \
+                    else -line.amount_residual_import_inv
+                amount_cur += residual
+                total += line.amount_currency
+                
             # Search register line reference size
             ref_field_data = self.pool.get('account.bank.statement.line').fields_get(cr, uid, ['ref'])
             size = 0
