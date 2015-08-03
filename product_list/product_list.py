@@ -273,7 +273,38 @@ product and can't be deleted"""),
         ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
         ('xmlid_code', "unique(xmlid_code)", 'The xmlid_code must be unique'),
     ]
-    
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Customize the search() method to include the search of products in a specific list
+        """
+        pl_obj = self.pool.get('product.list')
+        pll_obj = self.pool.get('product.list.line')
+
+        iargs = -1
+        for a in args:
+            iargs += 1
+            if a[0] == 'sublist':
+                prd_domain = set()
+                pl_ids = pl_obj.search(cr, uid, [
+                    ('name', a[1], a[2])
+                ], context=context)
+                pll_ids = pll_obj.search(cr, uid, [
+                    ('list_id', 'in', pl_ids),
+                ], context=context)
+                for line in pll_obj.browse(cr, uid, pll_ids, context=context):
+                    prd_domain.add(line.name.id)
+
+                del args[iargs]
+                args.append(('id', 'in', list(prd_domain)))
+
+                # In case of no list found or no line in lists, empty list
+                if not prd_domain:
+                    return []
+
+        return super(product_product, self).search(cr, uid, args, offset, limit, order, context, count)
+
+
     def write(self, cr, uid, ids, value, context=None):
         single = False
         if isinstance(ids, (long, int)):
