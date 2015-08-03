@@ -2614,7 +2614,20 @@ class sale_order_line(osv.osv):
         '''
         context = context is None and {} or context
 
-        if not context.get('noraise') and not context.get('import_in_progress'):
+        if context.get('button') in ['button_remove_lines', 'check_lines_to_fix', 'add_multiple_lines', 'wizard_import_ir_lines']:
+            return True
+
+        btns = [
+            'button_remove_lines',
+            'check_lines_to_fix',
+            'add_multiple_lines',
+            'wizard_import_ir_lines',
+        ]
+        cond1 = context.get('button') not in btns
+        cond2 = not ontext.get('noraise')
+        cond3 = not context.get('import_in_progress')
+
+        if cond1 and cond2 and cond3:
             empty_lines = False
             if ids and not 'product_uom_qty' in vals:
                 empty_lines = self.search(cr, uid, [
