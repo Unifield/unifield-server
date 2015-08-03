@@ -412,7 +412,7 @@ class List(TinyWidget):
                 buttons += [Button(**attrs)]
                 headers.append(("button", len(buttons)))
             elif node.nodeName == 'separator':
-                headers += [("separator", {'type': 'separator', 'string': '|'})]
+                headers += [("separator", {'type': 'separator', 'string': '|', 'not_sortable': 1})]
             elif node.nodeName == 'field':
                 attrs = node_attributes(node)
 
