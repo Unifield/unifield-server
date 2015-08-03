@@ -412,7 +412,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
 
             for sup in s_ids:
                 tree_view += """
-                    <separator string="|" type="separator" />
+                    <separator string="|" type="separator" not_sortable="1" />
                     <button
                         name="select_supplier_%(sid)s"
                         icon="terp-mail-forward"
@@ -429,7 +429,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
 
                 for fld in fld_to_add:
                     tree_view += """
-                        <field name="%s_%s" readonly="1" />
+                        <field name="%s_%s" readonly="1" not_sortable="1"/>
                      """ % (fld, sup.id)
 
             if s_ids:
