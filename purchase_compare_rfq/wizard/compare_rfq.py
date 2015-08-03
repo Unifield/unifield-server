@@ -260,16 +260,16 @@ class wizard_compare_rfq_line(osv.osv_memory):
         ),
         'rfq_line_id': fields.many2one(
             'purchase.order.line',
-            string='Choosen RfQ line',
+            string='Selected RfQ line',
         ),
         'choosen_supplier_id': fields.many2one(
             'res.partner',
-            string='Choosen supplier',
+            string='Selected supplier',
         ),
         'choosen_supplier_name': fields.related(
             'choosen_supplier_id',
             'name',
-            string='Choosen supplier',
+            string='Selected supplier',
             type='char',
             size=256,
         ),
