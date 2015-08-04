@@ -365,7 +365,6 @@ class account_move_line_compute_currency(osv.osv):
         # Prepare some values
         cur_obj = self.pool.get('res.currency')
         analytic_obj = self.pool.get('account.analytic.line')
-        reconciled_move = {}
         for move_line in self.browse(cr, uid, ids):
             if move_line.is_addendum_line:
                 # addendum line will be reevaluated after the reevaluation of the reconlied lines
@@ -425,12 +424,6 @@ class account_move_line_compute_currency(osv.osv):
                 for analytic_line in move_line.analytic_lines:
                     analytic_line_ids.append(analytic_line.id)
                 analytic_obj.update_amounts(cr, uid, analytic_line_ids)
-            # Reconciliation verification
-            if move_line.reconcile_id:
-                reconciled_move[move_line.reconcile_id.id] = True
-#                self.reconciliation_update(cr, uid, [move_line.id])
-        if reconciled_move:
-            self.reconciliation_update(cr, uid, reconciled_move.keys())
         return True
 
     def check_date(self, cr, uid, vals):
