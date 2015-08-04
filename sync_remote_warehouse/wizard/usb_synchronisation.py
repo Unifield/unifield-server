@@ -4,10 +4,13 @@ import time
 import dateutil.parser
 import base64
 from cStringIO import StringIO
-
+import pooler
+import threading
+import tools
+import logging
+import traceback
 from osv import osv, fields
 from tools.translate import _
-
 
 class usb_synchronisation(osv.osv_memory):
     _name = 'usb_synchronisation'
@@ -16,8 +19,18 @@ class usb_synchronisation(osv.osv_memory):
         return self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
     
     def _get_usb_sync_step(self, cr, uid, context):
+        if self.search(cr, uid, [('in_progress', '=', True)]):
+            return 'In Progress'
         return self._get_entity(cr, uid, context).usb_sync_step
-    
+
+    def _get_pull_result(self, cr, uid, context):
+        if self.search(cr, uid, [('in_progress', '=', True)]):
+            return 'Pull in progress'
+        prev_id = self.search(cr, uid, [('execute_in_background', '=', True)], order='id desc', limit=1)
+        if prev_id:
+            return "Previous pull result:\n%s" % self.read(cr, uid, prev_id[0], ['pull_result'])['pull_result']
+        return ''
+
     def _get_entity_last_push_file(self, cr, uid, ids=None, field_name=None, arg=None, context=None):
         return dict.fromkeys(ids, self._get_entity(cr, uid, context).usb_last_push_file)
     
@@ -55,12 +68,17 @@ class usb_synchronisation(osv.osv_memory):
         'patch_file' : fields.function(_get_entity_last_tarball_patches, type='binary', method=True, string='Tarball Patches'),
         'patch_file_name' : fields.function(_get_entity_last_tarball_file_name, type='char', method=True, string='Tarball Patches File Name'),
         'patch_file_visible': fields.boolean('Tarball Patch File Visible'),
+        'in_progress': fields.boolean('In progress'),
+        'execute_in_background': fields.boolean('Background Execution'),
     }
     
     _defaults = {
+        'in_progress': False,
+        'execute_in_background': False,
         'usb_sync_step': _get_usb_sync_step,
         'push_file_visible': False,
         'patch_file_visible': False,
+        'pull_result': _get_pull_result,
     }
     
     def _check_usb_instance_type(self, cr, uid, context):
@@ -182,7 +200,75 @@ class usb_synchronisation(osv.osv_memory):
             context.update({'rw_pull_sequence' : new_sequence})
         
         return self.pull_continue(cr, uid, ids, context)
-     
+
+    def pull_continue_thread(self, cr, uid, ids, context=None):
+        _logger = logging.getLogger('pull.rw')
+        cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            wizard = self.browse(cr, uid, ids[0])
+            #US-26: Added a check if the zip file has already been imported before
+            syncusb = self.pool.get('sync.usb.files')
+            md5 = syncusb.md5(wizard.pull_data)
+            self.write(cr, uid, ids, {'in_progress': True})
+            updates_pulled = update_pull_error = updates_ran = update_run_error = \
+            messages_pulled = message_pull_error = messages_ran = message_run_error = 0
+            try:
+                updates_pulled, update_pull_error, updates_ran, update_run_error, \
+                messages_pulled, message_pull_error, messages_ran, message_run_error = self.pool.get('sync.client.entity').usb_pull(cr, uid, wizard.pull_data, context=context)
+            except zipfile.BadZipfile:
+                raise osv.except_osv(_('Not a Zip File'), _('The file you uploaded was not a valid .zip file'))
+
+            #Update list of pulled files
+            syncusb.create(cr, uid, {
+                'sum': md5,
+                'date': datetime.datetime.now().isoformat(),
+            }, context=context)
+
+            # handle returned values
+            pull_result = ''
+            if not update_pull_error:
+                pull_result += 'Pulled %d update(s)' % updates_pulled 
+                if not update_run_error:
+                    pull_result += '\nRan %s update(s)' % updates_ran
+                else:
+                    pull_result += '\nError while executing %s update(s): %s' % (updates_ran, update_run_error)
+            else:
+                pull_result += 'Got an error while pulling %d update(s): %s' % (updates_pulled, update_pull_error)
+
+            if not message_pull_error:
+                pull_result += '\nPulled %d message(s)' % messages_pulled 
+                if not message_run_error:
+                    pull_result += '\nRan %s message(s)' % messages_ran
+                else:
+                    pull_result += '\nError while executing %s message(s): %s' % (messages_ran, message_run_error)
+            else:
+                pull_result += '\nGot an error while pulling %d message(s): %s' % (messages_pulled, message_pull_error)
+
+            # If the correct sequence is received, then update this value into the DB for this instance, and inform in the RW sync dialog  
+            rw_pull_sequence = context.get('rw_pull_sequence', -1)
+            if rw_pull_sequence != -1:
+                entity = self._get_entity(cr, uid, context)
+                self.pool.get('sync.client.entity').write(cr, uid, entity.id, {'rw_pull_sequence': rw_pull_sequence}, context)        
+                pull_result += '\n\nThe pulling file sequence is updated. The next expected sequence is %d' % (rw_pull_sequence + 1)
+
+            vals = {
+                'pull_result': pull_result,
+                'usb_sync_step': self._get_usb_sync_step(cr, uid, context=context),
+                'push_file_visible': False,
+            }
+
+            self.write(cr, uid, ids, vals, context=context)
+        except osv.except_osv, e:
+            self.write(cr, uid, ids, {'pull_result': "Error: %s" % e.value})
+            _logger.error("%s : %s" % (tools.ustr(e.value), tools.ustr(traceback.format_exc())))
+        except BaseException, e:
+            _logger.error("%s : %s" % (tools.ustr(e), tools.ustr(traceback.format_exc())))
+            self.write(cr, uid, ids, {'pull_result': "Error: %s" % tools.ustr(e)})
+        finally:
+            self.write(cr, uid, ids, {'in_progress': False})
+            cr.close()
+
+
     def pull_continue(self, cr, uid, ids, context=None):
         context = context or {}
         context.update({'offline_synchronization' : True})
@@ -191,59 +277,26 @@ class usb_synchronisation(osv.osv_memory):
         if not wizard.pull_data:
             raise osv.except_osv(_('No Data to Pull'), _('You have not specified a file that contains the data you want to Pull'))
 
-        #US-26: Added a check if the zip file has already been imported before
-        syncusb = self.pool.get('sync.usb.files')
-        md5 = syncusb.md5(wizard.pull_data)
-
-        updates_pulled = update_pull_error = updates_ran = update_run_error = \
-        messages_pulled = message_pull_error = messages_ran = message_run_error = 0
-        try:
-            updates_pulled, update_pull_error, updates_ran, update_run_error, \
-            messages_pulled, message_pull_error, messages_ran, message_run_error = self.pool.get('sync.client.entity').usb_pull(cr, uid, wizard.pull_data, context=context)
-        except zipfile.BadZipfile:
-            raise osv.except_osv(_('Not a Zip File'), _('The file you uploaded was not a valid .zip file'))
-
-        #Update list of pulled files
-        syncusb.create(cr, uid, {
-            'sum': md5,
-            'date': datetime.datetime.now().isoformat(),
-        }, context=context)
-        
-        # handle returned values
-        pull_result = ''
-        if not update_pull_error:
-            pull_result += 'Pulled %d update(s)' % updates_pulled 
-            if not update_run_error:
-                pull_result += '\nRan %s update(s)' % updates_ran
-            else:
-                pull_result += '\nError while executing %s update(s): %s' % (updates_ran, update_run_error)
-        else:
-            pull_result += 'Got an error while pulling %d update(s): %s' % (updates_pulled, update_pull_error)
-            
-        if not message_pull_error:
-            pull_result += '\nPulled %d message(s)' % messages_pulled 
-            if not message_run_error:
-                pull_result += '\nRan %s message(s)' % messages_ran
-            else:
-                pull_result += '\nError while executing %s message(s): %s' % (messages_ran, message_run_error)
-        else:
-            pull_result += '\nGot an error while pulling %d message(s): %s' % (messages_pulled, message_pull_error)
-        
-        # If the correct sequence is received, then update this value into the DB for this instance, and inform in the RW sync dialog  
-        rw_pull_sequence = context.get('rw_pull_sequence', -1)
-        if rw_pull_sequence != -1:
-            entity = self._get_entity(cr, uid, context)
-            self.pool.get('sync.client.entity').write(cr, uid, entity.id, {'rw_pull_sequence': rw_pull_sequence}, context)        
-            pull_result += '\n\nThe pulling file sequence is updated. The next expected sequence is %d' % (rw_pull_sequence + 1)
+        th = threading.Thread(target=self.pull_continue_thread,args=(cr, uid, ids, context))
+        th.start()
+        th.join(600)
+        if th.isAlive():
+            self.write(cr, uid, ids, {'execute_in_background': True})
+            view_id = self.pool.get('ir.model.data').get_object_reference(
+                cr, uid, 'sync_remote_warehouse', 'wizard_view_usb_synchronisation_background')[1]
+            return {
+                'name': "USB Synchronisation",
+                'type': 'ir.actions.act_window',
+                'res_model': 'usb_synchronisation',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'view_id': [view_id],
+                'res_id': [wizard.id],
+                'context': context,
+            }
 
         # write results to wizard object to update ui
-        vals = {
-            'pull_result': pull_result,
-            'usb_sync_step': self._get_usb_sync_step(cr, uid, context=context),
-            'push_file_visible': False,
-        }
-        
-        self.write(cr, uid, ids, vals, context=context)
         return {
                         'name': "USB Synchronisation",
                         'type': 'ir.actions.act_window',
