@@ -528,12 +528,16 @@ class hr_payroll_import(osv.osv_memory):
                 else:
                     raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
             fileobj.close()
-            
+
+        print "TEST"
+        print wiz_state
         if wiz_state == 'simu' and ids:
+            # US_201: if check raise no error, change state to process
+            self.write(cr, uid, [wiz.id], {'state': 'proceed'})
             view_id = self.pool.get('ir.model.data').get_object_reference(cr,
                 uid, 'msf_homere_interface', 'payroll_import_wizard')
             view_id = view_id and view_id[1] or False
-            
+
             return {
                 'name': 'Payroll Import Confirmation',
                 'type': 'ir.actions.act_window',
@@ -545,19 +549,19 @@ class hr_payroll_import(osv.osv_memory):
                 'target': 'new',
                 'context': context,
             }
-        
+
         if res:
             message = _("Payroll import successful")
         context.update({'message': message})
-        
+
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
-        
+
         # This is to redirect to Payroll Tree View
         context.update({'from': 'payroll_import'})
-        
+
         res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename,'created': created, 'total': processed, 'state': 'payroll'}, context=context)
-            
+
         return {
             'name': 'Payroll Import Confirmation',
             'type': 'ir.actions.act_window',
