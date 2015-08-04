@@ -21,8 +21,14 @@
                         <field name="categ" />
                         <field name="warehouse_id" widget="selection" />
                     </group>
+                    <group colspan="4" col="8">
+                        <field name="fnct_supplier_id" string="Supplier for all lines" readonly="0"/>
+                        <button name="add_supplier_all_lines" type="object" string="" icon="terp-mail-forward" />
+                        <button name="del_supplier_all_lines" type="object" string="" icon="gtk-undo" />
+                        <label colspan="4"> </label>
+                    </group>
     				<separator colspan="4" string="Lines" />
-                    <field name="line_ids" colspan="4" nolabel="1" readonly="0" context="{'tender_id': tender_id}" mode="tree" />
+                    <field name="line_ids" colspan="4" nolabel="1" readonly="1" context="{'tender_id': tender_id}" mode="tree" />
                     <separator colspan="4" string="Notes" />
                     <field name="notes" nolabel="1" colspan="4" />
     				<separator colspan="4" />
