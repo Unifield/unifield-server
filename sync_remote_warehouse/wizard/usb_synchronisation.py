@@ -265,7 +265,7 @@ class usb_synchronisation(osv.osv_memory):
             _logger.error("%s : %s" % (tools.ustr(e), tools.ustr(traceback.format_exc())))
             self.write(cr, uid, ids, {'pull_result': "Error: %s" % tools.ustr(e)})
         finally:
-            self.write(cr, uid, ids, {'in_progress': False})
+            self.write(cr, uid, ids, {'in_progress': False, 'usb_sync_step': self._get_entity(cr, uid, context).usb_sync_step})
             cr.close()
 
 
@@ -277,6 +277,9 @@ class usb_synchronisation(osv.osv_memory):
         if not wizard.pull_data:
             raise osv.except_osv(_('No Data to Pull'), _('You have not specified a file that contains the data you want to Pull'))
 
+        old_bg_ids = self.search(cr, uid, [('execute_in_background', '=', True)])
+        if old_bg_ids:
+            self.write(cr, uid, old_bg_ids, {'execute_in_background': False})
         th = threading.Thread(target=self.pull_continue_thread,args=(cr, uid, ids, context))
         th.start()
         th.join(600)
