@@ -2624,7 +2624,7 @@ class sale_order_line(osv.osv):
             'wizard_import_ir_lines',
         ]
         cond1 = context.get('button') not in btns
-        cond2 = not ontext.get('noraise')
+        cond2 = not context.get('noraise')
         cond3 = not context.get('import_in_progress')
 
         if cond1 and cond2 and cond3:
