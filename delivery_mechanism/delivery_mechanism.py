@@ -1051,6 +1051,7 @@ class stock_picking(osv.osv):
                                 ('picking_id', '=', out_move.picking_id.backorder_id.id),
                                 ('sale_line_id', '=', out_move.sale_line_id.id),
                                 ('state', '=', 'done'),
+                                ('in_out_updated', '=', False),
                             ], context=context)
                             while bo_moves:
                                 boms = move_obj.browse(cr, uid, bo_moves, context=context)
@@ -1065,6 +1066,7 @@ class stock_picking(osv.osv):
                                             ('picking_id', '=', bom.picking_id.backorder_id.id),
                                             ('sale_line_id', '=', bom.sale_line_id.id),
                                             ('state', '=', 'done'),
+                                            ('in_out_updated', '=', False),
                                         ], context=context))
 
                         if uom_partial_qty < out_move.product_qty:
