@@ -907,6 +907,8 @@ class Entity(osv.osv):
     def sync(self, cr, uid, context=None):
         if context is None:
             context = {}
+        # US_394: force synchronization lang to en_US
+        context['lang'] = 'en_US'
         logger = context.get('logger')
         self._logger.info("Start synchronization")
         self.pull_update(cr, uid, context=context)
