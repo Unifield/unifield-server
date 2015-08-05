@@ -22,7 +22,8 @@
                         <field name="warehouse_id" widget="selection" />
                     </group>
                     <group colspan="4" col="8">
-                        <field name="fnct_supplier_id" string="Supplier for all lines" readonly="0"/>
+                        <separator colspan="8" string="General supplier selection" />
+                        <field name="fnct_supplier_id" string="Select a supplier" readonly="0"/>
                         <button name="add_supplier_all_lines" type="object" string="" icon="terp-mail-forward" />
                         <button name="del_supplier_all_lines" type="object" string="" icon="gtk-undo" />
                         <label colspan="4"> </label>
