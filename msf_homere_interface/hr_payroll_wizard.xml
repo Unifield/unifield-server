@@ -153,7 +153,7 @@
                         <button string="Cancel" special="cancel"
                             icon="gtk-cancel"/>
                         <button name="button_proceed" type="object"
-                            string="Proceed Import" icon="terp-camera_test"
+                            string="Process Import" icon="terp-camera_test"
                             states="proceed"
                         />
                     </group>
