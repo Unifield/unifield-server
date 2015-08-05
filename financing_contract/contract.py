@@ -686,7 +686,8 @@ class financing_contract_contract(osv.osv):
         # proceed check
         funded_budget = 0.0
         for rl in self_br.actual_line_ids:
-            funded_budget += rl.allocated_budget
+            if rl.line_type != 'view': #US-385: Exclude the view line in the calculation
+                funded_budget += rl.allocated_budget
         if funded_budget != self_br.grant_amount:
             if context is None:
                 context = {}
