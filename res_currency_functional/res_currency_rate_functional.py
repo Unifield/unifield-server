@@ -43,11 +43,16 @@ class res_currency_rate_functional(osv.osv):
         move_line_ids = move_line_obj.search(cr, uid, move_line_search_params)
         move_line_obj.update_amounts(cr, uid, move_line_ids)
         move_ids = []
-        for ml in move_line_obj.read(cr, uid, move_line_ids, ['move_id']):
+        reconcile = set()
+        for ml in move_line_obj.read(cr, uid, move_line_ids, ['move_id', 'reconcile_id']):
+            if ml['reconcile_id']:
+                reconcile.add(ml['reconcile_id'][0])
             if ml.get('move_id', False):
                 move_ids.append(ml.get('move_id')[0])
         if move_ids:
-            self.pool.get('account.move').balance_move(cr, uid, list(set(move_ids)))
+            reconcile.update(self.pool.get('account.move').balance_move(cr, uid, list(set(move_ids))))
+        if reconcile:
+            move_line_obj.reconciliation_update(cr, uid, list(reconcile))
         return True
 
     def refresh_analytic_lines(self, cr, uid, ids, date=None, currency=None, context=None):

@@ -126,7 +126,6 @@ class report_project_expenses2(report_sxw.rml_parse):
             return []
         if self.objects[0].format_id.reporting_type == 'project' and self.name == 'financing.allocated.expenses.2':
             return []
-        pool = pooler.get_pool(self.cr.dbname)
         contract_obj = self.pool.get('financing.contract.contract')
         format_line_obj = self.pool.get('financing.contract.format.line')
         contract_domain = contract_obj.get_contract_domain(self.cr, self.uid, contract, reporting_type=self.reporting_type)

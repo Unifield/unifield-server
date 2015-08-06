@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <tree string="Account Entry Lines" editable="top" noteditable="True" hide_new_button="1">
                     <field name="instance_id"/>
-                    <field name="invoice"/>
+                    <field name="move_id" string="Entry" />
                     <field name="ref"/>
                     <field name="supplier_invoice_ref"/>
                     <field name="account_id"/>
