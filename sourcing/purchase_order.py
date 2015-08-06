@@ -53,7 +53,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
         ),
         'related_sourcing_id': fields.many2one(
             'related.sourcing',
-            string='Group sourcing',
+            string='Sourcing group',
             readonly=True,
         ),
     }

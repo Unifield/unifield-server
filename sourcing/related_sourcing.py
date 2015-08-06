@@ -36,7 +36,14 @@ class related_sourcing(osv.osv):
     _description = 'Sourcing group'
 
     _columns = {
-        'name': fields.char(size=128, string='Name', required=True),
+        'name': fields.char(
+            size=128,
+            string='Name',
+            required=True,
+        ),
+        'description': fields.text(
+            string='Description',
+        ),
     }
 
     def create(self, cr, uid, vals, context=None):
