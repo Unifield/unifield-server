@@ -291,6 +291,28 @@ class hr_employee(osv.osv):
                 vals.update({'funding_pool_id': False})
         return {'value': vals}
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+               context=None, count=False):
+
+        if not args:
+            args = []
+        if context is None:
+            context = {}
+        # US_262: add disrupt in search
+        disrupt = False
+        if context.get('disrupt_inactive', False) \
+           and context.get('disrupt_inactive') == True:
+            disrupt = True
+ 
+        if not disrupt:
+            if ('active', '=', False) not in args \
+               and ('active', '=', True) not in args:
+                args += [('active', '=', True)]
+
+        return super(hr_employee, self).search(cr, uid, args, offset=offset,
+                                               limit=limit, order=order,
+                                               context=context, count=count)
+
     def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
         if not args:
             args=[]
@@ -303,6 +325,7 @@ class hr_employee(osv.osv):
         if not disrupt:
             if not ('active', '=', False) or not ('active', '=', True) in args:
                 args += [('active', '=', True)]
+
         return super(hr_employee, self).name_search(cr, uid, name, args, operator, context, limit)
 
 hr_employee()
