@@ -22,10 +22,12 @@ import urllib
 
 import cherrypy
 from openerp import widgets as tw
-from openerp.utils import rpc, TinyDict, context_with_concurrency_info
+from openerp.utils import rpc, TinyDict, context_with_concurrency_info, expr_eval, node_attributes
 
 from form import Form, get_validation_schema, default_error_handler, default_exception_handler
 from openobject.tools import expose, validate, error_handler, exception_handler
+
+import xml.dom.minidom
 
 
 class OpenO2M(Form):
@@ -60,6 +62,7 @@ class OpenO2M(Form):
 
         params.prefix = params.o2m
         params.views = wid.view
+        params.hide_new_button = False
 
         ctx = params.context or {}
         ctx.update(params.parent_context or {})
@@ -68,7 +71,14 @@ class OpenO2M(Form):
         
         if ctx.get('default_name'):
             del ctx['default_name']
-        
+
+        arch = params.views.get('form', {}).get('arch', False)
+        if arch:
+            dom = xml.dom.minidom.parseString(arch.encode('utf-8'))
+            form_attribute = node_attributes(dom.childNodes[0])
+            if form_attribute.get('hide_new_button'):
+                params.hide_new_button = expr_eval(form_attribute.get('hide_new_button', False), {'context': ctx})
+
         params.context = ctx or {}
         params.hidden_fields = [tw.form.Hidden(name='_terp_parent_model', default=params.parent_model),
                                 tw.form.Hidden(name='_terp_parent_id', default=params.parent_id),
