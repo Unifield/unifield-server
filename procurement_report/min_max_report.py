@@ -25,6 +25,7 @@ from decimal_precision import decimal_precision as dp
 
 class min_max_rules_report(osv.osv):
     _name = 'min.max.rules.report'
+    _rec_name = 'rule_id'
     _auto = False
     _order = 'product_reference, product_name, product_id, location_id'
     

@@ -38,6 +38,7 @@ from account_override import ACCOUNT_RESTRICTED_AREA
 class hr_payroll_import_period(osv.osv):
     _name = 'hr.payroll.import.period'
     _description = 'Payroll Import Periods'
+    _rec_name = 'field'
 
     _columns = {
         'field': fields.char('Field', size=255, readonly=True, required=True),
@@ -146,10 +147,6 @@ class hr_payroll_import(osv.osv_memory):
 
         # If account is analytic-a-holic, fetch employee ID
         if account.is_analytic_addicted:
-            # Add default destination from account
-            if not account.default_destination_id:
-                raise osv.except_osv(_('Warning'), _('No default Destination defined for this account: %s') % (account.code or '',))
-            destination_id = account.default_destination_id and account.default_destination_id.id or False
             if second_description and second_description[0] and not is_payroll_rounding:
                 if not is_counterpart:
                     # fetch employee ID
@@ -174,6 +171,16 @@ class hr_payroll_import(osv.osv_memory):
                     ref = description and description[0] and ustr(description[0]).split(separator) and ustr(description[0]).split(separator)[1] or ''
                 except IndexError, e:
                     ref = ''
+            # US_263: get employee destination, if haven't get default destination
+            if employee_id:
+                emp = self.pool.get('hr.employee').browse(cr, uid, employee_id, context=context)
+                if emp.destination_id:
+                    destination_id = emp.destination_id.id
+            if not destination_id:
+                if not account.default_destination_id:
+                    raise osv.except_osv(_('Warning'), _('No default Destination defined for this account: %s') % (account.code or '',))
+                destination_id = account.default_destination_id and account.default_destination_id.id or False
+
         # Fetch description
         if not name:
             name = description and description[0] and ustr(description[0]) or ''
@@ -221,20 +228,23 @@ class hr_payroll_import(osv.osv_memory):
             created += 1
         return True, amount, created
 
-    def _get_homere_password(self, cr, uid):
+    def _get_homere_password(self, cr, uid, pass_type='payroll'):
+        ##### UPDATE HOMERE.CONF FILE #####
         if sys.platform.startswith('win'):
             homere_file = os.path.join(config['root_path'], 'homere.conf')
         else:
             homere_file = os.path.join(os.path.expanduser('~'),'tmp/homere.conf') # relative path from user directory to homere password file
-        
+
         # Search homere password file
         if not os.path.exists(homere_file):
             raise osv.except_osv(_("Error"), _("File '%s' doesn't exist!") % (homere_file,))
         # Read homere file
         homere_file_data = open(homere_file, 'rb')
         pwd = homere_file_data.readline()
+        if pass_type == 'permois':
+            pwd = homere_file_data.readline()
         if not pwd:
-            raise osv.except_osv(_("Error"), _("File '%s' is empty !") % (homere_file,))
+            raise osv.except_osv(_("Error"), _("File '%s' does not contain the password !") % (homere_file,))
         homere_file_data.close()
         return pwd.decode('base64')
 
@@ -246,12 +256,12 @@ class hr_payroll_import(osv.osv_memory):
         # Do verifications
         if not context:
             context = {}
-        
+
         # Verify that no draft payroll entries exists
         line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')])
         if len(line_ids):
             raise osv.except_osv(_('Error'), _('You cannot import payroll entries. Please validate first draft payroll entries!'))
-        
+
         # Prepare some values
         file_ext_separator = '.'
         file_ext = "csv"
@@ -260,7 +270,7 @@ class hr_payroll_import(osv.osv_memory):
         created = 0
         processed = 0
 
-        xyargv = self._get_homere_password(cr, uid)
+        xyargv = self._get_homere_password(cr, uid, pass_type='payroll')
 
         filename = ""
         # Browse all given wizard
@@ -333,19 +343,19 @@ class hr_payroll_import(osv.osv_memory):
                 else:
                     raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
             fileobj.close()
-        
+
         if res:
             message = _("Payroll import successful")
         context.update({'message': message})
-        
+
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
-        
+
         # This is to redirect to Payroll Tree View
         context.update({'from': 'payroll_import'})
-        
+
         res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename,'created': created, 'total': processed, 'state': 'payroll'}, context=context)
-        
+
         return {
             'name': 'Payroll Import Confirmation',
             'type': 'ir.actions.act_window',

@@ -98,7 +98,7 @@
                     				<field name="hidden_creation_state" invisible="True" />
                     				<field name="hidden_creation_qty_stock_move" invisible="True" />
                     				<button name="split_stock_move" type="object" string="Split Move" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('hidden_state', 'not in', ['confirmed'])]}" />
-                    				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('hidden_state', '!=', 'confirmed')]}" />
+                    				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_exp_check', '=', True)]}" />
                     				<button name="cancel_assign" type="object" string="Cancel Availability" icon="gtk-undo" attrs="{'invisible': [('hidden_state', '!=', 'assigned')]}" />
                     				<button name="validate_assign" type="object" string="Validate" icon="gtk-go-forward" attrs="{'invisible': [('hidden_state', '!=', 'assigned')]}" />
                     				<button name="assign_to_kit" type="object" string="Assign to Kits" icon="gtk-indent"

@@ -475,7 +475,7 @@
                     <field name="prod_lot_id" position="replace">
                         <field name="prod_lot_id"
                             on_change="change_lot(prod_lot_id)"
-                            context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory}"
+                            context="{'location_id':location_id, 'product_id': product_id}"
                             domain="[('check_type','=', True), ('product_id', '=', product_id)]"
                             attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
                            <field name="expiry_date"

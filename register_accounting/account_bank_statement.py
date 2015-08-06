@@ -235,8 +235,14 @@ class account_bank_statement(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Verify that previous register is open, unless this register is the first register
-        return self.write(cr, uid, ids, {'state': 'open'})
+        registers = self.browse(cr, uid, ids, context=context)
+        for register in registers:
+            if register['period_id']['state'] in ['field-closed',
+                                                  'mission-closed', 'done']:
+                raise osv.except_osv(_('Error'),
+                                     _('The associated period is closed'))
+            else:
+                return self.write(cr, uid, ids, {'state': 'open'})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
         """
@@ -965,7 +971,8 @@ class account_bank_statement_line(osv.osv):
                 for ml in absl.imported_invoice_line_ids:
                     res.add(ml.move_id.id)
             # UTP-1039: Show the search loop for direct invoice
-            if absl.direct_invoice and absl.invoice_id:
+            if absl.invoice_id and (absl.direct_invoice or absl.cash_return_move_line_id):
+                # BKLG-60: reg line from advance return: display invoice(s) AJIs too
                 res.add(absl.invoice_id.move_id.id)
         return list(res)
 
@@ -995,7 +1002,7 @@ class account_bank_statement_line(osv.osv):
         for out in self.browse(cr, uid, ids, context=context):
             type_for_register = out.account_id.type_for_register
             if type_for_register in ['advance','transfer_same','down_payment','transfer']:
-                if out.partner_id.id is False and out.employee_id.id is False and out.transfer_journal_id.id is False: 
+                if out.partner_id.id is False and out.employee_id.id is False and out.transfer_journal_id.id is False:
                     result[out.id]['red_on_supplier'] = True
         return result
 
@@ -1077,17 +1084,21 @@ class account_bank_statement_line(osv.osv):
         move_ids = self._get_move_ids(cr, uid, ids, context=context)
         # Search valid ids
         domain = [('account_id.category', '=', 'FUNDING'), ('move_id.move_id', 'in', move_ids)]
-        # For cash advance register lines, filtering on names (as amount can be splitted, account changed, etc.). The name remains.
-        advance_names = []
-        for absl in self.browse(cr, uid, ids, context=context):
-            if absl.from_cash_return:
-                advance_names.append(absl.name)
-        if advance_names:
-            name_len = len(advance_names)
-            if name_len > 1:
-                domain += ['|' for x in range(0,name_len - 1)]
-            for name in advance_names:
-                domain.append(('name', '=ilike', '%%%s' % name))
+
+        # BKLG-60: for cash advance register lines, filtering on new
+        # cash_return_move_line_id link field
+        absl_brs = self.browse(cr, uid, ids, context=context)
+        cash_adv_return_move_line_ids = [
+            absl.cash_return_move_line_id.id \
+            for absl in absl_brs \
+            if not absl.invoice_id and absl.from_cash_return and \
+                absl.cash_return_move_line_id
+            # NOTE: for imported invoices we let the default behaviour
+            # (display of invoice AJIs)
+        ]
+        if cash_adv_return_move_line_ids:
+            domain.append(('move_id', 'in', cash_adv_return_move_line_ids))
+
         context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
         return {
             'name': _('Analytic Journal Items'),
@@ -1356,10 +1367,26 @@ class account_bank_statement_line(osv.osv):
                 if third and third[0] and third[0] != "hr.employee":
                     return res
                 emp_id = third and third[1] or False
-            employee = self.pool.get('hr.employee').read(cr, uid, int(emp_id), ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id'])
+            employee = self.pool.get('hr.employee').read(cr, uid, int(emp_id), ['destination_id', 'cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id'])
             if is_expense and employee.get('cost_center_id', False):
                 # Create a distribution
-                destination_id = (employee.get('destination_id', False) and employee.get('destination_id')[0]) or (account.get('default_destination_id', False) and account.get('default_destination_id')[0]) or False
+
+                # default destination
+                destination_id = account.get('default_destination_id', False) and account.get('default_destination_id')[0] or False
+
+                # emp destination
+                emp_destination_id = employee.get('destination_id', False) and employee.get('destination_id')[0] or False
+                if emp_destination_id:
+                    # US-331: use EMP destination
+                    # check that the EMP dest is compatible with the account (else use account default dest instead)
+                    domain = [
+                        ('account_id', '=', values.get('account_id')),
+                        ('destination_id', '=', emp_destination_id),
+                    ]
+                    if self.pool.get('account.destination.link').search(cr, uid,
+                        domain, limit=1):
+                        destination_id = emp_destination_id  # compatible
+
                 cc_id = employee.get('cost_center_id', False) and employee.get('cost_center_id')[0] or False
                 fp_id = employee.get('funding_pool_id',False) and employee.get('funding_pool_id')[0] or False
                 f1_id = employee.get('free1_id', False) and employee.get('free1_id')[0] or False
@@ -1569,7 +1596,7 @@ class account_bank_statement_line(osv.osv):
                 # UTP-1097: If ref is given in "values"
                 if 'ref' in values:
                     ref = values.get('ref', False)
-                    if st_line.ref and not ref and register_line.move_id:
+                    if not ref and register_line.move_id:
                         # UTP-1097 ref field is cleared (a value to empty/False)
                         # ref of JIs/AJIs is not properly cleared in this case
                         aml_ids = acc_move_line_obj.search(cr, uid,
@@ -1812,12 +1839,25 @@ class account_bank_statement_line(osv.osv):
         if 'analytic_distribution_id' in values and values.get('analytic_distribution_id') != False:
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
-            values = self.update_employee_analytic_distribution(cr, uid, values=values)
-        if not context.get('sync_update_execution',False):
-            if 'cheque_number' in values and values.get('cheque_number', False):
-                cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (values['cheque_number'], ))
+            values = self.update_employee_analytic_distribution(cr, uid,
+                                                                values=values)
+
+        if not context.get('sync_update_execution', False):
+            if 'cheque_number' in values and values.get('cheque_number', False) and values.get('statement_id'):
+                statement_obj = self.pool.get('account.bank.statement')
+                statement = statement_obj.read(cr, uid, values['statement_id'], ['journal_id'])
+                journal_id = statement['journal_id'][0]
+                sql = '''SELECT l.id
+                       FROM account_bank_statement_line l
+                       LEFT JOIN account_bank_statement s ON l.statement_id = s.id
+                       WHERE l.cheque_number=%s
+                       AND s.journal_id=%s
+                '''
+                cr.execute(sql, (values['cheque_number'], journal_id))
+
                 for row in cr.dictfetchall():
-                    raise osv.except_osv(_('Info'),_('This cheque number has already been used'))
+                    msg = _('This cheque number has already been used')
+                    raise osv.except_osv(_('Info'), (msg))
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
         return absl
@@ -1851,6 +1891,50 @@ class account_bank_statement_line(osv.osv):
         # Case where _update_amount return False ! => this imply there is a problem with amount columns
         if not values:
             return False
+
+        # Then update analytic distribution
+        res = []
+        must_return = False
+        # US-351: fixed the wrong condition
+        if 'employee_id' in values or 'partner_type' in values:
+            must_return = True
+            for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'statement_id', 'first_move_line_id', 'move_ids']):
+                account_id = line.get('account_id')[0]
+                if not 'account_id' in values:
+                    values.update({'account_id': account_id})
+                if not 'statement_id' in values:
+                    values.update({'statement_id': line.get('statement_id')[0]})
+
+                old_distrib = False
+                if line.get('analytic_distribution_id', False):
+                    old_distrib = line.get('analytic_distribution_id')[0]
+
+                # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync
+                if not context.get('sync_update_execution'):
+                    values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance
+
+                tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
+                res.append(tmp)
+
+                new_distrib = values.get('analytic_distribution_id', False)
+                # US-351: Fixed the wrong condition
+                if new_distrib and old_distrib != new_distrib and line.get('first_move_line_id', False) and line.get('move_ids', False):
+                    first_move_line_id = line.get('first_move_line_id')[0]
+                    move_ids = line.get('move_ids')[0]
+                    if isinstance(move_ids, (int, long)):
+                        move_ids = [move_ids]
+
+                    # US-289: If there is a change in the DA, then populate it to the move line (and thus analytic lines)
+                    ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', account_id), ('id', 'not in', [first_move_line_id]), ('move_id', 'in', move_ids)])
+                    if ml_ids:
+                        # copy distribution
+                        new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, new_distrib, {}, context=context)
+                        # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
+                        self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': account_id}, check=False, update_check=False)
+
+        # US-289: The following block is moved down after the employee update, so that the call to _update_move_from_st_line will also update
+        # the distribution analytic in case there is a change of this value on the reg line, issued from the new block right above
+
         # In case of Temp Posting, we also update attached account move lines
         if state == 'temp':
             # method write removes date in value: save it, then restore it
@@ -1860,17 +1944,8 @@ class account_bank_statement_line(osv.osv):
             self._update_move_from_st_line(cr, uid, ids, values, context=context)
             if saveddate:
                 values['date'] = saveddate
-        # Then update analytic distribution
-        if 'employee_id' or 'partner_type' in values:
-            res = []
-            for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'statement_id']):
-                if not 'account_id' in values:
-                    values.update({'account_id': line.get('account_id')[0]})
-                if not 'statement_id' in values:
-                    values.update({'statement_id': line.get('statement_id')[0]})
-                values = self.update_employee_analytic_distribution(cr, uid, values)
-                tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
-                res.append(tmp)
+
+        if must_return:
             return res
         # Update the bank statement lines with 'values'
         res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
@@ -1909,6 +1984,7 @@ class account_bank_statement_line(osv.osv):
             'transfer_amount': False,
             'transfer_currency': False,
             'down_payment_id': False,
+            'cash_return_move_line_id': False,  # BKLG-60
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]

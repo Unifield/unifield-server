@@ -22,6 +22,7 @@
 import tools
 from osv import fields, osv
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from sale_override import SALE_ORDER_STATE_SELECTION
 
 class sale_report(osv.osv):
     _name = "sale.report"
@@ -64,6 +65,8 @@ class sale_report(osv.osv):
             ('10', 'October'), ('11', 'November'), ('12', 'December')], 'Month', readonly=True),
         'day': fields.char('Day', size=128, readonly=True),
         'product_id': fields.many2one('product.product', 'Product', readonly=True),
+        'product_code': fields.char(size=256, string='Product code', readonly=True),
+        'product_name': fields.char(size=512, string='Product Name', readonly=True),
         'uom_name': fields.char('Reference UoM', size=128, readonly=True),
         'product_uom_qty': fields.float('# of Qty', readonly=True),
         'partner_id': fields.many2one('res.partner', 'Partner', readonly=True),
@@ -74,16 +77,8 @@ class sale_report(osv.osv):
         'delay': fields.float('Commitment Delay', digits=(16,2), readonly=True),
         'categ_id': fields.many2one('product.category','Category of Product', readonly=True),
         'nbr': fields.integer('# of Lines', readonly=True),
-        'state': fields.selection([
-            ('draft', 'Draft'),
-            ('waiting_date', 'Waiting Schedule'),
-            ('manual', 'Confirmed'),
-            ('progress', 'Confirmed'),
-            ('shipping_except', 'Shipping Exception'),
-            ('invoice_except', 'Invoice Exception'),
-            ('done', 'Closed'),
-            ('cancel', 'Cancelled')
-            ], 'Order State', readonly=True),
+        'state': fields.selection(selection=SALE_ORDER_STATE_SELECTION,
+            string='Order State', readonly=True),
         'pricelist_id': fields.many2one('product.pricelist', 'Currency', readonly=True),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account', readonly=True),
         'name': fields.char('Order Reference', size=64, required=True,
@@ -99,6 +94,12 @@ class sale_report(osv.osv):
         'currency_id': fields.many2one('res.currency',string='Currency'),
     }
     _order = 'date desc'
+    _replace_exported_fields = {
+        'product_id': [
+            (['product_code', 'Product Code'], 10),
+            (['product_name', 'Product Name'], 20),
+        ],
+    }
 
     def read_group(self, cr, uid, domain, fields, groupby, offset=0,limit=None, context=None, orderby=False):
         res = super(sale_report, self).read_group(cr, uid, domain,fields, groupby, offset, limit, context, orderby)
@@ -115,12 +116,15 @@ class sale_report(osv.osv):
                             product_id = x[2]
 
                 if product_id:
-                    uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id
-                    data.update({'uom_name': uom.name})
+                    product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+                    data.update({
+                        'uom_name': product.uom_id.name,
+                        'product_code': product.default_code,
+                        'product_name': product.name,
+                    })
 
                 if not product_id and 'product_uom_qty' in data:
                     data.update({'product_uom_qty': ''})
-
 
         return res
 
@@ -156,6 +160,8 @@ class sale_report(osv.osv):
                     (
                     select l.id as id,
                         l.product_id as product_id,
+                        p.default_code as product_code,
+                        pt.name as product_name,
                         u.name as uom_name,
                         sum(l.product_uom_qty / u.factor * pu.factor) as product_uom_qty,
                         sum(l.product_uom_qty * l.price_unit) as price_total,
@@ -166,10 +172,12 @@ class sale_report(osv.osv):
                      and pt.id = p.product_tmpl_id
                      and p.id = l.product_id
                      and pu.id = pt.uom_id
-                      group by l.id, l.order_id, l.product_id, u.name, pt.categ_id, u.uom_type, u.category_id) el
+                      group by l.id, l.order_id, l.product_id, u.name, pt.categ_id, u.uom_type, u.category_id, p.default_code, pt.name) el
                 where s.id = el.order_id
                 group by el.id,
                     el.product_id,
+                    el.product_code,
+                    el.product_name,
                     el.uom_name,
                     el.product_uom_qty,
                     el.price_total,
@@ -193,4 +201,4 @@ class sale_report(osv.osv):
         """)
 sale_report()
 
-# vim:explytic_account_id': fields.many2one('account.analytic.account', 'Analytic andtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

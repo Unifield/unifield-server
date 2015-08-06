@@ -20,13 +20,54 @@
 #
 ##############################################################################
 
+from osv import fields, osv
+from tools.translate import _
 import datetime
 from dateutil.relativedelta import relativedelta
-from osv import osv
 
 class account_fiscalyear(osv.osv):
     _name = "account.fiscalyear"
     _inherit = "account.fiscalyear"
+
+    def _get_is_closable(self, cr, uid, ids, field_names, args, context=None):
+        # US-131: closable if all periods HQ closed (special ones too)
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        level = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id.level
+        if level != 'section':
+            # not at HQ level: FY not closable
+            for id in ids:
+                res[id] = False
+            return res
+
+        # check:
+        # - FY is not already closed
+        # - all FY's periods are HQ closed (state 'done') (special ones too)
+        for br in self.browse(cr, uid, ids, context=context):
+            closable = False
+
+            if br.state != 'done':
+                closable = all([ True if p.state == 'done' else False \
+                    for p in br.period_ids ])
+
+            res[br.id] = closable
+
+        return res
+
+    _columns = {
+        # US-131
+        'is_closable': fields.function(_get_is_closable, type='boolean',
+            method=True, string='Closable ? (all periods HQ closed)'),
+    }
+
+    _defaults = {
+        'is_closable': False,
+    }
 
     def create_period(self,cr, uid, ids, context=None, interval=1):
         for fy in self.browse(cr, uid, ids, context=context):
@@ -79,6 +120,26 @@ class account_fiscalyear(osv.osv):
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('instance_id', '=', current_instance_id)])
         for journal in self.pool.get('account.journal').browse(cr, uid, journal_ids, context=context):
             self.pool.get('account.journal').create_fiscalyear_sequence(cr, uid, res, name, journal.code.lower(), vals['date_start'], journal.sequence_id and journal.sequence_id.id or False, context=context)
+        return res
+
+    def uf_close_fy(self, cr, uid, ids, context=None):
+        """
+        US-131: Close FY(s) at HQ level: just set state to 'done'
+        (to prevent use of FY(s) in many2one fields)
+        """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for r in self.read(cr, uid, ids, ['is_closable', ], context=context):
+            if not r['is_closable']:
+                raise osv.except_osv(_("Warning"),
+                    _("Fiscal Year can not be closed. Aborted." \
+                        " (All periods must be HQ closed)"))
+
+        self.write(cr, uid, ids, { 'state': 'done' }, context=context)
         return res
 
 account_fiscalyear()

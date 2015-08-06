@@ -292,7 +292,7 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for var in self.browse(cr, uid, ids, context=context):
-            if not var.from_sync and var.partner_type != 'external':
+            if not var.from_sync and var.partner_type not in ('external', 'esc'):
                 raise osv.except_osv(_('Warning !'), _("""You can\'t cancel the PO because it may have already been synchronized,
                 the cancellation should then come from the supplier instance (and synchronize down to the requestor instance)."""))
         return True
@@ -489,6 +489,7 @@ wizard_export_po_validated()
 class purchase_order_simu_import_file(osv.osv):
     _name = 'purchase.order.simu.import.file'
     _order = 'timestamp'
+    _rec_name = 'order_id'
 
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Order', required=True),

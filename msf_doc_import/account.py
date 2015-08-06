@@ -524,6 +524,7 @@ msf_doc_import_accounting()
 
 class msf_doc_import_accounting_lines(osv.osv):
     _name = 'msf.doc.import.accounting.lines'
+    _rec_name = 'document_date'
 
     _columns = {
         'description': fields.text("Description", required=False, readonly=True),

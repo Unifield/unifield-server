@@ -71,6 +71,19 @@ class account_journal(osv.osv):
     _name = 'account.journal'
     _inherit = 'account.journal'
 
+    def name_get(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if context and context.get('journal_fake_name'):
+            if not ids:
+                return []
+            ret = []
+            for journal in self.read(cr, uid, ids, ['code', 'instance_id']):
+                ret.append((journal['id'], '%s / %s'%(journal['instance_id'] and journal['instance_id'][1] or '', journal['code'])))
+        else:
+            ret = super(account_journal, self).name_get(cr, uid, ids, context=context)
+        return ret
+
     def _get_current_instance(self, cr, uid, ids, name, args, context=None):
         """
         Get True if the journal was created by this instance.

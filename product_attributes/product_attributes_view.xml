@@ -94,7 +94,9 @@
                             <group colspan="2" col="2">
                                 <separator string="Weights" colspan="2"/>
                                 <field name="volume" attrs="{'readonly':[('type','=','service')]}"/>
+                                <field name="soq_volume" attrs="{'readonly':[('type','=','service')]}"/>
                                 <field name="weight" attrs="{'readonly':[('type','=','service')]}"/>
+                                <field name="soq_weight" attrs="{'readonly':[('type','=','service')]}"/>
                                 <!-- uf-1544
                                 <field digits="(14, 3)" name="weight_net" attrs="{'readonly':[('type','=','service')]}"/>
                                  -->
@@ -474,7 +476,7 @@
             <field name="inherit_id" ref="product.product_search_form_view"/>
             <field name="arch" type="xml">
                    <field name="list_ids" position="before">
-                       <field name="location_id" context="{'location': self}"/>
+                       <field name="location_id" context="{'location': self or context.get('location')}"/>
                        <separator orientation="vertical"/>
                    </field>
             </field>

@@ -29,6 +29,7 @@ import csv
 class imported_msf_budget_line(osv.osv):
     _name = 'imported.msf.budget.line'
     _description = 'Temporary budget line imported from a CSV'
+    _rec_name = 'account_id'
 
     _columns = {
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),

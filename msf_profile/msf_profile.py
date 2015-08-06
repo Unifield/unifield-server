@@ -28,6 +28,71 @@ import tools
 import os
 import logging
 
+
+class patch_scripts(osv.osv):
+    _name = 'patch.scripts'
+
+    _columns = {
+        'model': fields.text(string='Model', required=True),
+        'method': fields.text(string='Method', required=True),
+        'run': fields.boolean(string='Is ran ?'),
+    }
+
+    _defaults = {
+        'model': lambda *a: 'patch.scripts',
+    }
+
+    def launch_patch_scripts(self, cr, uid, *a, **b):
+        ps_obj = self.pool.get('patch.scripts')
+        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
+        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
+            method = ps['method']
+            model_obj = self.pool.get(ps['model'])
+            getattr(model_obj, method)(cr, uid, *a, **b)
+            self.write(cr, uid, [ps['id']], {'run': True})
+
+    def update_us_133(self, cr, uid, *a, **b):
+        p_obj = self.pool.get('res.partner')
+        po_obj = self.pool.get('purchase.order')
+        pl_obj = self.pool.get('product.pricelist')
+
+        # Take good pricelist on existing partners
+        p_ids = p_obj.search(cr, uid, [])
+        fields = [
+            'property_product_pricelist_purchase',
+            'property_product_pricelist',
+        ]
+        for p in p_obj.read(cr, uid, p_ids, fields):
+            p_obj.write(cr, uid, [p['id']], {
+                'property_product_pricelist_purchase': p['property_product_pricelist_purchase'][0],
+                'property_product_pricelist': p['property_product_pricelist'][0],
+            })
+
+        # Take good pricelist on existing POs
+        pl_dict = {}
+        po_ids = po_obj.search(cr, uid, [
+            ('pricelist_id.type', '=', 'sale'),
+        ])
+        for po in po_obj.read(cr, uid, po_ids, ['pricelist_id']):
+            vals = {}
+            if po['pricelist_id'][0] in pl_dict:
+                vals['pricelist_id'] = pl_dict[po['pricelist_id'][0]]
+            else:
+                pl_currency = pl_obj.read(cr, uid, po['pricelist_id'][0], ['currency_id'])
+                p_pl_ids = pl_obj.search(cr, uid, [
+                    ('currency_id', '=', pl_currency['currency_id'][0]),
+                    ('type', '=', 'purchase'),
+                ])
+                if p_pl_ids:
+                    pl_dict[po['pricelist_id'][0]] = p_pl_ids[0]
+                    vals['pricelist_id'] = p_pl_ids[0]
+
+            if vals:
+                po_obj.write(cr, uid, [po['id']], vals)
+
+patch_scripts()
+
+
 class ir_model_data(osv.osv):
     _inherit = 'ir.model.data'
     _name = 'ir.model.data'

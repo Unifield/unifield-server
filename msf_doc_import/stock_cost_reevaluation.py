@@ -103,18 +103,7 @@ Product Code*, Product Description*, Product Cost*, Currency*"""))
 
             # Product name
             product_name = row.cells[1].data
-            if product_name:
-                try:
-                    product_name = product_name.strip()
-                    product_ids = product_obj.search(cr, uid, [('name', '=', product_name)], context=context)
-                    if product_ids:
-                        product_id = product_ids[0]
-                except Exception:
-                    pass
-
             if not product_id:
-                if not product_code and not product_name:
-                    raise osv.except_osv(_('Error'), _('You have to fill at least the product code or the product name on each line'))
                 raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', product_name or ''))
 
             # Average cost

@@ -46,7 +46,7 @@ class stock_inventory(osv.osv):
     _columns = {
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format.
-                                        \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity"""),
+                                        \n The columns should be in this order : Product Code*, Product Description*, Location*, Batch, Expiry Date, Quantity"""),
         'import_error_ok':fields.function(_get_import_error,  method=True, type="boolean", string="Error in Import", store=True),
     }
 
@@ -144,28 +144,10 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
 
             # Product name
             p_name = row.cells[1].data
-            if not product_id and not p_name:
+            if not product_id:
                 to_correct_ok = True
                 import_to_correct = True
-                error_list.append(_('No Product Description'))
-            else:
-                try:
-                    p_name = p_name.strip()
-                    product_ids = product_obj.search(cr, uid, [('name', '=', p_name)], context=context)
-                    if not product_ids:
-                        to_correct_ok = True
-                        import_to_correct = True
-                        error_list.append(_('The Product was not found in the list of the products.'))
-                    else:
-                        product_id = product_ids[0]
-                except Exception:
-                     error_list.append(_('The Product Description has to be a string.'))
-                     to_correct_ok = True
-                     import_to_correct = True
-
-            if not product_id:
-                if not product_code and not p_name:
-                    raise osv.except_osv(_('Error'), _('You have to fill at least the product code or the product name on each line'))
+                error_list.append(_('The Product was not found in the list of the products.'))
                 raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
 
             # Location
@@ -541,28 +523,10 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
 
             # Product name
             p_name = row.cells[1].data
-            if not product_id and not p_name:
+            if not product_id:
                 to_correct_ok = True
                 import_to_correct = True
-                error_list.append(_('No Product Description'))
-            else:
-                try:
-                    p_name = p_name.strip()
-                    product_ids = product_obj.search(cr, uid, [('name', '=', p_name)], context=context)
-                    if not product_ids:
-                        to_correct_ok = True
-                        import_to_correct = True
-                        error_list.append(_('The Product was not found in the list of the products.'))
-                    else:
-                        product_id = product_ids[0]
-                except Exception:
-                     error_list.append(_('The Product Description has to be a string.'))
-                     to_correct_ok = True
-                     import_to_correct = True
-
-            if not product_id:
-                if not product_code and not p_name:
-                    raise osv.except_osv(_('Error'), _('You have to fill at least the product code or the product name on each line'))
+                error_list.append(_('The Product was not found in the list of the products.'))
                 raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
 
             # Average cost

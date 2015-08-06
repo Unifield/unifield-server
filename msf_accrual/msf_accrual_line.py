@@ -26,6 +26,7 @@ from dateutil.relativedelta import relativedelta
 
 class msf_accrual_line(osv.osv):
     _name = 'msf.accrual.line'
+    _rec_name = 'date'
     
     def onchange_period(self, cr, uid, ids, period_id, context=None):
         if period_id is False:
@@ -83,6 +84,15 @@ class msf_accrual_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+        if 'document_date' in vals and vals.get('period_id', False):
+            # US-192 check doc date regarding post date
+            # => read (as date readonly in form) to get posting date: 
+            # is end of period
+            posting_date = self.pool.get('account.period').read(cr, uid,
+                vals['period_id'], ['date_stop', ],
+                context=context)['date_stop']
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                vals['document_date'], posting_date, context=context)
         if 'third_party_type' in vals:
             if vals['third_party_type'] == 'hr.employee' and 'employee_id' in vals:
                 employee = self.pool.get('hr.employee').browse(cr, uid, vals['employee_id'], context=context)
@@ -100,10 +110,19 @@ class msf_accrual_line(osv.osv):
                 formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
                 raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
         return super(msf_accrual_line, self).create(cr, uid, vals, context=context)
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+
+        if 'document_date' in vals:
+            # US-192 check doc date reagarding post date
+            # => read date field (as readonly in form)
+            for r in self.read(cr, uid, ids, ['date', ], context=context):
+                self.pool.get('finance.tools').check_document_date(cr, uid,
+                    vals['document_date'], r['date'], context=context)
         if 'third_party_type' in vals:
             if vals['third_party_type'] == 'hr.employee' and 'employee_id' in vals:
                 employee = self.pool.get('hr.employee').browse(cr, uid, vals['employee_id'], context=context)

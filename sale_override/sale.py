@@ -855,17 +855,22 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # 1/ Check validity of analytic distribution
         self.analytic_distribution_checks(cr, uid, order_brw_list)
 
-        no_price_lines = line_obj.search(cr, uid, [
-            ('order_id', '=', ids),
-            ('price_unit', '=', 0.00),
-        ])
-        if no_price_lines:
-            raise osv.except_osv(
-                _('Warning'),
-                _('FO cannot be validated as line cannot have unit price of zero.'),
-            )
-
         for order in order_brw_list:
+            no_price_lines = []
+            if order.order_type == 'regular':
+                cr.execute('SELECT line_number FROM sale_order_line WHERE (price_unit*product_uom_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (order.id,))
+                line_errors = cr.dictfetchall()
+                for l_id in line_errors:
+                    if l_id not in no_price_lines:
+                        no_price_lines.append(l_id['line_number'])
+
+            if no_price_lines:
+                errors = ' / '.join(str(x) for x in no_price_lines)
+                raise osv.except_osv(
+                    _('Warning'),
+                    _('FO cannot be validated as line cannot have unit price of zero or subtotal of zero. Lines in exception: %s') % errors,
+                )
+
             # 2/ Check if there is lines in order
             if len(order.order_line) < 1:
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
@@ -978,6 +983,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                                               'order_line': [],
                                                               'loan_id': so.loan_id and so.loan_id.id or False,
                                                               'delivery_requested_date': so.delivery_requested_date,
+                                                              'transport_type': so.transport_type,
                                                               'split_type_sale_order': fo_type,
                                                               'ready_to_ship_date': line.order_id.ready_to_ship_date,
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
@@ -2196,7 +2202,8 @@ class sale_order_line(osv.osv):
                 'created_by_rfq_line': fields.many2one('purchase.order.line', string='Created by RfQ line'),
                 'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
                 'sync_sourced_origin': fields.char(string='Sync. Origin', size=256),
-                'cancel_split_ok': fields.boolean(
+                'cancel_split_ok': fields.float(
+                    digits=(16,2),
                     string='Cancel split',
                     help='If the line has been canceled/removed on the splitted FO',
                 ),
@@ -2308,7 +2315,8 @@ class sale_order_line(osv.osv):
                     pick_obj.validate(cr, uid, [pick.id])
 
             if line.original_line_id:
-                self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': True}, context=context)
+                cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
+                self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
 
             # UFTP-82:
             # do not delete cancelled IR line from PO cancelled
@@ -2607,7 +2615,12 @@ class sale_order_line(osv.osv):
         '''
         context = context is None and {} or context
 
-        if not context.get('noraise') and not context.get('import_in_progress'):
+        if context.get('button') in ['button_remove_lines', 'check_lines_to_fix', 'add_multiple_lines', 'wizard_import_ir_line']:
+            return True
+        cond1 = not context.get('noraise')
+        cond2 = not context.get('import_in_progress')
+
+        if cond1 and cond2:
             empty_lines = False
             if ids and not 'product_uom_qty' in vals:
                 empty_lines = self.search(cr, uid, [
@@ -2695,6 +2708,7 @@ sale_order_line()
 
 class sale_order_line_cancel(osv.osv):
     _name = 'sale.order.line.cancel'
+    _rec_name = 'sync_order_line_db_id'
 
     _columns = {
         'sync_order_line_db_id': fields.text(string='Sync order line DB ID', required=True),
@@ -2710,6 +2724,7 @@ sale_order_line_cancel()
 
 class expected_sale_order_line(osv.osv):
     _name = 'expected.sale.order.line'
+    _rec_name = 'order_id'
 
     _columns = {
         'order_id': fields.many2one(

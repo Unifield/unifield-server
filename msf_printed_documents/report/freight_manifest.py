@@ -38,16 +38,6 @@ class freight_manifest(report_sxw.rml_parse):
             'get_lines': self.get_lines,
             'getEtd': self.getEtd,
             'getEta': self.getEta,
-            'getDataRef': self.getDataRef,
-            'getDataPpl': self.getDataPpl,
-            'getDataDescr': self.getDataDescr,
-            'getDataKg': self.getDataKg,
-            'getDataParce': self.getDataParce,
-            'getDataM3': self.getDataM3,
-            'getDataValue': self.getDataValue,
-            'getDataKC': self.getDataKC,
-            'getDataDG': self.getDataDG,
-            'getDataNP': self.getDataNP,
             'getTotParce': self.getTotParce,
             'getTotM3': self.getTotM3,
             'getTotValue': self.getTotValue,
@@ -63,6 +53,7 @@ class freight_manifest(report_sxw.rml_parse):
             'getadditional_items_weight': self.getadditional_items_weight,
             'getadditional_items_getTotKg': self.getadditional_items_getTotKg,
             'getallTotKg': self.getallTotKg,
+            'get_group_lines': self.get_group_lines,
         })
 
     def getFonCur(self,ligne):
@@ -80,7 +71,79 @@ class freight_manifest(report_sxw.rml_parse):
     def getTotKg(self):
         return self.formatLang(self.kgtot and self.kgtot or 0.)
 
-    def get_lines(self, o): 
+    # BKLG_84
+    def get_group_lines(self, rml_line):
+        lines = rml_line[0].pack_family_memory_ids
+        lines_output = []
+        line_obj = {}
+
+        for line in lines:
+            if line.currency_id:
+                self.cur = line.currency_id.name
+            self.parcetot += line.num_of_packs
+            self.kgtot += line.total_weight
+            self.voltot += line.total_volume/1000.00
+            self.valtot += line.total_amount
+
+            line_ref = line and line.sale_order_id and line.sale_order_id.name or False
+            line_pl = line and line.ppl_id and line.ppl_id.name or False
+
+            kc = ""
+            dg = ""
+            np = ""
+            for x in line.move_lines:
+                if x.kc_check:
+                    kc = 'X'
+                if x.dg_check:
+                    dg = 'X'
+                if x.np_check:
+                    np = 'X'
+
+            if line_ref not in line_obj:
+                line_obj[line_ref] = {}
+
+            if line_pl not in line_obj[line_ref]:
+                line_obj[line_ref][line_pl] = {
+                    'desc': '',
+                    'parcels': 0,
+                    'kgs': 0,
+                    'm3': 0,
+                    'value': 0,
+                    'kc': 0,
+                    'dg': 0,
+                    'np': 0
+                }
+
+            line_obj[line_ref][line_pl]['desc'] = line.description_ppl or ''
+            line_obj[line_ref][line_pl]['parcels'] += line.num_of_packs or 0
+            line_obj[line_ref][line_pl]['kgs'] += line.total_weight or 0.0
+            line_obj[line_ref][line_pl]['m3'] += line.total_volume/1000.0 or 0.0
+            line_obj[line_ref][line_pl]['value'] += line.total_amount or 0.0
+            if kc != "":
+                line_obj[line_ref][line_pl]['kc'] = kc
+            if dg != "":
+                line_obj[line_ref][line_pl]['dg'] = dg
+            if np != "":
+                line_obj[line_ref][line_pl]['np'] = np
+
+        for ref in line_obj:
+            for ppl in line_obj[ref]:
+                current = {
+                    'ref': ref,
+                    'ppl': ppl,
+                    'desc': line_obj[ref][ppl]['desc'],
+                    'parcels': line_obj[ref][ppl]['parcels'],
+                    'kgs': line_obj[ref][ppl]['kgs'],
+                    'm3': line_obj[ref][ppl]['m3'],
+                    'value': round(line_obj[ref][ppl]['value'], 2),
+                    'kc': line_obj[ref][ppl]['kc'],
+                    'dg': line_obj[ref][ppl]['dg'],
+                    'np': line_obj[ref][ppl]['np']
+                }
+                lines_output.append(current)
+        return lines_output
+
+    def get_lines(self, o):
         return o[0].pack_family_memory_ids
 
     def getEtd(self, o):
@@ -89,53 +152,7 @@ class freight_manifest(report_sxw.rml_parse):
     def getEta(self, o):
         return time.strftime('%d/%m/%Y',time.strptime(o.planned_date_of_arrival,'%Y-%m-%d'))
 
-    def getDataRef(self, ligne):
-        if ligne.currency_id:
-            self.cur = ligne.currency_id.name
-        return ligne and ligne.sale_order_id and ligne.sale_order_id.name or False
-
-    def getDataPpl(self, ligne):
-        return ligne and ligne.ppl_id and ligne.ppl_id.name or False
-
-    def getDataDescr(self, ligne):
-        #return ligne.description and ligne.description or 'Pas de description'
-        return False        
-
-    def getDataKg(self, ligne):
-        self.kgtot += ligne.total_weight
-        return ligne and ligne.total_weight or '0.0'
-
-    def getDataParce(self, ligne):
-        self.parcetot += ligne.num_of_packs
-        return ligne and ligne.num_of_packs or '0'
-
-    def getDataM3(self, ligne):
-        self.voltot += ligne.total_volume/1000.00
-        return ligne and ligne.total_volume/1000.00 or '0.0'
-
-    def getDataValue(self, ligne):
-        self.valtot += ligne.total_amount
-        return ligne and ligne.total_amount or '0.0'
-
-    def getDataKC(self, ligne):
-        for x in ligne.move_lines:
-            if x.kc_check:
-                return 'X'
-        return ''
-
-    def getDataDG(self, ligne):
-        for x in ligne.move_lines:
-            if x.dg_check:
-                return 'X'
-        return ''
-
-    def getDataNP(self, ligne):
-        for x in ligne.move_lines:
-            if x.np_check:
-                return 'X'
-        return ''
-
-    def get_additional_items(self, o): 
+    def get_additional_items(self, o):
         return o[0].additional_items_ids
 
     def getadditional_items_name(self, line):
@@ -166,4 +183,3 @@ class freight_manifest(report_sxw.rml_parse):
 report_sxw.report_sxw('report.msf.freight_manifest', 'shipment', 'addons/msf_printed_documents/report/freight_manifest.rml', parser=freight_manifest, header=False,)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

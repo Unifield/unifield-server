@@ -28,6 +28,18 @@ from tools.translate import _
 import time
 from lxml import etree
 
+class account_bank_statement_line(osv.osv):
+    _name = "account.bank.statement.line"
+    _inherit = "account.bank.statement.line"
+
+    _columns = {
+        'cash_return_move_line_id': fields.many2one('account.move.line',
+            'Cash Return JI', required=False, readonly=True),  # BKLG-60 
+    }
+
+account_bank_statement_line()
+
+
 class wizard_invoice_line(osv.osv_memory):
     """
     A register line simulation containing some invoices.
@@ -508,7 +520,7 @@ class wizard_cash_return(osv.osv_memory):
         move_line_id = move_line_obj.create(cr, uid, move_line_vals, context=context)
         return move_line_id
 
-    def create_st_line_from_move_line(self, cr, uid, ids, register_id=None, move_id=None, move_line_id=None, invoice_id=None, context=None):
+    def create_st_line_from_move_line(self, cr, uid, ids, register_id=None, move_id=None, move_line_id=None, invoice_id=None, do_move_line_id_link=True, context=None):
         """
         Create a statement line from a move line and then link it to the move line
         """
@@ -560,6 +572,8 @@ class wizard_cash_return(osv.osv_memory):
             'sequence_for_reference': seq,
             'ref': reference,
             'analytic_distribution_id': analytic_distribution_id,
+            # BKLG-60 reg line: cash return reg line link with JI (for debit adv regline - not for the close adv one)
+            'cash_return_move_line_id': do_move_line_id_link and move_line_id or False,  
         }
         # Add invoice link if exists
         if invoice_id:
@@ -970,7 +984,7 @@ class wizard_cash_return(osv.osv_memory):
 
         move_line_obj.reconcile_partial(cr, uid, rec_targets)
         # create the statement line for the advance closing
-        self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_closing_id, context=context)
+        self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_closing_id, do_move_line_id_link=False, context=context)
 
         # Disable the return function on the statement line origin (on which we launch the wizard)
         absl_obj.write(cr, uid, [wizard.advance_st_line_id.id], {'from_cash_return': True}, context=context)
