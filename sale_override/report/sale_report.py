@@ -22,6 +22,7 @@
 import tools
 from osv import fields, osv
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from sale_override import SALE_ORDER_STATE_SELECTION
 
 class sale_report(osv.osv):
     _name = "sale.report"
@@ -76,16 +77,8 @@ class sale_report(osv.osv):
         'delay': fields.float('Commitment Delay', digits=(16,2), readonly=True),
         'categ_id': fields.many2one('product.category','Category of Product', readonly=True),
         'nbr': fields.integer('# of Lines', readonly=True),
-        'state': fields.selection([
-            ('draft', 'Draft'),
-            ('waiting_date', 'Waiting Schedule'),
-            ('manual', 'Confirmed'),
-            ('progress', 'Confirmed'),
-            ('shipping_except', 'Shipping Exception'),
-            ('invoice_except', 'Invoice Exception'),
-            ('done', 'Closed'),
-            ('cancel', 'Cancelled')
-            ], 'Order State', readonly=True),
+        'state': fields.selection(selection=SALE_ORDER_STATE_SELECTION,
+            string='Order State', readonly=True),
         'pricelist_id': fields.many2one('product.pricelist', 'Currency', readonly=True),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account', readonly=True),
         'name': fields.char('Order Reference', size=64, required=True,
