@@ -119,7 +119,7 @@ class wizard_import_invoice(osv.osv_memory):
         user = self.pool.get('res.users').browse(cr, uid, uid)
         instance_id = user.company_id and user.company_id.instance_id and user.company_id.instance_id.id or False
         fctx = {
-            'from': 'wizard_import_invoice', 
+            'from': 'wizard_import_invoice',
             'search_default_instance_id': instance_id,
         }
         form = etree.fromstring(result['arch'])
