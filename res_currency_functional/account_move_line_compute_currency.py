@@ -63,7 +63,10 @@ class account_move_line_compute_currency(osv.osv):
     def create_addendum_line(self, cr, uid, lines, total, context=None):
         """
         Create an addendum line.
-        posting_date and document_date should be the oldiest date from all lines!
+
+        Since US-236: default document and posting dates should belong to the
+        first open period found after the highest posting date involved in the
+        reconciliation
         """
         if context is None:
             context = {}
@@ -104,7 +107,7 @@ class account_move_line_compute_currency(osv.osv):
         if not to_create:
             return False
 
-        current_date = time.strftime('%Y-%m-%d')
+        period_obj = self.pool.get('account.period')
         j_obj = self.pool.get('account.journal')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         # Search Miscellaneous Transactions journal
@@ -145,20 +148,39 @@ class account_move_line_compute_currency(osv.osv):
                     oldiest_date = rline.date or False
                 if rline.date > oldiest_date:
                     oldiest_date = rline.date
-#                break
 
-            # Search attached period
-            period_id = None
-            for tested_date in [oldiest_date, current_date]:
-                period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', tested_date), ('date_stop', '>=', tested_date)], context=context, limit=1, order='date_start, name')
-                if not period_ids:
-                    raise osv.except_osv(_('Error'), _('No attached period found!'))
-                if self.pool.get('account.period').browse(cr, uid, period_ids[0]).state == 'draft':
-                    period_id = period_ids[0]
-                    break
+            # US-236: default document and posting dates should belong to the
+            # first open period found after the highest posting date involved in
+            # the reconciliation
+            current_date = time.strftime('%Y-%m-%d')
+            current_date_dt = self.pool.get('date.tools').orm2date(current_date)
+            oldiest_date_dt = self.pool.get('date.tools').orm2date(oldiest_date)
+            base_date = oldiest_date or current_date
+            base_date_dt = self.pool.get('date.tools').orm2date(base_date)
 
-            if not period_id:
-                raise osv.except_osv(_('Warning'), _('No open period found for this date: %s') % current_date)
+            # search first opened period since latest posting date
+            period_from = "%04d-%02d-%02d" % (base_date_dt.year,
+                base_date_dt.month, 1, )
+            period_ids = period_obj.search(cr, uid, [
+                ('date_start', '>=', period_from),
+                ('state', '=', 'draft'),  # first opened period since 
+            ], limit=1, order='date_start, name', context=context)
+            if not period_ids:
+                raise osv.except_osv(_('Warning'),
+                    _('No open period found since this date: %s') % base_date)
+            period_id = period_ids[0]
+            period_br = period_obj.browse(cr, uid, period_id, context=context)
+
+            if current_date_dt.year == oldiest_date_dt.year \
+                and current_date_dt.month == oldiest_date_dt.month \
+                and current_date_dt.day > oldiest_date_dt.day \
+                and period_br.date_start <= current_date <= period_br.date_stop:
+                # current date in 'opened period found': use it as 'base date'
+                base_date = current_date
+            elif period_br.date_start > base_date:
+                # opened period finally found after the latest posting date:
+                # use the period start date as 'base date'
+                base_date = period_br.date_start
 
             # verify that a fx gain/loss account exists
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
@@ -186,8 +208,8 @@ class account_move_line_compute_currency(osv.osv):
                     'currency_id': company_currency_id,
                     'analytic_id': search_ids[0],
                     'percentage': 100.0,
-                    'date': oldiest_date or current_date,
-                    'source_date': oldiest_date or current_date,
+                    'date': base_date,
+                    'source_date': base_date,
                     'destination_id': addendum_line_account_default_destination_id,
                 }
                 cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
@@ -201,13 +223,13 @@ class account_move_line_compute_currency(osv.osv):
                 distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0],})
                 self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
 
-            move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': oldiest_date or current_date}, context=context)
+            move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': base_date}, context=context)
             # Create default vals for the new two move lines
             vals = {
                 'move_id': move_id,
-                'date': oldiest_date or current_date,
-                'source_date': oldiest_date or current_date,
-                'document_date': oldiest_date or current_date,
+                'date': base_date,
+                'source_date': base_date,
+                'document_date': base_date,
                 'journal_id': journal_id,
                 'period_id': period_id,
                 'partner_id': partner_id,
