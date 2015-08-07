@@ -1640,6 +1640,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 
+                if line.type == 'make_to_stock' and line.procurement_id:
+                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_check', cr)
+
                 line_done += 1
                 prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
                    'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
