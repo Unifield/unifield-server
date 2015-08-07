@@ -1640,6 +1640,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 
+                if line.type == 'make_to_stock' and line.procurement_id:
+                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_check', cr)
+
                 line_done += 1
                 prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
                    'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
@@ -2155,6 +2158,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'context': context,
         }
 
+    def _manual_create_sync_message(self, cr, uid, res_id, return_info, rule_method, context=None):
+        return
+
 sale_order()
 
 
@@ -2324,7 +2330,13 @@ class sale_order_line(osv.osv):
             # - purchase_order_line.cancel_sol()
             if not 'update_or_cancel_line_not_delete' in context \
                 or not context['update_or_cancel_line_not_delete']:
+                tmp_ctx = context.get('call_unlink', None)
+                context['call_unlink'] = True
                 self.unlink(cr, uid, [line.id], context=context)
+                if tmp_ctx is None:
+                    del context['call_unlink']
+                else:
+                    context['call_unlink'] = tmp_ctx
             elif line.order_id.procurement_request:
                 # UFTP-82: flagging SO is an IR and its PO is cancelled
                 self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)

@@ -4129,6 +4129,18 @@ class stock_picking(osv.osv):
     def _manual_create_rw_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         return
 
+    def _create_sync_message_for_field_order(self, cr, uid, picking, context=None):
+        fo_obj = self.pool.get('sale.order')
+        if picking.sale_id:
+            return_info = {}
+#       fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.validated_fo_update_original_po', context=context)
+        if picking.sale_id.original_so_id_sale_order:
+            fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.original_so_id_sale_order.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
+        else:
+            fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
+        fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.create_split_po', context=context)
+        fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.update_split_po', context=context)
+
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         override cancel state action from the workflow
@@ -4147,6 +4159,8 @@ class stock_picking(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         obj_data = self.pool.get('ir.model.data')
+        fo_obj = self.pool.get('sale.order')
+
 
         # check the state of the picking
         for picking in self.browse(cr, uid, ids, context=context):
@@ -4154,6 +4168,7 @@ class stock_picking(osv.osv):
             if picking.subtype == 'picking' and picking.state in ('draft',):
                 if self.has_picking_ticket_in_progress(cr, uid, [picking.id], context=context)[picking.id]:
                     raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
+                self._create_sync_message_for_field_order(cr, uid, picking, context=context)
                 return super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
             # if not draft or qty does not match, the shipping is already in progress
             if picking.subtype == 'picking' and picking.state in ('done',):
@@ -4500,13 +4515,19 @@ class stock_move(osv.osv):
         '''
         pol_obj = self.pool.get('purchase.order.line')
         proc_obj = self.pool.get('procurement.order')
+        pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
 
         if context is None:
             context = {}
 
+        move_to_done = []
+        pick_to_check = set()
+
         for move in self.browse(cr, uid, ids, context=context):
+            if move.product_qty == 0.00:
+                move_to_done.append(move.id)
             """
             A stock move can be re-sourced but there are some conditions
 
@@ -4531,6 +4552,10 @@ class stock_move(osv.osv):
             pick_subtype = move.picking_id.subtype
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
+
+            if pick_subtype == 'picking' and pick_state == 'draft':
+                pick_to_check.add(move.picking_id.id)
+                pick_obj._create_sync_message_for_field_order(cr, uid, move.picking_id, context=context)
 
             if pick_type == 'in' and move.purchase_line_id:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
@@ -4572,6 +4597,8 @@ class stock_move(osv.osv):
         ids = self.search(cr, uid, [('id', 'in', ids)])
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 
+        self.action_done(cr, uid, move_to_done, context=context)
+
         wf_service = netsvc.LocalService("workflow")
 
         proc_obj = self.pool.get('procurement.order')
@@ -4581,6 +4608,13 @@ class stock_move(osv.osv):
                 wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_confirm', cr)
 #            else:
 #                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+
+        for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
+            if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
+                moves_to_done = self.search(cr, uid, [('picking_id', '=', ptc.id), ('product_qty', '=', 0.00), ('state', 'not in', ['done', 'cancel'])], context=context)
+                if moves_to_done:
+                    self.action_done(cr, uid, moves_to_done, context=context)
+                ptc.action_done(context=context)
 
         return res
 
