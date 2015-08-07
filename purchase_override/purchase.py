@@ -1637,6 +1637,7 @@ stock moves which are already processed : '''
 
         # corresponding sale order
         so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        so_ids = so_obj.search(cr, uid, [('id', 'in', so_ids), ('procurement_request', '=', False)], context=context)
         # from so, list corresponding po
         all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
 
@@ -1655,6 +1656,7 @@ stock moves which are already processed : '''
                                                                  ('type', '=', 'make_to_order'),
                                                                  ('product_id', '!=', False),
                                                                  ('procurement_id.state', '!=', 'cancel'),
+                                                                 ('order_id.procurement_request', '=', False),
                                                                  ('state', 'not in', ['confirmed', 'done'])], context=context)
 
             all_exp_sol_not_confirmed_ids = exp_sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids)], context=context)

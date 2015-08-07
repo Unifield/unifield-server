@@ -388,6 +388,10 @@ class po_follow_up_mixin(object):
         # if additional analytic lines print them here.
         for (index, analytic_line) in list(enumerate(analytic_lines))[1:]:
             report_line = {}
+            report_line['order_ref'] = ''
+            report_line['order_created'] = ''
+            report_line['order_confirmed_date'] = ''
+            report_line['order_status'] = ''
             report_line['item'] = ''
             report_line['code'] = ''
             report_line['description'] = ''

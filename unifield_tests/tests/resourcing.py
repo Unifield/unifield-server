@@ -108,7 +108,7 @@ No split of FO found !""")
         values.update(change_vals)
 
         # Add an analytic distribution
-        distrib_id = self.get_record(db, 'distrib_1')
+        distrib_id = self.create_analytic_distribution(db)
 
         values.update({
             'order_type': order_type,
