@@ -186,6 +186,7 @@
         <field name="name">view.employee.filter.2</field>
         <field name="model">hr.employee</field>
         <field name="type">search</field>
+        <field name="priority" eval="15"/>
         <field name="arch" type="xml">
             <search>
 
