@@ -631,6 +631,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
                         # we informs new move line that it have correct a statement line
                         self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
                         break
+                    else:
+                        #US-303: If not the case, then we inform the new move line that it has corrected a statement line
+                        self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)                        
             # if not, this move line should have a direct link to a register line
             elif ml.statement_id and ml.corrected_st_line_id:
                 absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
