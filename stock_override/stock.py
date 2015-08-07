@@ -1279,7 +1279,7 @@ class stock_move(osv.osv):
         res = {}
         for m in self.browse(cr, uid, ids, context=context):
             res[m.id] = False
-            if m.purchase_line_id and m.purchase_line_id.price_unit != m.price_unit:
+            if m.purchase_line_id and abs(m.purchase_line_id.price_unit - m.price_unit) > 10**3:
                 res[m.id] = True
 
         return res
