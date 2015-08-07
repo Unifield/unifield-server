@@ -467,9 +467,11 @@
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Ref</Data>
         </Cell>
-        <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Chk num</Data>
-        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="column_headers">
+            <Data ss:Type="String">Chk num</Data>
+          </Cell>
+        % endif
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Acct</Data>
         </Cell>
@@ -518,9 +520,11 @@
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.ref or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="centre">
-          <Data ss:Type="String">${line.cheque_number}</Data>
-        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="centre">
+            <Data ss:Type="String">${line.cheque_number}</Data>
+          </Cell>
+        % endif
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${line.account_id.code + ' ' + line.account_id.name|x}</Data>
         </Cell>
@@ -600,7 +604,11 @@ elif ana_line.last_corrected_id:
 endif
 %>
       <Row>
-        <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+        % else:
+          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+        % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell>
@@ -648,7 +656,11 @@ elif ana_line.last_corrected_id:
 endif
 %>
       <Row>
-        <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+        % else:
+          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+        % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell>
