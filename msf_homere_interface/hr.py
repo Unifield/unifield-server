@@ -299,16 +299,15 @@ class hr_employee(osv.osv):
         if context is None:
             context = {}
         # US_262: add disrupt in search
+        # If disrupt is not define don't block inactive
         disrupt = False
-        if context.get('disrupt_inactive', False) \
-           and context.get('disrupt_inactive') == True:
+        if context.get('disrupt_inactive', True):
             disrupt = True
- 
+
         if not disrupt:
             if ('active', '=', False) not in args \
                and ('active', '=', True) not in args:
                 args += [('active', '=', True)]
-
         return super(hr_employee, self).search(cr, uid, args, offset=offset,
                                                limit=limit, order=order,
                                                context=context, count=count)
