@@ -358,7 +358,6 @@ class hr_payroll_import(osv.osv_memory):
         cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [
             ('category', '=', 'OC'),
             ('for_fx_gain_loss', '=', True),
-            ('instance_id', '=', instance.id),
         ], context=context)
         if not cc_ids:
             msg = _("%s: No 'FX gain loss' cost center found" \
@@ -509,12 +508,9 @@ class hr_payroll_import(osv.osv_memory):
                                         header_vals['currency_code'] , )
                                 })
                             else:
-                                # >0 balance: debit > credit need to write credit JI
-                                # <0 balance: credit > debit need to write debit JI
-                                # => so just keep the balance sign amount as it
                                 self._uf_side_rounding_line_create(cr, uid, ids,
                                     context=context, header_vals=header_vals,
-                                    amount=res_amount_rounded)
+                                    amount=-1 * res_amount_rounded)
                             #raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
                         else:
                             # Fetch Payroll rounding amount line and update
@@ -529,8 +525,6 @@ class hr_payroll_import(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
             fileobj.close()
 
-        print "TEST"
-        print wiz_state
         if wiz_state == 'simu' and ids:
             # US_201: if check raise no error, change state to process
             self.write(cr, uid, [wiz.id], {'state': 'proceed'})
