@@ -411,7 +411,8 @@ class List(TinyWidget):
                         continue
                 buttons += [Button(**attrs)]
                 headers.append(("button", len(buttons)))
-                
+            elif node.nodeName == 'separator':
+                headers += [("separator", {'type': 'separator', 'string': '|', 'not_sortable': 1})]
             elif node.nodeName == 'field':
                 attrs = node_attributes(node)
 
@@ -667,6 +668,15 @@ class DateTime(Char):
     def get_sortable_text(self):
         return ustr(self.value or '')
 
+class Separator(Char):
+
+    def __init__(self, **attrs):
+        super(Separator, self).__init__(**attrs)
+        self.separator = True
+
+    def get_text(self):
+        return '|'
+
 class Boolean(Char):
     template = "/openerp/widgets/templates/listgrid/boolean.mako"
 
@@ -770,5 +780,6 @@ CELLTYPES = {
         'float_time':FloatTime,
         'integer':Int,
         'boolean' : Boolean,
-        'progressbar' : ProgressBar
+        'progressbar' : ProgressBar,
+        'separator': Separator,
 }

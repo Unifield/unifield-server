@@ -109,6 +109,8 @@
             <td class="grid-cell">
                 ${buttons[field_attrs-1].display(parent_grid=name, **buttons[field_attrs-1].params_from(data))}
             </td>
+        % elif field == 'separator':
+            <td class="grid-cell"><b>|</b></td>
         % else:
             <td class="grid-cell ${field_attrs.get('type', 'char')}"
                 style="${(data[field].color or None) and 'color: ' + data[field].color};"
@@ -242,7 +244,7 @@
                                 % for (field, field_attrs) in headers:
                                     % if field == 'button':
                                         <th class="grid-cell"><div style="width: 0;"></div></th>
-                                    % elif (field_attrs.get('function') and not field_attrs.get('store')):
+                                    % elif (field_attrs.get('function') and not field_attrs.get('store')) or field_attrs.get('not_sortable'):
                                         <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}">${field_attrs['string']}</th>
                                     % else:
                                         <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}" style="cursor: pointer;" onclick="new ListView('${name}').sort_by_order('${field}', this)">${field_attrs['string']}</th>
