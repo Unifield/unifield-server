@@ -107,12 +107,12 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0])
+        # US-364:
+        # as CC is the only one mandatory in this wizard, set only a default
+        # False val for him and do not touch other dimensions (dest, fp, f1, f2)
+        # => let entry 'analytical_state' field do his job
         vals = {
-            'destination_id': False,
             'cost_center_id': False,
-            'funding_pool_id': False,
-            'free1_id': False,
-            'free2_id': False,
         }
         for el in ['destination_id', 'cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
             obj = getattr(wiz, el, None)

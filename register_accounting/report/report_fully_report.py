@@ -70,8 +70,8 @@ class report_fully_report(report_sxw.rml_parse):
         aml_ids = aml_obj.search(self.cr, self.uid, domain)
         if aml_ids:
             res = aml_obj.browse(self.cr, self.uid, aml_ids)
-
-        return sorted(res, key=lambda x: x.line_number)
+        # US_297: Sort by invoice.number instead line_number
+        return sorted(res, key=lambda x: (x.invoice.number, x.line_number))
 
     def getMoveLines(self, move_brs, regline_br):
         """

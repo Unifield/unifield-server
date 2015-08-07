@@ -108,7 +108,7 @@ No split of FO found !""")
         values.update(change_vals)
 
         # Add an analytic distribution
-        distrib_id = self.get_record(db, 'distrib_1')
+        distrib_id = self.create_analytic_distribution(db)
 
         values.update({
             'order_type': order_type,
@@ -302,7 +302,7 @@ No split of FO found !""")
             ('analytic_distribution_id', '=', False),
         ])
         pol_obj.write(no_ana_line_ids, {
-            'analytic_distribution_id': self.get_record(db, 'distrib_1'),
+            'analytic_distribution_id': self.create_analytic_distribution(db),
         })
 
         # Check if the PO is draft

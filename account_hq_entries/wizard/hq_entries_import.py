@@ -97,10 +97,8 @@ class hq_entries_import_wizard(osv.osv_memory):
         # [utp-928]
         # Make it impossible to import HQ entries where Doc Date > Posting Date,
         # it will spare trouble at HQ entry validation.
-        if dd and line_date and dd > line_date:
-            raise osv.except_osv(_('Error'),
-                                  _('Document date "%s" is greater than Posting date "%s"') % (document_date, line_date)
-            )
+        self.pool.get('finance.tools').check_document_date(cr, uid,
+            dd, line_date, show_date=True)
         # Retrieve account
         if account_description:
             account_data = account_description.split(' ')
