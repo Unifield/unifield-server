@@ -552,31 +552,26 @@
     <Cell ss:StyleID="mSupComment"><Data ss:Type="String">${_('Comment')}</Data></Cell>
     % endfor
    </Row>
-   <% list_lines = gen_line_link(o) %>
-   % for num, line in enumerate(o.tender_line_ids):
-   <% list_line_product = list_lines.get(line.product_id.id, {}) %>
-   ## 'list_lines' is a dict with 'product id' key,
-   ## each 'list_line_product' element is a dict with 'supplier id' key,
-   ## each supplier element is a dict with 'price_unit' and 'notes' values
+   % for line in get_compare_lines(o):
    <Row ss:Height="30">
-    <Cell ss:StyleID="s67"><Data ss:Type="Number">${num+1}</Data></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_id.code|x}</Data></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="Number">${line.qty}</Data></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_uom.name|x}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">${line.line_number|x}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_code|x}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_name|x}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">${line.quantity}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.uom_id|x}</Data></Cell>
 
-      % for supplier in o.supplier_ids:
-      <%
-        list_line_supplier_data = list_line_product.get(supplier.id, {})
-        price_unit = list_line_supplier_data.get('price_unit', 0.)
-        notes = list_line_supplier_data.get('notes', False) or ''
+    % for supplier in o.supplier_ids:
+        <%
+        sup_name = 'name_%s' % supplier.id
+        sup_price = 'unit_price_%s' % supplier.id
+        sup_comment = 'comment_%s' % supplier.id
       %>
-    <Cell ss:StyleID="s87"><Data ss:Type="String">${supplier.name|x}</Data></Cell>
-    <Cell ss:StyleID="s88"><Data ss:Type="Number">${price_unit}</Data></Cell>
-    <Cell ss:StyleID="s89"><Data ss:Type="String">${notes|x}</Data></Cell>
+    <Cell ss:StyleID="s87"><Data ss:Type="String">${line.get(sup_name, '')|x}</Data></Cell>
+    <Cell ss:StyleID="s88"><Data ss:Type="Number">${line.get(sup_price, 0.00)}</Data></Cell>
+    <Cell ss:StyleID="s89"><Data ss:Type="String">${line.get(sup_comment, '')|x}</Data></Cell>
       % endfor
 
-    <Cell ss:StyleID="s91"><Data ss:Type="String">${line.supplier_id and line.supplier_id.name or ''|x}</Data></Cell>
+    <Cell ss:StyleID="s91"><Data ss:Type="String">${line.choosen_supplier_id or ''|x}</Data></Cell>
    </Row>
    % endfor
    <Row ss:Height="3.5">
