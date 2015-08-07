@@ -44,11 +44,11 @@ class initial_stock_inventory(osv.osv):
     _columns = {
         'inventory_line_id': fields.one2many('initial.stock.inventory.line', 'inventory_id', string='Inventory lines'),
         'move_ids': fields.many2many('stock.move', 'initial_stock_inventory_move_rel', 'inventory_id', 'move_id', 'Created Moves'),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
     }
     
     def _inventory_line_hook(self, cr, uid, inventory_line, move_vals):
@@ -407,11 +407,11 @@ class stock_cost_reevaluation(osv.osv):
                                                  readonly=True, states={'draft': [('readonly', False)]}),
         'state': fields.selection([('draft', 'Draft'), ('confirm', 'Confirmed'), ('done', 'Done'), ('cancel', 'Cancel')],
                                   string='State', readonly=True, required=True),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
     }
     
     _defaults = {
