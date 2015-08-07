@@ -404,6 +404,10 @@ class stock_picking(osv.osv):
             self._logger.info(message)
             return message
 
+    def _manual_create_sync_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
+         rule_obj = self.pool.get("sync.client.message_rule")
+         rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
+
     # REMOVE THIS METHOD, NO MORE USE! do_incoming_shipment_sync
 
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
@@ -442,6 +446,7 @@ class stock_picking(osv.osv):
                     message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
                     self._logger.info(message)
                     return message
+                
         elif context.get('restore_flag'):
             # UF-1830: Create a message to remove the invalid reference to the inexistent document
             shipment_ref = pick_dict['name']

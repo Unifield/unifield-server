@@ -104,6 +104,11 @@ class sale_order_sync(osv.osv):
             default.update({'fo_created_by_po_sync': False})
         return super(sale_order_sync, self).copy(cr, uid, id, default, context=context)
 
+    def _manual_create_sync_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
+
+
     def create_so(self, cr, uid, source, po_info, context=None):
         self._logger.info("+++ Create an FO at %s from a PO (normal flow) at %s"%(cr.dbname, source))
         if not context:

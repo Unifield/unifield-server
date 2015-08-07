@@ -109,6 +109,44 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
+    def _manual_create_sync_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, context=None):
+        if True:
+            partner_name = 'fake'
+            
+            rule = self.get_rule_by_remote_call(cr, uid, rule_method, context)
+            if not rule:
+                logger.info("Sorry, there is no message rule found for the method %s." % (rule_method)) 
+                return
+    
+            model_obj = self.pool.get(model_name)
+            msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+            partner_name = model_obj.browse(cr, uid, res_id).partner_id.name
+    
+            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, context=context)
+#            temp = arguments[0] 
+#            temp['picking'] = return_info
+#            arguments = [temp]
+#            
+            sale_name = ''
+            if 'name' in arguments[0]:
+                sale_name = arguments[0]['name']
+            
+            identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [res_id], rule.server_id, context=context)
+            if not identifiers:
+                return
+            # Still create the message if an existing message was already in the system, as the return action could be repeat
+            xml_id = identifiers[res_id]
+            data = {
+                    'identifier' : xml_id,
+                    'remote_call': rule.remote_call,
+                    'arguments': arguments,
+                    'destination_name': partner_name,
+                    'sent' : False,
+                    'generate_message' : True,
+            }
+            msg_to_send_obj.create(cr, uid, data, context=context)
+            logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name)) 
+
     #UF-2531: This method is to create manually a RW message for the return pack, of ship or ppl and put into the queue for the next USB sync
     def _manual_create_rw_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, context=None):
         pick_obj = self.pool.get('stock.picking')
