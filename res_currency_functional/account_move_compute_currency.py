@@ -157,6 +157,7 @@ class account_move_compute_currency(osv.osv):
         """
         if not context:
             context = {}
+        reconcile = {}
         for move in self.browse(cr, uid, ids, context):
             amount = 0
             amount_currency = 0
@@ -183,6 +184,8 @@ class account_move_compute_currency(osv.osv):
                                                              debit_currency=%s, \
                                                              credit_currency=%s where id=%s',
                               (amount_currency, debit_currency, credit_currency, line_to_be_balanced.id))
+                    if line_to_be_balanced.reconcile_id:
+                        reconcile[line_to_be_balanced.reconcile_id.id] = 1
                 elif abs(amount) > 10 ** -4 and abs(amount_currency) < 10 ** -4:
                     # The move is balanced, but there is a difference in the converted amounts;
                     # the second-biggest move line is modified accordingly
@@ -198,7 +201,9 @@ class account_move_compute_currency(osv.osv):
                     cr.execute('update account_move_line set debit=%s, \
                                                              credit=%s where id=%s',
                               (debit, credit, line_to_be_balanced.id))
-        return True
+                    if line_to_be_balanced.reconcile_id:
+                        reconcile[line_to_be_balanced.reconcile_id.id] = 1
+        return reconcile.keys()
 
     def validate(self, cr, uid, ids, context=None):
         """

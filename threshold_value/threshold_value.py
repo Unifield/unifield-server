@@ -93,11 +93,11 @@ class threshold_value(osv.osv):
         'fixed_line_ids': fields.one2many('threshold.value.line', 'threshold_value_id2', string="Products"),
         'product_ids': fields.function(_get_product_ids, fnct_search=_src_product_ids, 
                                     type='many2many', relation='product.product', method=True, string='Products'),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
     }
     
     _defaults = {

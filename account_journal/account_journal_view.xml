@@ -36,7 +36,7 @@
                 </form>
             </field>
         </record>
-        
+
         <record id="view_account_journal_tree_inherit" model="ir.ui.view">
             <field name="name">account.journal.tree.inherit</field>
             <field name="model">account.journal</field>

@@ -554,8 +554,8 @@ class account_move(osv.osv):
             ids = [ids]
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
-                if m.document_date and m.date and m.date < m.document_date:
-                    raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+                self.pool.get('finance.tools').check_document_date(cr, uid,
+                    m.document_date, m.date, context=context)
         return True
 
     def _check_date_in_period(self, cr, uid, ids, context=None):

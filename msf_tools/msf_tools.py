@@ -28,9 +28,12 @@ import inspect
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+from datetime import date
 from decimal import Decimal, ROUND_UP
 
 import netsvc
+
+from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 
 class lang(osv.osv):
     '''
@@ -139,7 +142,25 @@ class date_tools(osv.osv):
             d_format = self.get_datetime_format(cr, uid)
             date = time.strptime(datetime, '%Y-%m-%d %H:%M:%S')
             return time.strftime(d_format, date)
-    
+
+    def orm2date(self, dt):
+        if isinstance(dt, basestring):
+            st = time.strptime(dt, DEFAULT_SERVER_DATE_FORMAT)
+            dt = date(st[0], st[1], st[2])
+        return dt
+
+    def date2orm(self, dt):
+        return dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+
+    def datetime2orm(self, dt):
+        return dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+
+    def orm2datetime(self, dt):
+        if isinstance(dt, basestring):
+            st = time.strptime(dt, DEFAULT_SERVER_DATETIME_FORMAT)
+            dt = datetime(st[0], st[1], st[2], st[3], st[4], st[5])
+        return dt
+
 date_tools()
 
 
@@ -599,3 +620,70 @@ class product_uom(osv.osv):
         return result
 
 product_uom()
+
+
+class finance_tools(osv.osv):
+    """
+    finance tools
+    """
+    _name = 'finance.tools'
+
+    def get_orm_date(self, day, month, year=False):
+        """
+        get date in ORM format
+        :type day: int
+        :type month: int
+        :type year: int (current FY if not provided)
+        """
+        return "%04d-%02d-%02d" % (year or datetime.now().year, month, day, )
+
+    def check_document_date(self, cr, uid, document_date, posting_date,
+        show_date=False, custom_msg=False, context=None):
+        """
+        US-192 document date check rules
+        http://jira.unifield.org/browse/US-192?focusedCommentId=38911&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38911
+
+        Document date should be included within the fiscal year of
+            the posting date it is tied with.
+        01/01/FY <= document date <= 31/12/FY
+
+        :type document_date: orm date
+        :type posting_date: orm date
+        :param show_date: True to display dates in message
+        :param custom_msg: str for custom basic message (will cancel show_date)
+        :type custom_msg: bool/str
+        """
+        if not document_date or not posting_date:
+            return
+        if custom_msg:
+            show_date = False
+
+        # initial check that not (posting_date < document_date)
+        # like was until 1.0-5
+        if posting_date < document_date:
+            if custom_msg:
+                msg = custom_msg  # optional custom message
+            else:
+                if show_date:
+                    msg = _('Posting date (%s) should be later than' \
+                        ' Document Date (%s).') % (posting_date, document_date,)
+                else:
+                    msg = _(
+                        'Posting date should be later than Document Date.')
+            raise osv.except_osv(_('Error'), msg)
+
+        # US-192 check
+        # 01/01/FY <= document date <= 31/12/FY
+        posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
+        check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
+        check_range_end = posting_date
+        if not (check_range_start <= document_date <= check_range_end):
+            if show_date:
+                msg = _('Document date (%s) should be in posting date FY') % (
+                    document_date, )
+            else:
+                msg = _('Document date should be in posting date FY')
+            raise osv.except_osv(_('Error'), msg)
+
+finance_tools()
+

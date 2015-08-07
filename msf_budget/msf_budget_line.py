@@ -61,7 +61,9 @@ class one2many_budget_lines(fields.one2many):
 
 class msf_budget_line(osv.osv):
     _name = "msf.budget.line"
-
+    _parent_store = True
+    _order = "parent_left"
+    _parent_order = 'account_code asc, line_type desc'
     def _get_name(self, cr, uid, ids, field_names=None, arg=None, context=None):
         result = self.browse(cr, uid, ids, context=context)
         res = {}
@@ -381,15 +383,16 @@ class msf_budget_line(osv.osv):
         'comm_amount': fields.function(_get_amounts, method=True, store=False, string="Commitments amount", type="float", readonly=True, multi="budget_amounts"),
         'balance': fields.function(_get_amounts, method=True, store=False, string="Balance", type="float", readonly=True, multi="budget_amounts"),
         'percentage': fields.function(_get_amounts, method=True, store=False, string="Percentage", type="float", readonly=True, multi="budget_amounts"),
-        'parent_id': fields.many2one('msf.budget.line', 'Parent Line'),
+        'parent_id': fields.many2one('msf.budget.line', 'Parent Line', ondelete='cascade'),
         'child_ids': fields.one2many('msf.budget.line', 'parent_id', 'Child Lines'),
         'line_type': fields.selection([('view','View'),
                                        ('normal','Normal'),
                                        ('destination', 'Destination')], 'Line type', required=True),
         'account_code': fields.related('account_id', 'code', type='char', string='Account code', size=64, store=True),
+        'parent_left': fields.integer('Parent Left', select=1),
+        'parent_right': fields.integer('Parent Right', select=1),
     }
 
-    _order = 'account_code asc, line_type desc'
 
     _defaults = {
         'line_type': lambda *a: 'normal',

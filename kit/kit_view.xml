@@ -102,13 +102,33 @@
             		<field name="composition_version" />
             		<field name="composition_creation_date" />
             		<field name="composition_reference" invisible="True" />
-            		<field name="composition_combined_ref_lot" />
             		<field name="composition_lot_id" invisible="True" />
-            		<field name="composition_exp" />
             		<field name="state" />
             	</tree>
             </field>
-		</record>
+        </record>
+		
+		<record id="view_composition_kit_real_tree" model="ir.ui.view">
+            <field name="name">composition.kit.real.tree</field>
+            <field name="model">composition.kit</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<tree string="Kit Composition" hide_delete_button="True">
+            		<field name="composition_type" invisible="True" />
+            		<field name="composition_product_id" />
+            		<field name="composition_version" />
+            		<field name="composition_creation_date" />
+            		<field name="composition_reference" invisible="True" />
+            		<field name="composition_combined_ref_lot" />
+            		<field name="composition_lot_id" invisible="True" />
+            		<field name="composition_exp" />
+                    <field name="state" />
+                    <button name="delete_button" type="object" icon="gtk-del" string="Delete" states='draft' confirm='Do you really want to delete selected record(s) ?'/>
+            	</tree>
+            </field>
+        </record>
+
+
 		
 		<record id="view_composition_kit_theoretical_filter" model="ir.ui.view">
             <field name="name">composition.kit.theoretical.filter</field>
@@ -335,7 +355,14 @@
 			<field name="domain">[('composition_type', '=', 'real')]</field>
 			<field name="context">{'search_default_completed': True, 'composition_type':'real'}</field>
 			<field name="search_view_id" ref="view_composition_kit_real_filter" />
-		</record>
+        </record>
+
+        <record id="kit_composition_real_action_tree_view" model="ir.actions.act_window.view">
+            <field eval="10" name="sequence" />
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_composition_kit_real_tree" />
+            <field name="act_window_id" ref="kit_composition_real_action" />
+        </record>
 		
 		<record id="kit_composition_real_item_action" model="ir.actions.act_window">
 			<field name="name">Kit Composition Item</field>
@@ -355,7 +382,14 @@
 			<field name="domain">[('composition_type', '=', 'real'),('composition_product_id', '=', active_id)]</field>
 			<field name="context">{'composition_type':'real'}</field>
 			<field name="search_view_id" ref="view_composition_kit_real_filter" />
-		</record>
+        </record>
+
+        <record id="kit_composition_real_action2_tree_view" model="ir.actions.act_window.view">
+            <field eval="10" name="sequence" />
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_composition_kit_real_tree" />
+            <field name="act_window_id" ref="kit_composition_real_action2" />
+        </record>
 		
 		<record id="ir_open_composition_list_view" model="ir.values">
 		    <field name="key2">client_action_relate</field>

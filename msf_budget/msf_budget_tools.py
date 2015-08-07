@@ -70,21 +70,18 @@ class msf_budget_tools(osv.osv):
             SELECT id, CASE WHEN type != 'view' THEN 'normal' ELSE 'view' END AS account_type, parent_id
             FROM account_account
             WHERE id IN %s
-            ORDER BY parent_id ASC"""
+            ORDER BY parent_left"""
         cr.execute(sql, (tuple(account_ids),))
         if not cr.rowcount:
             raise osv.except_osv(_('Error'), _('Unable to find needed info.'))
         tmp_res = cr.fetchall()
-        # UF-2503: sort this tmp_res to make sure that the parent record must appear first, then its children 
-        final_res = self.sort_the_correct_order(cr, uid, tmp_res, context=context)
-
         # We take destination ids for a given account (and we make a dictionnary to be quickly used)
         accounts = self.pool.get('account.account').read(cr, uid, account_ids, ['destination_ids'], context=context)
         destinations = {}
         for account in accounts:
             destinations[account.get('id')] = account.get('destination_ids')
         # We then create the final result with all needed elements
-        for line_id, line_type, parent_id in final_res:
+        for line_id, line_type, parent_id in tmp_res:
             line_vals = {
                 'id': line_id,
                 'type': line_type,
@@ -95,70 +92,6 @@ class msf_budget_tools(osv.osv):
                 line_vals.update({'destination_ids': destinations[line_id]})
             res.append(line_vals)
         return res
-
-    # UF-2503: sort this tmp_res to make sure that the parent record must appear first, then its children
-    def sort_the_correct_order(self, cr, uid, tmp_res, context=None):
-        top_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', 'MSF')], context=context)
-        if not top_ids:
-            raise osv.except_osv(_('Error'), _('Top level of MSF Chart of Accounts not found!'))
-
-        # UFTP-360: move all the lines with parent_id = top ids
-        final_res = []
-        top_id = top_ids[0]
-        line_already_visited = set()
-        for line_id, line_type, parent_id in tmp_res:
-            if parent_id == top_id:
-                final_res.append((line_id, line_type, parent_id))
-                line_already_visited.add(line_id)
-
-        for line_id, line_type, parent_id in tmp_res:
-            if line_id in line_already_visited:
-                continue
-            final_res.append((line_id, line_type, parent_id))
-        tmp_res = final_res
-
-        # With guarantee that all the lines having top level as parent are appeared in the first positions, now start the sort
-        max_try = 0
-        while (True):
-            all_ok = True
-            i = 0
-
-            list_parents = set()
-            list_parents.add(tmp_res[0][2])
-            list_parents.add(tmp_res[0][0])
-            line_already_visited = set()
-
-            line_already_visited.add(tmp_res[0][0])
-            final_res = [tmp_res[0]]
-
-            for line_id, line_type, parent_id in tmp_res:
-                i = i+1
-                if line_id in line_already_visited:
-                    continue
-                if parent_id in list_parents:
-                    final_res.append((line_id, line_type, parent_id))
-                else:
-                    for j in range(1, len(tmp_res) - 1, 1):
-                        l_id = tmp_res[j][0]
-                        p_id = tmp_res[j][2]
-                        if l_id == parent_id:
-                            final_res.append(tmp_res[j])
-                            final_res.append((line_id, line_type, parent_id))
-                            list_parents.add(l_id)
-                            line_already_visited.add(l_id)
-                            break
-                    all_ok = False # to be sorted again! :(
-                list_parents.add(line_id)
-                line_already_visited.add(line_id)
-
-            tmp_res = final_res
-            max_try += 1
-            if all_ok:
-                return final_res
-            if max_try == 50:
-                raise osv.except_osv(_('Error'), _('There was a problem with the building of the account hierarchy. Please verify the Chart of Account!'))
-        return tmp_res
-
 
     def create_budget_lines(self, cr, uid, budget_id, sequence=False, context=None):
         """
