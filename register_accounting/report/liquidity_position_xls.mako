@@ -219,6 +219,16 @@
 </Style>
 
 
+<Style ss:ID="s48">
+<Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+</Style>
+
 <Style ss:ID="s49">
 <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
 <Borders>
@@ -264,7 +274,7 @@
 
 <Row>
 <Cell ss:StyleID="s25b" >
-<Data ss:Type="String">${_('LIQUIDITY POSITION TEEST')}</Data>
+<Data ss:Type="String">${_('LIQUIDITY POSITION')}</Data>
 </Cell>
 </Row>
 <Row ss:Height="13.5"/>
@@ -378,19 +388,15 @@
 % endfor
 
 <Row>
-	<Cell ss:StyleID="s38">
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s38">
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s39">
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s43">
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s32">
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+
+	<Cell ss:StyleID="s42">
 	<Data ss:Type="String">${_('Subtotal =')}</Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
@@ -417,8 +423,10 @@
 	<Cell ss:StyleID="s25c"/>
 	<Cell ss:StyleID="s25c"/>
 	<Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
 
-	<Cell  ss:StyleID="s49">
+
+	<Cell ss:MergeAcross="1" ss:StyleID="s49">
 	<Data ss:Type="String">${_('Grand Total =')}</Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
