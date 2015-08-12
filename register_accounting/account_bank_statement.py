@@ -667,7 +667,8 @@ class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
 
-    _order = 'sequence_for_reference desc, document_date desc'
+    _order = 'sequence_for_reference desc, document_date desc, '\
+             'date desc, create_date desc'
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -1872,24 +1873,6 @@ class account_bank_statement_line(osv.osv):
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
         return absl
-
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        # US_198:
-        # Order the line by: sequence(D), document date(D), posting date (D)
-        #                    and creation date (D)
-        #
-        # Draft entries must by on top: sequence is empty
-
-        if order is None:
-            order = 'sequence_for_reference desc, document_date desc,' \
-                    ' date desc, create_date desc'
-        res = super(account_bank_statement_line, self).search(cr, uid, args,
-                                                              offset=offset,
-                                                              limit=limit,
-                                                              order=order,
-                                                              context=context,
-                                                              count=count)
-        return res
 
     def write(self, cr, uid, ids, values, context=None):
         """
