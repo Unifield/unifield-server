@@ -667,7 +667,7 @@ class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
 
-    _order = 'sequence_for_order, sequence_for_reference desc, document_date desc, date desc, id desc'
+    _order = 'sequence_for_order desc, sequence_for_reference desc, document_date desc, date desc, id desc'
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -924,18 +924,18 @@ class account_bank_statement_line(osv.osv):
         for line in self.browse(cr, uid, ids):
             res[line.id] = {
                 'sequence_for_reference': '',
-                'sequence_for_order': line.create_date
+                'sequence_for_order': line.id
             }
             if len(line.move_ids) > 0:
                 res[line.id] = {
                     'sequence_for_reference': line.move_ids[0].name,
-                    'sequence_for_order': False
+                    'sequence_for_order': 0
                 }
             else:
                 # UFTP-201: If there is no move linked to this reg line, get the current value of ref
                 res[line.id] = {
                     'sequence_for_reference': line.sequence_for_reference,
-                    'sequence_for_order': not line.sequence_for_reference and line.create_date or 0
+                    'sequence_for_order': not line.sequence_for_reference and line.id or 0
                 }
 
         return res
@@ -1035,8 +1035,7 @@ class account_bank_statement_line(osv.osv):
                 'account.bank.statement.line': (lambda self, cr, uid, ids, c=None: ids, ['move_ids'], 10),
                 'account.move': (_get_bank_statement_line_ids, ['statement_line_ids'], 10)
             }, size=64, multi='_seq_for_ref_order'),
-        'sequence_for_order': fields.function(_get_sequence, method=True, string="Sequence (for order)", type="datetime", store=True, readonly=1, multi='_seq_for_ref_order'),
-        'create_date' : fields.datetime('Creation date',readonly=True),
+        'sequence_for_order': fields.function(_get_sequence, method=True, string="Sequence (for order)", type="float", store=True, readonly=1, multi='_seq_for_ref_order'),
         'date': fields.date('Posting Date', required=True),
         'document_date': fields.date(string="Document Date", required=True),
         'cheque_number': fields.char(string="Cheque Number", size=120),
