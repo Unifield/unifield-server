@@ -1874,13 +1874,21 @@ class account_bank_statement_line(osv.osv):
         return absl
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        # US_198:
+        # Order the line by: sequence(D), document date(D), posting date (D)
+        #                    and creation date (D)
+        #
+        # Draft entries must by on top: sequence is empty
 
-        # Search if args contains 'state'
-        for arg in args:
-            # if state == draft, override order
-            if arg[0] == 'state' and arg[2] == 'draft':
-                order = 'sequence_for_reference desc, date, document_date, create_date'
-        res = super(account_bank_statement_line, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+        if order is None:
+            order = 'sequence_for_reference desc, document_date desc,' \
+                    ' date desc, create_date desc'
+        res = super(account_bank_statement_line, self).search(cr, uid, args,
+                                                              offset=offset,
+                                                              limit=limit,
+                                                              order=order,
+                                                              context=context,
+                                                              count=count)
         return res
 
     def write(self, cr, uid, ids, values, context=None):
