@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <!-- Liquidity position report -->
+        <record model="ir.ui.view" id="action_report_liquidity_position_form">
+            <field name='name'>wizard.liquidity.position.form</field>
+            <field name='model'>wizard.liquidity.position</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+
+                <form string="Export liquidity position">
+                    <group colspan="4">
+                        <group col="1"></group>
+                        <group col="2" colspan="2">
+                            <field colspan="2" name="period_id"/>
+                            <field colspan="2" name="export_type"/>
+                            <button colspan="2" name="create_report" string="Export" type="object"/>
+                        </group>
+                        <group col="1"></group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <act_window id="action_report_liquidity_position"
+            name="Liquidity Position"
+            res_model="wizard.liquidity.position"
+            src_model="account.bank.statement"
+            view_mode='form'
+            view_type='form'
+            target='new' />
+    </data>
+</openerp>
+
+
