@@ -61,7 +61,7 @@
         menu="True"
          />
 
-        <!-- # US_336: Now liquidity position run with a wizard 
+        <!-- # US_336: Now liquidity position run with a wizard -->
         <report id="liquidity_position"
         string="Liquidity Position"
         target_filename="Liquidity Position_${instance_id.code}_%(year)s%(month)s%(day)s"
@@ -71,8 +71,8 @@
         report_type="webkit"
         header="False"
         auto="False"
-        menu="True"/>
-        -->
+        menu="False"/>
+
         
         <report id="fully_report"
         string="Full Report"
