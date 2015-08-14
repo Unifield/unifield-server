@@ -61,6 +61,7 @@
         menu="True"
          />
 
+        <!-- # US_336: Now liquidity position run with a wizard 
         <report id="liquidity_position"
         string="Liquidity Position"
         target_filename="Liquidity Position_${instance_id.code}_%(year)s%(month)s%(day)s"
@@ -71,7 +72,8 @@
         header="False"
         auto="False"
         menu="True"/>
-
+        -->
+        
         <report id="fully_report"
         string="Full Report"
         target_filename="Full Report_${name}_${period_id.name}_%(year)s%(month)s%(day)s"

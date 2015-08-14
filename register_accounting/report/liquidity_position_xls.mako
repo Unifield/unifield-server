@@ -333,57 +333,56 @@
 </Row>
 
 % for reg in getRegister():
-	% for o in getRegister2()[reg]:
-	<Row>
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${(o.instance_id and o.instance_id.code or '')|x}</Data>
-</Cell>
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
-</Cell>
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${(o.journal_id and o.journal_id.name or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="s25" >
-        <Data ss:Type="String">${(o.state or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="s25" >
-        <Data ss:Type="String">${(o.period_id.name or '')|x}</Data>
-</Cell>
-        <Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${(o.msf_calculated_balance or 0.0)|x}</Data>
-</Cell>
-        % if o.journal_id.type == 'cash' :
-        	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${(o.balance_end_cash or 0.0)|x}</Data>
-</Cell>
-	% endif
-        % if o.journal_id.type == 'bank' :
-        	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${(o.balance_end_real or 0.0)|x}</Data>
-</Cell>
-	% endif
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${( o.journal_id and o.journal_id.currency and o.journal_id.currency.name or '')|x}</Data>
-</Cell>
-        <Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.msf_calculated_balance, 'cal') or 0.0 )|x}</Data>
-</Cell>
-
-        % if o.journal_id.type == 'cash' :
-        	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_cash,'reg') or 0.0 )|x}</Data>
-</Cell>
-	% endif
-        % if o.journal_id.type == 'bank' :
-        	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_real,'reg') or 0.0 )|x}</Data>
-</Cell>
-	% endif
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${( getFuncCur(o) or '')|x}</Data>
-</Cell>
-	</Row>
+% for o in getRegister2()[reg]:
+<Row>
+  <Cell ss:StyleID="s25" >
+    <Data ss:Type="String">${(o.instance_id and o.instance_id.code or '')|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="s25" >
+    <Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="s25" >
+    <Data ss:Type="String">${(o.journal_id and o.journal_id.name or '')|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="s25" >
+    <Data ss:Type="String">${(o.state or '')|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="s25" >
+    <Data ss:Type="String">${(o.period_id.name or '')|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="s26" >
+    <Data ss:Type="Number">${( o.msf_calculated_balance or 0.0)|x}</Data>
+  </Cell>
+  % if o.journal_id.type == 'cash' :
+  <Cell ss:StyleID="s26" >
+    <Data ss:Type="Number">${( o.balance_end_cash or 0.0) |x}</Data>
+  </Cell>
+  % endif
+  % if o.journal_id.type == 'bank' :
+  <Cell ss:StyleID="s26" >
+    <Data ss:Type="Number">${( o.balance_end_real or 0.0)|x}</Data>
+  </Cell>
+  % endif
+  <Cell ss:StyleID="s25" >
+    <Data ss:Type="String">${( o.journal_id and o.journal_id.currency and o.journal_id.currency.name or '')|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="s26" >
+    <Data ss:Type="Number">${( addAndprintCalBal(getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.msf_calculated_balance, 'cal')) or 0.0 )|x}</Data>
+  </Cell>
+  % if o.journal_id.type == 'cash' :
+  <Cell ss:StyleID="s26" >
+    <Data ss:Type="Number">${( addAndprintRegBal(getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_cash,'reg')) or 0.0 )|x}</Data>
+  </Cell>
+  % endif
+  % if o.journal_id.type == 'bank' :
+  <Cell ss:StyleID="s26" >
+    <Data ss:Type="Number">${( addAndprintRegBal(getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_real,'reg')) or 0.0 )|x}</Data>
+  </Cell>
+  % endif
+  <Cell ss:StyleID="s25" >
+    <Data ss:Type="String">${( getFuncCur(o) or '')|x}</Data>
+  </Cell>
+</Row>
 
 % endfor
 
@@ -396,23 +395,46 @@
   <Cell ss:StyleID="s25c"/>
   <Cell ss:StyleID="s25c"/>
 
-	<Cell ss:StyleID="s42">
-	<Data ss:Type="String">${_('Subtotal =')}</Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s44" ss:Formula="=SUM(R[-${getCal()}]C:R[-1]C)" >
-	<Data ss:Type="Number"></Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s44" ss:Formula="=SUM(R[-${getRes()}]C:R[-1]C)" >
-	<Data ss:Type="Number"></Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s41">
-	<Data ss:Type="String">${( getCurTot() or '')|x}</Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
+  <Cell ss:StyleID="s42">
+   <Data ss:Type="String">${_('Subtotal =')}</Data>
+   <NamedCell ss:Name="Print_Area"/>
+ </Cell>
+ <Cell ss:StyleID="s44" ss:Formula="=SUM(R[-${getCal()}]C:R[-1]C)" >
+   <Data ss:Type="Number"></Data>
+   <NamedCell ss:Name="Print_Area"/>
+ </Cell>
+ <Cell ss:StyleID="s44" ss:Formula="=SUM(R[-${getRes()}]C:R[-1]C)" >
+   <Data ss:Type="Number"></Data>
+   <NamedCell ss:Name="Print_Area"/>
+ </Cell>
+ <Cell ss:StyleID="s41">
+   <Data ss:Type="String">${( getCurTot() or '')|x}</Data>
+   <NamedCell ss:Name="Print_Area"/>
+ </Cell>
 </Row>
+
+
+% for d in getDevices()[reg]:
+<Row>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+
+  <Cell ss:StyleID="s42">
+   <Data ss:Type="String">${_('Subtotal ' + str(d))}</Data>
+   <NamedCell ss:Name="Print_Area"/>
+ </Cell>
+ <Cell ss:StyleID="s44">
+   <Data ss:Type="Number">${getDevices()[reg][d]['calc_bal']}</Data>
+   <NamedCell ss:Name="Print_Area"/>
+ </Cell>
+ <Cell ss:StyleID="s44">
+   <Data ss:Type="Number">${getDevices()[reg][d]['reg_bal']}</Data>
+   <NamedCell ss:Name="Print_Area"/>
+ </Cell>
+</Row>
+% endfor
 <Row ss:Height="13.5"/>
 % endfor
 
@@ -430,12 +452,12 @@
 	<Data ss:Type="String">${_('Grand Total =')}</Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
-	<Cell ss:StyleID="s50" ss:Formula="=${getFormula()}+R[-2]C">
-	<Data ss:Type="Number"></Data>
+	<Cell ss:StyleID="s50">
+	<Data ss:Type="Number">${ (getTotalCalBal() ) }</Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
-	<Cell ss:StyleID="s50" ss:Formula="=${getFormula()}+R[-2]C">
-	<Data ss:Type="Number"></Data>
+	<Cell ss:StyleID="s50">
+	<Data ss:Type="Number">${ (getTotalRegBal() ) }</Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s51">
