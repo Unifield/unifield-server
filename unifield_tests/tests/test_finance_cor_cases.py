@@ -347,7 +347,8 @@ class FinanceTestCorCases(FinanceTest):
         # ---------------------------------------------------------------------
         meta = self._get_dataset_meta()
         
-        year = datetime.now().year
+        now = datetime.now()
+        year = now.year
         date_fy_start = self.get_orm_date_fy_start()
         date_fy_stop = self.get_orm_date_fy_stop()
         date_now = self.get_orm_date_now()
@@ -369,9 +370,9 @@ class FinanceTestCorCases(FinanceTest):
             )
             
             # open current month period
-            period_id = self.get_period_id(db, date_now.month)
+            period_id = self.get_period_id(db, now.month)
             if period_id:
-                db.get('account_period').write([period_id], {
+                db.get('account.period').write([period_id], {
                     'state': 'draft',
                 })
                     
@@ -403,13 +404,14 @@ class FinanceTestCorCases(FinanceTest):
         self.synchronize(self.c1)
         self.synchronize(self.c1)
         self.synchronize(self.p1)
-        #self.synchronize(self.p12)
+        self.synchronize(self.p12)  # C1P2
+        # TODO:C2 level and C2P1/P2 (C2 not use in scenario at this time)
         
     def _sync_c1(self):
         self.synchronize(self.c1)
         self.synchronize(self.hq1)
         self.synchronize(self.p1)
-        #self.synchronize(self.p12)
+        self.synchronize(self.p12)  # C1P2
            
     def _register_set(self, db, period_id=1, ccy_name=False):
         dataset_meta = self._get_dataset_meta()

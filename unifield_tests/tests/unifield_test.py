@@ -76,6 +76,7 @@ class UnifieldTest(unittest.TestCase):
         if remote_warehouse:
             self.is_remote_warehouse = True
         self.is_remote_warehouse = False
+        # TODO: Check coordo level (c2 for 'HQ1C2')
         # Check project level
         p_level = c.get('DB', 'project_level') or '1'
         p_level = int(p_level)
@@ -83,6 +84,7 @@ class UnifieldTest(unittest.TestCase):
             levels = range(2, p_level + 1)
             db_suffixes += [ 'HQ1C1P%d' % (l, ) for l in levels ]
             names += [ 'p1%d' % (l, ) for l in levels ]
+            # TODO: p21 for 'HQ1C2P1', p22 for 'HQ1C2P2'
         # instance suffixes except sync server
         self._instances_suffixes = list(db_suffixes)
         self._instances_suffixes.remove('SYNC_SERVER')
@@ -264,12 +266,10 @@ class UnifieldTest(unittest.TestCase):
         return self._db_prefix + suffix
     
     def get_db_from_name(self, db_name):
-        if self.hq1.db_name == db_name:
-            return self.hq1
-        elif self.c1.db_name == db_name:
-            return self.c1
-        elif self.p1.db_name == db_name:
-            return self.p1
+        for attr_name in self.db:
+            if self.db[attr_name].db_name == db_name:
+                return self.db[attr_name]
+
         raise UnifieldTestException("'%s' database not found" % (db_name, ))
             
     def are_same_db(self, db1, db2):
