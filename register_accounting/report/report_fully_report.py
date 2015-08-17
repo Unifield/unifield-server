@@ -30,7 +30,19 @@ class report_fully_report(report_sxw.rml_parse):
             'getMoveLines': self.getMoveLines,
             'getAnalyticLines': self.getAnalyticLines,
             'getImportedMoveLines': self.getImportedMoveLines,
+            'getRegRef': self.getRegRef,
         })
+
+    def getRegRef(self, reg_line):
+        invoice = False
+        if reg_line.direct_invoice_move_id:
+            return reg_line.direct_invoice_move_id.name
+        if reg_line.imported_invoice_line_ids:
+            num = []
+            for inv in reg_line.imported_invoice_line_ids:
+                num.append(inv.move_id.name)
+            return " ".join(num)
+        return reg_line.ref or ''
 
     def filter_regline(self, regline_br):
         """
