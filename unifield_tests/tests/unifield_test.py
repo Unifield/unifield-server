@@ -64,6 +64,7 @@ class UnifieldTest(unittest.TestCase):
         c = UnifieldTestConfigParser()
         self.config = c.read()
         self._db_prefix = c.get('DB', 'db_prefix')
+        self._db_instance_prefix = c.get('DB', 'instance_prefix') or False
         tempo_mkdb = c.getboolean('DB', 'tempo_mkdb')
         db_suffixes = ['SYNC_SERVER', 'HQ1', 'HQ1C1', 'HQ1C1P1']
         names = ['sync', 'hq1', 'c1', 'p1']

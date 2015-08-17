@@ -46,10 +46,6 @@ DATASET = False
 #TEST_THE_TEST = True
 TEST_THE_TEST = False
 
-# when dbs are coming from a given RB, et the db prefix to retrieve
-# prop instances correctly (not from local db names)
-RBDB_PREFIX = 'cor-test'
-
 
 class FinanceTestCorCasesException(UnifieldTestException):
     pass
@@ -57,7 +53,11 @@ class FinanceTestCorCasesException(UnifieldTestException):
 
 class FinanceTestCorCases(FinanceTest):
     class DataSetMeta(object):
-        instances = [ 'HQ1', 'HQ1C1',  'HQ1C1P1', ]
+        instances = [ 'HQ1', 'HQ1C1',  'HQ1C1P1', 'HQ1C1P2' ]
+        
+        # TODO
+        # excel doc specifies C2 and C2P1/C2P2 but not test scenario uses them
+        # => only using behind instances
         #instances = [ 'HQ1', 'HQ1C1',  'HQ1C1P1', 'HQ1C1P2', 'HQ1C2',
         #   'HQ1C2P1',]
         
@@ -73,8 +73,10 @@ class FinanceTestCorCases(FinanceTest):
         ccs = {
             'HT112': [ 'HQ1C1P1', ],
             'HT120': [ 'HQ1C1', ],
-            #'HT122': [ 'HQ1C1P2', ],  # TODO uncomment when instances activated
-            #'HT220': [ 'HQ1C2', ],  # TODO uncomment when instances activated
+            
+            # TODO
+            #'HT122': [ 'HQ1C1P2', ],  # no test scenario uses it
+            #'HT220': [ 'HQ1C2', ],  # excel doc specifies C2 and C2P1/C2P2 but not test scenario uses them
         }
     
         # new FUNDING POOLS (and related cost centers)
@@ -132,8 +134,9 @@ class FinanceTestCorCases(FinanceTest):
                 [('code', 'in', target_instance_codes)])
             if not instance_ids:
                 # default dev instance (db/prop instances name from a RB)
-                target_instance_codes = [
-                    "%s_%s" % (RBDB_PREFIX, c, ) for c in codes ]
+                target_instance_codes = [ "%s%s" % (
+                    self._db_instance_prefix or self_db_prefix, c, ) \
+                    for c in codes ]
                 instance_ids = db.get('msf.instance').search(
                         [('code', 'in', target_instance_codes)])
                 self.assert_(instance_ids != False, "instances not found")
@@ -905,7 +908,7 @@ class FinanceTestCorCases(FinanceTest):
         fcc_obj.contract_soft_closed([fc_id])
         
         # select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
-        # sytem deny as FC1 soft-closed
+        # system deny as FC1 soft-closed
         # TODO
         
         # repoen FC1
