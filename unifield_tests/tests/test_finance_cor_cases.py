@@ -53,14 +53,6 @@ class FinanceTestCorCasesException(UnifieldTestException):
 
 class FinanceTestCorCases(FinanceTest):
     class DataSetMeta(object):
-        instances = [ 'HQ1', 'HQ1C1',  'HQ1C1P1', 'HQ1C1P2' ]
-        
-        # TODO
-        # excel doc specifies C2 and C2P1/C2P2 but not test scenario uses them
-        # => only using behind instances
-        #instances = [ 'HQ1', 'HQ1C1',  'HQ1C1P1', 'HQ1C1P2', 'HQ1C2',
-        #   'HQ1C2P1',]
-        
         functional_ccy = 'EUR'
     
         rates = { # from Januar
@@ -365,7 +357,7 @@ class FinanceTestCorCases(FinanceTest):
         self.analytic_account_activate_since(self.hq1,
             self.get_orm_fy_date(1, 1))
         
-        for i in meta.instances:
+        for i in self._instances_suffixes:
             # check instance dataset
             db = self.get_db_from_name(self.get_db_name_from_suffix(i))
             company = self.get_company(db)
@@ -375,6 +367,13 @@ class FinanceTestCorCases(FinanceTest):
                  "wrong functionnal ccy: '%s' is expected" % (
                     meta.functional_ccy, )
             )
+            
+            # open current month period
+            period_id = self.get_period_id(db, date_now.month)
+            if period_id:
+                db.get('account_period').write([period_id], {
+                    'state': 'draft',
+                })
                     
             # activate currencies (if required)
             activate_currencies(db, [ccy_name for ccy_name in meta.rates])
@@ -460,6 +459,7 @@ class FinanceTestCorCases(FinanceTest):
     def test_cor1_00(self):
         """
         for dataset testing
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_00
         """
         return

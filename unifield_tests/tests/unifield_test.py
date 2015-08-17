@@ -76,6 +76,15 @@ class UnifieldTest(unittest.TestCase):
         if remote_warehouse:
             self.is_remote_warehouse = True
         self.is_remote_warehouse = False
+        # Check project level
+        p_level = c.get('DB', 'project_level') or '1'
+        p_level = int(p_level)
+        if p_level > 1:
+            levels = range(2, p_level + 1)
+            db_suffixes += [ 'HQ1C1P1%d' % (l, ) for l in levels ]
+            names += [ 'p1%d' % (l, ) for l in levels ]
+        # instance suffixes except sync server
+        self._instances_suffixes = list(db_suffixes).remove('SYNC_SERVER')
         # Other values
         colors = TerminalColors()
         self.colors = colors

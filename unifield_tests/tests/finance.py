@@ -998,8 +998,7 @@ class FinanceTest(UnifieldTest):
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
-                        # percent match ?
-                        aal_br.amount_currency == ((ji_amount * percent) / 100.):  
+                        aal_br.amount_currency == ((ji_amount * percent) / 100.):  # percent match ?
                         match_count += 1
                         break
                         
