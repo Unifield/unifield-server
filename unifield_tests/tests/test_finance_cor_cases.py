@@ -40,8 +40,8 @@ TODO  11 select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
 
 
 # TODO active again when dev/testing is finished
-DATASET = False
-#DATASET = True
+#DATASET = False
+DATASET = True
 
 #TEST_THE_TEST = True
 TEST_THE_TEST = False

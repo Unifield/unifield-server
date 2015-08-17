@@ -81,10 +81,11 @@ class UnifieldTest(unittest.TestCase):
         p_level = int(p_level)
         if p_level > 1:
             levels = range(2, p_level + 1)
-            db_suffixes += [ 'HQ1C1P1%d' % (l, ) for l in levels ]
+            db_suffixes += [ 'HQ1C1P%d' % (l, ) for l in levels ]
             names += [ 'p1%d' % (l, ) for l in levels ]
         # instance suffixes except sync server
-        self._instances_suffixes = list(db_suffixes).remove('SYNC_SERVER')
+        self._instances_suffixes = list(db_suffixes)
+        self._instances_suffixes.remove('SYNC_SERVER')
         # Other values
         colors = TerminalColors()
         self.colors = colors
