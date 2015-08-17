@@ -45,10 +45,12 @@ class report_liquidity_position2(report_sxw.rml_parse):
             'getRes': self.getRes,
             'getCal': self.getCal,
             'getRegister2': self.getRegister2,
+            'getRegisterName': self.getRegisterName,
             'getFuncCur': self.getFuncCur,
             'getCurTot': self.getCurTot,
             'getFormula': self.getFormula,
             'getDevices': self.getDevices,
+            'getPeriodName': self.getPeriodName,
             'addAndprintCalBal': self.addAndprintCalBal,
             'addAndprintRegBal': self.addAndprintRegBal,
             'getSubtotalRegBal': self.getSubtotalRegBal,
@@ -83,6 +85,13 @@ class report_liquidity_position2(report_sxw.rml_parse):
     def getCurTot(self):
         return self.funcCur
 
+    def getPeriodName(self):
+        sql = 'SELECT name FROM account_period WHERE id = '\
+               + str(self.period_id)
+        self.cr.execute(sql)
+        for name in self.cr.fetchall():
+            return name[0]
+
     def getRes(self):
         temp = self.res
         self.res = 0
@@ -95,6 +104,9 @@ class report_liquidity_position2(report_sxw.rml_parse):
 
     def getRegister2(self):
         return self.registers
+
+    def getRegisterName(self, reg):
+        return self.registers[reg][0].instance_id.name
 
     def getDevices(self):
         return self.devices
