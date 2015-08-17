@@ -173,53 +173,58 @@ class FinanceTestCorCases(FinanceTest):
                         index += 1
 
         def set_cost_centers():
-            db = self.hq1
-            company = self.get_company(db)
+            hq = self.hq1
             model = 'account.analytic.account'
-            parent_cc_ids = {}
             any_set = False
             
             for cc in meta.ccs:
-                if self.record_exists(db, model, 
-                    [('code', '=', cc), ('category', '=', 'OC')]):
-                    continue
-                any_set = True
+                for i in self._instances_suffixes:
+                    # instances CCs 
+                    parent_cc_ids = {}
+                    db = self.get_db_from_name(self.get_db_name_from_suffix(i))
+                    company = self.get_company(db)
                 
-                # get parent (parent code: 3 first caracters (HT1, HT2, ...))
-                parent_code = cc[:3]  
-                if not parent_code in parent_cc_ids:
-                    parent_ids = db.get(model).search([
-                        ('type', '=', 'view'),
-                        ('category', '=', 'OC'),
-                        ('code', '=', parent_code),
-                    ])
-                    parent_id = parent_ids and parent_ids[0] or False
-                    parent_cc_ids[parent_code] = parent_id
-                else:
-                    parent_id = parent_cc_ids.get(parent_code, False)
-                self.assert_(
-                    parent_id != False,
-                    "parent cost center not found '%s'" % (parent_code, )
-                )
+                    # check instance dataset
+                    if self.record_exists(db, model, 
+                        [('code', '=', cc), ('category', '=', 'OC')]):
+                        continue
+                    any_set = True
                     
-                vals = {
-                    'code': cc,
-                    'description': cc,
-                    'currency_id': company.currency_id.id,
-                    'name': cc,
-                    'date_start': date_fy_start,
-                    'parent_id': parent_id,
-                    'state': 'open',
-                    'type': 'normal', 
-                    'category': 'OC',
-                    'instance_id': company.instance_id.id,
-                }
-                cc_id = db.get(model).create(vals)
+                    # get parent (parent code: 3 first caracters (HT1, HT2, ...))
+                    parent_code = cc[:3]  
+                    if not parent_code in parent_cc_ids:
+                        parent_ids = db.get(model).search([
+                            ('type', '=', 'view'),
+                            ('category', '=', 'OC'),
+                            ('code', '=', parent_code),
+                        ])
+                        parent_id = parent_ids and parent_ids[0] or False
+                        parent_cc_ids[parent_code] = parent_id
+                    else:
+                        parent_id = parent_cc_ids.get(parent_code, False)
+                    self.assert_(
+                        parent_id != False,
+                        "parent cost center not found '%s'" % (parent_code, )
+                    )
                         
-                # set target instance
+                    vals = {
+                        'code': cc,
+                        'description': cc,
+                        'currency_id': company.currency_id.id,
+                        'name': cc,
+                        'date_start': date_fy_start,
+                        'parent_id': parent_id,
+                        'state': 'open',
+                        'type': 'normal', 
+                        'category': 'OC',
+                        'instance_id': company.instance_id.id,
+                    }
+                    cc_id = db.get(model).create(vals)
+                        
+                # set target instance (from HQ)
                 instance_ids = get_instance_ids_from_code(
                     [ti for ti in meta.ccs[cc]])
-                atcc_obj = db.get('account.target.costcenter')
+                atcc_obj = hq.get('account.target.costcenter')
                 for ins_id in instance_ids:
                     atcc_obj.create({
                         'instance_id': ins_id,
@@ -230,17 +235,13 @@ class FinanceTestCorCases(FinanceTest):
             return any_set
                         
         def set_funding_pools():
-            db = self.hq1
             aaa_model = 'account.analytic.account'
-            aaa_obj = db.get(aaa_model)
-            company = self.get_company(db)
             
             for instance, fp in meta.fp_ccs:
                 db = self.get_db_from_name(
                     self.get_db_name_from_suffix(instance))
-                aaa_model = 'account.analytic.account'
+                    
                 aaa_obj = db.get(aaa_model)
-                
                 company = self.get_company(db)
                 
                 parent_ids = aaa_obj.search([
