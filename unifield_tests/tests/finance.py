@@ -282,8 +282,8 @@ class FinanceTest(UnifieldTest):
         :param third_partner_id: partner id
         :param third_employee_id: emp id (operational advance)
         :param third_journal_id: journal id (internal transfer)
-        :return: register line id and AD id and first expense ji 
-            (expense ji given if hard host or temp post)
+        :return: register line id and AD id and target ji for correction
+            (if hard host or temp post)
         :rtype: tuple (register_line_id, ad_id/False, ji_id)
         """
         # register
@@ -374,15 +374,16 @@ class FinanceTest(UnifieldTest):
         else:
             distrib_id = False
         
-        expense_ji_id = False
+        target_ji_id = False
         if do_temp_post:
             self.register_line_temp_post(db, regl_id)
         if do_hard_post:
             self.register_line_hard_post(db, regl_id)
         if do_temp_post or do_hard_post:
-            expense_ji_id = self.register_line_get_first_expense_ji(db, regl_id)
+            target_ji_id = self.register_line_get_target_ji(db, regl_id,
+                account_br.code, account_br.is_analytic_addicted)
  
-        return (regl_id, distrib_id, expense_ji_id, )
+        return (regl_id, distrib_id, target_ji_id, )
         
     def register_line_temp_post(self, db, regl_id):
         db.get('account.bank.statement.line').button_temp_posting([regl_id], {})
@@ -390,24 +391,23 @@ class FinanceTest(UnifieldTest):
     def register_line_hard_post(self, db, regl_id):
         db.get('account.bank.statement.line').button_hard_posting([regl_id], {})
         
-    def register_line_get_first_expense_ji(self, db, regl_id):
+    def register_line_get_target_ji(self, db, regl_id, account_code,
+        is_expense_account):
         """
-        return the 1st expense JI of the regline
-        - if no expense jis returns at least the 1st JI
-        - the reg line need to be temp or hard posted
+        return regline related target ji for corrections
+        (the reg line need to be temp or hard posted: journal items here)
         """
         absl_obj = db.get('account.bank.statement.line')
         aml_obj = db.get('account.move.line')
         
-        aml_ids = aml_obj.search([
+        domain = [
             ('name', '=', absl_obj.browse(regl_id).name), 
-            ('account_id.is_analytic_addicted', '=', 'True')  # expense account
-        ])
-        if not aml_ids:
-            # returns at least the 1st JI
-            aml_ids = aml_obj.search([
-                ('name', '=', absl_obj.browse(regl_id).name), 
-            ])
+            ('account_id.code', '=', account_code),
+        ]
+        if is_expense_account:
+            domain.append(('account_id.is_analytic_addicted', '=', 'True'))
+ 
+        aml_ids = aml_obj.search(domain)
         return aml_ids and aml_ids[0] or False
         
     def register_close(self, db, ids):
