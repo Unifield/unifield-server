@@ -12,7 +12,7 @@ from datetime import datetime
 """
 TODO NOTES
 
-- use cases to check:
+- use cases to check at fonctional level:
     10: not expense account to expense one with an AD: 
         => AJIs are created in OD journal
             => check with Matthias
@@ -1131,6 +1131,7 @@ class FinanceTestCorCases(FinanceTest):
 
             # hard post to allow future period closing for over test flows
             self.register_line_hard_post(db, regl_id)
+            # => so now the cor wizard will be visible at this stage
 
 def get_test_class():
     return FinanceTestCorCases
