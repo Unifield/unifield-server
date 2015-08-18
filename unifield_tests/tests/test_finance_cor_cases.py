@@ -20,8 +20,8 @@ TODO NOTES
     X 2
     X 3
     X 4
-TODO  5 (AD raises 'No modification seen!' if played after cases 01)
-TODO  6 (replace ad to fix (no rev/cor)
+    X 5
+    X 6
     X 7
     X 8
     X 9
@@ -643,7 +643,7 @@ class FinanceTestCorCases(FinanceTest):
             
             regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
-                account, self.get_random_amount(True),
+                account, -100.,  # 100 amount to easyly check AD brakdown
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
@@ -688,7 +688,7 @@ class FinanceTestCorCases(FinanceTest):
             
             regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
-                account, 100,
+                account, -100.,
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
@@ -701,7 +701,7 @@ class FinanceTestCorCases(FinanceTest):
             
             new_ad=[
                 (70., 'OPS', 'HT101', 'PF'),
-                (30., 'OPS', 'HT101', 'PF'),
+                (30., 'OPS', 'HT120', 'PF'),
             ]
             self.simulation_correction_wizard(db, ji_id,
                     cor_date=self.get_orm_fy_date(2, 7),  # 7 Feb of this year
@@ -709,7 +709,7 @@ class FinanceTestCorCases(FinanceTest):
                     new_ad_breakdown_data=False,
                     ad_replace_data={
                             60.: {'per': 70., },
-                            40.: {'per': 30., },
+                            40.: {'per': 30., 'cc': 'HT120', },
                         },
             )
             
@@ -746,7 +746,7 @@ class FinanceTestCorCases(FinanceTest):
             
             regl_id, distrib_id, ji_id = self.register_create_line(
                 db, reg_id,
-                account, 100,
+                account, -100.,
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
