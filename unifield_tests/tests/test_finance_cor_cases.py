@@ -33,9 +33,7 @@ TODO NOTES
     X 8
     X 9
     X 10 
-TODO  11 select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
-         system deny as FC1 soft-closed
-         select ALL booked AJI of FP1, correction wizard
+TODO  11
     X 12
     X 13
     X 14
@@ -902,17 +900,26 @@ class FinanceTestCorCases(FinanceTest):
         """
         db = self.c1
         
+        aal_obj = db.get('account.analytic.line')
+        
+        ad = [
+            (40., 'NAT', 'HT101', 'PF'),
+            (60., 'NAT', 'HT120', 'FP1'),
+        ],
+        
+        new_ad= [
+            (40., 'NAT', 'HT101', 'PF'),
+            (60., 'NAT', 'HT120', 'PF'),
+        ],
+        
         invoice_lines_accounts = [ '66002', '66003', '66004', ]
         for a in invoice_lines_accounts:
             self.analytic_distribution_set_fp_account_dest(db, 'FP1', a, 'NAT')
                 
-        self.invoice_validate(db,
+        ji_ids = self.invoice_validate(db,
             self.invoice_create_supplier_invoice(
                 db, ccy_code=False, date=False, partner_id=False,
-                ad_header_breakdown_data=[
-                    (50., 'NAT', 'HT101', 'PF'),
-                    (50., 'NAT', 'HT120', 'FP1'),
-                ],
+                ad_header_breakdown_data=ad,
                 lines_accounts=invoice_lines_accounts,
                 tag="C1_11"
             )
@@ -922,21 +929,44 @@ class FinanceTestCorCases(FinanceTest):
         fcc_obj = db.get('financing.contract.contract')
         fc_id = self.get_id_from_key(db, 'financing.contract.contract', 'FC1',
             assert_if_no_ids=True)
-        fcc_obj.contract_soft_closed([fc_id])
-        
-        # select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
-        # system deny as FC1 soft-closed
         # TODO
+        #fcc_obj.contract_soft_closed([fc_id])
+        
+        # select an AJI booked on FP1, correction wizard
+        fp1_id = self.get_account_from_code(db, 'FP1', is_analytic=True)
+        aji_ids = aal_obj.search([
+            ('move_id', 'in', ji_ids),
+            ('account_id', '=', fp1_id),
+        ])
+        aji_br = aal_obj.browse(aji_ids[0])
+        ji_id = aji_br.move_id.id
+        ji_account_code = aji_br.move_id.account_id.code
+        
+        # replace FP1 to PF: system deny as FC1 soft-closed
+        # TODO
+        """self.simulation_correction_wizard(db, ji_id,
+                    cor_date=False,
+                    new_account_code=False,
+                    ad_replace_data={ 60.: {'fp': 'PF', } }
+            )"""
         
         # repoen FC1
+        # select an AJI booked on FP1, correction wizard, change FP1 to PF,
+        # AJI should be directly update (no cor rev) as AD replaced not deleted
+        # AND should pass as financing contract reopened
         fcc_obj.contract_open([fc_id])
-        
-        # select ALL boocked AJI of FP1, correction wizard:
-        # => change AD
-        # - 50% NAT, HT101, PF
-        # - 50% NAT, HT120, PF
-        # => funding pool is modified by the AJI initially selected
-        # TODO
+        self.simulation_correction_wizard(db, ji_id,
+                    cor_date=False,
+                    new_account_code=False,
+                    ad_replace_data={ 60.: {'fp': 'PF', } }
+            )
+            
+        self.check_ji_correction(db, ji_id,
+                ji_account_code, new_account_code=False,
+                expected_ad=new_ad,
+                expected_ad_rev=False,
+                expected_ad_cor=False,
+            )
         
     def test_cor1_12(self):
         """
