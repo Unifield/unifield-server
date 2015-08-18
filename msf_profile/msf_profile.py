@@ -73,6 +73,14 @@ class patch_scripts(osv.osv):
             budget_obj.update_parent_budgets(cr, uid, child_id)
             logger.warn('US-489: parent budget %s updated' % (parent_id,))
 
+    def update_us_435_2(self, cr, uid, *a, **b):
+        period_obj = self.pool.get('account.period')
+        period_state_obj = self.pool.get('account.period.state')
+        periods = period_obj.search(cr, uid, [])
+        for period in periods:
+            period_state_obj.update_state(cr, uid, period)
+
+        return True
 
     def update_us_133(self, cr, uid, *a, **b):
         p_obj = self.pool.get('res.partner')
