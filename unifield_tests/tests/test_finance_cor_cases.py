@@ -9,6 +9,10 @@ from finance import FinanceTest
 import time
 from datetime import datetime
 
+# play all flow:
+# cd unifield/test-finance/unifield-wm/unifield_tests
+# python -m unittest tests.test_finance_cor_cases
+
 """
 TODO NOTES
 
@@ -99,24 +103,22 @@ class FinanceTestCorCases(FinanceTest):
     
     def setUp(self):
         def dataset_msg(msg):
-            prefix = 'FinanceTestCorCases DATASET state'
+            prefix = 'FinanceTestCorCases DATASET'
             prefix_pattern = '[' + self.colors.BGreen + prefix \
                 + self.colors.Color_Off + '] '
             print(prefix_pattern + msg)
-  
+            
         keyword = 'finance_test_cor_cases_dataset'  # dataset flag at HQ level
-        
+            
         if not self.is_keyword_present(self.hq1, keyword):
             # dataset to generate
             dataset_msg('GENERATING')
             self._set_dataset()
             self.hq1.get(self.test_module_obj_name).create({
                 'name': keyword,
-                'active': True
+                'active': True,
             })
-        else:
-            dataset_msg('EXISTS')
-        
+            
     def tearDown(self):
         pass
         
@@ -125,10 +127,6 @@ class FinanceTestCorCases(FinanceTest):
     # -------------------------------------------------------------------------
     
     def _set_dataset(self):
-        """
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCases.test_cor_dataset
-        correction test cases dataset
-        """
         def get_instance_ids_from_code(codes):
             if isinstance(codes, (str, unicode, )):
                 codes = [codes]
@@ -392,7 +390,7 @@ class FinanceTestCorCases(FinanceTest):
                     
             # activate currencies (if required)
             activate_currencies(db, [ccy_name for ccy_name in meta.rates])
-                
+
         # set default rates: at HQ then sync down
         set_default_currency_rates(self.hq1)
         self._sync_down()
@@ -471,6 +469,10 @@ class FinanceTestCorCases(FinanceTest):
     # -------------------------------------------------------------------------
     # FLOW
     # -------------------------------------------------------------------------
+        
+    # play all flow:
+    # cd unifield/test-finance/unifield-wm/unifield_tests
+    # python -m unittest tests.test_finance_cor_cases
         
     def test_cor1_00(self):
         """
