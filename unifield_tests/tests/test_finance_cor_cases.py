@@ -39,10 +39,6 @@ TODO  11 select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
 """
 
 
-# TODO active again when dev/testing is finished
-#DATASET = False
-DATASET = True
-
 #TEST_THE_TEST = True
 TEST_THE_TEST = False
 
@@ -99,11 +95,25 @@ class FinanceTestCorCases(FinanceTest):
     # -------------------------------------------------------------------------
     
     def setUp(self):
-        dataset_applied = hasattr(self, 'dataset_applied') and \
-            self.dataset_applied or False
-        if DATASET and not dataset_applied:
+        def dataset_msg(msg):
+            prefix = 'FinanceTestCorCases DATASET state'
+            prefix_pattern = '[' + self.colors.BGreen + prefix \
+                + self.colors.Color_Off + '] '
+            print(prefix_pattern + msg)
+  
+        keyword = 'finance_test_cor_cases_dataset'  # dataset flag at HQ level
+        
+        if not self.is_keyword_present(self.hq1, keyword):
+            # dataset to generate
+            dataset_msg('GENERATING')
             self._set_dataset()
-
+            self.hq1.get(self.test_module_obj_name).create({
+                'name': keyword,
+                'active': True
+            })
+        else:
+            dataset_msg('EXISTS')
+        
     def tearDown(self):
         pass
         
