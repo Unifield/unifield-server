@@ -66,21 +66,22 @@ class account_period_state(osv.osv):
             period = self.pool.get('account.period').read(cr, uid, period_id,
                                                           ['id', 'state'],
                                                           context=context)
-            args = [
-                ('instance_id', '=', parent),
-                ('period_id', '=', period['id'])
-            ]
-            ids = self.search(cr, uid, args, context=context)
-            if ids:
-                vals = {
-                    'state': period['state']
-                }
-                self.write(cr, uid, ids, vals, context=context)
-            else:
-                vals = {
-                    'period_id': period['id'],
-                    'instance_id': parent,
-                    'state': period['state']}
-                self.create(cr, uid, vals, context=context)
+            if parent and period:
+                args = [
+                    ('instance_id', '=', parent),
+                    ('period_id', '=', period['id'])
+                ]
+                ids = self.search(cr, uid, args, context=context)
+                if ids:
+                    vals = {
+                        'state': period['state']
+                    }
+                    self.write(cr, uid, ids, vals, context=context)
+                else:
+                    vals = {
+                        'period_id': period['id'],
+                        'instance_id': parent,
+                        'state': period['state']}
+                    self.create(cr, uid, vals, context=context)
         return True
 account_period_state()
