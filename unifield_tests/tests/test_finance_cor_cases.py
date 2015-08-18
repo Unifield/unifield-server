@@ -27,8 +27,8 @@ TODO  6 (replace ad to fix (no rev/cor)
     X 9
     X 10
 TODO  11 select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
-         sytem deny as FC1 soft-closed
-         select ALL boocked AJI of FP1, correction wizard
+         system deny as FC1 soft-closed
+         select ALL booked AJI of FP1, correction wizard
     X 12
     X 13
     X 14
@@ -540,9 +540,9 @@ class FinanceTestCorCases(FinanceTest):
             
             # correction dest from OPS to NAT
             self.simulation_correction_wizard(db, ji_id,
-                    new_account_code=False,
-                    new_ad_breakdown_data=False,
-                    ad_replace_data={ 'dest': [(dest, new_dest)] },
+                new_account_code=False,
+                new_ad_breakdown_data=False,
+                ad_replace_data={ 100.: {'dest': new_dest, } },
             )
             
             self.check_ji_correction(db, ji_id,
@@ -579,7 +579,7 @@ class FinanceTestCorCases(FinanceTest):
             self.simulation_correction_wizard(db, ji_id,
                     new_account_code=False,
                     new_ad_breakdown_data=False,
-                    ad_replace_data={ 'cc': [(cc, new_cc)] },
+                    ad_replace_data={ 100.: {'cc': new_cc, } },
             )
             
             self.check_ji_correction(db, ji_id,
@@ -616,7 +616,7 @@ class FinanceTestCorCases(FinanceTest):
             self.simulation_correction_wizard(db, ji_id,
                 new_account_code=False,
                 new_ad_breakdown_data=False,
-                ad_replace_data={ 'fp': [(fp, new_fp)] },
+                ad_replace_data={ 100.: {'fp': new_fp, } },
             )
             
             self.check_ji_correction(db, ji_id,
@@ -707,7 +707,10 @@ class FinanceTestCorCases(FinanceTest):
                     cor_date=self.get_orm_fy_date(2, 7),  # 7 Feb of this year
                     new_account_code=False,
                     new_ad_breakdown_data=False,
-                    ad_replace_data={ 'per': [(60., 70.), (40., 30.), ] }
+                    ad_replace_data={
+                            60.: {'per': 70., },
+                            40.: {'per': 30., },
+                        },
             )
             
             self.check_ji_correction(db, ji_id,

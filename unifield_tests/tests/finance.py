@@ -575,14 +575,24 @@ class FinanceTest(UnifieldTest):
                 db.get(ad_dim_analytic_obj).create(vals)
         return distrib_id
         
-    def simulation_correction_wizard(self, db, ji_to_correct_id,
+    def simulation_correction_wizard(self,
+        db,
+        ji_to_correct_id,
         cor_date=False,
         new_account_code=False,
-        new_ad_breakdown_data=False, ad_replace_data=False):
+        new_ad_breakdown_data=False,
+        ad_replace_data=False):
         """
         :param new_account_code: new account code for a G/L correction
         :param new_ad_breakdown_data: new ad lines to replace all ones (delete)
-        :param ad_replace_data: {'dest/cc/fp/per': [(old, new), ], }
+        :param ad_replace_data: { percent_key: {'dest/cc/fp/per': new_val, }
+            ad_replace_data: percent_key to identify the line where to replace
+            examples:
+                ad_replace_data={ 100.: {'dest': new_dest, } },
+                ad_replace_data={
+                            60.: {'per': 70., },
+                            40.: {'per': 30., },
+                        },
         choose between delete and recreate AD with new_ad_breakdown_data
         or to replace dest/cc/fp/percentage values with ad_replace_data
         """
@@ -671,20 +681,7 @@ class FinanceTest(UnifieldTest):
             )
             
             total_amount = 0.
-            ad_replace_data_by_id = {}
             if ad_replace_data:                
-                for k in ad_replace_data:
-                    if k != 'per':
-                        old_new_values = [] 
-                        for old, new in ad_replace_data[k]:
-                            old_new_values.append((
-                                self.get_account_from_code(db, old,
-                                    is_analytic=True),
-                                self.get_account_from_code(db, new,
-                                    is_analytic=True),
-                            ))
-                        ad_replace_data_by_id[k] = old_new_values
-                
                 fields = [
                     'percentage',
                     'cost_center_id',
@@ -697,36 +694,37 @@ class FinanceTest(UnifieldTest):
                     # 'analytic_id' <=> CC
                     # as rpc browse failed here: dirty workaround with read
                     line_ids = [ l.id for l in wizard_ad_br.line_ids ]
-                    for adwl_r in wizard_adl_obj.read(line_ids, fields):
-                        ad_line_val = {}
+                    for adwl_r in wizard_adl_obj.read(line_ids, fields): 
                         percent = adwl_r['percentage']
                         
-                        if 'dest' in ad_replace_data_by_id:
+                        if percent in ad_replace_data:
+                            # line is target of replace
+                            ad_line_vals = {}
+                            replace_vals = ad_replace_data[percent]
+                            
                             # destination replace
-                            for old, new in ad_replace_data_by_id['dest']:
-                                if adwl_r['destination_id'] == old:
-                                    ad_line_val['destination_id'] = new
-                                    break
-                                    
-                        if 'cc' in ad_replace_data_by_id:
+                            if 'dest' in replace_vals:
+                                ad_line_vals['destination_id'] = \
+                                    self.get_account_from_code(db,
+                                        replace_vals['dest'],
+                                        is_analytic=True)
+ 
                             # cost center replace
-                            for old, new in ad_replace_data_by_id['cc']:
-                                if adwl_r['analytic_id'] == old:
-                                    ad_line_val['analytic_id'] = new
-                                    break
-                                    
-                        if 'per' in ad_replace_data:
+                            if 'cc' in replace_vals:
+                                ad_line_vals['analytic_id'] = \
+                                    self.get_account_from_code(db,
+                                        replace_vals['cc'],
+                                        is_analytic=True)
+                                   
                             # percentage replace
-                            for old, new in ad_replace_data['per']:
-                                if percent == old:
-                                    percent = new
-                                    break
+                            if 'per' in replace_vals:
+                                percent = replace_vals['per']
                                     
-                        if ad_line_val:
-                            # line write workarround
-                            #(always needed percentage in vals)
-                            ad_line_val['percentage'] = percent  
-                            wizard_adl_obj.write([adwl_r['id']], ad_line_val)
+                            if ad_line_vals or 'per' in replace_vals:
+                                # (always needed percentage in vals)
+                                ad_line_vals['percentage'] = percent
+                                wizard_adl_obj.write([adwl_r['id']],
+                                    ad_line_vals)
                             
                     # supply update amount from cc lines
                     # NOTE: for finance (state != 'cc') the amount is to be
@@ -742,44 +740,43 @@ class FinanceTest(UnifieldTest):
                     # as rpc browse failed here: dirty workaround with read
                     fp_line_ids = [ l.id for l in wizard_ad_br.fp_line_ids ]
                     for adwl_r in wizard_adfpl_obj.read(fp_line_ids, fields):
-                        ad_line_val = {}
                         percent = adwl_r['percentage']
-                        is_percent_replaced = False
                         
-                        if 'dest' in ad_replace_data_by_id:
+                        if percent in ad_replace_data:
+                            # line is target of replace
+                            ad_line_vals = {}
+                            replace_vals = ad_replace_data[percent]
+                        
                             # destination replace
-                            for old, new in ad_replace_data_by_id['dest']:
-                                if adwl_r['destination_id'] == old:
-                                    ad_line_val['destination_id'] = new
-                                    break
-                                    
-                        if 'cc' in ad_replace_data_by_id:
+                            if 'dest' in replace_vals:
+                                ad_line_vals['destination_id'] = \
+                                    self.get_account_from_code(db,
+                                        replace_vals['dest'],
+                                        is_analytic=True)
+ 
                             # cost center replace
-                            for old, new in ad_replace_data_by_id['cc']:
-                                if adwl_r['cost_center_id'] == old:
-                                    ad_line_val['cost_center_id'] = new
-                                    break
-                                    
-                        if 'fp' in ad_replace_data_by_id:
-                            # funding pool replace
-                            for old, new in ad_replace_data_by_id['fp']:
-                                if adwl_r['analytic_id'] == old:
-                                    ad_line_val['analytic_id'] = new
-                                    break
-                                              
-                        if 'per' in ad_replace_data:
+                            if 'cc' in replace_vals:
+                                ad_line_vals['cost_center_id'] = \
+                                    self.get_account_from_code(db,
+                                        replace_vals['cc'],
+                                        is_analytic=True)
+ 
+                            # fp replace
+                            if 'fp' in replace_vals:
+                                ad_line_vals['analytic_id'] = \
+                                    self.get_account_from_code(db,
+                                        replace_vals['fp'],
+                                        is_analytic=True)
+                                                  
                             # percentage replace
-                            for old, new in ad_replace_data['per']:
-                                if percent == old:
-                                    percent = new
-                                    is_percent_replaced = True
-                                    break
-                                    
-                        if ad_line_val or is_percent_replaced:
-                            # line write workarround
-                            # (always needed percentage in vals)
-                            ad_line_val['percentage'] = percent  
-                            wizard_adfpl_obj.write([adwl_r['id']], ad_line_val)
+                            if 'per' in replace_vals:
+                                percent = replace_vals['per']
+                            
+                            if ad_line_vals or 'per' in replace_vals:
+                                # (always needed percentage in vals)
+                                ad_line_vals['percentage'] = percent  
+                                wizard_adfpl_obj.write([adwl_r['id']],
+                                    ad_line_vals)
                                               
                     # finance update amount from fp lines
                     # NOTE: for supply (state == 'cc') the amount is to be
@@ -788,6 +785,7 @@ class FinanceTest(UnifieldTest):
                         for adwl_r in wizard_adfpl_obj.read(line_ids,
                             ['amount']):
                             total_amount += adwl_r['amount']
+            # end replace data
             elif new_ad_breakdown_data:
                 # replace full AD
                 
@@ -855,10 +853,10 @@ class FinanceTest(UnifieldTest):
                         wizard_adl_obj.create(new_vals)
                     for new_vals in ad_fp_line_vals:
                         wizard_adfpl_obj.create(new_vals)
+            # end new ad breakdown
                          
             # will validate cor wizard too
-            if total_amount and \
-                (ad_replace_data_by_id or new_ad_breakdown_data):
+            if total_amount and (ad_replace_data or new_ad_breakdown_data):
                 # set wizard header vals to update
                 ad_wiz_vals = {
                     'amount': total_amount,
@@ -888,7 +886,7 @@ class FinanceTest(UnifieldTest):
                 if new_account_id:
                     context['unit_test']['new_account_id'] = new_account_id
                 wizard_ad_obj.button_confirm([wizard_ad_id], context)
-                return  # G/L account change already processed line above 
+                return  # G/L account change already processed line above
  
         if new_account_id:
             # G/L correction without AD correction: confirm wizard
