@@ -66,7 +66,7 @@ class account_period_state(osv.osv):
             period = self.pool.get('account.period').read(cr, uid, period_id,
                                                           ['id', 'state'],
                                                           context=context)
-            if parent and period:
+            if parent and period and parent != '':
                 args = [
                     ('instance_id', '=', parent),
                     ('period_id', '=', period['id'])
