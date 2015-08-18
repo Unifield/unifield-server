@@ -12,8 +12,11 @@ from datetime import datetime
 """
 TODO NOTES
 
-- use cases to check => unit test has failed:
-    10: seems to  create 3 COR AJIs in OD journal instead of regular AJIs
+- use cases to check:
+    10: not expense account to expense one with an AD: 
+        => AJIs are created in OD journal
+            => check with Matthias
+            => check case manually
 
 - cases developed:
     X 1
@@ -25,7 +28,7 @@ TODO NOTES
     X 7
     X 8
     X 9
-    X 10
+    X 10 
 TODO  11 select ALL booked AJI of FP1, correction wizard: replace FP1 to PF
          system deny as FC1 soft-closed
          select ALL booked AJI of FP1, correction wizard
@@ -886,9 +889,9 @@ class FinanceTestCorCases(FinanceTest):
             
             self.check_ji_correction(db, ji_id,
                 account, new_account_code=new_account,
-                expected_ad=ad,
+                expected_ad=False,
                 expected_ad_rev=False,
-                expected_ad_cor=False,
+                expected_ad_cor=ad,
             )
             
     def test_cor1_11(self):
