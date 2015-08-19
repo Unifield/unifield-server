@@ -21,11 +21,41 @@
 
 from report import report_sxw
 
+
 class bank_reconciliation(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(bank_reconciliation, self).__init__(cr, uid, name, context=context)
+        self.cr = cr
+        self.uid = uid
+        self.context = context
         self.localcontext.update({
+            'get_amount_pending_cheque': self.get_amount_pending_cheque,
         })
+
+    def get_amount_pending_cheque(self, obj):
+        amount = 0
+        aj_obj = self.pool.get('account.journal')
+        abs_obj = self.pool.get('account.bank.statement')
+
+        aj_args = [
+            ('type', '=', 'cheque'),
+            ('instance_id', '=', obj.journal_id.instance_id.id)
+        ]
+        aj_ids = aj_obj.search(self.cr, self.uid, aj_args, context=self.context)
+
+        abs_args = [
+            ('period_id', '=', obj.period_id.id),
+            ('journal_id', 'in', aj_ids),
+            ('currency', '=', obj.currency),
+        ]
+        ids = abs_obj.search(self.cr, self.uid, abs_args, context=self.context)
+        for id in ids:
+            chk = abs_obj.browse(self.cr, self.uid, id, context=self.context)
+            for line in chk.line_ids:
+                amount += line.amount_out
+                amount -= line.amount_in
+        return amount
+
 
 report_sxw.report_sxw('report.bank.reconciliation', 'account.bank.statement', 'addons/register_accounting/report/bank_reconciliation.rml', parser=bank_reconciliation)
 
