@@ -28,10 +28,6 @@ TODO NOTES
             => check with Matthias
             => check case manually
             
-- DATASET
-    - Financing contract FC1: FP1/FP2 missings (funding_pool_ids)
-        =>FC1	HT101, HT120	FP1, FP2
-
 - cases developed
     - single instance
         X 01
@@ -83,18 +79,21 @@ class FinanceTestCorCases(FinanceTest):
         
         # new COST CENTERS (and related target instances)
         ccs = {
-            'HT112': [ 'HQ1C1P1', ],
-            'HT120': [ 'HQ1C1', ],
+            # 'CC': [(Prop Instance, is_target), ]
             
-            # TODO
-            #'HT122': [ 'HQ1C1P2', ],  # no test scenario uses it
-            #'HT220': [ 'HQ1C2', ],  # excel doc specifies C2 and C2P1/C2P2 but not test scenario uses them
+            # C1 tree
+            'HT120': [ ('HQ1C1', True), ],
+            'HT112': [ ('HQ1C1', False), ('HQ1C1P1', True), ],
+            'HT122': [ ('HQ1C1', False), ('HQ1C1P2', True), ],
+            
+            # C2 tree
+            'HT220': [ ('HQ1C2', True), ],
         }
     
         # new FUNDING POOLS (and related cost centers)
         fp_ccs = {
             ('HQ1C1', 'FP1'): [ 'HT101', 'HT120', ],
-            ('HQ1C1', 'FP2'): [ 'HT101', 'HT120'],
+            ('HQ1C1', 'FP2'): [ 'HT101', 'HT120', ],
         }
         
         # financing contracts
@@ -144,23 +143,19 @@ class FinanceTestCorCases(FinanceTest):
     # -------------------------------------------------------------------------
     
     def _set_dataset(self):
-        def get_instance_ids_from_code(codes):
-            if isinstance(codes, (str, unicode, )):
-                codes = [codes]
-                
-            target_instance_codes = [
-                self.get_db_name_from_suffix(c) for c in codes ]
+        def get_instance_id_from_code(db, code):
             instance_ids = db.get('msf.instance').search(
-                [('code', 'in', target_instance_codes)])
+                [('code', '=', self.get_db_name_from_suffix(code))])
+                
             if not instance_ids:
                 # default dev instance (db/prop instances name from a RB)
-                target_instance_codes = [ "%s%s" % (
-                    self._db_instance_prefix or self_db_prefix, c, ) \
-                    for c in codes ]
+                target_instance_code = "%s%s" % (
+                    self._db_instance_prefix or self_db_prefix, code, )
                 instance_ids = db.get('msf.instance').search(
-                        [('code', 'in', target_instance_codes)])
-                self.assert_(instance_ids != False, "instances not found")
-            return instance_ids
+                        [('code', '=', target_instance_code)])
+                self.assert_(instance_ids != False, "instance not found")
+            
+            return instance_ids and instance_ids[0] or False
         
         def activate_currencies(db, codes):
             if isinstance(codes, (str, unicode, )):
@@ -202,26 +197,25 @@ class FinanceTestCorCases(FinanceTest):
 
         def set_cost_centers():
             hq = self.hq1
-            model = 'account.analytic.account'
-            any_set = False
+            aaa_model = 'account.analytic.account'
+            aaa_obj = hq.get(aaa_model)
+            atcc_obj = hq.get('account.target.costcenter')
             
+            company = self.get_company(hq)
+            
+            cc_id = False
+            parent_cc_ids = {}
             for cc in meta.ccs:
-                for i in self._instances_suffixes:
-                    # instances CCs 
-                    parent_cc_ids = {}
-                    db = self.get_db_from_name(self.get_db_name_from_suffix(i))
-                    company = self.get_company(db)
-                
-                    # check instance dataset
-                    if self.record_exists(db, model, 
-                        [('code', '=', cc), ('category', '=', 'OC')]):
-                        continue
-                    any_set = True
+                cc_ids = aaa_obj.search(
+                    [('code', '=', cc), ('category', '=', 'OC')])
+                    
+                if not cc_ids:
+                    # CC to create
                     
                     # get parent (parent code: 3 first caracters (HT1, HT2, ...))
                     parent_code = cc[:3]  
                     if not parent_code in parent_cc_ids:
-                        parent_ids = db.get(model).search([
+                        parent_ids = aaa_obj.search([
                             ('type', '=', 'view'),
                             ('category', '=', 'OC'),
                             ('code', '=', parent_code),
@@ -247,20 +241,33 @@ class FinanceTestCorCases(FinanceTest):
                         'category': 'OC',
                         'instance_id': company.instance_id.id,
                     }
-                    cc_id = db.get(model).create(vals)
-                        
-                # set target instance (from HQ)
-                instance_ids = get_instance_ids_from_code(
-                    [ti for ti in meta.ccs[cc]])
-                atcc_obj = hq.get('account.target.costcenter')
-                for ins_id in instance_ids:
-                    atcc_obj.create({
-                        'instance_id': ins_id,
-                        'cost_center_id': cc_id,
-                        'is_target': True
-                    })
- 
-            return any_set
+                    cc_id = aaa_obj.create(vals)
+                else:
+                    cc_id = cc_ids[0]
+                
+                if cc_id:
+                    # set target instance or/and is target
+                    for instance_code, is_target in meta.ccs[cc]:
+                        instance_id = get_instance_id_from_code(hq,
+                            instance_code)
+                        if instance_id:
+                            target_ids = atcc_obj.search([
+                                ('instance_id', '=', instance_id),
+                                ('cost_center_id', '=', cc_id),
+                            ])
+                            
+                            if not target_ids:
+                                target_id = atcc_obj.create({
+                                    'instance_id': instance_id,
+                                    'cost_center_id': cc_id,
+                                })
+                            else:
+                                target_id = target_ids[0]
+                            
+                            if is_target and target_id:
+                                atcc_obj.write([target_id], {
+                                    'is_target': True,
+                                })
                         
         def set_funding_pools():
             aaa_model = 'account.analytic.account'
@@ -384,9 +391,6 @@ class FinanceTestCorCases(FinanceTest):
         
         # activate all analytic account (date start) from HQ
         # (will be synced later here)
-        self.analytic_account_activate_since(self.hq1,
-            self.get_orm_fy_date(1, 1))
-        
         for i in self._instances_suffixes:
             # check instance dataset
             db = self.get_db_from_name(self.get_db_name_from_suffix(i))
@@ -397,6 +401,9 @@ class FinanceTestCorCases(FinanceTest):
                  "wrong functionnal ccy: '%s' is expected" % (
                     meta.functional_ccy, )
             )
+            
+            # activate analytic accounts since FY start
+            self.analytic_account_activate_since(self.hq1, date_fy_start)
             
             # open current month period
             period_id = self.get_period_id(db, now.month)
@@ -412,9 +419,9 @@ class FinanceTestCorCases(FinanceTest):
         set_default_currency_rates(self.hq1)
         self._sync_down()
             
-        # HQ level: set cost centers + sync down
-        if set_cost_centers():
-            self._sync_down()
+        # HQ level: set cost centers + target CC of instance + sync down
+        set_cost_centers()
+        self._sync_down()
             
         # set funding pool + sync up/down (from c1)
         set_funding_pools()
@@ -430,8 +437,8 @@ class FinanceTestCorCases(FinanceTest):
         
     def _sync_down(self):
         self.synchronize(self.hq1)
-        self.synchronize(self.c1)
-        self.synchronize(self.c1)
+        self.synchronize(self.c1)  # pull from hq
+        self.synchronize(self.c1)  # push to projects
         self.synchronize(self.p1)
         self.synchronize(self.p12)  # C1P2
         # TODO:C2 level and C2P1/P2 (C2 not use in scenario at this time)
