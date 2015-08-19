@@ -49,12 +49,12 @@ TODO NOTES
         X 13
         X 14
     - sync
+          20
           21
           22
           23
           24
           25
-          26
           26
     
 - options:
@@ -1218,15 +1218,42 @@ class FinanceTestCorCases(FinanceTest):
             
    
     # -------------------------------------------------------------------------
-    # SYNC CASES FLOW: from 21 to 27
+    # SYNC CASES FLOW: from 20 to 26
     # -------------------------------------------------------------------------
  
-    def test_cor1_21(self):
+    def test_cor1_20(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_21
         """
-        return
+        db = self.c1
+        
+        invoice_lines_accounts = [ '63100', '63110', '63120', ]
+        
+        invoice_lines_breakdown_data = {
+            1: [(100., 'OPS', 'HT101', 'FP1'), ],
+            2: [(100., 'OPS', 'HT120', 'FP2'), ],
+            3: [(100., 'OPS', 'HT112', 'PF'), ],
+        }
+        self.analytic_distribution_set_fp_account_dest(db, 'FP1', '63100',
+            'OPS')
+        self.analytic_distribution_set_fp_account_dest(db, 'FP2', '63110',
+            'OPS')
+        
+        aml_obj = db.get('account.move.line')
+        
+        ji_ids = self.invoice_validate(db,
+            self.invoice_create_supplier_invoice(db,
+                ccy_code=False,
+                is_refund=True,
+                date=False,
+                partner_id=False,
+                ad_header_breakdown_data=False,
+                lines_accounts=invoice_lines_accounts,
+                lines_breakdown_data=invoice_lines_breakdown_data,
+                tag="C1_20"
+            )
+        )
 
 
 def get_test_class():

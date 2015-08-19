@@ -1253,7 +1253,9 @@ class FinanceTest(UnifieldTest):
                 
     def invoice_create_supplier_invoice(self, db, ccy_code=False,
         is_refund=False, date=False, partner_id=False,
-        ad_header_breakdown_data=False, lines_accounts=[], validate=False,
+        ad_header_breakdown_data=False,
+        lines_accounts=[], lines_breakdown_data=False,
+        validate=False,
         tag="UNIT_TEST"):
         """
         create a supplier invoice or
@@ -1263,6 +1265,8 @@ class FinanceTest(UnifieldTest):
         :param partner_id: Local Market if False
         :param ad_header_breakdown_data: see analytic_distribution_create
         :param lines_accounts: list of account codes for each line to generate
+        :param lines_breakdown_data: {index: [(percent, dest, cc, fp), ]}
+            index (start by 1) refer to lines_accounts order 
         :return : id of invoice
         """
         res = {}
@@ -1343,9 +1347,9 @@ class FinanceTest(UnifieldTest):
                     
         # header ad
         if ad_header_breakdown_data:
-            ad_id = self.analytic_distribution_create(db,
-                breakdown_data=ad_header_breakdown_data)
-            vals['analytic_distribution_id'] = ad_id
+            vals['analytic_distribution_id'] = \
+                self.analytic_distribution_create(db,
+                    breakdown_data=ad_header_breakdown_data)
             
         # save header
         id = ai_obj.create(vals, context)
@@ -1361,6 +1365,13 @@ class FinanceTest(UnifieldTest):
                     'quantity': float(randrange(10, 100)),
                 }) for i, a in list(enumerate(lines_accounts))
             ]
+            
+            if lines_breakdown_data:
+                for i in lines_breakdown_data:
+                    line_vals[i-1][2]['analytic_distribution_id'] = \
+                        self.analytic_distribution_create(db,
+                            breakdown_data=lines_breakdown_data[i])
+            
             ai_obj.write([id], {'invoice_line': line_vals}, context)
         
         return id
