@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
+
+#
+# FINANCE GL/AD CORRECTION UNIT TESTS
+# Developer: Vincent GREINER
+#
+
 from __future__ import print_function
 from unifield_test import UnifieldTestException
 from unifield_test import UnifieldTest
@@ -21,19 +27,24 @@ TODO NOTES
         => AJIs are created in OD journal
             => check with Matthias
             => check case manually
+            
+- DATASET
+    - Financing contract FC1: FP1/FP2 missings (funding_pool_ids)
+        =>FC1	HT101, HT120	FP1, FP2
 
-- cases developed:
-    X 1
-    X 2
-    X 3
-    X 4
-    X 5
-    X 6
-    X 7
-    X 8
-    X 9
+- cases developed
+    single instance
+    X 01
+    X 02
+    X 03
+    X 04
+    X 05
+    X 06
+    X 07
+    X 08
+    X 09
     X 10 
-TODO  11
+    X 11
     X 12
     X 13
     X 14
@@ -902,15 +913,15 @@ class FinanceTestCorCases(FinanceTest):
         
         aal_obj = db.get('account.analytic.line')
         
-        ad = [
+        ad=[
             (40., 'NAT', 'HT101', 'PF'),
             (60., 'NAT', 'HT120', 'FP1'),
-        ],
+        ]
         
-        new_ad= [
+        new_ad=[
             (40., 'NAT', 'HT101', 'PF'),
             (60., 'NAT', 'HT120', 'PF'),
-        ],
+        ]
         
         invoice_lines_accounts = [ '66002', '66003', '66004', ]
         for a in invoice_lines_accounts:
@@ -929,8 +940,7 @@ class FinanceTestCorCases(FinanceTest):
         fcc_obj = db.get('financing.contract.contract')
         fc_id = self.get_id_from_key(db, 'financing.contract.contract', 'FC1',
             assert_if_no_ids=True)
-        # TODO
-        #fcc_obj.contract_soft_closed([fc_id])
+        fcc_obj.contract_soft_closed([fc_id])
         
         # select an AJI booked on FP1, correction wizard
         fp1_id = self.get_account_from_code(db, 'FP1', is_analytic=True)
@@ -942,13 +952,28 @@ class FinanceTestCorCases(FinanceTest):
         ji_id = aji_br.move_id.id
         ji_account_code = aji_br.move_id.account_id.code
         
-        # replace FP1 to PF: system deny as FC1 soft-closed
-        # TODO
-        """self.simulation_correction_wizard(db, ji_id,
-                    cor_date=False,
-                    new_account_code=False,
-                    ad_replace_data={ 60.: {'fp': 'PF', } }
-            )"""
+        # replace FP1 to PF => system deny as FC1 soft-closed:
+        # RPCError: warning -- Error
+        # Funding pool is on a soft/hard closed contract: FP1
+        expected_except = 'Funding pool is on a soft/hard closed contract: FP1'
+        e = False
+        try:
+            self.simulation_correction_wizard(db, ji_id,
+                        cor_date=False,
+                        new_account_code=False,
+                        ad_replace_data={ 60.: {'fp': 'PF', } }
+                )
+        except Exception, e:
+            if e and e.message and expected_except not in e.message:
+                # reopen contract and let others exceptions occur
+                fcc_obj.contract_open([fc_id])
+                raise e
+        self.assert_(
+                # we want the given except to be raised
+                e and e.message and expected_except in e.message,  
+                "You should not correct FP1 to PF as FC1 contract soft closed" \
+                    " :: %s" % (db.colored_name, )
+            )
         
         # repoen FC1
         # select an AJI booked on FP1, correction wizard, change FP1 to PF,

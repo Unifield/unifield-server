@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
+
+#
+# FINANCE UNIT TESTS TOOLS
+# Developer: Vincent GREINER
+#
+
 from __future__ import print_function
 from unifield_test import UnifieldTestException
 from unifield_test import UnifieldTest
