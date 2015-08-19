@@ -33,21 +33,29 @@ TODO NOTES
         =>FC1	HT101, HT120	FP1, FP2
 
 - cases developed
-    single instance
-    X 01
-    X 02
-    X 03
-    X 04
-    X 05
-    X 06
-    X 07
-    X 08
-    X 09
-    X 10 
-    X 11
-    X 12
-    X 13
-    X 14
+    - single instance
+        X 01
+        X 02
+        X 03
+        X 04
+        X 05
+        X 06
+        X 07
+        X 08
+        X 09
+        X 10 
+        X 11
+        X 12
+        X 13
+        X 14
+    - sync
+          21
+          22
+          23
+          24
+          25
+          26
+          26
     
 - options:
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
@@ -417,7 +425,7 @@ class FinanceTestCorCases(FinanceTest):
         self._sync_c1()
         
     # -------------------------------------------------------------------------
-    # PRIVATE TOOLS FUNCTIONS (for flow)
+    # PRIVATE TOOLS FUNCTIONS
     # -------------------------------------------------------------------------
         
     def _sync_down(self):
@@ -478,21 +486,26 @@ class FinanceTestCorCases(FinanceTest):
     # -------------------------------------------------------------------------
     # FLOW
     # -------------------------------------------------------------------------
-        
+           
     # play all flow:
     # cd unifield/test-finance/unifield-wm/unifield_tests
     # python -m unittest tests.test_finance_cor_cases
-        
+    
     def test_cor1_00(self):
         """
-        for dataset testing
+        fake unit test for dataset testing
         cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_00
         """
-        return
+        pass
+    
+    # -------------------------------------------------------------------------
+    # SINGLE CASES FLOW: from 01 to 14
+    # -------------------------------------------------------------------------
         
     def test_cor1_01(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_01
         G/L ACCOUNT 60010=>60020
         """
@@ -531,6 +544,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_02(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_02
         DEST REPLACE OPS=>NAT NO REV/COR
         """
@@ -568,6 +582,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_03(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_03
         CC REPLACE HT101=>HT120 NO REV/COR
         """
@@ -605,6 +620,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_04(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_04
         FP REPLACE PF=>FP1 NO REV/COR
         """
@@ -642,6 +658,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_05(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_05
         G/L ACCOUNT 60010=>60000 and new AD 
         """
@@ -686,6 +703,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_06(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_06
         """
         db = self.c1
@@ -742,6 +760,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_07(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_07
         G/L ACCOUNT 60010=>60030
         """
@@ -788,6 +807,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_08(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_08
         """    
         db = self.c1
@@ -830,6 +850,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_09(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_09
         G/L ACCOUNT 13000=>13010
         """
@@ -865,6 +886,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_10(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_10
         """
         db = self.c1
@@ -907,6 +929,7 @@ class FinanceTestCorCases(FinanceTest):
             
     def test_cor1_11(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_11
         """
         db = self.c1
@@ -995,6 +1018,7 @@ class FinanceTestCorCases(FinanceTest):
         
     def test_cor1_12(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_12
         """
         db = self.c1
@@ -1058,6 +1082,7 @@ class FinanceTestCorCases(FinanceTest):
         
     def test_cor1_13(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_13
         """
         db = self.c1
@@ -1158,6 +1183,7 @@ class FinanceTestCorCases(FinanceTest):
         
     def test_cor1_14(self):
         """
+        cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_14
         """
         db = self.c1
@@ -1189,6 +1215,19 @@ class FinanceTestCorCases(FinanceTest):
             # hard post to allow future period closing for over test flows
             self.register_line_hard_post(db, regl_id)
             # => so now the cor wizard will be visible at this stage
+            
+   
+    # -------------------------------------------------------------------------
+    # SYNC CASES FLOW: from 21 to 27
+    # -------------------------------------------------------------------------
+ 
+    def test_cor1_21(self):
+        """
+        cd unifield/test-finance/unifield-wm/unifield_tests
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_21
+        """
+        return
+
 
 def get_test_class():
     return FinanceTestCorCases
