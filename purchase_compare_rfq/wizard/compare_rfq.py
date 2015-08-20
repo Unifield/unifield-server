@@ -21,399 +21,662 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
+from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 import netsvc
-
 import decimal_precision as dp
 
-from tools.translate import _
 
 class wizard_compare_rfq(osv.osv_memory):
     _name = 'wizard.compare.rfq'
     _description = 'Compare Quotations'
-    
-    _columns = {
-        'rfq_number': fields.integer(string='# of Quotations', readonly=True),
-        'line_ids': fields.one2many('wizard.compare.rfq.line', 'compare_id', string='Lines'),
-        'tender_id': fields.many2one('tender', string="Tender", readonly=True,)
-    }
 
-    def start_compare_rfq(self, cr, uid, ids, context=None):
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for wid in ids:
+            res[wid] = None
+
+        return res
+
+    def _get_possible_suppliers(self, cr, uid, context=None):
+        """
+        Return the list of possible selected supplier
+        """
+        t_obj = self.pool.get('tender')
         if context is None:
             context = {}
 
-        order_obj = self.pool.get('purchase.order')
-        compare_line_obj = self.pool.get('wizard.compare.rfq.line')
-        
-        # openERP BUG ?
-        ids = context.get('active_ids',[])
-        
-        # tender reference
-        tender_id = context.get('tender_id', False)
-        
-        # already compared values
-        suppliers = context.get('suppliers', False)
-        
-        if not ids:
-            raise osv.except_osv(_('Error'), _('No quotation found !'))
-#        if len(ids) < 2:
-#            raise osv.except_osv(_('Error'), _('You should select at least two quotations to compare !'))
-            
-        products = {}
-        line_ids = []
-        lines = {}
+        res = []
+        if not context.get('tender_id'):
+            return res
 
-        products = {}
-        
-        tender_lines = self.pool.get('tender.line').search(cr, uid, [('tender_id', '=', tender_id), ('line_state', '=', 'draft')], context=context)
+        t_brw = t_obj.browse(cr, uid, context.get('tender_id'), context=context)
+        for rfq in t_brw.rfq_ids:
+            if rfq.state not in ('cancel', 'done'):
+                res.append((rfq.partner_id.id, rfq.partner_id.name))
 
-        for o in order_obj.browse(cr, uid, ids, context=context):
-            if o.state not in ('draft', 'rfq_updated'):
-                raise osv.except_osv(_('Error'), _('You cannot compare confirmed Purchase Order !'))
-            for l in [line for line in o.order_line if line.price_unit > 0.00]:
-                if not l.tender_line_id:
-                    if not products.get(l.product_id.id, False):
-                        products[l.product_id.id] = {'product_id': l.product_id.id, 'po_line_ids': []}
-                    products[l.product_id.id]['po_line_ids'].append(l.id)
-                elif l.tender_line_id.id in tender_lines:
-                    if not lines.get(l.tender_line_id.id, False):
-                        lines[l.tender_line_id.id] = {'product_id': l.product_id.id, 'po_line_ids': []}
-                    lines[l.tender_line_id.id]['po_line_ids'].append(l.id)
+        return res
 
-        for l_id in lines:
-            l = lines.get(l_id)
-            po_line_ids = []
-            for po_line in l.get('po_line_ids'):
-                po_line_ids.append(po_line)
-            cmp_line_ids = compare_line_obj.search(cr, uid, [('tender_line_id', '=', l_id)])
-            if not cmp_line_ids or not context.get('end_wizard', False):
-                product_id = l.get('product_id')
-                values = {'product_id': product_id, 'tender_line_id': l_id,
-                          'po_line_ids': [(6,0,po_line_ids)], 'supplier_id': suppliers and suppliers.get(l_id, False)}
-                line_ids.append((0, 0, values))
+    def _write_all_supplier(
+        self, cr, uid, ids, field_name, values, args, context=None):
+        """
+        Write the selected supplier on the wizard
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if field_name == 'fnct_supplier_id':
+            self.write(cr, uid, ids, {'supplier_id': values}, context=context)
+
+        return True
+
+    _columns = {
+        'line_ids': fields.one2many(
+            'wizard.compare.rfq.line',
+            'compare_id',
+            string='Lines',
+        ),
+        'tender_id': fields.many2one(
+            'tender',
+            string="Tender",
+            readonly=True,
+        ),
+        'creator': fields.many2one(
+            'res.users',
+            string='Creator',
+            readonly=True,
+        ),
+        'creation_date': fields.date(
+            string="Creation Date",
+            readonly=True,
+        ),
+        'name': fields.char(
+            'Tender Reference',
+            size=64,
+            readonly=True,
+        ),
+        'sale_order_id': fields.many2one(
+            'sale.order',
+            string="Sale Order",
+            readonly=True,
+        ),
+        'requested_date': fields.date(
+            string="Requested Date",
+            readonly=True,
+        ),
+        'location_id': fields.many2one(
+            'stock.location',
+            string='Location',
+            readonly=True,
+        ),
+        'categ': fields.selection(
+            ORDER_CATEGORY,
+            string='Tender Category',
+            readonly=True,
+        ),
+        'warehouse_id': fields.many2one(
+            'stock.warehouse',
+            string='Warehouse',
+            readonly=True,
+        ),
+        'details': fields.char(
+            size=30,
+            string='Details',
+            readonly=True,
+        ),
+        'priority': fields.selection(
+            ORDER_PRIORITY,
+            string='Tender Priority',
+            readonly=True,
+        ),
+        'notes': fields.text(
+            string='Notes',
+            readonly=True,
+        ),
+        'supplier_id': fields.many2one(
+            'res.partner',
+            string='Supplier',
+            readonly=True,
+        ),
+        'fnct_supplier_id': fields.function(
+            _get_dummy,
+            fnct_inv=_write_all_supplier,
+            method=True,
+            type='selection',
+            selection=_get_possible_suppliers,
+            string='Supplier',
+            store=False,
+            readonly=False,
+        ),
+    }
+
+    def start_compare_rfq(self, cr, uid, ids, context=None):
+        """
+        Build the compare RfQ wizard
+        """
+        t_obj = self.pool.get('tender')
+        wcr_obj = self.pool.get('wizard.compare.rfq')
+        wcrl_obj = self.pool.get('wizard.compare.rfq.line')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for tender in t_obj.browse(cr, uid, ids, context=context):
+            line_dict = {}
+            for line in tender.tender_line_ids:
+                if line.line_state != 'draft':
+                    continue
+
+                cs_id = False       # Choosen supplier ID
+                rfql_id = False     # Choosen RfQ line ID
+                if line.purchase_order_line_id:
+                    cs_id = line.purchase_order_line_id.order_id.partner_id.id
+                    rfql_id = line.purchase_order_line_id.id
+
+                line_dict.update({
+                    line.id: {
+                        'tender_line_id': line.id,
+                        'product_code': line.product_id.default_code,
+                        'product_name': line.product_id.name,
+                        'quantity': line.qty,
+                        'uom_id': line.product_uom.id,
+                        'choosen_supplier_id': cs_id,
+                        'rfq_line_id': rfql_id,
+                    },
+                })
+
+            if not line_dict:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Nothing to compare !'),
+                )
+
+            so_id = tender.sale_order_id
+            loc_id = tender.location_id
+            wh_id = tender.warehouse_id
+            cmp_id = wcr_obj.create(cr, uid, {
+                'tender_id': tender.id,
+                'creator': tender.creator and tender.creator.id or False,
+                'creation_date': tender.creation_date or False,
+                'name': tender.name or '',
+                'sale_order_id': so_id and so_id.id or False,
+                'requested_date': tender.requested_date or False,
+                'location_id': loc_id and loc_id.id or False,
+                'categ': tender.categ,
+                'priority': tender.priority,
+                'warehouse_id': wh_id and wh_id.id or False,
+                'details': tender.details or '',
+                'notes': tender.notes or '',
+            }, context=context)
+
+            context.update({'tender_id': tender.id})
+
+            for line in line_dict.itervalues():
+                line_vals = line.copy()
+                line_vals['compare_id'] = cmp_id
+                wcrl_obj.create(cr, uid, line_vals, context=context)
+
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.compare.rfq',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': cmp_id,
+                'context': context,
+            }
+
+    def _get_rfq_line(self, cr, uid, line, supplier_id, context=None):
+        """
+        Return the ID of the RfQ line matching with the wizard line and the
+        selected supplier
+        """
+        if context is None:
+            context = {}
+
+        pol_obj = self.pool.get('purchase.order.line')
+        rfql_ids = pol_obj.search(cr, uid, [
+            ('order_id.partner_id', '=', supplier_id),
+            ('tender_line_id', '=', line.tender_line_id.id),
+            ('price_unit', '!=', 0.00),
+        ], context=context)
+
+        return rfql_ids and rfql_ids[0] or None
+
+    def add_supplier_all_lines(self, cr, uid, ids, context=None, deselect=False):
+        """
+        Update all lines with the selected supplier (if possible)
+        """
+        wl_obj = self.pool.get('wizard.compare.rfq.line')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            # If there is no supplier selected and not in the case where
+            # the supplier should be removed on all lines
+            if not deselect and not wiz.supplier_id:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('No supplier selected !')
+                )
+
+            # In case of removing supplier on all lines
+            if deselect:
+                wiz_lines = wl_obj.search(cr, uid, [
+                    ('compare_id', '=', wiz.id),
+                ], context=context)
+                wl_obj.write(cr, uid, wiz_lines, {
+                    'choosen_supplier_id': False,
+                    'rfq_line_id': False,
+                }, context=context)
             else:
-                line_ids.append((0, 0, cmp_line_ids[0]))
+                for l in wiz.line_ids:
+                    rfql_id = self._get_rfq_line(
+                        cr, uid, l, wiz.supplier_id.id, context=context)
+                    if not rfql_id:
+                        continue
 
-        for l_id in products:
-            l = products.get(l_id)
-            po_line_ids = []
-            for po_line in l.get('po_line_ids'):
-                po_line_ids.append(po_line)
-            cmp_line_ids = compare_line_obj.search(cr, uid, [('tender_line_id', '=', False), ('product_id', '=', l_id)])
-            if not cmp_line_ids or not context.get('end_wizard', False):
-                product_id = l.get('product_id')
-                values = {'product_id': product_id, 'tender_line_id': False,
-                          'po_line_ids': [(6,0,po_line_ids)], 'supplier_id': suppliers and suppliers.get(l_id, False)}
-                line_ids.append((0, 0, values))
-            else:
-                line_ids.append((0, 0, cmp_line_ids[0]))
-             
-        rfq_compare_obj = self.pool.get('wizard.compare.rfq')
-        newid = rfq_compare_obj.create(cr, uid, {'rfq_number': len(ids), 'line_ids': line_ids, 'tender_id': tender_id}, context=context)
-        
-        return {'type': 'ir.actions.act_window',
+                    wl_obj.write(cr, uid, [l.id], {
+                        'choosen_supplier_id': wiz.supplier_id.id,
+                        'rfq_line_id': rfql_id,
+                    }, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
             'res_model': 'wizard.compare.rfq',
             'view_type': 'form',
             'view_mode': 'form',
             'target': 'new',
-            'res_id': newid,
+            'res_id': ids[0],
             'context': context,
-           }
-        
+        }
+
+    def del_supplier_all_lines(self, cr, uid, ids, context=None):
+        """
+        Remove the supplier from all lines
+        """
+        return self.add_supplier_all_lines(cr, uid, ids,
+                context=context, deselect=True)
+
+
     def update_tender(self, cr, uid, ids, context=None):
         '''
-        update the corresponding tender lines
-        
+        Update the corresponding tender lines
+
         related rfq line: po_line_id.id
         '''
-        tender_obj = self.pool.get('tender')
-        for wiz in self.browse(cr, uid, ids, context=context):
-            # loop through wizard_compare_rfq_line
-            tender_id = wiz.tender_id.id
-            for wiz_line in wiz.line_ids:
-                # check if a supplier has been selected for this product
-                if wiz_line.po_line_id:
-                    # update the tender lines with corresponding product_id
-                    updated_lines = [] # use to store the on-the-fly lines
-                    for tender in tender_obj.browse(cr, uid, [wiz.tender_id.id], context=context):
-                        for tender_line in tender.tender_line_ids:
-                            if tender_line.product_id.id == wiz_line.product_id.id:
-                                values = {'purchase_order_line_id': wiz_line.po_line_id.id,}
-                                tender_line.write(values, context=context)
-                                updated_lines.append(tender_line.id);
+        t_obj = self.pool.get('tender')
+        tl_obj = self.pool.get('tender.line')
 
-                        # UF-733: if all tender lines have been compared (have PO Line id), then set the tender to be ready
-                        # for proceeding to other actions (create PO, Done etc)
-                        if tender.internal_state == 'draft':
-                            flag = True
-                            for line in tender.tender_line_ids:
-                                if line.line_state != 'cancel' and line.id not in updated_lines and not line.purchase_order_line_id:
-                                    flag = False
-                            if flag:
-                                tender_obj.write(cr, uid, tender.id, {'internal_state': 'updated'})
-
-            # display the corresponding tender                                
-            return {'type': 'ir.actions.act_window',
-                    'res_model': 'tender',
-                    'view_type': 'form',
-                    'view_mode': 'form,tree',
-                    'target': 'crush',
-                    'res_id': tender_id,
-                    'context': context
-                    }
-        
-    def create_po(self, cr, uid, ids, context=None):
-        '''
-        Creates PO according to the selection
-        '''
         if context is None:
             context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
-        po_line_obj = self.pool.get('purchase.order.line')
-        po_obj = self.pool.get('purchase.order')
-        
-        po_ids= []
-        
-        for wiz in self.browse(cr, uid, ids, context=context):
-            # For each line, delete non selected lines
-            unlink_lines = []
-            non_choosen_lines = []
-            choosen_lines = []
-            for product_line in wiz.line_ids:
-                for po_line in product_line.po_line_ids:
-                    # Save the order list
-                    if po_line.order_id.id not in po_ids:
-                        po_ids.append(po_line.order_id.id)
-                    if product_line.po_line_id and po_line.id != product_line.po_line_id.id:
-                        unlink_lines.append(po_line.id)
-                    elif product_line.po_line_id and po_line.id == product_line.po_line_id.id:
-                        choosen_lines.append(po_line.id)
-                    else:
-                        non_choosen_lines.append(po_line.id)
-            
-            # Unlink lines
-            po_line_obj.unlink(cr, uid, unlink_lines, context=context)
-            
-            wf_service = netsvc.LocalService("workflow")
-            
-            # Unlink order with no lines
-            returned_po = []
-            for po in po_obj.browse(cr, uid, po_ids):
-                new_lines = []
-                validate_po = True
-                # Unlink lines with unit price equal to 0.00
-                for line in po.order_line:
-                    if line.price_unit == 0.00:
-                        po_line_obj.unlink(cr, uid, [line.id], context=context)
-                    elif line.id in choosen_lines:
-                        new_lines.append(line.id)
-                    elif line.id in non_choosen_lines:
-                        validate_po = False
-                        
-                if new_lines and len(new_lines) != len(po.order_line): # We create a new PO for confirmed lines
-                    new_po_id = po_obj.copy(cr, uid, po.id, {'order_lines': (6, 0, [])})
-                    # Delete all lines generated by the copy of the old PO
-                    for new_l in po_obj.browse(cr, uid, new_po_id).order_line:
-                        po_line_obj.unlink(cr, uid, new_l.id)
-                    # Move the PO line to the new PO
-                    po_line_obj.write(cr, uid, new_lines, {'order_id': new_po_id})
-                    # Validate the new PO
-                    wf_service.trg_validate(uid, 'purchase.order', new_po_id, 'purchase_confirm', cr)
-                    returned_po.append(new_po_id)
-                elif len(po.order_line) == 0:   # We remove all purchase line which haven't lines
-                    po_ids.remove(po.id)
-                    po_obj.unlink(cr, uid, [po.id], context=context)
-                elif validate_po:   # We validate the PO if all lines of this PO are confirmed
-                    wf_service.trg_validate(uid, 'purchase.order', po.id, 'purchase_confirm', cr)
-                    returned_po.append(po.id)
 
+        t_id = False    # Tender ID
+        for w_brw in self.browse(cr, uid, ids, context=context):
+            t_id = w_brw.tender_id.id
+            # loop through wizard_compare_rfq_line
+            for wl_brw in w_brw.line_ids:
+                # check if a supplier has been selected for this product
+                pol_id = wl_brw.rfq_line_id and wl_brw.rfq_line_id.id or False
+                tl_obj.write(cr, uid, [wl_brw.tender_line_id.id], {
+                    'purchase_order_line_id': pol_id,
+                }, context=context)
 
-        context['search_default_draft'] = 0 
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'purchase.order',
-                'view_type': 'form',
-                'view_mode': 'tree,form',
-                'domain': [('id', 'in', returned_po)],
-                'context': context
-                }
-            
+            # UF-733: if all tender lines have been compared (have PO Line id),
+            # then set the tender to be ready
+            # for proceeding to other actions (create PO, Done etc)
+            flag = tl_obj.search(cr, uid, [
+                ('tender_id', '=', t_id),
+                ('line_state', '!=' ,'cancel'),
+                ('purchase_order_line_id', '=', False),
+            ], limit=1, context=context)
+
+            t_obj.write(cr, uid, t_id, {
+                'internal_state': flag and 'draft' or 'updated',
+            }, context=context)
+
+        # Display the corresponding tender
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'tender',
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'target': 'crush',
+            'res_id': t_id,
+            'context': context
+        }
+
 wizard_compare_rfq()
 
 
 class wizard_compare_rfq_line(osv.osv_memory):
     _name = 'wizard.compare.rfq.line'
     _description = 'Compare Quotation Line'
-    
+
     _columns = {
-        'compare_id': fields.many2one('wizard.compare.rfq', string='Wizard'),
-        'tender_line_id': fields.many2one('tender.line', string='Tender line'),
-        'product_id': fields.many2one('product.product', string='Product'),
-        'supplier_id': fields.many2one('res.partner', string='Supplier'),
-        'po_line_id': fields.many2one('purchase.order.line', string='Selected line'),
-        'po_line_ids': fields.many2many('purchase.order.line', 'rfq_po_line_rel', 'compare_id', 'line_id',
-                                       string='Quotation Line'),
-    }
-    
-    def choose_supplier(self, cr, uid, ids, context=None):
-        '''
-        Opens a wizard to compare and choose a supplier for this line
-        '''
+        'compare_id': fields.many2one(
+            'wizard.compare.rfq',
+            string='Wizard',
+        ),
+        'tender_line_id': fields.many2one(
+            'tender.line',
+            string='Tender line',
+        ),
+        'product_code': fields.char(
+            size=128,
+            string='Product Code',
+        ),
+        'product_name': fields.char(
+            size=256,
+            string='Product Description',
+        ),
+        'quantity': fields.float(
+            digits=(16,2),
+            string='Qty',
+        ),
+        'uom_id': fields.many2one(
+            'product.uom',
+            string='UoM',
+        ),
+        'rfq_line_id': fields.many2one(
+            'purchase.order.line',
+            string='Selected RfQ line',
+        ),
+        'choosen_supplier_id': fields.many2one(
+            'res.partner',
+            string='Selected supplier',
+        ),
+        'choosen_supplier_name': fields.related(
+            'choosen_supplier_id',
+            'name',
+            string='Selected supplier',
+            type='char',
+            size=256,
+        ),
+   }
+
+    def fields_get(self, cr, uid, fields=None, context=None):
+        """
+        Add some fields according to number of suppliers on the tender.
+        """
+        t_obj = self.pool.get('tender')
+
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]        
-        
-        choose_sup_obj = self.pool.get('wizard.choose.supplier')
-        choose_line_obj = self.pool.get('wizard.choose.supplier.line')
-        line_id = self.browse(cr, uid, ids[0], context=context)
-        
-        line_data = {'product_id': line_id.product_id.id,
-                     'compare_id': line_id.id}
-        
-        if line_id.supplier_id and line_id.supplier_id.id:
-            line_data.update({'supplier_id': line_id.supplier_id.id})
-        
-        new_id = choose_sup_obj.create(cr, uid, line_data, context=context)
-        
-        line_ids = []
-        for l in line_id.po_line_ids:
-            line_ids.append(choose_line_obj.create(cr, uid, {'supplier_id': l.order_id.partner_id.id,
-                                                             'po_line_id': l.id,
-                                                             'price_unit': l.price_unit,
-                                                             'qty': l.product_qty,
-                                                             'notes': l.notes,
-                                                             'compare_line_id': line_id.id,
-                                                             'compare_id': line_id.compare_id.id,
-                                                             'currency_id': l.order_id.pricelist_id.currency_id.id,
-                                                             'price_total': l.product_qty*l.price_unit}, context=context))
-        choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)],
-                                                 'line_notes_ids': [(6,0,line_ids)]})
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.choose.supplier',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': new_id,
-                'context': context,
-                }
-    
-wizard_compare_rfq_line()
 
+        res = super(wizard_compare_rfq_line, self).\
+            fields_get(cr, uid, fields, context)
 
-class wizard_choose_supplier(osv.osv_memory):
-    _name = 'wizard.choose.supplier'
-    _description = 'Choose a supplier'
-    
-    _columns = {
-        'product_id': fields.many2one('product.product', string='Product'),
-        'supplier_id': fields.many2one('res.partner', string='Supplier'),
-        'line_ids': fields.many2many('wizard.choose.supplier.line', 'choose_supplier_line', 'init_id', 'line_id',
-                                     string='Lines'),
-        'line_notes_ids': fields.many2many('wizard.choose.supplier.line', 'choose_supplier_line', 'init_id', 'line_id',
-                                     string='Lines'),
-        'compare_id': fields.many2one('wizard.compare.rfq.line', string='Wizard'),
-    }
-    
-    def return_view(self, cr, uid, ids, context=None):
-        '''
-        Return to the main wizard
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-            
-        obj = self.browse(cr, uid, ids[0])
-            
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.compare.rfq',
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                'res_id': obj.compare_id.compare_id.id,
-                'context': context}
-    
-wizard_choose_supplier()
+        t_id = context.get('tender_id', False)
+        s_ids = []
+        if t_id:
+            s_ids = t_obj.browse(cr, uid, t_id, context=context).supplier_ids
 
+        for sup in s_ids:
+            sid = sup.id
+            res.update({
+                # Name of the supplier
+                'name_%s' % sid: {
+                    'selectable': True,
+                    'type': 'char',
+                    'size': 128,
+                    'string': 'Supplier',
+                },
+                # Unit price on the related RfQ line
+                'unit_price_%s' % sid: {
+                    'selectable': True,
+                    'type': 'float',
+                    'digits': (16,2),
+                    'string': 'Unit price',
+                },
+                # Comment of the related RfQ line
+                'comment_%s' % sid: {
+                    'selectable': True,
+                    'type': 'text',
+                    'string': 'Comment',
+                },
+            })
 
-class wizard_choose_supplier_line(osv.osv_memory):
-    _name = 'wizard.choose.supplier.line'
-    _description = 'Line Choose supplier wizard'
-    
-    _order = 'price_unit'
-    
-    def _get_func_total(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Returns the total of line in functional currency
-        '''
-        res = {}
-        
-        for line in self.browse(cr, uid, ids, context=context):
-            func_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-            if field_name == 'func_currency_id':
-                res[line.id] = func_currency
-            elif field_name == 'func_price_total':
-                res[line.id] = self.pool.get('res.currency').compute(cr, uid, line.currency_id.id, func_currency, line.price_total, round=True, context=context)
-                
         return res
-    
-    _columns = {
-        'compare_id': fields.many2one('wizard.compare.rfq', string='Compare'),
-        'compare_line_id': fields.many2one('wizard.compare.rfq.line', string='Compare Line'),
-        'po_line_id': fields.many2one('purchase.order.line', string='PO Line'),
-        'supplier_id': fields.many2one('res.partner', string='Supplier'),
-        'price_unit': fields.float(string='Unit Price', digits_compute=dp.get_precision('Purchase Price Computation')),
-        'qty': fields.float(digits=(16,2), string='Qty'),
-        'price_total': fields.float(string='Total Price', digits_compute=dp.get_precision('Purchase Price')),
-        'currency_id': fields.many2one('res.currency', string='Currency'),
-        'func_price_total': fields.function(_get_func_total, method=True, string='Func. Total Price', type='float', digits_compute=dp.get_precision('Purchase Price')),
-        'func_currency_id': fields.function(_get_func_total, method=True, string='Func. Currency', type='many2one', relation='res.currency'),
-        'notes': fields.text(string='Notes'),
-    }
-    
-    def write(self, cr, uid, ids, data, context=None):
+
+    def read(self, cr, uid, ids, vals, context=None, load='_classic_read'):
         '''
-        Change the quantity on the purchase order line if 
-        it's modified on the supplier choose line
+        Read the RfQ lines related to each tender line and each supplier
+        and put values on the wizard lines.
         '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-            
-        if 'qty' in data:
-            for line in self.browse(cr, uid, ids):
-                self.pool.get('purchase.order.line').write(cr, uid, [line.po_line_id.id], {'product_qty': data.get('qty', line.qty)})
-                
-        return super(wizard_choose_supplier_line, self).write(cr, uid, ids, data, context=context)
-    
-    def choose_supplier(self, cr, uid, ids, context=None):
-        '''
-        Define the supplier for the line
-        '''
+        t_obj = self.pool.get('tender')
+        pol_obj = self.pool.get('purchase.order.line')
+        cur_obj = self.pool.get('res.currency')
+        user_obj = self.pool.get('res.users')
+
+        if context is None:
+            context = context
+
+        func_cur_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
+
+        # Force the reading of some fields
+        forced_flds = [
+            'tender_line_id',
+        ]
+        for ffld in forced_flds:
+            if ffld not in vals:
+                vals.append(ffld)
+
+        res = super(wizard_compare_rfq_line, self).\
+            read(cr, uid, ids, vals, context=context, load=load)
+
+        t_id = context.get('tender_id', False)
+        s_ids = []
+        if t_id:
+            s_ids = t_obj.browse(cr, uid, t_id, context=context).supplier_ids
+
+        for sup in s_ids:
+            sid = sup.id
+            for r in res:
+                rfql_ids = pol_obj.search(cr, uid, [
+                    ('order_id.partner_id', '=', sid),
+                    ('tender_line_id', '=', r['tender_line_id']),
+                ], context=context)
+                rfql = None
+                pu = 0.00
+                if rfql_ids:
+                    rfql = pol_obj.browse(cr, uid, rfql_ids[0], context=context)
+                    pu = rfql.price_unit
+                    same_cur = rfql.order_id.pricelist_id.currency_id.id == func_cur_id
+                    if not same_cur:
+                        pu = cur_obj.compute(
+                            cr, uid,
+                            rfql.order_id.pricelist_id.currency_id.id,
+                            func_cur_id,
+                            pu,
+                            round=True)
+
+                r.update({
+                    'name_%s' % sid: sup.name,
+                    'unit_price_%s' % sid: rfql and pu or 0.00,
+                    'comment_%s' % sid: rfql and rfql.comment or '',
+                })
+
+        return res
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form',
+            context=None, toolbar=False, submenu=False):
+        """
+        Display the computed fields according to number of suppliers in the
+        tender.
+        """
+        t_obj = self.pool.get('tender')
+
         if context is None:
             context = {}
-        compare_obj = self.pool.get('wizard.compare.rfq')
-        compare_line_obj = self.pool.get('wizard.compare.rfq.line')
-        
-        if isinstance(ids, (int, long)):
-                      ids = [ids]
-        
-        line_id = self.browse(cr, uid, ids[0])
-        compare_line_obj.write(cr, uid, [line_id.compare_line_id.id], {'supplier_id': line_id.supplier_id.id, 'po_line_id': line_id.po_line_id.id})
-        
-        context.update({'end_wizard': True})
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.compare.rfq',
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                'res_id': line_id.compare_id.id,
-                'context': context,
-                }
-    
-wizard_choose_supplier_line()
+
+        res = super(wizard_compare_rfq_line, self).fields_view_get(
+            cr, uid, view_id, view_type,
+            context=context, toolbar=toolbar,
+            submenu=submenu)
+
+        if view_type == 'tree':
+            tree_view = """<tree string="Compared products" editable="top">
+                <field name="tender_line_id" invisible="1" />
+                <field name="product_code" readonly="1" />
+                <field name="product_name" readonly="1" />
+                <field name="quantity" readonly="1" />
+                <field name="uom_id" readonly="1" />
+            """
+            fld_to_add = ['name', 'unit_price', 'comment']
+            t_id = context.get('tender_id', False)
+            s_ids = []
+            if t_id:
+                s_ids = t_obj.\
+                    browse(cr, uid, t_id, context=context).supplier_ids
+
+            for sup in s_ids:
+                tree_view += """
+                    <separator string="|" type="separator" not_sortable="1" />
+                    <button
+                        name="select_supplier_%(sid)s"
+                        icon="terp-mail-forward"
+                        string="Select this supplier"
+                        type="object"
+                        attrs="{
+                            'invisible': [
+                                '|',
+                                ('choosen_supplier_id', '=', %(sid)s),
+                                ('unit_price_%(sid)s', '=', 0.00),
+                            ]
+                        }" />
+                """ % {'sid': sup.id}
+
+                for fld in fld_to_add:
+                    tree_view += """
+                        <field name="%s_%s" readonly="1" not_sortable="1"/>
+                     """ % (fld, sup.id)
+
+            if s_ids:
+                tree_view += """
+                    <separator string="|" editable="0" />
+                    <field name="choosen_supplier_id" invisible="1" />
+                    <button
+                        name="reset_selection"
+                        icon="gtk-undo"
+                        string="Reset supplier selection"
+                        type="object"
+                        attrs="{
+                            'invisible': [('choosen_supplier_id', '=', False)],
+                        }" />
+                    <field name="choosen_supplier_name" readonly="1" />
+                    <field name="rfq_line_id" invisible="1" />
+                """
+
+            tree_view += """</tree>"""
+            res['arch'] = tree_view
+
+        return res
+
+    def __getattr__(self, name, *args, **kwargs):
+        """
+        Call the select_supplier_x() method with good paramater
+        """
+        if name[:16] == 'select_supplier_':
+            sup_id = name[16:]
+            self.sup_id = int(sup_id)
+            return self.choose_supplier
+        else:
+            return super(wizard_compare_rfq_line, self).\
+                __getattr__(name, *args, **kwargs)
+
+
+    def choose_supplier(self, cr, uid, ids, context=None):
+        '''
+        Select the supplier
+        '''
+        pol_obj = self.pool.get('purchase.order.line')
+
+        if context is None:
+            context = {}
+
+        if not self.sup_id:
+            raise osv.except_osv(
+                _('Error'),
+                _('No supplier selected'),
+            )
+
+        for wiz_line in self.browse(cr, uid, ids, context=context):
+            rfq_line_ids = pol_obj.search(cr, uid, [
+                ('order_id.partner_id', '=', self.sup_id),
+                ('tender_line_id', '=', wiz_line.tender_line_id.id),
+            ], context=context)
+            compare_rfq_id = wiz_line.compare_id.id
+            if rfq_line_ids:
+                self.write(cr, uid, [wiz_line.id], {
+                    'rfq_line_id': rfq_line_ids[0],
+                    'choosen_supplier_id': self.sup_id,
+                }, context=context)
+            else:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Bad supplier selected'),
+                )
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.compare.rfq',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': compare_rfq_id,
+            'context': context,
+        }
+
+    def reset_selection(self, cr, uid, ids, context=None):
+        """
+        Remove the selected supplier on the selected lines
+        """
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('No line selected'),
+            )
+
+        ctx = context.copy()
+        self.write(cr, uid, ids, {
+            'rfq_line_id': False,
+            'choosen_supplier_id': False,
+        }, context=ctx)
+
+        if 'tender_id' in ctx:
+            del ctx['tender_id']
+
+        compare_rfq_id = self.\
+            read(cr, uid, ids[0], ['compare_id'], context=ctx)['compare_id']
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.compare.rfq',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': compare_rfq_id,
+            'context': context,
+        }
+
+wizard_compare_rfq_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

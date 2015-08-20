@@ -402,6 +402,9 @@ class account_move_line(osv.osv):
             # UFTP-262: Add description from the move_id
             if m and m.manual_name:
                 vals.update({'name': m.manual_name})
+        # US-220: vals.ref must have 64 digits max
+        if vals.get('ref'):
+            vals['ref'] = vals['ref'][:64]
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
         # UTP-317: Check partner (if active or not)
         if res and not (context.get('sync_update_execution', False) or context.get('addendum_line_creation', False)): #UF-2214: Not for the case of sync. # UTP-1022: Not for the case of addendum line creation

@@ -386,6 +386,12 @@ class account_invoice(osv.osv):
             for node in nodes:
                 node.set('string', name)
             res['arch'] = etree.tostring(doc)
+        elif view_type in ('tree', 'search') and context.get('type') in ['out_invoice', 'out_refund']:
+            doc = etree.XML(res['arch'])
+            nodes = doc.xpath("//field[@name='supplier_reference']")
+            for node in nodes:
+                node.getparent().remove(node)
+            res['arch'] = etree.tostring(doc)
         return res
 
     def default_get(self, cr, uid, fields, context=None):
