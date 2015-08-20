@@ -1233,7 +1233,82 @@ class FinanceTestCorCases(FinanceTest):
         cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_21
         """
-        db = self.c1
+        
+        """
+account.analytic.line
+SD ref : 	9dead17a-44cd-11e5-9243-00259054f102/account_analytic_line/9
+Is deleted? : 		Force record recreation : 		Version : 	2
+	
+Synchronization
+Fetched on : 	19/Aug/2015 16:12
+Source Instance : 	test-finance2_HQ1C1
+Sequence : 	33
+Owner Instance : 	test-finance2_HQ1C1P1
+Handle Priority : 		Run : 		Last execution : 	19/Aug/2015 16:12
+Fields
+
+['last_corrected_id/id', 'cost_center_id/id', 'reversal_origin/id', 'id']
+	
+Values
+
+[False, u'sd.47883ce2-44cc-11e5-ab8b-00259054f102/account_analytic_account/37', False, u'sd.9dead17a-44cd-11e5-9243-00259054f102/account_analytic_line/9']
+	
+Fallback Values
+
+Execution Messages
+
+Cannot import in model account.analytic.line:
+Data: {'cost_center_id/id': u'sd.47883ce2-44cc-11e5-ab8b-00259054f102/account_analytic_account/37', 'last_corrected_id/id': False, 'id': u'sd.9dead17a-44cd-11e5-9243-00259054f102/account_analytic_line/9', 'reversal_origin/id': False}
+Reason: null value in column "name" violates not-null constraint
+        """
+        
+        """
+Model : 	account.analytic.line
+SD ref : 	9dead17a-44cd-11e5-9243-00259054f102/account_analytic_line/9
+Is deleted? : 		Force record recreation : 		Version : 	2
+	
+Synchronization
+Fetched on : 	19/Aug/2015 16:12
+Source Instance : 	test-finance2_HQ1C1
+Sequence : 	33
+Owner Instance : 	test-finance2_HQ1C1P1
+Handle Priority : 		Run : 		Last execution : 	19/Aug/2015 16:12
+Fields
+
+['account_id/id', 'amount', 'amount_currency', 'correction_date', 'code', 'cost_center_id/id', 'currency_id/id', 'date', 'destination_id/id', 'distrib_line_id', 'distribution_id/id', 'document_date', 'general_account_id/id', 'instance_id/id', 'is_reallocated', 'is_reversal', 'journal_id/id', 'move_id/id', 'name', 'partner_txt', 'ref', 'reversal_origin/id', 'source_date', 'entry_sequence', 'id']
+	
+Values
+
+[u'sd.analytic_distribution_analytic_account_msf_private_funds', u'75.0', u'75.0', False, False, u'sd.47883ce2-44cc-11e5-ab8b-00259054f102/account_analytic_account/37', u'sd.base_EUR', u'2015-08-19', u'sd.analytic_distribution_analytic_account_destination_operation', u"(u'sd', 'funding.pool.distribution.line', u'9dead17a-44cd-11e5-9243-00259054f102/funding_pool_distribution_line/8')", u'sd.9dead17a-44cd-11e5-9243-00259054f102/analytic_distribution/7', u'2015-08-19', u'sd.msf_sync_data_hq_account_63120', u'sd.47883ce2-44cc-11e5-ab8b-00259054f102/msf_instance/2', 'False', 'False', u'sd.9dead17a-44cd-11e5-9243-00259054f102/account_analytic_journal/19', u'sd.9dead17a-44cd-11e5-9243-00259054f102/account_move_line/3', u'[C1_20] 1/L003 63120', u'Local Market', u'false', False, u'2015-08-19', u'C11-PUF-150001', u'sd.9dead17a-44cd-11e5-9243-00259054f102/account_analytic_line/9']
+	
+Fallback Values
+
+Execution Messages
+
+Cannot import in model account.analytic.line:
+Data: {'general_account_id/id': u'sd.msf_sync_data_hq_account_63120', 'code': False, 'cost_center_id/id': u'sd.47883ce2-44cc-11e5-ab8b-00259054f102/account_analytic_account/37', 'id': u'sd.9dead17a-44cd-11e5-9243-00259054f102/account_analytic_line/9', 'document_date': u'2015-08-19', 'partner_txt': u'Local Market', 'is_reallocated': 'False', 'is_reversal': 'False', 'instance_id/id': u'sd.47883ce2-44cc-11e5-ab8b-00259054f102/msf_instance/2', 'distribution_id/id': u'sd.9dead17a-44cd-11e5-9243-00259054f102/analytic_distribution/7', 'source_date': u'2015-08-19', 'distrib_line_id': u"(u'sd', 'funding.pool.distribution.line', u'9dead17a-44cd-11e5-9243-00259054f102/funding_pool_distribution_line/8')", 'ref': u'false', 'move_id/id': False, 'currency_id/id': u'sd.base_EUR', 'correction_date': False, 'date': u'2015-08-19', 'journal_id/id': u'sd.9dead17a-44cd-11e5-9243-00259054f102/account_analytic_journal/19', 'destination_id/id': u'sd.analytic_distribution_analytic_account_destination_operation', 'account_id/id': u'sd.analytic_distribution_analytic_account_msf_private_funds', 'name': u'[C1_20] 1/L003 63120', 'reversal_origin/id': False, 'amount': u'75.0', 'amount_currency': u'75.0', 'entry_sequence': u'C11-PUF-150001'}
+Reason: 'unicode' object has no attribute 'year'
+        """
+        
+        """
+test-finance_HQ1C1=# select * from analytic_distribution where id=7;
+id | create_uid |        create_date         | write_date | write_uid | amount | user_id |         name         | unit_amount |    date    | company_id | account_id | is_reallocated | destination_id | document_date | from_write_off | cost_center_id | is_reversal | distribution_id | reversal_origin | source_date |         distrib_line_id          | exported | code | general_account_id | currency_id | move_id | product_uom_id | journal_id | product_id | amount_currency |  ref  | imported_commitment | imported_entry_sequence | commitment_line_id | entry_sequence | imported_partner_txt | partner_txt  | instance_id | last_corrected_id | correction_date 
+----+------------+----------------------------+------------+-----------+--------+---------+----------------------+-------------+------------+------------+------------+----------------+----------------+---------------+----------------+----------------+-------------+-----------------+-----------------+-------------+----------------------------------+----------+------+--------------------+-------------+---------+----------------+------------+------------+-----------------+-------+---------------------+-------------------------+--------------------+----------------+----------------------+--------------+-------------+-------------------+-----------------
+  9 |          1 | 2015-08-19 16:28:49.031532 |            |           | 513.00 |       1 | [C1_20] 1/L003 63120 |             | 2015-08-19 |          1 |          6 | f              |              8 | 2015-08-19    | f              |             20 | f           |               7 |                 | 2015-08-19  | funding.pool.distribution.line,8 | f        |      |                197 |           1 |       3 |                |         19 |            |          513.00 | false | f                   |                         |                    | C11-PUF-150001 |                      | Local Market |           2 |                   | 
+(1 row)
+
+test-finance_HQ1C1=# select id, name, distribution_id, distrib_line_id from account_analytic_line where id=9;
+id |         name         | distribution_id |         distrib_line_id          
+----+----------------------+-----------------+----------------------------------
+  9 | [C1_20] 1/L003 63120 |               7 | funding.pool.distribution.line,8
+(1 row)
+
+test-finance_HQ1C1=# select * from funding_pool_distribution_line where id=8;                     
+id | create_uid |        create_date         | write_date | write_uid | currency_id |                  name                   | partner_type | cost_center_id | analytic_id | distribution_id | amount | source_date | destination_id |    date    | percentage 
+----+------------+----------------------------+------------+-----------+-------------+-----------------------------------------+--------------+----------------+-------------+-----------------+--------+-------------+----------------+------------+------------
+  8 |          1 | 2015-08-19 16:28:49.031532 |            |           |           1 | AD 0453b217-eec6-42c2-9a96-98773bc62e25 |              |             20 |           6 |               7 |   0.00 | 2015-08-19  |              8 | 2015-08-19 |      100.0
+(1 row) 
+        """
         
         invoice_lines_accounts = [ '63100', '63110', '63120', ]
         
@@ -1242,13 +1317,15 @@ class FinanceTestCorCases(FinanceTest):
             2: [(100., 'OPS', 'HT120', 'FP2'), ],
             3: [(100., 'OPS', 'HT112', 'PF'), ],
         }
-        self.analytic_distribution_set_fp_account_dest(db, 'FP1', '63100',
-            'OPS')
-        self.analytic_distribution_set_fp_account_dest(db, 'FP2', '63110',
-            'OPS')
+        for db in (self.c1, self.p1, self.p12, ):
+            self.analytic_distribution_set_fp_account_dest(db, 'FP1', '63100',
+                'OPS')
+            self.analytic_distribution_set_fp_account_dest(db, 'FP2', '63110',
+                'OPS')
         
+        # at C1
+        db = self.c1
         aml_obj = db.get('account.move.line')
-        
         ji_ids = self.invoice_validate(db,
             self.invoice_create_supplier_invoice(db,
                 ccy_code=False,
@@ -1261,6 +1338,11 @@ class FinanceTestCorCases(FinanceTest):
                 tag="C1_20"
             )
         )
+        self.synchronize(db)
+        
+        # at C1P1
+        db = self.p1
+        self.synchronize(db)
 
 
 def get_test_class():
