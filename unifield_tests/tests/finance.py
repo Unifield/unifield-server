@@ -1445,12 +1445,10 @@ class FinanceTest(UnifieldTest):
         :param pull_db: db to pull record from
         :rtype: bool
         """
-        model_name = 'account.analytic.line'
-        
         fields = [
             'entry_sequence',
             'date',
-            'doc_date',
+            'document_date',
             
             'amount_currency',
             'amount',
@@ -1460,17 +1458,19 @@ class FinanceTest(UnifieldTest):
         model_account = 'account.account'
         model_analytic_account = 'account.analytic.account'
         fields_m2o = [
-            (model_ccy, 'currency_id',
+            (model_ccy, 'currency_id'),
             (model_ccy, 'fonctional_currency_id'),
             
             (model_account, 'general_account_id'),
+            
             (model_analytic_account, 'destination_id'),
             (model_analytic_account, 'cost_center_id'),
             #(model_analytic_account, 'account_id'),  # FP: not synced dataset
         ]
         
-        return compare_record_sync_push_pulled(model_name, push_db, push_id,
-            pull_db, fields=fields, fields_m2o=fields_m2o,
+        return compare_record_sync_push_pulled('account.analytic.line',
+            push_db, push_id, pull_db,
+            fields=fields, fields_m2o=fields_m2o,
             raise_report=raise_report)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
