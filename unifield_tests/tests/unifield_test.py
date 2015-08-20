@@ -402,62 +402,112 @@ class UnifieldTest(unittest.TestCase):
         return self.get_record_id_from_sdref(pull_db,
             self.get_record_sdref_from_id(model, push_db, push_id))
             
-    def compare_record_sync_push_pulled(self, model, push_db, push_id,
-        pull_db, fields=False, fields_m2o=False, raise_report=True):
+    def check_records_sync_push_pulled(self,
+        model,
+        push_db, push_ids_expected, push_ids_not_expected,
+        pull_db,
+        fields=False, fields_m2o=False,
+        raise_report=True):
         """
         :param model: model name of target record
         :param push_db: db to push record from
-        :param push_id: record id to push
+        :param push_id_expected: record ids push side expected to be pulled
+        :param push_ids_not_expected: record ids push side expected NOT to be
+            pulled (example not a target CC instance)
         :param pull_db: db to pull record from
-        :param fields: regular fields name
+        :param fields: check regular fields name eguals
         :type fields: list/tuple/False
-        :param fields_m2o: m2o list of tuples (comodel and field name)
+        :param fields_m2o: check m2o eguaks: list of tuples
+            (comodel and field name)
         :type fields_m2o: [('comodel', 'field_name'), ]
         :raise_report: True to raise a report if fields mismatch
         :return records eguals ?
-        :rtype: bool
+        :rtype: { id: True, }
         """
+        def check_expected():
+            for push_id in push_ids_expected:
+                res[push_id] = True  # OK by default 
+                
+                # push browsed record
+                push_br = push_obj.browse(push_id)
+                
+                # pulled browsed record
+                pull_id = self.get_record_sync_push_pulled(model, push_db,
+                    push_id, pull_db)
+                if not pull_id:
+                    # KO record not pulled
+                    res[push_id] = False
+                    if raise_report:
+                        report_lines.append("%s %d(id) %s NOT pulled to %s" % (
+                            push_db.colored_name, push_id, push_br.name,
+                            pull_db.colored_name)
+                    continue  # not pulled, continue to next record to test
+                pull_br = pull_obj.browse(pull_id)
+                
+                # compare fields
+                if fields or fields_m2o:
+                    diff_fields = []
+                    
+                    for f in fields:
+                        if f in push_br and push_br[f] != pull_br[f]:
+                            diff_fields.append(f)
+                    
+                    # compare m2o by sdref
+                    for comodel, f in fields_m2o:
+                        if f in push_br[f]:
+                            if not push_br[f] and not pull_br[f]:
+                                continue
+
+                        push_sdref = self.get_record_sdref_from_id(comodel,
+                            push_db, push_br[f].id)
+                        pull_sdref = self.get_record_sdref_from_id(comodel,
+                            pull_db, pull_br[f].id)
+                        if push_sdref != pull_sdref:
+                            diff_fields.append(f)
+                            
+                    if diff_fields:
+                        # KO diff in fields
+                        res[push_id] = False
+                        if raise_report:
+                            report_lines.append("%s %d(id) %s pulled to %s" \
+                                " / diff in fields found: %s" % (
+                                    push_db.colored_name, push_id, push_br.name,
+                                    pull_db.colored_name,
+                                    ', '.join(diff_fields), )
+            
+        def check_unexpected():
+            for push_id in push_ids_not_expected:
+                res[push_id] = True  # OK by default 
+                
+                # push browsed record
+                push_br = push_obj.browse(push_id)
+                
+                # pulled browsed record
+                pull_id = self.get_record_sync_push_pulled(model, push_db,
+                    push_id, pull_db)
+                if pull_id:
+                    # KO record pulled AND SHOULD NOT 
+                    res[push_id] = False
+                    if raise_report:
+                        report_lines.append("%s %d(id) %s pulled to %s" \
+                            " AND SHOULD NOT" % (
+                                push_db.colored_name, push_id, push_br.name,
+                                pull_db.colored_name)
+            
         push_obj = push_db.get(model)
         pull_obj = pull_db.get(model)
-        diff_fields = []  # minimal result <=> pulled record found
+        res = {}
+        report_lines = []
         
-        # push browsed record
-        push_br = push_obj.browse(push_id)
-        
-        # pulled browsed record
-        pull_id = self.get_record_sync_push_pulled(model, push_db, push_id,
-            pull_db)
-        if not pull_id:
-            # record not pulled
-            return False
-        pull_br = pull_obj.browse(pull_id)
-        
-        # compare fields
-        for f in fields:
-            if f in push_br and push_br[f] != pull_br[f]:
-                diff_fields.append(f)
-        
-        # compare m2o by sdref
-        for comodel, f in fields_m2o:
-            if f in push_br[f]:
-                if not push_br[f] and not pull_br[f]:
-                    continue
-
-            push_sdref = self.get_record_sdref_from_id(comodel, push_db,
-                push_br[f].id)
-            pull_sdref = self.get_record_sdref_from_id(comodel, pull_db,
-                pull_br[f].id)
-            if push_sdref != pull_sdref:
-                diff_fields.append(f)
-        
+        # checks
+        check_expected()
+        check_unexpected()
+ 
         # report
-        if diff_fields and raise_report:
-            report = "pulled report %s fields mismatch: %s" % (
-                self.get_record_sdref_from_id(model, push_db, push_id),
-                ', '.join(diff_fields))
-            raise UnifieldTestException(report)
+        if raise_report and report_lines:
+            raise UnifieldTestException("\n".join(report_lines))
             
-        return not diff_fields or False
+        return res
         
     def get_first(self, itr):
         """
