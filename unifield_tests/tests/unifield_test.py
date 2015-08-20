@@ -366,29 +366,46 @@ class UnifieldTest(unittest.TestCase):
             return False
         return db.get('ir.model.data').browse(ids[0]).res_id
         
-    def get_record_sdref_from_id(self, obj, id):
+    def get_record_sdref_from_id(self, model, db, id):
         """
-        :obj: a db.get('model_name) object
+        :param model: target model
+        :param db: target db
+        :param id: record id
         :return sdref (without sd.) from id
         """
-        return obj.get_sd_ref(cr, uid, [id])[0]
+        # [WORKAROUND]
+        # oerlib proxy can not call sync client orm
+        # class extended_orm_methods methods
+        # return db.get(model).get_sd_ref([id], 'name')[id]
         
-    def get_record_sync_push_pulled(self, push_obj, push_id, pull_db):
+        model_data_obj = db.get('ir.model.data')
+        sdref_ids = model_data_obj.search([
+            ('model', '=', model),
+            ('res_id', '=', id),
+            ('module','=', 'sd'),
+        ])
+        
+        if not sdref_ids:
+            return False
+        return model_data_obj.browse(sdref_ids[0]).name
+        
+    def get_record_sync_push_pulled(self, model, push_db, push_id, pull_db):
         """
         get(check) pulled record id of pushed record 'push_id' from model
         object 'push_obj' to 'pull_db' database
-        :param push_obj: a db.get('model_name)  object to pull record from
+        :param model: target model name
+        :param push_db: db to push record from
         :param push_id: record id to push
         :param pull_db: db to pull record from a get pulled record id
         :return pushed record id or False if not pulled
         """
         return self.get_record_id_from_sdref(pull_db,
-            self.get_record_sdref_from_id(push_obj, push_id))
+            self.get_record_sdref_from_id(model, push_db, push_id))
             
-    def compare_record_sync_push_pulled(self, model_name, push_db, push_id,
+    def compare_record_sync_push_pulled(self, model, push_db, push_id,
         pull_db, fields=False, fields_m2o=False, raise_report=True):
         """
-        :param model_name: model name of record
+        :param model: model name of target record
         :param push_db: db to push record from
         :param push_id: record id to push
         :param pull_db: db to pull record from
@@ -400,15 +417,16 @@ class UnifieldTest(unittest.TestCase):
         :return records eguals ?
         :rtype: bool
         """
-        push_obj = push_db.get(model_name)
-        pull_obj = pull_db.get(model_name)
+        push_obj = push_db.get(model)
+        pull_obj = pull_db.get(model)
         diff_fields = []  # minimal result <=> pulled record found
         
         # push browsed record
         push_br = push_obj.browse(push_id)
         
         # pulled browsed record
-        pull_id = self.get_record_sync_push_pulled(push_obj, push_id, pull_db)
+        pull_id = self.get_record_sync_push_pulled(model, push_db, push_id,
+            pull_db)
         if not pull_id:
             # record not pulled
             return False
@@ -425,17 +443,17 @@ class UnifieldTest(unittest.TestCase):
                 if not push_br[f] and not pull_br[f]:
                     continue
 
-            push_sdref = get_record_sdref_from_id(push_db.get(comodel),
-                    push_br[f].id)
-            pull_sdref = get_record_sdref_from_id(pull_db.get(comodel),
-                    pull_br[f].id)
+            push_sdref = self.get_record_sdref_from_id(comodel, push_db,
+                push_br[f].id)
+            pull_sdref = self.get_record_sdref_from_id(comodel, pull_db,
+                pull_br[f].id)
             if push_sdref != pull_sdref:
                 diff_fields.append(f)
         
         # report
         if diff_fields and raise_report:
             report = "pulled report %s fields mismatch: %s" % (
-                get_record_sdref_from_id(push_obj, push_id),
+                self.get_record_sdref_from_id(model, push_db, push_id),
                 ', '.join(diff_fields))
             raise UnifieldTestException(report)
             

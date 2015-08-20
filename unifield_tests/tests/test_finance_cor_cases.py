@@ -1239,6 +1239,8 @@ class FinanceTestCorCases(FinanceTest):
         cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_21
         """
+        model_aal = 'account.analytic.line'
+        
         invoice_lines_accounts = [ '63100', '63110', '63120', ]
         
         invoice_lines_breakdown_data = {
@@ -1252,13 +1254,9 @@ class FinanceTestCorCases(FinanceTest):
             'OPS')
         self._sync_from_c1()  # sync down fp account/dest
         
-        # at C1
-        db = self.c1
-        aml_obj = db.get('account.move.line')
-        
         # 20.1, 20.2, 20.3
-        ji_ids = self.invoice_validate(db,
-            self.invoice_create_supplier_invoice(db,
+        ji_ids = self.invoice_validate(self.c1,
+            self.invoice_create_supplier_invoice(self.c1,
                 ccy_code=False,
                 is_refund=True,
                 date=False,
@@ -1269,18 +1267,23 @@ class FinanceTestCorCases(FinanceTest):
                 tag="C1_20"
             )
         )
-        ajis_by_account = self.get_ji_ajis_by_account(db, ji_ids)
+        ajis_by_account = self.get_ji_ajis_by_account(self.c1, ji_ids)
         
         # 20.4
-        self.synchronize(db)
+        self.synchronize(self.c1)
         
         # 20.5
-        db = self.p1
-        self.synchronize(db)
+        self.synchronize(self.p1)
+        pulled_id = self.get_record_sync_push_pulled(model_aal, self.c1,
+            ajis_by_account['63120'][0], self.p1)
+        self.assert_(
+            pulled_id and isinstance(pulled_id, (int, long)),
+            "63120 HT112 C1P1 AJI not pulled:: %s" % (self.p1.colored_name, )
+        )
         
         # 20.6
         db = self.p1
-        self.synchronize(db)
+        self.synchronize(self.p12)  # C1P2
 
 
 def get_test_class():
