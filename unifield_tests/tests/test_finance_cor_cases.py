@@ -270,14 +270,12 @@ class FinanceTestCorCases(FinanceTest):
                                 })
                         
         def set_funding_pools():
+            c = self.c1
             aaa_model = 'account.analytic.account'
             
             for instance, fp in meta.fp_ccs:
-                db = self.get_db_from_name(
-                    self.get_db_name_from_suffix(instance))
-                    
-                aaa_obj = db.get(aaa_model)
-                company = self.get_company(db)
+                aaa_obj = c.get(aaa_model)
+                company = c.get_company(db)
                 
                 parent_ids = aaa_obj.search([
                     ('code', '=', 'FUNDING'),
@@ -300,7 +298,7 @@ class FinanceTestCorCases(FinanceTest):
                     'category': 'FUNDING',
                     'instance_id': company.instance_id.id,
                 }
-                if not self.record_exists(db, aaa_model, 
+                if not self.record_exists(c, aaa_model, 
                         self.dfv(vals, include=('code', 'instance_id', ))):
                     # get related CCs and set them
                     cc_ids = aaa_obj.search([
@@ -423,11 +421,11 @@ class FinanceTestCorCases(FinanceTest):
         set_cost_centers()
         self._sync_down()
             
-        # set funding pool + sync up/down (from c1)
+        # C1 level: set funding pool + sync up/down (from c1)
         set_funding_pools()
         self._sync_c1()
         
-        # set financing contract + sync up/down (from c1)
+        # C1 level: set financing contract + sync up/down (from c1)
         set_financing_contracts()
         self._sync_c1()
         
@@ -445,7 +443,7 @@ class FinanceTestCorCases(FinanceTest):
         
     def _sync_c1(self):
         self.synchronize(self.c1)
-        self.synchronize(self.hq1)
+        #self.synchronize(self.hq1)
         self.synchronize(self.p1)
         self.synchronize(self.p12)  # C1P2
            
