@@ -433,7 +433,7 @@ class UnifieldTest(unittest.TestCase):
                 diff_fields.append(f)
         
         # report
-        if diff_fields and raise_report
+        if diff_fields and raise_report:
             report = "pulled report %s fields mismatch: %s" % (
                 get_record_sdref_from_id(push_obj, push_id),
                 ', '.join(diff_fields))

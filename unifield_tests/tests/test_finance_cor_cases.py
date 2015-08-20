@@ -275,7 +275,7 @@ class FinanceTestCorCases(FinanceTest):
             
             for instance, fp in meta.fp_ccs:
                 aaa_obj = c.get(aaa_model)
-                company = c.get_company(db)
+                company = self.get_company(c)
                 
                 parent_ids = aaa_obj.search([
                     ('code', '=', 'FUNDING'),
