@@ -423,25 +423,33 @@ class FinanceTestCorCases(FinanceTest):
             
         # C1 level: set funding pool + sync up/down (from c1)
         set_funding_pools()
-        self._sync_c1()
+        self._sync_from_c1()
         
         # C1 level: set financing contract + sync up/down (from c1)
         set_financing_contracts()
-        self._sync_c1()
+        self._sync_from_c1()
         
     # -------------------------------------------------------------------------
     # PRIVATE TOOLS FUNCTIONS
     # -------------------------------------------------------------------------
         
-    def _sync_down(self):
+    def _sync_down(self, c2=False):
         self.synchronize(self.hq1)
         self.synchronize(self.c1)  # pull from hq
         self.synchronize(self.c1)  # push to projects
         self.synchronize(self.p1)
         self.synchronize(self.p12)  # C1P2
-        # TODO:C2 level and C2P1/P2 (C2 not use in scenario at this time)
         
-    def _sync_c1(self):
+        # TODO:C2 level and C2P1/P2 (C2 not use in scenario at this time)
+        """
+        if c2:
+            self.synchronize(self.c2) # pull from hq
+            self.synchronize(self.c2)  # push to projects
+            self.synchronize(self.p2)
+            self.synchronize(self.p22)  # C2P2
+        """
+        
+    def _sync_from_c1(self):
         self.synchronize(self.c1)
         #self.synchronize(self.hq1)
         self.synchronize(self.p1)
@@ -917,6 +925,7 @@ class FinanceTestCorCases(FinanceTest):
             ]
             self.analytic_distribution_set_fp_account_dest(db, 'FP1',
                 new_account, 'OPS')
+            self_sync_from_c1()  # sync down fp account/dest
             
             self.simulation_correction_wizard(db, ji_id,
                     cor_date=False,
@@ -954,6 +963,7 @@ class FinanceTestCorCases(FinanceTest):
         invoice_lines_accounts = [ '66002', '66003', '66004', ]
         for a in invoice_lines_accounts:
             self.analytic_distribution_set_fp_account_dest(db, 'FP1', a, 'NAT')
+        self_sync_from_c1()  # sync down fp account/dest
                 
         ji_ids = self.invoice_validate(db,
             self.invoice_create_supplier_invoice(
@@ -1139,6 +1149,19 @@ class FinanceTestCorCases(FinanceTest):
         new_ad2 = [ (100., 'OPS', 'HT120', 'FP1'), ]
         self.analytic_distribution_set_fp_account_dest(db, 'FP1', new_account2,
             'OPS')
+            
+        # prepare 13.8 ad and fp account/dest to sync down fp account/dest
+        # for 13.6/7 and 13.8 in a same sync transaction
+        new_account3 = '60100'
+        new_ad3 = [
+            (70., 'OPS', 'HT120', 'FP2'),
+            (30., 'OPS', 'HT101', 'FP2'),
+        ]
+        self.analytic_distribution_set_fp_account_dest(db, 'FP1', new_account3,
+            'OPS')
+        self.analytic_distribution_set_fp_account_dest(db, 'FP2', new_account3,
+            'OPS')
+        self_sync_from_c1()  # sync down fp account/dest
         
         self.simulation_correction_wizard(db, cor1_ids[0],
             cor_date=False,
@@ -1160,16 +1183,6 @@ class FinanceTestCorCases(FinanceTest):
         # correction of COR-2 => will generate COR-3
         cor2_ids = aml_obj.search([('corrected_line_id', '=', cor1_ids[0])])
         self.assert_(cor2_ids != False, 'COR-2 JI not found!')
-
-        new_account3 = '60100'
-        new_ad3 = [
-            (70., 'OPS', 'HT120', 'FP2'),
-            (30., 'OPS', 'HT101', 'FP2'),
-        ]
-        self.analytic_distribution_set_fp_account_dest(db, 'FP1', new_account3,
-            'OPS')
-        self.analytic_distribution_set_fp_account_dest(db, 'FP2', new_account3,
-            'OPS')
  
         self.simulation_correction_wizard(db, cor2_ids[0],
             cor_date=False,
@@ -1320,6 +1333,7 @@ id | create_uid |        create_date         | write_date | write_uid | currency
                 'OPS')
             self.analytic_distribution_set_fp_account_dest(db, 'FP2', '63110',
                 'OPS')
+        self_sync_from_c1()  # sync down fp account/dest
         
         # at C1
         db = self.c1
