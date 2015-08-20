@@ -350,6 +350,22 @@ class UnifieldTest(unittest.TestCase):
         obj = db.get('ir.model.data').get_object_reference(module, xmlid)
         return obj[1] if obj else False
         
+    def get_record_id_from_sdref(self, db, sdref):
+        if sdref.startswith('sd.'):
+            sdref = sdref[3:]
+            
+        ids = obj = db.get('ir.model.data').search([
+            ('module', '=', 'sd'),
+            ('name', '=', sdref),
+        ])
+        
+        if not ids:
+            return False
+        return db.get('ir.model.data').browse(ids[0]).res_id
+        
+    def get_record_sdref_from_id(self, obj, id):
+        return obj.get_sd_ref(cr, uid, [id])[0]
+        
     def get_first(self, itr):
         """
         get first element of an iterator (to use with a not indexed iterator)
