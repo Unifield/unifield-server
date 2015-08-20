@@ -1506,7 +1506,10 @@ class shipment(osv.osv):
             # all object of a given picking object, he is set to Done and still belong to the same shipment_id
             # another possibility would be to unlink the picking object from the shipment, set shipment_id to False
             # but in this case the returned pack families would not be displayed anymore in the shipment
-            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '!=', 'done'), ], context=context)
+            packing_ids = pick_obj.search(cr, uid, [
+                ('shipment_id', '=', shipment.id),
+                ('state', 'not in', ['done', 'cancel']),
+            ], context=context)
 
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing' and packing.state == 'assigned'

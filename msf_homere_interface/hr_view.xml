@@ -128,6 +128,7 @@
         <field name="name">editable.view.employee.tree</field>
         <field name="model">hr.employee</field>
         <field name="type">tree</field>
+        <field name="priority" eval="10" />
         <field name="arch" type="xml">
             <tree string="Employees" editable="top" colors="red:not active">
                 <field name="allow_edition" invisible="1"/>
