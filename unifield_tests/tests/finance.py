@@ -1255,7 +1255,6 @@ class FinanceTest(UnifieldTest):
         is_refund=False, date=False, partner_id=False,
         ad_header_breakdown_data=False,
         lines_accounts=[], lines_breakdown_data=False,
-        validate=False,
         tag="UNIT_TEST"):
         """
         create a supplier invoice or
@@ -1267,6 +1266,8 @@ class FinanceTest(UnifieldTest):
         :param lines_accounts: list of account codes for each line to generate
         :param lines_breakdown_data: {index: [(percent, dest, cc, fp), ]}
             index (start by 1) refer to lines_accounts order 
+            the index key allow to pass some lines with AD at line level
+            keeping using AD at header level for others lines
         :return : id of invoice
         """
         res = {}
@@ -1413,18 +1414,40 @@ class FinanceTest(UnifieldTest):
                 validated_ids.append(ai.id)
                 
         for ai in ai_obj.browse(validated_ids):
-            # get invoice EXPENSE JIs from invoice reference 
-            # (reference obtained once invoice is validated)
-            ji_ids = aml_obj.search([
-                ('reference', '=', ai.number),
-                # only expense JIs
-                ('account_id.is_analytic_addicted', '=', True),
-            ])
+            # get invoice EXPENSE JIs
+            ji_ids = [ ji.id for ji in ai.move_id.line_id \
+                if ji.account_id.is_analytic_addicted
+            ]
+ 
             if is_single_ids:
                 res = ji_ids or []
             else:
                 res[ai.id] = ji_ids or []
 
+        return res
+        
+    def get_ji_ajis_by_account(self, db, ji_ids):
+        """
+        get JIs 'AJIs ids breakdown by account code
+        :param ji_ids: JI ids
+        :return { 'account_code': aji_ids/False), }
+        """
+        if not ji_ids:
+            return False
+        if isinstance(ji_ids, (int, long, )):
+            ji_ids = [ji_ids]
+        res = {}
+        
+        for ji_br in db.get('account.move.line').browse(ji_ids):
+            aji_ids = []
+            if ji_br.analytic_lines:
+                aji_ids = [ aji.id for aji in ji_br.analytic_lines ]
+                
+            if not ji_br.account_id.code in res:
+                res[ji_br.account_id.code] = aji_ids
+            else:
+                res[ji_br.account_id.code].append(aji_ids)
+            
         return res
         
     def analytic_account_activate_since(self, db, date):

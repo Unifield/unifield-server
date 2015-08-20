@@ -1250,11 +1250,13 @@ class FinanceTestCorCases(FinanceTest):
             'OPS')
         self.analytic_distribution_set_fp_account_dest(self.c1, 'FP2', '63110',
             'OPS')
-        self_sync_from_c1()  # sync down fp account/dest
+        self._sync_from_c1()  # sync down fp account/dest
         
         # at C1
         db = self.c1
         aml_obj = db.get('account.move.line')
+        
+        # 20.1, 20.2, 20.3
         ji_ids = self.invoice_validate(db,
             self.invoice_create_supplier_invoice(db,
                 ccy_code=False,
@@ -1267,9 +1269,16 @@ class FinanceTestCorCases(FinanceTest):
                 tag="C1_20"
             )
         )
+        ajis_by_account = self.get_ji_ajis_by_account(db, ji_ids)
+        
+        # 20.4
         self.synchronize(db)
         
-        # at C1P1
+        # 20.5
+        db = self.p1
+        self.synchronize(db)
+        
+        # 20.6
         db = self.p1
         self.synchronize(db)
 
