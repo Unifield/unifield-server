@@ -248,11 +248,17 @@ class hq_report_oca(report_sxw.report_sxw):
                     # US-274/1: for FXA entries output fonctional amount in balance
                     # report
                     is_cur_adj_entry = move_line.journal_id \
-                        and move_line.journal_id.type == 'cur_adj' or False
-                    output_debit = is_cur_adj_entry and move_line.debit \
-                        or move_line.debit_currency
-                    output_credit = is_cur_adj_entry and move_line.credit \
-                        or move_line.credit_currency
+                        and move_line.journal_id.type in ('revaluation', 'cur_adj') or False
+                    if is_cur_adj_entry:
+                        output_debit = move_line.debit
+                        output_credit = move_line.credit
+                        output_rate = 1
+                        output_curr = func_currency and func_currency.name or "0"
+                    else:
+                        output_debit = move_line.debit_currency
+                        output_credit = move_line.credit_currency
+                        output_rate = rate
+                        output_curr = currency and currency.name or "0"
 
                     other_formatted_data = ["01",
                                             country_code,
@@ -260,8 +266,8 @@ class hq_report_oca(report_sxw.report_sxw):
                                             expat_identification,
                                             "0",
                                             move_line.date and datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                            currency and currency.name or "0",
-                                            rate,
+                                            output_curr,
+                                            output_rate,
                                             output_debit != 0.0 and round(output_debit, 2) or "",
                                             output_credit != 0.0 and round(output_credit, 2) or "",
                                             move_line.move_id and move_line.move_id.name or "0",
