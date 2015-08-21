@@ -1239,6 +1239,7 @@ class FinanceTestCorCases(FinanceTest):
         cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_20
         """
+        push_db = self.c1
         model_aal = 'account.analytic.line'
         
         invoice_lines_accounts = [ '63100', '63110', '63120', ]
@@ -1248,15 +1249,15 @@ class FinanceTestCorCases(FinanceTest):
             2: [ (100., 'OPS', 'HT120', 'FP2'), ],
             3: [ (100., 'OPS', 'HT112', 'PF'), ],
         }
-        self.analytic_distribution_set_fp_account_dest(self.c1, 'FP1', '63100',
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP1', '63100',
             'OPS')
-        self.analytic_distribution_set_fp_account_dest(self.c1, 'FP2', '63110',
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP2', '63110',
             'OPS')
         self._sync_from_c1()  # sync down fp account/dest
         
         # 20.1, 20.2, 20.3
-        ji_ids = self.invoice_validate(self.c1,
-            self.invoice_create_supplier_invoice(self.c1,
+        ji_ids = self.invoice_validate(push_db,
+            self.invoice_create_supplier_invoice(push_db,
                 ccy_code=False,
                 is_refund=True,
                 date=False,
@@ -1267,13 +1268,15 @@ class FinanceTestCorCases(FinanceTest):
                 tag="C1_20"
             )
         )
-        ajis_by_account = self.get_ji_ajis_by_account(self.c1, ji_ids)
+        ajis_by_account = self.get_ji_ajis_by_account(push_db, ji_ids)
         
         # 20.4
-        self.synchronize(self.c1)
+        self.synchronize(push_db)
         
         # 20.5
-        self.synchronize(self.p1)
+        pull_db = self.p1
+        self.synchronize(pull_db)
+        
         push_ids_expected=[
             ajis_by_account['63120'][0],
         ]
@@ -1283,18 +1286,32 @@ class FinanceTestCorCases(FinanceTest):
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
-                push_db=self.c1,
+                push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
-                pull_db=self.p1,
+                pull_db=pull_db,
                 raise_report=True
             ))),
             "SYNC mismatch"
         )
         
         # 20.6
-        db = self.p1
-        self.synchronize(self.p12)  # C1P2
+        pull_db = self.p12  # C1P2
+        self.synchronize(pull_db)
+        
+        push_ids_expected=[]
+        push_ids_not_expected=self.flat_dict_vals(ajis_by_account,
+            list_vals_filter_first=True)
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=push_ids_not_expected,
+                pull_db=pull_db,
+                raise_report=True
+            ))),
+            "SYNC mismatch"
+        )
  
 
 

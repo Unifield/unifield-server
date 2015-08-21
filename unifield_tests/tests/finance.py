@@ -1466,6 +1466,8 @@ class FinanceTest(UnifieldTest):
         AJI wrapper for check_records_sync_push_pulled
         see unifield_test.py check_records_sync_push_pulled for parameters help
         """
+        fields = False
+        fields_m2o = False
         if push_ids_expected:
             # check fields of expected pulled records
             

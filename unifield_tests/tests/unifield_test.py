@@ -275,13 +275,19 @@ class UnifieldTest(unittest.TestCase):
     def are_same_db(self, db1, db2):
         return db1.db_name == db2.db_name or False
         
-    def flat_dict_vals(self, d):
+    def flat_dict_vals(self, d, list_vals_filter_first=False):
         """
-        {key1: val, keyN: val} => [key1, ..., keyN]
+        {key1: val1, keyN: valN} => [val1, ..., valN]
         :type d: dict
+        :param list_vals_filter_first: if True
+            {key1: [i1, i2, ], keyN: valN} => [i1, ..., valN]
+        :type list_vals_filter_first: bool
         :rtype : list
         """
-        return [ d[k] for k in d ]
+        return [ 
+            (list_vals_filter_first and isinstance(d[k], (list, tuple, )) \
+            and d[k][0]) or d[k] for k in d
+        ]
         
     def dfv(self, vals, include=None, exclude=None):
         """
