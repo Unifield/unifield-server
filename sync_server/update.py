@@ -375,10 +375,10 @@ class update(osv.osv):
         top = entity
         while top.parent_id:
             top = top.parent_id
-        tree_ids = self.pool.get('sync.server.entity')._get_all_children(cr, uid, top.id, context=context)
+        tree_ids = [x for x in self.pool.get('sync.server.entity')._get_all_children(cr, uid, top.id, context=context) if x!=entity.id]
         if not tree_ids:
             tree_ids = [0]
-        tree_str = ','.join(map(str, [x for x in tree_ids if x!=entity.id]))
+        tree_str = ','.join(map(str, tree_ids))
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         if not rules:
             return None
