@@ -275,6 +275,14 @@ class UnifieldTest(unittest.TestCase):
     def are_same_db(self, db1, db2):
         return db1.db_name == db2.db_name or False
         
+    def flat_dict_vals(self, d):
+        """
+        {key1: val, keyN: val} => [key1, ..., keyN]
+        :type d: dict
+        :rtype : list
+        """
+        return [ d[k] for k in d ]
+        
     def dfv(self, vals, include=None, exclude=None):
         """
         domain from vals (all vals with implicite &)
@@ -448,22 +456,24 @@ class UnifieldTest(unittest.TestCase):
                 if fields or fields_m2o:
                     diff_fields = []
                     
-                    for f in fields:
-                        if f in push_br and push_br[f] != pull_br[f]:
-                            diff_fields.append(f)
+                    if fields:
+                        for f in fields:
+                            if hasattr(push_br, f) and \
+                                push_br[f] != pull_br[f]:
+                                diff_fields.append(f)
                     
                     # compare m2o by sdref
-                    for comodel, f in fields_m2o:
-                        if f in push_br[f]:
-                            if not push_br[f] and not pull_br[f]:
-                                continue
-
-                        push_sdref = self.get_record_sdref_from_id(comodel,
-                            push_db, push_br[f].id)
-                        pull_sdref = self.get_record_sdref_from_id(comodel,
-                            pull_db, pull_br[f].id)
-                        if push_sdref != pull_sdref:
-                            diff_fields.append(f)
+                    if fields_m2o:
+                        for comodel, f in fields_m2o:
+                            if hasattr(push_br, f):
+                                if not push_br[f] and not pull_br[f]:
+                                    continue
+                                push_sdref = self.get_record_sdref_from_id(
+                                    comodel, push_db, push_br[f].id)
+                                pull_sdref = self.get_record_sdref_from_id(
+                                    comodel, pull_db, pull_br[f].id)
+                                if push_sdref != pull_sdref:
+                                    diff_fields.append(f)
                             
                     if diff_fields:
                         # KO diff in fields

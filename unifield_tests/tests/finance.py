@@ -1464,33 +1464,35 @@ class FinanceTest(UnifieldTest):
         pull_db=None, raise_report=True):
         """
         AJI wrapper for check_records_sync_push_pulled
-        :param push_db: db to push record from
-        :param push_id: record id to push
-        :param pull_db: db to pull record from
-        :rtype: bool
+        see unifield_test.py check_records_sync_push_pulled for parameters help
         """
-        fields = [
-            'entry_sequence',
-            'date',
-            'document_date',
+        if push_ids_expected:
+            # check fields of expected pulled records
             
-            'amount_currency',
-            'amount',
-        ]
-        
-        model_ccy = 'res.currency'
-        model_account = 'account.account'
-        model_analytic_account = 'account.analytic.account'
-        fields_m2o = [
-            (model_ccy, 'currency_id'),
-            (model_ccy, 'fonctional_currency_id'),
+            # regular fields
+            fields = [
+                'entry_sequence',
+                'date',
+                'document_date',
+                
+                'amount_currency',
+                'amount',
+            ]
             
-            (model_account, 'general_account_id'),
-            
-            (model_analytic_account, 'destination_id'),
-            (model_analytic_account, 'cost_center_id'),
-            #(model_analytic_account, 'account_id'),  # FP: not synced dataset
-        ]
+            # m2o fields
+            model_ccy = 'res.currency'
+            model_account = 'account.account'
+            model_analytic_account = 'account.analytic.account'
+            fields_m2o = [
+                (model_ccy, 'currency_id'),
+                (model_ccy, 'fonctional_currency_id'),
+                
+                (model_account, 'general_account_id'),
+                
+                (model_analytic_account, 'destination_id'),
+                (model_analytic_account, 'cost_center_id'),
+                (model_analytic_account, 'account_id'),  # funding pool
+            ]
  
         return self.check_records_sync_push_pulled(
             model='account.analytic.line',
@@ -1498,8 +1500,7 @@ class FinanceTest(UnifieldTest):
             push_ids_expected=push_ids_expected,
             push_ids_not_expected=push_ids_not_expected,
             pull_db=pull_db,
-            fields=False, fields_m2o=False,
-            #fields=fields, fields_m2o=fields_m2o,  # TODO active
+            fields=fields, fields_m2o=fields_m2o,
             raise_report=True
         )
 

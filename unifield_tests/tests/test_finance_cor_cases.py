@@ -1274,12 +1274,6 @@ class FinanceTestCorCases(FinanceTest):
         
         # 20.5
         self.synchronize(self.p1)
-        """pulled_id = self.get_record_sync_push_pulled(model_aal, self.c1,
-            ajis_by_account['63120'][0], self.p1)
-        self.assert_(
-            pulled_id and isinstance(pulled_id, (int, long)),
-            "63120 HT112 C1P1 AJI not pulled:: %s" % (self.p1.colored_name, )
-        )"""
         push_ids_expected=[
             ajis_by_account['63120'][0],
         ]
@@ -1287,12 +1281,15 @@ class FinanceTestCorCases(FinanceTest):
             ajis_by_account['63100'][0],
             ajis_by_account['63110'][0],
         ]
-        self.check_aji_record_sync_push_pulled(
-            push_db=self.c1,
-            push_ids_expected=push_ids_expected,
-            push_ids_not_expected=push_ids_not_expected,
-            pull_db=self.p1,
-            raise_report=True
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=self.c1,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=push_ids_not_expected,
+                pull_db=self.p1,
+                raise_report=True
+            ))),
+            "SYNC mismatch"
         )
         
         # 20.6
