@@ -50,7 +50,7 @@ TODO NOTES
         X 14
     - sync
         X 20
-          21
+        X 21
           22
           23
           24
@@ -557,7 +557,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_01"
+                tag="CT_01"
             )
             
             # 60010 -> 60020
@@ -595,7 +595,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=[(100., dest, 'HT101', 'PF'), ],
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_02"
+                tag="CT_02"
             )
             
             # correction dest from OPS to NAT
@@ -633,7 +633,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=[(100., 'OPS', cc, 'PF'), ],
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_03"
+                tag="CT_03"
             )
             
             # correction CC from HT101 to HT120
@@ -671,7 +671,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=[(100., 'OPS', 'HT101', fp), ],
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_04"
+                tag="CT_04"
             )
             
             # correction FP from PF to FP1
@@ -710,7 +710,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_05"
+                tag="CT_05"
             )
             
             # 60010 -> 60000
@@ -756,7 +756,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_06"
+                tag="CT_06"
             )
             
             # CLOSE PERIOD Januar (MISSION)
@@ -815,7 +815,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_07"
+                tag="CT_07"
             )
             
             new_ad=[
@@ -863,7 +863,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=ad,
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_08"
+                tag="CT_08"
             )
  
             self.simulation_correction_wizard(db, ji_id,
@@ -899,7 +899,7 @@ class FinanceTestCorCases(FinanceTest):
                 account, self.get_random_amount(True),
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_09"
+                tag="CT_09"
             )
             
             self.simulation_correction_wizard(db, ji_id,
@@ -934,7 +934,7 @@ class FinanceTestCorCases(FinanceTest):
                 account, self.get_random_amount(True),
                 date=False, document_date=False,
                 do_hard_post=True,
-                tag="C1_10"
+                tag="CT_10"
             )
  
             ad=[
@@ -987,7 +987,7 @@ class FinanceTestCorCases(FinanceTest):
                 db, ccy_code=False, date=False, partner_id=False,
                 ad_header_breakdown_data=ad,
                 lines_accounts=invoice_lines_accounts,
-                tag="C1_11"
+                tag="CT_11"
             )
         )
             
@@ -1069,7 +1069,7 @@ class FinanceTestCorCases(FinanceTest):
                 partner_id=False,
                 ad_header_breakdown_data=ad,
                 lines_accounts=invoice_lines_accounts,
-                tag="C1_12"
+                tag="CT_12"
             )
         )
         
@@ -1135,7 +1135,7 @@ class FinanceTestCorCases(FinanceTest):
                 partner_id=False,
                 ad_header_breakdown_data=ad,
                 lines_accounts=invoice_lines_accounts,
-                tag="C1_13"
+                tag="CT_13"
             )
         )
  
@@ -1230,7 +1230,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_breakdown_data=[ (100., 'OPS', 'HT101', 'PF'), ]  ,
                 date=False, document_date=False,
                 do_temp_post=True, do_hard_post=False,
-                tag="C1_14"
+                tag="CT_14"
             )
             
             # 14.4 correction wizard should not be available
@@ -1284,7 +1284,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_header_breakdown_data=False,
                 lines_accounts=invoice_lines_accounts,
                 lines_breakdown_data=invoice_lines_breakdown_data,
-                tag="C1_20"
+                tag="CT_20"
             )
         )
         jis_by_account = self.get_jis_by_account(push_db, ji_ids)
@@ -1393,6 +1393,151 @@ class FinanceTestCorCases(FinanceTest):
             ))),
             "SYNC mismatch"
         )
+        
+    def test_cor_21(self):
+        """
+        cd unifield/test-finance/unifield-wm/unifield_tests
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_20
+        """
+        push_db = self.c1
+        model_aal = 'account.analytic.line'
+        
+        invoice_lines_accounts = [ '63100', '63110', '63120', ]
+        
+        invoice_lines_breakdown_data = {
+            1: [ (100., 'OPS', 'HT101', 'FP1'), ],
+            2: [ (100., 'OPS', 'HT120', 'FP2'), ],
+            3: [ (100., 'OPS', 'HT112', 'PF'), ],
+        }
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP1', '63100',
+            'OPS')
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP2', '63110',
+            'OPS')
+        self._sync_from_c1()  # sync down fp account/dest
+        
+        # 21.1, 21.2, 21.3
+        ji_ids = self.invoice_validate(push_db,
+            self.invoice_create_supplier_invoice(push_db,
+                ccy_code=False,
+                is_refund=True,
+                date=False,
+                partner_id=False,
+                ad_header_breakdown_data=False,
+                lines_accounts=invoice_lines_accounts,
+                lines_breakdown_data=invoice_lines_breakdown_data,
+                tag="CT_21"
+            )
+        )
+        jis_by_account = self.get_jis_by_account(push_db, ji_ids)
+        ajis_by_account = self.get_ji_ajis_by_account(push_db, ji_ids)
+        
+        # 21.4
+        self.synchronize(push_db)
+        
+        # 21.5
+        pull_db = self.p1
+        self.synchronize(pull_db)
+        
+        push_ids_expected=[
+            ajis_by_account['63120'][0],
+        ]
+        push_ids_not_expected=[
+            ajis_by_account['63100'][0],
+            ajis_by_account['63110'][0],
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=push_ids_not_expected,
+                pull_db=pull_db,
+                raise_report=True
+            ))),
+            "SYNC mismatch"
+        )
+        
+        # 21.6
+        pull_db = self.p12  # C1P2
+        self.synchronize(pull_db)
+        
+        push_ids_expected=[]
+        push_ids_not_expected=self.flat_dict_vals(ajis_by_account,
+            list_vals_filter_first=True)
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=push_ids_not_expected,
+                pull_db=pull_db,
+                raise_report=True
+            ))),
+            "SYNC mismatch"
+        )
+ 
+        # 21.7/21.8/21.9
+        new_ad = [
+            (50., 'OPS', 'HT112', 'PF'),
+            (50., 'OPS', 'HT121', 'PF'),
+        ]
+        self.simulation_correction_wizard(push_db, jis_by_account['63120'][0],
+            cor_date=False,
+            new_account_code=False,
+            new_ad_breakdown_data=new_ad,
+            ad_replace_data=False
+        )
+        
+        self.check_ji_correction(push_db, jis_by_account['63120'][0],
+            '63120', new_account_code=False,
+            expected_ad=new_ad,
+            expected_ad_rev=False,
+            expected_ad_cor=False
+        )
+        
+        # 21.10
+        self.synchronize(push_db)
+        
+        # 21.11
+        pull_db = self.p1
+        self.synchronize(pull_db)
+        
+        push_ids_expected=[
+            self.get_ji_ajis_by_account(push_db, ji_ids,
+                cc_code_filter='HT112')['63120'][0]
+        ]
+        push_ids_not_expected=[
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=push_ids_not_expected,
+                pull_db=pull_db,
+                raise_report=True
+            ))),
+            "SYNC mismatch"
+        )
+        
+        # 21.12
+        pull_db = self.p12
+        self.synchronize(pull_db)
+        
+        push_ids_expected=[
+            self.get_ji_ajis_by_account(push_db, ji_ids,
+                cc_code_filter='HT121')['63120'][0]
+        ]
+        push_ids_not_expected=[
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=push_ids_not_expected,
+                pull_db=pull_db,
+                raise_report=True
+            ))),
+            "SYNC mismatch"
+        )
+
 
 def get_test_class():
     return FinanceTestCorCases

@@ -1445,10 +1445,11 @@ class FinanceTest(UnifieldTest):
             
         return res
         
-    def get_ji_ajis_by_account(self, db, ji_ids):
+    def get_ji_ajis_by_account(self, db, ji_ids, cc_code_filter=False):
         """
         get JIs 'AJIs ids breakdown by account code
         :param ji_ids: JI ids
+        :param cc_code_filter: filter results by CC code
         :return { 'account_code': aji_ids/False), }
         """
         if not ji_ids:
@@ -1460,7 +1461,12 @@ class FinanceTest(UnifieldTest):
         for ji_br in db.get('account.move.line').browse(ji_ids):
             aji_ids = []
             if ji_br.analytic_lines:
-                aji_ids = [ aji.id for aji in ji_br.analytic_lines ]
+                aji_ids = []
+                for aji in ji_br.analytic_lines:
+                    if cc_code_filter and \
+                        aji.cost_center_id.code != cc_code_filter:
+                            continue
+                    aji_ids.append(aji.id)
                 
             if not ji_br.account_id.code in res:
                 res[ji_br.account_id.code] = aji_ids
