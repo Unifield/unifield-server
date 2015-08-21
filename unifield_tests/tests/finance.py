@@ -1486,7 +1486,7 @@ class FinanceTest(UnifieldTest):
             
     def check_aji_record_sync_push_pulled(self,
         push_db=None, push_ids_expected=[], push_ids_not_expected=[],
-        pull_db=None, raise_report=True):
+        pull_db=None, assert_report=True):
         """
         AJI wrapper for check_records_sync_push_pulled
         see unifield_test.py check_records_sync_push_pulled for parameters help
@@ -1528,7 +1528,7 @@ class FinanceTest(UnifieldTest):
             push_ids_not_expected=push_ids_not_expected,
             pull_db=pull_db,
             fields=fields, fields_m2o=fields_m2o,
-            raise_report=True
+            assert_report=assert_report
         )
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

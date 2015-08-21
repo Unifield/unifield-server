@@ -421,7 +421,7 @@ class UnifieldTest(unittest.TestCase):
         push_db=None, push_ids_expected=[], push_ids_not_expected=[],
         pull_db=None,
         fields=False, fields_m2o=False,
-        raise_report=True):
+        assert_report=True):
         """
         :param model: model name of target record
         :param push_db: db to push record from
@@ -434,7 +434,8 @@ class UnifieldTest(unittest.TestCase):
         :param fields_m2o: check m2o eguaks: list of tuples
             (comodel and field name)
         :type fields_m2o: [('comodel', 'field_name'), ]
-        :raise_report: True to raise a report if fields mismatch
+        :assert_report: True to assert a report if fields mismatch
+            (assert used to no stop full unit test flow)
         :return records eguals ?
         :rtype: { id: True, }
         """        
@@ -451,9 +452,9 @@ class UnifieldTest(unittest.TestCase):
                 if not pull_id:
                     # KO record not pulled
                     res[push_id] = False
-                    if raise_report:
-                        report_lines.append("%s %d(id) %s NOT pulled to %s" % (
-                            push_db.colored_name, push_id, push_br.name,
+                    if assert_report:
+                        report_lines.append("%s %s(%d) %s NOT pulled to %s" % (
+                            push_db.colored_name, model, push_id, push_br.name,
                             pull_db.colored_name, ))
                     continue  # not pulled, continue to next record to test
                 pull_br = pull_obj.browse(pull_id)
@@ -484,11 +485,11 @@ class UnifieldTest(unittest.TestCase):
                     if diff_fields:
                         # KO diff in fields
                         res[push_id] = False
-                        if raise_report:
-                            report_lines.append("%s %d(id) %s pulled to %s" \
+                        if assert_report:
+                            report_lines.append("%s %s(%d) %s pulled to %s" \
                                 " / diff in fields found: %s" % (
-                                    push_db.colored_name, push_id, push_br.name,
-                                    pull_db.colored_name,
+                                    push_db.colored_name, model, push_id,
+                                    push_br.name, pull_db.colored_name,
                                     ', '.join(diff_fields), ))
             
         def check_unexpected():
@@ -504,11 +505,11 @@ class UnifieldTest(unittest.TestCase):
                 if pull_id:
                     # KO record pulled AND SHOULD NOT 
                     res[push_id] = False
-                    if raise_report:
-                        report_lines.append("%s %d(id) %s pulled to %s" \
+                    if assert_report:
+                        report_lines.append("%s %s(%d) %s pulled to %s" \
                             " AND SHOULD NOT" % (
-                                push_db.colored_name, push_id, push_br.name,
-                                pull_db.colored_name, ))
+                                push_db.colored_name, model, push_id,
+                                push_br.name, pull_db.colored_name, ))
             
         push_obj = push_db.get(model)
         pull_obj = pull_db.get(model)
@@ -522,8 +523,8 @@ class UnifieldTest(unittest.TestCase):
             check_unexpected()
  
         # report
-        if raise_report and report_lines:
-            raise UnifieldTestException("\n".join(report_lines))
+        if assert_report and report_lines:
+            self.assert_(not report_lines, "\n".join(report_lines))
             
         return res
         

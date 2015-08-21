@@ -1309,8 +1309,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
-                pull_db=pull_db,
-                raise_report=True
+                pull_db=pull_db
             ))),
             "SYNC mismatch"
         )
@@ -1327,8 +1326,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
-                pull_db=pull_db,
-                raise_report=True
+                pull_db=pull_db
             ))),
             "SYNC mismatch"
         )
@@ -1367,8 +1365,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
-                pull_db=pull_db,
-                raise_report=True
+                pull_db=pull_db
             ))),
             "SYNC mismatch"
         )
@@ -1388,8 +1385,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
-                pull_db=pull_db,
-                raise_report=True
+                pull_db=pull_db
             ))),
             "SYNC mismatch"
         )
@@ -1450,8 +1446,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
-                pull_db=pull_db,
-                raise_report=True
+                pull_db=pull_db
             ))),
             "SYNC mismatch"
         )
@@ -1468,8 +1463,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
-                pull_db=pull_db,
-                raise_report=True
+                pull_db=pull_db
             ))),
             "SYNC mismatch"
         )
@@ -1502,7 +1496,7 @@ class FinanceTestCorCases(FinanceTest):
         
         push_ids_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
-                cc_code_filter='HT112')['63120'][0]
+                cc_code_filter='HT112')['63120'][0],
         ]
         push_ids_not_expected=[
         ]
@@ -1511,8 +1505,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
-                pull_db=pull_db,
-                raise_report=True
+                pull_db=pull_db
             ))),
             "SYNC mismatch"
         )
@@ -1523,7 +1516,7 @@ class FinanceTestCorCases(FinanceTest):
         
         push_ids_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
-                cc_code_filter='HT121')['63120'][0]
+                cc_code_filter='HT121')['63120'][0],
         ]
         push_ids_not_expected=[
         ]
@@ -1532,8 +1525,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
-                pull_db=pull_db,
-                raise_report=True
+                pull_db=pull_db
             ))),
             "SYNC mismatch"
         )
