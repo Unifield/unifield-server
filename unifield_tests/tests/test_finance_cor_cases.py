@@ -1357,7 +1357,9 @@ class FinanceTestCorCases(FinanceTest):
         push_ids_expected=[
         ]
         push_ids_not_expected=[
-            # target instance changed CC HT112 to HT121: AJI removed from C1P1
+        ]
+        push_ids_should_deleted=[
+            # target instance changed CC HT112 to HT121
             ajis_by_account['63120'][0],  
         ]
         self.assert_(
@@ -1365,6 +1367,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
+                push_ids_should_deleted=push_ids_should_deleted,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1380,11 +1383,14 @@ class FinanceTestCorCases(FinanceTest):
         ]
         push_ids_not_expected=[
         ]
+        push_ids_should_deleted=[
+        ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
+                push_ids_should_deleted=push_ids_should_deleted,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1500,11 +1506,14 @@ class FinanceTestCorCases(FinanceTest):
         ]
         push_ids_not_expected=[
         ]
+        push_ids_should_deleted=[
+        ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
                 push_ids_expected=push_ids_expected,
                 push_ids_not_expected=push_ids_not_expected,
+                push_ids_should_deleted=push_ids_should_deleted,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1520,6 +1529,72 @@ class FinanceTestCorCases(FinanceTest):
         ]
         push_ids_not_expected=[
         ]
+        push_ids_should_deleted=[
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=push_ids_not_expected,
+                push_ids_should_deleted=push_ids_should_deleted,
+                pull_db=pull_db
+            ))),
+            "SYNC mismatch"
+        )
+        
+    def test_cor_22(self):
+        """
+        cd unifield/test-finance/unifield-wm/unifield_tests
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_20
+        """
+        push_db = self.c1
+        model_aal = 'account.analytic.line'
+        model_aml = 'account.move.line'
+        
+        invoice_lines_accounts = [ '63100', '63110', '63120', ]
+        
+        invoice_lines_breakdown_data = {
+            1: [ (100., 'OPS', 'HT101', 'FP1'), ],
+            2: [ (100., 'OPS', 'HT120', 'FP2'), ],
+            3: [ (50., 'OPS', 'HT111', 'PF'), (50., 'OPS', 'HT112', 'PF'), ],
+        }
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP1', '63100',
+            'OPS')
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP2', '63110',
+            'OPS')
+        self._sync_from_c1()  # sync down fp account/dest
+        
+        # 22.1, 22.2, 22.3
+        ji_ids = self.invoice_validate(push_db,
+            self.invoice_create_supplier_invoice(push_db,
+                ccy_code=False,
+                is_refund=False,
+                date=False,
+                partner_id=False,
+                ad_header_breakdown_data=False,
+                lines_accounts=invoice_lines_accounts,
+                lines_breakdown_data=invoice_lines_breakdown_data,
+                tag="CT_22"
+            )
+        )
+        jis_by_account = self.get_jis_by_account(push_db, ji_ids)
+        ajis_by_account = self.get_ji_ajis_by_account(push_db, ji_ids)
+        # keep AJI id of HT112 63120 has should be deleted later and we must
+        # assert that
+        c1_aji_HT112_id = self.get_ji_ajis_by_account(push_db, ji_ids,
+                cc_code_filter='HT112')['63120'][0],
+        
+        # 22.4
+        self.synchronize(push_db)
+        
+        # 22.5
+        self.synchronize(self.p1)
+        
+        push_ids_expected = ajis_by_account['63120']  # 2 AJIs HT111 & HT112
+        push_ids_not_expected=[
+            ajis_by_account['63100'][0],
+            ajis_by_account['63110'][0],
+        ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
@@ -1529,7 +1604,57 @@ class FinanceTestCorCases(FinanceTest):
             ))),
             "SYNC mismatch"
         )
-
+        
+        # 22.7 (note NO 22.6 in excel)
+        # get related P1 side 63120 C1 JI
+        pull_db = self.p1
+        pull_ji_id = self.get_record_sync_push_pulled(model_aml, push_db,
+            jis_by_account['63120'], pull_db)
+        
+        new_ad = [ (100., 'OPS', 'HT111', 'PF'), ]
+        self.simulation_correction_wizard(pull_db, pull_ji_id,
+            cor_date=False,
+            new_account_code=False,
+            new_ad_breakdown_data=new_ad,
+            ad_replace_data=False
+        )
+        
+        self.check_ji_correction(pull_db, pull_ji_id,
+            '63120', new_account_code=False,
+            expected_ad=new_ad,
+            expected_ad_rev=False,
+            expected_ad_cor=False
+        )
+        
+        # 22.9
+        self.synchronize(self.p1)
+        
+        # 22.9
+        self.synchronize(self.c1)
+        
+        p1_aji_ht111_id = self.get_record_sync_push_pulled(model_aal, self.c1,
+            self.get_ji_ajis_by_account(self.c1, ji_ids,
+                cc_code_filter='HT111')['63120'][0], self.c1)
+        
+        push_ids_expected = [ p1_aji_ht111_id ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=self.p1,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=False,
+                push_ids_should_deleted=push_ids_should_deleted,
+                pull_db=self.c1
+            ))),
+            "SYNC mismatch"
+        )
+        
+        # assert 63120 HT112 del in C1 when sync P1->C1 (was del in P1)
+        self._assert(
+            not is_record(self.c1, model_aal, c1_aji_HT112_id),
+            "%s %s(%d) %s should be deleted" % (
+                push_db.colored_name, model_aal, c1_aji_HT112_id, )
+        )
+    
 
 def get_test_class():
     return FinanceTestCorCases

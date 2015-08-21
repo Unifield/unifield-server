@@ -321,7 +321,18 @@ class UnifieldTest(unittest.TestCase):
         :rtype: boolean
         """
         #return db.get(model).search(domain, 0, 1)  # domain, offset, limit
-        return db.get(model).search(domain)  # domain, offset, limit
+        return bool(db.get(model).search(domain))
+        
+    def is_record(self, db, model, id):
+        """
+        at least 1 record for the given domain
+        :param db: db
+        :type db: object
+        :param model: model name
+        :param id: id
+        :rtype: boolean
+        """
+        return self.record_exists(db, model, [('id', '=', id), ])
         
     def date2orm(self, dt):
         """
@@ -418,16 +429,23 @@ class UnifieldTest(unittest.TestCase):
             
     def check_records_sync_push_pulled(self,
         model='',
-        push_db=None, push_ids_expected=[], push_ids_not_expected=[],
+        push_db=None,
+        push_ids_expected=[],
+        push_ids_not_expected=[],
+        push_ids_should_deleted=[],
         pull_db=None,
-        fields=False, fields_m2o=False,
+        fields=False,
+        fields_m2o=False,
         assert_report=True):
         """
         :param model: model name of target record
         :param push_db: db to push record from
-        :param push_id_expected: record ids push side expected to be pulled
+        :param push_id_expected: record ids push side expected to be pulled 
+            (or updated)
         :param push_ids_not_expected: record ids push side expected NOT to be
             pulled (example not a target CC instance)
+        :param push_ids_should_deleted: record ids push side expected TO BE 
+            DELETED (example not a target CC instance)
         :param pull_db: db to pull record from
         :param fields: check regular fields name eguals
         :type fields: list/tuple/False
@@ -491,7 +509,7 @@ class UnifieldTest(unittest.TestCase):
                                     push_db.colored_name, model, push_id,
                                     push_br.name, pull_db.colored_name,
                                     ', '.join(diff_fields), ))
-            
+
         def check_unexpected():
             for push_id in push_ids_not_expected:
                 res[push_id] = True  # OK by default 
@@ -510,6 +528,26 @@ class UnifieldTest(unittest.TestCase):
                             " AND SHOULD NOT" % (
                                 push_db.colored_name, model, push_id,
                                 push_br.name, pull_db.colored_name, ))
+
+        def check_should_deleted():
+            for push_id in push_ids_should_deleted:
+                res[push_id] = True  # OK by default 
+                
+                # push browsed record
+                push_br = push_obj.browse(push_id)
+                
+                # pulled browsed record
+                pull_id = self.get_record_sync_push_pulled(model, push_db,
+                    push_id, pull_db)
+                if pull_id:
+                    # KO record here and SHOULD BE DELETED
+                    res[push_id] = False
+                    if assert_report:
+                        report_lines.append("%s %s(%d) %s HERE IN %s" \
+                            " AND SHOULD BE DELETED" % (
+                                push_db.colored_name, model, push_id,
+                                push_br.name, pull_db.colored_name, ))                                
+                                
             
         push_obj = push_db.get(model)
         pull_obj = pull_db.get(model)
@@ -521,6 +559,8 @@ class UnifieldTest(unittest.TestCase):
             check_expected()
         if push_ids_not_expected:
             check_unexpected()
+        if push_ids_should_deleted:
+            check_should_deleted()
  
         # report
         if assert_report and report_lines:

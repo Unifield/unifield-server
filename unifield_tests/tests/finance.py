@@ -1485,8 +1485,12 @@ class FinanceTest(UnifieldTest):
             }) 
             
     def check_aji_record_sync_push_pulled(self,
-        push_db=None, push_ids_expected=[], push_ids_not_expected=[],
-        pull_db=None, assert_report=True):
+        push_db=None,
+        push_ids_expected=[],
+        push_ids_not_expected=[],
+        push_ids_should_deleted=[],
+        pull_db=None,
+        assert_report=True):
         """
         AJI wrapper for check_records_sync_push_pulled
         see unifield_test.py check_records_sync_push_pulled for parameters help
