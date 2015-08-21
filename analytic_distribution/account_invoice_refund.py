@@ -131,5 +131,20 @@ class account_invoice_refund(osv.osv_memory):
                 res = period_ids[0]
         return res
 
+    def compute_refund(self, cr, uid, ids, mode='refund', context=None):
+        if mode == 'modify' or mode == 'cancel':
+            invoice_obj = self.pool.get('account.invoice')
+            absl_obj = self.pool.get('account.bank.statement.line')
+            inv_ids = context.get('active_ids', [])
+            invoices = invoice_obj.browse(cr, uid, inv_ids, context=context)
+            for invoice in invoices:
+                if invoice.imported_state == 'partial':
+                    raise osv.except_osv(_('Error !'), _('You can not refund an invoice partially imported.')) 
+
+        air_sup = super(account_invoice_refund, self)
+        res = air_sup.compute_refund(cr, uid, ids, mode=mode, context=context)
+        return res
+
+
 account_invoice_refund()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
