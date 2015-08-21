@@ -403,9 +403,9 @@ class UnifieldTest(unittest.TestCase):
             self.get_record_sdref_from_id(model, push_db, push_id))
             
     def check_records_sync_push_pulled(self,
-        model,
-        push_db, push_ids_expected, push_ids_not_expected,
-        pull_db,
+        model='',
+        push_db=None, push_ids_expected=[], push_ids_not_expected=[],
+        pull_db=None,
         fields=False, fields_m2o=False,
         raise_report=True):
         """
@@ -423,7 +423,7 @@ class UnifieldTest(unittest.TestCase):
         :raise_report: True to raise a report if fields mismatch
         :return records eguals ?
         :rtype: { id: True, }
-        """
+        """        
         def check_expected():
             for push_id in push_ids_expected:
                 res[push_id] = True  # OK by default 
@@ -440,7 +440,7 @@ class UnifieldTest(unittest.TestCase):
                     if raise_report:
                         report_lines.append("%s %d(id) %s NOT pulled to %s" % (
                             push_db.colored_name, push_id, push_br.name,
-                            pull_db.colored_name)
+                            pull_db.colored_name, ))
                     continue  # not pulled, continue to next record to test
                 pull_br = pull_obj.browse(pull_id)
                 
@@ -473,7 +473,7 @@ class UnifieldTest(unittest.TestCase):
                                 " / diff in fields found: %s" % (
                                     push_db.colored_name, push_id, push_br.name,
                                     pull_db.colored_name,
-                                    ', '.join(diff_fields), )
+                                    ', '.join(diff_fields), ))
             
         def check_unexpected():
             for push_id in push_ids_not_expected:
@@ -492,7 +492,7 @@ class UnifieldTest(unittest.TestCase):
                         report_lines.append("%s %d(id) %s pulled to %s" \
                             " AND SHOULD NOT" % (
                                 push_db.colored_name, push_id, push_br.name,
-                                pull_db.colored_name)
+                                pull_db.colored_name, ))
             
         push_obj = push_db.get(model)
         pull_obj = pull_db.get(model)

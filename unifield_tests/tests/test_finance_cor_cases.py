@@ -1237,7 +1237,7 @@ class FinanceTestCorCases(FinanceTest):
     def test_cor1_20(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_21
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_20
         """
         model_aal = 'account.analytic.line'
         
@@ -1274,16 +1274,31 @@ class FinanceTestCorCases(FinanceTest):
         
         # 20.5
         self.synchronize(self.p1)
-        pulled_id = self.get_record_sync_push_pulled(model_aal, self.c1,
+        """pulled_id = self.get_record_sync_push_pulled(model_aal, self.c1,
             ajis_by_account['63120'][0], self.p1)
         self.assert_(
             pulled_id and isinstance(pulled_id, (int, long)),
             "63120 HT112 C1P1 AJI not pulled:: %s" % (self.p1.colored_name, )
+        )"""
+        push_ids_expected=[
+            ajis_by_account['63120'][0],
+        ]
+        push_ids_not_expected=[
+            ajis_by_account['63100'][0],
+            ajis_by_account['63110'][0],
+        ]
+        self.check_aji_record_sync_push_pulled(
+            push_db=self.c1,
+            push_ids_expected=push_ids_expected,
+            push_ids_not_expected=push_ids_not_expected,
+            pull_db=self.p1,
+            raise_report=True
         )
         
         # 20.6
         db = self.p1
         self.synchronize(self.p12)  # C1P2
+ 
 
 
 def get_test_class():

@@ -1459,10 +1459,11 @@ class FinanceTest(UnifieldTest):
                 'date_start': date,
             }) 
             
-    def compare_aji_record_sync_push_pulled(self, push_db, push_id, pull_db,
-        fields=False, fields_m2o=False, raise_report=True):
+    def check_aji_record_sync_push_pulled(self,
+        push_db=None, push_ids_expected=[], push_ids_not_expected=[],
+        pull_db=None, raise_report=True):
         """
-        AJI wrapper for compare_record_sync_push_pulled
+        AJI wrapper for check_records_sync_push_pulled
         :param push_db: db to push record from
         :param push_id: record id to push
         :param pull_db: db to pull record from
@@ -1490,10 +1491,16 @@ class FinanceTest(UnifieldTest):
             (model_analytic_account, 'cost_center_id'),
             #(model_analytic_account, 'account_id'),  # FP: not synced dataset
         ]
-        
-        return compare_record_sync_push_pulled('account.analytic.line',
-            push_db, push_id, pull_db,
-            fields=fields, fields_m2o=fields_m2o,
-            raise_report=raise_report)
+ 
+        return self.check_records_sync_push_pulled(
+            model='account.analytic.line',
+            push_db=push_db,
+            push_ids_expected=push_ids_expected,
+            push_ids_not_expected=push_ids_not_expected,
+            pull_db=pull_db,
+            fields=False, fields_m2o=False,
+            #fields=fields, fields_m2o=fields_m2o,  # TODO active
+            raise_report=True
+        )
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
