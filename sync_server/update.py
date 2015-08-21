@@ -372,7 +372,13 @@ class update(osv.osv):
                      - A dict that format a packet for the client
         """
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
-
+        top = entity
+        while top.parent_id:
+            top = top.parent_id
+        tree_ids = self.pool.get('sync.server.entity')._get_all_children(cr, uid, top.id, context=context)
+        if not tree_ids:
+            tree_ids = [0]
+        tree_str = ','.join(map(str, [x for x in tree_ids if x!=entity.id]))
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         if not rules:
             return None
@@ -383,7 +389,7 @@ class update(osv.osv):
 
         ## Recover add own client updates to the list
         if not recover:
-            base_query += " AND sync_server_update.source != %s" % entity.id
+            base_query += " AND sync_server_update.source in (%s)" % (tree_str,)
 
         base_query += " ORDER BY sequence ASC, id ASC OFFSET %s LIMIT %s"
 
