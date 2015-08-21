@@ -42,6 +42,8 @@ class report_fully_report(report_sxw.rml_parse):
             for inv in reg_line.imported_invoice_line_ids:
                 num.append(inv.move_id.name)
             return " ".join(num)
+        if reg_line.from_import_cheque_id and reg_line.from_import_cheque_id.move_id:
+            return reg_line.from_import_cheque_id.move_id.name
         return reg_line.ref or ''
 
     def filter_regline(self, regline_br):
