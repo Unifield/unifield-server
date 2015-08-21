@@ -1289,6 +1289,8 @@ class FinanceTestCorCases(FinanceTest):
         )
         jis_by_account = self.get_jis_by_account(push_db, ji_ids)
         ajis_by_account = self.get_ji_ajis_by_account(push_db, ji_ids)
+        aji_HT112 = self.get_ji_ajis_by_account(push_db, ji_ids,
+            cc_code_filter='HT112')['63120'][0]
         
         # 20.4
         self.synchronize(push_db)
@@ -1297,18 +1299,18 @@ class FinanceTestCorCases(FinanceTest):
         pull_db = self.p1
         self.synchronize(pull_db)
         
-        push_ids_expected=[
+        push_expected=[
             ajis_by_account['63120'][0],
         ]
-        push_ids_not_expected=[
+        push_not_expected=[
             ajis_by_account['63100'][0],
             ajis_by_account['63110'][0],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=push_ids_not_expected,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1318,14 +1320,14 @@ class FinanceTestCorCases(FinanceTest):
         pull_db = self.p12  # C1P2
         self.synchronize(pull_db)
         
-        push_ids_expected=[]
-        push_ids_not_expected=self.flat_dict_vals(ajis_by_account,
+        push_expected=[]
+        push_not_expected=self.flat_dict_vals(ajis_by_account,
             list_vals_filter_first=True)
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=push_ids_not_expected,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1354,20 +1356,20 @@ class FinanceTestCorCases(FinanceTest):
         pull_db = self.p1
         self.synchronize(pull_db)
         
-        push_ids_expected=[
+        push_expected=[
         ]
-        push_ids_not_expected=[
+        push_not_expected=[
         ]
-        push_ids_should_deleted=[
+        push_should_deleted=[
             # target instance changed CC HT112 to HT121
-            ajis_by_account['63120'][0],  
+            aji_HT112 
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=push_ids_not_expected,
-                push_ids_should_deleted=push_ids_should_deleted,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                push_should_deleted=push_should_deleted,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1377,20 +1379,20 @@ class FinanceTestCorCases(FinanceTest):
         pull_db = self.p12
         self.synchronize(pull_db)
         
-        push_ids_expected=[
+        push_expected=[
             # target instance changed CC HT112 to HT121: AJI moved to C1P2
             ajis_by_account['63120'][0],  
         ]
-        push_ids_not_expected=[
+        push_not_expected=[
         ]
-        push_ids_should_deleted=[
+        push_should_deleted=[
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=push_ids_not_expected,
-                push_ids_should_deleted=push_ids_should_deleted,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                push_should_deleted=push_should_deleted
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1440,18 +1442,18 @@ class FinanceTestCorCases(FinanceTest):
         pull_db = self.p1
         self.synchronize(pull_db)
         
-        push_ids_expected=[
+        push_expected=[
             ajis_by_account['63120'][0],
         ]
-        push_ids_not_expected=[
+        push_not_expected=[
             ajis_by_account['63100'][0],
             ajis_by_account['63110'][0],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=push_ids_not_expected,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1461,14 +1463,14 @@ class FinanceTestCorCases(FinanceTest):
         pull_db = self.p12  # C1P2
         self.synchronize(pull_db)
         
-        push_ids_expected=[]
-        push_ids_not_expected=self.flat_dict_vals(ajis_by_account,
+        push_expected=[]
+        push_not_expected=self.flat_dict_vals(ajis_by_account,
             list_vals_filter_first=True)
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=push_ids_not_expected,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1500,20 +1502,20 @@ class FinanceTestCorCases(FinanceTest):
         pull_db = self.p1
         self.synchronize(pull_db)
         
-        push_ids_expected=[
+        push_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 cc_code_filter='HT112')['63120'][0],
         ]
-        push_ids_not_expected=[
+        push_not_expected=[
         ]
-        push_ids_should_deleted=[
+        push_should_deleted=[
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=push_ids_not_expected,
-                push_ids_should_deleted=push_ids_should_deleted,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                push_should_deleted=push_should_deleted,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1523,20 +1525,20 @@ class FinanceTestCorCases(FinanceTest):
         pull_db = self.p12
         self.synchronize(pull_db)
         
-        push_ids_expected=[
+        push_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 cc_code_filter='HT121')['63120'][0],
         ]
-        push_ids_not_expected=[
+        push_not_expected=[
         ]
-        push_ids_should_deleted=[
+        push_should_deleted=[
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=push_ids_not_expected,
-                push_ids_should_deleted=push_ids_should_deleted,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                push_should_deleted=push_should_deleted,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1590,16 +1592,16 @@ class FinanceTestCorCases(FinanceTest):
         # 22.5
         self.synchronize(self.p1)
         
-        push_ids_expected = ajis_by_account['63120']  # 2 AJIs HT111 & HT112
-        push_ids_not_expected=[
+        push_expected = ajis_by_account['63120']  # 2 AJIs HT111 & HT112
+        push_not_expected=[
             ajis_by_account['63100'][0],
             ajis_by_account['63110'][0],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=push_ids_not_expected,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1636,13 +1638,13 @@ class FinanceTestCorCases(FinanceTest):
             self.get_ji_ajis_by_account(self.c1, ji_ids,
                 cc_code_filter='HT111')['63120'][0], self.c1)
         
-        push_ids_expected = [ p1_aji_ht111_id ]
+        push_expected = [ p1_aji_ht111_id ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=self.p1,
-                push_ids_expected=push_ids_expected,
-                push_ids_not_expected=False,
-                push_ids_should_deleted=push_ids_should_deleted,
+                push_expected=push_expected,
+                push_not_expected=False,
+                push_should_deleted=push_should_deleted,
                 pull_db=self.c1
             ))),
             "SYNC mismatch"

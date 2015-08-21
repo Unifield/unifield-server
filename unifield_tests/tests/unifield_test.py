@@ -430,9 +430,9 @@ class UnifieldTest(unittest.TestCase):
     def check_records_sync_push_pulled(self,
         model='',
         push_db=None,
-        push_ids_expected=[],
-        push_ids_not_expected=[],
-        push_ids_should_deleted=[],
+        push_expected=[],
+        push_not_expected=[],
+        push_should_deleted=[],
         pull_db=None,
         fields=False,
         fields_m2o=False,
@@ -440,12 +440,15 @@ class UnifieldTest(unittest.TestCase):
         """
         :param model: model name of target record
         :param push_db: db to push record from
-        :param push_id_expected: record ids push side expected to be pulled 
+        :param push_id_expected: records sdref push side expected to be pulled 
             (or updated)
-        :param push_ids_not_expected: record ids push side expected NOT to be
+        :type push_id_expected: list
+        :param push_not_expected: records sdref push side expected NOT to be
             pulled (example not a target CC instance)
-        :param push_ids_should_deleted: record ids push side expected TO BE 
+        :type push_not_expected: list
+        :param push_should_deleted: records sdref push side expected TO BE 
             DELETED (example not a target CC instance)
+        :type push_should_deleted: list
         :param pull_db: db to pull record from
         :param fields: check regular fields name eguals
         :type fields: list/tuple/False
@@ -455,24 +458,24 @@ class UnifieldTest(unittest.TestCase):
         :assert_report: True to assert a report if fields mismatch
             (assert used to no stop full unit test flow)
         :return records eguals ?
-        :rtype: { id: True, }
+        :rtype: { 'sdref' : True, }
         """        
         def check_expected():
-            for push_id in push_ids_expected:
-                res[push_id] = True  # OK by default 
+            for sdref in push_expected:
+                res[sdref] = True  # OK by default 
                 
                 # push browsed record
-                push_br = push_obj.browse(push_id)
+                push_br = push_obj.browse(self.get_record_id_from_sdref(push_db,
+                    sdref))
                 
                 # pulled browsed record
-                pull_id = self.get_record_sync_push_pulled(model, push_db,
-                    push_id, pull_db)
+                pull_id = self.get_record_id_from_sdref(pull_db, sdref)
                 if not pull_id:
                     # KO record not pulled
-                    res[push_id] = False
+                    res[sdref] = False
                     if assert_report:
-                        report_lines.append("%s %s(%d) %s NOT pulled to %s" % (
-                            push_db.colored_name, model, push_id, push_br.name,
+                        report_lines.append("%s %s(%s) %s NOT pulled to %s" % (
+                            push_db.colored_name, model, sdref, push_br.name,
                             pull_db.colored_name, ))
                     continue  # not pulled, continue to next record to test
                 pull_br = pull_obj.browse(pull_id)
@@ -502,52 +505,51 @@ class UnifieldTest(unittest.TestCase):
                             
                     if diff_fields:
                         # KO diff in fields
-                        res[push_id] = False
+                        res[sdref] = False
                         if assert_report:
-                            report_lines.append("%s %s(%d) %s pulled to %s" \
+                            report_lines.append("%s %s(%s) %s pulled to %s" \
                                 " / diff in fields found: %s" % (
-                                    push_db.colored_name, model, push_id,
+                                    push_db.colored_name, model, sdref,
                                     push_br.name, pull_db.colored_name,
                                     ', '.join(diff_fields), ))
 
         def check_unexpected():
-            for push_id in push_ids_not_expected:
-                res[push_id] = True  # OK by default 
+            for sdref in push_not_expected:
+                res[sdref] = True  # OK by default 
                 
                 # push browsed record
-                push_br = push_obj.browse(push_id)
+                push_br = push_obj.browse(self.get_record_id_from_sdref(push_db,
+                    sdref))
                 
                 # pulled browsed record
-                pull_id = self.get_record_sync_push_pulled(model, push_db,
-                    push_id, pull_db)
+                pull_id = self.get_record_id_from_sdref(pull_db, sdref)
                 if pull_id:
                     # KO record pulled AND SHOULD NOT 
-                    res[push_id] = False
+                    res[sdref] = False
                     if assert_report:
-                        report_lines.append("%s %s(%d) %s pulled to %s" \
+                        report_lines.append("%s %s(%s) %s pulled to %s" \
                             " AND SHOULD NOT" % (
-                                push_db.colored_name, model, push_id,
+                                push_db.colored_name, model, sdref,
                                 push_br.name, pull_db.colored_name, ))
 
         def check_should_deleted():
-            for push_id in push_ids_should_deleted:
-                res[push_id] = True  # OK by default 
+            for sdref in push_should_deleted:
+                res[sdref] = True  # OK by default 
                 
                 # push browsed record
-                push_br = push_obj.browse(push_id)
+                push_br = push_obj.browse(self.get_record_id_from_sdref(push_db,
+                    sdref))
                 
                 # pulled browsed record
-                pull_id = self.get_record_sync_push_pulled(model, push_db,
-                    push_id, pull_db)
+                pull_id = self.get_record_id_from_sdref(pull_db, sdref)
                 if pull_id:
                     # KO record here and SHOULD BE DELETED
-                    res[push_id] = False
+                    res[sdref] = False
                     if assert_report:
-                        report_lines.append("%s %s(%d) %s HERE IN %s" \
+                        report_lines.append("%s %s(%s) %s HERE IN %s" \
                             " AND SHOULD BE DELETED" % (
-                                push_db.colored_name, model, push_id,
+                                push_db.colored_name, model, sdref,
                                 push_br.name, pull_db.colored_name, ))                                
-                                
             
         push_obj = push_db.get(model)
         pull_obj = pull_db.get(model)
@@ -555,11 +557,11 @@ class UnifieldTest(unittest.TestCase):
         report_lines = []
         
         # checks
-        if push_ids_expected:
+        if push_expected:
             check_expected()
-        if push_ids_not_expected:
+        if push_not_expected:
             check_unexpected()
-        if push_ids_should_deleted:
+        if push_should_deleted:
             check_should_deleted()
  
         # report

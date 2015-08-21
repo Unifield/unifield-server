@@ -1428,9 +1428,9 @@ class FinanceTest(UnifieldTest):
         
     def get_jis_by_account(self, db, ji_ids):
         """
-        get JIs breakdown by account code
+        get JIs sdrefs breakdown by account code
         :param ji_ids: JI ids
-        :return { 'account_code': ji_ids/False), }
+        :return { 'account_code': sdref/False), }
         """
         if not ji_ids:
             return False
@@ -1441,16 +1441,17 @@ class FinanceTest(UnifieldTest):
         for ji_br in db.get('account.move.line').browse(ji_ids):
             if not ji_br.account_id.code in res:
                 res[ji_br.account_id.code] = []
-            res[ji_br.account_id.code].append(ji_br.id)
+            res[ji_br.account_id.code].append(self.get_record_sdref_from_id(
+                'account.move.line', db, ji_br.id))
             
         return res
         
     def get_ji_ajis_by_account(self, db, ji_ids, cc_code_filter=False):
         """
-        get JIs 'AJIs ids breakdown by account code
+        get JIs 'AJIs sdrefs breakdown by account code
         :param ji_ids: JI ids
         :param cc_code_filter: filter results by CC code
-        :return { 'account_code': aji_ids/False), }
+        :return { 'account_code': sdref/False), }
         """
         if not ji_ids:
             return False
@@ -1461,17 +1462,18 @@ class FinanceTest(UnifieldTest):
         for ji_br in db.get('account.move.line').browse(ji_ids):
             aji_ids = []
             if ji_br.analytic_lines:
-                aji_ids = []
+                aji_sdrefs = []
                 for aji in ji_br.analytic_lines:
                     if cc_code_filter and \
                         aji.cost_center_id.code != cc_code_filter:
                             continue
-                    aji_ids.append(aji.id)
+                    aji_sdrefs.append(self.get_record_sdref_from_id(
+                        'account.analytic.line', db, aji.id))
                 
             if not ji_br.account_id.code in res:
-                res[ji_br.account_id.code] = aji_ids
+                res[ji_br.account_id.code] = aji_sdrefs
             else:
-                res[ji_br.account_id.code].append(aji_ids)
+                res[ji_br.account_id.code].append(aji_sdrefs)
             
         return res
         
@@ -1486,9 +1488,9 @@ class FinanceTest(UnifieldTest):
             
     def check_aji_record_sync_push_pulled(self,
         push_db=None,
-        push_ids_expected=[],
-        push_ids_not_expected=[],
-        push_ids_should_deleted=[],
+        push_expected=[],
+        push_not_expected=[],
+        push_should_deleted=[],
         pull_db=None,
         assert_report=True):
         """
@@ -1528,8 +1530,9 @@ class FinanceTest(UnifieldTest):
         return self.check_records_sync_push_pulled(
             model='account.analytic.line',
             push_db=push_db,
-            push_ids_expected=push_ids_expected,
-            push_ids_not_expected=push_ids_not_expected,
+            push_expected=push_expected,
+            push_not_expected=push_not_expected,
+            push_should_deleted=push_should_deleted
             pull_db=pull_db,
             fields=fields, fields_m2o=fields_m2o,
             assert_report=assert_report
