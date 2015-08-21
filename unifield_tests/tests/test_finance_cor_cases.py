@@ -28,6 +28,10 @@ TODO NOTES
             => check with Matthias
             => check case manually
             
+- DATASET
+    - financing contract FC1: add FP1, FP2
+    (need to be done manually at this time...)
+            
 - cases developed
     - single instance
         X 01
@@ -45,7 +49,7 @@ TODO NOTES
         X 13
         X 14
     - sync
-          20
+        X 20
           21
           22
           23
@@ -77,17 +81,25 @@ class FinanceTestCorCases(FinanceTest):
             'USD': [ 1.24, 1.28, ],
         }
         
-        # new COST CENTERS (and related target instances)
+        # COST CENTERS BREAKDOWN related prop instances
+        # SET HERE WHAT YOU EXCEPT FOR TREE
+        # - only missing link will be created
+        # - and is_target will be update for already existing link
         ccs = {
             # 'CC': [(Prop Instance, is_target), ]
             
             # C1 tree
+            'HT101': [ ('HQC1', True), ],
             'HT120': [ ('HQ1C1', True), ],
+            'HT111': [ ('HQ1C1', False), ('HQ1C1P1', True), ],
             'HT112': [ ('HQ1C1', False), ('HQ1C1P1', True), ],
+            'HT121': [ ('HQ1C1', False), ('HQ1C1P2', True), ],
             'HT122': [ ('HQ1C1', False), ('HQ1C1P2', True), ],
             
             # C2 tree
+            'HT201': [ ('HQ1C2', True), ],
             'HT220': [ ('HQ1C2', True), ],
+            'HT211': [ ('HQ1C2', True), ('HQ1C2P1', True),],
         }
     
         # new FUNDING POOLS (and related cost centers)
@@ -257,6 +269,7 @@ class FinanceTestCorCases(FinanceTest):
                             ])
                             
                             if not target_ids:
+                                # create new link CC to prop instance
                                 target_id = atcc_obj.create({
                                     'instance_id': instance_id,
                                     'cost_center_id': cc_id,
@@ -265,9 +278,15 @@ class FinanceTestCorCases(FinanceTest):
                                 target_id = target_ids[0]
                             
                             if is_target and target_id:
-                                atcc_obj.write([target_id], {
-                                    'is_target': True,
-                                })
+                                # target expected update new or existing
+                                # do not raise except regarding already a target
+                                # to not block test dataset build and flow test
+                                try:
+                                    atcc_obj.write([target_id], {
+                                        'is_target': True,
+                                    })
+                                except Exception:
+                                    pass
                         
         def set_funding_pools():
             c = self.c1
@@ -504,11 +523,11 @@ class FinanceTestCorCases(FinanceTest):
     # cd unifield/test-finance/unifield-wm/unifield_tests
     # python -m unittest tests.test_finance_cor_cases
     
-    def test_cor1_00(self):
+    def test_cor_00(self):
         """
         fake unit test for dataset testing
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_00
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_00
         """
         pass
     
@@ -516,10 +535,10 @@ class FinanceTestCorCases(FinanceTest):
     # SINGLE CASES FLOW: from 01 to 14
     # -------------------------------------------------------------------------
         
-    def test_cor1_01(self):
+    def test_cor_01(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_01
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_01
         G/L ACCOUNT 60010=>60020
         """
         db = self.c1
@@ -555,10 +574,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=ad,
             )
             
-    def test_cor1_02(self):
+    def test_cor_02(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_02
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_02
         DEST REPLACE OPS=>NAT NO REV/COR
         """
         db = self.c1
@@ -593,10 +612,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,
             )
             
-    def test_cor1_03(self):
+    def test_cor_03(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_03
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_03
         CC REPLACE HT101=>HT120 NO REV/COR
         """
         db = self.c1
@@ -631,10 +650,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,
             )
             
-    def test_cor1_04(self):
+    def test_cor_04(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_04
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_04
         FP REPLACE PF=>FP1 NO REV/COR
         """
         db = self.c1
@@ -669,10 +688,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,
             )
             
-    def test_cor1_05(self):
+    def test_cor_05(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_05
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_05
         G/L ACCOUNT 60010=>60000 and new AD 
         """
         db = self.c1
@@ -714,10 +733,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=new_ad,
             )
             
-    def test_cor1_06(self):
+    def test_cor_06(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_06
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_06
         """
         db = self.c1
         self._register_set(db, ccy_name='USD')
@@ -771,10 +790,10 @@ class FinanceTestCorCases(FinanceTest):
             self.period_reopen(db, 'f', 1)
 
             
-    def test_cor1_07(self):
+    def test_cor_07(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_07
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_07
         G/L ACCOUNT 60010=>60030
         """
         db = self.c1
@@ -818,10 +837,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_cor_rev_ajis_total_func_amount=80.65,
             )
             
-    def test_cor1_08(self):
+    def test_cor_08(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_08
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_08
         """    
         db = self.c1
         self._register_set(db)
@@ -861,10 +880,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,  # bc new account not an expense one
             )
             
-    def test_cor1_09(self):
+    def test_cor_09(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_09
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_09
         G/L ACCOUNT 13000=>13010
         """
         db = self.c1
@@ -897,10 +916,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,
             )
             
-    def test_cor1_10(self):
+    def test_cor_10(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_10
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_10
         """
         db = self.c1
         self._register_set(db)
@@ -940,10 +959,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=ad,
             )
             
-    def test_cor1_11(self):
+    def test_cor_11(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_11
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_11
         """
         db = self.c1
         
@@ -1029,10 +1048,10 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=False,
             )
         
-    def test_cor1_12(self):
+    def test_cor_12(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_12
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_12
         """
         db = self.c1
         
@@ -1093,10 +1112,10 @@ class FinanceTestCorCases(FinanceTest):
         self.period_reopen(db, 'm', 1)
         self.period_reopen(db, 'f', 1)
         
-    def test_cor1_13(self):
+    def test_cor_13(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_13
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_13
         """
         db = self.c1
         
@@ -1194,10 +1213,10 @@ class FinanceTestCorCases(FinanceTest):
             cor_level=3, ji_origin_id=ji_ids[0]
         )
         
-    def test_cor1_14(self):
+    def test_cor_14(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_14
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_14
         """
         db = self.c1
         
@@ -1234,10 +1253,10 @@ class FinanceTestCorCases(FinanceTest):
     # SYNC CASES FLOW: from 20 to 26
     # -------------------------------------------------------------------------
  
-    def test_cor1_20(self):
+    def test_cor_20(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor1_20
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_20
         """
         push_db = self.c1
         model_aal = 'account.analytic.line'
@@ -1268,6 +1287,7 @@ class FinanceTestCorCases(FinanceTest):
                 tag="C1_20"
             )
         )
+        jis_by_account = self.get_jis_by_account(push_db, ji_ids)
         ajis_by_account = self.get_ji_ajis_by_account(push_db, ji_ids)
         
         # 20.4
@@ -1313,7 +1333,66 @@ class FinanceTestCorCases(FinanceTest):
             "SYNC mismatch"
         )
  
-
+        # 20.7/8/9 (change 63120 refund line AD CC HT112 to HT121)
+        new_CC = 'HT121'
+        self.simulation_correction_wizard(push_db, jis_by_account['63120'][0],
+            cor_date=False,
+            new_account_code=False,
+            new_ad_breakdown_data=False,
+            ad_replace_data={ 100.: {'cc': new_CC, } }
+        )
+        
+        self.check_ji_correction(push_db, jis_by_account['63120'][0],
+            '63120', new_account_code=False,
+            expected_ad=[ (100., 'OPS', new_CC, 'PF'), ],
+            expected_ad_rev=False,
+            expected_ad_cor=False
+        )
+        
+        # 20.10
+        self.synchronize(push_db)
+        
+        # 20.11
+        pull_db = self.p1
+        self.synchronize(pull_db)
+        
+        push_ids_expected=[
+        ]
+        push_ids_not_expected=[
+            # target instance changed CC HT112 to HT121: AJI removed from C1P1
+            ajis_by_account['63120'][0],  
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=push_ids_not_expected,
+                pull_db=pull_db,
+                raise_report=True
+            ))),
+            "SYNC mismatch"
+        )
+        
+        # 20.12
+        pull_db = self.p12
+        self.synchronize(pull_db)
+        
+        push_ids_expected=[
+            # target instance changed CC HT112 to HT121: AJI moved to C1P2
+            ajis_by_account['63120'][0],  
+        ]
+        push_ids_not_expected=[
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_ids_expected=push_ids_expected,
+                push_ids_not_expected=push_ids_not_expected,
+                pull_db=pull_db,
+                raise_report=True
+            ))),
+            "SYNC mismatch"
+        )
 
 def get_test_class():
     return FinanceTestCorCases

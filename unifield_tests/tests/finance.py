@@ -1426,6 +1426,25 @@ class FinanceTest(UnifieldTest):
 
         return res
         
+    def get_jis_by_account(self, db, ji_ids):
+        """
+        get JIs breakdown by account code
+        :param ji_ids: JI ids
+        :return { 'account_code': ji_ids/False), }
+        """
+        if not ji_ids:
+            return False
+        if isinstance(ji_ids, (int, long, )):
+            ji_ids = [ji_ids]
+        res = {}
+        
+        for ji_br in db.get('account.move.line').browse(ji_ids):
+            if not ji_br.account_id.code in res:
+                res[ji_br.account_id.code] = []
+            res[ji_br.account_id.code].append(ji_br.id)
+            
+        return res
+        
     def get_ji_ajis_by_account(self, db, ji_ids):
         """
         get JIs 'AJIs ids breakdown by account code

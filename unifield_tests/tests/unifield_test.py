@@ -516,8 +516,10 @@ class UnifieldTest(unittest.TestCase):
         report_lines = []
         
         # checks
-        check_expected()
-        check_unexpected()
+        if push_ids_expected:
+            check_expected()
+        if push_ids_not_expected:
+            check_unexpected()
  
         # report
         if raise_report and report_lines:
