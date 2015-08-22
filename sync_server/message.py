@@ -170,11 +170,13 @@ class message(osv.osv):
 
             @return : True or raise an error
         """
+        self._logger.info("[%s] Set messages as received" % (entity.name,))
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm messages...'))
 
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids), ('destination', '=', entity.id)], context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
+        self._logger.info("[%s] %s messages confirmed" % (entity.name, len(ids)))
 
         return True
 

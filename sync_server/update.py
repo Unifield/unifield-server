@@ -193,7 +193,7 @@ class update(osv.osv):
 
             @return : True or raise an error
         """
-
+        self._logger.info("[%s] is pushing %s updates + %s delete" % (entity.name, len(packet['load']), len(packet['unload'])))
         def safe_create(data):
             cr.execute("SAVEPOINT update_creation")
             try:
@@ -241,8 +241,8 @@ class update(osv.osv):
                     }):
                 delete_updates_count += 1
 
-        self._logger.debug("Inserted %d new updates: %d normal(s) and %d delete(s)"
-                          % ((normal_updates_count+delete_updates_count), normal_updates_count, delete_updates_count))
+        self._logger.info("[%s] Inserted %d new updates: %d normal(s) and %d delete(s)"
+                          % (entity.name, (normal_updates_count+delete_updates_count), normal_updates_count, delete_updates_count))
         return True
 
     def confirm_updates(self, cr, uid, entity, session_id, context=None):
@@ -259,6 +259,7 @@ class update(osv.osv):
                 a : boolean : is True is if the call is succesfull, False otherwise
                 b : int : sequence number given
         """
+        self._logger.info("[%s] Data Push :: Confirming updates session: %s" % (entity.name, session_id))
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm updates...'))
 
         update_ids = self.search(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id)], context=context)
@@ -400,6 +401,7 @@ class update(osv.osv):
         ids = []
         update_to_send = []
         update_master = None
+        self._logger.info("[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, offset, max_size))
         while not ids or not update_to_send:
             query = base_query % (offset, max_size)
             cr.execute(query)
@@ -422,7 +424,7 @@ class update(osv.osv):
             offset += len(ids)
 
         if not update_to_send:
-            self._logger.debug("No update to send to %s" % (entity.name,))
+            self._logger.info("No update to send to %s" % (entity.name,))
             return None
 
         # Point of no return
