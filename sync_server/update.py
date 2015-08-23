@@ -30,7 +30,7 @@ pp = pprint.PrettyPrinter(indent=4)
 import logging
 from tools.safe_eval import safe_eval as eval
 import threading
-
+import time
 from sync_common import add_sdref_column, translate_column, fancy_integer
 
 class SavePullerCache(object):
@@ -373,6 +373,10 @@ class update(osv.osv):
                      - A dict that format a packet for the client
         """
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
+        restrict_oc_version = entity.version == 1
+        if not restrict_oc_version and offset == 0:
+            self.pool.get('sync.server.entity').write(cr, uid, [entity.id], {'version': 1})
+            restrict_oc_version = True
         top = entity
         while top.parent_id:
             top = top.parent_id
@@ -393,7 +397,10 @@ class update(osv.osv):
 
         ## Recover add own client updates to the list
         if not recover:
-            base_query += " AND sync_server_update.source in (%s)" % (tree_str,)
+            if restrict_oc_version:
+                base_query += " AND sync_server_update.source in (%s)" % (tree_str,)
+            else:
+                base_query += " AND sync_server_update.source != %s" % entity.id
 
         base_query += " ORDER BY sequence ASC, id ASC OFFSET %s LIMIT %s"
 
@@ -401,8 +408,13 @@ class update(osv.osv):
         ids = []
         update_to_send = []
         update_master = None
+        timed_out = False
+        start_time = time.time()
         self._logger.info("[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, offset, max_size))
         while not ids or not update_to_send:
+            if not restrict_oc_version and time.time() - start_time > 500:
+                timed_out = True
+                break
             query = base_query % (offset, max_size)
             cr.execute(query)
             ids = map(lambda x:x[0], cr.fetchall())
@@ -422,6 +434,18 @@ class update(osv.osv):
                     ids = ids[:ids.index(update.id)]
                     break
             offset += len(ids)
+        if timed_out and not update_to_send:
+            # send a fake update to keep to connection open
+            self._logger.info("[%s] Data pull :: Send faked packet offset = %s" % (entity.name, offset))
+            return {
+                'model' : 'account.analytic.line',
+                'source_name' : 'fake',
+                'sequence' : 1,
+                'rule' : 1,
+                'offset' : offset,
+                'type': 'delete',
+                'unload': ['xxxxxxx']
+            }
 
         if not update_to_send:
             self._logger.info("No update to send to %s" % (entity.name,))
