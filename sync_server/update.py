@@ -375,6 +375,7 @@ class update(osv.osv):
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
         restrict_oc_version = entity.version == 1
         if not restrict_oc_version and offset == 0:
+            self._logger.info("[%s] Set entity version = 1" % (entity.name,))
             self.pool.get('sync.server.entity').write(cr, uid, [entity.id], {'version': 1})
             restrict_oc_version = True
         top = entity
