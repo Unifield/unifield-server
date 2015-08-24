@@ -20,6 +20,21 @@ from datetime import datetime
 # python -m unittest tests.test_finance_cor_cases
 
 """
+TARGET CCs
+
+CC          C1          C1P1        C1P2        C2      C2P1
+HT101       X
+HT120       X
+HT111                   X
+HT112                   X
+HT121                               X
+HT122                               X
+HT201                                           X
+HT220                                           X
+HT211                                                   X
+"""
+
+"""
 TODO NOTES
 
 - use cases to check at fonctional level:
@@ -31,7 +46,7 @@ TODO NOTES
 - DATASET
     - financing contract FC1: add FP1, FP2
     (need to be done manually at this time...)
-            
+    
 - cases developed
     - single instance
         X 01
@@ -105,8 +120,8 @@ class FinanceTestCorCases(FinanceTest):
         # new FUNDING POOLS (and related cost centers)
         fp_ccs = {
             ('HQ1C1', 'FP1'): [ 'HT101', 'HT120', ],
-            ('HQ1C1', 'FP2'): [ 'HT101', 'HT120', ],
-        }
+            ('HQ1C1', 'FP2'): [ 'HT101', 'HT120', 'HT121', 'HT122', ],
+         }
         
         # financing contracts
         financing_contracts_donor = 'DONOR',
@@ -1741,7 +1756,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_header_breakdown_data=False,
                 lines_accounts=invoice_lines_accounts,
                 lines_breakdown_data=invoice_lines_breakdown_data,
-                tag="CT_21"
+                tag="CT_23"
             )
         )
         jis_by_account = self.get_jis_by_account(push_db, ji_ids)
@@ -1864,7 +1879,7 @@ class FinanceTestCorCases(FinanceTest):
                 ad_header_breakdown_data=False,
                 lines_accounts=invoice_lines_accounts,
                 lines_breakdown_data=invoice_lines_breakdown_data,
-                tag="CT_21"
+                tag="CT_24"
             )
         )
         jis_by_account = self.get_jis_by_account(push_db, ji_ids)
@@ -1919,14 +1934,118 @@ class FinanceTestCorCases(FinanceTest):
                 account_code_filter='63100',
                 cc_code_filter='HT101')['63100'][0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
-                account_code_filter='63110',
-                cc_code_filter='HT121')['63110'][0][1],
+                account_code_filter='63120',
+                cc_code_filter='HT111')['63120'][0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
                 push_expected=push_expected,
                 push_not_expected=push_not_expected,
+                pull_db=pull_db
+            ))),
+            "SYNC mismatch"
+        )
+        
+        # 24.7
+        # get 63120 HT111 sdref: will be deleted later(C1P1) and need to assert
+        aji_63120_HT111_sdref = self.get_ji_ajis_by_account(push_db, ji_ids,
+            account_code_filter='63120',
+            cc_code_filter='HT111')['63120'][0][1]
+        
+        new_ad = [
+            (100., 'OPS', 'HT120', 'PF'),
+        ]
+        self.simulation_correction_wizard(push_db,
+            jis_by_account['63120'][0][0],
+            cor_date=False,
+            new_account_code=False,
+            new_ad_breakdown_data=new_ad,
+            ad_replace_data=False
+        )
+        
+        self.check_ji_correction(push_db,
+            jis_by_account['63120'][0][0],
+            '63120', new_account_code=False,
+            expected_ad=new_ad,
+            expected_ad_rev=False,
+            expected_ad_cor=False
+        )
+        
+        # 24.8
+        # get 63110 HT121 sdref: will be deleted later(C1P2) and need to assert
+        aji_63110_HT121_sdref = self.get_ji_ajis_by_account(push_db, ji_ids,
+            account_code_filter='63110',
+            cc_code_filter='HT121')['63110'][0][1]
+        
+        new_cc = 'HT122'
+        new_ad = [
+            (100., 'OPS', new_cc, 'FP2'),
+        ]
+        self.simulation_correction_wizard(push_db,
+            jis_by_account['63110'][0][0],
+            cor_date=False,
+            new_account_code=False,
+            new_ad_breakdown_data=False,
+            ad_replace_data={ 100.: {'cc': new_cc, } },
+        )
+        
+        self.check_ji_correction(push_db,
+            jis_by_account['63110'][0][0],
+            '63110', new_account_code=False,
+            expected_ad=new_ad,
+            expected_ad_rev=False,
+            expected_ad_cor=False
+        )
+        
+        # 24.9
+        self.synchronize(push_db)
+        
+        # 24.10
+        pull_db = self.p1
+        self.synchronize(pull_db)
+ 
+        # delete 1 AJI: 63120 HT111
+        push_expected = [
+        ]
+        push_not_expected = [
+        ]
+        push_should_deleted = [
+            aji_63120_HT111_sdref,
+        ]
+        # TODO: raised and should not: AJI is correctly deleted C1P1 side
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                push_should_deleted=push_should_deleted,
+                pull_db=pull_db
+            ))),
+            "SYNC mismatch"
+        )
+        
+        # 24.11
+        pull_db = self.p12
+        self.synchronize(pull_db)
+ 
+        # update 1 AJI: 63111 HT121 -> HT122
+        push_expected = [
+            self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63110',
+                cc_code_filter='HT122')['63110'][0][1],
+        ]
+        push_not_expected = [
+        ]
+        push_should_deleted = [
+            aji_63110_HT121_sdref,
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                push_should_deleted=push_should_deleted,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"

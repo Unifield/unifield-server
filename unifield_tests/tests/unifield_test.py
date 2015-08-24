@@ -530,20 +530,16 @@ class UnifieldTest(unittest.TestCase):
             for sdref in push_should_deleted:
                 res[sdref] = True  # OK by default 
                 
-                # push browsed record
-                push_br = push_obj.browse(self.get_record_id_from_sdref(push_db,
-                    sdref))
-                
                 # pulled browsed record
                 pull_id = self.get_record_id_from_sdref(pull_db, sdref)
                 if pull_id:
                     # KO record here and SHOULD BE DELETED
                     res[sdref] = False
                     if assert_report:
-                        report_lines.append("%s %s(%s) %s HERE IN %s" \
-                            " AND SHOULD BE DELETED" % (
+                        report_lines.append("%s %s(%s) STILL IN %s" \
+                            " with id %d AND SHOULD BE DELETED" % (
                                 push_db.colored_name, model, sdref,
-                                push_br.name, pull_db.colored_name, ))                                
+                                pull_db.colored_name, pull_id))                                
             
         push_obj = push_db.get(model)
         pull_obj = pull_db.get(model)
