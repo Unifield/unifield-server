@@ -729,7 +729,7 @@ class sync_manager(osv.osv):
             len_ids = len(msg_ids_tmp)
             self.pool.get('sync.server.entity').write(cr, 1, entity.id, {'msg_ids_tmp': msg_ids_tmp}, context=context)
 
-        self._logger.info("::::::::The instance " + entity.name + " stored " + str(len_ids) + " messages.")
+        self._logger.info("::::::::[%s] stored %s messages" % (entity.name, len_ids))
         return (True, len_ids)
 
     @check_validated

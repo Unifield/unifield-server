@@ -193,7 +193,7 @@ class update(osv.osv):
 
             @return : True or raise an error
         """
-        self._logger.info("[%s] is pushing %s updates + %s delete" % (entity.name, len(packet['load']), len(packet['unload'])))
+        self._logger.info("::::::::[%s] is pushing %s updates + %s delete" % (entity.name, len(packet['load']), len(packet['unload'])))
         def safe_create(data):
             cr.execute("SAVEPOINT update_creation")
             try:
@@ -241,7 +241,7 @@ class update(osv.osv):
                     }):
                 delete_updates_count += 1
 
-        self._logger.info("[%s] Inserted %d new updates: %d normal(s) and %d delete(s)"
+        self._logger.info("::::::::[%s] Inserted %d new updates: %d normal(s) and %d delete(s)"
                           % (entity.name, (normal_updates_count+delete_updates_count), normal_updates_count, delete_updates_count))
         return True
 
@@ -259,7 +259,7 @@ class update(osv.osv):
                 a : boolean : is True is if the call is succesfull, False otherwise
                 b : int : sequence number given
         """
-        self._logger.info("[%s] Data Push :: Confirming updates session: %s" % (entity.name, session_id))
+        self._logger.info("::::::::[%s] Data Push :: Confirming updates session: %s" % (entity.name, session_id))
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm updates...'))
 
         update_ids = self.search(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id)], context=context)
@@ -267,9 +267,9 @@ class update(osv.osv):
         if update_ids:
             sequence = self._get_next_sequence(cr, uid, context=context)
             self.write(cr, 1, update_ids, {'sequence' : sequence}, context=context)
-        self._logger.info("[%s] Data Push :: Number of data pushed: %d" % (entity.name, len(update_ids)))
+        self._logger.info("::::::::[%s] Data Push :: Number of data pushed: %d" % (entity.name, len(update_ids)))
         if sequence:
-            self._logger.info("[%s] Data Push :: New server's sequence number: %s" % (entity.name, sequence))
+            self._logger.info("::::::::[%s] Data Push :: New server's sequence number: %s" % (entity.name, sequence))
         return (True, sequence)
 
     def _get_next_sequence(self, cr, uid, context=None):
@@ -375,7 +375,7 @@ class update(osv.osv):
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
         restrict_oc_version = entity.version == 1
         if not restrict_oc_version and offset == 0:
-            self._logger.info("[%s] Set entity version = 1" % (entity.name,))
+            self._logger.info("::::::::[%s] Set entity version = 1" % (entity.name,))
             self.pool.get('sync.server.entity').write(cr, 1, [entity.id], {'version': 1})
             restrict_oc_version = True
         top = entity
@@ -411,7 +411,7 @@ class update(osv.osv):
         update_master = None
         timed_out = False
         start_time = time.time()
-        self._logger.info("[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, offset, max_size))
+        self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, offset, max_size))
         while not ids or not update_to_send:
             if not restrict_oc_version and time.time() - start_time > 500:
                 timed_out = True
@@ -437,7 +437,7 @@ class update(osv.osv):
             offset += len(ids)
         if timed_out and not update_to_send:
             # send a fake update to keep to connection open
-            self._logger.info("[%s] Data pull :: Send faked packet offset = %s" % (entity.name, offset))
+            self._logger.info("::::::::[%s] Data pull :: Send faked packet offset = %s" % (entity.name, offset))
             return {
                 'model' : 'account.analytic.line',
                 'source_name' : 'fake',
@@ -449,7 +449,7 @@ class update(osv.osv):
             }
 
         if not update_to_send:
-            self._logger.info("No update to send to %s" % (entity.name,))
+            self._logger.info("::::::::[%s] No (more) update to send" % (entity.name,))
             return None
 
         # Point of no return
@@ -489,7 +489,7 @@ class update(osv.osv):
                 })
 
         # Just shorten the log into one line
-        self._logger.info("[%s] Data pull :: Last Seq: Client= %s, Server= %s, Data pulled: %s" % (entity.name, last_seq, self.get_last_sequence(cr, uid), len(update_to_send)))
+        self._logger.info("::::::::[%s] Data pull :: %s updates" % (entity.name, len(update_to_send)))
         return data
     
     def get_additional_forced_field(self, update): 
