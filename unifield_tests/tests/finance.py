@@ -584,11 +584,13 @@ class FinanceTest(UnifieldTest):
     def simulation_correction_wizard(self,
         db,
         ji_to_correct_id,
+        from_aji=False,
         cor_date=False,
         new_account_code=False,
         new_ad_breakdown_data=False,
         ad_replace_data=False):
         """
+        :param from_aji: given ji_to_correct_id is an AJI instead of JI
         :param new_account_code: new account code for a G/L correction
         :param new_ad_breakdown_data: new ad lines to replace all ones (delete)
         :param ad_replace_data: { percent_key: {'dest/cc/fp/per': new_val, }
@@ -1447,10 +1449,12 @@ class FinanceTest(UnifieldTest):
             
         return res
         
-    def get_ji_ajis_by_account(self, db, ji_ids, cc_code_filter=False):
+    def get_ji_ajis_by_account(self, db, ji_ids, account_code_filter=False,
+        cc_code_filter=False):
         """
         get JIs'AJIs id/sdref breakdown by account code
         :param ji_ids: JI ids
+        :param account_code_filter: filter results by account code
         :param cc_code_filter: filter results by CC code
         :return { 'account_code': [(id, sdref), ], }
         """
@@ -1459,23 +1463,28 @@ class FinanceTest(UnifieldTest):
         if isinstance(ji_ids, (int, long, )):
             ji_ids = [ji_ids]
         res = {}
+        get_ajis = []
         
         for ji_br in db.get('account.move.line').browse(ji_ids):
-            aji_ids = []
             if ji_br.analytic_lines:
-                aji_sdrefs = []
                 for aji in ji_br.analytic_lines:
+                    if account_code_filter and \
+                        aji.general_account_id.code != account_code_filter:
+                        continue
                     if cc_code_filter and \
                         aji.cost_center_id.code != cc_code_filter:
                             continue
-                    aji_sdrefs.append((aji.id, self.get_record_sdref_from_id(
-                        'account.analytic.line', db, aji.id)))
-                
-            if not ji_br.account_id.code in res:
-                res[ji_br.account_id.code] = aji_sdrefs
-            else:
-                res[ji_br.account_id.code].append(aji_sdrefs)
-            
+                    
+                    if aji.id in get_ajis:
+                        continue
+                    get_ajis.append(aji.id)
+                    
+                    if not ji_br.account_id.code in res:
+                        res[ji_br.account_id.code] = []
+                    res[ji_br.account_id.code].append((aji.id,
+                        self.get_record_sdref_from_id('account.analytic.line', db,
+                            aji.id)))
+
         return res
         
     def analytic_account_activate_since(self, db, date):

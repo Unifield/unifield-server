@@ -51,7 +51,7 @@ TODO NOTES
     - sync
         X 20
         X 21
-          22
+          22: C1P1 for HT111/HT112 no wizard button
           23
           24
           25
@@ -1290,7 +1290,7 @@ class FinanceTestCorCases(FinanceTest):
         jis_by_account = self.get_jis_by_account(push_db, ji_ids)
         ajis_by_account = self.get_ji_ajis_by_account(push_db, ji_ids)
         aji_HT112 = self.get_ji_ajis_by_account(push_db, ji_ids,
-            cc_code_filter='HT112')['63120'][0]
+            account_code_filter='63120', cc_code_filter='HT112')['63120'][0]
         
         # 20.4
         self.synchronize(push_db)
@@ -1510,12 +1510,14 @@ class FinanceTestCorCases(FinanceTest):
         # 21.11
         pull_db = self.p1
         self.synchronize(pull_db)
-        
+ 
         push_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63120',
                 cc_code_filter='HT112')['63120'][0][1],
         ]
         aji_ht121 = self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63120',
                 cc_code_filter='HT121')['63120'][0]
         push_not_expected=[
             aji_ht121[1],
@@ -1592,21 +1594,30 @@ class FinanceTestCorCases(FinanceTest):
         )
         jis_by_account = self.get_jis_by_account(push_db, ji_ids)
         ajis_by_account = self.get_ji_ajis_by_account(push_db, ji_ids)
-        # keep AJI id of HT112 63120 has should be deleted later and we must
+        # keep ji 63120 sdref
+        ji_63120_sdref = jis_by_account['63120'][0][1]
+        # keep AJI sdref of HT112 63120 has should be deleted later and we must
         # assert that
-        c1_aji_HT112_id = self.get_ji_ajis_by_account(push_db, ji_ids,
-                cc_code_filter='HT112')['63120'][0],
+        aji_HT112 = self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63120',
+                cc_code_filter='HT112')['63120'][0]
         
         # 22.4
         self.synchronize(push_db)
         
         # 22.5
-        self.synchronize(self.p1)
+        pull_db = self.p1
+        self.synchronize(pull_db)
         
-        push_expected = ajis_by_account['63120']  # 2 AJIs HT111 & HT112
+        push_expected = [
+            # 2 AJIs HT111 & HT112
+            self.get_ji_ajis_by_account(push_db, ji_ids,  # get sdref from c1
+                cc_code_filter='HT111')['63120'][0][1],
+            aji_HT112[1],
+        ]
         push_not_expected=[
-            ajis_by_account['63100'][0],
-            ajis_by_account['63110'][0],
+            ajis_by_account['63100'][0][1],
+            ajis_by_account['63110'][0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1619,13 +1630,14 @@ class FinanceTestCorCases(FinanceTest):
         )
         
         # 22.7 (note NO 22.6 in excel)
-        # get related P1 side 63120 C1 JI
-        pull_db = self.p1
-        pull_ji_id = self.get_record_sync_push_pulled(model_aml, push_db,
-            jis_by_account['63120'], pull_db)
+        # TODO
+        # get related P1 side 63120 C1 AJIs HT111/HT112
+        #pull_aji_id = self.get_record_id_from_sdref(pull_db, )
         
+        """
         new_ad = [ (100., 'OPS', 'HT111', 'PF'), ]
         self.simulation_correction_wizard(pull_db, pull_ji_id,
+            from_aji=True,
             cor_date=False,
             new_account_code=False,
             new_ad_breakdown_data=new_ad,
@@ -1645,11 +1657,14 @@ class FinanceTestCorCases(FinanceTest):
         # 22.9
         self.synchronize(self.c1)
         
-        p1_aji_ht111_id = self.get_record_sync_push_pulled(model_aal, self.c1,
-            self.get_ji_ajis_by_account(self.c1, ji_ids,
-                cc_code_filter='HT111')['63120'][0], self.c1)
-        
-        push_expected = [ p1_aji_ht111_id ]
+        push_expected = [
+            # HT111 updated (new amount: (from 50% to 100%)
+            self.get_ji_ajis_by_account(push_db, ji_ids,  # get sdref from c1
+                cc_code_filter='HT111')['63120'][0][1],
+        ]
+        push_should_deleted = [
+            aji_HT112[1],
+        ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=self.p1,
@@ -1659,15 +1674,7 @@ class FinanceTestCorCases(FinanceTest):
                 pull_db=self.c1
             ))),
             "SYNC mismatch"
-        )
-        
-        # assert 63120 HT112 del in C1 when sync P1->C1 (was del in P1)
-        self._assert(
-            not is_record(self.c1, model_aal, c1_aji_HT112_id),
-            "%s %s(%d) %s should be deleted" % (
-                push_db.colored_name, model_aal, c1_aji_HT112_id, )
-        )
-    
+        )"""
 
 def get_test_class():
     return FinanceTestCorCases
