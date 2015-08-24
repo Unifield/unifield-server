@@ -51,7 +51,7 @@ TODO NOTES
     - sync
         X 20
         X 21
-          22: C1P1 for HT111/HT112 no wizard button
+          22 case not real for HT111/HT112 ajis no wizard button (target CC C1P1)
           23
           24
           25
@@ -1405,7 +1405,7 @@ class FinanceTestCorCases(FinanceTest):
     def test_cor_21(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_20
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_21
         """
         push_db = self.c1
         model_aal = 'account.analytic.line'
@@ -1557,10 +1557,11 @@ class FinanceTestCorCases(FinanceTest):
             "SYNC mismatch"
         )
         
+    '''
     def test_cor_22(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
-        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_20
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_22
         """
         push_db = self.c1
         model_aal = 'account.analytic.line'
@@ -1634,10 +1635,8 @@ class FinanceTestCorCases(FinanceTest):
         # get related P1 side 63120 C1 AJIs HT111/HT112
         #pull_aji_id = self.get_record_id_from_sdref(pull_db, )
         
-        """
         new_ad = [ (100., 'OPS', 'HT111', 'PF'), ]
         self.simulation_correction_wizard(pull_db, pull_ji_id,
-            from_aji=True,
             cor_date=False,
             new_account_code=False,
             new_ad_breakdown_data=new_ad,
@@ -1674,7 +1673,99 @@ class FinanceTestCorCases(FinanceTest):
                 pull_db=self.c1
             ))),
             "SYNC mismatch"
-        )"""
+        )
+    '''
+    
+    def test_cor_23(self):
+        """
+        cd unifield/test-finance/unifield-wm/unifield_tests
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_23
+        """
+        push_db = self.c1
+        model_aal = 'account.analytic.line'
+        
+        invoice_lines_accounts = [ '63100', '63110', '63120', ]
+        
+        invoice_lines_breakdown_data = {
+            1: [ (100., 'OPS', 'HT101', 'FP1'), ],
+            2: [ (100., 'OPS', 'HT120', 'FP2'), ],
+            3: [ (50., 'OPS', 'HT111', 'PF'), (50., 'OPS', 'HT112', 'PF'), ],
+        }
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP1', '63100',
+            'OPS')
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP2', '63110',
+            'OPS')
+        self._sync_from_c1()  # sync down fp account/dest
+        
+        # 23.1, 23.2, 23.3
+        ji_ids = self.invoice_validate(push_db,
+            self.invoice_create_supplier_invoice(push_db,
+                ccy_code=False,
+                is_refund=False,
+                date=False,
+                partner_id=False,
+                ad_header_breakdown_data=False,
+                lines_accounts=invoice_lines_accounts,
+                lines_breakdown_data=invoice_lines_breakdown_data,
+                tag="CT_21"
+            )
+        )
+        jis_by_account = self.get_jis_by_account(push_db, ji_ids)
+        ajis_by_account = self.get_ji_ajis_by_account(push_db, ji_ids)
+        
+       
+        # 23.4
+        self.synchronize(push_db)
+        
+        # 23.5
+        pull_db = self.p1
+        self.synchronize(pull_db)
+        
+        # 23.6/7
+        new_ad = [
+            (20., 'OPS', 'HT111', 'PF'),
+            (35., 'OPS', 'HT112', 'PF'),
+            (45., 'OPS', 'HT112', 'FP1'),
+        ]
+        self.simulation_correction_wizard(push_db, jis_by_account['63120'][0][0],
+            cor_date=False,
+            new_account_code=False,
+            new_ad_breakdown_data=new_ad,
+            ad_replace_data=False
+        )
+        
+        self.check_ji_correction(push_db, jis_by_account['63120'][0][0],
+            '63120', new_account_code=False,
+            expected_ad=new_ad,
+            expected_ad_rev=False,
+            expected_ad_cor=False
+        )
+        
+        # 23.8
+        self.synchronize(push_db)
+        
+        # 23.9
+        self.synchronize(pull_db)
+        
+        ht112_ajis = self.get_ji_ajis_by_account(push_db, ji_ids,
+                cc_code_filter='HT112')['63120']  # 2 items since C1 COR
+        push_expected = [
+            self.get_ji_ajis_by_account(push_db, ji_ids,  # get sdref from c1
+                cc_code_filter='HT111')['63120'][0][1],
+            ht112_ajis[0][1],
+            ht112_ajis[1][1],
+        ]
+        push_not_expected=[
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                pull_db=pull_db
+            ))),
+            "SYNC mismatch"
+        )
 
 def get_test_class():
     return FinanceTestCorCases

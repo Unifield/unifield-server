@@ -584,13 +584,11 @@ class FinanceTest(UnifieldTest):
     def simulation_correction_wizard(self,
         db,
         ji_to_correct_id,
-        from_aji=False,
         cor_date=False,
         new_account_code=False,
         new_ad_breakdown_data=False,
         ad_replace_data=False):
         """
-        :param from_aji: given ji_to_correct_id is an AJI instead of JI
         :param new_account_code: new account code for a G/L correction
         :param new_ad_breakdown_data: new ad lines to replace all ones (delete)
         :param ad_replace_data: { percent_key: {'dest/cc/fp/per': new_val, }
