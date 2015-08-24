@@ -1193,9 +1193,15 @@ class FinanceTest(UnifieldTest):
         return ids and ids[0] or False
         
     def period_close(self, db, level, month, year=0):
+        """
+        :param level: 'f', 'm' or 'h' for 'field', 'mission' or 'hq'
+        """
         self._period_close_reopen(db, level, month, year=year, reopen=False)
         
     def period_reopen(self, db, level, month, year=0):
+        """
+        :param level: 'f', 'm' or 'h' for 'field', 'mission' or 'hq'
+        """
         self._period_close_reopen(db, level, month, year=year, reopen=True)
     
     def _period_close_reopen(self, db, level, month, year=0, reopen=False):

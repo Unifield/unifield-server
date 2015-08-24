@@ -74,6 +74,9 @@ TODO NOTES
     
 - options:
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
+    - [IMP] if assert raise how to repen closed field/mission/hq periods to
+        allow for next test during flow
+        (log closing done in period_close/reopen)
     - [IMP] each case should delete some data
 """
 
@@ -2049,6 +2052,155 @@ class FinanceTestCorCases(FinanceTest):
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
+        )
+        
+    def test_cor_25(self):
+        """
+        cd unifield/test-finance/unifield-wm/unifield_tests
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_25
+        """
+        push_db = self.c1
+        model_aal = 'account.analytic.line'
+        
+        invoice_lines_accounts = [ '63100', '63110', '63120', ]
+        
+        invoice_lines_breakdown_data = {
+            1: [ (100., 'OPS', 'HT101', 'FP1'), ],
+            2: [ (100., 'OPS', 'HT121', 'FP2'), ],
+            3: [ (50., 'OPS', 'HT111', 'PF'), (50., 'OPS', 'HT121', 'PF'), ],
+        }
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP1', '63100',
+            'OPS')
+        self.analytic_distribution_set_fp_account_dest(push_db, 'FP2', '63110',
+            'OPS')
+        self._sync_from_c1()  # sync down fp account/dest
+        
+        # 25.1, 25.2, 25.3
+        ji_ids = self.invoice_validate(push_db,
+            self.invoice_create_supplier_invoice(push_db,
+                ccy_code=False,
+                is_refund=False,
+                date=self.get_orm_fy_date(1, 1),
+                partner_id=False,
+                ad_header_breakdown_data=False,
+                lines_accounts=invoice_lines_accounts,
+                lines_breakdown_data=invoice_lines_breakdown_data,
+                tag="CT_25"
+            )
+        )
+        jis_by_account = self.get_jis_by_account(push_db, ji_ids)
+        
+        # 25.4
+        self.synchronize(push_db)
+        
+        # 25.5
+        pull_db = self.p1
+        self.synchronize(pull_db)
+ 
+        # pull 1 AJI: 63120 HT111
+        push_expected = [
+            self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63120',
+                cc_code_filter='HT111')['63120'][0][1],
+        ]
+        push_not_expected=[
+            self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63100',
+                cc_code_filter='HT101')['63100'][0][1],
+            self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63110',
+                cc_code_filter='HT121')['63110'][0][1],
+            self.get_ji_ajis_by_account(push_db, ji_ids, 
+                account_code_filter='63120',
+                cc_code_filter='HT121')['63120'][0][1],
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                pull_db=pull_db
+            ))),
+            "SYNC mismatch"
+        )
+        
+        # 25.6
+        pull_db = self.p12
+        self.synchronize(pull_db)
+ 
+        # pull 2 AJIs: 63110 HT121, 63120 HT121
+        push_expected = [
+            self.get_ji_ajis_by_account(push_db, ji_ids,  
+                cc_code_filter='HT121')['63110'][0][1],
+            self.get_ji_ajis_by_account(push_db, ji_ids,  
+                cc_code_filter='HT121')['63120'][0][1],
+        ]
+        push_not_expected=[
+            self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63100',
+                cc_code_filter='HT101')['63100'][0][1],
+            self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63120',
+                cc_code_filter='HT111')['63120'][0][1],
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=push_db,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                pull_db=pull_db
+            ))),
+            "SYNC mismatch"
+        )
+        
+        # 25.7
+        self.period_close(push_db, 'f', 1, year=0)
+        self.period_close(push_db, 'm', 1, year=0)
+        
+        # 25.8
+        old_ad = [
+            (50., 'OPS', 'HT111', 'PF'),
+            (50., 'OPS', 'HT121', 'PF'),
+        ]
+        new_ad = [
+            (100., 'OPS', 'HT120', 'PF'),
+        ]
+        self.simulation_correction_wizard(push_db,
+            jis_by_account['63120'][0][0],
+            cor_date=self.get_orm_fy_date(2, 7),
+            new_account_code=False,
+            new_ad_breakdown_data=new_ad,
+            ad_replace_data=False
+        )
+        
+        self.check_ji_correction(push_db,
+            jis_by_account['63120'][0][0],
+            '63120', new_account_code=False,
+            expected_ad=old_ad,
+            expected_ad_rev=new_ad,
+            expected_ad_cor=old_ad
+        )
+        
+        # 25.9
+        old_ad = [ (100., 'OPS', 'HT121', 'FP2'), ]
+        new_cc = 'HT122'
+        new_ad = [
+            (100., 'OPS', new_cc, 'FP2'),
+        ]
+        self.simulation_correction_wizard(push_db,
+            jis_by_account['63110'][0][0],
+            cor_date=self.get_orm_fy_date(2, 8),
+            new_account_code=False,
+            new_ad_breakdown_data=False,
+            ad_replace_data={ 100.: {'cc': new_cc, } },
+        )
+        
+        self.check_ji_correction(push_db,
+            jis_by_account['63110'][0][0],
+            '63110', new_account_code=False,
+            expected_ad=old_ad,
+            expected_ad_rev=new_ad,
+            expected_ad_cor=old_ad
         )
         
 
