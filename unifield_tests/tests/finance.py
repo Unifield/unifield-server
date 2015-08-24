@@ -1428,9 +1428,9 @@ class FinanceTest(UnifieldTest):
         
     def get_jis_by_account(self, db, ji_ids):
         """
-        get JIs sdrefs breakdown by account code
+        get JIs id/sdref breakdown by account code
         :param ji_ids: JI ids
-        :return { 'account_code': sdref/False), }
+        :return { 'account_code': [(id, sdref), ], }
         """
         if not ji_ids:
             return False
@@ -1441,17 +1441,18 @@ class FinanceTest(UnifieldTest):
         for ji_br in db.get('account.move.line').browse(ji_ids):
             if not ji_br.account_id.code in res:
                 res[ji_br.account_id.code] = []
-            res[ji_br.account_id.code].append(self.get_record_sdref_from_id(
-                'account.move.line', db, ji_br.id))
+            res[ji_br.account_id.code].append((ji_br.id,
+                self.get_record_sdref_from_id(
+                    'account.move.line', db, ji_br.id)))
             
         return res
         
     def get_ji_ajis_by_account(self, db, ji_ids, cc_code_filter=False):
         """
-        get JIs 'AJIs sdrefs breakdown by account code
+        get JIs'AJIs id/sdref breakdown by account code
         :param ji_ids: JI ids
         :param cc_code_filter: filter results by CC code
-        :return { 'account_code': sdref/False), }
+        :return { 'account_code': [(id, sdref), ], }
         """
         if not ji_ids:
             return False
@@ -1467,8 +1468,8 @@ class FinanceTest(UnifieldTest):
                     if cc_code_filter and \
                         aji.cost_center_id.code != cc_code_filter:
                             continue
-                    aji_sdrefs.append(self.get_record_sdref_from_id(
-                        'account.analytic.line', db, aji.id))
+                    aji_sdrefs.append((aji.id, self.get_record_sdref_from_id(
+                        'account.analytic.line', db, aji.id)))
                 
             if not ji_br.account_id.code in res:
                 res[ji_br.account_id.code] = aji_sdrefs
@@ -1499,7 +1500,7 @@ class FinanceTest(UnifieldTest):
         """
         fields = False
         fields_m2o = False
-        if push_ids_expected:
+        if push_expected:
             # check fields of expected pulled records
             
             # regular fields
@@ -1532,7 +1533,7 @@ class FinanceTest(UnifieldTest):
             push_db=push_db,
             push_expected=push_expected,
             push_not_expected=push_not_expected,
-            push_should_deleted=push_should_deleted
+            push_should_deleted=push_should_deleted,
             pull_db=pull_db,
             fields=fields, fields_m2o=fields_m2o,
             assert_report=assert_report

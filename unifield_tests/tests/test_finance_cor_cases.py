@@ -1300,11 +1300,11 @@ class FinanceTestCorCases(FinanceTest):
         self.synchronize(pull_db)
         
         push_expected=[
-            ajis_by_account['63120'][0],
+            ajis_by_account['63120'][0][1],
         ]
         push_not_expected=[
-            ajis_by_account['63100'][0],
-            ajis_by_account['63110'][0],
+            ajis_by_account['63100'][0][1],
+            ajis_by_account['63110'][0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1321,8 +1321,11 @@ class FinanceTestCorCases(FinanceTest):
         self.synchronize(pull_db)
         
         push_expected=[]
-        push_not_expected=self.flat_dict_vals(ajis_by_account,
-            list_vals_filter_first=True)
+        push_not_expected=[
+            ajis_by_account['63100'][0][1],
+            ajis_by_account['63110'][0][1],
+            ajis_by_account['63120'][0][1],
+        ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
@@ -1335,14 +1338,15 @@ class FinanceTestCorCases(FinanceTest):
  
         # 20.7/8/9 (change 63120 refund line AD CC HT112 to HT121)
         new_CC = 'HT121'
-        self.simulation_correction_wizard(push_db, jis_by_account['63120'][0],
+        self.simulation_correction_wizard(push_db,
+            jis_by_account['63120'][0][0],
             cor_date=False,
             new_account_code=False,
             new_ad_breakdown_data=False,
             ad_replace_data={ 100.: {'cc': new_CC, } }
         )
         
-        self.check_ji_correction(push_db, jis_by_account['63120'][0],
+        self.check_ji_correction(push_db, jis_by_account['63120'][0][0],
             '63120', new_account_code=False,
             expected_ad=[ (100., 'OPS', new_CC, 'PF'), ],
             expected_ad_rev=False,
@@ -1362,7 +1366,7 @@ class FinanceTestCorCases(FinanceTest):
         ]
         push_should_deleted=[
             # target instance changed CC HT112 to HT121
-            aji_HT112 
+            aji_HT112[1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1381,7 +1385,7 @@ class FinanceTestCorCases(FinanceTest):
         
         push_expected=[
             # target instance changed CC HT112 to HT121: AJI moved to C1P2
-            ajis_by_account['63120'][0],  
+            ajis_by_account['63120'][0][1],  
         ]
         push_not_expected=[
         ]
@@ -1392,7 +1396,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db=push_db,
                 push_expected=push_expected,
                 push_not_expected=push_not_expected,
-                push_should_deleted=push_should_deleted
+                push_should_deleted=push_should_deleted,
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
@@ -1443,11 +1447,11 @@ class FinanceTestCorCases(FinanceTest):
         self.synchronize(pull_db)
         
         push_expected=[
-            ajis_by_account['63120'][0],
+            ajis_by_account['63120'][0][1],
         ]
         push_not_expected=[
-            ajis_by_account['63100'][0],
-            ajis_by_account['63110'][0],
+            ajis_by_account['63100'][0][1],
+            ajis_by_account['63110'][0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1464,8 +1468,11 @@ class FinanceTestCorCases(FinanceTest):
         self.synchronize(pull_db)
         
         push_expected=[]
-        push_not_expected=self.flat_dict_vals(ajis_by_account,
-            list_vals_filter_first=True)
+        push_not_expected = [
+            ajis_by_account['63100'][0][1],
+            ajis_by_account['63110'][0][1],
+            ajis_by_account['63120'][0][1],
+        ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
@@ -1481,14 +1488,16 @@ class FinanceTestCorCases(FinanceTest):
             (50., 'OPS', 'HT112', 'PF'),
             (50., 'OPS', 'HT121', 'PF'),
         ]
-        self.simulation_correction_wizard(push_db, jis_by_account['63120'][0],
+        self.simulation_correction_wizard(push_db,
+            jis_by_account['63120'][0][0],
             cor_date=False,
             new_account_code=False,
             new_ad_breakdown_data=new_ad,
             ad_replace_data=False
         )
         
-        self.check_ji_correction(push_db, jis_by_account['63120'][0],
+        self.check_ji_correction(push_db,
+            jis_by_account['63120'][0][0],
             '63120', new_account_code=False,
             expected_ad=new_ad,
             expected_ad_rev=False,
@@ -1504,9 +1513,12 @@ class FinanceTestCorCases(FinanceTest):
         
         push_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
-                cc_code_filter='HT112')['63120'][0],
+                cc_code_filter='HT112')['63120'][0][1],
         ]
+        aji_ht121 = self.get_ji_ajis_by_account(push_db, ji_ids,
+                cc_code_filter='HT121')['63120'][0]
         push_not_expected=[
+            aji_ht121[1],
         ]
         push_should_deleted=[
         ]
@@ -1526,8 +1538,7 @@ class FinanceTestCorCases(FinanceTest):
         self.synchronize(pull_db)
         
         push_expected=[
-            self.get_ji_ajis_by_account(push_db, ji_ids,
-                cc_code_filter='HT121')['63120'][0],
+            aji_ht121[1],
         ]
         push_not_expected=[
         ]
