@@ -35,13 +35,20 @@ class UnifieldTest(unittest.TestCase):
         '''
         Add new connection
         '''
-        con = XMLConn(db_suffix)
-        setattr(self, name, con)
-        self.db[name] = con
+        if name not in self.db:
+            con = XMLConn(db_suffix)
+            setattr(self, name, con)
+            self.db[name] = con
         # Set colors
         colors = self.colors
         database_display = colors.BRed + '[' + colors.Color_Off + name.center(6) + colors.BRed + ']' + colors.Color_Off
         self.db[name].colored_name = database_display
+    
+    def __getattr__(self, attr):
+        if attr in self.db:
+            return self.db[attr]
+        else:
+            super(UnifieldTest, self).__getattr__(attr)
 
     def _hook_db_process(self, name, database):
         '''

@@ -62,6 +62,42 @@ class sync_order_label(osv.osv):
 
 sync_order_label()
 
+class sync_sale_order_line_split(osv.osv):
+    _name = 'sync.sale.order.line.split'
+    _rec_name = 'partner_id'
+
+    _columns = {
+        'partner_id': fields.many2one(
+            'res.partner',
+            'Partner',
+            readonly=True,
+        ),
+        'old_sync_order_line_db_id': fields.text(
+            string='Sync order line DB Id of the splitted line',
+            required=True,
+            readonly=True,
+        ),
+        'new_sync_order_line_db_id': fields.text(
+            string='Sync order line DB ID of the new created line',
+            required=True,
+            readonly=True,
+        ),
+        'old_line_qty': fields.float(
+            digits=(16,2),
+            string='Old line qty',
+            required=True,
+            readonly=True,
+        ),
+        'new_line_qty': fields.float(
+            digit=(16,2),
+            string='New line qty',
+            required=True,
+            readonly=True,
+        ),
+    }
+
+sync_sale_order_line_split()
+
 class sale_order_sourcing_progress(osv.osv):
     _name = 'sale.order.sourcing.progress'
     _rec_name = 'order_id'
