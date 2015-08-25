@@ -82,6 +82,98 @@ class purchase_order_line_sync(osv.osv):
 purchase_order_line_sync()
 
 
+class purchase_order_line_to_split(osv.osv):
+    _name = 'purchase.order.line.to.split'
+    _rec_name = 'line_id'
+
+    _columns = {
+        'line_id': fields.many2one(
+            'purchase.order.line',
+            string='Original line',
+            readonly=True,
+            required=False,
+            ondelete='cascade',
+        ),
+        'order_id': fields.many2one(
+            'purchase.order',
+            string='Purchase order',
+            readonly=True,
+            required=False,
+            ondelete='cascade',
+        ),
+        'original_qty': fields.float(
+            digits=(16,2),
+            string='Original qty',
+            required=False,
+            readonly=True,
+        ),
+        'new_line_qty': fields.float(
+            digits=(16,2),
+            string='New line qty',
+            required=True,
+            readonly=True,
+        ),
+        'sync_order_line_db_id': fields.text(
+            string='Sync Order line DB ID of the new created line',
+            readonly=True,
+            required=True,
+            index=1,
+        ),
+        'new_sync_order_line_db_id': fields.text(
+            string='Sync Order line DB ID of the new created line',
+            readonly=True,
+            required=True,
+            index=1,
+        ),
+        'splitted': fields.boolean(
+            string='Is ran ?',
+            readonly=True,
+            index=1,
+        ),
+    }
+
+    def create_from_sync_message(self, cr, uid, source, line_info, context=None):
+        """
+        Create a record of purchase.order.line.to.split from the sync. messages
+        """
+        pol_obj = self.pool.get('purchase.order.line')
+
+        if context is None:
+            context = {}
+
+        lid = line_info.to_dict()
+        line_vals = {}
+        if 'old_sync_order_line_db_id' in lid:
+            pol_ids = pol_obj.search(cr, uid, [
+                ('sync_order_line_db_id', '=', lid['old_sync_order_line_db_id'])
+            ], context=context)
+            if not pol_ids:
+                line_vals.update({
+                    'original_qty': 0.00,
+                    'new_line_qty': lid.get('new_line_qty', 0.00),
+                    'sync_order_line_db_id': lid.get('old_sync_order_line_db_id'),
+                    'new_sync_order_line_db_id': lid.get('new_sync_order_line_db_id'),
+                })
+            else:
+                pol_brw = pol_obj.browse(cr, uid, pol_ids[0], context=context)
+                line_vals.update({
+                    'line_id': pol_brw.id,
+                    'order_id': pol_brw.order_id.id,
+                    'original_qty': lid.get('old_line_qty', pol_brw.product_qty),
+                    'new_line_qty': lid.get('new_line_qty', 0.00),
+                    'sync_order_line_db_id': lid.get('new_sync_order_line_db_id'),
+                    'new_sync_order_line_db_id': lid.get('new_sync_order_line_db_id'),
+                })
+            self.create(cr, uid, line_vals, context=context)
+        else:
+            raise Exception, "No Order line DB ID given in the sync. message"
+
+        return
+
+
+purchase_order_line_to_split()
+
+
 class purchase_order_sync(osv.osv):
     _inherit = "purchase.order"
     _logger = logging.getLogger('------sync.purchase.order')
@@ -125,6 +217,51 @@ class purchase_order_sync(osv.osv):
         'po_updated_by_sync': False,
         'is_confirmed_and_synced': False,
     }
+
+    def manage_split_po_lines(self, cr, uid, po_id, context=None):
+        """
+        Split the PO lines according to split FO lines
+        """
+        split_po_line_ids = self.pool.get('purchase.order.line.to.split').search(cr, uid, [
+            ('splitted', '=', False),
+        ], context=context)
+
+        done_ids = []
+        for spl_brw in self.pool.get('purchase.order.line.to.split').browse(cr, uid, split_po_line_ids, context=context):
+            pol_id = False
+            if not spl_brw.line_id:
+                already_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', spl_brw.new_sync_order_line_db_id)], context=context)
+                pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', spl_brw.sync_order_line_db_id)], context=context)
+                if not pol_ids or already_pol_ids:
+                    continue
+                else:
+                    pol_id = pol_ids[0]
+            else:
+                pol_id = spl_brw.line_id.id
+
+            pol_brw = self.pool.get('purchase.order.line').browse(cr, uid, pol_id, context=context)
+            if pol_brw.order_id.id != po_id:
+                continue
+
+            if pol_brw.product_qty < spl_brw.new_line_qty + 1:
+                self.pool.get('purchase.order.line').write(cr, uid, [pol_brw.id], {'product_qty': pol_brw.product_qty + spl_brw.new_line_qty}, context=context)
+                pol_brw = self.pool.get('purchase.order.line').browse(cr, uid, pol_brw.id, context=context)
+
+            split_id = self.pool.get('split.purchase.order.line.wizard').create(cr, uid, {
+                'purchase_line_id': pol_brw.id,
+                'original_qty': pol_brw.product_qty,
+                'old_line_qty': pol_brw.product_qty - spl_brw.new_line_qty,
+                'new_line_qty': spl_brw.new_line_qty,
+            }, context=context)
+            context['split_sync_order_line_db_id'] = spl_brw.new_sync_order_line_db_id
+            self.pool.get('split.purchase.order.line.wizard').split_line(cr, uid, split_id, context=context)
+            del context['split_sync_order_line_db_id']
+
+            done_ids.append(spl_brw.id)
+
+        self.pool.get('purchase.order.line.to.split').write(cr, uid, done_ids, {'splitted': True}, context=context)
+
+        return
 
 
     # UF-2267: Added a new method to update the reference of the FO back to the PO
@@ -181,6 +318,8 @@ class purchase_order_sync(osv.osv):
                 return "Recovery: cannot create the PO. Please inform the owner of the FO " + so_info.name + " at " + source + " to cancel it and to recreate a new process."
             raise Exception, "Cannot find the original PO that links to " + so_info.name + " at " + source
 
+        self.manage_split_po_lines(cr, uid, po_id, context=context)
+
         # UF-1830: if the PO exists, double check if this PO is really a normal PO, and not a split PO with suffix of -1,2,3!
         # if yes, then just return without continuing
         original_po = self.browse(cr, uid, po_id, context=context)
@@ -236,13 +375,13 @@ class purchase_order_sync(osv.osv):
         default.update(header_result)
 
         line_obj = self.pool.get('purchase.order.line')
-        to_split = {}
+        #to_split = {}
         for line in default['order_line']:
-            if line[2].get('is_line_split') and line[2].get('original_purchase_line_id') and line[2].get('original_purchase_line_id') in to_split:
-                to_split[line[2].get('original_purchase_line_id')].append(line[2])
-                del default['order_line'][default['order_line'].index(line)]
-            elif line[2].get('original_purchase_line_id') and line[2].get('original_purchase_line_id') not in to_split:
-                to_split.setdefault(line[2].get('original_purchase_line_id'), [])
+        #    if line[2].get('is_line_split') and line[2].get('original_purchase_line_id') and line[2].get('original_purchase_line_id') in to_split:
+        #        to_split[line[2].get('original_purchase_line_id')].append(line[2])
+        #        del default['order_line'][default['order_line'].index(line)]
+        #    elif line[2].get('original_purchase_line_id') and line[2].get('original_purchase_line_id') not in to_split:
+        #        to_split.setdefault(line[2].get('original_purchase_line_id'), [])
             orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', line[2].get('original_purchase_line_id'))])
             if orig_line:
                 orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
@@ -261,9 +400,12 @@ class purchase_order_sync(osv.osv):
         res_id = self.create(cr, uid, default , context=context)
         so_po_common.update_next_line_number_fo_po(cr, uid, res_id, self, 'purchase_order_line', context)
 
+        #self.manage_split_po_lines(cr, uid, res_id, context=context)
+
         proc_ids = []
         order_ids = []
         order = self.browse(cr, uid, res_id, context=context)
+        origin_lines = []
         #pdb.set_trace()
         for order_line in order.order_line:
             if order_line.original_purchase_line_id:
@@ -277,33 +419,41 @@ class purchase_order_sync(osv.osv):
 
                 if orig_line:
                     line = line_obj.browse(cr, uid, orig_line[0], context=context)
+                    origin_lines.append(line.id)
                     if line.procurement_id:
                         line_obj.write(cr, uid, [order_line.id], {'procurement_id': line.procurement_id.id})
                         proc_ids.append(line.procurement_id.id)
                     if line.order_id:
                         order_ids.append(line.order_id.id)
 
+        # Remove the original PO lines that are not in the split PO
+        for original_line in original_po.order_line:
+            if original_line.id not in origin_lines:
+                line_obj.fake_unlink(cr, uid, [original_line.id], context=context)
+        
+        self.manage_split_po_lines(cr, uid, res_id, context=context)
+
         if proc_ids:
             self.pool.get('procurement.order').write(cr, uid, proc_ids, {'purchase_id': res_id}, context=context)
             netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr)
 
-        for orig_line, split_lines in to_split.iteritems():
-            pol_ids = line_obj.search(cr, uid, [('order_id', '=', res_id), ('original_purchase_line_id', '=', orig_line)], context=context)
-            if pol_ids:
-                pol_brw = line_obj.browse(cr, uid, pol_ids[0], context=context)
-                for sp in split_lines:
-                    line_obj.write(cr, uid, pol_ids[0], {'product_qty': pol_brw.product_qty + sp.get('product_qty')}, context=context)
-                    split_obj = self.pool.get('split.purchase.order.line.wizard')
-                    split_id = split_obj.create(cr, uid, {
-                        'purchase_line_id': pol_brw.id,
-                        'original_qty': pol_brw.product_qty + sp.get('product_qty'),
-                        'old_line_qty': pol_brw.product_qty,
-                        'new_line_qty': sp.get('product_qty'),
-                    }, context=context)
-                    split_obj.split_line(cr, uid, [split_id], context=context)
-                    new_line_ids = line_obj.search(cr, uid, [('order_id', '=', res_id)], order='id desc', limit=1)
-                    if new_line_ids and sp.get('sync_order_line_db_id'):
-                        line_obj.write(cr, uid, new_line_ids, {'sync_order_line_db_id': sp.get('sync_order_line_db_id')}, context=context)
+#        for orig_line, split_lines in to_split.iteritems():
+#            pol_ids = line_obj.search(cr, uid, [('order_id', '=', res_id), ('original_purchase_line_id', '=', orig_line)], context=context)
+#            if pol_ids:
+#                pol_brw = line_obj.browse(cr, uid, pol_ids[0], context=context)
+#                for sp in split_lines:
+#                    line_obj.write(cr, uid, pol_ids[0], {'product_qty': pol_brw.product_qty + sp.get('product_qty')}, context=context)
+#                    split_obj = self.pool.get('split.purchase.order.line.wizard')
+#                    split_id = split_obj.create(cr, uid, {
+#                        'purchase_line_id': pol_brw.id,
+#                        'original_qty': pol_brw.product_qty + sp.get('product_qty'),
+#                        'old_line_qty': pol_brw.product_qty,
+#                        'new_line_qty': sp.get('product_qty'),
+#                    }, context=context)
+#                    split_obj.split_line(cr, uid, [split_id], context=context)
+#                    new_line_ids = line_obj.search(cr, uid, [('order_id', '=', res_id)], order='id desc', limit=1)
+#                    if new_line_ids and sp.get('sync_order_line_db_id'):
+#                        line_obj.write(cr, uid, new_line_ids, {'sync_order_line_db_id': sp.get('sync_order_line_db_id')}, context=context)
 
         fo_ids = self.pool.get('sale.order').search(cr, uid, [('loan_id', '=', po_id)], context=context)
         if fo_ids:
@@ -475,6 +625,8 @@ class purchase_order_sync(osv.osv):
 
         self.check_mandatory_fields(cr, uid, so_dict)
 
+        self.manage_split_po_lines(cr, uid, po_id, context=context)
+
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
         header_result['order_line'] = so_po_common.get_lines(cr, uid, source, so_info, po_id, False, True, False, context)
@@ -530,6 +682,8 @@ class purchase_order_sync(osv.osv):
             raise Exception, "Cannot find the original PO with the given info."
 
         so_dict = so_info.to_dict()
+
+        self.manage_split_po_lines(cr, uid, po_id, context=context)
 
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)

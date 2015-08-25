@@ -328,6 +328,8 @@ class so_po_common(osv.osv_memory):
         rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
 
         split_cancel_line = {}
+        split_bypass_lines = {}
+        update_lines_sync_order_ids = []
         line_vals_dict = line_values.to_dict()
         if 'order_line' not in line_vals_dict:
             return []
@@ -445,14 +447,22 @@ class so_po_common(osv.osv_memory):
             if partner_type not in ['section', 'intermission'] and line_dict.get('analytic_distribution_id'):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
 
+            if line_dict.get('source_sync_line_id'):
+                values['original_purchase_line_id'] = line_dict['source_sync_line_id']
+
             line_ids = False
             sync_order_line_db_id = False
             if line_dict.get('sync_order_line_db_id'):
                 sync_order_line_db_id = line.sync_order_line_db_id
                 values['sync_order_line_db_id'] = sync_order_line_db_id
 
-            if line_dict.get('source_sync_line_id'):
-                values['original_purchase_line_id'] = line_dict['source_sync_line_id']
+                line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
+                lines_to_split = self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id), ('splitted', '=', False)], context=context)
+                if lines_to_split and not line_ids:
+#                if self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id)], context=context):
+                    split_bypass_lines.setdefault(sync_order_line_db_id, [])
+                    split_bypass_lines[sync_order_line_db_id].append((lines_to_split, values))
+                    continue
 
             if (po_id or so_id) and not sync_order_line_db_id: # this updates the PO or SO -> the sync_order_line_db_id must exist
                 raise Exception, "The field sync_order_line_db_id is missing - please check the relevant message rule!"
@@ -461,9 +471,10 @@ class so_po_common(osv.osv_memory):
 
             if po_id: # this case is for update the PO
                 # look for the correct PO line for updating the value - corresponding to the SO line
-                line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
+                if not line_ids:
+                    line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
 
-                # Split PO lines that are canceled at other side
+                """# Split PO lines that are canceled at other side
                 if line_dict.get('cancel_split_ok') and line_ids:
                     pol = self.pool.get('purchase.order.line').read(cr, uid, line_ids[0], ['line_number', 'product_qty'], context=context)
                     pol_qty = pol['product_qty']
@@ -483,6 +494,7 @@ class so_po_common(osv.osv_memory):
 
                     if pol_qty == pol['product_qty']:
                         continue
+                """
 
             elif so_id:
                 # look for the correct PO line for updating the value - corresponding to the SO line
@@ -492,9 +504,17 @@ class so_po_common(osv.osv_memory):
                 if for_update: # add this value to the list of update, then remove
                     update_lines.append(line_ids[0])
 
+                update_lines_sync_order_ids.append(values['sync_order_line_db_id'])
                 line_result.append((1, line_ids[0], values))
             else:
+                update_lines_sync_order_ids.append(values['sync_order_line_db_id'])
                 line_result.append((0, 0, values))
+
+        for sync_order_line_db_id, line_values in split_bypass_lines.iteritems():
+            for line_vals in line_values:
+                for polts in self.pool.get('purchase.order.line.to.split').browse(cr, uid, line_vals[0], context=context):
+                    if polts.sync_order_line_db_id not in update_lines_sync_order_ids:
+                        line_result.append((0, 0, line_vals[1]))
 
         # for update case, then check all updated lines, the other lines that are not presented in the sync message must be deleted at this destination instance!
         if for_update:
