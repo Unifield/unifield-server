@@ -1506,7 +1506,10 @@ class shipment(osv.osv):
             # all object of a given picking object, he is set to Done and still belong to the same shipment_id
             # another possibility would be to unlink the picking object from the shipment, set shipment_id to False
             # but in this case the returned pack families would not be displayed anymore in the shipment
-            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '!=', 'done'), ], context=context)
+            packing_ids = pick_obj.search(cr, uid, [
+                ('shipment_id', '=', shipment.id),
+                ('state', 'not in', ['done', 'cancel']),
+            ], context=context)
 
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing' and packing.state == 'assigned'
@@ -4606,8 +4609,8 @@ class stock_move(osv.osv):
         for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
             if proc.state == 'draft':
                 wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_confirm', cr)
-#            else:
-#                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+            else:
+                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
 
         for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
             if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
