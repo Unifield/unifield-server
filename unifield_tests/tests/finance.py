@@ -1456,7 +1456,8 @@ class FinanceTest(UnifieldTest):
     def get_ji_ajis_by_account(self, db, ji_ids, account_code_filter=False,
         cc_code_filter=False):
         """
-        get JIs'AJIs id/sdref breakdown by account code
+        get base JIs'AJIs id/sdref breakdown by account code
+        (use for sync cases, REV/COR AJIs are not get, only base AJIs)
         :param ji_ids: JI ids
         :param account_code_filter: filter results by account code
         :param cc_code_filter: filter results by CC code
@@ -1478,6 +1479,9 @@ class FinanceTest(UnifieldTest):
                     if cc_code_filter and \
                         aji.cost_center_id.code != cc_code_filter:
                             continue
+                    if 'COR' in aji.name or 'REV' in aji.name:
+                        # DO NOT GET REV/COR AJIs
+                        continue
                     
                     if aji.id in get_ajis:
                         continue
@@ -1493,7 +1497,7 @@ class FinanceTest(UnifieldTest):
         
     def get_aji_revs(self, db, aji, cor_level=1):
         """
-        get JIs'AJIs id/sdref breakdown by account code
+        get aji REVs entries
         :param aji: aji id or sdref
         :type aji: int/str
         :param cor_level: cor level
@@ -1517,7 +1521,7 @@ class FinanceTest(UnifieldTest):
         
         domain = [
             ('journal_id', 'in', od_journal_ids),
-            ('general_account_id', '=', aal_br.account_id.id),
+            ('general_account_id', '=', aal_br.general_account_id.id),
         ]
         if cor_level == 1:
             domain.append(('reversal_origin', '=', aji))
@@ -1534,7 +1538,7 @@ class FinanceTest(UnifieldTest):
             
     def get_aji_cors(self, db, aji, new_account=False, cor_level=1):
         """
-        get JIs'AJIs id/sdref breakdown by account code
+        get aji CORs entries
         :param aji: aji id or sdref
         :type aji: int/str
         :param new_account: new GL account code expected if was corrected
@@ -1562,7 +1566,7 @@ class FinanceTest(UnifieldTest):
             account_id = self.get_account_from_code(db, new_account,
                 is_analytic=False)
         else:
-            account_id = aal_br.account_id.id
+            account_id = aal_br.general_account_id.id
             
         ids = aal_obj.search([
                 #('last_corrected_id', '=', aji),

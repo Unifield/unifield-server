@@ -2221,11 +2221,13 @@ class FinanceTestCorCases(FinanceTest):
         self.synchronize(pull_db)
         
         # pull 1 REV AJI 63120 HT111
-        # TODO way to get REV AJI
-        """
         push_expected = [
-            self.get_ji_ajis_by_account(push_db, ji_ids,  
-                cc_code_filter='HT121')['63110'][0][1],
+            self.get_aji_revs(
+                push_db,
+                self.get_ji_ajis_by_account(push_db, ji_ids,
+                    account_code_filter='63120',
+                    cc_code_filter='HT111')['63120'][0][0]
+            )[0][1],
         ]
         push_not_expected=[
         ]
@@ -2238,18 +2240,30 @@ class FinanceTestCorCases(FinanceTest):
             ))),
             "SYNC mismatch"
         )
-        """
         
         # 25.13
         pull_db = self.p12  # C1P2
         self.synchronize(pull_db)
         
-        # pull 2 AJIs: 1 REV 63110 HT121, 1 COR 63110 HT112
-        # TODO way to get REV/COR AJIs
-        """
+        # pull 3 AJIs:
+        # a) 1REV 63110 HT121 FP2, 1 COR 63110 HT112 FP2 due to 25.9
+        # b) 1REV 63120 HT121 PF due to 25.8
+        ht121_63110_id = self.get_ji_ajis_by_account(push_db, ji_ids,
+            account_code_filter='63110',
+            cc_code_filter='HT121')['63110'][0][0]
         push_expected = [
-            self.get_ji_ajis_by_account(push_db, ji_ids,  
-                cc_code_filter='HT121')['63110'][0][1],
+            # a) 63110
+            self.get_aji_revs(push_db, ht121_63110_id)[0][1],
+            self.get_aji_cors(push_db, ht121_63110_id,
+                new_account=False)[0][1],
+            
+            # b) 63120
+            self.get_aji_revs(
+                push_db,
+                self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63120',
+                cc_code_filter='HT121')['63120'][0][0]
+            )[0][1],
         ]
         push_not_expected=[
         ]
@@ -2262,7 +2276,9 @@ class FinanceTestCorCases(FinanceTest):
             ))),
             "SYNC mismatch"
         )
-        """
+        
+        self.period_reopen(push_db, 'm', 1, year=0)
+        self.period_reopen(push_db, 'f', 1, year=0)
         
 
 def get_test_class():
