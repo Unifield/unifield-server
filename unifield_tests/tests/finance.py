@@ -970,9 +970,9 @@ class FinanceTest(UnifieldTest):
                 ('account_id', '=', new_account_id),
                 (cor_rev_amount_field, '=', abs(cor_rev_amount)),
             ]
-            rev_ids = aml_obj.search(domain)
+            cor_ids = aml_obj.search(domain)
             self.assert_(
-                rev_ids != False,
+                cor_ids != False,
                 "no JI COR found for %s %s %f:: %s" % (new_account_code,
                     ji_br.name, ji_amount, db.colored_name, )
             )
@@ -1489,6 +1489,92 @@ class FinanceTest(UnifieldTest):
                         self.get_record_sdref_from_id('account.analytic.line', db,
                             aji.id)))
 
+        return res
+        
+    def get_aji_revs(self, db, aji, cor_level=1):
+        """
+        get JIs'AJIs id/sdref breakdown by account code
+        :param aji: aji id or sdref
+        :type aji: int/str
+        :param cor_level: cor level
+        :type cor_level: int
+        :return [(id, sdref), ]
+        """
+        if isinstance(aji, str):
+            aji = self.get_record_id_from_sdref(db, aji)
+            if not aji:
+                raise FinanceTestException("aji not found from sdref '%s'" % (
+                    aji, ))
+        elif not isinstance(aji, (int, long, )):
+            raise FinanceTestException('invalid arg aji: int or str expected')
+            
+        res = []
+        od_journal_ids = self.get_journal_ids(db, 'correction',
+            is_of_instance=False, is_analytic=True)
+        aal_model = 'account.analytic.line'
+        aal_obj = db.get(aal_model)
+        aal_br = aal_obj.browse(aji)
+        
+        domain = [
+            ('journal_id', 'in', od_journal_ids),
+            ('general_account_id', '=', aal_br.account_id.id),
+        ]
+        if cor_level == 1:
+            domain.append(('reversal_origin', '=', aji))
+        else:
+            domain.append(('name', '=', "REV - %s" % (aal_br.name, )))
+        ids = aal_obj.search(domain)
+        
+        if ids:
+            res = [
+                (id, self.get_record_sdref_from_id(aal_model, db, id)) \
+                    for id in ids
+            ]
+        return res
+            
+    def get_aji_cors(self, db, aji, new_account=False, cor_level=1):
+        """
+        get JIs'AJIs id/sdref breakdown by account code
+        :param aji: aji id or sdref
+        :type aji: int/str
+        :param new_account: new GL account code expected if was corrected
+        :type new_account: str/False
+        :param cor_level: cor level
+        :type cor_level: int
+        :return [(id, sdref), ]
+        """
+        if isinstance(aji, str):
+            aji = self.get_record_id_from_sdref(db, aji)
+            if not aji:
+                raise FinanceTestException("aji not found from sdref '%s'" % (
+                    aji, ))
+        elif not isinstance(aji, (int, long, )):
+            raise FinanceTestException('invalid arg aji: int or str expected')
+ 
+        res = []
+        od_journal_ids = self.get_journal_ids(db, 'correction',
+            is_of_instance=False, is_analytic=True)
+        aal_model = 'account.analytic.line'
+        aal_obj = db.get(aal_model)
+        aal_br = aal_obj.browse(aji)
+        
+        if new_account:
+            account_id = self.get_account_from_code(db, new_account,
+                is_analytic=False)
+        else:
+            account_id = aal_br.account_id.id
+            
+        ids = aal_obj.search([
+                #('last_corrected_id', '=', aji),
+                ('journal_id', 'in', od_journal_ids),
+                ('general_account_id', '=', account_id),
+                ('name', '=', "COR%d - %s" % (cor_level, aal_br.name, )),
+            ])
+        if ids:
+            res = [
+                (id, self.get_record_sdref_from_id(aal_model, db, id)) \
+                    for id in ids
+            ]
         return res
         
     def analytic_account_activate_since(self, db, date):
