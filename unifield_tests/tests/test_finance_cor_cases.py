@@ -43,6 +43,10 @@ TODO NOTES
             => check with Matthias
             => check case manually
             
+- MAJOR:
+  - when a flow close some period, force reopen at next flow begin to ensure
+    a raised assert does not block next flows
+            
 - DATASET
     - financing contract FC1: add FP1, FP2
     (need to be done manually at this time...)
@@ -74,9 +78,6 @@ TODO NOTES
     
 - options:
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
-    - [IMP] if assert raise how to repen closed field/mission/hq periods to
-        allow for next test during flow
-        (log closing done in period_close/reopen)
     - [IMP] each case should delete some data
 """
 
@@ -2173,22 +2174,13 @@ class FinanceTestCorCases(FinanceTest):
             ad_replace_data=False
         )
         
-        """self.check_ji_correction(push_db,
+        self.check_ji_correction(push_db,
             jis_by_account['63120'][0][0],
             '63120', new_account_code=False,
             expected_ad=old_ad,
-            expected_ad_rev=new_ad,
-            expected_ad_cor=old_ad
-        )"""
-        # TODO
-        """
-        Traceback (most recent call last):
-          File "tests/test_finance_cor_cases.py", line 2181, in test_cor_25
-            expected_ad_cor=old_ad
-          File "tests/finance.py", line 1030, in check_ji_correction
-            ji_br.name, ji_amount, db.colored_name, )
-            AssertionError: expected REV AJIs count do not match for JI 63120 [CT_25] 1/L003 63120 -476.000000:: [  c1  ]
-        """
+            expected_ad_rev=old_ad,
+            expected_ad_cor=new_ad
+        )
         
         # 25.9
         old_ad = [ (100., 'OPS', 'HT121', 'FP2'), ]
@@ -2204,14 +2196,13 @@ class FinanceTestCorCases(FinanceTest):
             ad_replace_data={ 100.: {'cc': new_cc, } },
         )
         
-        # TODO
-        """self.check_ji_correction(push_db,
+        self.check_ji_correction(push_db,
             jis_by_account['63110'][0][0],
             '63110', new_account_code=False,
             expected_ad=old_ad,
-            expected_ad_rev=new_ad,
-            expected_ad_cor=old_ad
-        )"""
+            expected_ad_rev=old_ad,
+            expected_ad_cor=new_ad
+        )
         
         # 25.10
         self.synchronize(push_db)
@@ -2277,6 +2268,7 @@ class FinanceTestCorCases(FinanceTest):
             "SYNC mismatch"
         )
         
+        # reopen periods for next flows
         self.period_reopen(push_db, 'm', 1, year=0)
         self.period_reopen(push_db, 'f', 1, year=0)
         
