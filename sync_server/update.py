@@ -445,7 +445,7 @@ class update(osv.osv):
                 'rule' : 1,
                 'offset' : offset,
                 'type': 'delete',
-                'unload': ['xxxxxxx']
+                'unload': ['x-%d'%offset]
             }
 
         if not update_to_send:
