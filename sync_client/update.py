@@ -540,6 +540,8 @@ class update_received(osv.osv):
                     # Rare exception, should never occur
                     raise AssertionError(message+"Wrong number of imported rows in model %s (expected %s, but %s imported)!\nUpdate ids: %s\n" % (obj._name, len(values), res[0], update_ids))
 
+            if obj._name == 'ir.translation':
+                self.pool.get('ir.translation')._get_reset_cache_at_sync(cr, uid)
             # Obvious
             assert len(values) == len(update_ids) == len(versions), \
                 message+"""This error must never occur. Please contact the developper team of this module.\n"""

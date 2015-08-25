@@ -35,20 +35,20 @@ from sync_common import xmlid_to_sdref
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
     _inherit = 'account.analytic.line'
-    
+
     def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
 
-        # Check if the create request comes from the sync data and from some specific trigger 
-        # for example: the create/write of account.move, account.move.line from sync data must not 
-        # create this object, because this object is sync-ed on a separate rule 
+        # Check if the create request comes from the sync data and from some specific trigger
+        # for example: the create/write of account.move, account.move.line from sync data must not
+        # create this object, because this object is sync-ed on a separate rule
         # otherwise duplicate entries will be created and these entries will be messed up in the later update
         if 'do_not_create_analytic_line' in context:
             if context.get('sync_update_execution'):
                 return False
             del context['do_not_create_analytic_line']
-        
+
         # UF-2479: Block the creation of an AJI if the given period is not open, in sync context
         if context.get('sync_update_execution') and 'date' in vals:
             period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
@@ -60,21 +60,21 @@ class account_analytic_line(osv.osv):
 
         # continue the create request if it comes from a normal requester
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
-    
+
 account_analytic_line()
 
 class account_move(osv.osv):
     _name = 'account.move'
     _inherit = 'account.move'
-    
+
     def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
-        
+
         # indicate to the account.analytic.line not to create such an object to avoid duplication
         context['do_not_create_analytic_line'] = True
         return super(account_move, self).create(cr, uid, vals, context=context)
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         if not context:
             context = {}
@@ -87,97 +87,14 @@ class account_move(osv.osv):
 account_move()
 
 
-# Add a field sd_ref for the ir.translation synchronisation.
-# Class added for SP-193
-class sync_ir_translation(osv.osv):
-
-    _name = 'ir.translation'
-    _inherit = 'ir.translation'
-
-    # _get_sd_ref return the xml_id of target (ex : product.product)
-    def _get_sd_ref(self, cr, uid, ids, field_name, arg, context=None):
-        res = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for rec in self.browse(cr, uid, ids, context=context):
-            res[rec.id] = ''
-            if rec.name:
-                if ',' in rec.name:
-                    model_name = rec.name.split(",")[0]
-                else:
-                    model_name = rec.name
-                if "ir.model.data" not in model_name:
-                    target_ids = [rec.res_id]
-                    #product.template xml_id is not create, so we search the product.product xml_id
-                    if "product.template" in model_name:
-                        target_ids = self.pool.get('product.product')\
-                            .search(cr, uid, [('product_tmpl_id', '=', rec.res_id)], context=context)
-                        model_name = 'product.product'
-
-                    if isinstance(target_ids, (int, long)):
-                        target_ids = [target_ids]
-                    target = self.pool.get(model_name)
-                    if target:
-                        if hasattr(target, "get_sd_ref"):
-                            sd_ref = target.get_sd_ref(cr, uid, target_ids)
-                            if sd_ref:
-                                res[rec.id] = sd_ref.values()[0]
-        return res
-
-    def _set_res_id(self, cr, uid, ids, field_name, field_value, arg, context):
-        res = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for rec in self.browse(cr, uid, ids, context=context):
-            if not rec.res_id:
-                # Search the new res_id
-                if field_name is 'sd_ref' and field_value:
-                    models_obj = self.pool.get('ir.model.data')
-                    models_ids = models_obj.search(cr, uid, [('name', '=', field_value)], context=context)
-                    if isinstance(models_ids, (int, long)):
-                        models_ids = [models_ids]
-                    ir_models = models_obj.browse(cr, uid, models_ids, context=context)
-
-                    for mod in ir_models:
-                        res_id = mod.res_id
-                        #product.template xml_id is not create, so we search the product.product xml_id
-                        if 'product.template' in rec.name:
-                            prod = self.pool.get('product.product').browse(cr, uid, mod.res_id, context=context)
-                            res_id = prod.product_tmpl_id.id
-
-                        # Delete all old values :
-                        old_domain = [
-                            ('lang', '=', rec.lang),
-                            ('name', '=', rec.name),
-                            ('res_id', '=', res_id),
-                            ('type', '=', rec.type)
-                        ]
-                        old_translations_ids = self.search(cr, uid, old_domain, context=context)
-                        self.unlink(cr, uid, old_translations_ids, context=context)
-                        #Write the new res_id
-                        self.write(cr, uid, ids, {'res_id': res_id})
-        return res
-
-    _columns = {
-        'sd_ref': fields.function(_get_sd_ref, fnct_inv=_set_res_id, type="char", size=128, method=True, store=False),
-    }
-
-    _defaults = {
-        'sd_ref': '',
-    }
-sync_ir_translation()
-
-
 class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
-    
+
     def create(self, cr, uid, vals, context=None, check=True):
         if not context:
             context = {}
-            
+
         # indicate to the account.analytic.line not to create such an object to avoid duplication
 #        context['do_not_create_analytic_line'] = True
 
@@ -191,13 +108,13 @@ class account_move_line(osv.osv):
         # UTP-632: re-add write(), but only for the check variable
         if not context:
             context = {}
-            
+
         sync_check = check
         if context.get('sync_update_execution', False):
             sync_check = False
 
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=sync_check, update_check=update_check)
-    
+
     def _hook_call_update_check(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
@@ -278,3 +195,15 @@ class ir_model_data(osv.osv):
 
 
 ir_model_data()
+
+
+class sync_ir_translation(osv.osv):
+    _name = 'ir.translation'
+    _inherit = 'ir.translation'
+
+    def _get_reset_cache_at_sync(self, cr, uid, context=None):
+        self._get_source.clear_cache(cr.dbname)
+        self._get_ids.clear_cache(cr.dbname)
+        return True
+
+sync_ir_translation()

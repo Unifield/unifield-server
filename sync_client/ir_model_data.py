@@ -212,10 +212,11 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                     'name' : sdref,
                 }, context=context)
             return True
-        return False              
+        return False
 
     def create(self, cr, uid, values, context=None):
         context = dict(context or {})
+
         # Silently purge old sdrefs for replacement
         if values['module'] == 'sd':
             cr.execute("""\
@@ -251,7 +252,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                 DELETE FROM ir_model_data
                 WHERE
                     module = 'sd' AND name = %s AND
-                    model = %s AND res_id != %s""", 
+                    model = %s AND res_id != %s""",
                 [sdref_name, values['model'], values['res_id']])
             values['force_recreation'] = cr._obj.rowcount > 0 \
                 and not context.get('sync_update_execution', False)
