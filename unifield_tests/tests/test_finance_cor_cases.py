@@ -2272,6 +2272,107 @@ class FinanceTestCorCases(FinanceTest):
         self.period_reopen(push_db, 'm', 1, year=0)
         self.period_reopen(push_db, 'f', 1, year=0)
         
+    def test_cor_26(self):
+        """
+        cd unifield/test-finance/unifield-wm/unifield_tests
+        python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_26
+        """
+        model_aal = 'account.analytic.line'
+        
+        invoice_lines_accounts = [ '60000', '60010', ]
+        header_ad = [
+            (60., 'OPS', 'HT112', 'PF'),
+            (40., 'NAT', 'HT122', 'PF'),
+        ]
+ 
+        # 26.1, 26.2, 26.3
+        ji_ids = self.invoice_validate(self.p1,
+            self.invoice_create_supplier_invoice(self.p1,
+                ccy_code=False,
+                is_refund=False,
+                date=False,
+                partner_id=False,
+                ad_header_breakdown_data=header_ad,
+                lines_accounts=invoice_lines_accounts,
+                lines_breakdown_data=False,
+                tag="CT_26"
+            )
+        )
+        jis_by_account = self.get_jis_by_account(self.p1, ji_ids)
+        
+        # 26.4
+        self.synchronize(self.p1)
+        
+        # 26.5
+        self.synchronize(self.c1)
+        # TODO check 3 JIs pulled
+        
+        # TODO check 4 AJIs pulled
+        
+        # 26.6
+        self.synchronize(self.p12)  # C1P1
+        
+        # TODO check 2 AJIs pulled (60000/60010 HT122)
+        
+        # 26.7
+        new_ad = [
+            (100., 'OPS', 'HT120', 'PF'),
+        ]
+        # convert 60000 JI from P1 sdref to C1 id
+        ji_60000_id = self.get_record_id_from_sdref(self.c1,
+            jis_by_account['60000'][0][1])
+        self.simulation_correction_wizard(self.c1,
+            ji_60000_id,  
+            cor_date=False,
+            new_account_code=False,
+            new_ad_breakdown_data=new_ad,
+            ad_replace_data=False
+        )
+        """
+        self.check_ji_correction(self.c1,
+            ji_60000_id,
+            '60000', new_account_code=False,
+            expected_ad=new_ad,
+            expected_ad_rev=False,
+            expected_ad_cor=False
+        )"""
+        
+        # 26.8
+        new_cc = 'HT120'
+        new_ad = [
+            (60., 'OPS', 'HT112', 'PF'),
+            (40., 'NAT', new_cc, 'PF'),
+        ]
+        # convert 60010 JI from P1 sdref to C1 id
+        ji_60010_id = self.get_record_id_from_sdref(self.c1,
+            jis_by_account['60010'][0][1])
+        self.simulation_correction_wizard(self.c1,
+            ji_60010_id,  
+            cor_date=False,
+            new_account_code=False,
+            new_ad_breakdown_data=False,
+            ad_replace_data={ 40.: {'cc': new_cc, } }
+        )
+        """
+        self.check_ji_correction(self.c1,
+            ji_60010_id,
+            '60010', new_account_code=False,
+            expected_ad=new_ad,
+            expected_ad_rev=False,
+            expected_ad_cor=False
+        )"""
+        
+        # 26.9
+        self.synchronize(self.c1)
+        
+        # 26.10
+        self.synchronize(self.p12)  # C1P2
+        # 2AJI deleted 60000 HT122 (=>HT120)
+        
+        # 26.11
+        self.synchronize(self.p1)
+        # 2 AJI deleted 60010 HT112 (=> HT120)
+        
 
 def get_test_class():
     return FinanceTestCorCases

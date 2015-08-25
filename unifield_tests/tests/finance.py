@@ -735,7 +735,7 @@ class FinanceTest(UnifieldTest):
                     # supply update amount from cc lines
                     # NOTE: for finance (state != 'cc') the amount is to be
                     # computed from amount of fp lines
-                    if wizard_ad_br.state != 'cc':
+                    if line_ids and wizard_ad_br.state != 'cc':
                         for adwl_r \
                             in wizard_adl_obj.read(line_ids, ['amount']):
                             total_amount += adwl_r['amount']
@@ -787,8 +787,8 @@ class FinanceTest(UnifieldTest):
                     # finance update amount from fp lines
                     # NOTE: for supply (state == 'cc') the amount is to be
                     # computed from amount of cc lines 
-                    if wizard_ad_br.state != 'cc':
-                        for adwl_r in wizard_adfpl_obj.read(line_ids,
+                    if fp_line_ids and wizard_ad_br.state != 'cc':
+                        for adwl_r in wizard_adfpl_obj.read(fp_line_ids,
                             ['amount']):
                             total_amount += adwl_r['amount']
             # end replace data
