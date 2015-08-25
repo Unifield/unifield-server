@@ -88,7 +88,7 @@ class entity_group(osv.osv):
         'entity_ids': fields.many2many('sync.server.entity', 'sync_entity_group_rel', 'group_id', 'entity_id', string="Instances"),
         'type_id': fields.many2one('sync.server.group_type', 'Group Type', ondelete="set null", required=True),
     }
-    
+
     def get_group_name(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
         res = []
@@ -168,8 +168,11 @@ class entity(osv.osv):
         'parent_right' : fields.integer("Right Parent", select=1),
         
         'msg_ids_tmp':fields.text('List of temporary ids of message to be pulled'),
+        'version': fields.integer('version'),
     }
-
+    _defaults = {
+        'version': lambda *a: 0,
+    }
     def unlink(self, cr, uid, ids, context=None):
         for rec in self.browse(cr, uid, ids, context=context):
             if rec.parent_id:
@@ -720,13 +723,13 @@ class sync_manager(osv.osv):
         # UTP-1179: store temporarily this ids of messages to be sent to this entity at the moment of getting the update
         # to avoid having messages that are not belonging to the same "sequence" of the update  
         msg_ids_tmp = self.pool.get("sync.server.message").search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], context=context)
-        
+
         len_ids = 0
         if msg_ids_tmp:
             len_ids = len(msg_ids_tmp)
             self.pool.get('sync.server.entity').write(cr, 1, entity.id, {'msg_ids_tmp': msg_ids_tmp}, context=context)
-            
-        self._logger.info("::::::::The instance " + entity.name + " pulled " + str(len_ids) + " messages.")        
+
+        self._logger.info("::::::::[%s] stored %s messages" % (entity.name, len_ids))
         return (True, len_ids)
 
     @check_validated
