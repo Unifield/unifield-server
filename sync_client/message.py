@@ -136,6 +136,8 @@ class local_message_rule(osv.osv):
                 return
             # Still create the message if an existing message was already in the system, as the return action could be repeat
             xml_id = identifiers[res_id]
+            if msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], context=context):
+                return
             data = {
                     'identifier' : xml_id,
                     'remote_call': rule.remote_call,
