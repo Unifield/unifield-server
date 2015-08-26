@@ -172,8 +172,8 @@ class product_nomenclature(osv.osv):
             for msf_id in msf_ids:
                 if msf_id != ids and msf_id not in ids:
                     raise osv.except_osv(_('Error'),
-                                         _('The MSFID (%s) already exist !')
-                                         % vals.get('msfid', False))
+                                         _('Another line have same MSFID (%s)')
+                                         % vals.get('msfid'))
         # save the data to db
         return super(product_nomenclature, self).write(cr, user, ids, vals, context)
 
@@ -191,7 +191,7 @@ class product_nomenclature(osv.osv):
                     self.write(cr, user, msf_ids, vals, context=context)
                 else:
                     raise osv.except_osv(_('Error'),
-                                         _('The MSFID (%s) already exist !')
+                                         _('MSFID (%s) already exist')
                                          % vals.get('msfid', False))
 
         # save the data to db
