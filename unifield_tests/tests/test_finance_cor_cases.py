@@ -39,10 +39,11 @@ TODO NOTES
 
 - FAILED CASES
     26:
-        - C1P2 left 1 AJI 60010 HT122: wrong as global AD replaced by new AD
+        - C1P2 left 1 AJI 60010 HT122 OPS: wrong as global AD replaced by new AD
           100% OPS HT120 PF (HT120 target of C1) should be removed as for 60000
           (due to header ad corrected to new ad ?)
-        - C1P1 left 2 AJI 60010 HT11: should here only one
+        - C1P1 left 2 AJI 60010 HT112: should here only one (60 OPS)
+               left 2 AJIs 60000/60010 HT122: should left none
         => check with a functional test of the flow
 
 - use cases to check at fonctional level:
