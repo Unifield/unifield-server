@@ -1588,7 +1588,57 @@ class FinanceTest(UnifieldTest):
             aaa_obj.write(aaa_br.id, {
                 'parent_id': aaa_br.parent_id.id,
                 'date_start': date,
-            }) 
+            })
+            
+    def check_ji_record_sync_push_pulled(self,
+        push_db=None,
+        push_expected=[],
+        push_not_expected=[],
+        push_should_deleted=[],
+        pull_db=None,
+        assert_report=True):
+        """
+        JI wrapper for check_records_sync_push_pulled
+        see unifield_test.py check_records_sync_push_pulled for parameters help
+        """
+        fields = False
+        fields_m2o = False
+        if push_expected:
+            # check fields of expected pulled records
+            
+            # regular fields
+            fields = [
+                'date',
+                'document_date',
+                
+                'debit_currency',
+                'debit',
+                'credit_currency',
+                'credit',
+            ]
+            
+            # m2o fields
+            model_ccy = 'res.currency'
+            model_account = 'account.account'
+            fields_m2o = [
+                ('account.move', 'move_id'),
+            
+                (model_ccy, 'currency_id'),
+                (model_ccy, 'functional_currency_id'),
+                
+                (model_account, 'account_id'),
+            ]
+ 
+        return self.check_records_sync_push_pulled(
+            model='account.move.line',
+            push_db=push_db,
+            push_expected=push_expected,
+            push_not_expected=push_not_expected,
+            push_should_deleted=push_should_deleted,
+            pull_db=pull_db,
+            fields=fields, fields_m2o=fields_m2o,
+            assert_report=assert_report
+        )
             
     def check_aji_record_sync_push_pulled(self,
         push_db=None,
@@ -1622,7 +1672,7 @@ class FinanceTest(UnifieldTest):
             model_analytic_account = 'account.analytic.account'
             fields_m2o = [
                 (model_ccy, 'currency_id'),
-                (model_ccy, 'fonctional_currency_id'),
+                (model_ccy, 'functional_currency_id'),
                 
                 (model_account, 'general_account_id'),
                 

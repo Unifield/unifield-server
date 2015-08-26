@@ -73,7 +73,7 @@ TODO NOTES
           22 case not real for HT111/HT112 ajis no wizard button (target CC C1P1)
         X 23
           24
-          25
+        X 25
           26
     
 - options:
@@ -2300,19 +2300,84 @@ class FinanceTestCorCases(FinanceTest):
         )
         jis_by_account = self.get_jis_by_account(self.p1, ji_ids)
         
+        # get sdref of entries that will be pull deleted after the following
+        # correction on 26.7/8
+        sdref_60000_ht112 = self.get_ji_ajis_by_account(self.p1, ji_ids,
+            account_code_filter='60000',
+                cc_code_filter='HT112')['60000'][0][1]
+        sdref_60000_ht122 = self.get_ji_ajis_by_account(self.p1, ji_ids,
+            account_code_filter='60000',
+            cc_code_filter='HT122')['60000'][0][1]
+        sdref_60010_ht112 = self.get_ji_ajis_by_account(self.p1, ji_ids,
+            account_code_filter='60010',
+                cc_code_filter='HT112')['60010'][0][1]
+        sdref_60010_ht122 = self.get_ji_ajis_by_account(self.p1, ji_ids,
+            account_code_filter='60010',
+            cc_code_filter='HT122')['60010'][0][1]
+        
         # 26.4
         self.synchronize(self.p1)
         
         # 26.5
         self.synchronize(self.c1)
-        # TODO check 3 JIs pulled
+        # check 3 JIs pulled
         
-        # TODO check 4 AJIs pulled
+        push_expected = [
+            jis_by_account['60000'][0][1],
+            jis_by_account['60010'][0][1],
+            # TODO check the not expense one
+        ]
+        push_not_expected=[
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_ji_record_sync_push_pulled(
+                push_db=self.p1,
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                pull_db=self.c1
+            ))),
+            "SYNC mismatch"
+        )
+        
+        # check 4 AJIs pulled
+        push_expected = [
+            sdref_60000_ht112,
+            sdref_60000_ht122,
+            sdref_60010_ht112,
+            sdref_60010_ht122,
+        ]
+        push_not_expected=[
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=self.p1,  # from P1
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                pull_db=self.c1  # to C1
+            ))),
+            "SYNC mismatch"
+        )
         
         # 26.6
         self.synchronize(self.p12)  # C1P1
         
-        # TODO check 2 AJIs pulled (60000/60010 HT122)
+        # check 2 AJIs pulled (60000/60010 HT122)
+        
+        push_expected = [
+            sdref_60000_ht122,
+            sdref_60010_ht122,
+        ]
+        push_not_expected=[
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=self.c1,  # from C1
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                pull_db=self.p12  # to C1P2
+            ))),
+            "SYNC mismatch"
+        )
         
         # 26.7
         new_ad = [
@@ -2328,14 +2393,13 @@ class FinanceTestCorCases(FinanceTest):
             new_ad_breakdown_data=new_ad,
             ad_replace_data=False
         )
-        """
         self.check_ji_correction(self.c1,
             ji_60000_id,
             '60000', new_account_code=False,
             expected_ad=new_ad,
             expected_ad_rev=False,
             expected_ad_cor=False
-        )"""
+        )
         
         # 26.8
         new_cc = 'HT120'
@@ -2353,21 +2417,39 @@ class FinanceTestCorCases(FinanceTest):
             new_ad_breakdown_data=False,
             ad_replace_data={ 40.: {'cc': new_cc, } }
         )
-        """
         self.check_ji_correction(self.c1,
             ji_60010_id,
             '60010', new_account_code=False,
             expected_ad=new_ad,
             expected_ad_rev=False,
             expected_ad_cor=False
-        )"""
+        )
         
         # 26.9
         self.synchronize(self.c1)
         
         # 26.10
         self.synchronize(self.p12)  # C1P2
-        # 2AJI deleted 60000 HT122 (=>HT120)
+        
+        # check 2AJI deleted 60000/60010 HT122 (=>HT120)
+        push_expected = [
+        ]
+        push_not_expected = [
+        ]
+        push_should_deleted = [
+            sdref_60000_ht122,
+            sdref_60010_ht122,
+        ]
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=self.c1,  # from C1
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                push_should_deleted=push_should_deleted,
+                pull_db=self.p12  # to C1P2
+            ))),
+            "SYNC mismatch"
+        )
         
         # 26.11
         self.synchronize(self.p1)
