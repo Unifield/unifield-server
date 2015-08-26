@@ -31,6 +31,7 @@ from mx import DateTime
 import re
 import logging
 
+
 class import_data(osv.osv_memory):
     _name = 'import_data'
     _description = 'Import Datas'
@@ -43,9 +44,47 @@ class import_data(osv.osv_memory):
 
     def _set_nomen_level(self, cr, uid, data, row, headers):
         if data.get('parent_id'):
-            v = self.onChangeParentId(cr, uid, id, data.get('type'), data['parent_id'])
-            if v['value']['level']:
-                data['level'] = v['value']['level']
+            parent_ids = self.search(cr, uid, [('msfid', '=', data['parent_id'])])
+            if parent_ids:
+                if isinstance(parent_ids, (int, long)):
+                    parent_ids = [parent_ids]
+                data['parent_id'] = parent_ids[0]
+
+                id = False  # Not used
+                v = self.onChangeParentId(cr, uid, id, data.get('type'),
+                                          data['parent_id'])
+                if v['value']['level']:
+                    data['level'] = v['value']['level']
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Nomenclature MSFID "%s" not found')
+                                     % (data['parent_id']))
+
+    def _set_product_category(self, cr, uid, data, row, headers):
+        if data.get('family_id', False):
+            n_obj = self.pool.get('product.nomenclature')
+            args = [('msfid', '=', data.get('family_id', False))]
+            nomen_ids = n_obj.search(cr, uid, args)
+            if nomen_ids:
+                if isinstance(nomen_ids, (int, long)):
+                    nomen_ids = [nomen_ids]
+                data['family_id'] = nomen_ids[0]
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Product category MSFID "%s" not found')
+                                     % (data.get('family_id')))
+        if data.get('donation_expense_account', False):
+            a_obj = self.pool.get('account.account')
+            args = [('code', '=', data.get('donation_expense_account'))]
+            account_ids = a_obj.search(cr, uid, args)
+            if account_ids:
+                if isinstance(account_ids, (int, long)):
+                    account_ids = [account_ids]
+                data['donation_expense_account'] = account_ids[0]
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Expense account code "%s" not found')
+                                     % (data.get('donation_expense_account')))
 
     def _set_full_path_nomen(self, cr, uid, headers, row, col):
         if not col:
@@ -78,11 +117,11 @@ class import_data(osv.osv_memory):
             if h in defaults and (not h in data or not data[h]):
                 data[h] = defaults[h]
 
-
     post_hook = {
         'account.budget.post': _set_code_name,
         'product.nomenclature': _set_nomen_level,
         'product.product': _set_default_value,
+        'product.category': _set_product_category,
     }
 
     pre_hook = {
@@ -144,6 +183,10 @@ class import_data(osv.osv_memory):
         fileobj.seek(0)
         impobj = self.pool.get(obj['object'])
         reader = csv.reader(fileobj, quotechar='"', delimiter=';')
+        delimiter = ";"
+        if impobj._name == 'product.nomenclature' or impobj._name == 'product.category':
+            delimiter = ","
+        reader = csv.reader(fileobj, quotechar='"', delimiter=delimiter)
         headers = []
 
         if impobj._name == 'product.product':
@@ -366,6 +409,8 @@ WHERE n3.level = 3)
                     if impobj._name == 'product.product':
                         # UF-2254: Allow to update the product, use xmlid_code now for searching
                         ids_to_update = impobj.search(cr, uid, [('xmlid_code', '=', data['xmlid_code'])])
+                    elif impobj._name == 'product.nomenclature':
+                        ids_to_update = impobj.search(cr, uid, [('msfid', '=', data['msfid'])])
 
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case
@@ -483,6 +528,49 @@ class import_product(osv.osv_memory):
                 'target': 'new'}
 
 import_product()
+
+
+class import_nomenclature(osv.osv_memory):
+    _name = 'import_nomenclature'
+    _inherit = 'import_data'
+
+    _defaults = {
+        'object': lambda *a: 'product.nomenclature',
+    }
+
+    def import_csv(self, cr, uid, ids, context=None):
+        super(import_nomenclature, self).import_csv(cr, uid, ids, context=context)
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'import_data', 'import_nomenclature_end')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'import_nomenclature',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'view_id': [view_id],
+                'target': 'new'}
+
+import_nomenclature()
+
+
+class import_product_category(osv.osv_memory):
+    _name = 'import_category'
+    _inherit = 'import_data'
+
+    _defaults = {
+        'object': lambda *a: 'product.category',
+    }
+
+    def import_csv(self, cr, uid, ids, context=None):
+        super(import_product_category, self).import_csv(cr, uid, ids, context=context)
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'import_data', 'import_category_end')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'import_category',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'view_id': [view_id],
+                'target': 'new'}
+
+import_product_category()
+
 
 class update_product(osv.osv_memory):
     _name = 'update_product'

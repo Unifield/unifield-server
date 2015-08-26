@@ -150,7 +150,7 @@ class product_nomenclature(osv.osv):
         check level value and type value
         '''
         if ('level' in vals) and ('type' in vals):
-            level = vals['level']
+            level = int(vals['level'])
             type = vals['type']
             # level test
             if level > _LEVELS:
@@ -165,7 +165,15 @@ class product_nomenclature(osv.osv):
         parent
         '''
         self._nomenclatureCheck(vals)
-
+        if vals.get('msfid', False):
+            # Check if msfid already exist
+            args = [('msfid', '=', vals.get('msfid', False))]
+            msf_ids = self.search(cr, user, args, context=context)
+            for msf_id in msf_ids:
+                if msf_id != ids and msf_id not in ids:
+                    raise osv.except_osv(_('Error'),
+                                         _('The MSFID (%s) already exist !')
+                                         % vals.get('msfid', False))
         # save the data to db
         return super(product_nomenclature, self).write(cr, user, ids, vals, context)
 
@@ -174,6 +182,17 @@ class product_nomenclature(osv.osv):
         override create method to check the validity of selected parent
         '''
         self._nomenclatureCheck(vals)
+        if vals.get('msfid', False):
+            # Check if msfid already exist
+            args = [('msfid', '=', vals.get('msfid', False))]
+            msf_ids = self.search(cr, user, args, context=context)
+            if msf_ids:
+                if context.get('from_import_menu', False):
+                    self.write(cr, user, msf_ids, vals, context=context)
+                else:
+                    raise osv.except_osv(_('Error'),
+                                         _('The MSFID (%s) already exist !')
+                                         % vals.get('msfid', False))
 
         # save the data to db
         return super(product_nomenclature, self).create(cr, user, vals, context)
@@ -469,18 +488,19 @@ class product_nomenclature(osv.osv):
         'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
 
         'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'), ('optional', 'Optional')], string='Nomenclature type', fnct_search=_search_nomen_type_s),
-
+        'msfid': fields.char('MSFID', size=128, required=True, select=True),
     }
 
     _defaults = {
-                 'level' : _getDefaultLevel,  # no access to actual new values, use onChange function instead
-                 'type' : lambda *a : 'mandatory',
-                 'sub_level': lambda *a : '0',
-                 'sequence': _getDefaultSequence,
-                 'active': True,
+        'level': _getDefaultLevel,  # no access to actual new values, use onChange function instead
+        'type': lambda *a: 'mandatory',
+        'sub_level': lambda *a: '0',
+        'sequence': _getDefaultSequence,
+        'active': True,
     }
 
     _order = "sequence, id"
+
     def _check_recursion(self, cr, uid, ids, context=None):
         level = 100
         while len(ids):
@@ -973,7 +993,6 @@ class product_product(osv.osv):
         if level not in levels:
             raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s') % (level, levels))
 
-
         for x in levels[level + 1:]:
             result['value'].update({'nomen_manda_%s' % x:False})
 
@@ -1097,6 +1116,7 @@ class product_product(osv.osv):
 
 product_product()
 
+
 class product_category(osv.osv):
     _name = 'product.category'
     _inherit = 'product.category'
@@ -1124,10 +1144,29 @@ class product_category(osv.osv):
         '''
         Set default values for datas.xml and tests.yml
         '''
+        res = {}
         if context is None:
             context = {}
 
-        return super(product_category, self).create(cr, uid, vals, context)
+        if vals.get('family_id', False):
+            args = [('family_id', '=', vals.get('family_id'))]
+            category_ids = self.search(cr, uid, args, context=context)
+            if context.get('from_import_menu', False):
+                res = self.write(cr, uid, category_ids, vals, context=context)
+            else:
+                raise osv.except_osv(_('Error'),
+                                     _('The MSFID (%s) already exist !')
+                                     % vals.get('family_id', False))
+        else:
+            res = super(product_category, self).create(cr, uid, vals,
+                                                       context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        return super(product_category, self).write(cr, uid, ids, vals,
+                                                   context=context)
 
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),

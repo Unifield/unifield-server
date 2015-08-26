@@ -51,6 +51,28 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_322_patch(self, cr, uid, *a, **b):
+        nomen_obj = self.pool.get('product.nomenclature')
+        nomen_ids = nomen_obj.search(cr, uid, [], order='id')
+
+        for nomen_id in nomen_ids:
+            nomen = nomen_obj.browse(cr, uid, nomen_id, context={})
+            msfid = ""
+            realmsfid = ""
+            if nomen.msfid is None or nomen.msfid == "":
+                if nomen.parent_id and nomen.parent_id != "":
+                    if nomen.parent_id.msfid != "":
+                        msfid = nomen.parent_id.msfid + "-"
+                name_first_word = nomen.name.split(' ')[0]
+                msfid += name_first_word
+                realmsfid = msfid
+                # Search same msfid
+                ids = nomen_obj.search(cr, uid, [('msfid', '=', realmsfid)])
+                while ids:
+                    realmsfid += msfid + str(nomen.id)
+                    ids = nomen_obj.search(cr, uid, [('msfid', '=', realmsfid)])
+                nomen_obj.write(cr, uid, nomen.id, {'msfid': realmsfid})
+
     def update_parent_budget_us_489(self, cr, uid, *a, **b):
         logger = logging.getLogger('update')
         c = self.pool.get('res.users').browse(cr, uid, uid).company_id

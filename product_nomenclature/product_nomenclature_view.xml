@@ -148,6 +148,7 @@
 				<form string="Product Nomenclature">
 					<field name="name" select="1" />
 					<field name="type" />
+					<field name="msfid" />
 					<field name="sub_level"
 						attrs="{'invisible': [('type', '!=', 'optional')], 'required': [('type', '=', 'optional')]}" />
 					<field name="parent_id" domain="[('type', '=', 'mandatory')]"
@@ -168,6 +169,7 @@
 			<field name="arch" type="xml">
 				<tree string="Product Nomenclature">
 					<field name="complete_name" invisible="1"/>
+                    <field name="msfid" />
                     <field name="nomen_manda_0_s" />
                     <field name="nomen_manda_1_s" />
                     <field name="nomen_manda_2_s" />
@@ -212,9 +214,11 @@
 			<field name="view_type">form</field>
 			<field name="view_id" ref="product_nomenclature_list_view" />
 		</record>
+
 		<menuitem action="product_nomenclature_action_form"
-			id="menu_product_nomenclature_action_form" parent="product.prod_config_main"
-			sequence="3" />
+			id="menu_product_nomenclature_action_form"
+			parent="purchase.menu_product_in_config_purchase"
+			sequence="6" />
 
 
 		<record id="product_nomenclature_normal_action_tree" model="ir.actions.act_window">
@@ -245,32 +249,31 @@
 		    <field name="priority" eval="99" />
 		    <field name="arch" type="xml">
 		        <search string="Link nomenclature/category">
+		            <field name="msfid" />
 		            <field name="custom_name" />
 		            <field name="category_id" />
-				<field name="nomen_type_s"  />
+					<field name="nomen_type_s"  />
 
-				<newline />
-						<group expand="1" string="Nomenclature Filters...">
-							<field name="nomen_manda_0_s"
-								domain="[('parent_id', '=', -1)]"
-								 widget="selection"
-								on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
-							<field name="nomen_manda_1_s"
-								domain="[('parent_id', '=', -1)]"
-								 widget="selection"
-								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
-							<field name="nomen_manda_2_s"
-								domain="[('parent_id', '=', -1), ('category_id', '!=', False)]"
-								 widget="selection"
-								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
-							<field name="nomen_manda_3_s"
-								domain="[('parent_id', '=', -1)]"
-								 widget="selection"
-								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
-						</group>
-						<newline />
-
-
+					<newline />
+					<group expand="1" string="Nomenclature Filters...">
+						<field name="nomen_manda_0_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_1_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_2_s"
+							domain="[('parent_id', '=', -1), ('category_id', '!=', False)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_3_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+					</group>
+					<newline />
 		        </search>
 		    </field>
 		</record>
@@ -281,6 +284,7 @@
 		    <field name="priority" eval="99" />
 		    <field name="arch" type="xml">
 		        <tree string="Link nomenclature/category" editable="top" hide_delete_button="True" noteditable="True">
+		            <field name="msfid" readonly="1" />
 		            <field name="name" readonly="1" string="Nomenclature" />
 		            <field name="category_id" required="1" />
 		        </tree>
@@ -302,7 +306,8 @@
         </record>
         <menuitem id="menu_link_nomenclature_category"
                   action="product_nomenclature_link_category_action"
-                  parent="purchase.menu_product_in_config_purchase" />
+                  parent="purchase.menu_product_in_config_purchase"
+                  sequence="7" />
                   
         <!-- Add family in product category view -->
         <record id="product_category_family_form_view" model="ir.ui.view">
