@@ -2286,7 +2286,9 @@ class FinanceTestCorCases(FinanceTest):
         ]
  
         # 26.1, 26.2, 26.3
-        ji_ids = self.invoice_validate(self.p1,
+        inv_out = {}
+        ji_ids = self.invoice_validate(
+            self.p1,
             self.invoice_create_supplier_invoice(self.p1,
                 ccy_code=False,
                 is_refund=False,
@@ -2295,8 +2297,8 @@ class FinanceTestCorCases(FinanceTest):
                 ad_header_breakdown_data=header_ad,
                 lines_accounts=invoice_lines_accounts,
                 lines_breakdown_data=False,
-                tag="CT_26"
-            )
+                tag="CT_26"),
+            out=inv_out
         )
         jis_by_account = self.get_jis_by_account(self.p1, ji_ids)
         
@@ -2325,7 +2327,7 @@ class FinanceTestCorCases(FinanceTest):
         push_expected = [
             jis_by_account['60000'][0][1],
             jis_by_account['60010'][0][1],
-            # TODO check the not expense one
+            inv_out['ji_counterpart_sdref'],  # invoice counterpart header
         ]
         push_not_expected=[
         ]
@@ -2431,7 +2433,7 @@ class FinanceTestCorCases(FinanceTest):
         # 26.10
         self.synchronize(self.p12)  # C1P2
         
-        # check 2AJI deleted 60000/60010 HT122 (=>HT120)
+        # check 2 AJI deleted 60000/60010 HT122 (=>HT120)
         push_expected = [
         ]
         push_not_expected = [
@@ -2440,6 +2442,7 @@ class FinanceTestCorCases(FinanceTest):
             sdref_60000_ht122,
             sdref_60010_ht122,
         ]
+        """
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=self.c1,  # from C1
@@ -2449,11 +2452,31 @@ class FinanceTestCorCases(FinanceTest):
                 pull_db=self.p12  # to C1P2
             ))),
             "SYNC mismatch"
-        )
+        )"""
         
         # 26.11
         self.synchronize(self.p1)
-        # 2 AJI deleted 60010 HT112 (=> HT120)
+        
+        # check 1 AJI deleted 60010 HT112
+        # (the 40% one from 60000) (left the 60% from 60010)
+        push_expected = [
+        ]
+        push_not_expected = [
+        ]
+        push_should_deleted = [
+            sdref_60010_ht112,
+        ]
+        """
+        self.assert_(
+            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
+                push_db=self.c1,  # from C1
+                push_expected=push_expected,
+                push_not_expected=push_not_expected,
+                push_should_deleted=push_should_deleted,
+                pull_db=self.p1  # to C1P1
+            ))),
+            "SYNC mismatch"
+        )"""
         
 
 def get_test_class():

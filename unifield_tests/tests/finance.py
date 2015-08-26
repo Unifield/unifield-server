@@ -1383,52 +1383,60 @@ class FinanceTest(UnifieldTest):
         
         return id
             
-    def invoice_validate(self, db, ids):
+    def invoice_validate(self, db, id, out=None):
         """
         validate the invoice and return its expense JIs ids list
-        :return : {id: [ji_id, ...]} if ids is a list else return [ji_id, ...]
+        the invoice must be DRAT
+        :param out: optional result, if provided filled with:
+            { 'ji_counterpart_id': id, 'ji_counterpart_sdref': 'sdref', }
+        :type out: dict/none
+        :return : [ji_id, ...]
         """
-        
-        if isinstance(ids, (int, long, )):
-            ids = [ids]
-            is_single_ids = True
-            res = []
-        else:
-            is_single_ids = False
-            res = {}
+        if not isinstance(id, (int, long, )):
+            raise FinanceTestException("id parameter expected to be unique id")
+            
+        res = []
             
         ai_model_name = 'account.invoice'
         ai_obj = db.get(ai_model_name)
-        aml_obj = db.get('account.move.line')
+        aml_model = 'account.move.line'
+        aml_obj = db.get(aml_model)
         
-        validated_ids = []
+        ai = ai_obj.browse(id)
+        if ai.state != 'draft':
+            raise FinanceTestException(
+                "You can not validate non draft invoice")
+                
+        # - open it
+        # - force doc date to posting date (as by default to cur date)
+        vals = {
+            'document_date': self.date2orm(ai.date_invoice),
+        }
+        if not ai.check_total:
+            vals['check_total'] = ai.amount_total
+        ai_obj.write([ai.id], vals)
+        db.exec_workflow(ai_model_name, 'invoice_open', ai.id)
+            
+        # rebrowse it to refresh after validate to get accounting entries
+        ai = ai_obj.browse(id)
         
-        for ai in ai_obj.browse(ids):
-            if not is_single_ids:
-                res[ai.id] = []
+        # get invoice EXPENSE JIs
+        ji_ids = [ ji.id for ji in ai.move_id.line_id \
+            if ji.account_id.is_analytic_addicted
+        ]
+        res = ji_ids or []
                 
-            if ai.state == 'draft':
-                # - open it
-                # - force doc date to posting date (as by default to cur date)
-                vals = {
-                    'document_date': self.date2orm(ai.date_invoice),
-                }
-                if not ai.check_total:
-                    vals['check_total'] = ai.amount_total
-                ai_obj.write([ai.id], vals)
-                db.exec_workflow(ai_model_name, 'invoice_open', ai.id)
-                validated_ids.append(ai.id)
-                
-        for ai in ai_obj.browse(validated_ids):
-            # get invoice EXPENSE JIs
+        if out is not None:
+            # optional results
+            
+            # get counterpart JI
             ji_ids = [ ji.id for ji in ai.move_id.line_id \
-                if ji.account_id.is_analytic_addicted
+                if not ji.account_id.is_analytic_addicted
             ]
- 
-            if is_single_ids:
-                res = ji_ids or []
-            else:
-                res[ai.id] = ji_ids or []
+            if ji_ids:
+                out['ji_counterpart_id'] = ji_ids[0]
+                out['ji_counterpart_sdref'] = self.get_record_sdref_from_id(
+                    aml_model, db, ji_ids[0])
 
         return res
         
