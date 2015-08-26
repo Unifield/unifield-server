@@ -87,7 +87,7 @@ TODO NOTES
     
 - options:
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
-    - [IMP] each case should delete some data
+    - [IMP] best if each case should delete some data
 """
 
 
@@ -813,7 +813,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_cor_rev_ajis_total_func_amount=80.65,
             )
             
-            # REOPEN period for over cases flows
+            # REOPEN period for over cases flow
             self.period_reopen(db, 'm', 1)
             self.period_reopen(db, 'f', 1)
 
@@ -825,6 +825,11 @@ class FinanceTestCorCases(FinanceTest):
         G/L ACCOUNT 60010=>60030
         """
         db = self.c1
+        
+        # REOPEN period closed in case 06 (if it fails)
+        self.period_reopen(db, 'm', 1)
+        self.period_reopen(db, 'f', 1)
+        
         self._register_set(db, ccy_name='USD')
         
         reg_id = self._register_get(db, browse=False, ccy_name='USD')
@@ -1136,7 +1141,7 @@ class FinanceTestCorCases(FinanceTest):
                 ji_br.name, ji_br.debit_currency, )
         )
         
-        # REOPEN period for over cases flows
+        # REOPEN period for over cases flow
         self.period_reopen(db, 'm', 1)
         self.period_reopen(db, 'f', 1)
         
@@ -1146,6 +1151,10 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_13
         """
         db = self.c1
+        
+        # REOPEN period closed in case 12 (if it fails)
+        self.period_reopen(db, 'm', 1)
+        self.period_reopen(db, 'f', 1)
         
         invoice_lines_accounts = [ '60010', '60020', ]
         
@@ -2275,15 +2284,19 @@ class FinanceTestCorCases(FinanceTest):
             "SYNC mismatch"
         )
         
-        # reopen periods for next flows
-        self.period_reopen(push_db, 'm', 1, year=0)
-        self.period_reopen(push_db, 'f', 1, year=0)
+        # REOPEN period for over cases flow
+        self.period_reopen(push_db, 'm', 1)
+        self.period_reopen(push_db, 'f', 1)
         
     def test_cor_26(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_26
         """
+        # REOPEN period closed in case 25 (if it fails)
+        self.period_reopen(self.c1, 'm', 1)
+        self.period_reopen(self.c1, 'f', 1)
+        
         model_aal = 'account.analytic.line'
         
         invoice_lines_accounts = [ '60000', '60010', ]

@@ -1204,14 +1204,19 @@ class FinanceTest(UnifieldTest):
         """
         self._period_close_reopen(db, level, month, year=year, reopen=True)
     
-    def _period_close_reopen(self, db, level, month, year=0, reopen=False):
+    def _period_close_reopen(self, db, level, month, year=0, reopen=None):
         """
         close/reopen period at given level
         :param level: 'f', 'm' or 'h' for 'field', 'mission' or 'hq'
         """
         self.assert_(
             level in ('f', 'm', 'h', ),
-            "invalid level value 'f', 'm' or 'h' expected"
+            "invalid level parameter 'f', 'm' or 'h' expected"
+        )
+        
+        self.assert_(
+            reopen is not None and isinstance(reopen, bool),
+            "invalid reopen parameter: bool expected"
         )
         
         period_id = self.get_period_id(db, month, year=year)
@@ -1221,30 +1226,48 @@ class FinanceTest(UnifieldTest):
         )
             
         period_obj = db.get('account.period')
+        period_br = period_obj.browse(period_id)
+        
+        # check current state
+        state = period_br.state
+        if reopen:
+            if level == 'f':
+                if state == 'draft':
+                    return  # already open
+            elif level == 'm':
+                if state in ('draft', 'field-closed', ):
+                    return  # already mission reopen
+            elif level == 'h':
+                if state in ('draft', 'field-closed', 'mission-closed', ):
+                    return   # already hq reopen
+        else:
+            if level == 'f':
+                if state in ('field-closed', 'mission-closed', 'done', ):
+                    return  # already field closed
+            elif level == 'm':
+                if state in ('mission-closed', 'done', ):
+                    return  # already mission closed
+            elif level == 'h':
+                if state == 'done':
+                    return   # already hq closed
+        
+        # reopen/close related registers
         abs_obj = db.get('account.bank.statement')
+        reg_ids = abs_obj.search([
+                ('state', '!=', 'open' if reopen else 'confirm'),
+                ('period_id', '=', period_id),
+            ])
+        if reg_ids:
+            for id in reg_ids:
+                if reopen:
+                    self.register_reopen(db, id)
+                else:
+                    self.register_close(db, id)
         
         if level =='f':
             if reopen:
-                # reopen relating registers
-                reg_ids = abs_obj.search([
-                    ('state', '!=', 'open'),
-                    ('period_id', '=', period_id),
-                ])
-                if reg_ids:
-                    for id in reg_ids:
-                        self.register_reopen(db, id)
-                    
                 period_obj.action_reopen_field([period_id])
             else:
-                # close relating registers
-                reg_ids = abs_obj.search([
-                    ('state', '!=', 'confirm'),
-                    ('period_id', '=', period_id),
-                ])
-                if reg_ids:
-                    for id in reg_ids:
-                        self.register_close(db, id)
-                    
                 period_obj.action_close_field([period_id])
         elif level == 'm':
             if reopen:
