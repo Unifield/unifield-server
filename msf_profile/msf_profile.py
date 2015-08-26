@@ -51,7 +51,7 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
-    def us_322_patch(self, cr, uid, *a, **b):
+    def us_332_patch(self, cr, uid, *a, **b):
         nomen_obj = self.pool.get('product.nomenclature')
         nomen_ids = nomen_obj.search(cr, uid, [], order='id')
 
@@ -59,7 +59,7 @@ class patch_scripts(osv.osv):
             nomen = nomen_obj.browse(cr, uid, nomen_id, context={})
             msfid = ""
             realmsfid = ""
-            if nomen.msfid is None or nomen.msfid == "":
+            if not nomen.msfid or nomen.msfid == "":
                 nomen_parent = nomen.parent_id
                 if nomen_parent and nomen_parent != "":
                     if nomen_parent.msfid and nomen_parent.msfid != "":

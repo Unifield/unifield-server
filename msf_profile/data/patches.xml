@@ -13,8 +13,8 @@
             <field name="method">us_394_2_patch</field>
         </record>
 
-        <record id="us_322_patch_msfid" model="patch.scripts">
-            <field name="method">us_322_patch</field>
+        <record id="us_332_patch" model="patch.scripts">
+            <field name="method">us_332_patch</field>
         </record>
 
     </data>
