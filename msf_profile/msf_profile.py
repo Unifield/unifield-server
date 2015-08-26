@@ -60,9 +60,10 @@ class patch_scripts(osv.osv):
             msfid = ""
             realmsfid = ""
             if nomen.msfid is None or nomen.msfid == "":
-                if nomen.parent_id and nomen.parent_id != "":
-                    if nomen.parent_id.msfid != "":
-                        msfid = nomen.parent_id.msfid + "-"
+                nomen_parent = nomen.parent_id
+                if nomen_parent and nomen_parent != "":
+                    if nomen_parent.msfid and nomen_parent.msfid != "":
+                        msfid = nomen_parent.msfid + "-"
                 name_first_word = nomen.name.split(' ')[0]
                 msfid += name_first_word
                 realmsfid = msfid
