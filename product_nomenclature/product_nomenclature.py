@@ -488,7 +488,7 @@ class product_nomenclature(osv.osv):
         'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
 
         'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'), ('optional', 'Optional')], string='Nomenclature type', fnct_search=_search_nomen_type_s),
-        'msfid': fields.char('MSFID', size=128, required=True, select=True),
+        'msfid': fields.char('MSFID', size=128, select=True),
     }
 
     _defaults = {
