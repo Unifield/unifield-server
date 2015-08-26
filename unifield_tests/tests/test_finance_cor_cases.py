@@ -52,10 +52,6 @@ TODO NOTES
             => check with Matthias
             => check case manually
             
-- MAJOR:
-  - when a flow close some period, force reopen at next flow begin to ensure
-    a raised assert does not block next flows
-            
 - DATASET
     - financing contract FC1: add FP1, FP2
     (need to be done manually at this time...)
