@@ -37,6 +37,14 @@ HT211                                                   X
 """
 TODO NOTES
 
+- FAILED CASES
+    26:
+        - C1P2 left 1 AJI 60010 HT122: wrong as global AD replaced by new AD
+          100% OPS HT120 PF (HT120 target of C1) should be removed as for 60000
+          (due to header ad corrected to new ad ?)
+        - C1P1 left 2 AJI 60010 HT11: should here only one
+        => check with a functional test of the flow
+
 - use cases to check at fonctional level:
     10: not expense account to expense one with an AD: 
         => AJIs are created in OD journal
@@ -2442,7 +2450,6 @@ class FinanceTestCorCases(FinanceTest):
             sdref_60000_ht122,
             sdref_60010_ht122,
         ]
-        """
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=self.c1,  # from C1
@@ -2452,21 +2459,20 @@ class FinanceTestCorCases(FinanceTest):
                 pull_db=self.p12  # to C1P2
             ))),
             "SYNC mismatch"
-        )"""
+        )
         
         # 26.11
         self.synchronize(self.p1)
         
-        # check 1 AJI deleted 60010 HT112
+        # check 1 AJI deleted 60000 HT112
         # (the 40% one from 60000) (left the 60% from 60010)
         push_expected = [
         ]
         push_not_expected = [
         ]
         push_should_deleted = [
-            sdref_60010_ht112,
+            sdref_60000_ht112,
         ]
-        """
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=self.c1,  # from C1
@@ -2476,7 +2482,7 @@ class FinanceTestCorCases(FinanceTest):
                 pull_db=self.p1  # to C1P1
             ))),
             "SYNC mismatch"
-        )"""
+        )
         
 
 def get_test_class():
