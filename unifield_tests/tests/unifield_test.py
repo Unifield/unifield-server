@@ -430,7 +430,8 @@ class UnifieldTest(unittest.TestCase):
         pull_db=None,
         fields=False,
         fields_m2o=False,
-        assert_report=True):
+        assert_report=True,
+        report_fields=False):
         """
         :param model: model name of target record
         :param push_db: db to push record from
@@ -451,9 +452,47 @@ class UnifieldTest(unittest.TestCase):
         :type fields_m2o: [('comodel', 'field_name'), ]
         :assert_report: True to assert a report if fields mismatch
             (assert used to no stop full unit test flow)
+        :param report_fields: list of fields to report if assert_report True
+        :type report_fields: list/none
         :return records eguals ?
         :rtype: { 'sdref' : True, }
-        """        
+        """
+        def get_fields_report(browsed_rec):
+            res = ''
+            if not report_fields:
+                return res
+                
+            # get meta from push model (same as pull) 
+            meta_model_ids = push_db.get('ir.model').search(
+                [('model', '=', model)])
+            if not meta_model_ids:
+                return res
+            
+            vals = {}
+            meta_field_obj = push_db.get('ir.model.fields')
+            for f in report_fields:
+                if hasattr(browsed_rec, f):
+                    meta_field_ids = meta_field_obj.search([
+                        ('model_id', '=', meta_model_ids[0]),
+                        ('name', '=', f),
+                    ])
+                    if not meta_field_ids:
+                        continue
+                        
+                    ftype = meta_field_obj.browse(meta_field_ids[0]).ttype
+                    fval = browsed_rec[f]
+                    if ftype == 'many2one':
+                        vals[f] = str(
+                            hasattr(fval, 'code') and fval.code or fval.name)
+                    elif ftype in ('char', 'text', ):
+                        vals[f] = fval
+                    else:
+                        vals[f] = str(fval)
+             
+            if vals:           
+                res = " | VALS %s" % (str(vals), )
+            return res
+                
         def check_expected():
             for sdref in push_expected:
                 res[sdref] = True  # OK by default 
@@ -468,9 +507,10 @@ class UnifieldTest(unittest.TestCase):
                     # KO record not pulled
                     res[sdref] = False
                     if assert_report:
-                        report_lines.append("%s %s(%s) %s NOT pulled to %s" % (
+                        report_lines.append(
+                            "%s %s(%s) %s NOT pulled to %s%s" % (
                             push_db.colored_name, model, sdref, push_br.name,
-                            pull_db.colored_name, ))
+                            pull_db.colored_name, get_fields_report(push_br)))
                     continue  # not pulled, continue to next record to test
                 pull_br = pull_obj.browse(pull_id)
                 
@@ -522,24 +562,30 @@ class UnifieldTest(unittest.TestCase):
                     res[sdref] = False
                     if assert_report:
                         report_lines.append("%s %s(%s) %s pulled to %s" \
-                            " AND SHOULD NOT" % (
+                            " AND SHOULD NOT%s" % (
                                 push_db.colored_name, model, sdref,
-                                push_br.name, pull_db.colored_name, ))
+                                push_br.name, pull_db.colored_name,
+                                get_fields_report(push_br)))
 
         def check_should_deleted():
             for sdref in push_should_deleted:
                 res[sdref] = True  # OK by default 
                 
-                # pulled browsed record
-                pull_id = self.get_record_id_from_sdref(pull_db, sdref)
-                if pull_id:
+                # is record pooled ?
+                pull_search_id = self.get_record_id_from_sdref(pull_db, sdref)
+                pull_ids = pull_obj.search([('id', '=', pull_search_id)])
+                
+                if pull_ids:
                     # KO record here and SHOULD BE DELETED
                     res[sdref] = False
                     if assert_report:
                         report_lines.append("%s %s(%s) STILL IN %s" \
-                            " with id %d AND SHOULD BE DELETED" % (
+                            " with id %d AND SHOULD BE DELETED%s" % (
                                 push_db.colored_name, model, sdref,
-                                pull_db.colored_name, pull_id))                                
+                                pull_db.colored_name, pull_ids[0],
+                                get_fields_report(pull_obj.browse(pull_ids[0])),
+                            )
+                        )                                
             
         push_obj = push_db.get(model)
         pull_obj = pull_db.get(model)

@@ -1896,6 +1896,15 @@ class FinanceTestCorCases(FinanceTest):
         )
         jis_by_account = self.get_jis_by_account(push_db, ji_ids)
         
+        # get 63120 HT111 sdref: will be deleted later(C1P1) and need to assert
+        aji_63120_HT111_sdref = self.get_ji_ajis_by_account(push_db, ji_ids,
+            account_code_filter='63120',
+            cc_code_filter='HT111')['63120'][0][1]
+        # get 63120 HT121 sdref: will be deleted later(C1P2) and need to assert
+        aji_63120_HT121_sdref = self.get_ji_ajis_by_account(push_db, ji_ids,
+            account_code_filter='63120',
+            cc_code_filter='HT121')['63120'][0][1]
+        
         # 24.4
         self.synchronize(push_db)
         
@@ -1959,12 +1968,7 @@ class FinanceTestCorCases(FinanceTest):
             "SYNC mismatch"
         )
         
-        # 24.7
-        # get 63120 HT111 sdref: will be deleted later(C1P1) and need to assert
-        aji_63120_HT111_sdref = self.get_ji_ajis_by_account(push_db, ji_ids,
-            account_code_filter='63120',
-            cc_code_filter='HT111')['63120'][0][1]
-        
+        # 24.7        
         new_ad = [
             (100., 'OPS', 'HT120', 'PF'),
         ]
@@ -1984,11 +1988,6 @@ class FinanceTestCorCases(FinanceTest):
         )
         
         # 24.8
-        # get 63110 HT121 sdref: will be deleted later(C1P2) and need to assert
-        aji_63110_HT121_sdref = self.get_ji_ajis_by_account(push_db, ji_ids,
-            account_code_filter='63110',
-            cc_code_filter='HT121')['63110'][0][1]
-        
         new_cc = 'HT122'
         new_ad = [
             (100., 'OPS', new_cc, 'FP2'),
@@ -2010,6 +2009,7 @@ class FinanceTestCorCases(FinanceTest):
         
         # 24.9
         self.synchronize(push_db)
+        self.synchronize(push_db)
         
         # 24.10
         pull_db = self.p1
@@ -2023,8 +2023,6 @@ class FinanceTestCorCases(FinanceTest):
         push_should_deleted = [
             aji_63120_HT111_sdref,
         ]
-        # TODO: raised and should not: AJI is correctly deleted C1P1 side
-        """
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
                 push_db=push_db,
@@ -2034,13 +2032,14 @@ class FinanceTestCorCases(FinanceTest):
                 pull_db=pull_db
             ))),
             "SYNC mismatch"
-        )"""
+        )
         
         # 24.11
         pull_db = self.p12
         self.synchronize(pull_db)
  
-        # update 1 AJI: 63110 HT121 -> HT122
+        # - delete 1 AJI: 63120 HT121 -> HT120
+        # - update 1 AJI: 63110 HT121 -> HT122
         push_expected = [
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
@@ -2049,6 +2048,7 @@ class FinanceTestCorCases(FinanceTest):
         push_not_expected = [
         ]
         push_should_deleted = [
+            aji_63120_HT121_sdref
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(

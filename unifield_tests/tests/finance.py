@@ -1645,7 +1645,8 @@ class FinanceTest(UnifieldTest):
             push_should_deleted=push_should_deleted,
             pull_db=pull_db,
             fields=fields, fields_m2o=fields_m2o,
-            assert_report=assert_report
+            assert_report=assert_report,
+            report_fields=[ 'account_id', 'date', 'document_date', ]
         )
             
     def check_aji_record_sync_push_pulled(self,
@@ -1697,7 +1698,10 @@ class FinanceTest(UnifieldTest):
             push_should_deleted=push_should_deleted,
             pull_db=pull_db,
             fields=fields, fields_m2o=fields_m2o,
-            assert_report=assert_report
+            assert_report=assert_report,
+            report_fields=[
+                'general_account_id', 'cost_center_id', 'account_id',
+                'date', 'document_date', ]
         )
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
