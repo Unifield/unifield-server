@@ -44,20 +44,20 @@ class import_data(osv.osv_memory):
 
     def _set_nomen_level(self, cr, uid, data, row, headers):
         if data.get('parent_id'):
-            parent_ids = self.search(cr, uid, [('msfid', '=', data['parent_id'])])
+            v = self.onChangeParentId(cr, uid, id, data.get('type'), data['parent_id'])
+            if v['value']['level']:
+                data['level'] = v['value']['level']
+
+            n_obj = self.pool.get('product.nomenclature')
+            args = [('msfid', '=', data['parent_id'])]
+            parent_ids = n_obj.search(cr, uid, args)
             if parent_ids:
                 if isinstance(parent_ids, (int, long)):
                     parent_ids = [parent_ids]
                 data['parent_id'] = parent_ids[0]
-
-                id = False  # Not used
-                v = self.onChangeParentId(cr, uid, id, data.get('type'),
-                                          data['parent_id'])
-                if v['value']['level']:
-                    data['level'] = v['value']['level']
             else:
                 raise osv.except_osv(_('Warning !'),
-                                     _('Nomenclature MSFID "%s" not found')
+                                     _('Parent Nomenclature "%s" not found')
                                      % (data['parent_id']))
 
     def _set_product_category(self, cr, uid, data, row, headers):
