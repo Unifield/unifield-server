@@ -2878,6 +2878,8 @@ class stock_picking(osv.osv):
             new_pick_id = False
             new_lines = []
 
+            import pdb
+            pdb.set_trace()
             if obj.state == 'draft' and keep_move is not None:
                 context['wkf_copy'] = True
                 new_pick_id = self.copy(cr, uid, obj.id, default_vals, context=context)
@@ -2962,9 +2964,10 @@ class stock_picking(osv.osv):
 
             if pick_to_check:
                 for ptc_id in pick_to_check:
-                    if self.has_picking_ticket_in_progress(cr, uid, [ptc_id], context=context)[ptc_id]:
+                    ptc = self.browse(cr, uid, ptc_id, context=context)
+                    if ptc.state == 'draft' and ptc.subtype == 'picking' and self.has_picking_ticket_in_progress(cr, uid, [ptc_id], context=context)[ptc_id]:
                         continue
-                    if self.read(cr, uid, ptc_id, ['state'], context=context)['state'] == 'draft':
+                    if ptc.state == 'draft':
                         self.validate(cr, uid, list(pick_to_check), context=context)
                     ptc = self.browse(cr, uid, ptc_id, context=context)
                     if all(m.state == 'cancel' or (m.product_qty == 0.00 and m.state in ('done', 'cancel')) for m in ptc.move_lines):
