@@ -144,6 +144,7 @@
                                 string="Unreconciled"
                                 domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
                                 name="unreconciled"/>
+                            <filter icon="terp-personal" string="Employee" domain="[('employee_id', '!=', False)]" context="{'identification': 1}" />
                             <field name="document_date"/>
                             <field name="date" select='1'/>
                             <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
