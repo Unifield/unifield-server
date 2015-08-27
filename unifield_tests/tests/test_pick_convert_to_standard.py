@@ -29,6 +29,7 @@ class PickConvertToStandardTest(ResourcingTest):
         self.c_lc_obj = self.c1.get('sale.order.leave.close')
         self.c_so_cancel_obj = self.c1.get('sale.order.cancelation.wizard')
         self.c_pick_obj = self.c1.get('stock.picking')
+        self.c_move_obj = self.c1.get('stock.move')
         self.c_ship_obj = self.c1.get('shipment')
         self.c_enter_reason_obj = self.c1.get('enter.reason')
         self.c_proc_in_obj = self.c1.get('stock.incoming.processor')
@@ -220,6 +221,12 @@ class PickConvertToStandardTest(ResourcingTest):
 
         return v_ship_id
 
+    def test_fake(self):
+        return
+
+    def check_draft_pick_move_state(self, draft_picks):
+        return
+
     def test_0001_convert_draft_pick(self):
         """
         Before the processing of the reception, convert to standard the draft picking ticket
@@ -303,9 +310,12 @@ class PickConvertToStandardTest(ResourcingTest):
         self.assert_(
             len(out_ids) == 1,
             "After converting a validated picking ticket, there is no Outgoing delivery in DB")
+        self.check_draft_pick_move_state(draft_picks)
         self.process_incoming()
 
         self.process_out(out_ids)
+
+        return draft_picks
 
     def test_0004_convert_partial_ppl(self):
         """
@@ -337,8 +347,11 @@ class PickConvertToStandardTest(ResourcingTest):
         self.assert_(
             len(out_ids) == 1,
             "After converting a draft picking ticket, there is no Outgoing delivery in DB")
+        self.check_draft_pick_move_state(draft_picks)
 
         self.process_out(out_ids)
+
+        return draft_picks
 
     def test_0005_convert_partial_shipment(self):
         """
@@ -374,14 +387,16 @@ class PickConvertToStandardTest(ResourcingTest):
         self.assert_(
             len(out_ids) == 1,
             "After converting a draft picking ticket, there is no Outgoing delivery in DB")
+        self.check_draft_pick_move_state(draft_picks)
 
         if ship_id:
             v_ship_id = self.create_shipment(ship_id)
             if v_ship_id:
                 self.c1.get('shipment').validate([v_ship_id])
 
-
         self.process_out(out_ids)
+
+        return draft_picks
 
     def test_0006_convert_partial_validated_shipment(self):
         """
@@ -422,11 +437,14 @@ class PickConvertToStandardTest(ResourcingTest):
         self.assert_(
             len(out_ids) == 1,
             "After converting a draft picking ticket, there is no Outgoing delivery in DB")
+        self.check_draft_pick_move_state(draft_picks)
 
         if v_ship_id:
             self.c1.get('shipment').validate([v_ship_id])
 
         self.process_out(out_ids)
+
+        return draft_picks
 
     def test_0007_convert_partial_closed_shipment(self):
         """
@@ -471,6 +489,52 @@ class PickConvertToStandardTest(ResourcingTest):
 
         self.process_out(out_ids)
 
+class PickConvertToStandardPartialTest(PickConvertToStandardTest):
 
-def get_test_class():
-    return PickConvertToStandardTest
+    def create_pick(self, pick_ids, full=False):
+        proc_obj = self.c1.get('create.picking.processor')
+        proc_move_obj = self.c1.get('create.picking.move.processor')
+
+        if isinstance(pick_ids, (int, long)):
+            pick_ids = [pick_ids]
+
+        for pick_id in pick_ids:
+            proc_res = self.c_pick_obj.create_picking([pick_id])
+            if full:
+                proc_obj.copy_all([proc_res.get('res_id')])
+            else:
+                proc_move_ids = proc_move_obj.search([('wizard_id', '=', proc_res.get('res_id'))])
+                for proc_move_id in proc_move_ids:
+                    proc_move_qty = proc_move_obj.browse(proc_move_id).ordered_quantity
+                    proc_move_obj.write([proc_move_id], {'quantity': proc_move_qty-1})
+            proc_obj.do_create_picking([proc_res.get('res_id')])
+
+        self.c_out_ids = self.c_pick_obj.search([('sale_id', '=', self.c_so_id), ('type', '=', 'out')])
+
+    def validate_pick(self, pick_ids, full=False):
+        proc_obj = self.c1.get('validate.picking.processor')
+        proc_move_obj = self.c1.get('validate.move.processor')
+
+        if isinstance(pick_ids, (int, long)):
+            pick_ids = [pick_ids]
+
+        for pick_id in pick_ids:
+            proc_res = self.c_pick_obj.validate_picking([pick_id])
+            if full:
+                proc_obj.copy_all([proc_res.get('res_id')])
+            else:
+                proc_move_ids = proc_move_obj.search([('wizard_id', '=', proc_res.get('res_id'))])
+                for proc_move_id in proc_move_ids:
+                    proc_move_qty = proc_move_obj.browse(proc_move_id).ordered_quantity
+                    proc_move_obj.write([proc_move_id], {'quantity': proc_move_qty-1})
+            proc_obj.do_validate_picking([proc_res.get('res_id')])
+
+    def check_draft_pick_move_state(self, draft_picks):
+        move_ids = self.c_move_obj.search([('picking_id', 'in', draft_picks)])
+        moves = self.c_move_obj.read(move_ids, ['state'])
+        self.assert_(
+            all(x['state'] == 'assigned' for x in moves),
+            "All moves in the draft picking ticket are not draft and should be")
+
+def get_test_suite():
+    return PickConvertToStandardTest, PickConvertToStandardTest

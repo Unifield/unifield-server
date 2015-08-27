@@ -2819,10 +2819,19 @@ class stock_picking(osv.osv):
         for pick in self.browse(cr, uid, ids, context=context):
             for bo in pick.backorder_ids:
                 if not bo.is_completed()[bo.id]:
+                    # Check for each stock move of the draft PT, if there is an in progress stock move
                     pick_moves.setdefault(pick.id, {})
                     for m in bo.move_lines:
                         if m.state not in ('done', 'cancel'):
                             pick_moves[pick.id].setdefault(m.backmove_id.id, True)
+                    steps = bo.previous_step_ids
+                    while steps:
+                        for next_step in steps:
+                            steps.remove(next_step)
+                            for m in next_step.move_lines:
+                                if m.state not in ('done', 'cancel'):
+                                    pick_moves[pick.id].setdefault(m.backmove_id.id, True)
+                            steps.extend(next_step.previous_step_ids)
 
         return pick_moves
 
@@ -2953,6 +2962,8 @@ class stock_picking(osv.osv):
 
             if pick_to_check:
                 for ptc_id in pick_to_check:
+                    if self.has_picking_ticket_in_progress(cr, uid, [ptc_id], context=context)[ptc_id]:
+                        continue
                     if self.read(cr, uid, ptc_id, ['state'], context=context)['state'] == 'draft':
                         self.validate(cr, uid, list(pick_to_check), context=context)
                     ptc = self.browse(cr, uid, ptc_id, context=context)
