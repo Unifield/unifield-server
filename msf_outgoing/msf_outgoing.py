@@ -2878,8 +2878,6 @@ class stock_picking(osv.osv):
             new_pick_id = False
             new_lines = []
 
-            import pdb
-            pdb.set_trace()
             if obj.state == 'draft' and keep_move is not None:
                 context['wkf_copy'] = True
                 new_pick_id = self.copy(cr, uid, obj.id, default_vals, context=context)
