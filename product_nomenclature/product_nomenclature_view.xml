@@ -249,7 +249,7 @@
 		    <field name="priority" eval="99" />
 		    <field name="arch" type="xml">
 		        <search string="Link nomenclature/category">
-		            <field name="msfid" />
+		            <field name="msfid" string="Nomenclature MSFID" />
 		            <field name="custom_name" />
 		            <field name="category_id" />
 					<field name="nomen_type_s"  />
@@ -284,7 +284,7 @@
 		    <field name="priority" eval="99" />
 		    <field name="arch" type="xml">
 		        <tree string="Link nomenclature/category" editable="top" hide_delete_button="True" noteditable="True">
-		            <field name="msfid" readonly="1" />
+		            <field name="msfid" string="Nomenclature MSFID" readonly="1" />
 		            <field name="name" readonly="1" string="Nomenclature" />
 		            <field name="category_id" required="1" />
 		        </tree>

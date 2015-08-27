@@ -175,12 +175,13 @@ class product_nomenclature(osv.osv):
                                          _('Another line have same MSFID (%s)')
                                          % vals.get('msfid'))
         # save the data to db
-        return super(product_nomenclature, self).write(cr, user, ids, vals, context)
+        return super(product_nomenclature, self).write(cr, user, ids, vals, context=context)
 
     def create(self, cr, user, vals, context=None):
         '''
         override create method to check the validity of selected parent
         '''
+        res = {}
         self._nomenclatureCheck(vals)
         if vals.get('msfid', False):
             # Check if msfid already exist
@@ -188,14 +189,19 @@ class product_nomenclature(osv.osv):
             msf_ids = self.search(cr, user, args, context=context)
             if msf_ids:
                 if context.get('from_import_menu', False):
-                    self.write(cr, user, msf_ids, vals, context=context)
+                    res = self.write(cr, user, msf_ids, vals, context=context)
                 else:
                     raise osv.except_osv(_('Error'),
                                          _('MSFID (%s) already exist')
                                          % vals.get('msfid', False))
-
-        # save the data to db
-        return super(product_nomenclature, self).create(cr, user, vals, context)
+            else:
+                print "Create"
+                res = super(product_nomenclature, self).create(cr, user, vals,
+                                                               context=context)
+        else:
+            raise osv.except_osv(_('Error'),
+                                 _('No MSFID given'))
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         """
@@ -464,7 +470,7 @@ class product_nomenclature(osv.osv):
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'name': fields.char('Name', size=64, required=True, select=True, translate=1),
-        'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name', fnct_search=_search_complete_name),
+        'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Full name', fnct_search=_search_complete_name),
         'custom_name': fields.function(_get_custom_name, method=True, type="char", string='Name', fnct_search=_search_custom_name),
         # technic fields - tree management
         'parent_id': fields.many2one('product.nomenclature', 'Parent Nomenclature', select=True),
@@ -1148,15 +1154,15 @@ class product_category(osv.osv):
         if context is None:
             context = {}
 
-        if vals.get('family_id', False):
-            args = [('family_id', '=', vals.get('family_id'))]
+        if vals.get('msfid', False):
+            args = [('msfid', '=', vals.get('msfid'))]
             category_ids = self.search(cr, uid, args, context=context)
             if context.get('from_import_menu', False):
                 res = self.write(cr, uid, category_ids, vals, context=context)
             else:
                 raise osv.except_osv(_('Error'),
                                      _('The MSFID (%s) already exist !')
-                                     % vals.get('family_id', False))
+                                     % vals.get('msfid', False))
         else:
             res = super(product_category, self).create(cr, uid, vals,
                                                        context=context)
@@ -1165,6 +1171,14 @@ class product_category(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
+
+        if vals.get('msfid', False):
+            args = [('msfid', '=', vals.get('msfid'))]
+            category_ids = self.search(cr, uid, args, context=context)
+            if ids == category_ids or ids in category_ids:
+                raise osv.except_osv(_('Error'),
+                                     _('The MSFID (%s) already exist !')
+                                     % vals.get('msfid', False))
         return super(product_category, self).write(cr, uid, ids, vals,
                                                    context=context)
 
@@ -1173,6 +1187,7 @@ class product_category(osv.osv):
         'family_id': fields.many2one('product.nomenclature', string='Family',
                                      domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '=', False)]",
                                      ),
+        'msfid': fields.char('MSFID', size=128),
     }
 
     _defaults = {

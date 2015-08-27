@@ -52,6 +52,8 @@ class patch_scripts(osv.osv):
             self.write(cr, uid, [ps['id']], {'run': True})
 
     def us_332_patch(self, cr, uid, *a, **b):
+
+        # create MSFID for product.nomenclature
         nomen_obj = self.pool.get('product.nomenclature')
         nomen_ids = nomen_obj.search(cr, uid, [], order='id')
 
@@ -69,10 +71,29 @@ class patch_scripts(osv.osv):
                 realmsfid = msfid
                 # Search same msfid
                 ids = nomen_obj.search(cr, uid, [('msfid', '=', realmsfid)])
-                while ids:
+                if ids:
                     realmsfid += msfid + str(nomen.id)
-                    ids = nomen_obj.search(cr, uid, [('msfid', '=', realmsfid)])
                 nomen_obj.write(cr, uid, nomen.id, {'msfid': realmsfid})
+
+        # create MSFID for product.category
+        categ_obj = self.pool.get('product.category')
+        categ_ids = categ_obj.search(cr, uid, [], order='id')
+
+        for categ_id in categ_ids:
+            categ = categ_obj.browse(cr, uid, categ_id, context={})
+            msfid = ""
+            realmsfid = ""
+            if not categ.msfid or categ.msfid == "":
+                family = categ.family_id
+                if family and family != "":
+                    if family.name and family.name != "":
+                        msfid = family.name[0:4]
+                        realmsfid = msfid
+                        ids = categ_obj.search(cr, uid,
+                                               [('msfid', '=', realmsfid)])
+                        if ids:
+                            realmsfid += msfid + str(categ.id)
+                categ_obj.write(cr, uid, categ.id, {'msfid': realmsfid})
 
     def update_parent_budget_us_489(self, cr, uid, *a, **b):
         logger = logging.getLogger('update')

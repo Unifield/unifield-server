@@ -43,18 +43,22 @@ class import_data(osv.osv_memory):
             data['code'] = row[0]
 
     def _set_nomen_level(self, cr, uid, data, row, headers):
-        if data.get('parent_id'):
-            v = self.onChangeParentId(cr, uid, id, data.get('type'), data['parent_id'])
-            if v['value']['level']:
-                data['level'] = v['value']['level']
 
+        if data.get('parent_id', False):
             n_obj = self.pool.get('product.nomenclature')
             args = [('msfid', '=', data['parent_id'])]
             parent_ids = n_obj.search(cr, uid, args)
             if parent_ids:
                 if isinstance(parent_ids, (int, long)):
-                    parent_ids = [parent_ids]
-                data['parent_id'] = parent_ids[0]
+                    parent_id = parent_ids
+                else:
+                    parent_id = parent_ids[0]
+
+                v = self.onChangeParentId(cr, uid, id, data.get('type'),
+                                          parent_id)
+                if v['value']['level']:
+                    data['level'] = v['value']['level']
+                data['parent_id'] = parent_id
             else:
                 raise osv.except_osv(_('Warning !'),
                                      _('Parent Nomenclature "%s" not found')
@@ -409,10 +413,6 @@ WHERE n3.level = 3)
                     if impobj._name == 'product.product':
                         # UF-2254: Allow to update the product, use xmlid_code now for searching
                         ids_to_update = impobj.search(cr, uid, [('xmlid_code', '=', data['xmlid_code'])])
-                    elif impobj._name == 'product.nomenclature' and data.get('msfid', False):
-                        ids_to_update = impobj.search(cr, uid, [('msfid', '=', data.get('msfid'))])
-                    elif impobj._name == 'product.category' and data.get('family_id', False):
-                        ids_to_update = impobj.search(cr, uid, [('family_id', '=', data.get('family_id'))])
 
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case
