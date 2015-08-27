@@ -195,12 +195,11 @@ class product_nomenclature(osv.osv):
                                          _('MSFID (%s) already exist')
                                          % vals.get('msfid', False))
             else:
-                print "Create"
                 res = super(product_nomenclature, self).create(cr, user, vals,
                                                                context=context)
         else:
-            raise osv.except_osv(_('Error'),
-                                 _('No MSFID given'))
+            res = super(product_nomenclature, self).create(cr, user, vals,
+                                                           context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
