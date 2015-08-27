@@ -40,12 +40,9 @@ TODO NOTES
 
 - FAILED CASES
     26:
-        - C1P2 left 1 AJI 60010 HT122 OPS: wrong as global AD replaced by new AD
-          100% OPS HT120 PF (HT120 target of C1) should be removed as for 60000
-          (due to header ad corrected to new ad ?)
-        - C1P1 left 2 AJI 60010 HT112: should here only one (60 OPS)
-               left 2 AJIs 60000/60010 HT122: should left none
-        => check with a functional test of the flow
+        - NOTE: fail has been checked with a functional manual test of the flow
+        - 26.10: C1P2 60010 NAT HT112 not deleted and should
+        (no more HT122 (the only is target for C1P2) since COR)
 
 - use cases to check at fonctional level:
     10: not expense account to expense one with an AD: 
@@ -74,7 +71,7 @@ TODO NOTES
         X 21
           22 case not real for HT111/HT112 ajis no wizard button(target CC C1P1)
         X 23
-          24
+        X 24
         X 25
         X 26
     
