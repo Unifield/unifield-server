@@ -16,6 +16,7 @@ from random import randint
 from random import randrange
 from oerplib import error
 
+
 FINANCE_TEST_MASK = {
     'register': "%s %s",
     'register_line': "[%s] %s",  # "[tag] uuid"
@@ -23,13 +24,16 @@ FINANCE_TEST_MASK = {
     'ji': "JI %s",
     'ad': "AD %s",
     'cheque_number': "cheque %s",
-    'invoice_line': "[%s] %d/L%03d %s",  # "[tag] (invoice id)/L(line number) (account)"
+    # invoice line name: "[tag] (invoice id)/L(line number) (account)"
+    'invoice_line': "[%s] %d/L%03d %s",  
 }
 
 AMOUNT_TOTAL_DIFF_DELTA = 0.01
 
+
 class FinanceTestException(UnifieldTestException):
     pass
+
 
 class FinanceTest(UnifieldTest):
 
@@ -55,7 +59,10 @@ class FinanceTest(UnifieldTest):
             fy_obj = database.get('account.fiscalyear')
             period_obj = database.get('account.period')
             # Fiscal years
-            fy_ids = fy_obj.search([('date_start', '<=', today), ('date_stop', '>=', today)])
+            fy_ids = fy_obj.search([
+                ('date_start', '<=', today),
+                ('date_stop', '>=', today)
+            ])
             self.assert_(fy_ids != False, 'No fiscalyear found!')
 
             # Sort periods by number
@@ -66,17 +73,25 @@ class FinanceTest(UnifieldTest):
             ], 0, 16, 'number')
             for period in periods:
                 try:
-                    period_obj.action_set_state(period, context={'state': 'draft'})
+                    period_obj.action_set_state(period,
+                        context={'state': 'draft'})
                 except error.RPCError as e:
                     print(e.oerp_traceback)
                     print(e.message)
                 except Exception, e:
                     raise Exception('error', str(e))
             # Write the fact that data have been loaded
-            database.get(self.test_module_obj_name).create({'name': keyword, 'active': True})
-            print (database.colored_name + ' [' + colors.BGreen + 'OK'.center(4) + colors.Color_Off + '] %s: Data loaded' % (keyword))
+            database.get(self.test_module_obj_name).create({
+                'name': keyword,
+                'active': True
+            })
+            print (database.colored_name + ' [' + colors.BGreen + \
+                'OK'.center(4) + colors.Color_Off + '] %s: Data loaded' % (
+                    keyword, ))
         else:
-            print (database.colored_name + ' [' + colors.BYellow + 'WARN'.center(4) + colors.Color_Off + '] %s: Data already exists' % (keyword))
+            print (database.colored_name + ' [' + colors.BYellow + \
+                'WARN'.center(4) + colors.Color_Off \
+                + '] %s: Data already exists' % (keyword, ))
         return super(FinanceTest, self)._hook_db_process(name, database)
         
     def get_journal_ids(self, db, journal_type, is_of_instance=False,
@@ -1002,7 +1017,8 @@ class FinanceTest(UnifieldTest):
                         aal_br.destination_id.code == dest and \
                         aal_br.cost_center_id.code == cc and \
                         aal_br.account_id.code == fp and \
-                        aal_br.amount_currency == ((ji_amount * percent) / 100.):  # percent match ?
+                        aal_br.amount_currency == ((ji_amount*percent) / 100.):  
+                        # check with percent match
                         match_count += 1
                         break
                         
@@ -1521,8 +1537,8 @@ class FinanceTest(UnifieldTest):
                     if not ji_br.account_id.code in res:
                         res[ji_br.account_id.code] = []
                     res[ji_br.account_id.code].append((aji.id,
-                        self.get_record_sdref_from_id('account.analytic.line', db,
-                            aji.id)))
+                        self.get_record_sdref_from_id('account.analytic.line',
+                            db, aji.id)))
 
         return res
         

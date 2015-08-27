@@ -15,6 +15,7 @@ from finance import FinanceTest
 import time
 from datetime import datetime
 
+
 # play all flow:
 # cd unifield/test-finance/unifield-wm/unifield_tests
 # python -m unittest tests.test_finance_cor_cases
@@ -240,8 +241,8 @@ class FinanceTestCorCases(FinanceTest):
                 if not cc_ids:
                     # CC to create
                     
-                    # get parent (parent code: 3 first caracters (HT1, HT2, ...))
-                    parent_code = cc[:3]  
+                    # get parent (parent code: 3 first caracters (HT1, HT2,...))
+                    parent_code = cc[:3]
                     if not parent_code in parent_cc_ids:
                         parent_ids = aaa_obj.search([
                             ('type', '=', 'view'),
@@ -1052,8 +1053,8 @@ class FinanceTestCorCases(FinanceTest):
         self.assert_(
                 # we want the given except to be raised
                 e and e.message and expected_except in e.message,  
-                "You should not correct FP1 to PF as FC1 contract soft closed" \
-                    " :: %s" % (db.colored_name, )
+                "You should not correct FP1 to PF as FC1 contract soft" \
+                    " closed :: %s" % (db.colored_name, )
             )
         
         # repoen FC1
@@ -1816,7 +1817,8 @@ class FinanceTestCorCases(FinanceTest):
             (35., 'OPS', 'HT112', 'PF'),
             (45., 'OPS', 'HT112', 'FP1'),
         ]
-        self.simulation_correction_wizard(push_db, jis_by_account['63120'][0][0],
+        self.simulation_correction_wizard(push_db,
+            jis_by_account['63120'][0][0],
             cor_date=False,
             new_account_code=False,
             new_ad_breakdown_data=new_ad,
