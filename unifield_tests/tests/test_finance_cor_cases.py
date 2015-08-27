@@ -51,10 +51,6 @@ TODO NOTES
         => AJIs are created in OD journal
             => check with Matthias
             => check case manually
-            
-- DATASET
-    - financing contract FC1: add FP1, FP2
-    (need to be done manually at this time...)
     
 - cases developed
     - single instance
@@ -85,10 +81,6 @@ TODO NOTES
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
     - [IMP] best if each case should delete some data
 """
-
-
-#TEST_THE_TEST = True
-TEST_THE_TEST = False
 
 
 class FinanceTestCorCasesException(UnifieldTestException):
@@ -133,7 +125,7 @@ class FinanceTestCorCases(FinanceTest):
          }
         
         # financing contracts
-        financing_contracts_donor = 'DONOR',
+        financing_contracts_donor = 'DONOR'
         financing_contracts = {
             ('HQ1C1', 'FC1'): { 
                 'ccs' : [ 'HT101', 'HT120', ],
@@ -376,19 +368,20 @@ class FinanceTestCorCases(FinanceTest):
                 if not donor_ids:
                     donor_ids = [db.get(model_fcd).create(vals), ]
                 
-                vals = {
-                    'code': fc,
-                    'name': fc,
-                    'donor_id': donor_ids[0],
-                    'instance_id': company.instance_id.id,
-                    'eligibility_from_date': date_fy_start,
-                    'eligibility_to_date': date_fy_stop,
-                    'grant_amount': 0.,
-                    'state': 'open',
-                    'open_date': date_now,
-                }
-                if not self.record_exists(db, model,
-                    self.dfv(vals, include=('code', ))):
+                if not self.record_exists(db, model, [('code', '=', fc)]):
+                    # set vals
+                    vals = {
+                        'code': fc,
+                        'name': fc,
+                        'donor_id': donor_ids[0],
+                        'instance_id': company.instance_id.id,
+                        'eligibility_from_date': date_fy_start,
+                        'eligibility_to_date': date_fy_stop,
+                        'grant_amount': 0.,
+                        'state': 'open',
+                        'open_date': date_now,
+                    }    
+                        
                     # set cost centers
                     cc_codes = meta.financing_contracts[(instance, fc)].get(
                         'ccs', False)
@@ -399,10 +392,12 @@ class FinanceTestCorCases(FinanceTest):
                         ])
                         if cc_ids:
                             vals['cost_center_ids'] = [(6, 0, cc_ids)]
+                                
+                    contract_id = db.get(model).create(vals, {'fake': 1})
                     
-                    contract_id = db.get(model).create(vals)
-                    
-                    # set funding pools
+                    # set funding pools 
+                    # NEED TO BE DONE AFTER CREATE (KO if done during create)
+                    vals = {}
                     fp_codes = meta.financing_contracts[(instance, fc)].get(
                         'fps', False)
                     if fp_codes:
@@ -411,15 +406,17 @@ class FinanceTestCorCases(FinanceTest):
                             ('code', 'in', fp_codes),
                         ])
                         if fp_ids:
+                            vals['funding_pool_ids'] = []
                             for fp_id in fp_ids:
-                                vals = {
-                                    'contract_id': contract_id,
-                                    'funding_pool_id': fp_id,
-                                    'funded': True,
-                                    'total_project': True,
+                                vals['funding_pool_ids'].append((0, 0, {
+                                        'funding_pool_id': fp_id,
+                                        'funded': True,
+                                        'total_project': True,
                                     'instance_id': company.instance_id.id,
-                                }
-                                db.get(model_fcfpl).create(vals, {'fake': 1})
+                                    }))
+                    if vals:
+                        contract_id = db.get(model).write([contract_id], vals,
+                            {'fake': 1})
                     
         # ---------------------------------------------------------------------
         meta = self._get_dataset_meta()
