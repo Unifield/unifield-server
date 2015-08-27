@@ -2677,6 +2677,7 @@ class ir_values(osv.osv):
                 or v[1] == 'Cheque Inventory' and context['journal_type'] == 'cheque' \
                 or v[1] == 'Pending Cheque' and context['journal_type'] == 'cheque' \
                 or v[1] == 'Liquidity Position' and context['journal_type'] != 'cheque' \
+                or v[1] == 'action_report_liquidity_position' and context['journal_type'] != 'cheque' \
                 or v[1] == 'Full Report' and context['journal_type'] in ['bank', 'cash', 'cheque']:
                     new_act.append(v)
             values = new_act
