@@ -30,6 +30,7 @@
             src_model="account.bank.statement"
             view_mode='form'
             view_type='form'
+            key2="client_action_multi"
             target='new' />
     </data>
 </openerp>
