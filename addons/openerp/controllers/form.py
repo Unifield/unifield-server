@@ -219,7 +219,7 @@ class Form(SecuredController):
         buttons = TinyDict()    # toolbar
         buttons.new = (not editable or mode == 'tree') and mode != 'diagram' and form.screen.button_new
         buttons.edit = not editable and (mode == 'form' or mode == 'diagram') and form.screen.button_edit
-        buttons.save = editable and mode == 'form'
+        buttons.save = editable and mode == 'form' and form.screen.button_save
         buttons.duplicate = form.screen.button_duplicate
         buttons.cancel = editable and mode == 'form'
         buttons.delete = not editable and mode == 'form' and form.screen.button_delete
