@@ -336,6 +336,23 @@ class account_invoice(osv.osv):
             if i.document_date and i.date_invoice and i.date_invoice < i.document_date:
                 raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return True
+        
+    def _check_invoice_merged_lines(self, cr, uid, ids, context=None):
+        """
+        US-357:
+            merge of lines by account break lines descriptions (required field)
+            => before next workflow stage from draft (validate, split)
+               check that user has entered description on each line
+               (force user to enter a custom description)
+        """
+        for self_br in self.browse(cr, uid, ids, context=context):
+            if self_br.is_merged_by_account:
+                if not all([ l.name for l in self_br.invoice_line ]):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Before continue: you must fill all lines ' \
+                        ' descriptions following a merge of lines by account')
+                    )
 
     def _refund_cleanup_lines(self, cr, uid, lines):
         """
@@ -640,6 +657,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        self._check_invoice_merged_lines(cr, uid, ids, context=context)
 
         # Prepare workflow object
         wf_service = netsvc.LocalService("workflow")
@@ -860,6 +878,8 @@ class account_invoice(osv.osv):
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        self._check_invoice_merged_lines(cr, uid, ids, context=context)
+            
         # Prepare some value
         wiz_lines_obj = self.pool.get('wizard.split.invoice.lines')
         inv_lines_obj = self.pool.get('account.invoice.line')
