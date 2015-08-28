@@ -25,9 +25,24 @@
             <field name="arch" type="xml">
                 <data >
                     <field name="instance_id" />
+                    <field name="instance_name" invisible="True" />
                     <field name="period_id" />
                     <field name="state" />
                 </data>
+            </field>
+        </record>
+
+        <record id="account_period_state_filter" model="ir.ui.view">
+            <field name="name">Account Period State</field>
+            <field name="model">account.period.state</field>
+            <field name="type">search</field>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+                <search string="Register Lines">
+                    <field name="instance_name"/>
+                    <field name="period_id" />
+                    <field name="state" />
+                </search>
             </field>
         </record>
     </data>

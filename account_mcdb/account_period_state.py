@@ -29,10 +29,31 @@ from tools.translate import _
 class account_period_state(osv.osv):
     _name = "account.period.state"
 
+    def _get_instance_name(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        obj_ids = self.browse(cr, uid, ids, context=context)
+        for obj in obj_ids:
+            res[obj.id] = obj.instance_id and obj.instance_id.name or ""
+
+        return res
+
+    def _get_search_by_instance(self, cr, uid, obj, name, args,
+                                context=None):
+        inst_obj = self.pool.get('msf.instance')
+        args = [('name', args[0][1], args[0][2])]
+        inst_ids = inst_obj.search(cr, uid, args, context=context)
+        return [('instance_id', 'in', inst_ids)]
+
     _columns = {
         'period_id': fields.many2one('account.period', 'Period'),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
         'state': fields.char('State', size=64, required=True),
+        'instance_name': fields.function(_get_instance_name, type='char',
+                                         fnct_search=_get_search_by_instance,
+                                         method=True,
+                                         string="Proprietary Instance"),
     }
 
     def get_period(self, cr, uid, ids, context=None):
@@ -41,16 +62,21 @@ class account_period_state(osv.osv):
                                                'account_period_state_view')
         view_id = view_id and view_id[1] or False
 
+        search_id = mod_obj.get_object_reference(cr, uid, 'account_mcdb',
+                                                 'account_period_state_filter')
+        search_id = search_id and search_id[1] or False
+
         view = {
             'name': _('Period states'),
             'type': 'ir.actions.act_window',
             'res_model': 'account.period.state',
             'view_type': 'form',
             'view_mode': 'tree',
+            'search_view_id': search_id,
             'view_id': [view_id],
-            'context': {},
-            'domain': [('period_id', 'in', context['active_ids'])],
-            'target': 'crush',
+            'context': context,
+            'domain': [],
+            'target': 'current',
         }
 
         return view
