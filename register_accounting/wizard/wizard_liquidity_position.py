@@ -58,6 +58,19 @@ class wizard_liquidity_position(osv.osv_memory):
         wiz_info = self.read(cr, uid, ids, ['export_type', 'period_id'])[0]
         context['period_id'] = wiz_info.get('period_id', None)
 
+        sql_register_ids = """
+            SELECT abs.id 
+            FROM account_bank_statement abs
+            LEFT JOIN account_journal aj ON abs.journal_id = aj.id
+            WHERE aj.type != 'cheque' 
+            AND abs.state != 'draft'
+            AND abs.period_number = """ + str(context['period_id'])
+        cr.execute(sql_register_ids)
+        if not cr.fetchall():
+            period = self.pool.get('account.period').browse(cr, uid, context['period_id'], context=context)
+            raise osv.except_osv(_('Export Liquidity Position'),
+                                 _('No register found for the period selected ') + period.name)
+
         if wiz_info.get('export_type', None) == 'excel':
             # Call excel report
             data = {

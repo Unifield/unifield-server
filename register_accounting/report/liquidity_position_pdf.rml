@@ -8,8 +8,7 @@
       <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
       <pageGraphics>
         <fill color="blue"/>
-        <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
-        <image x="35" y="790.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+        <image x="18mm" y="270mm" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
         <setFont name="Helvetica" size="8"/>
         <fill color="black"/>
         <drawString x="285" y="10.0">Page <pageNumber /></drawString>
@@ -18,9 +17,6 @@
   </template>
 
   <stylesheet>
-    <initialize>
-      <paraStyle name="all" fontName="Helvetica" fontSize="9.0"/>
-    </initialize>
 
     <blockTableStyle id="table_header">
       <lineStyle kind="GRID" colorName="grey"/>
@@ -30,16 +26,25 @@
       <blockBackground colorName="peachpuff" start="0,0" stop="-1,0"/>
     </blockTableStyle>
 
-    <paraStyle name="right" alignment="RIGHT"/>
-    <paraStyle name="center" alignment="CENTER"/>
+    <blockTableStyle id="table">
+      <lineStyle kind="GRID" colorName="grey"/>
+      <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+      <blockValign value="MIDDLE"/>
+      <blockValign value="TOP" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+
+    <paraStyle name="right" fontName="Helvetica" fontSize="8" alignment="RIGHT"/>
+    <paraStyle name="center" fontName="Helvetica" fontSize="8" alignment="CENTER"/>
+    <paraStyle name="text" fontName="Helvetica" fontSize="8"/>
 
   </stylesheet>
 
   <story>
 
-    <para style="right">Report date: [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]</para>
-    <title>Liquidity Position</title>
-    <title>[[ getPeriodName() ]]</title>
+    
+    <title style="text">Liquidity Position [[ getPeriodName() ]]</title>
+    <para style="center">Report edition date: [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]</para>
+    <spacer length="24"/>
 
     <section>
       [[ repeatIn(getRegister(), 'reg') ]]
@@ -52,21 +57,21 @@
       </blockTable>
       <blockTable htmlSpans="1" style="table_header" colWidths="20mm,25mm,15mm,25mm,25mm,10mm,25mm,25mm,10mm">
         <tr>
-          <td><para>Journal Code</para></td>
-          <td><para>Journal Name</para></td>
-          <td><para>State</para></td>
-          <td><para>Calculated Balance</para></td>
-          <td><para>Register Balance</para></td>
-          <td><para>Reg. ccy</para></td>
-          <td><para>Calculated Balance</para></td>
-          <td><para>Register Balance</para></td>
-          <td><para>Fun. ccy</para></td>
+          <td><para style="text">Journal Code</para></td>
+          <td><para style="text">Journal Name</para></td>
+          <td><para style="text">State</para></td>
+          <td><para style="text">Calculated Balance</para></td>
+          <td><para style="text">Register Balance</para></td>
+          <td><para style="text">Reg. ccy</para></td>
+          <td><para style="text">Calculated Balance</para></td>
+          <td><para style="text">Register Balance</para></td>
+          <td><para style="text">Fun. ccy</para></td>
         </tr>
         <tr>
           [[ repeatIn(getRegister2()[reg], 'reg2') ]]
-          <td><para>[[ reg2.journal_id and reg2.journal_id.code or '' ]]</para></td>
-          <td><para>[[ reg2.journal_id and reg2.journal_id.name or '' ]]</para></td>
-          <td><para>[[ reg2.state or '' ]]</para></td>
+          <td><para style="text">[[ reg2.journal_id and reg2.journal_id.code or '' ]]</para></td>
+          <td><para style="text">[[ reg2.journal_id and reg2.journal_id.name or '' ]]</para></td>
+          <td><para style="text">[[ reg2.state or '' ]]</para></td>
           <td><para style="right">[[ formatLang(reg2.msf_calculated_balance, digits=2, grouping=True) or '0.00' ]]</para></td>
           <td>
             <para style="right">[[ formatLang((reg2.journal_id.type == 'bank' and reg2.balance_end_real) \
@@ -75,7 +80,7 @@
             </para>
           </td>
           <td>
-            <para>[[ reg2.journal_id and reg2.journal_id.currency and reg2.journal_id.currency.name or '' ]]</para>
+            <para style="text">[[ reg2.journal_id and reg2.journal_id.currency and reg2.journal_id.currency.name or '' ]]</para>
           </td>
           <td>
             <para style="right">[[
@@ -90,28 +95,33 @@
             or (reg2.journal_id.type == 'cash' and addAndprintRegBal(getConvert(reg2.journal_id.currency,reg2.journal_id.company_id.currency_id,reg2.balance_end_cash,'reg'))), digits=2, grouping=True) \
             or '0.00' ]]</para>
           </td>
-          <td><para>[[ getFuncCur(reg2) or '' ]]</para></td>
+          <td><para style="text">[[ getFuncCur(reg2) or '' ]]</para></td>
         </tr>
 
       </blockTable>
+
       <blockTable htmlSpans="1" style="table_header" colWidths="120mm,25mm,25mm,10mm">
         <tr>
           <td><para style="right"><b>Subtotal</b></para></td>
           <td><para style="right">[[ formatLang(getSubtotalCalBal(), digits=2, grouping=True) or '0.00' ]]</para></td>
           <td><para style="right">[[ formatLang(getSubtotalRegBal(), digits=2, grouping=True) or '0.00' ]]</para></td>
-          <td><para>[[ getFuncCur(reg2) or '' ]] [[ resetSubtotalBal() ]]</para></td>
-        </tr>
-      
-        <tr>
-          [[ repeatIn(getDevices()[reg], 'd') ]]
-          <td><para style="right"><b>Subtotal [[ str(d) ]]</b></para></td>
-          <td><para style="right">[[ formatLang(getDevices()[reg][d]['calc_bal'], digits=2, grouping=True) or '0.00' ]]</para></td>
-          <td><para style="right">[[ formatLang(getDevices()[reg][d]['reg_bal'], digits=2, grouping=True) or '0.00' ]]</para></td>
-          <td><para>[[ str(d) ]]</para></td>
+          <td><para style="text">[[ getFuncCur(reg2) or '' ]] [[ resetSubtotalBal() ]]</para></td>
         </tr>
       </blockTable>
+
+      <section>
+        [[ repeatIn(getCurrencies()[reg], 'd') ]]
+        <spacer length="8"/>
+        <blockTable htmlSpans="1" style="table" colWidths="120mm,25mm,25mm,10mm">
+          <tr>
+            <td><para style="right"><b>Subtotal [[ str(d) ]]</b></para></td>
+            <td><para style="right">[[ formatLang(getCurrencies()[reg][d]['calc_bal'], digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="right">[[ formatLang(getCurrencies()[reg][d]['reg_bal'], digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="text">[[ str(d) ]]</para></td>
+          </tr>
+        </blockTable>
+      </section>
       <spacer length="24"/>
-    
     </section>
 
     <blockTable htmlSpans="1" style="table_header" colWidths="120mm,25mm,25mm,10mm">
@@ -119,7 +129,7 @@
         <td><para style="right"><b>Total:</b></para></td>
         <td><para style="right">[[ formatLang(getTotalCalBal(), digits=2, grouping=True) or '0.00' ]]</para></td>
         <td><para style="right">[[ formatLang(getTotalRegBal(), digits=2, grouping=True) or '0.00' ]]</para></td>
-        <td><para>[[ getFuncCur(reg2) or '' ]]</para></td>
+        <td><para style="text">[[ getFuncCur(reg2) or '' ]]</para></td>
       </tr>
     </blockTable>
 

@@ -34,7 +34,7 @@ class report_liquidity_position2(report_sxw.rml_parse):
         self.funcCur = ''
         self.iter = []
         self.period_id = context.get('period_id', None)
-        self.devices = {}
+        self.currencies = {}
         self.cal_bal_subtotal = 0
         self.reg_bal_subtotal = 0
         self.cal_bal_total = 0
@@ -49,7 +49,7 @@ class report_liquidity_position2(report_sxw.rml_parse):
             'getFuncCur': self.getFuncCur,
             'getCurTot': self.getCurTot,
             'getFormula': self.getFormula,
-            'getDevices': self.getDevices,
+            'getCurrencies': self.getCurrencies,
             'getPeriodName': self.getPeriodName,
             'addAndprintCalBal': self.addAndprintCalBal,
             'addAndprintRegBal': self.addAndprintRegBal,
@@ -108,8 +108,8 @@ class report_liquidity_position2(report_sxw.rml_parse):
     def getRegisterName(self, reg):
         return self.registers[reg][0].instance_id.name
 
-    def getDevices(self):
-        return self.devices
+    def getCurrencies(self):
+        return self.currencies
 
     def getRegister(self):
         ids = []
@@ -142,7 +142,7 @@ class report_liquidity_position2(report_sxw.rml_parse):
         register_ids = [x[0] for x in self.cr.fetchall()]
 
         registers = {}
-        devices = {}
+        currencies = {}
 
         for register in pool.get('account.bank.statement').browse(self.cr, self.uid, register_ids):
             ids.append(register)
@@ -151,8 +151,8 @@ class report_liquidity_position2(report_sxw.rml_parse):
             else:
                 registers[register.instance_id.id] = [register]
 
-            # US_336: parse uniques devices
-            device_name = register.journal_id.currency.name
+            # US_336: parse uniques currency
+            currency_name = register.journal_id.currency.name
             current_instance = register.instance_id.id
             calc_bal = register.msf_calculated_balance
             reg_bal = 0
@@ -161,16 +161,16 @@ class report_liquidity_position2(report_sxw.rml_parse):
             elif register.journal_id.type == 'bank':
                 reg_bal = register.balance_end_real
 
-            if current_instance not in devices:
-                devices[current_instance] = {}
-            if device_name not in devices[current_instance]:
-                devices[current_instance][device_name] = {'calc_bal': 0,
+            if current_instance not in currencies:
+                currencies[current_instance] = {}
+            if currency_name not in currencies[current_instance]:
+                currencies[current_instance][currency_name] = {'calc_bal': 0,
                                                         'reg_bal': 0}
-            devices[current_instance][device_name]['calc_bal'] += calc_bal
-            devices[current_instance][device_name]['reg_bal'] += reg_bal
+            currencies[current_instance][currency_name]['calc_bal'] += calc_bal
+            currencies[current_instance][currency_name]['reg_bal'] += reg_bal
 
         self.registers = registers
-        self.devices = devices
+        self.currencies = currencies
         for x in registers:
             self.iter.append(len(registers[x]))
 
@@ -213,5 +213,5 @@ class report_liquidity_position2(report_sxw.rml_parse):
         return self.cal_bal_total
 
 SpreadsheetReport('report.liquidity.position.2','account.bank.statement','addons/register_accounting/report/liquidity_position_xls.mako', parser=report_liquidity_position2)
-report_sxw.report_sxw('report.liquidity.position.3', 'account.bank.statement', 'addons/register_accounting/report/liquidity_position_pdf.rml', parser=report_liquidity_position2)
+report_sxw.report_sxw('report.liquidity.position.3', 'account.bank.statement', 'addons/register_accounting/report/liquidity_position_pdf.rml', header=False, parser=report_liquidity_position2)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

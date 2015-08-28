@@ -288,7 +288,7 @@
 </Row>
 <Row >
   <Cell>
-    <Data ss:Type="String">${_('Report Date:')}</Data>
+    <Data ss:Type="String">${_('Report edition date: ')}</Data>
   </Cell>
   <Cell ss:StyleID="short_date2" >
     <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
@@ -414,8 +414,12 @@
 </Row>
 
 
-% for d in getDevices()[reg]:
+% for d in getCurrencies()[reg]:
+<Row></Row>
 <Row>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
+  <Cell ss:StyleID="s25c"/>
   <Cell ss:StyleID="s25c"/>
   <Cell ss:StyleID="s25c"/>
   <Cell ss:StyleID="s25c"/>
@@ -426,11 +430,11 @@
    <NamedCell ss:Name="Print_Area"/>
  </Cell>
  <Cell ss:StyleID="s44">
-   <Data ss:Type="Number">${getDevices()[reg][d]['calc_bal']}</Data>
+   <Data ss:Type="Number">${getCurrencies()[reg][d]['calc_bal']}</Data>
    <NamedCell ss:Name="Print_Area"/>
  </Cell>
  <Cell ss:StyleID="s44">
-   <Data ss:Type="Number">${getDevices()[reg][d]['reg_bal']}</Data>
+   <Data ss:Type="Number">${getCurrencies()[reg][d]['reg_bal']}</Data>
    <NamedCell ss:Name="Print_Area"/>
  </Cell>
 </Row>
