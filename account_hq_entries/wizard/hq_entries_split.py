@@ -197,6 +197,11 @@ class hq_entries_split(osv.osv_memory):
         'original_id': fields.many2one('hq.entries', "Original HQ Entry", readonly=True, required=True),
         'original_amount': fields.float('Original Amount', readonly=True, required=True),
         'line_ids': fields.one2many('hq.entries.split.lines', 'wizard_id', "Split lines"),
+        'running': fields.boolean('Is running'),
+    }
+
+    _defaults = {
+        'running': False,
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -250,6 +255,8 @@ class hq_entries_split(osv.osv_memory):
         # Prepare some values
         hq_obj = self.pool.get('hq.entries')
         for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.running:
+                return {}
             # Check that wizard have 2 lines at least
             if len(wiz.line_ids) < 2:
                 raise osv.except_osv(_('Warning'), _('Make 2 lines at least.'))
@@ -259,6 +266,7 @@ class hq_entries_split(osv.osv_memory):
                 total += line.amount
             if abs(wiz.original_amount - total) > 10**-2:
                 raise osv.except_osv(_('Error'), _('Wrong total: %.2f, instead of: %.2f') % (total or 0.00, wiz.original_amount or 0.00,))
+            self.write(cr, uid, [wiz.id], {'running': True})
             # If all is OK, do process of lines
             # Mark original line as it is: an original one :-)
             hq_obj.write(cr, uid, wiz.original_id.id, {'is_original': True,})
@@ -291,6 +299,7 @@ class hq_entries_split(osv.osv_memory):
                 hq_line_id = hq_obj.create(cr, uid, line_vals, context=context)
                 hq_line = hq_obj.browse(cr, uid, hq_line_id, context=context)
                 if hq_line.analytic_state != 'valid':
+                    self.write(cr, uid, [wiz.id], {'running': False})
                     raise osv.except_osv(_('Warning'), _('Analytic distribution is invalid for the line "%s" with %.2f amount.') % (line.name, line.amount))
         return {'type' : 'ir.actions.act_window_close',}
 
