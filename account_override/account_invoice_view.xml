@@ -53,18 +53,15 @@
                         <field name="purchase_ids" invisible="1" widget="boolean" readonly="1" />
                         <button name="invoice_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible': ['|', ('state', 'in', ['open', 'paid']), ('purchase_ids', '!=', False)]}" confirm="You are about to cancel this invoice. Do you want to proceed?"/>
                     </button>
-                    <button name='invoice_open' position="after">
+                    <xpath expr="//button[@name='invoice_open']" position="after" >
                         <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
-                    </button>
-                    <xpath expr="//field[@name='invoice_line']" position="before">
-                        <!-- US-357 merge lines (by account) button for draft SIs -->
-                        <newline />
-                        <field name="can_merge_lines" invisible="1" />
-                        <button name="button_merge_lines" type="object"
-                            string="Merge Lines by Account" icon="gtk-convert"
-                            confirm="You are about to MERGE invoice lines by account. THIS OPERATION IS IRREVERSIBLE. Are you sure you want to proceed ?"
-                            attrs="{'invisible': [('can_merge_lines', '!=', True)]}"
-                        />
+                        <newline/>
+                        <field name="can_merge_lines" invisible="1"/>
+                        <!-- right align to split button -->
+                        <label />
+                        <!-- right align to cancel button (if displayed) -->
+                        <label attrs="{'invisible': ['|', ('state', 'in', ['open', 'paid']), ('purchase_ids', '!=', False)]}" />
+                        <button name="button_merge_lines" type="object" string="Merge Lines by Account" icon="gtk-convert" confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE" attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
                     </xpath>
                </data>
             </field>
