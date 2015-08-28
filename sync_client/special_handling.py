@@ -55,7 +55,9 @@ class account_analytic_line(osv.osv):
             if not period_ids:
                 raise osv.except_osv(_('Warning'), _('No period found for the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
-            if period and period.state == 'created':
+
+            # US-292: Allow the creation of an AJI if the given period is not open, in sync context
+            if period and period.state == 'created' and not vals.get('from_commitment_line', False):
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' of the given date %s is not open! No AJI is created') % (period.name, vals['date'] or ''))
 
         # continue the create request if it comes from a normal requester
