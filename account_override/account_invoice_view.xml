@@ -57,11 +57,11 @@
                         <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
                         <newline/>
                         <field name="can_merge_lines" invisible="1"/>
-                        <!-- right align to split button -->
-                        <label />
-                        <!-- right align to cancel button (if displayed) -->
-                        <label attrs="{'invisible': ['|', ('state', 'in', ['open', 'paid']), ('purchase_ids', '!=', False)]}" />
-                        <button name="button_merge_lines" type="object" string="Merge Lines by Account" icon="gtk-convert" confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE" attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
+                        <button name="button_merge_lines" type="object"
+                            colspan="3"
+                            string="Merge Lines by Account" icon="gtk-convert"
+                            confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
+                            attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
                     </xpath>
                </data>
             </field>
