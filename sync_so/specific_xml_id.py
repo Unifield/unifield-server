@@ -448,7 +448,7 @@ class account_analytic_line(osv.osv):
         'correction_date': fields.datetime('Correction Date'), # UF-2343: Add timestamp when making the correction, to be synced
     }
 
-    def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
+    def get_browse_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
         if cost_center_id:
             target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
                                                                                      ('is_target', '=', True)])
@@ -456,16 +456,39 @@ class account_analytic_line(osv.osv):
             if len(target_ids) > 0:
                 target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
                 if target.instance_id and target.instance_id.instance:
-                    return target.instance_id.instance
+                    return target.instance_id
 
             if current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
-                return current_instance.parent_id.instance
+                return current_instance.parent_id
             else:
                 return False
         else:
             return False
 
+    def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
+        browse_instance = self.get_browse_instance_name_from_cost_center(cr, uid, cost_center_id, context=context)
+        if browse_instance:
+            return browse_instance.instance
+        return browse_instance
+
+    def get_lower_instance_name(self, cr, uid, browse_inst1, browse_inst2, context=None):
+        if browse_inst1.id == browse_inst2.id:
+            return browse_inst1.instance
+        if browse_inst1.level == browse_inst2.level:
+            # same level so no parentality
+            return [browse_inst1.instance, browse_inst2.instance]
+        if browse_inst1.level == 'project' and browse_inst2.level in ('coordo', 'mission') or \
+                browse_inst1.level == 'coordo' and browse_inst2.level == 'mission':
+            lower = browse_inst1
+            upper = browse_inst2
+        else:
+            lower = browse_inst2
+            upper = browse_inst1
+
+        if lower.parent_id and lower.parent_id.id == upper.id or lower.parent_id.parent_id and lower.parent_id.parent_id.id == upper.id:
+            return lower.instance
+        return [browse_inst1.instance, browse_inst2.instance]
     def get_instance_level_from_cost_center(self, cr, uid, cost_center_id, context=None):
         if cost_center_id:
             target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
@@ -491,39 +514,48 @@ class account_analytic_line(osv.osv):
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         res = dict.fromkeys(ids, False)
         for line_data in self.browse(cr, uid, ids, context=context):
+            browse_instance = False
             if line_data.cost_center_id:
-                res[line_data.id] = self.get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context)
+                browse_instance = self.get_browse_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context)
+                res[line_data.id] = browse_instance.instance
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
+                browse_instance = current_instance.parent_id
                 res[line_data.id] = current_instance.parent_id.instance
             # UFTP-382/BKLG-24: sync the line associated to a register line to the register owner and to the target CC
-            if line_data and line_data.move_id and line_data.move_id.statement_id and line_data.move_id.statement_id.instance_id.id != current_instance.id:
-                new_dest = line_data.move_id.statement_id.instance_id.instance
-                if res[line_data.id] and res[line_data.id] != new_dest:
-                    res[line_data.id] = [res[line_data.id], new_dest]
+            # UF-450: send also the AJI to the journal owner
+            if line_data and line_data.move_id and line_data.move_id.journal_id and line_data.move_id.journal_id.instance_id and line_data.move_id.journal_id.instance_id.id != current_instance.id:
+                if res[line_data.id]:
+                    res[line_data.id] = self.get_lower_instance_name(cr, uid, browse_instance, line_data.move_id.journal_id.instance_id, context=context)
                 else:
-                    res[line_data.id] = new_dest
+                    res[line_data.id] = line_data.move_id.journal_id.instance_id.instance
         return res
 
     # Generate delete message for AJI at Project
     def generate_delete_message_at_project(self, cr, uid, ids, vals, context):
         if context is None:
             context = {}
+
+        if context.get('sync_update_execution'):
+            # US-450: no delete msg on a sync context
+            return False
+
         # NEED REFACTORING FOR THIS METHOD, if the action write on Analytic.line happens often!
         msf_instance_obj = self.pool.get('msf.instance')
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
         instance = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context)
         instance_name = instance.name
         instance_identifier = instance.identifier
-        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
-        xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
+        msf_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        instance_level = msf_instance.level
         line_data = self.read(cr, uid, ids, ['cost_center_id'], context=context)
         line_data = dict((data['id'], data) for data in line_data)
+        now = fields.datetime.now()
 
-        for i, xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
-            xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-            old_cost_center_id = line_data[ids[i]]['cost_center_id'] and line_data[ids[i]]['cost_center_id'][0] or False
+        for id in ids:
+            old_cost_center_id = line_data[id]['cost_center_id'] and line_data[id]['cost_center_id'][0] or False
             new_cost_center_id = False
+            xml_id = self.get_sd_ref(cr, uid, id, context=context)
             if 'cost_center_id' in vals:
                 new_cost_center_id = vals['cost_center_id']
             else:
@@ -535,121 +567,44 @@ class account_analytic_line(osv.osv):
                 back to P1 making that P1 deletes also the line with cost center of P2 <--- this is wrong as stated in the ticket
             '''
 
-            # UF-1011: generate delete msg if correction is made on coordo CC coming from project
-            old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
-            if not context.get('sync_update_execution') and old_destination_level == 'coordo' and not xml_id_record.name.startswith(instance_identifier) and instance_level == 'coordo':
-                creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id_record.name.split('/')[0]), ('level', '=', 'project')])
-                if creation_instance_ids:
-                    msf_instance = msf_instance_obj.browse(cr, uid, creation_instance_ids[0])
-                    new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-                    if new_destination_name != msf_instance.instance:
-                        now = fields.datetime.now()
-                        message_data = {'identifier':'delete_%s' % (xml_id,),
-                            'sent':False,
-                            'generate_message':True,
-                            'remote_call':self._name + ".message_unlink_analytic_line",
-                            'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                            'destination_name': msf_instance.instance} # UF-2499: Use instance field, and not name
-                        msg_to_send_obj.create(cr, uid, message_data)
-
-            # UF-2342: only generate delete message if the instance is at Project level
-            if old_destination_level == 'project':
+            if new_cost_center_id != old_cost_center_id:
                 old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
                 new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-                # UTP-1128: if the old cost center belong to the current instance, do not generate the delete message
-                if instance_name != old_destination_name and old_destination_name != new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
-                    send_msg = True
-                    if instance_level == 'coordo':
-                        """
-                        BKLG-19/5: not to delete AJIs with a not target CC at
-                        project level if these AJIs are tied to a project JI
+                if old_destination_name != new_destination_name and old_destination_name != instance.name:
+                    is_parent = False
+                    parent = msf_instance.parent_id
+                    while parent:
+                        if parent.instance == old_destination_name:
+                            is_parent = True
+                            break
+                        parent = parent.parent_id
 
-                        use case:
-                        - after the AD is changed project side to a coordo CC
-                        - sync to project
-                        - sync to coordo
-
-                        AT COORDO side:
-                        - delete message will be send here (as not target CC)
-                        - do not send it
-                        """
-                        aml_br = self.browse(cr, uid, ids[i], context=context)
-                        aml_ml_level = aml_br and aml_br.move_id and \
-                            aml_br.move_id.journal_id and \
-                            aml_br.move_id.journal_id.instance_id and \
-                            aml_br.move_id.journal_id.instance_id.level
-                        if aml_ml_level and aml_ml_level == 'project':
-                            send_msg = False
-
-                    now = fields.datetime.now()
-
-                    if send_msg:
-                        message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
-                            'sent':False,
-                            'generate_message':True,
-                            'remote_call':self._name + ".message_unlink_analytic_line",
-                            'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                            'destination_name':old_destination_name}
-                        msg_to_send_obj.create(cr, uid, message_data)
-
-                    #UF-2439: If the old destination is not the same as the creating instance, then a delete message needs also be generated for the creating instance
-                    creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id_record.name.split('/')[0]), ('level', '=', 'project')])
-                    if creation_instance_ids:
-                        msf_instance = msf_instance_obj.browse(cr, uid, creation_instance_ids[0])
-                        if old_destination_name != msf_instance.instance:
-                            now = fields.datetime.now()
-                            message_data = {'identifier':'delete_%s_to_%s' % (xml_id, msf_instance.instance),
+                    if not is_parent:
+                        this = self.browse(cr, uid, id, context=context)
+                        journal_instance = this.move_id and this.move_id.journal_id and this.move_id.journal_id.instance_id and this.move_id.journal_id.instance_id.instance
+                        if journal_instance and journal_instance != old_destination_name:
+                            # we have sent a orphean AJI to old_destination_name: delete it
+                            message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
                                 'sent':False,
                                 'generate_message':True,
                                 'remote_call':self._name + ".message_unlink_analytic_line",
                                 'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                                'destination_name': msf_instance.instance}
+                                'destination_name':old_destination_name}
                             msg_to_send_obj.create(cr, uid, message_data)
 
 
-            # Check if the new code center belongs to a project that has *previously* a delete message for the same AJI created but not sent
-            # -> remove that delete message from the queue
-            new_destination_level = self.get_instance_level_from_cost_center(cr, uid, new_cost_center_id, context=context)
-            if new_destination_level == 'project': # Only concern Project (other level has no delete message)
-                new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-                if new_destination_name and xml_id:
-                    identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
-                    exist_ids = msg_to_send_obj.search(cr, uid, [('identifier', '=', identifier), ('sent', '=', False)])
-                    if exist_ids:
-                        msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
 
-    def unlink(self, cr, uid, ids, context=None):
-        if isinstance(ids, (long, int)):
-            ids = [ids]
+                # Check if the new code center belongs to a project that has *previously* a delete message for the same AJI created but not sent
+                # -> remove that delete message from the queue
+                new_destination_level = self.get_instance_level_from_cost_center(cr, uid, new_cost_center_id, context=context)
+                if new_destination_level == 'project': # Only concern Project (other level has no delete message)
+                    new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
+                    if new_destination_name and xml_id:
+                        identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
+                        exist_ids = msg_to_send_obj.search(cr, uid, [('identifier', '=', identifier), ('sent', '=', False)])
+                        if exist_ids:
+                            msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
 
-        data_obj = self.pool.get('ir.model.data')
-        msf_instance_obj = self.pool.get('msf.instance')
-        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-        instance = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context)
-        instance_identifier = instance.identifier
-        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
-
-        if instance_level == 'coordo':
-            for al in self.read(cr, uid, ids, ['cost_center_id']):
-                if al['cost_center_id']:
-                    cost_center_id = al['cost_center_id'][0]
-                    destination_level = self.get_instance_level_from_cost_center(cr, uid, cost_center_id, context=context)
-                    if destination_level == 'coordo':
-                        xml_id = self.pool.get('ir.model.data').get(cr, uid, self, al['id'], context=context)
-                        xml_id_record = data_obj.read(cr, uid, xml_id, ['name'])
-                        if not xml_id_record['name'].startswith(instance_identifier):
-                            creation_instance_ids = msf_instance_obj.search(cr, uid, [('instance_identifier', '=', xml_id_record['name'].split('/')[0]), ('level', '=', 'project')])
-                            if creation_instance_ids:
-                                msf_instance = msf_instance_obj.browse(cr, uid, creation_instance_ids[0])
-                                now = fields.datetime.now()
-                                message_data = {'identifier':'delete_%s' % (xml_id,),
-                                    'sent':False,
-                                    'generate_message':True,
-                                    'remote_call':self._name + ".message_unlink_analytic_line",
-                                    'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                                    'destination_name': msf_instance.instance}
-                                msg_to_send_obj.create(cr, uid, message_data)
-        return super(account_analytic_line, self).unlink(cr, uid, ids, context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -697,13 +652,17 @@ class funding_pool_distribution_line(osv.osv):
             return super(funding_pool_distribution_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        ana_obj = self.pool.get('account.analytic.line')
         res = dict.fromkeys(ids, False)
         for line_id in ids:
             line_data = self.browse(cr, uid, line_id, context=context)
+            browse_instance = False
             if line_data.cost_center_id:
-                res[line_id] = self.pool.get('account.analytic.line').get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context)
+                browse_instance = ana_obj.get_browse_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context)
+                res[line_id] = browse_instance.instance
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
+                browse_instance = current_instance.parent_id
                 res[line_id] = current_instance.parent_id.instance
             # UFTP-382: sync down the distrib line associated to the register line
             if line_data.distribution_id and line_data.distribution_id.register_line_ids:
@@ -716,6 +675,14 @@ class funding_pool_distribution_line(osv.osv):
                     if move_line.statement_id and move_line.statement_id.instance_id.id != current_instance.id:
                         res[line_id] = move_line.statement_id.instance_id.instance
 
+            # US-450: also sent fp.line to related G/L journal instance
+            if line_data.distribution_id and line_data.distribution_id.move_line_ids:
+                for move_line in line_data.distribution_id.move_line_ids:
+                    if move_line.journal_id:
+                        inst = move_line.journal_id and move_line.journal_id.instance_id
+                        if inst and inst.id != current_instance.id and inst.instance != res[line_id]:
+                            res[line_id] = ana_obj.get_lower_instance_name(cr, uid, browse_instance, inst, context=context)
+                        break
         return res
 
 funding_pool_distribution_line()
