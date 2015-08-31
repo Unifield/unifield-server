@@ -350,8 +350,8 @@ class account_invoice(osv.osv):
                 if not all([ l.name for l in self_br.invoice_line ]):
                     raise osv.except_osv(
                         _('Error'),
-                        _('Before continue: you must fill all lines ' \
-                        ' descriptions following a merge of lines by account')
+                        _('Please enter a description in each merged line'
+                            \ ' before invoice validation')
                     )
 
     def _refund_cleanup_lines(self, cr, uid, lines):
