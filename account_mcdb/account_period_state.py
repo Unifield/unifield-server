@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 from tools.translate import _
+from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
 
 # account_period_state is on account_mcdb because it's depend to msf.instance
 # and account.period.
@@ -49,7 +50,8 @@ class account_period_state(osv.osv):
     _columns = {
         'period_id': fields.many2one('account.period', 'Period'),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
-        'state': fields.char('State', size=64, required=True),
+        'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State',
+                                  readonly=True),
         'instance_name': fields.function(_get_instance_name, type='char',
                                          fnct_search=_get_search_by_instance,
                                          method=True,
