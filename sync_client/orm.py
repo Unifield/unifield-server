@@ -606,7 +606,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         # US_394: Check if object have an ir.translation
         if self._name is not 'ir.translation':
             tr_obj = self.pool.get('ir.translation')
-            for obj_id in ids:
+            for obj_id in isinstance(ids, (int, long)) and [ids] or ids:
                 # Add commat for prevent delete other object
                 tr_name = str(self._name) + ',%'
                 args = [('name', 'like', tr_name), ('res_id', '=', obj_id)]
