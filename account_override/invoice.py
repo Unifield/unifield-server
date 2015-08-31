@@ -1071,7 +1071,7 @@ class account_invoice(osv.osv):
             if line_to_del_ids:
                 ail_obj.unlink(cr, uid, line_to_del_ids, context=context)
             
-        def do_merge(inv_br, lines_vals):
+        def do_merge(inv_br, lines_vals, not_merged_ids):
             """
             :param lines_vals: lines vals in order
             :type lines_vals: dict
@@ -1101,11 +1101,20 @@ class account_invoice(osv.osv):
                     vals, context=context):
                     break
                     
+            # recompute seq number for not merged lines
+            ail_obj = self.pool.get('account.invoice.line')
+            if not_merged_ids:
+                for lid in not_merged_ids:
+                    ln = inv_br.sequence_id.get_id(code_or_id='id')
+                    ail_obj.write(cr, uid, [lid], {
+                        'line_number': ln,
+                    })
+                                        
         def merge_invoice(inv_br):
             check(inv_br)
             merge_res = compute_merge(inv_br)
             delete_lines(inv_br, merge_res[1])
-            do_merge(inv_br, merge_res[0])
+            do_merge(inv_br, merge_res[0], merge_res[1])
             
             # set merged flag
             inv_br.write({'is_merged_by_account': True}, context=context)
