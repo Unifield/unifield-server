@@ -139,7 +139,7 @@ class account_invoice_refund(osv.osv_memory):
             invoices = invoice_obj.browse(cr, uid, inv_ids, context=context)
             for invoice in invoices:
                 if invoice.imported_state == 'partial':
-                    raise osv.except_osv(_('Error !'), _('You can not refund an invoice partially imported.')) 
+                    raise osv.except_osv(_('Error !'), _('You can not refund-modify nor refund-cancel an invoice partially imported in a register.')) 
 
         air_sup = super(account_invoice_refund, self)
         res = air_sup.compute_refund(cr, uid, ids, mode=mode, context=context)
