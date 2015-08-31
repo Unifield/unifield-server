@@ -350,8 +350,8 @@ class account_invoice(osv.osv):
                 if not all([ l.name for l in self_br.invoice_line ]):
                     raise osv.except_osv(
                         _('Error'),
-                        _('Please enter a description in each merged line'
-                            \ ' before invoice validation')
+                        _('Please enter a description in each merged line' \
+                            ' before invoice validation')
                     )
 
     def _refund_cleanup_lines(self, cr, uid, lines):
@@ -965,8 +965,10 @@ class account_invoice(osv.osv):
                 
         def compute_merge(inv_br):
             """
-            :result: lines vals by line number
-            :rtype : dict
+            :result:
+                - A: lines vals by line number
+                - B: and list of inv id to keep (1 line by account (not merged))
+            :rtype : [dict, list]
 
             NOTES:
             - no impact on 'import_invoice_id', 'is_corrected' as the 
@@ -1029,19 +1031,32 @@ class account_invoice(osv.osv):
                 # update merge line
                 by_account_vals[l.account_id.id] = vals
                 
-            # result by index    
-            res = {}
+                # internal merged lines ids
+                if not '_ids_' in by_account_vals[l.account_id.id]:
+                    by_account_vals[l.account_id.id]['_ids_'] = []
+                by_account_vals[l.account_id.id]['_ids_'].append(l.id)
+                
+            # result by index
+            res = [{}, []]
             for a in by_account_vals:
-                index = by_account_vals[a]['_index_']
-                del by_account_vals[a]['_index_']
-                res[index] = by_account_vals[a]
+                if len(by_account_vals[a]['_ids_']) > 1:
+                    # more than 1 inv line by account
+                    index = by_account_vals[a]['_index_']
+                    del by_account_vals[a]['_index_']
+                    del by_account_vals[a]['_ids_']
+                    res[0][index] = by_account_vals[a]
+                else:
+                    res[1].append(by_account_vals[a]['_ids_'][0])
             return res
             
-        def delete_lines(inv_br):
+        def delete_lines(inv_br, skip_ids):
             # get ids to delete
             ad_to_del_ids = []
             line_to_del_ids = []
+            
             for l in inv_br.invoice_line:
+                if l.id in skip_ids:
+                    continue  # line not to del (1 by account)
                 # delete AD
                 if l.analytic_distribution_id \
                     and not l.analytic_distribution_id.id in ad_to_del_ids:
@@ -1067,7 +1082,7 @@ class account_invoice(osv.osv):
                 inv_br.sequence_id.write({'number_next': 1}, context=context)
             
             # create merge lines
-            for ln in lines_vals.keys():
+            for ln in sorted(lines_vals.keys()):
                 vals = lines_vals[ln]
                 
                 # header AD as default
@@ -1088,9 +1103,9 @@ class account_invoice(osv.osv):
                     
         def merge_invoice(inv_br):
             check(inv_br)
-            res_vals = compute_merge(inv_br)
-            delete_lines(inv_br)
-            do_merge(inv_br, res_vals)
+            merge_res = compute_merge(inv_br)
+            delete_lines(inv_br, merge_res[1])
+            do_merge(inv_br, merge_res[0])
             
             # set merged flag
             inv_br.write({'is_merged_by_account': True}, context=context)
