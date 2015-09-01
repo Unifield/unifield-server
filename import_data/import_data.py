@@ -353,6 +353,10 @@ WHERE n3.level = 3)
                 if self.pre_hook.get(impobj._name):
                     self.pre_hook[impobj._name](impobj, cr, uid, headers, row, col_datas)
 
+                if impobj._name == 'product.nomenclature' or \
+                   impobj._name == 'product.category':
+                    import_mode = 'update'
+
                 for n,h in enumerate(headers):
                     row[n] = row[n].rstrip()
 
@@ -407,12 +411,17 @@ WHERE n3.level = 3)
                     self.post_hook[impobj._name](impobj, cr, uid, data, row, headers)
 
                 if import_mode == 'update':
+
                     # Search if an object already exist. If not, create it.
                     ids_to_update = []
 
                     if impobj._name == 'product.product':
                         # UF-2254: Allow to update the product, use xmlid_code now for searching
                         ids_to_update = impobj.search(cr, uid, [('xmlid_code', '=', data['xmlid_code'])])
+                    elif impobj._name == 'product.nomenclature':
+                        ids_to_update = impobj.search(cr, uid, [('msfid', '=', data['msfid'])])
+                    elif impobj._name == 'product.category':
+                        ids_to_update = impobj.search(cr, uid, [('msfid', '=', data['msfid'])])
 
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case

@@ -1156,12 +1156,11 @@ class product_category(osv.osv):
         if vals.get('msfid', False):
             args = [('msfid', '=', vals.get('msfid'))]
             category_ids = self.search(cr, uid, args, context=context)
-            if context.get('from_import_menu', False):
+            if category_ids and context.get('from_import_menu', False):
                 res = self.write(cr, uid, category_ids, vals, context=context)
             else:
-                raise osv.except_osv(_('Error'),
-                                     _('The MSFID (%s) already exist !')
-                                     % vals.get('msfid', False))
+                res = super(product_category, self).create(cr, uid, vals,
+                                                           context=context)
         else:
             res = super(product_category, self).create(cr, uid, vals,
                                                        context=context)

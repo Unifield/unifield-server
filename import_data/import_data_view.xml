@@ -250,7 +250,7 @@
             <field name="res_model">res.request</field>
             <field name="view_mode">tree,form</field>
             <field name="view_type">form</field>
-            <field name="domain">[('name', 'like', 'Import Product Nomenclature')]</field>
+            <field name="domain">[('name', 'ilike', 'Product Nomenclature')]</field>
         </record>
 
         <menuitem
@@ -335,7 +335,7 @@
             <field name="res_model">res.request</field>
             <field name="view_mode">tree,form</field>
             <field name="view_type">form</field>
-            <field name="domain">[('name', 'like', 'Import Product Category')]</field>
+            <field name="domain">[('name', 'ilike', 'Product Category')]</field>
         </record>
 
         <menuitem
