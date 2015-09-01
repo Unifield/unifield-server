@@ -1097,13 +1097,6 @@ class account_invoice(osv.osv):
             for ln in sorted(lines_vals.keys()):
                 vals = lines_vals[ln]
 
-                # header AD as default
-                vals['analytic_distribution_id'] = \
-                    inv_br.analytic_distribution_id \
-                    and ad_obj.copy(cr, uid,
-                        inv_br.analytic_distribution_id.id,
-                        {}, context=context) or False
-
                 # post encode tax m2m
                 vals['invoice_line_tax_id'] = vals['invoice_line_tax_id'] \
                     and [(6, 0, vals['invoice_line_tax_id'])] or False
