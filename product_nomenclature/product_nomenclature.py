@@ -1181,8 +1181,8 @@ class product_category(osv.osv):
                 category_ids = [category_ids]
             if ids not in category_ids:
                 raise osv.except_osv(_('Error'),
-                                     _('The MSFID category (%s) already exist')
-                                     % vals.get('msfid', False))
+                                     _('The MSFID category (%s) already exist (%s-%s)')
+                                     % vals.get('msfid', False), ids, category_ids)
         res = super(product_category, self).write(cr, uid, ids, vals)
         return res
 
