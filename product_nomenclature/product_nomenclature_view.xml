@@ -318,7 +318,7 @@
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='type']" position="after">
                     <field name="family_id" required="1" />
-                    <field name="msfid" invisible="1" />
+                    <field name="msfid" required="1" />
                 </xpath>
             </field>
         </record>
