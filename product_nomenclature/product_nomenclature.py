@@ -1171,15 +1171,21 @@ class product_category(osv.osv):
         if context is None:
             context = {}
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ids = ids[0]
+
         if vals.get('msfid', False):
             args = [('msfid', '=', vals.get('msfid'))]
             category_ids = self.search(cr, uid, args, context=context)
-            if ids == category_ids or ids in category_ids:
+            if isinstance(category_ids, (int, long)):
+                category_ids = [category_ids]
+            if ids not in category_ids:
                 raise osv.except_osv(_('Error'),
-                                     _('The MSFID (%s) already exist !')
+                                     _('The MSFID category (%s) already exist')
                                      % vals.get('msfid', False))
-        return super(product_category, self).write(cr, uid, ids, vals,
-                                                   context=context)
+        res = super(product_category, self).write(cr, uid, ids, vals)
+        return res
 
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
