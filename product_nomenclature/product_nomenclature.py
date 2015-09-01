@@ -1179,10 +1179,10 @@ class product_category(osv.osv):
             category_ids = self.search(cr, uid, args, context=context)
             if isinstance(category_ids, (int, long)):
                 category_ids = [category_ids]
-            if ids not in category_ids:
+            if category_ids and ids not in category_ids:
                 raise osv.except_osv(_('Error'),
-                                     _('The MSFID category (%s) already exist (%s-%s)')
-                                     % vals.get('msfid', False), ids, category_ids)
+                                     _('The MSFID category (%s) already exist')
+                                     % vals.get('msfid', False))
         res = super(product_category, self).write(cr, uid, ids, vals)
         return res
 
