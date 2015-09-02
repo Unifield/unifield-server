@@ -73,8 +73,7 @@ class FinanceTest(UnifieldTest):
             ], 0, 16, 'number')
             for period in periods:
                 try:
-                    period_obj.action_set_state(period,
-                        context={'state': 'draft'})
+                    period_obj.action_set_state(period, {'state': 'draft'})
                 except error.RPCError as e:
                     print(e.oerp_traceback)
                     print(e.message)
