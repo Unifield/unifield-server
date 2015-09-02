@@ -84,12 +84,12 @@ class import_data(osv.osv_memory):
 
         paec_code = data.get('property_account_expense_categ', False)
         if paec_code:
-            aa_args = [('code', '=', paec_code)]
-            aa_ids = aa_obj.search(cr, uid, aa_args, context=context)
-            if aa_ids:
-                if isinstance(aa_ids, (int, long)):
-                    aa_ids = [aa_ids]
-                data['property_account_expense_categ'] = aa_ids[0]
+            paec_args = [('code', '=', paec_code)]
+            paec_ids = aa_obj.search(cr, uid, paec_args, context=context)
+            if paec_ids:
+                if isinstance(paec_ids, (int, long)):
+                    paec_ids = [paec_ids]
+                data['property_account_expense_categ'] = paec_ids[0]
             else:
                 raise osv.except_osv(_('Warning !'),
                                      _('Account code "%s" not found')
@@ -97,12 +97,12 @@ class import_data(osv.osv_memory):
 
         paic_code = data.get('property_account_income_categ', False)
         if paic_code:
-            aa_args = [('code', '=', paic_code)]
-            aa_ids = aa_obj.search(cr, uid, aa_args, context=context)
-            if aa_ids:
-                if isinstance(aa_ids, (int, long)):
-                    aa_ids = [aa_ids]
-                data['property_account_income_categ'] = aa_ids[0]
+            paic_args = [('code', '=', paic_code)]
+            paic_ids = aa_obj.search(cr, uid, paic_args, context=context)
+            if paic_ids:
+                if isinstance(paic_ids, (int, long)):
+                    paic_ids = [paic_ids]
+                data['property_account_income_categ'] = paic_ids[0]
             else:
                 raise osv.except_osv(_('Warning !'),
                                      _('Account code "%s" not found')
@@ -111,11 +111,11 @@ class import_data(osv.osv_memory):
         dea_code = data.get('donation_expense_account', False)
         if dea_code:
             dea_args = [('code', '=', dea_code)]
-            aa_ids = aa_obj.search(cr, uid, dea_args, context=context)
-            if aa_ids:
-                if isinstance(aa_ids, (int, long)):
-                    aa_ids = [aa_ids]
-                data['donation_expense_account'] = aa_ids[0]
+            dea_ids = aa_obj.search(cr, uid, dea_args, context=context)
+            if dea_ids:
+                if isinstance(dea_ids, (int, long)):
+                    dea_ids = [dea_ids]
+                data['donation_expense_account'] = dea_ids[0]
             else:
                 raise osv.except_osv(_('Warning !'),
                                      _('Expense account code "%s" not found')
