@@ -3176,9 +3176,13 @@ class stock_picking(osv.osv):
                     processed_moves.append(move.id)
 
             if not len(move_data):
+                pick_type = 'Internal picking'
+                if picking.type == 'out':
+                    pick_type = 'Outgoing Delivery'
+
                 raise osv.except_osv(
                     _('Error'),
-                    _('An error occurs during the processing of the OUT, maybe the OUT has been already processed. Please check this and retry'),
+                    _('An error occurs during the processing of the %(pick_type)s, maybe the %(pick_type)s has been already processed. Please check this and retry') % {'pick_type': pick_type},
                 )
 
             # We check if all stock moves and all quantities are processed
