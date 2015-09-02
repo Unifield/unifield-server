@@ -65,10 +65,14 @@ class import_data(osv.osv_memory):
                                      % (data['parent_id']))
 
     def _set_product_category(self, cr, uid, data, row, headers):
-        if data.get('family_id', False):
-            n_obj = self.pool.get('product.nomenclature')
-            args = [('msfid', '=', data.get('family_id', False))]
-            nomen_ids = n_obj.search(cr, uid, args)
+        n_obj = self.pool.get('product.nomenclature')
+        aa_obj = self.pool.get('account.account')
+        context = {}
+
+        family_msfid = data.get('family_id', False)
+        if family_msfid:
+            family_args = [('msfid', '=', family_msfid)]
+            nomen_ids = n_obj.search(cr, uid, family_args, context=context)
             if nomen_ids:
                 if isinstance(nomen_ids, (int, long)):
                     nomen_ids = [nomen_ids]
@@ -76,19 +80,46 @@ class import_data(osv.osv_memory):
             else:
                 raise osv.except_osv(_('Warning !'),
                                      _('Product category MSFID "%s" not found')
-                                     % (data.get('family_id')))
-        if data.get('donation_expense_account', False):
-            a_obj = self.pool.get('account.account')
-            args = [('code', '=', data.get('donation_expense_account'))]
-            account_ids = a_obj.search(cr, uid, args)
-            if account_ids:
-                if isinstance(account_ids, (int, long)):
-                    account_ids = [account_ids]
-                data['donation_expense_account'] = account_ids[0]
+                                     % (family_msfid))
+
+        paec_code = data.get('property_account_expense_categ', False)
+        if paec_code:
+            aa_args = [('code', '=', paec_code)]
+            aa_ids = aa_obj.search(cr, uid, aa_args, context=context)
+            if aa_ids:
+                if isinstance(aa_ids, (int, long)):
+                    aa_ids = [aa_ids]
+                data['property_account_expense_categ'] = aa_ids[0]
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Account code "%s" not found')
+                                     % (paec_code))
+
+        paic_code = data.get('property_account_income_categ', False)
+        if paic_code:
+            aa_args = [('code', '=', paic_code)]
+            aa_ids = aa_obj.search(cr, uid, aa_args, context=context)
+            if aa_ids:
+                if isinstance(aa_ids, (int, long)):
+                    aa_ids = [aa_ids]
+                data['property_account_income_categ'] = aa_ids[0]
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Account code "%s" not found')
+                                     % (paic_code))
+
+        dea_code = data.get('donation_expense_account', False)
+        if dea_code:
+            dea_args = [('code', '=', dea_code)]
+            aa_ids = aa_obj.search(cr, uid, dea_args, context=context)
+            if aa_ids:
+                if isinstance(aa_ids, (int, long)):
+                    aa_ids = [aa_ids]
+                data['donation_expense_account'] = aa_ids[0]
             else:
                 raise osv.except_osv(_('Warning !'),
                                      _('Expense account code "%s" not found')
-                                     % (data.get('donation_expense_account')))
+                                     % (dea_code))
 
     def _set_full_path_nomen(self, cr, uid, headers, row, col):
         if not col:
