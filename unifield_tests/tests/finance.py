@@ -396,7 +396,7 @@ class FinanceTest(UnifieldTest):
             distrib_id = self.analytic_distribution_create(db,
                 breakdown_data=ad_breakdown_data)
             absl_obj.write([regl_id],
-                {'analytic_distribution_id': distrib_id}, {})
+                {'analytic_distribution_id': distrib_id}, {'fake': 1, })
         else:
             distrib_id = False
         
