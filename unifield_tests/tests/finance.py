@@ -412,10 +412,14 @@ class FinanceTest(UnifieldTest):
         return (regl_id, distrib_id, target_ji_id, )
         
     def register_line_temp_post(self, db, regl_id):
-        db.get('account.bank.statement.line').button_temp_posting([regl_id], {})
+        if isinstance(regl_id, (int, long, )):
+            regl_id = [regl_id]
+        db.get('account.bank.statement.line').button_temp_posting(regl_id, {})
         
     def register_line_hard_post(self, db, regl_id):
-        db.get('account.bank.statement.line').button_hard_posting([regl_id], {})
+        if isinstance(regl_id, (int, long, )):
+            regl_id = [regl_id]
+        db.get('account.bank.statement.line').button_hard_posting(regl_id, {})
         
     def register_line_get_target_ji(self, db, regl_id, account_code,
         is_expense_account):
