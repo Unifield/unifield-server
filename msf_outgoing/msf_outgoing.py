@@ -2819,10 +2819,19 @@ class stock_picking(osv.osv):
         for pick in self.browse(cr, uid, ids, context=context):
             for bo in pick.backorder_ids:
                 if not bo.is_completed()[bo.id]:
+                    # Check for each stock move of the draft PT, if there is an in progress stock move
                     pick_moves.setdefault(pick.id, {})
                     for m in bo.move_lines:
                         if m.state not in ('done', 'cancel'):
                             pick_moves[pick.id].setdefault(m.backmove_id.id, True)
+                    steps = bo.previous_step_ids
+                    while steps:
+                        for next_step in steps:
+                            steps.remove(next_step)
+                            for m in next_step.move_lines:
+                                if m.state not in ('done', 'cancel'):
+                                    pick_moves[pick.id].setdefault(m.backmove_id.id, True)
+                            steps.extend(next_step.previous_step_ids)
 
         return pick_moves
 
@@ -2857,7 +2866,7 @@ class stock_picking(osv.osv):
 
             self.log(cr, uid, obj.id, _('The Preparation Picking (%s) has been converted to simple Out (%s).') % (obj.name, new_name))
 
-            keep_move = self._get_keep_move(cr, uid, [obj.id], context=context).get(obj.id, {})
+            keep_move = self._get_keep_move(cr, uid, [obj.id], context=context).get(obj.id, None)
 
             # change subtype and name
             default_vals = {'name': new_name,
@@ -2869,7 +2878,7 @@ class stock_picking(osv.osv):
             new_pick_id = False
             new_lines = []
 
-            if obj.state == 'draft' and keep_move:
+            if obj.state == 'draft' and keep_move is not None:
                 context['wkf_copy'] = True
                 new_pick_id = self.copy(cr, uid, obj.id, default_vals, context=context)
                 pick_to_check.add(obj.id)
@@ -2953,7 +2962,10 @@ class stock_picking(osv.osv):
 
             if pick_to_check:
                 for ptc_id in pick_to_check:
-                    if self.read(cr, uid, ptc_id, ['state'], context=context)['state'] == 'draft':
+                    ptc = self.browse(cr, uid, ptc_id, context=context)
+                    if ptc.state == 'draft' and ptc.subtype == 'picking' and self.has_picking_ticket_in_progress(cr, uid, [ptc_id], context=context)[ptc_id]:
+                        continue
+                    if ptc.state == 'draft':
                         self.validate(cr, uid, list(pick_to_check), context=context)
                     ptc = self.browse(cr, uid, ptc_id, context=context)
                     if all(m.state == 'cancel' or (m.product_qty == 0.00 and m.state in ('done', 'cancel')) for m in ptc.move_lines):
@@ -3325,7 +3337,10 @@ class stock_picking(osv.osv):
             if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                 self.write(cr, uid, new_picking_id, {'already_replicated': False}, context=context)
 
-            context['allow_copy'] = tmp_allow_copy
+            if tmp_allow_copy is None:
+                del context['allow_copy']
+            else:
+                context['allow_copy'] = tmp_allow_copy
 
             # Create stock moves corresponding to processing lines
             # for now, each new line from the wizard corresponds to a new stock.move
