@@ -25,6 +25,12 @@ def main():
         test_modules = [] # modules that are in 'tests' directory
         added_paths = [] # path added to PYTHONPATH
         c = colors.TerminalColors()
+        
+        run_only_modules = False
+        if len(sys.argv) > 1:
+            # list of module names (without .py) to run only
+            # (must exists in tests folder)
+            run_only_modules = sys.argv[1:]
 
         _separator()
         # Browse the directory to search all tests
@@ -34,8 +40,11 @@ def main():
             if directory == 'tests':
                 for f in files:
                     if (f.startswith('test') and f.endswith('.py') and f != 'test.py'):
-                        name = path.join(racine, f)
-                        test_modules.append((name, f[:-3]))
+                        mod_name = f[:-3]
+                        if not run_only_modules or \
+                         (run_only_modules and mod_name in run_only_modules):
+                            name = path.join(racine, f)
+                            test_modules.append((name, mod_name))
         # Inform how many modules was found
         print ('%d module(s) found' % len(test_modules))
 
