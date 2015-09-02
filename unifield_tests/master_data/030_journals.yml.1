@@ -1,0 +1,149 @@
+-
+  I create a Journal View with some columns
+-
+  !record {model: account.journal.view, id: account_journal_view0}:
+    name: Bank/Cash/Cheque Journal (Multi-Currency) View
+    columns_id:
+        - name: Date
+          field: date
+          required: 1
+          sequence: 3
+        - name: Journal Entry
+          field: move_id
+          required: False
+          sequence: 1
+        - name: Name
+          field: name
+          required: 1
+          sequence: 7
+        - name: Statement
+          field: statement_id
+          sequence: 7
+        - name: Partner
+          field: partner_id
+          sequence: 5
+        - name: Account
+          field: account_id
+          required: 1
+          sequence: 6
+        - name: Currency Amt.
+          field: amount_currency
+          sequence: 9
+        - name: Currency
+          field: currency_id
+          sequence: 10
+        - name: Debit
+          field: debit
+          sequence: 11
+        - name: Credit
+          field: credit
+          sequence: 12
+        - name: Ref
+          field: ref
+          sequence: 2
+        - name: State
+          field: state
+          sequence: 19
+        - name: Reconcile
+          field: reconcile_id
+          sequence: 20
+-
+  I create an analytic journal for Cash
+-
+  !record {model: account.analytic.journal, id: analytic_journal_cash0}:
+    code: acsh
+    name: Analytic Cash Journal
+    type: cash
+-
+  I create a Cash Journal
+-
+  !record {model: account.journal, id: account_journal_cash_eur}:
+    code: csh
+    company_id: base.main_company
+    name: Cash Journal (test)
+    type: cash
+    currency: base.EUR
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_cash0
+    default_credit_account_id: account_account_cash0
+    allow_date: 0
+    analytic_journal_id: analytic_journal_cash0
+-
+  I create a Cash Journal in CHF
+-
+  !record {model: account.journal, id: account_journal_cash_chf}:
+    code: csh_chf
+    company_id: base.main_company
+    name: Cash journal in CHF (test)
+    type: cash
+    currency: base.CHF
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_cash1
+    default_credit_account_id: account_account_cash1
+    allow_date: 0
+    analytic_journal_id: analytic_journal_cash0
+-
+  I create a Cash Journal in USD
+-
+  !record {model: account.journal, id: account_journal_cash_usd}:
+    code: csh_usd
+    company_id: base.main_company
+    name: Cash journal in USD (test)
+    type: cash
+    currency: base.USD
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_cash2
+    default_credit_account_id: account_account_cash2
+    allow_date: 0
+    analytic_journal_id: analytic_journal_cash0
+-
+  I create a Bank Journal
+-
+  !record {model: account.journal, id: account_journal_bank_eur}:
+    code: bnk
+    company_id: base.main_company
+    name: Bank Journal (test)
+    type: bank
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_bank0
+    default_credit_account_id: account_account_bank0
+    allow_date: 0
+-
+  I create a Bank Journal in USD
+-
+  !record {model: account.journal, id: account_journal_bank_usd}:
+    code: bnk_usd
+    company_id: base.main_company
+    name: Bank Journal in USD (test)
+    type: bank
+    currency: base.USD
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_bank1
+    default_credit_account_id: account_account_bank1
+    allow_date: 0
+-
+  I create a Cheque Journal
+-
+  !record {model: account.journal, id: account_journal_cheque_eur}:
+    code: chq
+    company_id: base.main_company
+    name: Cheque Journal (test)
+    type: cheque
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_cheque0
+    default_credit_account_id: account_account_cheque0
+    allow_date: 0
+    bank_journal_id: account_journal_bank_eur
+-
+  I create a Cheque Journal in USD
+-
+  !record {model: account.journal, id: account_journal_cheque_usd}:
+    code: chq_usd
+    company_id: base.main_company
+    name: Cheque Journal in USD (test)
+    type: cheque
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_cheque1
+    default_credit_account_id: account_account_cheque1
+    allow_date: 0
+    bank_journal_id: account_journal_bank_usd
