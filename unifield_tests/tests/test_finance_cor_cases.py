@@ -69,7 +69,7 @@ TODO NOTES
     - sync
         X 20
         X 21
-          22 case not real for HT111/HT112 ajis no wizard button(target CC C1P1)
+        X 22 (until 22.7 (22.8 > 22.10 are not real))
         X 23
         X 24
         X 25
@@ -1614,7 +1614,6 @@ class FinanceTestCorCases(FinanceTest):
             "SYNC mismatch"
         )
         
-    '''
     def test_cor_22(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
@@ -1651,13 +1650,6 @@ class FinanceTestCorCases(FinanceTest):
             )
         )
         jis_by_account = self.get_jis_by_account(push_db, ji_ids)
-        # keep ji 63120 sdref
-        ji_63120_sdref = jis_by_account['63120'][0][1]
-        # keep AJI sdref of HT112 63120 has should be deleted later and we must
-        # assert that
-        aji_HT112 = self.get_ji_ajis_by_account(push_db, ji_ids,
-                account_code_filter='63120',
-                cc_code_filter='HT112')['63120'][0]
         
         # 22.4
         self.synchronize(push_db)
@@ -1671,7 +1663,9 @@ class FinanceTestCorCases(FinanceTest):
             # 2 AJIs HT111 & HT112
             self.get_ji_ajis_by_account(push_db, ji_ids,  # get sdref from c1
                 cc_code_filter='HT111')['63120'][0][1],
-            aji_HT112[1],
+            self.get_ji_ajis_by_account(push_db, ji_ids,
+                account_code_filter='63120',
+                cc_code_filter='HT112')['63120'][0][1],
         ]
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
@@ -1679,7 +1673,7 @@ class FinanceTestCorCases(FinanceTest):
                 cc_code_filter='HT101')['63100'][0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT121')['63110'][0][1],
+                cc_code_filter='HT120')['63110'][0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1690,54 +1684,7 @@ class FinanceTestCorCases(FinanceTest):
             ))),
             "SYNC mismatch"
         )
-        
-        # 22.7 (note NO 22.6 in excel)
-        # TODO
-        # get related P1 side 63120 C1 AJIs HT111/HT112
-        #pull_aji_id = self.get_record_id_from_sdref(pull_db, )
-        
-        new_ad = [ (100., 'OPS', 'HT111', 'PF'), ]
-        self.simulation_correction_wizard(pull_db, pull_ji_id,
-            cor_date=False,
-            new_account_code=False,
-            new_ad_breakdown_data=new_ad,
-            ad_replace_data=False
-        )
-        
-        self.check_ji_correction(pull_db, pull_ji_id,
-            '63120', new_account_code=False,
-            expected_ad=new_ad,
-            expected_ad_rev=False,
-            expected_ad_cor=False
-        )
-        
-        # 22.9
-        self.synchronize(self.p1)
-        
-        # 22.9
-        self.synchronize(self.c1)
-        
-        push_expected = [
-            # HT111 updated (new amount: (from 50% to 100%)
-            self.get_ji_ajis_by_account(push_db, ji_ids,
-                account_code_filter='63120',
-                cc_code_filter='HT111')['63120'][0][1],
-        ]
-        push_should_deleted = [
-            aji_HT112[1],
-        ]
-        self.assert_(
-            all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
-                push_db=self.p1,
-                push_expected=push_expected,
-                push_not_expected=False,
-                push_should_deleted=push_should_deleted,
-                pull_db=self.c1
-            ))),
-            "SYNC mismatch"
-        )
-    '''
-    
+ 
     def test_cor_23(self):
         """
         cd unifield/test-finance/unifield-wm/unifield_tests
