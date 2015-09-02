@@ -54,6 +54,11 @@ class FinanceTest(UnifieldTest):
         # If no one, do some changes on DBs
         if not self.is_keyword_present(database, keyword):
             # 00 Open periods from january to today's one
+            """
+            FIXME
+            temporay bypass this dataset as done in cor testing
+            and since no other tests performed for finance area
+            
             month = strftime('%m')
             today = strftime('%Y-%m-%d')
             fy_obj = database.get('account.fiscalyear')
@@ -79,6 +84,7 @@ class FinanceTest(UnifieldTest):
                     print(e.message)
                 except Exception, e:
                     raise Exception('error', str(e))
+            """
             # Write the fact that data have been loaded
             database.get(self.test_module_obj_name).create({
                 'name': keyword,
