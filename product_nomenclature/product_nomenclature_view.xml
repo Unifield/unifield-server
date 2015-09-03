@@ -218,7 +218,7 @@
 		<menuitem action="product_nomenclature_action_form"
 			id="menu_product_nomenclature_action_form"
 			parent="purchase.menu_product_in_config_purchase"
-			sequence="6" />
+			sequence="5" />
 
 
 		<record id="product_nomenclature_normal_action_tree" model="ir.actions.act_window">
@@ -307,7 +307,7 @@
         <menuitem id="menu_link_nomenclature_category"
                   action="product_nomenclature_link_category_action"
                   parent="purchase.menu_product_in_config_purchase"
-                  sequence="7" />
+                  sequence="4" />
                   
         <!-- Add family in product category view -->
         <record id="product_category_family_form_view" model="ir.ui.view">

@@ -81,6 +81,9 @@ class import_data(osv.osv_memory):
                 raise osv.except_osv(_('Warning !'),
                                      _('Product category MSFID "%s" not found')
                                      % (family_msfid))
+        else:
+            raise osv.except_osv(_('Warning !'),
+                                 _('Product category MSFID required'))
 
         paec_code = data.get('property_account_expense_categ', False)
         if paec_code:

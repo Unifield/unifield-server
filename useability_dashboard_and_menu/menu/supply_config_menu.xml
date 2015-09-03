@@ -9,7 +9,7 @@
         
         <menuitem id="product_nomenclature.menu_product_nomenclature_action_form" 
         parent="purchase.menu_product_in_config_purchase" 
-        sequence="10" />
+        sequence="5" />
         
         <!-- ASSET TYPE -->
         

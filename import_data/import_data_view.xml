@@ -236,7 +236,7 @@
         <menuitem
             id="parent_import_nomenclature"
             parent="purchase.menu_product_in_config_purchase"
-            sequence="4"
+            sequence="6"
             name="Import Nomenclatures" />
 
         <menuitem
@@ -320,7 +320,7 @@
 
         <menuitem
             id="parent_import_category"
-            parent="purchase.menu_product_in_config_purchase"
+            parent="account.menu_configuration_misc"
             sequence="5"
             name="Import Product Category" />
 
