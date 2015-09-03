@@ -30,6 +30,8 @@ FINANCE_TEST_MASK = {
 
 AMOUNT_TOTAL_DIFF_DELTA = 0.01
 
+CHECK_IS_CORRIGIBLE = False
+
 
 class FinanceTestException(UnifieldTestException):
     pass
@@ -673,6 +675,12 @@ class FinanceTest(UnifieldTest):
             self.assert_(
                 ji_br.account_id.code != new_account_code,
                 'you can not do a G/L correction with same account code'
+            )
+        if CHECK_IS_CORRIGIBLE:
+            self.assert_(
+                ji_br.is_corrigible,
+                "JI item '%s' is not corrigible (and should be)" % (
+                    ji_br.name or '', )
             )
         old_account_id = ji_br.account_id and ji_br.account_id.id or False
         ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \

@@ -37,18 +37,6 @@ HT211                                                   X
 
 """
 TODO NOTES
-
-- FAILED CASES
-    26:
-        - NOTE: fail has been checked with a functional manual test of the flow
-        - 26.10: C1P2 60010 NAT HT112 not deleted and should
-        (no more HT122 (the only is target for C1P2) since COR)
-
-- use cases to check at fonctional level:
-    10: not expense account to expense one with an AD: 
-        => AJIs are created in OD journal
-            => check with Matthias
-            => check case manually
     
 - cases developed
     - single instance
@@ -77,7 +65,6 @@ TODO NOTES
     
 - options:
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
-    - [IMP] best if each case should delete some data
 """
 
 
