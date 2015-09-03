@@ -171,6 +171,9 @@ class update(osv.osv):
         if self._table in existing_tables:
             cr.execute("""DELETE FROM %s WHERE rule_id IS NULL""" % self._table)
         super(update, self)._auto_init(cr, context=context)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'sync_server_update_sequence_id_index'")
+        if not cr.fetchone():
+            cr.execute("CREATE INDEX sync_server_update_sequence_id_index on sync_server_update (sequence, id)")
 
     def __init__(self, pool, cr):
         self._cache_pullers = SavePullerCache(self)
