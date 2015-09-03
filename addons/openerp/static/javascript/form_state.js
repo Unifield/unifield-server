@@ -133,16 +133,20 @@ function form_onStateChange(container, widget, states, evt) {
 }
 
 function form_hookFormReadonly() {
-    var $items = jQuery('[name]');
+    var $items = jQuery('[name], table');
 
     $items.each(function(){
         var $this = jQuery(this);
         var widgetName = $this.attr('widget') || '';
+        var kind = $this.attr('kind');
+        var field_id = $this.attr('id');
         var prefix = widgetName.slice(0, widgetName.lastIndexOf('/') +1);
         var widget = openobject.dom.get(widgetName) || $this;
         var readonly = openobject.dom.get(prefix + '_terp_readonly');
-        if (readonly && (readonly.value == 0 || readonly.value == 'True')) {
-            form_setReadonly(this, widget, true);
+        if (readonly && (readonly.value == 0 || readonly.value == 'True')){
+            if (($this.attr('name') && $this.attr('name').indexOf('_terp') != 0) || jQuery(idSelector('_o2m_'+field_id)).length != 0) {
+                form_setReadonly(this, widget, true);
+            }
         }
     })
 }
