@@ -94,6 +94,8 @@ class import_data(osv.osv_memory):
                 raise osv.except_osv(_('Warning !'),
                                      _('Account code "%s" not found')
                                      % (paec_code))
+        else:
+            data['property_account_expense_categ'] = None
 
         paic_code = data.get('property_account_income_categ', False)
         if paic_code:
@@ -107,6 +109,8 @@ class import_data(osv.osv_memory):
                 raise osv.except_osv(_('Warning !'),
                                      _('Account code "%s" not found')
                                      % (paic_code))
+        else:
+            data['property_account_income_categ'] = None
 
         dea_code = data.get('donation_expense_account', False)
         if dea_code:
@@ -120,6 +124,8 @@ class import_data(osv.osv_memory):
                 raise osv.except_osv(_('Warning !'),
                                      _('Expense account code "%s" not found')
                                      % (dea_code))
+        else:
+            data['donation_expense_account'] = None
 
     def _set_full_path_nomen(self, cr, uid, headers, row, col):
         if not col:
