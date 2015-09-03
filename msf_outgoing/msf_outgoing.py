@@ -3121,6 +3121,9 @@ class stock_picking(osv.osv):
                 move = line.move_id
                 first = False
 
+                if move.picking_id.id != picking.id:
+                    continue
+
                 if move.id not in move_data:
                     move_data.setdefault(move.id, {
                         'original_qty': move.product_qty,
@@ -3172,6 +3175,16 @@ class stock_picking(osv.osv):
                     move_obj.write(cr, uid, [move.id], values, context=context)
                     processed_moves.append(move.id)
 
+            if not len(move_data):
+                pick_type = 'Internal picking'
+                if picking.type == 'out':
+                    pick_type = 'Outgoing Delivery'
+
+                raise osv.except_osv(
+                    _('Error'),
+                    _('An error occurs during the processing of the %(pick_type)s, maybe the %(pick_type)s has been already processed. Please check this and retry') % {'pick_type': pick_type},
+                )
+
             # We check if all stock moves and all quantities are processed
             # If not, create a backorder
             need_new_picking = False
@@ -3180,6 +3193,7 @@ class stock_picking(osv.osv):
                    move_data[move.id]['original_qty'] != move_data[move.id]['processed_qty']):
                     need_new_picking = True
                     break
+
             rw_full_process = context.get('rw_full_process', False)
             if rw_full_process:
                 del context['rw_full_process']
