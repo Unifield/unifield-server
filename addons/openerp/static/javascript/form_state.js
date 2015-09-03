@@ -132,6 +132,21 @@ function form_onStateChange(container, widget, states, evt) {
     }
 }
 
+function form_hookFormReadonly() {
+    var $items = jQuery('[name]');
+
+    $items.each(function(){
+        var $this = jQuery(this);
+        var widgetName = $this.attr('widget') || '';
+        var prefix = widgetName.slice(0, widgetName.lastIndexOf('/') +1);
+        var widget = openobject.dom.get(widgetName) || $this;
+        var readonly = openobject.dom.get(prefix + '_terp_readonly');
+        if (readonly && (readonly.value == 0 || readonly.value == 'True')) {
+            form_setReadonly(this, widget, true);
+        }
+    })
+}
+
 function form_hookAttrChange() {
     var $items = jQuery('[attrs]');
     var fields = {};
@@ -502,4 +517,5 @@ jQuery(document).ready(function(){
     form_hookContextMenu();
     form_hookStateChange();
     form_hookAttrChange();
+    form_hookFormReadonly();
 });

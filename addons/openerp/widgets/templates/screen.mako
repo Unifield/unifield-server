@@ -11,6 +11,7 @@
 <input type="hidden" id="${name}_terp_domain" name="${name}_terp_domain" value="${domain}"/>
 <input type="hidden" id="${name}_terp_context" name="${name}_terp_context" value="${ctx}"/>
 <input type="hidden" id="${name}_terp_editable" name="${name}_terp_editable" value="${editable}"/>
+<input type="hidden" id="${name}_terp_readonly" name="${name}_terp_readonly" value="${readonly}"/>
 
 <input type="hidden" id="${name}_terp_limit" name="${name}_terp_limit" value="${limit}"/>
 <input type="hidden" id="${name}_terp_offset" name="${name}_terp_offset" value="${offset}"/>

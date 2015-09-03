@@ -93,6 +93,7 @@ function loadingError(url) {
         }
         form_hookStateChange();
         form_hookAttrChange();
+        form_hookFormReadonly();
     };
 }
 
@@ -172,6 +173,7 @@ function doLoadingSuccess(app, url) {
         }
         form_hookStateChange();
         form_hookAttrChange();
+        form_hookFormReadonly();
     };
 }
 
