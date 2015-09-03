@@ -651,7 +651,7 @@ wizard_register_import()
 class wizard_register_import_lines(osv.osv):
     _name = 'wizard.register.import.lines'
     _rec_name = 'document_date'
-
+    _order = 'id desc'
     _columns = {
         'description': fields.text("Description", required=False, readonly=True),
         'ref': fields.text("Reference", required=False, readonly=True),

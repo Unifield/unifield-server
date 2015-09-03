@@ -80,7 +80,7 @@
                             <filter string="ESC" name="esc" icon="gtk-ok" domain="[('partner_type','=','esc')]" help="ESC Partners"/>
                             <filter string="Intermission" name="intermission" icon="gtk-ok" domain="[('partner_type','=','intermission')]" help="Intermission Partners"/>
                             <separator orientation="vertical" />
-                            <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[('name', '!=', 'To be defined'), ('active', '=', False)]" context="{'active_test': False}" separator="1" />
+                            <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[('name', '!=', 'To be defined'), ('active', '=', False)]" separator="1" />
                             <newline />
                             <field name="name" select="1"/>
                             <field name="address" select="1"/>
