@@ -517,7 +517,8 @@ class account_analytic_line(osv.osv):
             browse_instance = False
             if line_data.cost_center_id:
                 browse_instance = self.get_browse_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context)
-                res[line_data.id] = browse_instance.instance
+                if browse_instance:
+                    res[line_data.id] = browse_instance.instance
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 browse_instance = current_instance.parent_id
@@ -659,7 +660,8 @@ class funding_pool_distribution_line(osv.osv):
             browse_instance = False
             if line_data.cost_center_id:
                 browse_instance = ana_obj.get_browse_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context)
-                res[line_id] = browse_instance.instance
+                if browse_instance:
+                    res[line_id] = browse_instance.instance
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 browse_instance = current_instance.parent_id
