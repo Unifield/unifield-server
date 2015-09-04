@@ -230,6 +230,9 @@ class PickConvertToStandardTest(ResourcingTest):
 
         return v_ship_id
 
+    def check_draft_pick_move_state(self, draft_picks):
+        return
+
     def test_0001_convert_draft_pick(self):
         """
         Before the processing of the reception, convert to standard the draft picking ticket
