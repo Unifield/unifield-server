@@ -165,15 +165,6 @@ class product_nomenclature(osv.osv):
         parent
         '''
         self._nomenclatureCheck(vals)
-        if vals.get('msfid', False):
-            # Check if msfid already exist
-            args = [('msfid', '=', vals.get('msfid', False))]
-            msf_ids = self.search(cr, user, args, context=context)
-            for msf_id in msf_ids:
-                if msf_id != ids and msf_id not in ids:
-                    raise osv.except_osv(_('Error'),
-                                         _('Another line have same MSFID (%s)')
-                                         % vals.get('msfid'))
         # save the data to db
         return super(product_nomenclature, self).write(cr, user, ids, vals, context=context)
 
@@ -183,23 +174,8 @@ class product_nomenclature(osv.osv):
         '''
         res = {}
         self._nomenclatureCheck(vals)
-        if vals.get('msfid', False):
-            # Check if msfid already exist
-            args = [('msfid', '=', vals.get('msfid', False))]
-            msf_ids = self.search(cr, user, args, context=context)
-            if msf_ids:
-                if context.get('from_import_menu', False):
-                    res = self.write(cr, user, msf_ids, vals, context=context)
-                else:
-                    raise osv.except_osv(_('Error'),
-                                         _('MSFID (%s) already exist')
-                                         % vals.get('msfid', False))
-            else:
-                res = super(product_nomenclature, self).create(cr, user, vals,
-                                                               context=context)
-        else:
-            res = super(product_nomenclature, self).create(cr, user, vals,
-                                                           context=context)
+        res = super(product_nomenclature, self).create(cr, user, vals,
+                                                       context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -505,6 +481,8 @@ class product_nomenclature(osv.osv):
     }
 
     _order = "sequence, id"
+
+    _sql_constraints = [('check_msfid_unique', 'unique(msfid)', 'MSFID must be unique !')]
 
     def _check_recursion(self, cr, uid, ids, context=None):
         level = 100
@@ -1145,58 +1123,19 @@ class product_category(osv.osv):
             file = tools.file_open(pathname)
             tools.convert_xml_import(cr, 'product_nomenclature', file, {}, mode='init', noupdate=False)
 
-    def create(self, cr, uid, vals, context=None):
-        '''
-        Set default values for datas.xml and tests.yml
-        '''
-        res = {}
-        if context is None:
-            context = {}
-
-        if vals.get('msfid', False):
-            args = [('msfid', '=', vals.get('msfid'))]
-            category_ids = self.search(cr, uid, args, context=context)
-            if category_ids and context.get('from_import_menu', False):
-                res = self.write(cr, uid, category_ids, vals, context=context)
-            else:
-                res = super(product_category, self).create(cr, uid, vals,
-                                                           context=context)
-        else:
-            res = super(product_category, self).create(cr, uid, vals,
-                                                       context=context)
-        return res
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        ids = ids[0]
-
-        if vals.get('msfid', False):
-            args = [('msfid', '=', vals.get('msfid'))]
-            category_ids = self.search(cr, uid, args, context=context)
-            if isinstance(category_ids, (int, long)):
-                category_ids = [category_ids]
-            if category_ids and ids not in category_ids:
-                raise osv.except_osv(_('Error'),
-                                     _('The MSFID category (%s) already exist')
-                                     % vals.get('msfid', False))
-        res = super(product_category, self).write(cr, uid, ids, vals)
-        return res
-
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'family_id': fields.many2one('product.nomenclature', string='Family',
                                      domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '=', False)]",
                                      ),
-        'msfid': fields.char('MSFID', size=128),
+        'msfid': fields.char('MSFID', size=128, select=True),
     }
 
     _defaults = {
                  'active': True,
     }
+
+    _sql_constraints = [('check_msfid_unique', 'unique(msfid)', 'MSFID must be unique !')]
 
     def unlink(self, cr, uid, ids, context=None):
         """
