@@ -187,9 +187,11 @@
         <field name="name">view.employee.filter.2</field>
         <field name="model">hr.employee</field>
         <field name="type">search</field>
+        <field name="priority" eval="15"/>
         <field name="arch" type="xml">
             <search>
-                <filter icon="terp-personal+" domain="[('active','=',True)]" name="active" string="Active" groups="base.group_extended"/>
+
+                <filter icon="terp-personal+" name="inactive" string="Show Inactive" domain="[('active', '=', False)]" groups="base.group_extended"/>
                 <separator orientation="vertical" />
                 <field name="name"/>
                 <field name="job_id" widget="selection"/>
