@@ -71,7 +71,10 @@ class UnifieldTest(unittest.TestCase):
         c = UnifieldTestConfigParser()
         self.config = c.read()
         self._db_prefix = c.get('DB', 'db_prefix')
-        self._db_instance_prefix = c.get('DB', 'instance_prefix') or False
+        self._db_instance_prefix = False
+        if c.has_option('DB', 'instance_prefix'):
+            self._db_instance_prefix = c.get('DB', 'instance_prefix') \
+                or self._db_instance_prefix
         tempo_mkdb = c.getboolean('DB', 'tempo_mkdb')
         db_suffixes = ['SYNC_SERVER', 'HQ1', 'HQ1C1', 'HQ1C1P1']
         names = ['sync', 'hq1', 'c1', 'p1']
@@ -85,7 +88,9 @@ class UnifieldTest(unittest.TestCase):
         self.is_remote_warehouse = False
         # TODO: Check coordo level (c2 for 'HQ1C2')
         # Check project level
-        p_level = c.get('DB', 'project_level') or '1'
+        p_level = '1'
+        if c.has_option('DB', 'project_level'):
+            p_level = c.get('DB', 'project_level') or p_level
         p_level = int(p_level)
         if p_level > 1:
             levels = range(2, p_level + 1)

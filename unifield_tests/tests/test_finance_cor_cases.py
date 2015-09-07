@@ -528,7 +528,7 @@ class FinanceTestCorCases(FinanceTest):
     # play all flow:
     # cd unifield/test-finance/unifield-wm/unifield_tests
     # python -m unittest tests.test_finance_cor_cases
-    
+    '''
     def test_cor_00(self):
         """
         fake unit test for dataset testing
@@ -536,6 +536,7 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_00
         """
         pass
+    '''
     
     # -------------------------------------------------------------------------
     # SINGLE CASES FLOW: from 01 to 14
@@ -1261,8 +1262,7 @@ class FinanceTestCorCases(FinanceTest):
 
             # hard post to allow future period closing for over test flows
             self.register_line_hard_post(db, regl_id)
-            # => so now the cor wizard will be visible at this stage
-            
+            # => so now the cor wizard will be visible at this stage      
    
     # -------------------------------------------------------------------------
     # SYNC CASES FLOW: from 20 to 26
