@@ -1527,13 +1527,14 @@ class FinanceTest(UnifieldTest):
         :param ji_ids: JI ids
         :param account_code_filter: filter results by account code
         :param cc_code_filter: filter results by CC code
-        :return { 'account_code': [(id, sdref), ], }
+        :return { 'account_code': [(id, sdref), ], } or [(id, sdref), ] if
+            cc_code_filter is used
         """
         if not ji_ids:
             return False
         if isinstance(ji_ids, (int, long, )):
             ji_ids = [ji_ids]
-        res = {}
+        res = [] if account_code_filter else {}
         get_ajis = []
         
         for ji_br in db.get('account.move.line').browse(ji_ids):
@@ -1553,11 +1554,18 @@ class FinanceTest(UnifieldTest):
                         continue
                     get_ajis.append(aji.id)
                     
-                    if not ji_br.account_id.code in res:
-                        res[ji_br.account_id.code] = []
-                    res[ji_br.account_id.code].append((aji.id,
-                        self.get_record_sdref_from_id('account.analytic.line',
-                            db, aji.id)))
+                    res_item = (
+                            aji.id,
+                            self.get_record_sdref_from_id(
+                                'account.analytic.line',
+                                db, aji.id),
+                    )
+                    if account_code_filter:
+                        res.append(res_item)
+                    else:
+                        if not ji_br.account_id.code in res:
+                            res[ji_br.account_id.code] = []
+                        res[ji_br.account_id.code].append(res_item)
 
         return res
         

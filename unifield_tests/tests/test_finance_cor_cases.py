@@ -1305,7 +1305,7 @@ class FinanceTestCorCases(FinanceTest):
         jis_by_account = self.get_jis_by_account(push_db, ji_ids)
         ajis_by_account = self.get_ji_ajis_by_account(push_db, ji_ids)
         aji_HT112 = self.get_ji_ajis_by_account(push_db, ji_ids,
-            account_code_filter='63120', cc_code_filter='HT112')['63120'][0]
+            account_code_filter='63120', cc_code_filter='HT112')[0]
         
         # 20.4
         self.synchronize(push_db)
@@ -1321,10 +1321,10 @@ class FinanceTestCorCases(FinanceTest):
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT120')['63110'][0][1],
+                cc_code_filter='HT120')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1346,10 +1346,10 @@ class FinanceTestCorCases(FinanceTest):
             aji_HT112[1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT120')['63110'][0][1],
+                cc_code_filter='HT120')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1414,7 +1414,7 @@ class FinanceTestCorCases(FinanceTest):
             # target instance changed CC HT112 to HT121: AJI moved to C1P2
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT121')['63120'][0][1],
+                cc_code_filter='HT121')[0][1],
         ]
         push_not_expected=[
         ]
@@ -1478,15 +1478,15 @@ class FinanceTestCorCases(FinanceTest):
         push_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT112')['63120'][0][1],
+                cc_code_filter='HT112')[0][1],
         ]
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT120')['63110'][0][1],
+                cc_code_filter='HT120')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1507,13 +1507,13 @@ class FinanceTestCorCases(FinanceTest):
         push_not_expected = [
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT120')['63110'][0][1],
+                cc_code_filter='HT120')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT112')['63120'][0][1],
+                cc_code_filter='HT112')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1557,11 +1557,11 @@ class FinanceTestCorCases(FinanceTest):
         push_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT112')['63120'][0][1],
+                cc_code_filter='HT112')[0][1],
         ]
         aji_ht121 = self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT121')['63120'][0]
+                cc_code_filter='HT121')[0]
         push_not_expected=[
             aji_ht121[1],  # not expected HT121 from AD split when C1 COR
         ]
@@ -1652,15 +1652,15 @@ class FinanceTestCorCases(FinanceTest):
                 cc_code_filter='HT111')['63120'][0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT112')['63120'][0][1],
+                cc_code_filter='HT112')[0][1],
         ]
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT120')['63110'][0][1],
+                cc_code_filter='HT120')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1719,18 +1719,18 @@ class FinanceTestCorCases(FinanceTest):
         push_expected = [
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT111')['63120'][0][1],
+                cc_code_filter='HT111')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT112')['63120'][0][1],
+                cc_code_filter='HT112')[0][1],
         ]
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT120')['63110'][0][1],
+                cc_code_filter='HT120')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1771,7 +1771,7 @@ class FinanceTestCorCases(FinanceTest):
         
         ht112_ajis = self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT112')['63120']  # 2 items since C1 COR
+                cc_code_filter='HT112')  # 2 items since C1 COR
         push_expected = [
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 cc_code_filter='HT111')['63120'][0][1],
@@ -1781,10 +1781,10 @@ class FinanceTestCorCases(FinanceTest):
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT120')['63110'][0][1],
+                cc_code_filter='HT120')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1835,11 +1835,11 @@ class FinanceTestCorCases(FinanceTest):
         # get 63120 HT111 sdref: will be deleted later(C1P1) and need to assert
         aji_63120_HT111_sdref = self.get_ji_ajis_by_account(push_db, ji_ids,
             account_code_filter='63120',
-            cc_code_filter='HT111')['63120'][0][1]
+            cc_code_filter='HT111')[0][1]
         # get 63120 HT121 sdref: will be deleted later(C1P2) and need to assert
         aji_63120_HT121_sdref = self.get_ji_ajis_by_account(push_db, ji_ids,
             account_code_filter='63120',
-            cc_code_filter='HT121')['63120'][0][1]
+            cc_code_filter='HT121')[0][1]
         
         # 24.4
         self.synchronize(push_db)
@@ -1852,18 +1852,18 @@ class FinanceTestCorCases(FinanceTest):
         push_expected = [
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT111')['63120'][0][1],
+                cc_code_filter='HT111')[0][1],
         ]
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT121')['63110'][0][1],
+                cc_code_filter='HT121')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids, 
                 account_code_filter='63120',
-                cc_code_filter='HT121')['63120'][0][1],
+                cc_code_filter='HT121')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1889,10 +1889,10 @@ class FinanceTestCorCases(FinanceTest):
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT111')['63120'][0][1],
+                cc_code_filter='HT111')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -1979,7 +1979,7 @@ class FinanceTestCorCases(FinanceTest):
         push_expected = [
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT122')['63110'][0][1],
+                cc_code_filter='HT122')[0][1],
         ]
         push_not_expected = [
         ]
@@ -2044,18 +2044,18 @@ class FinanceTestCorCases(FinanceTest):
         push_expected = [
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT111')['63120'][0][1],
+                cc_code_filter='HT111')[0][1],
         ]
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63110',
-                cc_code_filter='HT121')['63110'][0][1],
+                cc_code_filter='HT121')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids, 
                 account_code_filter='63120',
-                cc_code_filter='HT121')['63120'][0][1],
+                cc_code_filter='HT121')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -2081,10 +2081,10 @@ class FinanceTestCorCases(FinanceTest):
         push_not_expected=[
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63100',
-                cc_code_filter='HT101')['63100'][0][1],
+                cc_code_filter='HT101')[0][1],
             self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT111')['63120'][0][1],
+                cc_code_filter='HT111')[0][1],
         ]
         self.assert_(
             all(self.flat_dict_vals(self.check_aji_record_sync_push_pulled(
@@ -2159,7 +2159,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db,
                 self.get_ji_ajis_by_account(push_db, ji_ids,
                     account_code_filter='63120',
-                    cc_code_filter='HT111')['63120'][0][0]
+                    cc_code_filter='HT111')[0][0]
             )[0][1],
         ]
         push_not_expected=[
@@ -2183,7 +2183,7 @@ class FinanceTestCorCases(FinanceTest):
         # b) 1REV 63120 HT121 PF due to 25.8
         ht121_63110_id = self.get_ji_ajis_by_account(push_db, ji_ids,
             account_code_filter='63110',
-            cc_code_filter='HT121')['63110'][0][0]
+            cc_code_filter='HT121')[0][0]
         push_expected = [
             # a) 63110
             self.get_aji_revs(push_db, ht121_63110_id)[0][1],
@@ -2195,7 +2195,7 @@ class FinanceTestCorCases(FinanceTest):
                 push_db,
                 self.get_ji_ajis_by_account(push_db, ji_ids,
                 account_code_filter='63120',
-                cc_code_filter='HT121')['63120'][0][0]
+                cc_code_filter='HT121')[0][0]
             )[0][1],
         ]
         push_not_expected=[
@@ -2252,16 +2252,16 @@ class FinanceTestCorCases(FinanceTest):
         # correction on 26.7/8
         sdref_60000_ht112 = self.get_ji_ajis_by_account(self.p1, ji_ids,
             account_code_filter='60000',
-                cc_code_filter='HT112')['60000'][0][1]
+                cc_code_filter='HT112')[0][1]
         sdref_60000_ht122 = self.get_ji_ajis_by_account(self.p1, ji_ids,
             account_code_filter='60000',
-            cc_code_filter='HT122')['60000'][0][1]
+            cc_code_filter='HT122')[0][1]
         sdref_60010_ht112 = self.get_ji_ajis_by_account(self.p1, ji_ids,
             account_code_filter='60010',
-                cc_code_filter='HT112')['60010'][0][1]
+                cc_code_filter='HT112')[0][1]
         sdref_60010_ht122 = self.get_ji_ajis_by_account(self.p1, ji_ids,
             account_code_filter='60010',
-            cc_code_filter='HT122')['60010'][0][1]
+            cc_code_filter='HT122')[0][1]
         
         # 26.4
         self.synchronize(self.p1)
