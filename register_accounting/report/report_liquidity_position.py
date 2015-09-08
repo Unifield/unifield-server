@@ -145,6 +145,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                 'state': reg.state,
                 'calculated_balance': calc_bal,
                 'register_balance': reg_bal,
+                'opening_balance': reg.balance_start,
                 'currency': journal.currency.name,
                 'func_calculated_balance': func_calc_bal,
                 'func_register_balance': func_reg_bal

@@ -293,10 +293,10 @@
           <Data ss:Type="String">${_('Period')}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Calculated Balance in register currency')}</Data>
+          <Data ss:Type="String">${_('Opening Balance in register currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Register Balance in register currency')}</Data>
+          <Data ss:Type="String">${_('Calculated Balance in register currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Register Currency')}</Data>
@@ -330,10 +330,10 @@
           <Data ss:Type="String">${ (getPeriodName()) }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ (formatLang(reg['calculated_balance'], digits=2, grouping=True) or '0.00') }</Data>
+          <Data ss:Type="Number">${ (formatLang(reg['opening_balance'], digits=2, grouping=True) or '0.00') }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ (formatLang(reg['register_balance'], digits=2, grouping=True) or '0.00') }</Data>
+          <Data ss:Type="Number">${ (formatLang(reg['calculated_balance'], digits=2, grouping=True) or '0.00') }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">${ (reg['currency']) }</Data>
@@ -356,14 +356,12 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">Subtotal ${ str(cur) }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
           <Data ss:Type="Number">${ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_calculated'], digits=2, grouping=True) or '0.00' }</Data>
-        </Cell>
-        <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_balanced'], digits=2, grouping=True) or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">${ str(cur) }</Data>
@@ -385,8 +383,9 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
 
-        <Cell ss:MergeAcross="3" ss:StyleID="s49">
+        <Cell ss:MergeAcross="2" ss:StyleID="s49">
           <Data ss:Type="String">Total ${ reg_type }:</Data>
         </Cell>
         <Cell ss:StyleID="s50">
