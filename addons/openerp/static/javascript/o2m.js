@@ -188,9 +188,17 @@ One2Many.prototype = {
         var grid=MochiKit.DOM.getElement(this.name+'_grid');
         var edit=MochiKit.DOM.getElement(this.name + '/_terp_editable');
         var rows = jQuery('table[id='+this.name+'_grid] tr.grid-row');
+        var act_btn=jQuery('table[id='+this.name+'_grid] a.listImage-container');
         if (readonly) {
             jQuery('table.one2many[id$="'+this.name+'"]').addClass('m2o_readonly');
             if(btn){btn.style.display='none';}
+            if(act_btn && act_btn.length) {
+                act_btn.each(function(abtn) {
+                    console.log(abtn);
+                    console.log(act_btn);
+                    act_btn[abtn].style.display='none';
+                });
+            }
             MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
             edit.value= 0;
             if (rows && rows.length) {
