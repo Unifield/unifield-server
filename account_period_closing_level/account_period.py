@@ -288,7 +288,10 @@ class account_period(osv.osv):
             logging.getLogger('init').info('Loading default draft - created - state for account.period')
             vals['state'] = 'created'
 
-        return super(account_period, self).create(cr, uid, vals, context=context)
+        res = super(account_period, self).create(cr, uid, vals, context=context)
+        self.pool.get('account.period.state').update_state(cr, uid, res,
+                                                           context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         if not context:
@@ -301,7 +304,10 @@ class account_period(osv.osv):
             else:
                 vals['state_sync_flag'] = 'none'
 
-        return super(account_period, self).write(cr, uid, ids, vals, context=context)
+        res = super(account_period, self).write(cr, uid, ids, vals, context=context)
+        self.pool.get('account.period.state').update_state(cr, uid, ids,
+                                                           context=context)
+        return res
 
     _defaults = {
         'state': lambda *a: 'created',

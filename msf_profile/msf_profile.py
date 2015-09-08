@@ -74,10 +74,18 @@ class patch_scripts(osv.osv):
             logger.warn('US-489: parent budget %s updated' % (parent_id,))
 
     def us_394_2_patch(self, cr, uid, *a, **b):
-        print "Start patching ..."
         obj = self.pool.get('ir.translation')
         obj.clean_translation(cr, uid, context={})
         obj.add_xml_ids(cr, uid, context={})
+
+    def update_us_435_2(self, cr, uid, *a, **b):
+        period_obj = self.pool.get('account.period')
+        period_state_obj = self.pool.get('account.period.state')
+        periods = period_obj.search(cr, uid, [])
+        for period in periods:
+            period_state_obj.update_state(cr, uid, period)
+
+        return True
 
     def update_us_133(self, cr, uid, *a, **b):
         p_obj = self.pool.get('res.partner')
