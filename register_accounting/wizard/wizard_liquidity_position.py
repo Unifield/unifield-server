@@ -59,25 +59,29 @@ class wizard_liquidity_position(osv.osv_memory):
         context['period_id'] = wiz_info.get('period_id', None)
 
         sql_register_ids = """
-            SELECT abs.id 
+            SELECT abs.id
             FROM account_bank_statement abs
             LEFT JOIN account_journal aj ON abs.journal_id = aj.id
-            WHERE aj.type != 'cheque' 
+            WHERE aj.type != 'cheque'
             AND abs.state != 'draft'
             AND abs.period_number = """ + str(context['period_id'])
         cr.execute(sql_register_ids)
-        if not cr.fetchall():
-            period = self.pool.get('account.period').browse(cr, uid, context['period_id'], context=context)
-            raise osv.except_osv(_('Export Liquidity Position'),
-                                 _('No register found for the period selected ') + period.name)
 
+        if not cr.fetchall():
+            # No registers found
+            ap_obj = self.pool.get('account.period')
+            period = ap_obj.browse(cr, uid, context['period_id'],
+                                   context=context)
+            error_string = 'No register found for the period selected'
+            raise osv.except_osv(_('Export Liquidity Position'),
+                                 _(error_string) + period.name)
+        data = {
+            'ids': [],
+            'model': 'account.bank.statement',
+            'context': context,
+        }
         if wiz_info.get('export_type', None) == 'excel':
             # Call excel report
-            data = {
-                'ids': [],
-                'model': 'account.bank.statement',
-                'context': context,
-                }
             return {
                 'type': 'ir.actions.report.xml',
                 'report_name': 'liquidity.position.2',
@@ -85,14 +89,9 @@ class wizard_liquidity_position(osv.osv_memory):
             }
         elif wiz_info.get('export_type', None) == 'pdf':
             # Call pdf report
-            data = {
-                'ids': [],
-                'model': 'account.bank.statement',
-                'context': context,
-            }
             return {
                 'type': 'ir.actions.report.xml',
-                'report_name': 'liquidity.position.3',
+                'report_name': 'liquidity.position.pdf',
                 'datas': data,
             }
         else:

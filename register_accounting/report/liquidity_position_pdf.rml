@@ -47,18 +47,18 @@
     <spacer length="24"/>
 
     <section>
-      [[ repeatIn(getRegister(), 'reg') ]]
+      [[ repeatIn(getRegistersByType(), 'reg_type') ]]
         <condPageBreak height="9cm"/>
 
         <blockTable htmlSpans="1" style="table_header" colWidths="180mm">
         <tr>
-          <td><para style="center"><b>[[ getRegisterName(reg) ]]</b></para></td>
+          <td><para style="center"><b>[[ reg_type.title() ]]</b></para></td>
         </tr>
       </blockTable>
       <blockTable htmlSpans="1" style="table_header" colWidths="20mm,25mm,15mm,25mm,25mm,10mm,25mm,25mm,10mm">
         <tr>
-          <td><para style="text">Journal Code</para></td>
-          <td><para style="text">Journal Name</para></td>
+          <td><para style="text">Instance</para></td>
+          <td><para style="text">Journal Code - Journal Name</para></td>
           <td><para style="text">State</para></td>
           <td><para style="text">Calculated Balance</para></td>
           <td><para style="text">Register Balance</para></td>
@@ -68,68 +68,51 @@
           <td><para style="text">Fun. ccy</para></td>
         </tr>
         <tr>
-          [[ repeatIn(getRegister2()[reg], 'reg2') ]]
-          <td><para style="text">[[ reg2.journal_id and reg2.journal_id.code or '' ]]</para></td>
-          <td><para style="text">[[ reg2.journal_id and reg2.journal_id.name or '' ]]</para></td>
-          <td><para style="text">[[ reg2.state or '' ]]</para></td>
-          <td><para style="right">[[ formatLang(reg2.msf_calculated_balance, digits=2, grouping=True) or '0.00' ]]</para></td>
-          <td>
-            <para style="right">[[ formatLang((reg2.journal_id.type == 'bank' and reg2.balance_end_real) \
-              or (reg2.journal_id.type == 'cash' and reg2.balance_end_cash), digits=2, grouping=True) \
-              or '0.00' ]]
-            </para>
-          </td>
-          <td>
-            <para style="text">[[ reg2.journal_id and reg2.journal_id.currency and reg2.journal_id.currency.name or '' ]]</para>
-          </td>
-          <td>
-            <para style="right">[[
-              formatLang(
-                addAndprintCalBal(getConvert(reg2.journal_id.currency,reg2.journal_id.company_id.currency_id,reg2.msf_calculated_balance, 'cal')), digits=2, grouping=True) or '0.00'
-              ]]
-            </para>
-          </td>
-          <td>
-            <para style="right">[[ 
-              formatLang((reg2.journal_id.type == 'bank' and addAndprintRegBal(getConvert(reg2.journal_id.currency,reg2.journal_id.company_id.currency_id,reg2.balance_end_real,'reg'))) \
-            or (reg2.journal_id.type == 'cash' and addAndprintRegBal(getConvert(reg2.journal_id.currency,reg2.journal_id.company_id.currency_id,reg2.balance_end_cash,'reg'))), digits=2, grouping=True) \
-            or '0.00' ]]</para>
-          </td>
-          <td><para style="text">[[ getFuncCur(reg2) or '' ]]</para></td>
-        </tr>
-
-      </blockTable>
-
-      <blockTable htmlSpans="1" style="table_header" colWidths="120mm,25mm,25mm,10mm">
-        <tr>
-          <td><para style="right"><b>Subtotal</b></para></td>
-          <td><para style="right">[[ formatLang(getSubtotalCalBal(), digits=2, grouping=True) or '0.00' ]]</para></td>
-          <td><para style="right">[[ formatLang(getSubtotalRegBal(), digits=2, grouping=True) or '0.00' ]]</para></td>
-          <td><para style="text">[[ getFuncCur(reg2) or '' ]] [[ resetSubtotalBal() ]]</para></td>
+          [[ repeatIn(getReg()[reg_type]['registers'], 'reg') ]]
+          <td><para style="text">[[ reg['instance'] ]]</para></td>
+          <td><para style="text">[[ reg['journal_code'] ]] - [[ reg['journal_name'] ]]</para></td>
+          <td><para style="text">[[ reg['state'] ]]</para></td>
+          <td><para style="right">[[ formatLang(reg['calculated_balance'], digits=2, grouping=True) or '0.00']]</para></td>
+          <td><para style="right">[[ formatLang(reg['register_balance'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="text">[[ reg['currency'] ]]</para></td>
+          <td><para style="right">[[ formatLang(reg['func_calculated_balance'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="right">[[ formatLang(reg['func_register_balance'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="text">[[ getFuncCurrency() ]]</para></td>
         </tr>
       </blockTable>
 
       <section>
-        [[ repeatIn(getCurrencies()[reg], 'd') ]]
-        <spacer length="8"/>
-        <blockTable htmlSpans="1" style="table" colWidths="120mm,25mm,25mm,10mm">
+        [[ repeatIn(getReg()[reg_type]['currency_amounts'], 'cur') ]]
+        <blockTable htmlSpans="1" style="table" colWidths="60mm,25mm,25mm,10mm,25mm,25mm,10mm">
           <tr>
-            <td><para style="right"><b>Subtotal [[ str(d) ]]</b></para></td>
-            <td><para style="right">[[ formatLang(getCurrencies()[reg][d]['calc_bal'], digits=2, grouping=True) or '0.00' ]]</para></td>
-            <td><para style="right">[[ formatLang(getCurrencies()[reg][d]['reg_bal'], digits=2, grouping=True) or '0.00' ]]</para></td>
-            <td><para style="text">[[ str(d) ]]</para></td>
+            <td><para style="right">Subtotal [[ str(cur) ]]</para></td>
+            <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_calculated'], digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_balanced'], digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="text">[[ str(cur) ]]</para></td>
+            <td><para style="right">[[ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getFuncCurrencyId(), getReg()[reg_type]['currency_amounts'][cur]['amount_calculated']), digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="right">[[ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getFuncCurrencyId(), getReg()[reg_type]['currency_amounts'][cur]['amount_balanced']), digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="text">[[ getFuncCurrency() ]]</para></td>
           </tr>
         </blockTable>
       </section>
+
+      <blockTable htmlSpans="1" style="table_header" colWidths="120mm,25mm,25mm,10mm">
+        <tr>
+          <td><para style="right"><b>Total [[ reg_type ]]</b></para></td>
+          <td><para style="right">[[ formatLang(getReg()[reg_type]['func_amount_calculated'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="right">[[ formatLang(getReg()[reg_type]['func_amount_balanced'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="text">[[ getFuncCurrency() ]] </para></td>
+        </tr>
+      </blockTable>
       <spacer length="24"/>
-    </section>
+    </section>  
 
     <blockTable htmlSpans="1" style="table_header" colWidths="120mm,25mm,25mm,10mm">
       <tr>
-        <td><para style="right"><b>Total:</b></para></td>
-        <td><para style="right">[[ formatLang(getTotalCalBal(), digits=2, grouping=True) or '0.00' ]]</para></td>
-        <td><para style="right">[[ formatLang(getTotalRegBal(), digits=2, grouping=True) or '0.00' ]]</para></td>
-        <td><para style="text">[[ getFuncCur(reg2) or '' ]]</para></td>
+        <td><para style="right"><b>Grand Total:</b></para></td>
+        <td><para style="right">[[ formatLang(getTotalReg(), digits=2, grouping=True) or '0.00' ]]</para></td>
+        <td><para style="right">[[ formatLang(getTotalCalc(), digits=2, grouping=True) or '0.00' ]]</para></td>
+        <td><para style="text">[[ getFuncCurrency() ]]</para></td>
       </tr>
     </blockTable>
 
