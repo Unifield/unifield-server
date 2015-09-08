@@ -2457,41 +2457,28 @@ stock_move_cancel_wizard()
 class stock_picking_cancel_wizard(osv.osv_memory):
     _name = 'stock.picking.cancel.wizard'
 
-    def _get_allow_cr(self, cr, uid, ids, field_name, args, context=None):
+    def _get_allow_cr(self, cr, uid, context=None):
         """
         Define if the C&R are allowed on the wizard
         """
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+        picking_id = context.get('active_id')
+        for move in self.pool.get('stock.picking').browse(cr, uid, picking_id, context=context).move_lines:
+            if move.sale_line_id and move.sale_line_id.type == 'make_to_order':
+                return False
 
-        res = {}
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            res[wiz.id] = True
-            for move in wiz.picking_id.move_lines:
-                if move.sale_line_id and move.sale_line_id.type == 'on_order':
-                    res[wiz.id] = False
-                    break
-
-        return res
+        return True
 
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
-        'allow_cr': fields.function(
-            _get_allow_cr,
-            method=True,
-            type='boolean',
-            string='Allow Cancel and resource',
-            store=False,
-            readonly=True,
-        ),
+        'allow_cr': fields.boolean(string='Allow Cancel and resource'),
     }
 
     _defaults = {
         'picking_id': lambda self, cr, uid, c: c.get('active_id'),
+        'allow_cr': _get_allow_cr,
     }
 
     def just_cancel(self, cr, uid, ids, context=None):
