@@ -1153,15 +1153,16 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Cancel Picking">
-                    <group colspan="4" col="1">                                 
+                    <group colspan="4" col="1" attrs="{'invisible': [('allow_cr', '=', False)]}"> 
                         <html>
                             <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</h4>
                         </html>
                     </group>
                     <newline />
                     <separator string="Actions" />
+                    <field name="allow_cr" invisible="True" />
                     <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
-                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" attrs="{'invisible': [('allow_cr', '=', False)]}" />
                 </form>
             </field>
         </record>
@@ -1172,7 +1173,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Cancel move">
-                    <group colspan="4" col="1">
+                    <group colspan="4" col="1" attrs="{'invisible': [('cancel_only', '=', True)]}">
                         <html>
                             <h4 style="text-align: center; margin: 10px">Would you re-source the need sourced by this stock move ?</h4>
                         </html>
