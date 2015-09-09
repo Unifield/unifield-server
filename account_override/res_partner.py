@@ -23,7 +23,9 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 from account_override import ACCOUNT_RESTRICTED_AREA
+
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -33,6 +35,37 @@ class res_partner(osv.osv):
         'donation_payable_account': fields.many2one('account.account', "Donation Payable Account",
             domain=ACCOUNT_RESTRICTED_AREA['partner_donation']),
     }
+    
+    def _is_linked_to_any_posted_accounting_entry(self, cr, uid, partner_id,
+        context=None):
+        res = False
+        sql = "select count(ml.id) from account_move_line ml" \
+            " left join account_move m on m.id=ml.move_id" \
+            " where m.state='posted' and ml.partner_id=%d" % (partner_id, )
 
+        cr.execute(sql)
+        if cr.rowcount:
+            res = cr.fetchone()[0] > 0 or False
+        return res
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if ids and 'name' in vals:
+            current_name_recs = self.read(cr, uid, ids, ['name', ],
+                context=context)
+            for r in current_name_recs:
+                new_name = vals.get('name', False)
+                if new_name != r['name']:
+                    # check if partner is linked to a posted entry
+                    # if the case forbid its name modification
+                    if self._is_linked_to_any_posted_accounting_entry(cr, uid,
+                        r['id'], context=context):
+                        raise osv.except_osv(_('Error'),
+                            _('You can not rename a partner linked to posted' \
+                                ' accounting entries'))
+        
+        return super(res_partner, self).write(cr, uid, ids, vals,
+            context=context)
+        
+                    
 res_partner()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
