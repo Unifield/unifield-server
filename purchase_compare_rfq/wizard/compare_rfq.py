@@ -104,7 +104,7 @@ class wizard_compare_rfq(osv.osv_memory):
         ),
         'sale_order_id': fields.many2one(
             'sale.order',
-            string="Sale Order",
+            string="Field Order",
             readonly=True,
         ),
         'requested_date': fields.date(
