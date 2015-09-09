@@ -155,6 +155,11 @@ class wizard_compare_rfq(osv.osv_memory):
             store=False,
             readonly=False,
         ),
+        'currency_id': fields.many2one(
+            'res.currency',
+            string='Currency',
+            readonly=True,
+        ),
     }
 
     def start_compare_rfq(self, cr, uid, ids, context=None):
@@ -217,6 +222,7 @@ class wizard_compare_rfq(osv.osv_memory):
                 'warehouse_id': wh_id and wh_id.id or False,
                 'details': tender.details or '',
                 'notes': tender.notes or '',
+                'currency_id': tender.creator.company_id.currency_id.id,
             }, context=context)
 
             context.update({'tender_id': tender.id})
@@ -437,20 +443,20 @@ class wizard_compare_rfq_line(osv.osv_memory):
                     'selectable': True,
                     'type': 'char',
                     'size': 128,
-                    'string': 'Supplier',
+                    'string': _('Supplier'),
                 },
                 # Unit price on the related RfQ line
                 'unit_price_%s' % sid: {
                     'selectable': True,
                     'type': 'float',
                     'digits': (16,2),
-                    'string': 'Unit price',
+                    'string': _('Unit price'),
                 },
                 # Comment of the related RfQ line
                 'comment_%s' % sid: {
                     'selectable': True,
                     'type': 'text',
-                    'string': 'Comment',
+                    'string': _('Comment'),
                 },
             })
 
