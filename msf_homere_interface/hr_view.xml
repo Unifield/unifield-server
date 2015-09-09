@@ -19,7 +19,7 @@
                     <field colspan="6" name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="user_id" on_change="onchange_user(user_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="company_id" widget="selection" on_change="onchange_company(company_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
-                    <field name="active" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                    <field name="active" />
                     <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}" on_change="onchange_type(employee_type)"/>
                     <newline/>
                     <field name="department_id" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
@@ -128,6 +128,7 @@
         <field name="name">editable.view.employee.tree</field>
         <field name="model">hr.employee</field>
         <field name="type">tree</field>
+        <field name="priority" eval="10" />
         <field name="arch" type="xml">
             <tree string="Employees" editable="top" colors="red:not active">
                 <field name="allow_edition" invisible="1"/>
@@ -186,9 +187,11 @@
         <field name="name">view.employee.filter.2</field>
         <field name="model">hr.employee</field>
         <field name="type">search</field>
+        <field name="priority" eval="15"/>
         <field name="arch" type="xml">
             <search>
-                <filter icon="terp-personal+" domain="[('active','=',True)]" name="active" string="Active" groups="base.group_extended"/>
+
+                <filter icon="terp-personal+" name="inactive" string="Show Inactive" domain="[('active', '=', False)]" groups="base.group_extended"/>
                 <separator orientation="vertical" />
                 <field name="name"/>
                 <field name="job_id" widget="selection"/>

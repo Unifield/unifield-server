@@ -53,9 +53,16 @@
                         <field name="purchase_ids" invisible="1" widget="boolean" readonly="1" />
                         <button name="invoice_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible': ['|', ('state', 'in', ['open', 'paid']), ('purchase_ids', '!=', False)]}" confirm="You are about to cancel this invoice. Do you want to proceed?"/>
                     </button>
-                    <button name='invoice_open' position="after">
+                    <xpath expr="//button[@name='invoice_open']" position="after" >
                         <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
-                    </button>
+                        <newline/>
+                        <field name="can_merge_lines" invisible="1"/>
+                        <button name="button_merge_lines" type="object"
+                            colspan="3"
+                            string="Merge Lines by Account" icon="gtk-convert"
+                            confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
+                            attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
+                    </xpath>
                </data>
             </field>
         </record>
@@ -92,6 +99,7 @@
                 <data>
                     <xpath expr="/tree/field[@name='date_invoice']" position="before">
                         <field name="document_date"/>
+                        <field name="supplier_reference"/>
                     </xpath>
                     <xpath expr="/tree/field[@name='user_id']" position="replace">
                     </xpath>
@@ -138,6 +146,9 @@
                     <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">
                     </xpath>
                     <xpath expr="/search/group[3]/filter[@string='Responsible']" position="replace">
+                    </xpath>
+                    <xpath expr="/search/group[2]/field[@name='period_id']" position="after">
+                        <field name="supplier_reference"/>
                     </xpath>
                     <xpath expr="/search/group[1]/separator[1]" position="replace">
                     </xpath>

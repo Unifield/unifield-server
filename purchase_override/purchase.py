@@ -1637,6 +1637,7 @@ stock moves which are already processed : '''
 
         # corresponding sale order
         so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        so_ids = so_obj.search(cr, uid, [('id', 'in', so_ids), ('procurement_request', '=', False)], context=context)
         # from so, list corresponding po
         all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
 
@@ -1655,6 +1656,7 @@ stock moves which are already processed : '''
                                                                  ('type', '=', 'make_to_order'),
                                                                  ('product_id', '!=', False),
                                                                  ('procurement_id.state', '!=', 'cancel'),
+                                                                 ('order_id.procurement_request', '=', False),
                                                                  ('state', 'not in', ['confirmed', 'done'])], context=context)
 
             all_exp_sol_not_confirmed_ids = exp_sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids)], context=context)
@@ -3016,6 +3018,13 @@ class purchase_order_line(osv.osv):
 
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                 diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line_qty, sol.product_uom.id)
+                # In case of the product qty of the PO line is decrease before the cancelation, check if there
+                # is some other PO lines related to this FO line, then cancel the whole line.
+                if 'pol_qty' not in context and sol.procurement_id:
+                    pol_ids = self.search(cr, uid, [('procurement_id', '=', sol.procurement_id.id)], context=context)
+                    if len(pol_ids) == 1 and pol_ids[0] == line.id:
+                        diff_qty = sol.product_uom_qty
+
                 sol_to_update.setdefault(sol.id, 0.00)
                 sol_to_update[sol.id] += diff_qty
                 if line.has_to_be_resourced:

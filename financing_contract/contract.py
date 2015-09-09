@@ -69,7 +69,10 @@ class financing_contract_funding_pool_line(osv.osv):
         result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
         # when a new funding pool is added to contract, then add all of the cost centers to the cost center tab, unless
         # the cost center is already there. No action is taken when a cost center is deleted
-        if 'contract_id' in vals and 'funding_pool_id' in vals:
+
+        #US-345: the following block cannot be executed in the sync context, because it would then reset all costcenters from the funding pools!
+        # making that the deleted costcenters from the sender were not taken into account
+        if not context.get('sync_update_execution') and 'contract_id' in vals and 'funding_pool_id' in vals:
             # get the cc ids from for this funding pool
             quad_obj = self.pool.get('financing.contract.account.quadruplet')
             quad_ids = quad_obj.search(cr, uid, [('funding_pool_id','=',vals['funding_pool_id'])],context=context)
@@ -205,35 +208,54 @@ class financing_contract_contract(osv.osv):
         })
         return True
 
-    def get_contract_domain(self, cr, uid, browse_contract, reporting_type=None, context=None):
-        # we update the context with the contract reporting type and currency
+    def add_general_domain(self, cr, uid, domain, browse_format_id, reporting_type, context=None):
         format_line_obj = self.pool.get('financing.contract.format.line')
+        general_domain = format_line_obj._get_general_domain(cr, uid, browse_format_id, reporting_type, context=context)
+        # UTP-1063: Don't use MSF Private Funds anymore
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except Exception as e:
+            fp_id = 0
+
+        #US-385: Move the funding pool and cost center outside the loop, put them at header of the domain
+        temp_domain = []
+        cc_domain = eval(general_domain['cost_center_domain'])
+        date_domain = eval(general_domain['date_domain'])
+        if general_domain.get('funding_pool_domain', False):
+            temp_domain = ['&', '&'] + [cc_domain] + [eval(general_domain['funding_pool_domain'])] + date_domain
+
+        res = [('account_id', '!=', fp_id)]
+        if domain:
+            res = ['&'] + res + domain
+
+        if temp_domain:
+            res = ['&'] + temp_domain + res
+        return res
+
+    def get_contract_domain(self, cr, uid, browse_contract, reporting_type=None, context=None):
         # Values to be set
         if reporting_type is None:
             reporting_type = browse_contract.reporting_type
 
         analytic_domain = False
         isFirst = True
+
+        format_line_obj = self.pool.get('financing.contract.format.line')
+
         # parse parent lines (either value or sum of children's values)
         for line in browse_contract.actual_line_ids:
             if not line.parent_id:
                 # Calculate the all the children lines account domain
                 temp = format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, isFirst, context=context)
                 if analytic_domain:
-                    # if there exist already previous view, just add an OR operator
-                    analytic_domain = ['|'] + analytic_domain + temp
+                    if temp: # US-385: Added this check, otherwise there will be a extra "|" causing error! 
+                        # if there exist already previous view, just add an OR operator
+                        analytic_domain = ['|'] + analytic_domain + temp
                 else:
                     # first time
                     analytic_domain = temp
-        # UTP-1063: Don't use MSF Private Funds anymore
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except Exception as e:
-            fp_id = 0
-        res = [('account_id', '!=', fp_id)]
-        if analytic_domain:
-            res += analytic_domain
-        return res
+
+        return self.add_general_domain(cr, uid, analytic_domain, browse_contract.format_id, reporting_type, context)
 
     def _get_overhead_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -392,6 +414,7 @@ class financing_contract_contract(osv.osv):
                                                                browse_contract.reporting_type,
                                                                True,
                                                                context=context)
+        analytic_domain = self.pool.get('financing.contract.contract').add_general_domain(cr, uid, analytic_domain, browse_format_line.format_id, browse_contract.reporting_type, context)
         vals = {'name': browse_format_line.name,
                 'code': browse_format_line.code,
                 'line_type': browse_format_line.line_type,
@@ -717,7 +740,8 @@ class financing_contract_contract(osv.osv):
         # proceed check
         funded_budget = 0.0
         for rl in self_br.actual_line_ids:
-            funded_budget += rl.allocated_budget
+            if rl.line_type != 'view': #US-385: Exclude the view line in the calculation
+                funded_budget += rl.allocated_budget
         if funded_budget != self_br.grant_amount:
             if context is None:
                 context = {}

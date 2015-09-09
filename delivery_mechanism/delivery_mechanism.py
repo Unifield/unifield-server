@@ -166,7 +166,8 @@ class stock_move(osv.osv):
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             # UF-1797: when we duplicate a doc we delete the link with the poline
-            defaults.update(purchase_line_id=False)
+            if 'purchase_line_id' not in defaults:
+                defaults.update(purchase_line_id=False)
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
                 input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
@@ -675,7 +676,10 @@ class stock_picking(osv.osv):
 
         average_values = {}
 
-        move_currency_id = move.company_id.currency_id.id
+        if move.price_currency_id:
+            move_currency_id = move.price_currency_id.id
+        else:
+            move_currency_id = move.company_id.currency_id.id
         context['currency_id'] = move_currency_id
 
         qty = line.quantity
@@ -706,6 +710,9 @@ class stock_picking(osv.osv):
                 if product_availability[line.product_id.id]:
                     new_std_price = ((current_price * product_availability[line.product_id.id])
                                      + (new_price * qty)) / (product_availability[line.product_id.id] + qty)
+
+            new_std_price = currency_obj.compute(cr, uid, line.currency.id, move.company_id.currency_id.id,
+                                                 new_std_price, round=True, context=context)
 
             # Write the field according to price type field
             product_obj.write(cr, uid, [line.product_id.id], {'standard_price': new_std_price})
@@ -989,6 +996,7 @@ class stock_picking(osv.osv):
                         done_moves.append(move.id)
                     else:
                         values['state'] = 'assigned'
+                        values['purchase_line_id'] = move.purchase_line_id and move.purchase_line_id.id or False
                         context['keepLineNumber'] = True
                         new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                         context['keepLineNumber'] = False
@@ -1049,6 +1057,7 @@ class stock_picking(osv.osv):
                                 ('picking_id', '=', out_move.picking_id.backorder_id.id),
                                 ('sale_line_id', '=', out_move.sale_line_id.id),
                                 ('state', '=', 'done'),
+                                ('in_out_updated', '=', False),
                             ], context=context)
                             while bo_moves:
                                 boms = move_obj.browse(cr, uid, bo_moves, context=context)
@@ -1063,6 +1072,7 @@ class stock_picking(osv.osv):
                                             ('picking_id', '=', bom.picking_id.backorder_id.id),
                                             ('sale_line_id', '=', bom.sale_line_id.id),
                                             ('state', '=', 'done'),
+                                            ('in_out_updated', '=', False),
                                         ], context=context))
 
                         if uom_partial_qty < out_move.product_qty:
@@ -1436,7 +1446,7 @@ class stock_picking(osv.osv):
                         ptc = self.browse(cr, uid, mirror_pick.id, context=context)
                         if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
                             ptc.action_done(context=context)
-                        elif mirror_pick.subtype == 'picking' and mirror_pick.state == 'draft':
+                        elif mirror_pick.subtype == 'picking' and ptc.state == 'draft':
                             # If there are still some lines available with qty 0, then check if any in progress PICK, if all complete, then close the PICK
                             self.validate(cr, uid, [mirror_pick.id], context=context)
 
