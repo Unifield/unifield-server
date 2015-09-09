@@ -150,12 +150,26 @@ Many2Many.prototype = {
         return false;
     },
 
-    setReadonly: function(readonly) {
+    setReadonly: function(readonly, from_hookForm) {
         var $field = jQuery(idSelector(this.name));
+        var add_btn = jQuery(idSelector(this.name+'_add_records'));
+        var act_btn = jQuery('table[id='+this.name+'_grid] img.listImage');
         if(!$field.length) $field = jQuery(this.id);
         $field.add(this.text)
                 .attr('readOnly', readonly)
                 .toggleClass('readonlyfield', readonly);
+        if (readonly && from_hookForm) {
+            if(add_btn && add_btn.length) {
+                add_btn.each(function(ibtn) {
+                    add_btn[ibtn].style.display='none';
+                });
+            }
+            if(act_btn && act_btn.length) {
+                act_btn.each(function(ibtn) {
+                    act_btn[ibtn].style.display='none';
+                });
+            }
+        }
     },
 
     addRecords: function () {

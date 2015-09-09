@@ -194,8 +194,6 @@ One2Many.prototype = {
             if(btn){btn.style.display='none';}
             if(act_btn && act_btn.length) {
                 act_btn.each(function(abtn) {
-                    console.log(abtn);
-                    console.log(act_btn);
                     act_btn[abtn].style.display='none';
                 });
             }

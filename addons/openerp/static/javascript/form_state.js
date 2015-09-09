@@ -144,8 +144,8 @@ function form_hookFormReadonly() {
         var widget = openobject.dom.get(widgetName) || $this;
         var readonly = openobject.dom.get(prefix + '_terp_readonly');
         if (readonly && (readonly.value == 0 || readonly.value == 'True')){
-            if (($this.attr('name') && $this.attr('name').indexOf('_terp') != 0) || jQuery(idSelector('_o2m_'+field_id)).length != 0) {
-                form_setReadonly(this, widget, true);
+            if (($this.attr('name') && $this.attr('name').indexOf('_terp') != 0) || jQuery(idSelector('_o2m_'+field_id)).length != 0 || jQuery(idSelector('_m2m_'+field_id)).length != 0) {
+                form_setReadonly(this, widget, true, true);
             }
         }
     })
@@ -390,8 +390,7 @@ function eval_stack(stack, i) {
     return stack
 }
 
-function form_setReadonly(container, fieldName, readonly) {
-
+function form_setReadonly(container, fieldName, readonly, from_hookForm) {
     var $field = typeof(fieldName) == "string" ? jQuery(idSelector(fieldName)) : jQuery(fieldName);
 
     if (!$field.length) {
@@ -418,7 +417,7 @@ function form_setReadonly(container, fieldName, readonly) {
             jQuery(idSelector(field_id + '_id')) &&
             jQuery(idSelector(field_id + '_set')) &&
             jQuery(idSelector(field_id + '_id')).attr('kind') == "many2many") {
-         Many2Many(field_id).setReadonly(readonly);
+         Many2Many(field_id).setReadonly(readonly, from_hookForm);
         return;
     }
 
