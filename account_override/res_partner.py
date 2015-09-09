@@ -52,8 +52,8 @@ class res_partner(osv.osv):
         if ids and 'name' in vals:
             current_name_recs = self.read(cr, uid, ids, ['name', ],
                 context=context)
+            new_name = vals.get('name', False)
             for r in current_name_recs:
-                new_name = vals.get('name', False)
                 if new_name != r['name']:
                     # check if partner is linked to a posted entry
                     # if the case forbid its name modification
