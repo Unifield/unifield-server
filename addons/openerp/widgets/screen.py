@@ -32,7 +32,7 @@ class Screen(TinyInputWidget):
     template = "/openerp/widgets/templates/screen.mako"
 
     params = ['model', 'state', 'id', 'ids', 'view_id', 'view_ids', 'view_mode', 'view_type', 'domain',
-              'context', 'limit', 'offset', 'count', 'group_by_ctx', 'action_id']
+              'context', 'limit', 'offset', 'count', 'group_by_ctx', 'action_id', 'noteditable']
 
     member_widgets = ['widget']
 
@@ -106,7 +106,8 @@ class Screen(TinyInputWidget):
 
         self.selectable         = selectable
         self.editable           = editable
-        self.readonly           = readonly
+        self.readonly           = True
+        self.noteditable        = readonly
         self.link               = nolinks
 
         # get calendar options
