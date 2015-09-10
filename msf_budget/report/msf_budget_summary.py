@@ -161,7 +161,7 @@ class msf_budget_summary(osv.osv_memory):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
             'msf_budget', 'view_msf_budget_summary_budget_line_tree')[1]
         res = {
-            'name': name,
+            'name': name.replace('&', ''),
             'type': 'ir.actions.act_window',
             'res_model': 'msf.budget.summary.line',
             'view_type': 'tree',
@@ -324,7 +324,7 @@ class msf_budget_summary_line(osv.osv_memory):
             budget_line=sl_br.name or '')
 
         res = {
-            'name': name,
+            'name': name.replace('&', ''),
             'type': 'ir.actions.act_window',
             'res_model': 'account.analytic.line',
             'view_type': 'form',
