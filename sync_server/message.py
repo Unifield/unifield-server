@@ -94,7 +94,7 @@ class message(osv.osv):
                 'source': entity.id,
             }, context=context)
 
-        self._logger.info("[%s] Message push :: Number of message pushed: %s" % (entity.name, len(package)))
+        self._logger.info("::::::::[%s] Message push :: Number of message pushed: %s" % (entity.name, len(package)))
         return (True, "Message received")
 
     def _get_destination(self, cr, uid, dest, context=None):
@@ -155,7 +155,7 @@ class message(osv.osv):
             }
             packet.append(message)
 
-        self._logger.info("[%s] Message pull :: Number of message pulled: %s" % (entity.name, len(packet)))
+        self._logger.info("::::::::[%s] Message pull :: Number of message pulled: %s" % (entity.name, len(packet)))
         return packet
 
     def set_message_as_received(self, cr, uid, entity, message_uuids, context=None):
@@ -170,11 +170,13 @@ class message(osv.osv):
 
             @return : True or raise an error
         """
+        self._logger.info("::::::::[%s] Set messages as received" % (entity.name,))
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm messages...'))
 
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids), ('destination', '=', entity.id)], context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
+        self._logger.info("::::::::[%s] %s messages confirmed" % (entity.name, len(ids)))
 
         return True
 

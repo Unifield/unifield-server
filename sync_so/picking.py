@@ -110,11 +110,9 @@ class stock_picking(osv.osv):
             asset_id = self.pool.get('product.asset').find_sd_ref(cr, uid, xmlid_to_sdref(data['asset_id']['id']), context=context)
 
         # uom
-        uom_name = data['product_uom']['name']
-        uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
-        if not uom_ids:
+        uom_id = uom_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_uom']['id']), context=context)
+        if not uom_id:
             raise Exception, "The corresponding uom does not exist here. Uom name: %s" % uom_name
-        uom_id = uom_ids[0]
 
         # UF-1617: Handle batch and asset object
         batch_id = False
