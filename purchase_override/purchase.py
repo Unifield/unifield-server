@@ -1467,7 +1467,35 @@ stock moves which are already processed : '''
                     if so.procurement_request and so.location_requestor_id.usage == 'customer' \
                                               and line.procurement_id.move_id \
                                               and not line.procurement_id.move_id.processed_stock_move:
-                        out_move_id = line.procurement_id.move_id
+                        # In case of replacement of a non-stockable product by a stockable product
+                        if line.product_id.id != line.procurement_id.product_id.id and  line.procurement_id.product_id.type in ('service', 'service_recep', 'consu') and line.product_id.type == 'product':
+                            # Get OUT linked to IR
+                            pick_to_confirm = None
+                            out_ids = pick_obj.search(cr, uid, [
+                                ('sale_id', '=', line.link_so_id.id),
+                                ('type', '=', 'out'),
+                                ('state', 'in', ['draft', 'confirmed', 'assigned']),
+                            ], context=context)
+                            if not out_ids:
+                                picking_data = so_obj._get_picking_data(cr, uid, so)
+                                out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
+                                pick_to_confirm = out_ids
+
+                            move_data = so_obj._get_move_data(cr, uid, so, sol, out_ids[0], context=context)
+                            new_move_id = move_obj.create(cr, uid, move_data, context=context)
+                            out_move_id = line.procurement_id.move_id.id
+                            proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': new_move_id}, context=context)
+                            move_obj.write(cr, uid, [out_move_id], {'state': 'draft'}, context=context)
+                            move_obj.unlink(cr, uid, [out_move_id], context=context)
+
+                            if pick_to_confirm:
+                                wf_service = netsvc.LocalService("workflow")
+                                for pick_to_confirm_id in pick_to_confirm:
+                                    wf_service.trg_validate(uid, 'stock.picking', pick_to_confirm_id, 'button_confirm', cr)
+                                #pick_obj.action_confirm(cr, uid, pick_to_confirm, context=context)
+                            out_move_id = move_obj.browse(cr, uid, new_move_id, context=context)
+                        else:
+                            out_move_id = line.procurement_id.move_id
                         # If there is a non-stockable or service product, remove the OUT
                         # stock move and update the stock move on the procurement
                         if context.get('wait_order') and line.product_id.type in ('service', 'service_recep', 'consu') and out_move_id.picking_id:
