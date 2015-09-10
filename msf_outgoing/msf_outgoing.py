@@ -4611,11 +4611,11 @@ class stock_move(osv.osv):
                             {'move_id': other_out_move_ids[0]},
                             context=context)
 
+        self.action_done(cr, uid, move_to_done, context=context)
+
         # Search only non unlink move
         ids = self.search(cr, uid, [('id', 'in', ids)])
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
-
-        self.action_done(cr, uid, move_to_done, context=context)
 
         wf_service = netsvc.LocalService("workflow")
 
