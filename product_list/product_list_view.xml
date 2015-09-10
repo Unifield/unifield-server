@@ -73,7 +73,7 @@
                     </group>
                     <field name="reviewer_id" />
                     <field name="nb_products" invisible="1" />
-                    <field name="parent_id" attrs="{'invisible': [('type', '!=', 'sublist')], 'readonly': [('nb_products', '!=', 0)]}" />
+                    <field name="parent_id" attrs="{'invisible': [('type', '!=', 'sublist')]}" on_change="change_parent_list(parent_id, product_ids)" />
                     <newline />
                     <field name="warehouse_id" attrs="{'required': [('type', '=', 'sublist'), ('location_id', '=', False)]}" />
                     <field name="location_id" attrs="{'required': [('type', '=', 'sublist'), ('warehouse_id', '=', False)]}" />
