@@ -214,7 +214,16 @@ class msf_budget_summary_line(osv.osv_memory):
     }
 
     def build_tree(self, cr, uid, summary_line_br, context=None):
+        aa_obj = self.pool.get('account.account')
         mbl_obj = self.pool.get('msf.budget.line')
+        
+        # get account tree
+        account_ids = aa_obj.search(cr, uid, [])
+        account_tree = {}
+        for a in aa_obj.read(cr, uid, account_ids, ['parent_id', ],
+            context=context):
+            account_tree[a['id']] = a['parent_id'] and a['parent_id'][0] \
+                or False
 
         # create root node
         vals = {
@@ -233,32 +242,37 @@ class msf_budget_summary_line(osv.osv_memory):
         # build nodes from budget lines
         id = False
         parent_level_ids = {}
-        fields = ['name', 'budget_amount', 'actual_amount', 'balance']
+        fields = [ 'name', 'budget_amount', 'actual_amount', 'balance', ]
 
         budget_lines_ids = mbl_obj.search(cr, uid, [
             ('budget_id', '=', summary_line_br.budget_id.id),
             ('line_type', 'in', ('view', 'normal')),
         ], context=context)
 
-        for bl_r in mbl_obj.read(cr, uid, budget_lines_ids, fields,
-            context=context):
+        # mapping between build tree lines and budget lines by account
+        mapping = {}
+        
+        # get line truely in parent_left order
+        # (the native order of budget lines)
+        line_read = {}
+        for bl_r in mbl_obj.read(cr, uid, budget_lines_ids,
+            fields + [ 'account_id', ], context=context):
+            line_read[bl_r['id']] = bl_r
+            
+        for bl_id in budget_lines_ids:
+            bl_r = line_read[bl_id]
 
             # get account level
             parts = bl_r['name'].split(' ')
             account = parts and parts[0] or ''
-            len_account = len(account)
-
-            # set parent from level
-            if len_account == 1:
-                # reinitialize parent level ids for accounts 6, 7, ...
-                parent_level_ids = {}
-                parent_id = root_id
-            elif 1 < len_account < 4:
-                parent_id = parent_level_ids.get(len_account - 1, False)
-            elif len_account == 5:
-                parent_id = parent_level_ids.get(3, False)
-            else:
-                parent_id = False
+ 
+            # parent mapping
+            account_id = bl_r['account_id'][0]
+            parent_id = root_id
+            if account_tree.get(account_id):
+                parent_account = account_tree[account_id]
+                if parent_account in mapping:
+                    parent_id = mapping[parent_account]
 
             # set vals
             vals = {
@@ -273,15 +287,10 @@ class msf_budget_summary_line(osv.osv_memory):
 
             # create node
             id = self.create(cr, uid, vals, context=context)
+            mapping[account_id] = id
             if not id:
                 break
-            if not root_id:
-               root_id = id
-
-            # update parent for next iteration
-            if 1 <= len_account < 4:
-                parent_level_ids[len_account] = id
-
+  
         return root_id
 
     def action_open_analytic_lines(self, cr, uid, ids, context):
