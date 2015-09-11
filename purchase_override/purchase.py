@@ -2548,8 +2548,14 @@ class purchase_order_line(osv.osv):
                 merged_id = line.merged_id.id
                 change_price_ok = line.change_price_ok
                 c = context.copy()
+                tmp_import_in_progress = context.get('import_in_progress')
+                context['import_in_progress'] = True
                 c.update({'change_price_ok': change_price_ok})
                 self.write(cr, uid, line_id, {'merged_id': False}, context=context)
+                if tmp_import_in_progress:
+                    context.update({'import_in_progress': tmp_import_in_progress})
+                else:
+                    del context['import_in_progress']
                 res_merged = merged_line_obj._update(cr, uid, merged_id, line.id, -line.product_qty, line.price_unit, context=c)
 
                 # Create or update an existing merged line with the new product
