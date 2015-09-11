@@ -61,7 +61,7 @@ class one2many_budget_lines(fields.one2many):
 
 class msf_budget_line(osv.osv):
     _name = "msf.budget.line"
-    _order = "account_order, id"
+    _order = "account_order, destination_id DESC, id"
     def _get_name(self, cr, uid, ids, field_names=None, arg=None, context=None):
         result = self.browse(cr, uid, ids, context=context)
         res = {}
