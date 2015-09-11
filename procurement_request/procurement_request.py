@@ -514,7 +514,20 @@ class procurement_request(osv.osv):
         '''
         Creates all procurement orders according to lines
         '''
-        self.write(cr, uid, ids, {'state': 'done'})
+        for id in ids:
+            # US_543: don't pass IR to done, if need an OUT.
+            out_obj = self.pool.get('stock.picking')
+            args = [('sale_id', '=', id)]
+            out_ids = out_obj.search(cr, uid, args, context=context)
+            outs = out_obj.browse(cr, uid, out_ids, context=context)
+            state_done = True
+            for out in outs:
+                if out.state != 'done':
+                    state_done = False
+            if state_done:
+                self.write(cr, uid, ids, {'state': 'done'})
+            else:
+                self.write(cr, uid, ids, {'state': 'progress'})
 
         return True
 

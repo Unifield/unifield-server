@@ -92,6 +92,23 @@ class stock_picking(osv.osv):
         '''
         set the delivered flag
         '''
+
+        # US-543: at confirmation, pass IR to done state
+        outs = self.browse(cr, uid, ids, context=context)
+        sale_obj = self.pool.get('sale.order')
+        sale_vals = {'state': 'done'}
+
+        for out in outs:
+            if out.sale_id and out.sale_id.id:
+                sale_id = out.sale_id.id
+                args = [
+                    ('sale_id', '=', sale_id),
+                    ('state', '!=', 'done')
+                ]
+                outs_link_ids = self.search(cr, uid, args, context=context)
+                if not outs_link_ids:
+                    sale_obj.write(cr, uid, sale_id, sale_vals, context=context)
+
         self.write(cr, uid, ids, {'delivered': True,}, context=context)
         return True
      
