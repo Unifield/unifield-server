@@ -162,8 +162,6 @@ class msf_budget_summary(osv.osv_memory):
                 _('Only childest budgets are drillable'))
 
         # build tree
-        if 'commitment' in context:
-            del context['commitment']
         root_id = mbsl_obj.build_tree(cr, uid, summary_br, context=context)
 
         # set action
@@ -228,6 +226,10 @@ class msf_budget_summary_line(osv.osv_memory):
         aa_obj = self.pool.get('account.account')
         mbl_obj = self.pool.get('msf.budget.line')
         
+        if context is None:
+            context = {}
+        context['commitment'] = 1
+        
         # get account tree
         account_ids = aa_obj.search(cr, uid, [])
         account_tree = {}
@@ -267,7 +269,7 @@ class msf_budget_summary_line(osv.osv_memory):
         # (the native order of budget lines)
         line_read = {}
         for bl_r in mbl_obj.read(cr, uid, budget_lines_ids,
-            fields + [ 'account_id', ], context=context):
+            fields + [ 'account_id', 'comm_amount', ], context=context):
             line_read[bl_r['id']] = bl_r
             
         for bl_id in budget_lines_ids:
@@ -295,6 +297,9 @@ class msf_budget_summary_line(osv.osv_memory):
             }
             for f in fields:
                 vals[f] = bl_r[f]
+                if f == 'actual_amount':
+                    # include commitments
+                    vals[f] += bl_r['comm_amount']
 
             # create node
             id = self.create(cr, uid, vals, context=context)
@@ -326,8 +331,6 @@ class msf_budget_summary_line(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
-        if 'commitment' in context:
-            del context['commitment']
 
         sl_br = self.browse(cr, uid, ids[0], context=context)
         name = self._aji_label_pattern.format(
