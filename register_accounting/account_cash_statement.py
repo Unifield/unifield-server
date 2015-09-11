@@ -161,7 +161,7 @@ class account_cash_statement(osv.osv):
             ids = [ids] # Calculate the starting balance
 
         # Prepare some values
-        st = self.browse(cr, uid, ids)[0]
+        st = self.browse(cr, uid, ids, context=context)[0]
 
         # Complete closing balance with all elements of starting balance
         cashbox_line_obj = self.pool.get('account.cashbox.line')
