@@ -242,7 +242,7 @@ class account_bank_statement(osv.osv):
                 raise osv.except_osv(_('Error'),
                                      _('The associated period is closed'))
             else:
-                return self.write(cr, uid, ids, {'state': 'open'})
+                return self.write(cr, uid, [register.id], {'state': 'open', 'name': register.journal_id.name})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
         """
