@@ -298,7 +298,7 @@ class res_partner(osv.osv):
                     part_name = self.read(cr, uid, part_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
-                        _('''The partner '%s' is an Unifield internal partner, so you can't remove it''' % part_name),
+                        _('''The partner '%s' is an Unifield internal partner, so you can't remove it''') % part_name,
                     )
             except ValueError:
                 pass
@@ -723,7 +723,7 @@ class res_partner_address(osv.osv):
                     addr_name = self.read(cr, uid, addr_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
-                        _('''The Address '%s' is an Unifield internal address, so you can't remove it''' % addr_name),
+                        _('''The Address '%s' is an Unifield internal address, so you can't remove it''') % addr_name,
                     )
             except ValueError:
                 pass

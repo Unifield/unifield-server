@@ -11,13 +11,29 @@
                     <separator colspan="4" string="Products to import" />
                     <field name="product_ids" colspan="4" />
                     <separator colspan="4" string="List definition" />
-                    <field name="list_type" />
-                    <field name="list_id" attrs="{'invisible': [('list_type', '=', 'new')], 'required': [('list_type', 'in', ['exist', 'replace'])]}" />
+                    <field
+                        name="list_type" 
+                        on_change="list_type_change(list_type, list_id, product_ids)"
+                    />
+                    <field
+                        name="list_id" 
+                        attrs="{'invisible': [('list_type', '=', 'new')], 'required': [('list_type', 'in', ['exist', 'replace'])]}"
+                        on_change="list_type_change(list_type, list_id, product_ids)"
+                    />
                     <field name="new_list_name" attrs="{'invisible': [('list_type', 'in', ['exist', 'replace'])], 'required': [('list_type', '=', 'new')]}" />
                     <field name="new_list_type" attrs="{'invisible': [('list_type', 'in', ['exist', 'replace'])], 'required': [('list_type', '=', 'new')]}" />
                     <separator colspan="4" string="" />
+                    <field name="product_alert" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': [('product_alert', '=', False)]}">
+                        <html>
+                            <p id="view_product_alert"
+                                style="text-align: center; color:#ff0000; font-weight: bold;">
+                                You cannot import these products into this existing sublist because some of the products are not present in the parent list of the selected product list.
+                            </p>
+                        </html>
+                    </group>
                     <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                    <button name="import_products" string="Import products" icon="gtk-execute" type="object" />
+                    <button name="import_products" string="Import products" icon="gtk-execute" type="object" attrs="{'readonly': [('product_alert', '=', True)]}" />
                 </form>
             </field>
         </record>

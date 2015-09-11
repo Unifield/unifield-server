@@ -467,6 +467,11 @@
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Ref</Data>
         </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="column_headers">
+            <Data ss:Type="String">Chk num</Data>
+          </Cell>
+        % endif
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Acct</Data>
         </Cell>
@@ -513,8 +518,13 @@
           <Data ss:Type="String">${line.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="centre">
-          <Data ss:Type="String">${line.ref or ''|x}</Data>
+          <Data ss:Type="String">${getRegRef(line) or ''|x}</Data>
         </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="centre">
+            <Data ss:Type="String">${line.cheque_number}</Data>
+          </Cell>
+        % endif
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${line.account_id.code + ' ' + line.account_id.name|x}</Data>
         </Cell>
@@ -563,8 +573,13 @@
           <Data ss:Type="String">${inv_line.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</Data>
+          <Data ss:Type="String">${inv_line.move_id and inv_line.move_id.name or hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</Data>
         </Cell>
+        % if o.journal_id.type == 'cheque':
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % endif
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code + ' ' + inv_line.account_id.name or ''|x}</Data>
         </Cell>
@@ -575,7 +590,7 @@
           <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${hasattr(inv_line, 'price_subtotal') and inv_line.price_subtotal or hasattr(inv_line, 'amount_currency') and inv_line.amount_currency or 0.0}</Data>
+          <Data ss:Type="Number">${hasattr(inv_line, 'amount_currency') and inv_line.amount_currency or 0.0}</Data>
         </Cell>
       </Row>
 % if hasattr(inv_line, 'analytic_lines'):
@@ -591,7 +606,11 @@ elif ana_line.last_corrected_id:
 endif
 %>
       <Row>
-        <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+        % else:
+          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+        % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell>
@@ -639,7 +658,11 @@ elif ana_line.last_corrected_id:
 endif
 %>
       <Row>
-        <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+        % else:
+          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+        % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell>

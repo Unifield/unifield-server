@@ -51,6 +51,42 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def update_parent_budget_us_489(self, cr, uid, *a, **b):
+        logger = logging.getLogger('update')
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        instance_name = c and c.instance_id and c.instance_id.name
+        if instance_name == 'BD_DHK_OCA':
+            budget_obj = self.pool.get('msf.budget')
+            parent_id = budget_obj.search(cr, uid, [('type', '=', 'view'), ('id', '=', 2)])
+            child_id = budget_obj.search(cr, uid, [('type', '=', 'normal'), ('id', '=', 4)])
+            if not parent_id or not child_id:
+                logger.warn('US-489: budget not found, parent: %s, child: %s' % (parent_id, child_id))
+                return False
+            budget_obj.write(cr, uid, parent_id, {'state': 'draft'})
+            budget_obj.unlink(cr, uid, parent_id)
+            fields = ['cost_center_id', 'fiscalyear_id', 'decision_moment_id']
+            data = budget_obj.read(cr, uid, child_id[0], fields)
+            vals = {}
+            for f in fields:
+                vals[f] = data[f] and data[f][0]
+            budget_obj._check_parent(cr, uid, vals)
+            budget_obj.update_parent_budgets(cr, uid, child_id)
+            logger.warn('US-489: parent budget %s updated' % (parent_id,))
+
+    def us_394_2_patch(self, cr, uid, *a, **b):
+        obj = self.pool.get('ir.translation')
+        obj.clean_translation(cr, uid, context={})
+        obj.add_xml_ids(cr, uid, context={})
+
+    def update_us_435_2(self, cr, uid, *a, **b):
+        period_obj = self.pool.get('account.period')
+        period_state_obj = self.pool.get('account.period.state')
+        periods = period_obj.search(cr, uid, [])
+        for period in periods:
+            period_state_obj.update_state(cr, uid, period)
+
+        return True
+
     def update_us_133(self, cr, uid, *a, **b):
         p_obj = self.pool.get('res.partner')
         po_obj = self.pool.get('purchase.order')

@@ -27,6 +27,7 @@ from tools.translate import _
 from ..register_tools import _get_date_in_period
 from time import strftime
 
+
 class wizard_import_cheque_lines(osv.osv_memory):
     """
     Content all lines that have been imported from a cheque register.
@@ -71,10 +72,12 @@ class wizard_import_cheque(osv.osv_memory):
         'date': fields.date('Posting Date', required=False),
         'document_date': fields.date('Document Date', required=False),
         'journal_id': fields.many2one('account.journal', string="Cheque journal to use", required=True, help="The journal the wizard will use to display lines to import"),
+        'is_imported': fields.boolean("is wizard already imported"),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
+        'is_imported': False,
     }
 
     def action_import(self, cr, uid, ids, context=None):
@@ -90,11 +93,13 @@ class wizard_import_cheque(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.line_ids:
             raise osv.except_osv(_('Error'), _('No entries ! Please select some entries then click on Import button.'))
+
         imported_lines = [x.line_id.id for x in wizard.imported_lines_ids]
         new_lines = []
         date = wizard.date or None
         document_date = wizard.document_date or None
         for line in wizard.line_ids:
+
             if line.id not in imported_lines:
                 if not date:
                     date = line.date
@@ -118,7 +123,6 @@ class wizard_import_cheque(osv.osv_memory):
                     'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or None,
                 }
                 new_lines.append((0, 0, vals))
-
         # Add lines to the imported_lines, flush them from the first tree and change state of the wizard
         self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': '', 'document_date': '',}, context=context)
         # Refresh wizard to display changes
@@ -143,10 +147,16 @@ class wizard_import_cheque(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
+
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         absl_obj = self.pool.get('account.bank.statement.line')
         curr_date = strftime('%Y-%m-%d')
+
+        # US-212: If multi-click on import button, we import only the first
+        if wizard.is_imported:
+            return {}
+
         # Process lines
         absl_lines = []
         for imported_line in wizard.imported_lines_ids:
@@ -174,7 +184,7 @@ class wizard_import_cheque(osv.osv_memory):
 
         if not len(absl_lines):
             raise osv.except_osv(_('Warning'), _('No line created!'))
-
+        self.write(cr, uid, ids, {'is_imported': True}, context=context)
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines, 'o2m_refresh': 'line_ids'}
 
 wizard_import_cheque()

@@ -21,6 +21,7 @@
 #
 ##############################################################################
 
+import account_period_state
 import account_mcdb
 import report
 import account_move_line

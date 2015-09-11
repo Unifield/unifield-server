@@ -5,6 +5,16 @@
         <record id="us_133_patch" model="patch.scripts">
             <field name="method">update_us_133</field>
         </record>
+        <record id="us_489_patch" model="patch.scripts">
+            <field name="method">update_parent_budget_us_489</field>
+        </record>
+        <record id="us_435_patch_2" model="patch.scripts">
+            <field name="method">update_us_435_2</field>
+        </record>
+
+        <record id="us_394_2_patch" model="patch.scripts">
+            <field name="method">us_394_2_patch</field>
+        </record>
 
     </data>
 </openerp>
