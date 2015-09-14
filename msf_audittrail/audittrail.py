@@ -78,6 +78,54 @@ class product_supplier(osv.osv):
     _inherit = 'product.supplierinfo'
     _trace = True
 
+    def add_audit_line(self, cr, uid, name, object_id, res_id, fct_object_id,
+                       fct_res_id, sub_obj_name, field_description,
+                       trans_field_description, new_value, old_value, context=None):
+
+        audit_line_obj = self.pool.get('audittrail.log.line')
+        vals = {
+            'user_id': uid,
+            'method': 'write',
+            'name': name,
+            'object_id': object_id,
+            'res_id': res_id,
+            'fct_object_id': fct_object_id,
+            'fct_res_id': fct_res_id,
+            'sub_obj_name': sub_obj_name,
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'field_description': field_description,
+            'trans_field_description': trans_field_description,
+            'new_value': new_value,
+            'new_value_text': new_value,
+            'new_value_fct': new_value,
+            'old_value': old_value,
+            'old_value_text': old_value,
+            'old_value_fct': old_value,
+        }
+        audit_line_obj.create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+
+        ir_model = self.pool.get('ir.model')
+        model_name = self._name
+        product_model_name = 'product.template'
+
+        object_id = ir_model.search(cr, uid, [('model', '=', product_model_name)], context=context)[0]
+        fct_object_id = ir_model.search(cr, uid, [('model', '=', model_name)], context=context)[0]
+
+        suppliers = self.browse(cr, uid, ids, context=context)
+        for supplier in suppliers:
+            if vals.get('sequence') and vals['sequence'] != supplier.sequence:
+                self.add_audit_line(cr, uid, 'sequence', object_id,
+                                    supplier.product_id.id, fct_object_id,
+                                    supplier.id, supplier.name.name, 'Supplier sequence',
+                                    'Supplier sequence', vals['sequence'],
+                                    supplier.sequence, context=context)
+
+        res = super(product_supplier, self).write(cr, uid, ids, vals,
+                                                  context=context)
+        return res
+
 product_supplier()
 
 
