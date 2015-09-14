@@ -892,6 +892,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.analytic_distribution_checks(cr, uid, order_brw_list)
 
         for order in order_brw_list:
+            line_ids = []
+            for line in order.order_line:
+                line_ids.append(line.id)
             no_price_lines = []
             if order.order_type == 'regular':
                 cr.execute('SELECT line_number FROM sale_order_line WHERE (price_unit*product_uom_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (order.id,))
@@ -928,6 +931,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     _('The currency used on the order is not compatible with the supplier. '\
 'Please change the currency to choose a compatible currency.'),
                 )
+
+            if not order.procurement_request:
+                line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
 
         self.write(cr, uid, ids, {
             'state': 'validated',
