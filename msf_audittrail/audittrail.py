@@ -84,12 +84,13 @@ class product_supplier(osv.osv):
 
         audit_line_obj = self.pool.get('audittrail.log.line')
         audit_seq_obj = self.pool.get('audittrail.log.sequence')
-        log = False
+        log = 1
 
         domain = [
-            ('model', '=', 'product.product'),
+            ('model', '=', 'product.template'),
             ('res_id', '=', res_id),
         ]
+
         log_sequence = audit_seq_obj.search(cr, uid, domain)
         if log_sequence:
             log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
