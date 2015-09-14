@@ -25,6 +25,8 @@ from osv import fields
 
 import decimal_precision as dp
 
+from datetime import datetime
+
 
 class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
@@ -47,6 +49,7 @@ class product_supplierinfo(osv.osv):
             ret[prod.id]['get_first_currency'] = prod.pricelist_ids and prod.pricelist_ids[0].currency_id and prod.pricelist_ids[0].currency_id.id or False
             ret[prod.id]['get_till_date'] = False
             ret[prod.id]['get_from_date'] = False
+            ret[prod.id]['outdated'] = False
             min_qty = False
             if prod.pricelist_ids:
                 for price in prod.pricelist_ids:
@@ -55,6 +58,15 @@ class product_supplierinfo(osv.osv):
                             ret[prod.id]['get_till_date'] = price.valid_till
                         if price.valid_from:
                             ret[prod.id]['get_from_date'] = price.valid_from
+
+                        dt_vt = price.valid_till and datetime.strptime('%s 23:59:59' % price.valid_till, '%Y-%m-%d %H:%M:%S') or False
+                        dt_vf = price.valid_from and datetime.strptime('%s 00:00:00' % price.valid_from, '%Y-%m-%d %H:%M:%S') or False
+
+                        if dt_vt and dt_vt < datetime.today():
+                            ret[prod.id]['outdated'] = True
+                        elif dt_vf and dt_vf > datetime.today():
+                            ret[prod.id]['outdated'] = True
+
                         min_qty = price.min_order_qty
         return ret
 
@@ -69,6 +81,13 @@ class product_supplierinfo(osv.osv):
         'get_first_currency': fields.function(_get_manu_price_dates, method=True, type="many2one", relation="res.currency", string="Currency", multi="compt_f"),
         'get_till_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid till date", multi="compt_f"),
         'get_from_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid from date", multi="compt_f"),
+        'outdated': fields.function(
+            _get_manu_price_dates,
+            method=True,
+            type='boolean',
+            string='Outdated ?',
+            multi='compt_f',
+        ),
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the the supplier info without removing it."),
     }
     
