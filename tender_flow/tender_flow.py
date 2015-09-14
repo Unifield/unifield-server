@@ -540,7 +540,8 @@ class tender(osv.osv):
                     product = line.product_id
                     # find the corresponding suppinfo with sequence -99
                     info_99_list = info_obj.search(cr, uid, [('product_id', '=', product.product_tmpl_id.id),
-                                                        ('sequence', '=', -99),], context=context)
+                                                             ('name', '=', line.purchase_order_line_id.order_id.partner_id.id),
+                                                             ('sequence', '=', -99),], context=context)
                     
                     if info_99_list:
                         # we drop it
