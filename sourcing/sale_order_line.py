@@ -713,6 +713,33 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def update_supplier_on_line(self, cr, uid, line_ids, context=None):
+        """
+        Update the selected supplier on lines for line in make_to_order.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs the method
+        :param line_ids: List of ID of sale.order.line to update
+        :param context: Context of the call
+
+        :return True
+        :rtype bool
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+
+        for line in self.browse(cr, uid, line_ids, context=context):
+            if line.type == 'make_to_order' and line.product_id \
+               and line.product_id.seller_id:
+                self.write(cr, uid, [line.id], {
+                    'supplier': line.product_id.seller_id.id,
+                }, context=context)
+
+        return True
+
     def _check_loan_conditions(self, cr, uid, line, context=None):
         """
         Check if the value of lines are compatible with the value
