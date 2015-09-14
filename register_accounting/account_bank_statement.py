@@ -983,6 +983,12 @@ class account_bank_statement_line(osv.osv):
             if absl.invoice_id and (absl.direct_invoice or absl.cash_return_move_line_id):
                 # BKLG-60: reg line from advance return: display invoice(s) AJIs too
                 res.add(absl.invoice_id.move_id.id)
+            elif not absl.invoice_id and absl.direct_invoice:
+                # US-512: 
+                # above case UTP-1039 was ok for temp posted direct invoice
+                # hard posted direct invoice regline case (and sync P1->C1)
+                if absl.direct_invoice_move_id:
+                    res.add(absl.direct_invoice_move_id.id)
         return list(res)
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
