@@ -83,6 +83,18 @@ class product_supplier(osv.osv):
                        trans_field_description, new_value, old_value, context=None):
 
         audit_line_obj = self.pool.get('audittrail.log.line')
+        audit_seq_obj = self.pool.get('audittrail.log.sequence')
+        log = False
+
+        domain = [
+            ('model', '=', 'product.product'),
+            ('res_id', '=', res_id),
+        ]
+        log_sequence = audit_seq_obj.search(cr, uid, domain)
+        if log_sequence:
+            log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
+            log = log_seq.get_id(code_or_id='id')
+
         vals = {
             'user_id': uid,
             'method': 'write',
@@ -101,11 +113,11 @@ class product_supplier(osv.osv):
             'old_value': old_value,
             'old_value_text': old_value,
             'old_value_fct': old_value,
+            'log': log,
         }
         audit_line_obj.create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
-
         ir_model = self.pool.get('ir.model')
         model_name = self._name
         product_model_name = 'product.template'
