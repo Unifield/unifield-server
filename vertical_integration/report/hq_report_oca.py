@@ -186,6 +186,11 @@ class hq_report_oca(report_sxw.report_sxw):
             currency = move_line.currency_id
             func_currency = move_line.functional_currency_id
             rate = "0.00"
+            
+            is_cur_adj_entry = move_line.journal_id \
+                and move_line.journal_id.type in ('revaluation', 'cur_adj') \
+                or False
+            
             if currency and func_currency:
                 # US-274/9: accrual account (always refer to previous period)
                 # base on doc date instead posting in this case
@@ -232,6 +237,10 @@ class hq_report_oca(report_sxw.report_sxw):
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
+            if is_cur_adj_entry:
+                # US-478/3: FXA/REV entry, raw data, always rate of 1
+                # without impacting formatted_data for other files
+                first_result_lines[-1][-1] = 1.
 
             # For third report: add to corresponding sub
             if journal and journal.type not in (
@@ -247,8 +256,6 @@ class hq_report_oca(report_sxw.report_sxw):
 
                     # US-274/1: for FXA entries output fonctional amount in balance
                     # report
-                    is_cur_adj_entry = move_line.journal_id \
-                        and move_line.journal_id.type in ('revaluation', 'cur_adj') or False
                     if is_cur_adj_entry:
                         output_debit = move_line.debit
                         output_credit = move_line.credit
