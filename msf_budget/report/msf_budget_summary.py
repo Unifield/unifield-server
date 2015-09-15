@@ -313,15 +313,13 @@ class msf_budget_summary_line(osv.osv_memory):
         def get_analytic_domain(sl_br):
             cc_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(cr,
                 uid, sl_br.budget_id.cost_center_id)
-            gl_accound_ids = self.pool.get('account.account').search(cr, uid, [
-                ('code', 'like', sl_br.account),
-            ], context=context)
 
             return [
                 ('cost_center_id', 'in', cc_ids),
                 ('date', '>=', sl_br.budget_id.fiscalyear_id.date_start),
                 ('date', '<=', sl_br.budget_id.fiscalyear_id.date_stop),
-                ('general_account_id', 'in', gl_accound_ids),
+                ('general_account_id', 'child_of',
+                    [sl_br.budget_line_id.account_id.id]),
             ]
 
         res = {}
@@ -333,6 +331,10 @@ class msf_budget_summary_line(osv.osv_memory):
             context = {}
 
         sl_br = self.browse(cr, uid, ids[0], context=context)
+        if not sl_br.budget_line_id:
+            # no AJI drill for the root line: only from 1 level (like 6, 7)
+            raise osv.except_osv(_('Warning'),
+                _('You can not drill analytic journal items of the root line'))
         name = self._aji_label_pattern.format(
             budget_code=sl_br.budget_id.code or '',
             budget_line=sl_br.name or '')
