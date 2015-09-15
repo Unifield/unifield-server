@@ -318,6 +318,11 @@ class hq_report_oca(report_sxw.report_sxw):
                 cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, analytic_line.date))
                 if cr.rowcount:
                     rate = round(1 / cr.fetchall()[0][0], 8)
+                    
+            is_analytic_cur_adj_entry = analytic_line.journal_id \
+                and analytic_line.journal_id.type in ('revaluation',
+                    'cur_adj') or False
+                    
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
@@ -340,6 +345,10 @@ class hq_report_oca(report_sxw.report_sxw):
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
+            if is_analytic_cur_adj_entry:
+                # US-478/3: FXA/REV entry, raw data, always rate of 1
+                # without impacting formatted_data for other files
+                first_result_lines[-1][-1] = 1.
 
             if analytic_line.journal_id \
                 and analytic_line.journal_id.type not in (
