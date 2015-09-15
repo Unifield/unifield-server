@@ -1471,11 +1471,13 @@ stock moves which are already processed : '''
                         if line.product_id.id != line.procurement_id.product_id.id and  line.procurement_id.product_id.type in ('service', 'service_recep', 'consu') and line.product_id.type == 'product':
                             # Get OUT linked to IR
                             pick_to_confirm = None
-                            out_ids = pick_obj.search(cr, uid, [
-                                ('sale_id', '=', line.link_so_id.id),
-                                ('type', '=', 'out'),
-                                ('state', 'in', ['draft', 'confirmed', 'assigned']),
-                            ], context=context)
+                            out_ids = []
+                            if line.procurement_id.sale_id:
+                                out_ids = pick_obj.search(cr, uid, [
+                                    ('sale_id', '=', line.procurement_id.sale_id.id),
+                                    ('type', '=', 'out'),
+                                    ('state', 'in', ['draft', 'confirmed', 'assigned']),
+                                ], context=context)
                             if not out_ids:
                                 picking_data = so_obj._get_picking_data(cr, uid, so)
                                 out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
