@@ -53,47 +53,55 @@ class patch_scripts(osv.osv):
 
     def us_332_patch(self, cr, uid, *a, **b):
 
-        # create MSFID for product.nomenclature
-        nomen_obj = self.pool.get('product.nomenclature')
-        nomen_ids = nomen_obj.search(cr, uid, [], order='id')
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+        
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
 
-        for nomen_id in nomen_ids:
-            nomen = nomen_obj.browse(cr, uid, nomen_id, context={})
-            msfid = ""
-            realmsfid = ""
-            if not nomen.msfid or nomen.msfid == "":
-                nomen_parent = nomen.parent_id
-                if nomen_parent and nomen_parent != "":
-                    if nomen_parent.msfid and nomen_parent.msfid != "":
-                        msfid = nomen_parent.msfid + "-"
-                name_first_word = nomen.name.split(' ')[0]
-                msfid += name_first_word
-                realmsfid = msfid
-                # Search same msfid
-                ids = nomen_obj.search(cr, uid, [('msfid', '=', realmsfid)])
-                if ids:
-                    realmsfid += msfid + str(nomen.id)
-                nomen_obj.write(cr, uid, nomen.id, {'msfid': realmsfid})
+        if level_current == 'section':
+            # create MSFID for product.nomenclature
+            nomen_obj = self.pool.get('product.nomenclature')
+            nomen_ids = nomen_obj.search(cr, uid, [], order='id')
 
-        # create MSFID for product.category
-        categ_obj = self.pool.get('product.category')
-        categ_ids = categ_obj.search(cr, uid, [], order='id')
+            for nomen_id in nomen_ids:
+                nomen = nomen_obj.browse(cr, uid, nomen_id, context={})
+                msfid = ""
+                realmsfid = ""
+                if not nomen.msfid or nomen.msfid == "":
+                    nomen_parent = nomen.parent_id
+                    if nomen_parent and nomen_parent != "":
+                        if nomen_parent.msfid and nomen_parent.msfid != "":
+                            msfid = nomen_parent.msfid + "-"
+                    name_first_word = nomen.name.split(' ')[0]
+                    msfid += name_first_word
+                    realmsfid = msfid
+                    # Search same msfid
+                    ids = nomen_obj.search(cr, uid, [('msfid', '=', realmsfid)])
+                    if ids:
+                        realmsfid += msfid + str(nomen.id)
+                    nomen_obj.write(cr, uid, nomen.id, {'msfid': realmsfid})
 
-        for categ_id in categ_ids:
-            categ = categ_obj.browse(cr, uid, categ_id, context={})
-            msfid = ""
-            realmsfid = ""
-            if not categ.msfid or categ.msfid == "":
-                family = categ.family_id
-                if family and family != "":
-                    if family.name and family.name != "":
-                        msfid = family.name[0:4]
-                        realmsfid = msfid
-                        ids = categ_obj.search(cr, uid,
-                                               [('msfid', '=', realmsfid)])
-                        if ids:
-                            realmsfid += msfid + str(categ.id)
-                categ_obj.write(cr, uid, categ.id, {'msfid': realmsfid})
+            # create MSFID for product.category
+            categ_obj = self.pool.get('product.category')
+            categ_ids = categ_obj.search(cr, uid, [], order='id')
+
+            for categ_id in categ_ids:
+                categ = categ_obj.browse(cr, uid, categ_id, context={})
+                msfid = ""
+                realmsfid = ""
+                if not categ.msfid or categ.msfid == "":
+                    family = categ.family_id
+                    if family and family != "":
+                        if family.name and family.name != "":
+                            msfid = family.name[0:4]
+                            realmsfid = msfid
+                            ids = categ_obj.search(cr, uid,
+                                                   [('msfid', '=', realmsfid)])
+                            if ids:
+                                realmsfid += msfid + str(categ.id)
+                    categ_obj.write(cr, uid, categ.id, {'msfid': realmsfid})
 
     def update_parent_budget_us_489(self, cr, uid, *a, **b):
         logger = logging.getLogger('update')
