@@ -188,8 +188,9 @@ class hq_report_oca(report_sxw.report_sxw):
             rate = "0.00"
             
             is_cur_adj_entry = move_line.journal_id \
-                and move_line.journal_id.type in ('revaluation', 'cur_adj') \
-                or False
+                and move_line.journal_id.type == 'cur_adj' or False
+            is_rev_entry = move_line.journal_id \
+                and move_line.journal_id.type == 'revaluation' or False
             
             if currency and func_currency:
                 # US-274/9: accrual account (always refer to previous period)
@@ -237,7 +238,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
-            if is_cur_adj_entry:
+            if is_cur_adj_entry or is_rev_entry:
                 # US-478/3: FXA/REV entry, raw data, always rate of 1
                 # without impacting formatted_data for other files
                 first_result_lines[-1][-1] = 1.
@@ -254,9 +255,9 @@ class hq_report_oca(report_sxw.report_sxw):
                             expat_identification = move_line.employee_id.identification_id
                         expat_employee = move_line.partner_txt
 
-                    # US-274/1: for FXA entries output fonctional amount in balance
+                    # US-274/1: for FXA/REV entries output fonctional amount in balance
                     # report
-                    if is_cur_adj_entry:
+                    if is_cur_adj_entry or is_rev_entry:
                         output_debit = move_line.debit
                         output_credit = move_line.credit
                         output_rate = 1
@@ -320,8 +321,9 @@ class hq_report_oca(report_sxw.report_sxw):
                     rate = round(1 / cr.fetchall()[0][0], 8)
                     
             is_analytic_cur_adj_entry = analytic_line.journal_id \
-                and analytic_line.journal_id.type in ('revaluation',
-                    'cur_adj') or False
+                and analytic_line.journal_id.type == 'cur_adj' or False
+            is_analytic_rev_entry = analytic_line.journal_id \
+                and analytic_line.journal_id.type == 'revaluation' or False
                     
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
@@ -345,7 +347,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
-            if is_analytic_cur_adj_entry:
+            if is_analytic_cur_adj_entry or is_analytic_rev_entry:
                 # US-478/3: FXA/REV entry, raw data, always rate of 1
                 # without impacting formatted_data for other files
                 first_result_lines[-1][-1] = 1.
