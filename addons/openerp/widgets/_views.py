@@ -67,8 +67,6 @@ class FormView(TinyView):
                            nolinks=screen.link,
                            get_source=screen.get_source)
 
-        screen.noteditable = widget.noteditable
-
         if not screen.is_wizard and screen.ids is None:
             limit = screen.limit or 50
             
