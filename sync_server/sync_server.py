@@ -569,6 +569,21 @@ class entity(osv.osv):
                 context=context)
         ])
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        to_order = False
+        if not count and order and ('last_dateactivity' in order or 'activity' in order):
+            to_order = True
+            init_offset = offset
+            init_limit = limit
+            offset = 0
+            limit = None
+        ids = super(entity, self).search(cr, uid, args, offset, limit, order, context, count)
+        if ids and to_order:
+            order = order.replace('last_dateactivity', 'datetime')
+            cr.execute('select entity_id from sync_server_entity_activity where id in %%s order by %s'%(order,), (tuple(ids),))
+            return [x[0] for x in cr.fetchall()]
+        return ids
+
     _constraints = [
         (_check_recursion, 'Error! You cannot create cycle in entities structure.', ['parent_id']),
     ]
@@ -577,7 +592,6 @@ class entity(osv.osv):
         ('identifier_unique', 'UNIQUE(identifier)', "Can't have multiple instances with the same identifier!"),
     ]
 entity()
-
 
 class sync_manager(osv.osv):
     _name = "sync.server.sync_manager"
