@@ -2853,8 +2853,17 @@ class stock_picking(osv.osv):
         pick_to_check = set()
 
         for obj in self.browse(cr, uid, ids, context=context):
-            # the convert function should only be called on draft picking ticket
-            assert obj.subtype == 'picking' and obj.state in ('draft', 'assigned'), 'the convert function should only be called on draft picking ticket objects'
+            if obj.subtype == 'standard':
+                raise osv.except_osv(
+                    _('Bad state'),
+                    _('The document you want to convert is already a standard OUT'),
+                )
+
+            if obj.subtype != 'picking' or obj.state not in ('draft', 'assigned'):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The convert function should only be called on draft picking ticket objects'),
+                )
 #            if self.has_picking_ticket_in_progress(cr, uid, [obj.id], context=context)[obj.id]:
 #                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
 
@@ -3030,6 +3039,11 @@ class stock_picking(osv.osv):
         view_id = view_id and view_id[1] or False
 
         for out in self.browse(cr, uid, ids, context=context):
+            if out.subtype == 'picking':
+                raise osv.except_osv(
+                    _('Bad document'),
+                    _('The document you want to convert is alreday a Picking Ticket')
+                )
             if out.state in ('cancel', 'done'):
                 raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
 
