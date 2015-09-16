@@ -61,7 +61,11 @@ class ocb_export_wizard(osv.osv_memory):
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         data['form'].update({'selection': wizard.selection})
 
-        data['target_filename'] = '%s_%s_formatted data UF to OCB HQ system' % (wizard.instance_id and wizard.instance_id.code[0:3] or '', period_name)
+        target_file_name_pattern = '%s_%s_formatted data UF to OCB HQ system' 
+        data['target_filename'] = target_file_name_pattern % (
+            wizard.instance_id and wizard.instance_id.code or '',
+            period_name)
+            
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocb', 'datas': data}
 
 ocb_export_wizard()
