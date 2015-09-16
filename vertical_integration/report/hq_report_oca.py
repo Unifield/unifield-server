@@ -246,7 +246,8 @@ class hq_report_oca(report_sxw.report_sxw):
             # For third report: add to corresponding sub
             if journal and journal.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
-                if not account.shrink_entries_for_hq:
+                if not account.shrink_entries_for_hq or is_rev_entry:
+                    # US-478/1: or is_rev_entry, no shrink for rev journal entries
                     expat_identification = "0"
                     expat_employee = "0"
                     # Expat employees are the only third party in this report
