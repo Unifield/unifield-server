@@ -3042,7 +3042,7 @@ class stock_picking(osv.osv):
             if out.subtype == 'picking':
                 raise osv.except_osv(
                     _('Bad document'),
-                    _('The document you want to convert is alreday a Picking Ticket')
+                    _('The document you want to convert is already a Picking Ticket')
                 )
             if out.state in ('cancel', 'done'):
                 raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
