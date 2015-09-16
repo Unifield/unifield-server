@@ -156,12 +156,11 @@ class M2M(TinyInputWidget):
             except:
                 pass
 
-        force_readonly = attrs.get('force_readonly', False)
         self.screen = Screen(current, prefix=self.name, views_preloaded=view,
                              editable=self.editable, readonly=self.editable,
                              selectable=selectable, nolinks=self.link, **{
                                  '_m2m': 1,
-                                 'force_readonly': force_readonly,
+                                 'force_readonly': self.force_readonly,
                             })
 
         self.screen.widget.checkbox_name = False
