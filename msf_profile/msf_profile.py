@@ -52,7 +52,7 @@ class patch_scripts(osv.osv):
             self.write(cr, uid, [ps['id']], {'run': True})
 
     def us_332_patch(self, cr, uid, *a, **b):
-
+        context = {}
         user_obj = self.pool.get('res.users')
         usr = user_obj.browse(cr, uid, [uid], context=context)[0]
         level_current = False
