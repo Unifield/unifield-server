@@ -518,10 +518,16 @@ class wizard_register_import(osv.osv_memory):
                             pass
                         # Check funding pool
                         try:
+                            default_name = "PF"
+                            fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', default_name), ('code', '=', default_name)])
+                            if fp_ids:
+                                r_fp = fp_ids[0]
+
                             if line[cols['funding_pool']]:
                                 fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['funding_pool']]), ('code', '=', line[cols['funding_pool']])])
                                 if fp_ids:
                                     r_fp = fp_ids[0]
+
                         except IndexError, e:
                             pass
                         # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
