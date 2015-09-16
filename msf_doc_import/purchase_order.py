@@ -86,7 +86,7 @@ class purchase_order(osv.osv):
         res = {}
 
         for po_id in ids:
-            res[po_id] = wiz_obj.search(cr, uid, [
+            res[po_id] = wiz_obj.search(cr, 1, [
                 ('po_id', '=', po_id),
                 ('state', '=', 'in_progress'),
             ], limit=1, context=context) and True or False
