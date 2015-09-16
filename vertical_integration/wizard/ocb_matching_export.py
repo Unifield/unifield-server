@@ -47,7 +47,9 @@ class ocb_matching_export_wizard(osv.osv_memory):
             data['form'].update({'instance_ids': [wizard.instance_id.id] + [x.id for x in wizard.instance_id.child_ids]})
         period_name = ''
 
-        data['target_filename'] = '%s_matching_export' % (wizard.instance_id and wizard.instance_id.code[0:3] or '',)
+        data['target_filename'] = '%s_matching_export' % (
+            wizard.instance_id and wizard.instance_id.code or '', )
+        
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocb.matching', 'datas': data}
 
 ocb_matching_export_wizard()
