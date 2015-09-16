@@ -48,9 +48,9 @@ class res_partner(osv.osv):
         res = []
 
         info_ids = supinfo_obj.search(cr, uid, [('product_product_ids', '=', context.get('product_id'))])
-        info = supinfo_obj.read(cr, uid, info_ids, ['name', 'outdated'])
+        info = supinfo_obj.read(cr, uid, info_ids, ['name'])
 
-        sup_in = [x['name'] for x in info if not x['outdated']]
+        sup_in = [x['name'] for x in info]
 
         for arg in args:
             if arg[1] == '=':
@@ -84,9 +84,8 @@ class res_partner(osv.osv):
             seller_info = {}
             # Get all suppliers defined on product form
             for s in product.seller_ids:
-                if not s.outdated:
-                    seller_ids.append(s.name.id)
-                    seller_info.update({s.name.id: {'min_qty': s.min_qty, 'delay': s.delay}})
+                seller_ids.append(s.name.id)
+                seller_info.update({s.name.id: {'min_qty': s.min_qty, 'delay': s.delay}})
             # Check if the partner is in product form
             for i in ids:
                 if i in seller_ids:
