@@ -8,15 +8,6 @@
  * @default afterLoad callback to execute after URL has been loaded and
  *                    inserted, if any.
  */
-
-function close_this_frame() {
-    /* less intrusive than UF-2513 */
-    fr = jQuery('.ui-icon-closethick')
-    if (fr && fr.length) {
-        fr[0].click();
-    }
-}
-
 function openLink(url /*optional afterLoad */) {
     var $app = jQuery('#appContent');
     var afterLoad = arguments[1];
@@ -93,7 +84,6 @@ function loadingError(url) {
         }
         form_hookStateChange();
         form_hookAttrChange();
-        form_hookFormReadonly();
     };
 }
 
@@ -173,7 +163,6 @@ function doLoadingSuccess(app, url) {
         }
         form_hookStateChange();
         form_hookAttrChange();
-        form_hookFormReadonly();
     };
 }
 

@@ -229,9 +229,12 @@ class O2M(TinyInputWidget):
         if self.view_type == 'tree' and pparams:
             self.editable = bool(pparams.id)
 
+        self.force_readonly = attrs.get('force_readonly', False)
+
         self.screen = Screen(current, prefix=self.name, views_preloaded=view,
                              editable=self.editable, readonly=self.readonly,
-                             selectable=0, nolinks=self.link, _o2m=1)
+                             selectable=0, nolinks=self.link, _o2m=1,
+                             force_readonly=self.force_readonly)
         
         self.id = id
         self.ids = ids

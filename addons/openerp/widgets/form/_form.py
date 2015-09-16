@@ -867,6 +867,14 @@ class Form(TinyInputWidget):
                 continue
 
             attrs = node_attributes(node)
+            if self.noteditable:
+                attrs['readonly'] = True
+                attrs['force_readonly'] = True
+                if 'attrs' in attrs and attrs['attrs'] and 'readonly' in attrs['attrs']:
+                    dictattr = eval(attrs['attrs'])
+                    if 'readonly' in dictattr:
+                        del dictattr['readonly']
+                    attrs['attrs'] = str(dictattr)
             attrs['prefix'] = prefix
             attrs['state'] = self.state
 
@@ -1012,6 +1020,8 @@ class Form(TinyInputWidget):
         if attrs.get('get_selection') and kind == 'selection' and attrs.get('type2') == 'many2one' and self.id:
             proxy = rpc.RPCProxy(self.model)
             attrs['selection'] = getattr(proxy, attrs['get_selection'])(self.id, name)
+        if attrs.get('force_readonly', False) and 'states' in attrs:
+            del attrs['states']
         field = get_widget(kind)(**attrs)
 
         if isinstance(field, TinyInputWidget):

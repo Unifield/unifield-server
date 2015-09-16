@@ -122,7 +122,8 @@ class ListView(TinyView):
                                     offset=screen.offset, limit=screen.limit,
                                     count=screen.count, nolinks=screen.link,
                                     m2m=screen.m2m, o2m=screen.o2m,
-                                    default_data=screen.default_value)
+                                    default_data=screen.default_value,
+                                    force_readonly=screen.force_readonly)
 
         screen.ids = widget.ids
         screen.limit = widget.limit

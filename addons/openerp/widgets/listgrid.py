@@ -101,8 +101,8 @@ class List(TinyWidget):
         self.o2m = kw.get('o2m', 0)
         self.concurrency_info = None
         self.selector = None
+        self.force_readonly = kw.get('force_readonly', False)
         
-
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
             if terp_params.get('_terp_model'):
@@ -404,6 +404,8 @@ class List(TinyWidget):
         for node in root.childNodes:
 
             if node.nodeName == 'button':
+                if self.force_readonly:
+                    continue
                 attrs = node_attributes(node)
                 if attrs.get('invisible', False):
                     visible = eval(attrs['invisible'], {'context':self.context})

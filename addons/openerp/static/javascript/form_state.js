@@ -132,25 +132,6 @@ function form_onStateChange(container, widget, states, evt) {
     }
 }
 
-function form_hookFormReadonly() {
-    var $items = jQuery('[name], table');
-
-    $items.each(function(){
-        var $this = jQuery(this);
-        var widgetName = $this.attr('widget') || '';
-        var kind = $this.attr('kind');
-        var field_id = $this.attr('id');
-        var prefix = widgetName.slice(0, widgetName.lastIndexOf('/') +1);
-        var widget = openobject.dom.get(widgetName) || $this;
-        var readonly = document.getElementById(prefix + '_terp_readonly');
-        if (readonly != undefined && readonly.value == 'True'){
-            if (($this.attr('name') && $this.attr('name').indexOf('_terp') != 0) || jQuery(idSelector('_o2m_'+field_id)).length != 0 || jQuery(idSelector('_m2m_'+field_id)).length != 0) {
-                form_setReadonly(this, widget, true, true);
-            }
-        }
-    })
-}
-
 function form_hookAttrChange() {
     var $items = jQuery('[attrs]');
     var fields = {};
@@ -390,7 +371,8 @@ function eval_stack(stack, i) {
     return stack
 }
 
-function form_setReadonly(container, fieldName, readonly, from_hookForm) {
+function form_setReadonly(container, fieldName, readonly) {
+
     var $field = typeof(fieldName) == "string" ? jQuery(idSelector(fieldName)) : jQuery(fieldName);
 
     if (!$field.length) {
@@ -417,7 +399,7 @@ function form_setReadonly(container, fieldName, readonly, from_hookForm) {
             jQuery(idSelector(field_id + '_id')) &&
             jQuery(idSelector(field_id + '_set')) &&
             jQuery(idSelector(field_id + '_id')).attr('kind') == "many2many") {
-         Many2Many(field_id).setReadonly(readonly, from_hookForm);
+         Many2Many(field_id).setReadonly(readonly);
         return;
     }
 
@@ -520,5 +502,4 @@ jQuery(document).ready(function(){
     form_hookContextMenu();
     form_hookStateChange();
     form_hookAttrChange();
-    form_hookFormReadonly();
 });
