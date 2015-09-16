@@ -580,7 +580,9 @@ class entity(osv.osv):
         ids = super(entity, self).search(cr, uid, args, offset, limit, order, context, count)
         if ids and to_order:
             order = order.replace('last_dateactivity', 'datetime')
-            cr.execute('select entity_id from sync_server_entity_activity where id in %%s order by %s'%(order,), (tuple(ids),))
+            limit_str = init_limit and ' limit %d' % init_limit or ''
+            offset_str = init_offset and ' offset %d' % init_offset or ''
+            cr.execute('select entity_id from sync_server_entity_activity where entity_id in %s order by ' + order + limit_str + offset_str, (tuple(ids),))
             return [x[0] for x in cr.fetchall()]
         return ids
 
