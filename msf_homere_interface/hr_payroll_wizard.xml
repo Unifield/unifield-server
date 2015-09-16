@@ -167,7 +167,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Import Expats">
-                  <label string="This wizard will import an Expat employees file in XML Spreadsheet 2003 format. To generate this file, create a Speadsheet with 2 columns: 'Name' and 'Code'." colspan="4"/>
+                  <label string="This wizard will import an Expat employees file in XML Spreadsheet 2003 format. To generate this file, create a Speadsheet with 3 columns: 'Name' , 'Code' and 'Active'." colspan="4"/>
                     <newline/>
                     <field name="file" filename="filename"/>
                     <field name="filename" invisible="1"/>
