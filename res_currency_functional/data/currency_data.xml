@@ -1,1112 +1,1112 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
-        <record id="base.AED" model="res.currency">
+        <record id="base.AED" model="res.currency" forcecreate="0">
             <field name="name">AED</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">UNITED ARAB EMIRATES DIRHAM</field>
         </record>
-        <record id="base.AFN" model="res.currency">
+        <record id="base.AFN" model="res.currency" forcecreate="0">
             <field name="name">AFN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">AFGHAN AFGHANI</field>
         </record>
-        <record id="base.ALL" model="res.currency">
+        <record id="base.ALL" model="res.currency" forcecreate="0">
             <field name="name">ALL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ALBANIAN LEK</field>
         </record>
-        <record id="base.AMD" model="res.currency">
+        <record id="base.AMD" model="res.currency" forcecreate="0">
             <field name="name">AMD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ARMENIAN DRAM</field>
         </record>
-        <record id="base.ANG" model="res.currency">
+        <record id="base.ANG" model="res.currency" forcecreate="0">
             <field name="name">ANG</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">NETHERLANDS ANTILLEAN GUILDER</field>
         </record>
-        <record id="base.AOA" model="res.currency">
+        <record id="base.AOA" model="res.currency" forcecreate="0">
             <field name="name">AOA</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ANGOLAN KWANZA</field>
         </record>
-        <record id="base.ARS" model="res.currency">
+        <record id="base.ARS" model="res.currency" forcecreate="0">
             <field name="name">ARS</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ARGENTINE PESO</field>
         </record>
-        <record id="base.AUD" model="res.currency">
+        <record id="base.AUD" model="res.currency" forcecreate="0">
             <field name="name">AUD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">AUSTRALIAN DOLLAR</field>
         </record>
-        <record id="base.AWG" model="res.currency">
+        <record id="base.AWG" model="res.currency" forcecreate="0">
             <field name="name">AWG</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ARUBAN FLORIN</field>
         </record>
-        <record id="base.AZN" model="res.currency">
+        <record id="base.AZN" model="res.currency" forcecreate="0">
             <field name="name">AZN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">AZERBAIJANI MANAT</field>
         </record>
-        <record id="base.BAM" model="res.currency">
+        <record id="base.BAM" model="res.currency" forcecreate="0">
             <field name="name">BAM</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BOSNIA AND HERZEGOVINA CONVERTIBLE MARK</field>
         </record>
-        <record id="base.BBD" model="res.currency">
+        <record id="base.BBD" model="res.currency" forcecreate="0">
             <field name="name">BBD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BARBADOS DOLLAR</field>
         </record>
-        <record id="base.BDT" model="res.currency">
+        <record id="base.BDT" model="res.currency" forcecreate="0">
             <field name="name">BDT</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BANGLADESHI TAKA</field>
         </record>
-        <record id="base.BGN" model="res.currency">
+        <record id="base.BGN" model="res.currency" forcecreate="0">
             <field name="name">BGN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BULGARIAN LEV</field>
         </record>
-        <record id="base.BHD" model="res.currency">
+        <record id="base.BHD" model="res.currency" forcecreate="0">
             <field name="name">BHD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BAHRAINI DINAR</field>
         </record>
-        <record id="base.BIF" model="res.currency">
+        <record id="base.BIF" model="res.currency" forcecreate="0">
             <field name="name">BIF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BURUNDIAN FRANC</field>
         </record>
-        <record id="base.BMD" model="res.currency">
+        <record id="base.BMD" model="res.currency" forcecreate="0">
             <field name="name">BMD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BERMUDIAN DOLLAR</field>
         </record>
-        <record id="base.BND" model="res.currency">
+        <record id="base.BND" model="res.currency" forcecreate="0">
             <field name="name">BND</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BRUNEI DOLLAR</field>
         </record>
-        <record id="base.BOB" model="res.currency">
+        <record id="base.BOB" model="res.currency" forcecreate="0">
             <field name="name">BOB</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BOLIVIANO</field>
         </record>
-        <record id="base.BRL" model="res.currency">
+        <record id="base.BRL" model="res.currency" forcecreate="0">
             <field name="name">BRL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BRAZILIAN REAL</field>
         </record>
-        <record id="base.BSD" model="res.currency">
+        <record id="base.BSD" model="res.currency" forcecreate="0">
             <field name="name">BSD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BAHAMIAN DOLLAR</field>
         </record>
-        <record id="base.BTN" model="res.currency">
+        <record id="base.BTN" model="res.currency" forcecreate="0">
             <field name="name">BTN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BHUTANESE NGULTRUM</field>
         </record>
-        <record id="base.BWP" model="res.currency">
+        <record id="base.BWP" model="res.currency" forcecreate="0">
             <field name="name">BWP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BOTSWANA PULA</field>
         </record>
-        <record id="base.BYR" model="res.currency">
+        <record id="base.BYR" model="res.currency" forcecreate="0">
             <field name="name">BYR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BELARUSIAN RUBLE</field>
         </record>
-        <record id="base.BZD" model="res.currency">
+        <record id="base.BZD" model="res.currency" forcecreate="0">
             <field name="name">BZD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">BELIZE DOLLAR</field>
         </record>
-        <record id="base.CAD" model="res.currency">
+        <record id="base.CAD" model="res.currency" forcecreate="0">
             <field name="name">CAD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CANADIAN DOLLAR</field>
         </record>
-        <record id="base.CDF" model="res.currency">
+        <record id="base.CDF" model="res.currency" forcecreate="0">
             <field name="name">CDF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CONGOLESE FRANC</field>
         </record>
-        <record id="base.CHF" model="res.currency">
+        <record id="base.CHF" model="res.currency" forcecreate="0">
             <field name="name">CHF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="True"/>
             <field name="currency_name">SWISS FRANC</field>
         </record>
-        <record id="base.CLP" model="res.currency">
+        <record id="base.CLP" model="res.currency" forcecreate="0">
             <field name="name">CLP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CHILEAN PESO</field>
         </record>
-        <record id="base.CNY" model="res.currency">
+        <record id="base.CNY" model="res.currency" forcecreate="0">
             <field name="name">CNY</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CHINESE YUAN</field>
         </record>
-        <record id="base.COP" model="res.currency">
+        <record id="base.COP" model="res.currency" forcecreate="0">
             <field name="name">COP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">COLOMBIAN PESO</field>
         </record>
-        <record id="base.CRC" model="res.currency">
+        <record id="base.CRC" model="res.currency" forcecreate="0">
             <field name="name">CRC</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">COSTA RICAN COLON</field>
         </record>
-        <record id="base.CUC" model="res.currency">
+        <record id="base.CUC" model="res.currency" forcecreate="0">
             <field name="name">CUC</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CUBAN CONVERTIBLE PESO</field>
         </record>
-        <record id="base.CUP" model="res.currency">
+        <record id="base.CUP" model="res.currency" forcecreate="0">
             <field name="name">CUP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CUBAN PESO</field>
         </record>
-        <record id="base.CVE" model="res.currency">
+        <record id="base.CVE" model="res.currency" forcecreate="0">
             <field name="name">CVE</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CAPE VERDE ESCUDO</field>
         </record>
-        <record id="base.CZK" model="res.currency">
+        <record id="base.CZK" model="res.currency" forcecreate="0">
             <field name="name">CZK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CZECH KORUNA</field>
         </record>
-        <record id="base.DJF" model="res.currency">
+        <record id="base.DJF" model="res.currency" forcecreate="0">
             <field name="name">DJF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">DJIBOUTIAN FRANC</field>
         </record>
-        <record id="base.DKK" model="res.currency">
+        <record id="base.DKK" model="res.currency" forcecreate="0">
             <field name="name">DKK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">DANISH KRONE</field>
         </record>
-        <record id="base.DOP" model="res.currency">
+        <record id="base.DOP" model="res.currency" forcecreate="0">
             <field name="name">DOP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">DOMINICAN PESO</field>
         </record>
-        <record id="base.DZD" model="res.currency">
+        <record id="base.DZD" model="res.currency" forcecreate="0">
             <field name="name">DZD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ALGERIAN DINAR</field>
         </record>
-        <record id="base.EGP" model="res.currency">
+        <record id="base.EGP" model="res.currency" forcecreate="0">
             <field name="name">EGP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">EGYPTIAN POUND</field>
         </record>
-        <record id="base.ERN" model="res.currency">
+        <record id="base.ERN" model="res.currency" forcecreate="0">
             <field name="name">ERN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ERITREAN NAKFA</field>
         </record>
-        <record id="base.ETB" model="res.currency">
+        <record id="base.ETB" model="res.currency" forcecreate="0">
             <field name="name">ETB</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ETHIOPIAN BIRR</field>
         </record>
-        <record id="base.EUR" model="res.currency">
+        <record id="base.EUR" model="res.currency" forcecreate="0">
             <field name="name">EUR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="True"/>
             <field name="currency_name">EURO</field>
         </record>
-        <record id="base.FJD" model="res.currency">
+        <record id="base.FJD" model="res.currency" forcecreate="0">
             <field name="name">FJD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">FIJI DOLLAR</field>
         </record>
-        <record id="base.FKP" model="res.currency">
+        <record id="base.FKP" model="res.currency" forcecreate="0">
             <field name="name">FKP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">FALKLAND ISLANDS POUND</field>
         </record>
-        <record id="base.GBP" model="res.currency">
+        <record id="base.GBP" model="res.currency" forcecreate="0">
             <field name="name">GBP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">POUND STERLING</field>
         </record>
-        <record id="base.GEL" model="res.currency">
+        <record id="base.GEL" model="res.currency" forcecreate="0">
             <field name="name">GEL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">GEORGIAN LARI</field>
         </record>
-        <record id="base.GHS" model="res.currency">
+        <record id="base.GHS" model="res.currency" forcecreate="0">
             <field name="name">GHS</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">GHANAIAN CEDI</field>
         </record>
-        <record id="base.GIP" model="res.currency">
+        <record id="base.GIP" model="res.currency" forcecreate="0">
             <field name="name">GIP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">GIBRALTAR POUND</field>
         </record>
-        <record id="base.GMD" model="res.currency">
+        <record id="base.GMD" model="res.currency" forcecreate="0">
             <field name="name">GMD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">GAMBIAN DALASI</field>
         </record>
-        <record id="base.GNF" model="res.currency">
+        <record id="base.GNF" model="res.currency" forcecreate="0">
             <field name="name">GNF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">GUINEAN FRANC</field>
         </record>
-        <record id="base.GTQ" model="res.currency">
+        <record id="base.GTQ" model="res.currency" forcecreate="0">
             <field name="name">GTQ</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">GUATEMALAN QUETZAL</field>
         </record>
-        <record id="base.GYD" model="res.currency">
+        <record id="base.GYD" model="res.currency" forcecreate="0">
             <field name="name">GYD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">GUYANESE DOLLAR</field>
         </record>
-        <record id="base.HKD" model="res.currency">
+        <record id="base.HKD" model="res.currency" forcecreate="0">
             <field name="name">HKD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">HONG KONG DOLLAR</field>
         </record>
-        <record id="base.HNL" model="res.currency">
+        <record id="base.HNL" model="res.currency" forcecreate="0">
             <field name="name">HNL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">HONDURAN LEMPIRA</field>
         </record>
-        <record id="base.HRK" model="res.currency">
+        <record id="base.HRK" model="res.currency" forcecreate="0">
             <field name="name">HRK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CROATIAN KUNA</field>
         </record>
-        <record id="base.HTG" model="res.currency">
+        <record id="base.HTG" model="res.currency" forcecreate="0">
             <field name="name">HTG</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">HAITIAN GOURDE</field>
         </record>
-        <record id="base.HUF" model="res.currency">
+        <record id="base.HUF" model="res.currency" forcecreate="0">
             <field name="name">HUF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">HUNGARIAN FORINT</field>
         </record>
-        <record id="base.IDR" model="res.currency">
+        <record id="base.IDR" model="res.currency" forcecreate="0">
             <field name="name">IDR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">INDONESIAN RUPIAH</field>
         </record>
-        <record id="base.ILS" model="res.currency">
+        <record id="base.ILS" model="res.currency" forcecreate="0">
             <field name="name">ILS</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ISRAELI NEW SHEQEL</field>
         </record>
-        <record id="base.INR" model="res.currency">
+        <record id="base.INR" model="res.currency" forcecreate="0">
             <field name="name">INR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">INDIAN RUPEE</field>
         </record>
-        <record id="base.IQD" model="res.currency">
+        <record id="base.IQD" model="res.currency" forcecreate="0">
             <field name="name">IQD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">IRAQI DINAR</field>
         </record>
-        <record id="base.IRR" model="res.currency">
+        <record id="base.IRR" model="res.currency" forcecreate="0">
             <field name="name">IRR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">IRANIAN RIAL</field>
         </record>
-        <record id="base.ISK" model="res.currency">
+        <record id="base.ISK" model="res.currency" forcecreate="0">
             <field name="name">ISK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ICELANDIC KRÓNA</field>
         </record>
-        <record id="base.JMD" model="res.currency">
+        <record id="base.JMD" model="res.currency" forcecreate="0">
             <field name="name">JMD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">JAMAICAN DOLLAR</field>
         </record>
-        <record id="base.JOD" model="res.currency">
+        <record id="base.JOD" model="res.currency" forcecreate="0">
             <field name="name">JOD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">JORDANIAN DINAR</field>
         </record>
-        <record id="base.JPY" model="res.currency">
+        <record id="base.JPY" model="res.currency" forcecreate="0">
             <field name="name">JPY</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">JAPANESE YEN</field>
         </record>
-        <record id="base.KES" model="res.currency">
+        <record id="base.KES" model="res.currency" forcecreate="0">
             <field name="name">KES</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">KENYAN SHILLING</field>
         </record>
-        <record id="base.KGS" model="res.currency">
+        <record id="base.KGS" model="res.currency" forcecreate="0">
             <field name="name">KGS</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">KYRGYZSTANI SOM</field>
         </record>
-        <record id="base.KHR" model="res.currency">
+        <record id="base.KHR" model="res.currency" forcecreate="0">
             <field name="name">KHR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CAMBODIAN RIEL</field>
         </record>
-        <record id="base.KMF" model="res.currency">
+        <record id="base.KMF" model="res.currency" forcecreate="0">
             <field name="name">KMF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">COMORO FRANC</field>
         </record>
-        <record id="base.KPW" model="res.currency">
+        <record id="base.KPW" model="res.currency" forcecreate="0">
             <field name="name">KPW</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">NORTH KOREAN WON</field>
         </record>
-        <record id="base.KRW" model="res.currency">
+        <record id="base.KRW" model="res.currency" forcecreate="0">
             <field name="name">KRW</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SOUTH KOREAN WON</field>
         </record>
-        <record id="base.KWD" model="res.currency">
+        <record id="base.KWD" model="res.currency" forcecreate="0">
             <field name="name">KWD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">KUWAITI DINAR</field>
         </record>
-        <record id="base.KYD" model="res.currency">
+        <record id="base.KYD" model="res.currency" forcecreate="0">
             <field name="name">KYD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CAYMAN ISLANDS DOLLAR</field>
         </record>
-        <record id="base.KZT" model="res.currency">
+        <record id="base.KZT" model="res.currency" forcecreate="0">
             <field name="name">KZT</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">KAZAKHSTANI TENGE</field>
         </record>
-        <record id="base.LAK" model="res.currency">
+        <record id="base.LAK" model="res.currency" forcecreate="0">
             <field name="name">LAK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">LAO KIP</field>
         </record>
-        <record id="base.LBP" model="res.currency">
+        <record id="base.LBP" model="res.currency" forcecreate="0">
             <field name="name">LBP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">LEBANESE POUND</field>
         </record>
-        <record id="base.LKR" model="res.currency">
+        <record id="base.LKR" model="res.currency" forcecreate="0">
             <field name="name">LKR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SRI LANKA RUPEE</field>
         </record>
-        <record id="base.LRD" model="res.currency">
+        <record id="base.LRD" model="res.currency" forcecreate="0">
             <field name="name">LRD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">LIBERIAN DOLLAR</field>
         </record>
-        <record id="base.LSL" model="res.currency">
+        <record id="base.LSL" model="res.currency" forcecreate="0">
             <field name="name">LSL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">LESOTHO LOTI</field>
         </record>
-        <record id="base.LTL" model="res.currency">
+        <record id="base.LTL" model="res.currency" forcecreate="0">
             <field name="name">LTL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">LITHUANIAN LITAS</field>
         </record>
-        <record id="base.LVL" model="res.currency">
+        <record id="base.LVL" model="res.currency" forcecreate="0">
             <field name="name">LVL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">LATVIAN LATS</field>
         </record>
-        <record id="base.LYD" model="res.currency">
+        <record id="base.LYD" model="res.currency" forcecreate="0">
             <field name="name">LYD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">LIBYAN DINAR</field>
         </record>
-        <record id="base.MAD" model="res.currency">
+        <record id="base.MAD" model="res.currency" forcecreate="0">
             <field name="name">MAD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MOROCCAN DIRHAM</field>
         </record>
-        <record id="base.MDL" model="res.currency">
+        <record id="base.MDL" model="res.currency" forcecreate="0">
             <field name="name">MDL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MOLDOVAN LEU</field>
         </record>
-        <record id="base.MGA" model="res.currency">
+        <record id="base.MGA" model="res.currency" forcecreate="0">
             <field name="name">MGA</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MALAGASY ARIARY</field>
         </record>
-        <record id="base.MKD" model="res.currency">
+        <record id="base.MKD" model="res.currency" forcecreate="0">
             <field name="name">MKD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MACEDONIAN DENAR</field>
         </record>
-        <record id="base.MMF" model="res.currency">
+        <record id="base.MMF" model="res.currency" forcecreate="0">
             <field name="name">MMF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MYANMA KYAT2</field>
         </record>
-        <record id="base.MMK" model="res.currency">
+        <record id="base.MMK" model="res.currency" forcecreate="0">
             <field name="name">MMK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MYANMA KYAT</field>
         </record>
-        <record id="base.MNT" model="res.currency">
+        <record id="base.MNT" model="res.currency" forcecreate="0">
             <field name="name">MNT</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MONGOLIAN TUGRIK</field>
         </record>
-        <record id="base.MOP" model="res.currency">
+        <record id="base.MOP" model="res.currency" forcecreate="0">
             <field name="name">MOP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MACANESE PATACA</field>
         </record>
-        <record id="base.MRO" model="res.currency">
+        <record id="base.MRO" model="res.currency" forcecreate="0">
             <field name="name">MRO</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MAURITANIAN OUGUIYA</field>
         </record>
-        <record id="base.MUR" model="res.currency">
+        <record id="base.MUR" model="res.currency" forcecreate="0">
             <field name="name">MUR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MAURITIAN RUPEE</field>
         </record>
-        <record id="base.MVR" model="res.currency">
+        <record id="base.MVR" model="res.currency" forcecreate="0">
             <field name="name">MVR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MALDIVIAN RUFIYAA</field>
         </record>
-        <record id="base.MWK" model="res.currency">
+        <record id="base.MWK" model="res.currency" forcecreate="0">
             <field name="name">MWK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MALAWIAN KWACHA</field>
         </record>
-        <record id="base.MXN" model="res.currency">
+        <record id="base.MXN" model="res.currency" forcecreate="0">
             <field name="name">MXN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MEXICAN PESO</field>
         </record>
-        <record id="base.MYR" model="res.currency">
+        <record id="base.MYR" model="res.currency" forcecreate="0">
             <field name="name">MYR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MALAYSIAN RINGGIT</field>
         </record>
-        <record id="base.MZN" model="res.currency">
+        <record id="base.MZN" model="res.currency" forcecreate="0">
             <field name="name">MZN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">MOZAMBICAN METICAL</field>
         </record>
-        <record id="base.NAD" model="res.currency">
+        <record id="base.NAD" model="res.currency" forcecreate="0">
             <field name="name">NAD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">NAMIBIAN DOLLAR</field>
         </record>
-        <record id="base.NGN" model="res.currency">
+        <record id="base.NGN" model="res.currency" forcecreate="0">
             <field name="name">NGN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">NIGERIAN NAIRA</field>
         </record>
-        <record id="base.NIO" model="res.currency">
+        <record id="base.NIO" model="res.currency" forcecreate="0">
             <field name="name">NIO</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CORDOBA ORO</field>
         </record>
-        <record id="base.NOK" model="res.currency">
+        <record id="base.NOK" model="res.currency" forcecreate="0">
             <field name="name">NOK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">NORWEGIAN KRONE</field>
         </record>
-        <record id="base.NPR" model="res.currency">
+        <record id="base.NPR" model="res.currency" forcecreate="0">
             <field name="name">NPR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">NEPALESE RUPEE</field>
         </record>
-        <record id="base.NZD" model="res.currency">
+        <record id="base.NZD" model="res.currency" forcecreate="0">
             <field name="name">NZD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">NEW ZEALAND DOLLAR</field>
         </record>
-        <record id="base.OMR" model="res.currency">
+        <record id="base.OMR" model="res.currency" forcecreate="0">
             <field name="name">OMR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">OMANI RIAL</field>
         </record>
-        <record id="base.PAB" model="res.currency">
+        <record id="base.PAB" model="res.currency" forcecreate="0">
             <field name="name">PAB</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">PANAMANIAN BALBOA</field>
         </record>
-        <record id="base.PEN" model="res.currency">
+        <record id="base.PEN" model="res.currency" forcecreate="0">
             <field name="name">PEN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">PERUVIAN NUEVO SOL</field>
         </record>
-        <record id="base.PGK" model="res.currency">
+        <record id="base.PGK" model="res.currency" forcecreate="0">
             <field name="name">PGK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">PAPUA NEW GUINEAN KINA</field>
         </record>
-        <record id="base.PHP" model="res.currency">
+        <record id="base.PHP" model="res.currency" forcecreate="0">
             <field name="name">PHP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">PHILIPPINE PESO</field>
         </record>
-        <record id="base.PKR" model="res.currency">
+        <record id="base.PKR" model="res.currency" forcecreate="0">
             <field name="name">PKR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">PAKISTANI RUPEE</field>
         </record>
-        <record id="base.PLN" model="res.currency">
+        <record id="base.PLN" model="res.currency" forcecreate="0">
             <field name="name">PLN</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">POLISH ZLOTY</field>
         </record>
-        <record id="base.PYG" model="res.currency">
+        <record id="base.PYG" model="res.currency" forcecreate="0">
             <field name="name">PYG</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">PARAGUAYAN GUARANÍ</field>
         </record>
-        <record id="base.QAR" model="res.currency">
+        <record id="base.QAR" model="res.currency" forcecreate="0">
             <field name="name">QAR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">QATARI RIAL</field>
         </record>
-        <record id="base.RON" model="res.currency">
+        <record id="base.RON" model="res.currency" forcecreate="0">
             <field name="name">RON</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ROMANIAN NEW LEU</field>
         </record>
-        <record id="base.RSD" model="res.currency">
+        <record id="base.RSD" model="res.currency" forcecreate="0">
             <field name="name">RSD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SERBIAN DINAR</field>
         </record>
-        <record id="base.RUB" model="res.currency">
+        <record id="base.RUB" model="res.currency" forcecreate="0">
             <field name="name">RUB</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">RUSSIAN ROUBLE</field>
         </record>
-        <record id="base.RWF" model="res.currency">
+        <record id="base.RWF" model="res.currency" forcecreate="0">
             <field name="name">RWF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">RWANDAN FRANC</field>
         </record>
-        <record id="base.SAR" model="res.currency">
+        <record id="base.SAR" model="res.currency" forcecreate="0">
             <field name="name">SAR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SAUDI RIYAL</field>
         </record>
-        <record id="base.SBD" model="res.currency">
+        <record id="base.SBD" model="res.currency" forcecreate="0">
             <field name="name">SBD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SOLOMON ISLANDS DOLLAR</field>
         </record>
-        <record id="base.SCR" model="res.currency">
+        <record id="base.SCR" model="res.currency" forcecreate="0">
             <field name="name">SCR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SEYCHELLES RUPEE</field>
         </record>
-        <record id="base.SDG" model="res.currency">
+        <record id="base.SDG" model="res.currency" forcecreate="0">
             <field name="name">SDG</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SUDANESE POUND</field>
         </record>
-        <record id="base.SEK" model="res.currency">
+        <record id="base.SEK" model="res.currency" forcecreate="0">
             <field name="name">SEK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SWEDISH KRONA</field>
         </record>
-        <record id="base.SGD" model="res.currency">
+        <record id="base.SGD" model="res.currency" forcecreate="0">
             <field name="name">SGD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SINGAPORE DOLLAR</field>
         </record>
-        <record id="base.SHP" model="res.currency">
+        <record id="base.SHP" model="res.currency" forcecreate="0">
             <field name="name">SHP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SAINT HELENA POUND</field>
         </record>
-        <record id="base.SLL" model="res.currency">
+        <record id="base.SLL" model="res.currency" forcecreate="0">
             <field name="name">SLL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SIERRA LEONEAN LEONE</field>
         </record>
-        <record id="base.SOS" model="res.currency">
+        <record id="base.SOS" model="res.currency" forcecreate="0">
             <field name="name">SOS</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SOMALI SHILLING</field>
         </record>
-        <record id="base.SRD" model="res.currency">
+        <record id="base.SRD" model="res.currency" forcecreate="0">
             <field name="name">SRD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SURINAMESE DOLLAR</field>
         </record>
-        <record id="base.STD" model="res.currency">
+        <record id="base.STD" model="res.currency" forcecreate="0">
             <field name="name">STD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SÃO TOMÉ AND PRÍNCIPE DOBRA</field>
         </record>
-        <record id="base.SYP" model="res.currency">
+        <record id="base.SYP" model="res.currency" forcecreate="0">
             <field name="name">SYP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SYRIAN POUND</field>
         </record>
-        <record id="base.SZL" model="res.currency">
+        <record id="base.SZL" model="res.currency" forcecreate="0">
             <field name="name">SZL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">LILANGENI</field>
         </record>
-        <record id="base.THB" model="res.currency">
+        <record id="base.THB" model="res.currency" forcecreate="0">
             <field name="name">THB</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">THAI BAHT</field>
         </record>
-        <record id="base.TJS" model="res.currency">
+        <record id="base.TJS" model="res.currency" forcecreate="0">
             <field name="name">TJS</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">TAJIKISTANI SOMONI</field>
         </record>
-        <record id="base.TMT" model="res.currency">
+        <record id="base.TMT" model="res.currency" forcecreate="0">
             <field name="name">TMT</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">TURKMENISTANI MANAT</field>
         </record>
-        <record id="base.TND" model="res.currency">
+        <record id="base.TND" model="res.currency" forcecreate="0">
             <field name="name">TND</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">TUNISIAN DINAR</field>
         </record>
-        <record id="base.TOP" model="res.currency">
+        <record id="base.TOP" model="res.currency" forcecreate="0">
             <field name="name">TOP</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">TONGAN PA'ANGA</field>
         </record>
-        <record id="base.TRY" model="res.currency">
+        <record id="base.TRY" model="res.currency" forcecreate="0">
             <field name="name">TRY</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">TURKISH LIRA</field>
         </record>
-        <record id="base.TTD" model="res.currency">
+        <record id="base.TTD" model="res.currency" forcecreate="0">
             <field name="name">TTD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">TRINIDAD AND TOBAGO DOLLAR</field>
         </record>
-        <record id="base.TWD" model="res.currency">
+        <record id="base.TWD" model="res.currency" forcecreate="0">
             <field name="name">TWD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">NEW TAIWAN DOLLAR</field>
         </record>
-        <record id="base.TZS" model="res.currency">
+        <record id="base.TZS" model="res.currency" forcecreate="0">
             <field name="name">TZS</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">TANZANIAN SHILLING</field>
         </record>
-        <record id="base.UAH" model="res.currency">
+        <record id="base.UAH" model="res.currency" forcecreate="0">
             <field name="name">UAH</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">UKRAINIAN HRYVNIA</field>
         </record>
-        <record id="base.UGX" model="res.currency">
+        <record id="base.UGX" model="res.currency" forcecreate="0">
             <field name="name">UGX</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">UGANDAN SHILLING</field>
         </record>
-        <record id="base.USD" model="res.currency">
+        <record id="base.USD" model="res.currency" forcecreate="0">
             <field name="name">USD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">UNITED STATES DOLLAR</field>
         </record>
-        <record id="base.UYU" model="res.currency">
+        <record id="base.UYU" model="res.currency" forcecreate="0">
             <field name="name">UYU</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">URUGUAYAN PESO</field>
         </record>
-        <record id="base.UZS" model="res.currency">
+        <record id="base.UZS" model="res.currency" forcecreate="0">
             <field name="name">UZS</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">UZBEKISTAN SOM</field>
         </record>
-        <record id="base.VEF" model="res.currency">
+        <record id="base.VEF" model="res.currency" forcecreate="0">
             <field name="name">VEF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">VENEZUELAN BOLÍVAR FUERTE</field>
         </record>
-        <record id="base.VND" model="res.currency">
+        <record id="base.VND" model="res.currency" forcecreate="0">
             <field name="name">VND</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">VIETNAMESE DONG</field>
         </record>
-        <record id="base.VUV" model="res.currency">
+        <record id="base.VUV" model="res.currency" forcecreate="0">
             <field name="name">VUV</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">VANUATU VATU</field>
         </record>
-        <record id="base.WST" model="res.currency">
+        <record id="base.WST" model="res.currency" forcecreate="0">
             <field name="name">WST</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SAMOAN TALA</field>
         </record>
-        <record id="base.XAF" model="res.currency">
+        <record id="base.XAF" model="res.currency" forcecreate="0">
             <field name="name">XAF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CFA FRANC BEAC</field>
         </record>
-        <record id="base.XCD" model="res.currency">
+        <record id="base.XCD" model="res.currency" forcecreate="0">
             <field name="name">XCD</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">EAST CARIBBEAN DOLLAR</field>
         </record>
-        <record id="base.XOF" model="res.currency">
+        <record id="base.XOF" model="res.currency" forcecreate="0">
             <field name="name">XOF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CFA FRANC BCEAO</field>
         </record>
-        <record id="base.XPF" model="res.currency">
+        <record id="base.XPF" model="res.currency" forcecreate="0">
             <field name="name">XPF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">CFP FRANC</field>
         </record>
-        <record id="base.YER" model="res.currency">
+        <record id="base.YER" model="res.currency" forcecreate="0">
             <field name="name">YER</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">YEMENI RIAL</field>
         </record>
-        <record id="base.ZAR" model="res.currency">
+        <record id="base.ZAR" model="res.currency" forcecreate="0">
             <field name="name">ZAR</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">SOUTH AFRICAN RAND</field>
         </record>
-        <record id="base.ZMK" model="res.currency">
+        <record id="base.ZMK" model="res.currency" forcecreate="0">
             <field name="name">ZMK</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ZAMBIAN KWACHA</field>
         </record>
-        <record id="base.ZWL" model="res.currency">
+        <record id="base.ZWL" model="res.currency" forcecreate="0">
             <field name="name">ZWL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
             <field name="currency_name">ZIMBABWE DOLLAR</field>
         </record>
-        <delete  model="res.currency"  id="base.VEB" />
+        <delete  model="res.currency" forcecreate="0"  id="base.VEB" />
     </data>
 </openerp>
