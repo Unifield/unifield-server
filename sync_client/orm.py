@@ -75,7 +75,7 @@ class extended_orm_methods:
             return res
         return recur_get_model(self, [])
 
-    def need_to_push(self, cr, uid, ids, touched_fields=None, context=None):
+    def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
         """
         Check if records need to be pushed to the next synchronization process
         or not.
@@ -108,17 +108,24 @@ class extended_orm_methods:
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable: ids = [ids]
         ids = filter(None, ids)
-        if not ids: return ids if result_iterable else False
+        if not empty_ids and not ids: return ids if result_iterable else False
+
+        sql_params = [self._name]
+        add_sql = ''
+        if not empty_ids:
+            add_sql = ' res_id IN %s AND '
+            sql_params.append(tuple(ids))
+
         if touched_fields is None:
             cr.execute("""\
 SELECT res_id
     FROM ir_model_data
     WHERE module = 'sd' AND
           model = %s AND
-          res_id IN %s AND
-          (sync_date < last_modification OR sync_date IS NULL) AND
+          """+add_sql+"""
+          ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
           (create_date is NULL or create_date <= NOW())""",
-[self._name, tuple(ids)])
+sql_params)
         # NOW() is the sql transaction begin date
         # can't use (sync_date IS NULL or last_modification <= NOW()) bc UTP-1201 use case failed
         # can't use (last_modification <= NOW()) bc a record created before the sync but updated during the sync will not be sent
@@ -131,10 +138,10 @@ SELECT res_id, touched
     FROM ir_model_data
     WHERE module = 'sd' AND
           model = %s AND
-          res_id IN %s AND
-          (sync_date < last_modification OR sync_date IS NULL) AND
+          """+add_sql+"""
+          ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
           (create_date is NULL or create_date <= NOW())""",
-[self._name, tuple(ids)])
+sql_params)
             result = [row[0] for row in cr.fetchall()
                       if row[1] is None \
                           or touched_fields.intersection(eval(row[1]) if row[1] else [])]
@@ -632,7 +639,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         elif not isinstance(ids, tuple): ids = tuple(ids)
         ids = filter(None, ids)
         if not ids: return True
-        already_deleted = self.search_deleted(cr, uid, [('res_id','in',ids)], context=context)
+        already_deleted = self.search_deleted(cr, uid, res_ids=ids, context=context)
         to_delete = list(set(ids) - set(already_deleted))
         self.unlink(cr, uid, to_delete, context=context)
         cr.execute("""\
@@ -640,7 +647,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 """, [self._name, ids])
         return True
 
-    def search_deleted(self, cr, user, args=[], context=None):
+    def search_deleted(self, cr, user, module=None, res_ids=None, context=None):
         """
         Search for deleted entries in the table. It search for xmlids that are linked to not existing records. Beware that the domain applies to the ir.model.data
 
@@ -653,10 +660,21 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         :raise AccessError: * if user tries to bypass access rules for read on the requested object.
 
         """
-        ir_data = self.pool.get('ir.model.data')
-        data_ids = ir_data.search(cr, user,
-            args + [('model','=',self._name)], context=context)
-        return list(set(data['res_id'] for data in ir_data.read(cr, user, data_ids, ['id','res_id','is_deleted'], context=context) if data['is_deleted']))
+        sql_add = ''
+        sql_params = {'model': self._name}
+
+        if module:
+            sql_add = ' AND d.module=%(module)s '
+            sql_params['module'] = module
+        if res_ids:
+            sql_add += ' AND d.res_id in %(res_ids)s '
+            sql_params['res_ids'] = tuple(res_ids)
+
+        cr.execute('''
+        select d.res_id from ir_model_data d
+        left join '''+self._table+''' t on t.id = d.res_id and d.model=%(model)s
+        where t.id is null and d.model=%(model)s'''+sql_add, sql_params)
+        return [x[0] for x in cr.fetchall()]
 
     def search_ext(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """
