@@ -579,7 +579,7 @@
                     <notebook colspan="4">
                         <page string="General Information">
                             <field name="from_wkf" invisible="1"/>
-                            <field name="subtype" invisible="1" />
+                            <field name="subtype" invisible="1" readonly="1" />
                             <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
                                 default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
@@ -865,7 +865,7 @@
                     <notebook colspan="4">
                         <page string="Products">
                             <field name="from_wkf" invisible="1"/>
-                            <field name="subtype" invisible="True"/>
+                            <field name="subtype" invisible="True" readonly="1" />
                             <field name="move_lines"
                                 colspan="4"
                                 nolabel="1"
