@@ -1107,6 +1107,6 @@
             <field name="active" eval="False"/>
             <field name="currency_name">ZIMBABWE DOLLAR</field>
         </record>
-        <delete  model="res.currency" forcecreate="0"  id="base.VEB" />
+        <delete  model="res.currency" id="base.VEB" />
     </data>
 </openerp>
