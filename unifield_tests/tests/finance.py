@@ -934,11 +934,51 @@ class FinanceTest(UnifieldTest):
             # action_confirm(ids, context=None, distrib_id=False)
             wizard_cor_obj.action_confirm([wiz_br.id], {'unit_test': 1}, False)
             
+    def check_sequence_number(self, expected_ji_seq_num, model_obj, entries_ids,
+        is_analytic=False, db_name=''):
+        """
+        check sequence number consistency
+        :param expected_ji_seq_num: expected sequence number
+        :type expected_ji_seq_num: str
+        :param model_obj: open erp model object
+        :param entries_ids: entries ids
+        :type entries_ids:  int/long/list
+        :param analytic: is analytic entry
+        :type analytic: bool
+        """
+        def get_od_sequence_number(self, source_seq_number, od_seq_number):
+            pass
+        
+        pattern_header = db_name and "sequence number mismatch :: %s: %s" \
+            or "sequence number mismatch: %s"
+        pattern_mismatch_line = "%s %s should have sequence number '%s'" \
+            "instead of '%s'"
+        if isinstance(entries_ids, (int, long, )):
+            entries_ids = [ entries_ids ]
+        mismatch = []
+        
+        for r_br in model_obj.browse(entries_ids):
+            entry_sequence_number = is_analytic and r_br.entry_sequence \
+                or r_br.move_id.name
+            if entry_sequence_number != expected_ji_seq_num:
+                mismatch.append(pattern_mismatch_line % (
+                    r_br.account_id.code,
+                    r_br.name,
+                    entry_sequence_number,
+                    expected_ji_seq_num,
+                ))
+                
+        self.assert_(
+            len(mismatch) == 0,
+            pattern_header % (db_name, ', '.join(mismatch), )
+        )
+    
     def check_ji_correction(self, db, ji_id,
         account_code, new_account_code=False,
         expected_ad=False, expected_ad_rev=False, expected_ad_cor=False,
         expected_cor_rev_ajis_total_func_amount=False,
-        cor_level=1, ji_origin_id=False):
+        cor_level=1, ji_origin_id=False,
+        check_sequence_number=False):
         """
         ji_origin_id: 1st ji corrected for cor cascade
         cor_level: cor level for cor cascade
@@ -971,6 +1011,7 @@ class FinanceTest(UnifieldTest):
             )
         
         ji_br = aml_obj.browse(ji_id)
+        ji_seq_num = ji_br.move_id.name
         ji_origin = ji_origin_id and aml_obj.browse(ji_origin_id).name or \
             ji_br.name
         ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
@@ -994,6 +1035,10 @@ class FinanceTest(UnifieldTest):
                 "no JI REV found for %s %s %f:: %s" % (account_code,
                     ji_br.name, ji_amount, db.colored_name, )
             )
+            # check sequence number
+            if check_sequence_number:
+                self.check_sequence_number(ji_seq_num, aml_obj, rev_ids,
+                    is_analytic=False, db_name=db.colored_name)
             
             # check JI COR
             cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
@@ -1010,6 +1055,10 @@ class FinanceTest(UnifieldTest):
                 "no JI COR found for %s %s %f:: %s" % (new_account_code,
                     ji_br.name, ji_amount, db.colored_name, )
             )
+            # check sequence number
+            if check_sequence_number:
+                self.check_sequence_number(ji_seq_num, aml_obj, cor_ids,
+                    is_analytic=False, db_name=db.colored_name)
                 
         # ids of AJIs not rev/cor (not in correction journal)
         base_aji_ids = aal_obj.search([

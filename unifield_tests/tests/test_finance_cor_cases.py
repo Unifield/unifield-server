@@ -528,15 +528,14 @@ class FinanceTestCorCases(FinanceTest):
     # play all flow:
     # cd unifield/test-finance/unifield-wm/unifield_tests
     # python -m unittest tests.test_finance_cor_cases
-    '''
-    def test_cor_00(self):
+    
+    '''def test_cor_00(self):
         """
         fake unit test for dataset testing
         cd unifield/test-finance/unifield-wm/unifield_tests
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_00
         """
-        pass
-    '''
+        pass'''
     
     # -------------------------------------------------------------------------
     # SINGLE CASES FLOW: from 01 to 14
@@ -579,6 +578,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=ad,
+                #check_sequence_number=True
             )
             
     def test_cor_02(self):
