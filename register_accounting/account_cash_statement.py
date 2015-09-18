@@ -100,9 +100,10 @@ class account_cash_statement(osv.osv):
         if prev_reg_id:
             prev_reg = self.browse(cr, uid, [prev_reg_id], context=context)[0]
             # if previous register closing balance is freezed, then retrieving previous closing balance
-            if prev_reg.closing_balance_frozen:
-                if journal.type == 'bank':
-                    vals.update({'balance_start': prev_reg.msf_calculated_balance})
+            # US_410: retrieving previous closing balance even closing balance is not freezed
+            # if prev_reg.closing_balance_frozen:
+            if journal.type == 'bank':
+                vals.update({'balance_start': prev_reg.msf_calculated_balance})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists (or discard if they come from sync)
         if prev_reg_id and not sync_update:
@@ -110,6 +111,19 @@ class account_cash_statement(osv.osv):
         # update balance_end
         self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution') and vals.get('balance_end_real', False):
+            for id in ids:
+                args = [('prev_reg_id', '=', id)]
+                search_ids = self.search(cr, uid, args, context=context)
+                new_vals = {'balance_start': vals['balance_end_real']}
+                self.write(cr, uid, search_ids, new_vals, context=context)
+
+        return super(account_cash_statement, self).write(cr, uid, ids, vals, context=context)
 
     def button_open_cash(self, cr, uid, ids, context=None):
         if not context:
@@ -147,7 +161,7 @@ class account_cash_statement(osv.osv):
             ids = [ids] # Calculate the starting balance
 
         # Prepare some values
-        st = self.browse(cr, uid, ids)[0]
+        st = self.browse(cr, uid, ids, context=context)[0]
 
         # Complete closing balance with all elements of starting balance
         cashbox_line_obj = self.pool.get('account.cashbox.line')

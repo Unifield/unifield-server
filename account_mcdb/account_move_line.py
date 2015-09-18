@@ -73,6 +73,7 @@ class account_move_line(osv.osv):
                 res[o_id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             return res
         # Retrieve currency
+        company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency_id = context.get('output_currency_id')
         currency_obj = self.pool.get('res.currency')
         rate = currency_obj.read(cr, uid, currency_id, ['rate'], context=context).get('rate', False)
@@ -82,21 +83,23 @@ class account_move_line(osv.osv):
                 res[out_id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             return res
         for ml in self.browse(cr, uid, ids, context=context):
-            res[ml.id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
+            res[ml.id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
             context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
             # Now call the common method to calculate the output values
-            amount = self.calculate_output(cr, uid, currency_id, ml, round=True, context=context)
-            res[ml.id]['output_amount'] = amount or 0.0
-            if amount < 0.0:
-                res[ml.id]['output_amount_debit'] = 0.0
-                res[ml.id]['output_amount_credit'] = abs(amount) or 0.0
+            if currency_id == company_currency_id:
+                res[ml.id].update({'output_amount': ml.debit - ml.credit, 'output_amount_debit': ml.debit, 'output_amount_credit': ml.credit})
             else:
-                res[ml.id]['output_amount_debit'] = abs(amount) or 0.0
-                res[ml.id]['output_amount_credit'] = 0.0
-                # or output_currency field
-            res[ml.id]['output_currency'] = currency_id
+                amount = self.calculate_output(cr, uid, currency_id, ml, round=True, context=context)
+                res[ml.id]['output_amount'] = amount or 0.0
+                if amount < 0.0:
+                    res[ml.id]['output_amount_debit'] = 0.0
+                    res[ml.id]['output_amount_credit'] = abs(amount) or 0.0
+                else:
+                    res[ml.id]['output_amount_debit'] = abs(amount) or 0.0
+                    res[ml.id]['output_amount_credit'] = 0.0
+                    # or output_currency field
         return res
 
     _columns = {

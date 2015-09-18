@@ -115,6 +115,7 @@
                     <field name="employee_id" invisible="1"/>
                     <field name="transfer_journal_id" invisible="1"/>
                     <field name="partner_txt"/>
+                    <field name="partner_identification" invisible="'identification' not in context" />
                     <field name="partner_type" invisible="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
                         attrs="{'required': [('partner_type_mandatory', '=', True)]}"
                         domain="[('filter_for_third_party', '=', account_id)]"

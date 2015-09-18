@@ -1586,11 +1586,6 @@ msgstr "Revaluation du coût des produits"
 msgid "Initial amount"
 msgstr "Montant Initial"
 
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_free_2
-msgid "Free 2"
-msgstr "Free 2"
-
 #. module: specific_rules
 #: view:initial.stock.inventory:0
 #: field:initial.stock.inventory,inventory_line_id:0
@@ -7481,18 +7476,6 @@ msgstr "Qté recue"
 #: field:account.tax.template,price_include:0
 msgid "Tax Included in Price"
 msgstr "Taxe Incluse dans le Prix"
-
-#. modules: account_override, account, msf_instance, analytic_distribution
-#: selection:account.analytic.journal,type:0
-#: selection:account.journal,type:0
-#: selection:account.move,journal_type:0
-#: selection:account.move.line,journal_type:0
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_project_intermission
-#: selection:account.analytic.line,journal_type:0
-#: selection:account.analytic.journal.fake,type:0
-#: selection:account.journal.fake,type:0
-msgid "Intermission"
-msgstr "Intermission"
 
 #. module: base
 #: field:ir.module.module,certificate:0
@@ -18056,11 +18039,6 @@ msgstr "\n"
 "\n"
 "The columns should be in this values: "
 
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_expatriates
-msgid "Expatriates"
-msgstr "Expatriates"
-
 #. module: procurement
 #: selection:mrp.property,composition:0
 msgid "plus"
@@ -20312,44 +20290,6 @@ msgstr "Rechercher Donation"
 msgid "America/Argentina/Rio_Gallegos"
 msgstr "America/Argentina/Rio_Gallegos"
 
-#. modules: msf_budget, purchase, sync_client, account_mcdb, msf_homere_interface, financing_contract, account_hq_entries, purchase_allocation_report, base, msf_doc_import, stock, analytic_distribution
-#: field:hq.analytic.reallocation,destination_id:0
-#: field:hq.entries,destination_id:0
-#: view:account.analytic.line:0
-#: view:account.mcdb:0
-#: field:account.mcdb,analytic_account_dest_ids:0
-#: code:addons/account_mcdb/report/account_mcdb_export.py:167
-#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:65
-#: selection:account.analytic.account,category:0
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination
-#: view:account.analytic.line:0
-#: field:account.analytic.line,destination_id:0
-#: field:analytic.distribution.wizard.f1.lines,destination_id:0
-#: field:analytic.distribution.wizard.f2.lines,destination_id:0
-#: field:analytic.distribution.wizard.fp.lines,destination_id:0
-#: field:analytic.distribution.wizard.lines,destination_id:0
-#: field:cost.center.distribution.line,destination_id:0
-#: field:free.1.distribution.line,destination_id:0
-#: field:free.2.distribution.line,destination_id:0
-#: field:funding.pool.distribution.line,destination_id:0
-#: field:ir.server.object.lines,col1:0
-#: report:addons/financing_contract/report/project_expenses_xls.mako:458
-#: field:msf.budget.line,destination_id:0
-#: selection:msf.budget.line,line_type:0
-#: field:msf.doc.import.accounting.lines,destination_id:0
-#: field:hr.analytic.reallocation,destination_id:0
-#: field:hr.employee,destination_id:0
-#: field:hr.payroll.msf,destination_id:0
-#: field:purchase.order,location_id:0
-#: report:po.line.allocation.report:0
-#: report:purchase.order.allocation.report:0
-#: field:purchase.order.line.allocation.report,destination_id:0
-#: view:stock.move:0
-#: view:sync.client.message_to_send:0
-#, python-format
-msgid "Destination"
-msgstr "Destination"
-
 #. module: return_claim
 #: field:return.claim,contains_event_return_claim:0
 msgid "Contains Events"
@@ -21040,11 +20980,6 @@ msgstr "Reprendre la Synchronisation en arrière-plan "
 #: help:payment.line,move_line_id:0
 msgid "This Entry Line will be referred for the information of the ordering customer."
 msgstr "Cette Ligne d'Ecriture servira de référence pour les informations concernant le client passeur de commande."
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_operation
-msgid "Operations"
-msgstr "Operations"
 
 #. module: base
 #: code:addons/fields.py:113
@@ -23751,15 +23686,6 @@ msgstr "French / Français"
 #, python-format
 msgid "Not implemented"
 msgstr "Non mis en œuvre"
-
-#. modules: financing_contract, account_mcdb, analytic_distribution
-#: field:account.mcdb,analytic_account_fp_ids:0
-#: code:addons/account_mcdb/report/account_mcdb_export.py:167
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_funding_pool
-#: report:addons/financing_contract/report/project_expenses_xls.mako:464
-#, python-format
-msgid "Funding Pool"
-msgstr "Funding Pool"
 
 #. module: sale_override
 #: field:sale.order,original_so_id_sale_order:0
@@ -35151,11 +35077,6 @@ msgstr "ID Enfants"
 #: report:msf.product_list:0
 msgid "List Type :"
 msgstr "Type de Liste :"
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_support
-msgid "Support"
-msgstr "Support"
 
 #. module: base_setup
 #: model:ir.module.module,shortdesc:base_setup.module_meta_information
@@ -50847,11 +50768,6 @@ msgstr "La première séquence doit commencer par un 1"
 msgid "Commitment Voucher %s has been created."
 msgstr "Le Bon d'Engagement  %s été créé"
 
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_free_1
-msgid "Free 1"
-msgstr "Free 1"
-
 #. module: sync_client
 #: field:sync.client.sync_server_connection,protocol:0
 msgid "Protocol"
@@ -52734,11 +52650,6 @@ msgstr "13e"
 #: model:process.node,name:purchase.process_node_approvepurchaseorder0
 msgid "PO - confirmed"
 msgstr "BC - confirmé"
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_project
-msgid "OC"
-msgstr "OC"
 
 #. module: tender_flow
 #: code:addons/tender_flow/tender_flow.py:368
@@ -65305,11 +65216,6 @@ msgstr "Centres de Coûts associés"
 msgid "Etc/GMT-4"
 msgstr "Etc/GMT-4"
 
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_national_staff
-msgid "National Staff"
-msgstr "National Staff"
-
 #. module: msf_config_locations
 #: field:stock.location,virtual_ok:0
 msgid "Virtual Location"
@@ -69279,11 +69185,6 @@ msgstr "Prix Coûtant"
 #: report:addons/register_accounting/report/open_advances_xls.mako:153
 msgid "Booking Debit"
 msgstr "Booking Debit"
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_msf_private_funds
-msgid "MSF Private Funds"
-msgstr "MSF Private Funds"
 
 #. module: msf_doc_import
 #: field:incoming.import.xml.line,file_line_number:0

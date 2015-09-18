@@ -205,10 +205,12 @@ class product_attributes(osv.osv):
     def init(self, cr):
         if hasattr(super(product_attributes, self), 'init'):
             super(product_attributes, self).init(cr)
+        mod_obj = self.pool.get('ir.module.module')
+        mode = mod_obj.search(cr, 1, [('name', '=', 'product_attributes'), ('state', '=', 'to install')]) and 'init' or 'update'
         logging.getLogger('init').info('HOOK: module product_attributes: loading product_attributes_data.xml')
         pathname = path.join('product_attributes', 'product_attributes_data.xml')
         file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'product_attributes', file, {}, mode='init', noupdate=False)
+        tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
 
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}

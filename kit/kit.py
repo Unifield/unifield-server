@@ -459,7 +459,19 @@ class composition_kit(osv.osv):
                 view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'kit', 'view_composition_kit_theoretical_filter')
                 if view:
                     view_id = view[1]
-                 
+
+        if view_type == 'tree' and not view_id:
+            if not context.get('composition_type', False) and not context.get('wizard_composition_type', False):
+                # view tree not from a menu -> picking process wizard, we are looking for composition list - by default the theoretical search view is      displayed
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'kit', 'view_composition_kit_real_tree')
+                if view:
+                    view_id = view[1]
+            # second level flag for wizards
+            elif context.get('wizard_composition_type', False) == 'theoretical' or context.get('composition_type', False) == 'theoretical':
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'kit', 'view_composition_kit_tree')
+                if view:
+                    view_id = view[1]
+
         # call super
         result = super(composition_kit, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type - fields from one2many field
@@ -487,48 +499,7 @@ class composition_kit(osv.osv):
                 root.set('hide_delete_button', 'True')
                 # fields to be modified
                 result['arch'] = etree.tostring(root)
-                
-        # columns from kit composition tree - if we display from theoretical menu or display the search view of version_id from real_filter
-        if view_type == 'tree':
-            if context.get('wizard_composition_type', False) == 'theoretical' or (context.get('composition_type', False) == 'theoretical' and not context.get('wizard_composition_type', False)):
-                # load the xml tree
-                root = etree.fromstring(result['arch'])
-                # xpath of fields to be modified
-                list = ['//field[@name="composition_exp"]', '//field[@name="composition_combined_ref_lot"]']
-                for xpath in list:
-                    fields = root.xpath(xpath)
-                    if not fields:
-                        raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
-                    for field in fields:
-                        field.set('invisible', 'True')
-                result['arch'] = etree.tostring(root)
-                
-            # in tree view, hide the delete button and replace it by a delete button of type "object" to hide if it is not draft state
-            if context.get('composition_type', False) == 'real':
-                # load the xml tree
-                root = etree.fromstring(result['arch'])
-                # the root is tree tag
-                root.set('hide_delete_button', 'True')
-                # fields to be modified
-                list = ['//field[@name="state"]']
-                fields = []
-                for xpath in list:
-                    fields = root.xpath(xpath)
-                    if not fields:
-                        raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
-                # get separator index within xml tree
-                state_index = root.index(fields[0])
-                new_button_txt = '''
-                                 <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
-                                                     states='draft' confirm='Do you really want to delete selected record(s) ?'/>
-                                                     '''
-                # generate xml tree
-                new_tree = etree.fromstring(new_button_txt)
-                # insert new tree just after state index position
-                root.insert(state_index+1, new_tree)
-                # generate xml back to string
-                result['arch'] = etree.tostring(root)
-                
+
         return result
     
     def name_get(self, cr, uid, ids, context=None):

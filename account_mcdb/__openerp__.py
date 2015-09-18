@@ -31,6 +31,7 @@
     "init_xml" : [],
     "update_xml" : [
         'wizard/output_currency_for_export_view.xml',
+        'account_period_state_view.xml',
         'account_mcdb_view.xml',
         'account_view.xml',
         'account_mcdb_export_view.xml',

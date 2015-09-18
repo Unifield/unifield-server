@@ -29,6 +29,11 @@
             <blockValign value="TOP" />
         </blockTableStyle>
 
+        <blockTableStyle id="NoPackTable">
+            <blockAlignment value="CENTER" />
+            <blockValign value="TOP" />
+        </blockTableStyle>
+
         <blockTableStyle id="ParcelHeaderGrey">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
@@ -53,6 +58,8 @@
 
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
         <paraStyle name="HeaderInfosValue" fontName="Helvetica" fontSize="8.0" textColor="blue" />
+
+        <paraStyle name="NoPack" fontName="Helvetica" fontSize="12.0" textColor="red" alignment="center" />
 
         <paraStyle name="ParcelInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
         <paraStyle name="ParcelInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" alignment="right" />
@@ -154,6 +161,15 @@
                             <para style="HeaderInfosTitle"> </para>
                             <para style="HeaderInfosTitle">Invoice to:</para>
                             <para style="HeaderInfosValue"></para>
+                        </td>
+                    </tr>
+                </blockTable>
+
+                <blockTable colWidths="810.0" style="NoPackTable">
+                    [[ len(p['pf']) != 0 and removeParentNode('blockTable') ]]
+                    <tr>
+                        <td>
+                            <para style="NoPack"><font color="red">NO PACK FAMILIES IN THIS PPL</font></para>
                         </td>
                     </tr>
                 </blockTable>

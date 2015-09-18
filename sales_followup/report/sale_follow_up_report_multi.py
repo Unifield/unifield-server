@@ -21,7 +21,7 @@
 
 
 import time
-
+import tools
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
@@ -36,6 +36,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             'getLines': self._get_lines,
             'getOrders': self._get_orders,
             'getProducts': self._get_products,
+            'saleUstr': self._sale_ustr,
         })
         self._order_iterator = 0
         self._nb_orders = 0
@@ -46,6 +47,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
         else:
             self.back_browse = None
+
+    def _sale_ustr(self, string):
+        return tools.ustr(string)
 
     def _get_orders(self, report):
         orders = []
