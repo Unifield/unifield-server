@@ -909,7 +909,7 @@
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
-            <field name="currency_name">SOUTH SOUDAN</field>
+            <field name="currency_name">SOUTH SUDANESE POUND</field>
         </record>
         <record id="base.STD" model="res.currency">
             <field name="name">STD</field>
