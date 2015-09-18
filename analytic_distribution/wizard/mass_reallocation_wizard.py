@@ -180,9 +180,18 @@ class mass_reallocation_wizard(osv.osv_memory):
         Change domain for mass reallocation wizard to filter free1/free2 if we are in this case.
         Otherwise only accept OC/Dest/FP.
         """
+        ids = False
         view = super(mass_reallocation_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        if view_type == 'form' and context and context.get('active_ids', False):
+        
+        if view_type == 'form' and context and context.get('search_domain', False):
+            aal_obj = self.pool.get('account.analytic.line')
+            args = context.get('search_domain')
+            ids = aal_obj.search(cr, uid, args, context=context)
+            context['active_ids'] = ids
+        elif view_type == 'form' and context and context.get('active_ids', False):
             ids = context.get('active_ids')
+
+        if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
             first_line = self.pool.get('account.analytic.line').browse(cr, uid, ids)[0]
@@ -208,6 +217,13 @@ class mass_reallocation_wizard(osv.osv_memory):
             context = {}
         # Default behaviour
         res = super(mass_reallocation_wizard, self).default_get(cr, uid, fields, context=context)
+
+        if context.get('search_domain', False):
+            aal_obj = self.pool.get('account.analytic.line')
+            args = context.get('search_domain')
+            ids = aal_obj.search(cr, uid, args, context=context)
+            context['active_ids'] = ids
+
         # Populate line_ids field
         if context.get('analytic_account_from'):
             res['state'] = 'blocked'

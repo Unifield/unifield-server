@@ -134,6 +134,16 @@
             context="{'analytic_account_from': context.get('analytic_account_from', False) }"
             target="new"/>
 
+        <act_window id="action_mass_reallocation_search"
+            name="Mass reallocation - All search results"
+            res_model="mass.reallocation.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="{'all_search': True, 'search_domain': search_domain, 'analytic_account_from': context.get('analytic_account_from', False) }"
+            target="new"/>
+
     <!-- Mass reallocation wizard -->
         <record id="mass_reallocation_wizard_view" model="ir.ui.view">
             <field name="name">Mass Reallocation Wizard</field>

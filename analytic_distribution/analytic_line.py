@@ -200,7 +200,7 @@ class analytic_line(osv.osv):
     _defaults = {
         'imported_commitment': lambda *a: False,
     }
-
+    
     def create(self, cr, uid, vals, context=None):
         """
         Check date for given date and given account_id
