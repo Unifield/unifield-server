@@ -578,7 +578,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=ad,
-                check_sequence_number_mode='consistency'
+                check_sequence_number=True
             )
             
     def test_cor_02(self):
@@ -738,7 +738,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
-                check_sequence_number_mode='consistency'
+                check_sequence_number=True
             )
             
     def test_cor_06(self):
@@ -791,7 +791,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
                 expected_cor_rev_ajis_total_func_amount=80.65,
-                check_sequence_number_mode='regular'
+                check_sequence_number=True
             )
             
             # REOPEN period for over cases flow
@@ -849,7 +849,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
                 expected_cor_rev_ajis_total_func_amount=80.65,
-                check_sequence_number_mode='consistency'
+                check_sequence_number=True
             )
             
     def test_cor_08(self):
@@ -972,7 +972,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad=False,
                 expected_ad_rev=False,
                 expected_ad_cor=ad,
-                check_sequence_number_mode='consistency'
+                check_sequence_number=True
             )
             
     def test_cor_11(self):
@@ -1112,7 +1112,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=new_ad,
-                check_sequence_number_mode='consistency'
+                check_sequence_number=True
             )
             
         # 1st invoice line change account to 60000 for 10th Feb
@@ -1177,7 +1177,7 @@ class FinanceTestCorCases(FinanceTest):
             expected_ad=ad,
             expected_ad_rev=ad,
             expected_ad_cor=new_ad,
-            check_sequence_number_mode='consistency'
+            check_sequence_number=True
         )
    
         # 13.6/7: correction of COR-1 => will generate COR-2
@@ -1202,7 +1202,7 @@ class FinanceTestCorCases(FinanceTest):
             expected_ad_rev=new_ad,  
             expected_ad_cor=new_ad2,
             cor_level=2, ji_origin_id=ji_ids[0],
-            check_sequence_number_mode='consistency'
+            check_sequence_number=True
         )
             
         # 13.8/9:

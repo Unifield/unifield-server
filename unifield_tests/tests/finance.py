@@ -934,75 +934,42 @@ class FinanceTest(UnifieldTest):
             # action_confirm(ids, context=None, distrib_id=False)
             wizard_cor_obj.action_confirm([wiz_br.id], {'unit_test': 1}, False)
             
-    def check_sequence_number(self, source_ji_seq_num, model_obj, entries_ids,
-        mode, is_analytic=False, db_name=''):
+    def check_sequence_number(self, model_obj, entries_ids, is_analytic=False,
+        db_name=''):
         """
         check sequence number consistency
-        :param source_ji_seq_num: source corrected entry sequence number
-        :type source_ji_seq_num: str
-        :param model_obj: open erp model object
+        :param model_obj: oerplib model object
         :param entries_ids: entries ids
         :type entries_ids:  int/long/list
-        :param mode: check mode
-            - 'regular': all cor/rev entries have the same sequence number
-            - 'consistency': all cor/rev entries have the same sequence number
-                AND MUST be the same as original entry sequence number
-                (expected_ji_seq_num)
-        :param analytic: is analytic entry
+        :param analytic: is analytic entry ?
         :type analytic: bool
+        :param db_name: database name
+        :type db_name: str
         """
         def get_entry_sequence(entry_br):
             return is_analytic and entry_br.entry_sequence \
                     or entry_br.move_id.name
                     
-        if not mode or mode not in ('regular', 'consistency', ):
-            raise FinanceTestException('invalid mode parameter')
-                    
         if isinstance(entries_ids, (int, long, )):
             entries_ids = [ entries_ids ]
+        entries_seq_number = [ get_entry_sequence(e_br) for e_br \
+            in model_obj.browse(entries_ids) ]
             
         assert_pattern_header = db_name \
             and "sequence number mismatch :: %s: %s" \
             or "sequence number mismatch: %s"
-        
-        if mode == 'consistency':
-            # all cor/rev entries have the same sequence number
-            # AND MUST be the same as original entry sequence number
-            # (expected_ji_seq_num)
-            assert_pattern_line = "%s %s should have sequence number '%s'" \
-                " instead of '%s'"
-            
-            source_seq_number_parts = source_ji_seq_num.split('-')
-            expected_od_seq_number = "%s-OD-%s" % (source_seq_number_parts[0],
-                source_seq_number_parts[-1], )
-        
-            mismatch = []
-            for e_br in model_obj.browse(entries_ids):
-                entry_seq_num = get_entry_sequence(e_br)
-                if entry_seq_num != expected_od_seq_number:
-                    mismatch.append(assert_pattern_line % (e_br.account_id.code,
-                        e_br.name, entry_seq_num, expected_od_seq_number, ))
-                    
-            self.assert_(
-                len(mismatch) == 0,
-                assert_pattern_header % (db_name, ', '.join(mismatch), )
-            )
-        elif mode == 'regular':
-            entries_seq_number = [ get_entry_sequence(e_br) for e_br \
-                in model_obj.browse(entries_ids) ]
- 
-            self.assert_(
-                len(set(entries_seq_number)) == 1,
-                assert_pattern_header % (db_name, ', '.join(entries_seq_number),
-                    )
-            )
+        self.assert_(
+            len(set(entries_seq_number)) == 1,
+            assert_pattern_header % (db_name, ', '.join(entries_seq_number),
+                )
+        )
     
     def check_ji_correction(self, db, ji_id,
         account_code, new_account_code=False,
         expected_ad=False, expected_ad_rev=False, expected_ad_cor=False,
         expected_cor_rev_ajis_total_func_amount=False,
         cor_level=1, ji_origin_id=False,
-        check_sequence_number_mode=False):
+        check_sequence_number=False):
         """
         ji_origin_id: 1st ji corrected for cor cascade
         cor_level: cor level for cor cascade
@@ -1058,10 +1025,9 @@ class FinanceTest(UnifieldTest):
                 "no JI REV found for %s %s %f:: %s" % (account_code,
                     ji_br.name, ji_amount, db.colored_name, )
             )
-            if check_sequence_number_mode:
+            if check_sequence_number:
                 # check sequence number
-                self.check_sequence_number(ji_seq_num, aml_obj, rev_ids,
-                    check_sequence_number_mode, is_analytic=False,
+                self.check_sequence_number(aml_obj, rev_ids, is_analytic=False,
                     db_name=db.colored_name)
             
             # check JI COR
@@ -1079,10 +1045,9 @@ class FinanceTest(UnifieldTest):
                 "no JI COR found for %s %s %f:: %s" % (new_account_code,
                     ji_br.name, ji_amount, db.colored_name, )
             )
-            if check_sequence_number_mode:
+            if check_sequence_number:
                 # check sequence number
-                self.check_sequence_number(ji_seq_num, aml_obj, cor_ids,
-                    check_sequence_number_mode, is_analytic=False,
+                self.check_sequence_number(aml_obj, cor_ids, is_analytic=False,
                     db_name=db.colored_name)
                 
         # ids of AJIs not rev/cor (not in correction journal)
@@ -1168,10 +1133,9 @@ class FinanceTest(UnifieldTest):
                         expected_cor_rev_ajis_total_func_amount,
                         db.colored_name, )
                 )
-            if check_sequence_number_mode:
+            if check_sequence_number:
                 # check sequence number
-                self.check_sequence_number(ji_seq_num, aal_obj, ids,
-                    check_sequence_number_mode, is_analytic=True,
+                self.check_sequence_number(aal_obj, ids, is_analytic=True,
                     db_name=db.colored_name)
                 
         if expected_ad_cor:
@@ -1222,10 +1186,9 @@ class FinanceTest(UnifieldTest):
                         expected_cor_rev_ajis_total_func_amount,
                         db.colored_name, )
                 )"""
-            if check_sequence_number_mode:
+            if check_sequence_number:
                 # check sequence number
-                self.check_sequence_number(ji_seq_num, aal_obj, ids,
-                    check_sequence_number_mode, is_analytic=True,
+                self.check_sequence_number(aal_obj, ids, is_analytic=True,
                     db_name=db.colored_name)
         
     def journal_create_entry(self, database):
