@@ -157,7 +157,7 @@ class update(osv.osv):
     _order = 'sequence, create_date desc'
 
     _sql_constraints = [
-        ('detect_duplicated_updates','UNIQUE(session_id, rule_id, sdref, owner)','This update is duplicated and has been ignored!'),
+        ('detect_duplicated_updates','UNIQUE (session_id, rule_id, sdref, owner)','This update is duplicated and has been ignored!'),
     ]
 
     @add_sdref_column
