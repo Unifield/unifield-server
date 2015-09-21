@@ -970,7 +970,7 @@ class FinanceTest(UnifieldTest):
             # AND MUST be the same as original entry sequence number
             # (expected_ji_seq_num)
             assert_pattern_line = "%s %s should have sequence number '%s'" \
-                "instead of '%s'"
+                " instead of '%s'"
             
             source_seq_number_parts = source_ji_seq_num.split('-')
             expected_od_seq_number = "%s-OD-%s" % (source_seq_number_parts[0],
@@ -980,12 +980,8 @@ class FinanceTest(UnifieldTest):
             for e_br in model_obj.browse(entries_ids):
                 entry_seq_num = get_entry_sequence(e_br)
                 if entry_seq_num != expected_od_seq_number:
-                    mismatch.append(assert_pattern_line % (
-                        r_br.account_id.code,
-                        r_br.name,
-                        entry_seq_num,
-                        expected_od_seq_number,
-                    ))
+                    mismatch.append(assert_pattern_line % (e_br.account_id.code,
+                        e_br.name, entry_seq_num, expected_od_seq_number, ))
                     
             self.assert_(
                 len(mismatch) == 0,
@@ -1062,8 +1058,8 @@ class FinanceTest(UnifieldTest):
                 "no JI REV found for %s %s %f:: %s" % (account_code,
                     ji_br.name, ji_amount, db.colored_name, )
             )
-            # check sequence number
             if check_sequence_number_mode:
+                # check sequence number
                 self.check_sequence_number(ji_seq_num, aml_obj, rev_ids,
                     check_sequence_number_mode, is_analytic=False,
                     db_name=db.colored_name)
@@ -1083,8 +1079,8 @@ class FinanceTest(UnifieldTest):
                 "no JI COR found for %s %s %f:: %s" % (new_account_code,
                     ji_br.name, ji_amount, db.colored_name, )
             )
-            # check sequence number
             if check_sequence_number_mode:
+                # check sequence number
                 self.check_sequence_number(ji_seq_num, aml_obj, cor_ids,
                     check_sequence_number_mode, is_analytic=False,
                     db_name=db.colored_name)
@@ -1172,6 +1168,11 @@ class FinanceTest(UnifieldTest):
                         expected_cor_rev_ajis_total_func_amount,
                         db.colored_name, )
                 )
+            if check_sequence_number_mode:
+                # check sequence number
+                self.check_sequence_number(ji_seq_num, aal_obj, ids,
+                    check_sequence_number_mode, is_analytic=True,
+                    db_name=db.colored_name)
                 
         if expected_ad_cor:
             # check COR AJIs
@@ -1221,6 +1222,11 @@ class FinanceTest(UnifieldTest):
                         expected_cor_rev_ajis_total_func_amount,
                         db.colored_name, )
                 )"""
+            if check_sequence_number_mode:
+                # check sequence number
+                self.check_sequence_number(ji_seq_num, aal_obj, ids,
+                    check_sequence_number_mode, is_analytic=True,
+                    db_name=db.colored_name)
         
     def journal_create_entry(self, database):
         '''
