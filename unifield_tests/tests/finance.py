@@ -46,6 +46,7 @@ class FinanceTest(UnifieldTest):
         To know this, we use the key: "finance_test_class"
         '''
         super(FinanceTest, self).__init__(*args, **kwargs)
+        self.set_correction_transaction(start=False)
 
     def _hook_db_process(self, name, database):
         '''
@@ -935,7 +936,7 @@ class FinanceTest(UnifieldTest):
             wizard_cor_obj.action_confirm([wiz_br.id], {'unit_test': 1}, False)
             
     def check_sequence_number(self, model_obj, entries_ids, is_analytic=False,
-        db_name=''):
+        od_type=None, db_name=''):
         """
         check sequence number consistency
         :param model_obj: oerplib model object
@@ -943,6 +944,8 @@ class FinanceTest(UnifieldTest):
         :type entries_ids:  int/long/list
         :param analytic: is analytic entry ?
         :type analytic: bool
+        :param od_type: type of od entry: 'rev' or 'cor'
+        :type od_type: str
         :param db_name: database name
         :type db_name: str
         """
@@ -950,19 +953,43 @@ class FinanceTest(UnifieldTest):
             return is_analytic and entry_br.entry_sequence \
                     or entry_br.move_id.name
                     
+        if not od_type in ('rev', 'cor', ):
+            FinanceTestException("invalid od_type parameter, should be:" \
+                " 'rev'/'cor'")
         if isinstance(entries_ids, (int, long, )):
             entries_ids = [ entries_ids ]
+            
+        if self._cor_transaction_data is not None:
+            # get previous entries of current transaction
+            previous_transac_entries_key = "%sji_%s_ids" % (
+                is_analytic and 'a' or '', od_type, )
+            entries_ids += self._cor_transaction_data.get(
+                previous_transac_entries_key, [])
+            
         entries_seq_number = [ get_entry_sequence(e_br) for e_br \
             in model_obj.browse(entries_ids) ]
             
         assert_pattern_header = db_name \
-            and "sequence number mismatch :: %s: %s" \
-            or "sequence number mismatch: %s"
+            and "%ssequence number mismatch :: %s: %s" \
+            or "%ssequence number mismatch: %s"
         self.assert_(
             len(set(entries_seq_number)) == 1,
-            assert_pattern_header % (db_name, ', '.join(entries_seq_number),
+            assert_pattern_header % (
+                'transaction ' and self._cor_transaction_data or '',
+                db_name, ', '.join(entries_seq_number),
                 )
         )
+        
+    def set_correction_transaction(self, start=True):
+        self._cor_transaction_data = {} if start else None
+        
+    def set_correction_transaction_add_ids(self, key, ids):
+        if self._cor_transaction_data is not None:
+            if not key in self._cor_transaction_data:
+                self._cor_transaction_data[key] = ids
+            else:
+                self._cor_transaction_data[key] = \
+                    self._cor_transaction_data[key] + ids        
     
     def check_ji_correction(self, db, ji_id,
         account_code, new_account_code=False,
@@ -1028,7 +1055,8 @@ class FinanceTest(UnifieldTest):
             if check_sequence_number:
                 # check sequence number
                 self.check_sequence_number(aml_obj, rev_ids, is_analytic=False,
-                    db_name=db.colored_name)
+                    od_type='rev', db_name=db.colored_name)
+            self.set_correction_transaction_add_ids('ji_rev_ids', rev_ids)
             
             # check JI COR
             cor_rev_amount, cor_rev_amount_field = get_rev_cor_amount_and_field(
@@ -1048,7 +1076,8 @@ class FinanceTest(UnifieldTest):
             if check_sequence_number:
                 # check sequence number
                 self.check_sequence_number(aml_obj, cor_ids, is_analytic=False,
-                    db_name=db.colored_name)
+                    od_type='cor', db_name=db.colored_name)
+            self.set_correction_transaction_add_ids('ji_cor_ids', cor_ids)
                 
         # ids of AJIs not rev/cor (not in correction journal)
         base_aji_ids = aal_obj.search([
@@ -1136,7 +1165,8 @@ class FinanceTest(UnifieldTest):
             if check_sequence_number:
                 # check sequence number
                 self.check_sequence_number(aal_obj, ids, is_analytic=True,
-                    db_name=db.colored_name)
+                    od_type='rev', db_name=db.colored_name)
+            self.set_correction_transaction_add_ids('aji_rev_ids', ids)
                 
         if expected_ad_cor:
             # check COR AJIs
@@ -1189,7 +1219,8 @@ class FinanceTest(UnifieldTest):
             if check_sequence_number:
                 # check sequence number
                 self.check_sequence_number(aal_obj, ids, is_analytic=True,
-                    db_name=db.colored_name)
+                    od_type='cor', db_name=db.colored_name)
+            self.set_correction_transaction_add_ids('aji_cor_ids', ids)
         
     def journal_create_entry(self, database):
         '''
