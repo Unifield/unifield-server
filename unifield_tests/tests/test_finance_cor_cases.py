@@ -578,7 +578,7 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad=ad,
                 expected_ad_rev=ad,
                 expected_ad_cor=ad,
-                #check_sequence_number=True
+                check_sequence_number_mode='consistency'
             )
             
     def test_cor_02(self):
