@@ -50,6 +50,9 @@ class product_list(osv.osv):
             'last_update_date': time.strftime('%Y-%m-%d'),
         })
 
+        if vals.get('type') == 'list':
+            vals['parent_id'] = False
+
         return super(product_list, self).\
             write(cr, uid, ids, vals, context=context)
 
@@ -147,6 +150,33 @@ class product_list(osv.osv):
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'A list or sublist with the same name already exists in the system!')
     ]
+
+    def change_parent_list(self, cr, uid, ids, list_id, product_ids, context=None):
+        '''
+        Check if all products are in the parent list
+        '''
+        if not list_id:
+            return {}
+
+        parent_product_ids = []
+        list_brw = self.browse(cr, uid, list_id, context=context)
+        for list_line in list_brw.product_ids:
+            parent_product_ids.append(list_line.name.id)
+
+        for product in product_ids:
+            if product[2]['name'][0] not in parent_product_ids:
+                return {
+                    'value': {
+                        'parent_id': False,
+                    },
+                    'warning': {
+                        'title': _('Not consistent parent list'),
+                        'message': _('The selected parent list is not consistent with the products in the list. Please select another parent list or remove the products of the list that are not in the selected parent list before select the parent list.'),
+                    }
+                }
+
+        return {}
+
 
     def change_product_line(self, cr, uid, ids, product_ids, context=None):
         '''
