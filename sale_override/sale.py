@@ -1046,6 +1046,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
+
+            split_fo_ids = [x for x in split_fo_dic.values() if x]
+            self._hook_create_sync_split_fo_messages(cr, uid, split_fo_ids, so.id, context=context) # US-599: Create the sync messages for validated FO and split FO
+
         return True
 
     def get_original_name(self, cr, uid, order, context=None):
@@ -1084,6 +1088,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=dict(context, procurement_request=order.procurement_request))
 
         return order_id
+
+    def _hook_create_sync_split_fo_messages(self, cr, uid, split_ids, original_id, context=None):
+        """
+        Overrided on sync_module_prod/sync_so/sale.py
+        """
+        return True
 
     def sale_except_correction(self, cr, uid, ids, context=None):
         '''
@@ -2352,6 +2362,13 @@ class sale_order_line(osv.osv):
             if line.original_line_id:
                 cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
+
+#            self.pool.get('sale.order.line.cancel').create(cr, uid, {
+#                'sync_order_line_db_id': line.original_line_id and line.original_line_id.sync_order_line_db_id or line.sync_order_line_db_id,
+#                'partner_id': line.order_id.partner_id.id,
+#                'partner_type': line.order_id.partner_id.partner_type,
+#                'resource_ok': True,
+#            }, context=context)
 
             # UFTP-82:
             # do not delete cancelled IR line from PO cancelled
