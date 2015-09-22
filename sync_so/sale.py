@@ -325,4 +325,60 @@ class sale_order_sync(osv.osv):
                 logger.is_product_price_modified |= \
                     ('price_unit' in line_changes)
 
+    def _hook_create_sync_split_fo_messages(self, cr, uid, split_ids, original_id, context=None):
+        """
+        Generate sync. messages manually for the FOs in ids
+        """
+        rule_obj = self.pool.get('sync.client.message_rule')
+        msg_to_send_obj = self.pool.get('sync.client.message_to_send')
+
+        if isinstance(split_ids, (int, long)):
+            split_ids = [split_ids]
+
+        res = super(sale_order_sync, self)._hook_create_sync_split_fo_messages(cr, uid, split_ids, original_id, context=context)
+
+        def generate_msg_to_send(rule, model_obj, object_id, partner_name):
+            arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
+            identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
+            if not identifiers:
+                return
+
+            xml_id = identifiers[object_id]
+            existing_message_id = msg_to_send_obj.search(cr, uid, [
+                ('identifier', '=', xml_id),
+                ('destination_name', '=', partner_name),
+            ], context=context)
+            if existing_message_id:
+                return
+
+            # if not then create a new one --- FOR THE GIVEN FO AND DESTINATION
+            data = {
+                'identifier': xml_id,
+                'remote_call': rule.remote_call,
+                'arguments': arguments,
+                'destination_name': partner_name,
+                'sent': False,
+                'generate_message': True,
+            }
+            return msg_to_send_obj.create(cr, uid, data, context=context)
+
+        vfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.validated_fo_update_original_po', context=context)
+        csp_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.create_split_po', context=context)
+
+        if (not vfo_rule and not csp_rule) or (not split_ids and not original_id):
+            return
+
+        vfo_model_obj = self.pool.get(vfo_rule.model)
+        csp_model_obj = self.pool.get(csp_rule.model)
+
+        if original_id:
+            orig_partner_name = self.browse(cr, uid, original_id, context=context).partner_id.name
+            generate_msg_to_send(vfo_rule, vfo_model_obj, original_id, orig_partner_name)
+
+        for fo in self.browse(cr, uid, split_ids, context=context):
+            generate_msg_to_send(csp_rule, csp_model_obj, fo.id, fo.partner_id.name)
+
+        return
+
+
 sale_order_sync()
