@@ -372,14 +372,18 @@ class sale_order_sync(osv.osv):
 
         if original_id:
             orig_partner_name = self.browse(cr, uid, original_id, context=context).partner_id.name
-            if nfo_model_obj and nfo_rule:
+            available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain), context=context)
+            available_vfo_ids = self.search(cr, uid, eval(vfo_rule.domain), context=context)
+            if nfo_model_obj and nfo_rule and original_id in available_nfo_ids:
                 generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner_name)
-            if vfo_model_obj and vfo_rule:
+            if vfo_model_obj and vfo_rule and original_id in available_vfo_ids:
                 generate_msg_to_send(vfo_rule, vfo_model_obj, original_id, orig_partner_name)
 
         if split_ids and csp_rule and csp_model_obj:
+            available_split_ids = self.search(cr, uid, eval(csp_rule.domain), context=context)
             for fo in self.browse(cr, uid, split_ids, context=context):
-                generate_msg_to_send(csp_rule, csp_model_obj, fo.id, fo.partner_id.name)
+                if fo.id in available_split_ids:
+                    generate_msg_to_send(csp_rule, csp_model_obj, fo.id, fo.partner_id.name)
 
         return
 
