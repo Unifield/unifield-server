@@ -2249,6 +2249,8 @@ class FinanceTestCorCases(FinanceTest):
         # REOPEN period closed in case 25 (if it fails)
         self.period_reopen(self.c1, 'm', 1)
         self.period_reopen(self.c1, 'f', 1)
+        self.period_reopen(self.p1, 'm', 1)
+        self.period_reopen(self.p1, 'f', 1)
         
         model_aal = 'account.analytic.line'
         
