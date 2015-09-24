@@ -20,6 +20,11 @@ from datetime import datetime
 # cd unifield/test-finance/unifield-wm/unifield_tests
 # python -m unittest tests.test_finance_cor_cases
 
+
+DEFAULT_DATE_PERIOD_ID = 1
+DEFAULT_DATE_MONTH = 1
+
+
 """
 TARGET CCs
 
@@ -36,8 +41,6 @@ HT211                                                   X
 """
 
 """
-TODO NOTES
-    
 - cases developed
     - single instance
         X 01
@@ -63,7 +66,7 @@ TODO NOTES
         X 25
         X 26
     
-- options:
+- TODO:
     - [IMP] check_ji_correction(): obtain expected AD with cor level > 1
 """
 
@@ -479,8 +482,12 @@ class FinanceTestCorCases(FinanceTest):
         #self.synchronize(self.hq1)
         self.synchronize(self.p1)
         self.synchronize(self.p12)  # C1P2
+
+    def _get_default_date(self):
+        return self.get_orm_fy_rand_month_date(DEFAULT_DATE_MONTH)
            
-    def _register_set(self, db, period_id=1, ccy_name=False):
+    def _register_set(self, db, period_id=DEFAULT_DATE_PERIOD_ID,
+            ccy_name=False):
         dataset_meta = self._get_dataset_meta()
         
         db = self.c1
@@ -1000,7 +1007,10 @@ class FinanceTestCorCases(FinanceTest):
                 
         ji_ids = self.invoice_validate(db,
             self.invoice_create_supplier_invoice(
-                db, ccy_code=False, date=False, partner_id=False,
+                db,
+                ccy_code=False,
+                date=self._get_default_date(),
+                partner_id=False,
                 ad_header_breakdown_data=ad,
                 lines_accounts=invoice_lines_accounts,
                 tag="CT_11"
@@ -1079,7 +1089,8 @@ class FinanceTestCorCases(FinanceTest):
         ]
         
         ji_ids = self.invoice_validate(db,
-            self.invoice_create_supplier_invoice(db,
+            self.invoice_create_supplier_invoice(
+                db,
                 ccy_code='USD',
                 date=self.get_orm_fy_date(1, 8),
                 partner_id=False,
@@ -1152,9 +1163,10 @@ class FinanceTestCorCases(FinanceTest):
         aml_obj = db.get('account.move.line')
         
         ji_ids = self.invoice_validate(db,
-            self.invoice_create_supplier_invoice(db,
+            self.invoice_create_supplier_invoice(
+                db,
                 ccy_code=False,
-                date=False,
+                date=self._get_default_date(),
                 partner_id=False,
                 ad_header_breakdown_data=ad,
                 lines_accounts=invoice_lines_accounts,
@@ -1300,10 +1312,11 @@ class FinanceTestCorCases(FinanceTest):
         
         # 20.1, 20.2, 20.3
         ji_ids = self.invoice_validate(push_db,
-            self.invoice_create_supplier_invoice(push_db,
+            self.invoice_create_supplier_invoice(
+                push_db,
                 ccy_code=False,
                 is_refund=True,
-                date=False,
+                date=self._get_default_date(),
                 partner_id=False,
                 ad_header_breakdown_data=False,
                 lines_accounts=invoice_lines_accounts,
@@ -1463,10 +1476,11 @@ class FinanceTestCorCases(FinanceTest):
         
         # 21.1, 21.2, 21.3
         ji_ids = self.invoice_validate(push_db,
-            self.invoice_create_supplier_invoice(push_db,
+            self.invoice_create_supplier_invoice(
+                push_db,
                 ccy_code=False,
                 is_refund=True,
-                date=False,
+                date=self._get_default_date(),
                 partner_id=False,
                 ad_header_breakdown_data=False,
                 lines_accounts=invoice_lines_accounts,
@@ -1634,10 +1648,11 @@ class FinanceTestCorCases(FinanceTest):
         
         # 22.1, 22.2, 22.3
         ji_ids = self.invoice_validate(push_db,
-            self.invoice_create_supplier_invoice(push_db,
+            self.invoice_create_supplier_invoice(
+                push_db,
                 ccy_code=False,
                 is_refund=False,
-                date=False,
+                date=self._get_default_date(),
                 partner_id=False,
                 ad_header_breakdown_data=False,
                 lines_accounts=invoice_lines_accounts,
@@ -1704,10 +1719,11 @@ class FinanceTestCorCases(FinanceTest):
         
         # 23.1, 23.2, 23.3
         ji_ids = self.invoice_validate(push_db,
-            self.invoice_create_supplier_invoice(push_db,
+            self.invoice_create_supplier_invoice(
+                push_db,
                 ccy_code=False,
                 is_refund=False,
-                date=False,
+                date=self._get_default_date(),
                 partner_id=False,
                 ad_header_breakdown_data=False,
                 lines_accounts=invoice_lines_accounts,
@@ -1828,10 +1844,11 @@ class FinanceTestCorCases(FinanceTest):
         
         # 24.1, 24.2, 24.3
         ji_ids = self.invoice_validate(push_db,
-            self.invoice_create_supplier_invoice(push_db,
+            self.invoice_create_supplier_invoice(
+                push_db,
                 ccy_code=False,
                 is_refund=False,
-                date=False,
+                date=self._get_default_date(),
                 partner_id=False,
                 ad_header_breakdown_data=False,
                 lines_accounts=invoice_lines_accounts,
@@ -2029,7 +2046,8 @@ class FinanceTestCorCases(FinanceTest):
         
         # 25.1, 25.2, 25.3
         ji_ids = self.invoice_validate(push_db,
-            self.invoice_create_supplier_invoice(push_db,
+            self.invoice_create_supplier_invoice(
+                push_db,
                 ccy_code=False,
                 is_refund=False,
                 date=self.get_orm_fy_date(1, 1),
@@ -2244,10 +2262,11 @@ class FinanceTestCorCases(FinanceTest):
         inv_out = {}
         ji_ids = self.invoice_validate(
             self.p1,
-            self.invoice_create_supplier_invoice(self.p1,
+            self.invoice_create_supplier_invoice(
+                self.p1,
                 ccy_code=False,
                 is_refund=False,
-                date=False,
+                date=self._get_default_date(),
                 partner_id=False,
                 ad_header_breakdown_data=header_ad,
                 lines_accounts=invoice_lines_accounts,

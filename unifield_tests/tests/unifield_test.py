@@ -359,6 +359,10 @@ class UnifieldTest(unittest.TestCase):
         
     def get_orm_fy_date(self, month, day):
         return "%04d-%02d-%02d" % (datetime.now().year, month, day, )
+
+    def get_orm_fy_rand_month_date(self, month):
+        return "%04d-%02d-%02d" % (datetime.now().year, month,
+            random.randint(1, 28), )
         
     def get_uuid(self):
         """

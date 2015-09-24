@@ -631,9 +631,6 @@ class FinanceTest(UnifieldTest):
         choose between delete and recreate AD with new_ad_breakdown_data
         or to replace dest/cc/fp/percentage values with ad_replace_data
         """
-        if not cor_date:
-            cor_date = self.get_orm_date_now()
-        
         wizard_cor_obj = db.get('wizard.journal.items.corrections')
         wizard_corl_obj = db.get('wizard.journal.items.corrections.lines')
         wizard_ad_obj = db.get('analytic.distribution.wizard')
@@ -686,6 +683,9 @@ class FinanceTest(UnifieldTest):
         old_account_id = ji_br.account_id and ji_br.account_id.id or False
         ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
             ji_br.credit_currency
+        if not cor_date:
+            # same date as corrected JI by default
+            cor_date = self.date2orm(ji_br.date)
         
         # set wizard header (will generate in create the correction lines)
         vals = {
