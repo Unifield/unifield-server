@@ -1486,12 +1486,19 @@ stock moves which are already processed : '''
 
                         minus_qty = 0.00
                         bo_moves = []
-                        if out_move_id.picking_id and out_move_id.picking_id.backorder_id:
-                            bo_moves = move_obj.search(cr, uid, [
-                                ('picking_id', '=', out_move_id.picking_id.backorder_id.id),
+                        if out_move_id.picking_id:
+                            if out_move_id.picking_id.backorder_id:
+                                bo_moves = move_obj.search(cr, uid, [
+                                    ('picking_id', '=', out_move_id.picking_id.backorder_id.id),
+                                    ('sale_line_id', '=', out_move_id.sale_line_id.id),
+                                    ('state', '=', 'done'),
+                                ], context=context)
+                            bo_moves.extend(move_obj.search(cr, uid, [
+                                ('picking_id', '=', out_move_id.picking_id.id),
                                 ('sale_line_id', '=', out_move_id.sale_line_id.id),
-                                ('state', '=', 'done'),
-                            ], context=context)
+                                ('id', '!=', out_move_id.id),
+                                ('state', 'in', ['confirmed', 'assigned']),
+                            ], context=context))
                             while bo_moves:
                                 boms = move_obj.browse(cr, uid, bo_moves, context=context)
                                 bo_moves = []
@@ -1501,10 +1508,18 @@ stock moves which are already processed : '''
                                     else:
                                         minus_qty += bom.product_qty
                                         if bom.picking_id and bom.picking_id.backorder_id:
+                                            if bom.picking_id.backorder_id:
+                                                bo_moves.extend(move_obj.search(cr, uid, [
+                                                    ('picking_id', '=', bom.picking_id.backorder_id.id),
+                                                    ('sale_line_id', '=', bom.sale_line_id.id),
+                                                    ('state', '=', 'done'),
+                                                ], context=context))
                                             bo_moves.extend(move_obj.search(cr, uid, [
-                                                ('picking_id', '=', bom.picking_id.backorder_id.id),
+                                                ('picking_id', '=', bom.picking_id.id),
                                                 ('sale_line_id', '=', bom.sale_line_id.id),
-                                                ('state', '=', 'done'),
+                                                ('id', '!=', bom.id),
+                                                ('id', 'not in', bo_moves),
+                                                ('state', 'in', ['confirmed', 'assigned']),
                                             ], context=context))
 
                         if out_move_id.product_uom.id != line.product_uom.id:
