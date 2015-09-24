@@ -10,6 +10,7 @@ from __future__ import print_function
 from unifield_test import UnifieldTestException
 from unifield_test import UnifieldTest
 from datetime import datetime
+from datetime import timedelta
 from time import strftime
 from time import sleep
 from random import randint
@@ -683,9 +684,11 @@ class FinanceTest(UnifieldTest):
         old_account_id = ji_br.account_id and ji_br.account_id.id or False
         ji_amount = ji_br.debit_currency and ji_br.debit_currency * -1 or \
             ji_br.credit_currency
+
         if not cor_date:
-            # same date as corrected JI by default
-            cor_date = self.date2orm(ji_br.date)
+            cor_date = ji_br.date
+        if not isinstance(cor_date, str):
+            cor_date = self.date2orm(cor_date)
         
         # set wizard header (will generate in create the correction lines)
         vals = {

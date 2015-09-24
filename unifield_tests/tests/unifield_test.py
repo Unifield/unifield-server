@@ -347,6 +347,12 @@ class UnifieldTest(unittest.TestCase):
         :rtype: str YYYY-MM-DD
         """
         return dt.strftime('%Y-%m-%d')
+
+    def orm2date(self, dt):
+        if isinstance(dt, basestring):
+            st = time.strptime(dt, '%Y-%m-%d')
+            dt = date(st[0], st[1], st[2])
+        return dt
         
     def get_orm_date_fy_start(self):
         return "%04d-01-01" % (datetime.now().year, )
