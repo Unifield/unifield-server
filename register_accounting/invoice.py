@@ -163,7 +163,7 @@ class account_invoice(osv.osv):
                     'period_id': inv.period_id.id,
                     'date': inv.date_invoice,
                     'partner_id': inv.partner_id.id,
-                    'ref': ':'.join(['%s' % (x.name or '') for x in inv.purchase_ids]),
+                    'ref': inv.name or '',
                 }
                 move_id = self.pool.get('account.move').create(cr, uid, vals)
                 # then 2 lines for this move
