@@ -3,6 +3,9 @@
     <data>
         <report auto="False" id="account_general_ledger" menu="False" model="account.account" name="account.general.ledger" rml="account/report/account_general_ledger.rml" string="General Ledger" target_filename="General Ledger_%(instance_code)s%(year)s%(month)s%(day)s" />
         <report auto="False" id="account_general_ledger_landscape" menu="False" model="account.account" name="account.general.ledger_landscape" rml="account/report/account_general_ledger_landscape.rml" string="General Ledger" target_filename="General Ledger_%(instance_code)s%(year)s%(month)s%(day)s"/>
+        <report auto="False" id="account_general_ledger_ccy" menu="False" model="account.move.line" name="account.general.ledger.ccy" rml="account/report/account_general_ledger_ccy.rml" string="General Ledger" target_filename="General Ledger_%(instance_code)s%(year)s%(month)s%(day)s" />
+        <report auto="False" id="account_general_ledger_ccy_landscape" menu="False" model="account.move.line" name="account.general.ledger.ccy_landscape" rml="account/report/account_general_ledger_ccy_landscape.rml" string="General Ledger" target_filename="General Ledger_%(instance_code)s%(year)s%(month)s%(day)s"/>
+
         <report auto="False" id="account_3rdparty_ledger" menu="False" model="res.partner" name="account.third_party_ledger" rml="account/report/account_partner_ledger.rml" string="Partner Ledger" target_filename="Partner Ledger_%(instance_code)s_%(year)s%(month)s%(day)s" />
         <report auto="False" id="account_3rdparty_ledger_other" menu="False" model="res.partner" name="account.third_party_ledger_other" rml="account/report/account_partner_ledger_other.rml" string="Partner Ledger" target_filename="Partner Ledger_%(instance_code)s_%(year)s%(month)s%(day)s"/>
         <report auto="False" id="account_account_balance" menu="False" model="account.account" name="account.account.balance" rml="account/report/account_balance.rml" string="Trial Balance" target_filename="Trial Balance_%(instance_code)s_%(year)s%(month)s%(day)s" />
@@ -58,6 +61,15 @@
             name="account.general.ledger_xls"
             file="account/report/account_general_ledger_xls.mako"
             report_type="webkit" 
+            string="General Ledger"/>
+        <report id="account_general_ledger_ccy_xls"
+            auto="False"
+            menu="False"
+            header="False"
+            model="account.move.line"
+            name="account.general.ledger.ccy_xls"
+            file="account/report/account_general_ledger_ccy_xls.mako"
+            report_type="webkit"
             string="General Ledger"/>
     </data>
 </openerp>

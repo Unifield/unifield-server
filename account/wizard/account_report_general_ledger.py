@@ -107,7 +107,12 @@ class account_report_general_ledger(osv.osv_memory):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['landscape',  'initial_balance', 'amount_currency', 'sortby', 'output_currency', 'instance_ids', 'export_format'])[0])
+        form_fields = [ 'landscape',  'initial_balance', 'amount_currency',
+            'sortby', 'output_currency', 'instance_ids', 'export_format',
+            'display_mode', 'display_account_view', 'display_details',
+            'unreconciled', 'account_ids'
+        ]
+        data['form'].update(self.read(cr, uid, ids, form_fields)[0])
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form'].update({'initial_balance': False})
         if data['form']['journal_ids']:
@@ -115,6 +120,27 @@ class account_report_general_ledger(osv.osv_memory):
             if default_journals:
                 if len(default_journals) == len(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
+
+        if data['form']['display_mode'] == 'booking_account':
+            if data['form']['export_format'] and \
+                data['form']['export_format'] == 'xls':
+                    return {
+                        'type': 'ir.actions.report.xml',
+                        'report_name': 'account.general.ledger.ccy_xls',
+                        'datas': data,
+                    }
+            if data['form']['landscape']:
+                return {
+                   'type': 'ir.actions.report.xml',
+                    'report_name': 'account.general.ledger.ccy_landscape',
+                    'datas': data,
+                }
+            return {
+                   'type': 'ir.actions.report.xml',
+                    'report_name': 'account.general.ledger.ccy',
+                    'datas': data,
+                }
+
         if data['form']['export_format'] \
            and data['form']['export_format'] == 'xls':
             return { 

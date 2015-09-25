@@ -462,6 +462,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
 
+report_sxw.report_sxw('report.account.general.ledger.ccy', 'account.move.line', 'addons/account/report/account_general_ledger_ccy.rml', parser=general_ledger, header='internal')
+report_sxw.report_sxw('report.account.general.ledger.ccy_landscape', 'account.move.line', 'addons/account/report/account_general_ledger_ccy_landscape.rml', parser=general_ledger, header='internal landscape')
+
 
 class general_ledger_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -472,5 +475,6 @@ class general_ledger_xls(SpreadsheetReport):
         a = super(general_ledger_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 general_ledger_xls('report.account.general.ledger_xls', 'account.account', 'addons/account/report/account_general_ledger_xls.mako', parser=general_ledger, header='internal')
+general_ledger_xls('report.account.general.ledger.ccy_xls', 'account.move.line', 'addons/account/report/account_general_ledger_ccy_xls.mako', parser=general_ledger, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
