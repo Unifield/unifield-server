@@ -1485,20 +1485,23 @@ stock moves which are already processed : '''
                             continue
 
                         minus_qty = 0.00
-                        bo_moves = []
+                        bo_moves = []   # Moves already processed
+                        sp_moves = []   # Moves in same picking related to same FO/IR line
                         if out_move_id.picking_id:
+                            sp_moves = move_obj.search(cr, uid, [
+                                ('picking_id', '=', out_move_id.picking_id.id),
+                                ('sale_line_id', '=', out_move_id.sale_line_id.id),
+                                ('id', '!=', out_move_id.id),
+                                ('state', 'in', ['confirmed', 'assigned']),
+                            ], context=context)
+
                             if out_move_id.picking_id.backorder_id:
                                 bo_moves = move_obj.search(cr, uid, [
                                     ('picking_id', '=', out_move_id.picking_id.backorder_id.id),
                                     ('sale_line_id', '=', out_move_id.sale_line_id.id),
                                     ('state', '=', 'done'),
                                 ], context=context)
-                            bo_moves.extend(move_obj.search(cr, uid, [
-                                ('picking_id', '=', out_move_id.picking_id.id),
-                                ('sale_line_id', '=', out_move_id.sale_line_id.id),
-                                ('id', '!=', out_move_id.id),
-                                ('state', 'in', ['confirmed', 'assigned']),
-                            ], context=context))
+
                             while bo_moves:
                                 boms = move_obj.browse(cr, uid, bo_moves, context=context)
                                 bo_moves = []
@@ -1514,13 +1517,12 @@ stock moves which are already processed : '''
                                                     ('sale_line_id', '=', bom.sale_line_id.id),
                                                     ('state', '=', 'done'),
                                                 ], context=context))
-                                            bo_moves.extend(move_obj.search(cr, uid, [
-                                                ('picking_id', '=', bom.picking_id.id),
-                                                ('sale_line_id', '=', bom.sale_line_id.id),
-                                                ('id', '!=', bom.id),
-                                                ('id', 'not in', bo_moves),
-                                                ('state', 'in', ['confirmed', 'assigned']),
-                                            ], context=context))
+
+                        for sp_move in move_obj.browse(cr, uid, sp_moves, context=context):
+                            if sp_move.product_uom.id != out_move_id.product_uom.id:
+                                minus_qty += uom_obj._compute_qty(cr, uid, bom.product_uom.id, bom.product_qty, out_move_id.product_uom.id)
+                            else:
+                                minus_qty += sp_move.product_qty
 
                         if out_move_id.product_uom.id != line.product_uom.id:
                             minus_qty = uom_obj._compute_qty(cr, uid, out_move_id.product_uom.id, minus_qty, line.product_uom.id)
