@@ -36,6 +36,30 @@ class account_report_general_ledger(osv.osv_memory):
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         #'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
+
+        # us-334: General ledger report improvements
+        'account_type': fields.selection([
+            ('all', 'All'),
+            ('income','Profit & Loss'),
+            ('asset','Balance Sheet'),
+        ], 'B/S / P&L account', required=True),
+
+        'display_mode': fields.selection([
+            ('account_booking', 'Accounting code and then booking currency'),
+            ('booking_account','Booking currency and then accounting code'),
+        ], 'Display mode', required=True),
+
+        'display_account_view': fields.boolean("Display view accounts"),
+
+        'display_details': fields.boolean("Display details",
+            help="Display details of the entries mouvement per account"),
+
+        'unreconciled': fields.boolean("Display view accounts",
+            help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
+
+        'account_ids': fields.many2many('account.account',
+            'account_report_general_ledger_account_account_rel',
+            'report_id', 'account_id', 'Accounts'),
     }
     
     def _get_journals(self, cr, uid, context=None):
@@ -51,6 +75,12 @@ class account_report_general_ledger(osv.osv_memory):
         'amount_currency': True,
         'export_format': 'pdf',
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
+
+        'account_type': 'all',
+        'display_mode': 'account_booking',
+        'display_account_view': True,
+        'display_details': False,
+        'unreconciled': False
     }
     
     def default_get(self, cr, uid, fields, context=None):
