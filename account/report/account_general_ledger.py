@@ -140,6 +140,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_line_balance': self._get_line_balance,
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances,
+            'get_currencies': self.get_currencies,
         })
         
         # company currency
@@ -167,6 +168,21 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                             WHERE l.account_id = %s AND %s '%(account.id, self.init_query))
             sum_currency += self.cr.fetchone()[0] or 0.0
         return sum_currency
+
+    def get_currencies(self):
+        res = []
+
+        sql = """
+                SELECT DISTINCT(l.currency_id)
+                FROM account_move_line AS l
+                WHERE %s
+        """ % (self.query)
+        self.cr.execute(sql)
+        rows = self.cr.fetchall()
+        if rows:
+            res = [ r[0] for r in rows ]
+
+        return res
 
     def get_children_accounts(self, account, ccy_id=False):
         res = []
