@@ -130,7 +130,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entries Sorted By</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Proprietary Instances</Data></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 <Cell ss:StyleID="ssCell"></Cell>
 <Cell ss:StyleID="ssCell"></Cell>
 </Row>
@@ -160,7 +160,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(prop_instances or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${get_output_currency_code(data)}</Data>
+</Cell>
 <Cell ss:StyleID="ssCell"></Cell>
 <Cell ss:StyleID="ssCell"></Cell>
 </Row>
@@ -187,8 +189,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Counter part</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Balance</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
 </Row>
 % for o in get_children_accounts(a):
 <Row>
@@ -208,9 +209,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Cell>
 <Cell ss:StyleID="ssNumber">
     <Data ss:Type="Number">${sum_balance_account(o)}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
 </Row>
 % for line in lines(o):
@@ -244,9 +242,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_balance(line)}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine2">
-    <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
 </Row>
 % endfor
