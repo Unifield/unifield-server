@@ -4588,7 +4588,7 @@ class stock_move(osv.osv):
                         sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
                         sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
-                if move.sale_line_id.order_id.procurement_request and move.sale_line_id.procurement_id:
+                if move.sale_line_id.procurement_id:
                     # Search OUT moves that have the same source and there are done
                     other_out_move_ids = self.search(cr, uid, [
                         ('sale_line_id', '=', move.sale_line_id.id),
