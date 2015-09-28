@@ -169,7 +169,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             sum_currency += self.cr.fetchone()[0] or 0.0
         return sum_currency
 
-    def get_currencies(self):
+    def get_currencies(self, account=False):
         res = []
 
         sql = """
@@ -177,6 +177,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             FROM account_move_line AS l
             WHERE %s
         """ % (self.query)
+        if account:
+            sql += " and l.account_id=%d" % (account.id, )
         self.cr.execute(sql)
         rows = self.cr.fetchall()
         if rows:
@@ -222,6 +224,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not res:
             return [account]
         return res
+
     def lines(self, account, ccy=False):
         """ Return all the account_move_line of account with their account code counterparts """
         move_state = ['draft','posted']

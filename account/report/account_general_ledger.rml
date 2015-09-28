@@ -258,8 +258,28 @@
           </td>
         </tr>
       </blockTable>
+
       <section>
-        <para style="terp_default_8">[[ repeatIn(lines(o), 'line') ]]</para>
+      <para style="terp_default_8">[[ repeatIn(get_currencies(account=o), 'c') ]]</para>
+      <blockTable colWidths="352.0,57.0,57.0,74.0" style="Table8">
+        <tr>
+          <td>
+            <para style="terp_default_Bold_9">[[ c.name or '' ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_account(o, ccy=c), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_account(o, ccy=c), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o, ccy=c), digits=get_digits(dp='Account')) ]] </para>
+          </td>
+        </tr>
+      </blockTable>
+
+        <section>
+        <para style="terp_default_8">[[ repeatIn(lines(o, ccy=c), 'line') ]]</para>
         <blockTable colWidths="121.0,21.0,48.0,42.0,42.0,48.0,28.0,57.0,57.0,74.0" style="Table9">
           <tr>
             <td>
@@ -294,6 +314,7 @@
             </td>
           </tr>
         </blockTable>
+      </section>
       </section>
     </section>
 

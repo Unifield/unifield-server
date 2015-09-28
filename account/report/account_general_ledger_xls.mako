@@ -211,7 +211,29 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="Number">${sum_balance_account(o)}</Data>
 </Cell>
 </Row>
-% for line in lines(o):
+
+% for c in get_currencies(account=o):
+<Row>
+<Cell ss:StyleID="ssBorder">
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${(c.name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder" ss:MergeAcross="4">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssNumber">
+    <Data ss:Type="Number">${sum_debit_account(o, ccy=c)}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber">
+    <Data ss:Type="Number">${sum_credit_account(o, ccy=c)}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber">
+    <Data ss:Type="Number">${sum_balance_account(o, ccy=c)}</Data>
+</Cell>
+</Row>
+
+% for line in lines(o, ccy=c):
 <Row>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(formatLang(line['ldate'],date=True)) or ''}</Data>
@@ -244,6 +266,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="Number">${get_line_balance(line)}</Data>
 </Cell>
 </Row>
+% endfor
 % endfor
 % endfor
 % endfor
