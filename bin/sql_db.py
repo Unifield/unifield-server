@@ -356,6 +356,7 @@ class ConnectionPool(object):
                     self._connections.append((cnx, False))
                     self._debug('Put connection to %r in pool', cnx.dsn)
                 else:
+                    cnx.close()
                     self._debug('Forgot connection to %r', cnx.dsn)
                 break
         else:
