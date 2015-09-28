@@ -168,7 +168,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             sum_currency += self.cr.fetchone()[0] or 0.0
         return sum_currency
 
-    def get_children_accounts(self, account):
+    def get_children_accounts(self, account, ccy_id=False):
         res = []
         currency_obj = self.pool.get('res.currency')
          
@@ -183,6 +183,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 FROM account_move_line AS l
                 WHERE %s AND l.account_id = %%s
             """ % (self.query)
+            if ccy_id:
+                sql += " and l.currency_id = %d" % (ccy_id, )
             self.cr.execute(sql, (child_account.id,))
             num_entry = self.cr.fetchone()[0] or 0
             sold_account = self._sum_balance_account(child_account)
@@ -195,11 +197,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     if not currency_obj.is_zero(self.cr, self.uid, currency, sold_account):
                         res.append(child_account)
             else:
-                res.append(child_account)
+                if not ccy_id or (ccy_id and num_entry > 0):
+                    res.append(child_account)
         if not res:
             return [account]
         return res
-    def lines(self, account):
+    def lines(self, account, ccy_id=False):
         """ Return all the account_move_line of account with their account code counterparts """
         move_state = ['draft','posted']
         if self.target_move == 'posted':
@@ -243,8 +246,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             LEFT JOIN account_invoice i on (m.id =i.move_id)
             LEFT JOIN account_period per on (per.id=l.period_id)
             JOIN account_journal j on (l.journal_id=j.id)
-            WHERE %s AND m.state IN %s AND l.account_id = %%s ORDER by %s
+            WHERE %s AND m.state IN %s AND l.account_id = %%s{ccy} ORDER by %s
         """ %(self.query, tuple(move_state), sql_sort)
+        if ccy_id:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy_id, )
+        else:
+            ccy_pattern = ""
+        sql = sql.replace('{ccy}', ccy_pattern)
         self.cr.execute(sql, (account.id,))
         res_lines = self.cr.dictfetchall()
         res_init = []
@@ -265,6 +273,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 JOIN account_journal j on (l.journal_id=j.id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s
             """ %(self.init_query, tuple(move_state))
+            if ccy_id:
+                sql += ccy_pattern
             self.cr.execute(sql, (account.id,))
             res_init = self.cr.dictfetchall()
         res = res_init + res_lines
@@ -283,7 +293,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.tot_currency = self.tot_currency + l['amount_currency']
         return res
 
-    def _sum_debit_account(self, account):
+    def _sum_debit_account(self, account, ccy_id=False):
+        if ccy_id:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy_id, )
+        else:
+            ccy_pattern = ""
+
         if account.type == 'view':
             amount = account.debit
             if not account.parent_id:
@@ -301,7 +316,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 JOIN account_move am ON (am.id = l.move_id) \
                 WHERE (l.account_id = %s) \
                 AND (am.state IN %s) \
-                AND '+ self.query +' '
+                AND '+ self.query +' ' + ccy_pattern
                 ,(account.id, tuple(move_state)))
         sum_debit = self.cr.fetchone()[0] or 0.0
         if self.init_balance:
@@ -310,14 +325,19 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     JOIN account_move am ON (am.id = l.move_id) \
                     WHERE (l.account_id = %s) \
                     AND (am.state IN %s) \
-                    AND '+ self.init_query +' '
+                    AND '+ self.init_query +' ' + ccy_pattern
                     ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_debit += self.cr.fetchone()[0] or 0.0
         sum_debit = self._currency_conv(sum_debit)
         return sum_debit
 
-    def _sum_credit_account(self, account):
+    def _sum_credit_account(self, account, ccy_id=False):
+        if ccy_id:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy_id, )
+        else:
+            ccy_pattern = ""
+
         if account.type == 'view':
             amount = account.credit
             if not account.parent_id:
@@ -335,7 +355,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 JOIN account_move am ON (am.id = l.move_id) \
                 WHERE (l.account_id = %s) \
                 AND (am.state IN %s) \
-                AND '+ self.query +' '
+                AND '+ self.query +' ' + ccy_pattern
                 ,(account.id, tuple(move_state)))
         sum_credit = self.cr.fetchone()[0] or 0.0
         if self.init_balance:
@@ -344,14 +364,19 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     JOIN account_move am ON (am.id = l.move_id) \
                     WHERE (l.account_id = %s) \
                     AND (am.state IN %s) \
-                    AND '+ self.init_query +' '
+                    AND '+ self.init_query +' ' + ccy_pattern
                     ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_credit += self.cr.fetchone()[0] or 0.0
         sum_credit = self._currency_conv(sum_credit)
         return sum_credit
 
-    def _sum_balance_account(self, account):
+    def _sum_balance_account(self, account, ccy_id=False):
+        if ccy_id:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy_id, )
+        else:
+            ccy_pattern = ""
+
         if account.type == 'view':
             amount = account.balance
             if not account.parent_id:
@@ -369,7 +394,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 JOIN account_move am ON (am.id = l.move_id) \
                 WHERE (l.account_id = %s) \
                 AND (am.state IN %s) \
-                AND '+ self.query +' '
+                AND '+ self.query +' ' + ccy_pattern
                 ,(account.id, tuple(move_state)))
         sum_balance = self.cr.fetchone()[0] or 0.0
         if self.init_balance:
@@ -378,7 +403,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     JOIN account_move am ON (am.id = l.move_id) \
                     WHERE (l.account_id = %s) \
                     AND (am.state IN %s) \
-                    AND '+ self.init_query +' '
+                    AND '+ self.init_query +' ' + ccy_pattern
                     ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_balance += self.cr.fetchone()[0] or 0.0
@@ -462,8 +487,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
 
-report_sxw.report_sxw('report.account.general.ledger.ccy', 'account.move.line', 'addons/account/report/account_general_ledger_ccy.rml', parser=general_ledger, header='internal')
-report_sxw.report_sxw('report.account.general.ledger.ccy_landscape', 'account.move.line', 'addons/account/report/account_general_ledger_ccy_landscape.rml', parser=general_ledger, header='internal landscape')
+report_sxw.report_sxw('report.account.general.ledger.ccy', 'account.account', 'addons/account/report/account_general_ledger_ccy.rml', parser=general_ledger, header='internal')
+report_sxw.report_sxw('report.account.general.ledger.ccy_landscape', 'account.account', 'addons/account/report/account_general_ledger_ccy_landscape.rml', parser=general_ledger, header='internal landscape')
 
 
 class general_ledger_xls(SpreadsheetReport):
@@ -475,6 +500,6 @@ class general_ledger_xls(SpreadsheetReport):
         a = super(general_ledger_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 general_ledger_xls('report.account.general.ledger_xls', 'account.account', 'addons/account/report/account_general_ledger_xls.mako', parser=general_ledger, header='internal')
-general_ledger_xls('report.account.general.ledger.ccy_xls', 'account.move.line', 'addons/account/report/account_general_ledger_ccy_xls.mako', parser=general_ledger, header='internal')
+general_ledger_xls('report.account.general.ledger.ccy_xls', 'account.account', 'addons/account/report/account_general_ledger_ccy_xls.mako', parser=general_ledger, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
