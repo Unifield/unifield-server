@@ -180,8 +180,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.cr.execute(sql)
         rows = self.cr.fetchall()
         if rows:
-            res = self.pool.get('res.currency').browse(self.cr, self.uid,
-                [ r[0] for r in rows ])
+            rc_obj = self.pool.get('res.currency')
+            ordered_ids = rc_obj.search(self.cr, self.uid, [
+                ('id', 'in', [ r[0] for r in rows ]),
+            ], order='name')
+            res = rc_obj.browse(self.cr, self.uid, ordered_ids)
 
         return res
 
