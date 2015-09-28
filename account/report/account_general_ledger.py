@@ -173,18 +173,19 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         res = []
 
         sql = """
-                SELECT DISTINCT(l.currency_id)
-                FROM account_move_line AS l
-                WHERE %s
+            SELECT DISTINCT(l.currency_id)
+            FROM account_move_line AS l
+            WHERE %s
         """ % (self.query)
         self.cr.execute(sql)
         rows = self.cr.fetchall()
         if rows:
-            res = [ r[0] for r in rows ]
+            res = self.pool.get('res.currency').browse(self.cr, self.uid,
+                [ r[0] for r in rows ])
 
         return res
 
-    def get_children_accounts(self, account, ccy_id=False):
+    def get_children_accounts(self, account, ccy=False):
         res = []
         currency_obj = self.pool.get('res.currency')
          
@@ -199,8 +200,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 FROM account_move_line AS l
                 WHERE %s AND l.account_id = %%s
             """ % (self.query)
-            if ccy_id:
-                sql += " and l.currency_id = %d" % (ccy_id, )
+            if ccy:
+                sql += " and l.currency_id = %d" % (ccy.id, )
             self.cr.execute(sql, (child_account.id,))
             num_entry = self.cr.fetchone()[0] or 0
             sold_account = self._sum_balance_account(child_account)
@@ -213,12 +214,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     if not currency_obj.is_zero(self.cr, self.uid, currency, sold_account):
                         res.append(child_account)
             else:
-                if not ccy_id or (ccy_id and num_entry > 0):
+                if not ccy or (ccy and num_entry > 0):
                     res.append(child_account)
         if not res:
             return [account]
         return res
-    def lines(self, account, ccy_id=False):
+    def lines(self, account, ccy=False):
         """ Return all the account_move_line of account with their account code counterparts """
         move_state = ['draft','posted']
         if self.target_move == 'posted':
@@ -264,8 +265,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             JOIN account_journal j on (l.journal_id=j.id)
             WHERE %s AND m.state IN %s AND l.account_id = %%s{ccy} ORDER by %s
         """ %(self.query, tuple(move_state), sql_sort)
-        if ccy_id:
-            ccy_pattern = " AND l.currency_id = %d" % (ccy_id, )
+        if ccy:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
         else:
             ccy_pattern = ""
         sql = sql.replace('{ccy}', ccy_pattern)
@@ -289,7 +290,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 JOIN account_journal j on (l.journal_id=j.id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s
             """ %(self.init_query, tuple(move_state))
-            if ccy_id:
+            if ccy:
                 sql += ccy_pattern
             self.cr.execute(sql, (account.id,))
             res_init = self.cr.dictfetchall()
@@ -309,9 +310,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.tot_currency = self.tot_currency + l['amount_currency']
         return res
 
-    def _sum_debit_account(self, account, ccy_id=False):
-        if ccy_id:
-            ccy_pattern = " AND l.currency_id = %d" % (ccy_id, )
+    def _sum_debit_account(self, account, ccy=False):
+        if ccy:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
         else:
             ccy_pattern = ""
 
@@ -348,9 +349,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         sum_debit = self._currency_conv(sum_debit)
         return sum_debit
 
-    def _sum_credit_account(self, account, ccy_id=False):
-        if ccy_id:
-            ccy_pattern = " AND l.currency_id = %d" % (ccy_id, )
+    def _sum_credit_account(self, account, ccy=False):
+        if ccy:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
         else:
             ccy_pattern = ""
 
@@ -387,9 +388,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         sum_credit = self._currency_conv(sum_credit)
         return sum_credit
 
-    def _sum_balance_account(self, account, ccy_id=False):
-        if ccy_id:
-            ccy_pattern = " AND l.currency_id = %d" % (ccy_id, )
+    def _sum_balance_account(self, account, ccy=False):
+        if ccy:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
         else:
             ccy_pattern = ""
 
