@@ -1054,6 +1054,13 @@ You cannot choose this supplier because some destination locations are not avail
         Update the Unit price according to the UoM received and the UoM ordered
         '''
         res = super(stock_picking, self)._get_price_unit_invoice(cr, uid, move_line, type)
+        if type == 'in_refund':
+            if move_line.picking_id and move_line.picking_id.purchase_id:
+                products = move_line.picking_id.purchase_id.order_line
+                for product in products:
+                    if product.id == move_line.picking_id.purchase_id.id:
+                        return product.price_unit
+
         if move_line.purchase_line_id:
             po_uom_id = move_line.purchase_line_id.product_uom.id
             move_uom_id = move_line.product_uom.id
