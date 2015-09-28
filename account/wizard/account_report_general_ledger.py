@@ -111,7 +111,7 @@ class account_report_general_ledger(osv.osv_memory):
         form_fields = [ 'landscape',  'initial_balance', 'amount_currency',
             'sortby', 'output_currency', 'instance_ids', 'export_format',
             'display_mode', 'display_account_view', 'display_details',
-            'unreconciled', 'account_ids'
+            'unreconciled', 'account_ids',
         ]
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record

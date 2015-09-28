@@ -50,7 +50,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.init_balance = data['form']['initial_balance']
         self.display_account = data['form']['display_account']
         self.target_move = data['form'].get('target_move', 'all')
+        self.show_move_lines = self._get_show_move_lines(data)
         self.context['state'] = data['form']['target_move']
+
         if 'instance_ids' in data['form']:
             self.context['instance_ids'] = data['form']['instance_ids']
         if (data['model'] == 'ir.ui.menu'):
@@ -141,6 +143,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances,
             'get_currencies': self.get_currencies,
+            'get_show_move_lines': self._get_show_move_lines
         })
         
         # company currency
@@ -227,6 +230,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def lines(self, account, ccy=False):
         """ Return all the account_move_line of account with their account code counterparts """
+        if not self.show_move_lines:
+            return []
+
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted', '']
@@ -502,10 +508,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         
     def _get_prop_instances(self, data):
         instances = []
-        if data.get('form', False) and data['form'].get('instance_ids', False):
-            self.cr.execute('select code from msf_instance where id IN %s',(tuple(data['form']['instance_ids']),))
+        if data.get('form', False) \
+            and data['form'].get('display_details', False):
+            self.cr.execute('select code from msf_instance where id IN %s',
+                (tuple(data['form']['instance_ids']),))
             instances = [x for x, in self.cr.fetchall()]
         return instances
+
+    def _get_show_move_lines(self, data):
+        return data.get('form', False) \
+            and data['form'].get('display_details', False) or False
                                             
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
