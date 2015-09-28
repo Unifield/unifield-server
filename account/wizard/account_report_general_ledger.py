@@ -49,12 +49,13 @@ class account_report_general_ledger(osv.osv_memory):
             ('booking_account','Booking currency and then accounting code'),
         ], 'Display mode', required=True),
 
-        'display_account_view': fields.boolean("Display view accounts"),
+        'display_account_view': fields.boolean("Account Header",
+            help="Display view accounts ?"),
 
         'display_details': fields.boolean("Display details",
             help="Display details of the entries mouvement per account"),
 
-        'unreconciled': fields.boolean("Display view accounts",
+        'unreconciled': fields.boolean("Unreconciled",
             help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
 
         'account_ids': fields.many2many('account.account',
