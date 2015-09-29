@@ -53,7 +53,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.account_type = self._get_data_form(data, 'account_type')
         self.account_ids = self._get_data_form(data, 'account_ids')
         self.show_account_views = self._get_data_form(data,
-            'display_account_view')
+            'display_account_view', default=True)
         self.show_move_lines = self._get_data_form(data,
             'display_details')
         self.unreconciled = self._get_data_form(data,
@@ -232,19 +232,27 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     res.append(child_account)
         if not res:
             return [account]
-        if self.account_ids:
+
+        # account filtering
+        if self.account_ids or not self.show_account_views:
             # filter by account
             new_res = []
             for a in res:
-                if a.id in self.account_ids:
+                # 1st filter account views ?
+                if not self.show_account_views and a.type == 'view':
+                    continue
+
+                # 2nd filter by account (integrate parents of filtered account)
+                if not a.id in self.account_ids:
                     new_res.append(a)
                 else:
                     for ca in a.child_parent_ids:
                         if ca.id in self.account_ids:
-                            # account parent of expected account
                             new_res.append(a)
                             break
+
             res = new_res
+
         return res
 
     def lines(self, account, ccy=False):
@@ -535,9 +543,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return instances
 
     # internal filter functions
-    def _get_data_form(self, data, key):
-        return data.get('form', False) \
-            and data['form'].get(key, False) or False
+    def _get_data_form(self, data, key, default=False):
+        if not 'form' in data or not key in data['form']:
+            return default
+        return data['form'].get(key, default)
                                             
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
@@ -554,6 +563,7 @@ class general_ledger_xls(SpreadsheetReport):
         #ids = getIds(self, cr, uid, ids, context)
         a = super(general_ledger_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
+
 general_ledger_xls('report.account.general.ledger_xls', 'account.account', 'addons/account/report/account_general_ledger_xls.mako', parser=general_ledger, header='internal')
 general_ledger_xls('report.account.general.ledger.ccy_xls', 'account.account', 'addons/account/report/account_general_ledger_ccy_xls.mako', parser=general_ledger, header='internal')
 
