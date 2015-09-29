@@ -4580,7 +4580,7 @@ class stock_move(osv.osv):
                         out_move = self.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                         out_move_id = False
                         if out_move['moves']:
-                            out_move_id = sorted(out_move['moves'], key=lambda x: abs(x.product_qty-diff_qty))[0]
+                            out_move_id = sorted(out_move['moves'], key=lambda x: abs(x.product_qty-diff_qty))[0].id
                         elif out_move['move_id']:
                             out_move_id = out_move['move_id']
 
