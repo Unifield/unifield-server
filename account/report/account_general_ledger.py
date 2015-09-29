@@ -565,18 +565,27 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return data['form'].get(key, default)
 
     def _get_display_info(self, data):
+        display_mode = _('Accounting code and then booking currency')
+        if data['form'].get('display_account', False) == 'booking_account':
+            display_mode = _('Booking currency and then accounting code')
+
         if 'display_account' not in data['form']:
-            da = _('All')
+            display_account = _('All')
         else:
             if data['form']['display_account'] == 'bal_all':
-                da = _('All')
+                display_account = _('All')
             elif data['form']['display_account'] == 'bal_movement':
-                da = _('With movements')
+                display_account = _('With movements')
             else:
-                da = _('With balance is not equal to 0')
+                display_account = _('With balance is not equal to 0')
 
         info_data = [
-            (_('Display accounts'), da, ),
+            (_('Mode'), display_mode, ),
+            (_('Accounts'), display_account, ),
+            (_('Account header'),
+                _(self.show_account_views and 'Yes' or 'No'), ),
+            (_('Details'),
+                _(self.show_move_lines and 'Yes' or 'No'), ),
         ]
 
         res = ""
