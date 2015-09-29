@@ -125,7 +125,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Journals</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Display Account</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Display</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entries Sorted By</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
@@ -146,7 +146,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String">${(journals or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${(display_account or '')|x}</Data>
+    <Data ss:Type="String">${get_display_info(data)|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>

@@ -158,6 +158,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances,
             'get_currencies': self.get_currencies,
+            'get_display_info': self._get_display_info,
         })
         
         # company currency
@@ -562,6 +563,26 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not 'form' in data or not key in data['form']:
             return default
         return data['form'].get(key, default)
+
+    def _get_display_info(self, data):
+        if 'display_account' not in data['form']:
+            da = _('All')
+        else:
+            if data['form']['display_account'] == 'bal_all':
+                da = _('All')
+            elif data['form']['display_account'] == 'bal_movement':
+                da = _('With movements')
+            else:
+                da = _('With balance is not equal to 0')
+
+        info_data = [
+            (_('Display accounts'), da, ),
+        ]
+
+        res = ""
+        for label, val in info_data:
+            res += "%s: %s\n" % (label, val, )
+        return res
                                             
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
