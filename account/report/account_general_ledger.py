@@ -50,7 +50,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.init_balance = data['form']['initial_balance']
         self.display_account = data['form']['display_account']
         self.target_move = data['form'].get('target_move', 'all')
-        self.show_move_lines = self._get_show_move_lines(data)
+        self.account_type = self._get_data_form(data, 'account_type')
+        self.account_ids = self._get_data_form(data, 'account_ids')
+        self.show_account_views = self._get_data_form(data,
+            'display_account_view')
+        self.show_move_lines = self._get_data_form(data,
+            'display_details')
+        self.unreconciled = self._get_data_form(data,
+            'unreconciled')
         self.context['state'] = data['form']['target_move']
 
         if 'instance_ids' in data['form']:
@@ -143,7 +150,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances,
             'get_currencies': self.get_currencies,
-            'get_show_move_lines': self._get_show_move_lines
         })
         
         # company currency
@@ -226,6 +232,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     res.append(child_account)
         if not res:
             return [account]
+        if self.account_ids:
+            # filter by account
+            res = [ a for a in res if a.id in self.account_ids ]
         return res
 
     def lines(self, account, ccy=False):
@@ -515,9 +524,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             instances = [x for x, in self.cr.fetchall()]
         return instances
 
-    def _get_show_move_lines(self, data):
+    # internal filter functions
+    def _get_data_form(self, data, key):
         return data.get('form', False) \
-            and data['form'].get('display_details', False) or False
+            and data['form'].get(key, False) or False
                                             
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
