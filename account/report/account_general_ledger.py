@@ -516,6 +516,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             res = self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
         elif f == 'Periods':
             res = self.get_start_period(data) + ' - ' + self.get_end_period(data)
+
+        if data['form'].get('account_type'):
+            if res == 'No Filter':
+                res = ''
+            if data['form'].get('account_type') == 'pl':
+                res += "\n" + _('Profit & Loss accounts')
+            elif data['form'].get('account_type') == 'bl':
+                res += "\n" + _('Balance Sheet accounts')
+        if self.unreconciled:
+            if res == 'No Filter':
+                res = ''
+            res += "\n" + _('Unreconciled')
         return res
         
     def _get_line_debit(self, line):
