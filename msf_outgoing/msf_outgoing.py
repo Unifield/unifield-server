@@ -4592,7 +4592,8 @@ class stock_move(osv.osv):
                     # Search OUT moves that have the same source and there are done
                     other_out_move_ids = self.search(cr, uid, [
                         ('sale_line_id', '=', move.sale_line_id.id),
-                        ('state', '=', 'done'),
+                        ('state', 'in', ['assigned', 'confirmed', 'done']),
+                        ('id', '!=', move.id),
                     ], context=context)
                     if other_out_move_ids:
                         proc_obj.write(cr, uid,
