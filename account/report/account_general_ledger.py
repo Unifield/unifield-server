@@ -234,7 +234,17 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             return [account]
         if self.account_ids:
             # filter by account
-            res = [ a for a in res if a.id in self.account_ids ]
+            new_res = []
+            for a in res:
+                if a.id in self.account_ids:
+                    new_res.append(a)
+                else:
+                    for ca in a.child_parent_ids:
+                        if ca.id in self.account_ids:
+                            # account parent of expected account
+                            new_res.append(a)
+                            break
+            res = new_res
         return res
 
     def lines(self, account, ccy=False):
