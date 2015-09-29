@@ -50,7 +50,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.init_balance = data['form']['initial_balance']
         self.display_account = data['form']['display_account']
         self.target_move = data['form'].get('target_move', 'all')
-        self.account_type = self._get_data_form(data, 'account_type')
+        self.account_report_types = self._get_data_form(data, 'account_type')
+        if self.account_report_types:
+            # convert wizard selection to account.account.type 'report_type'
+            if self.account_report_types == 'pl':
+                self.account_report_types = [ 'income', 'expense', ]
+            elif self.account_report_types == 'bl':
+                self.account_report_types = [ 'asset', 'liability', ]
+            else:  # all
+                self.account_report_types = False
         self.account_ids = self._get_data_form(data, 'account_ids')
         self.show_account_views = self._get_data_form(data,
             'display_account_view', default=True)
@@ -209,6 +217,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if child_account.code.startswith('8') or child_account.code.startswith('9'):
                 # UF-1714: exclude accounts '8*'/'9*'
                 continue
+            if self.account_report_types:
+                # filter by B/S P&L report type
+                if child_account.user_type \
+                    and child_account.user_type.report_type \
+                    and child_account.user_type.report_type \
+                        not in self.account_report_types:
+                    continue
             sql = """
                 SELECT count(id)
                 FROM account_move_line AS l
