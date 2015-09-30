@@ -108,21 +108,28 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         # UF-1714
         # accounts 8*, 9* are not displayed:
         # we have to deduce debit/credit/balance amounts of MSF account view (root account)
-        self._deduce_accounts = { 
-            '8': {'debit': 0., 'credit': 0., 'balance': 0. },
-            '9': {'debit': 0., 'credit': 0., 'balance': 0. },
-        }
         a_obj = self.pool.get('account.account')
-        for a_code in self._deduce_accounts:
+        self._deduce_accounts_index = [ '8', '9', ]
+        self._deduce_accounts_balance = {}
+        for a_code in self._deduce_accounts_index:
             a_ids = a_obj.search(self.cr, self.uid, [('code', '=', a_code)])
             if a_ids:
-                if isinstance(a_ids, (int, long)):
-                    a_ids = [a_ids]
-                account = a_obj.browse(self.cr, self.uid, a_ids, context=self.context)[0]
+                account = a_obj.browse(self.cr, self.uid, [a_ids[0], ],
+                    context=self.context)[0]
                 if account:
-                    self._deduce_accounts[a_code]['debit'] = self._sum_debit_account(account)
-                    self._deduce_accounts[a_code]['credit'] = self._sum_credit_account(account)
-                    self._deduce_accounts[a_code]['balance'] = self._sum_balance_account(account)
+                    self._deduce_accounts_balance[a_code] = {}
+
+                    # all ccy amounts (regarding move lines)
+                    self._deduce_accounts_balance[a_code]['_all_'] = \
+                        self._sum_balance_account(account)
+
+                    # per ccy amounts (regarding move lines)
+                    ccy_brs = self.get_currencies(account=account)
+                    if ccy_brs:
+                        for c in ccy_brs:
+                            self._deduce_accounts_balance[a_code][c.id] = \
+                                self._sum_balance_account(account, ccy=c)
+        print self._deduce_accounts_balance
         
         return res
 
@@ -383,11 +390,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if account.type == 'view':
             amount = account.debit
             if not account.parent_id:
-                # UF-1714
-                # accounts 8*, 9* are not displayed:
-                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
-                for a_code in self._deduce_accounts:
-                    amount -= self._deduce_accounts[a_code]['debit']
+                # deduce balance of not displayed accounts
+                for a_code in self._deduce_accounts_index:
+                    deduce_bal = self._deduce_accounts_balance[a_code][ccy.id] \
+                        if ccy else self._deduce_accounts_balance[a_code]['_all_']
+                    amount -= deduce_bal
             return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
@@ -422,12 +429,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if account.type == 'view':
             amount = account.credit
             if not account.parent_id:
-                # UF-1714
-                # accounts 8*, 9* are not displayed:
-                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
-                for a_code in self._deduce_accounts:
-                    amount -= self._deduce_accounts[a_code]['credit']
-            return self._currency_conv(amount)
+                # deduce balance of not displayed accounts
+                for a_code in self._deduce_accounts_index:
+                    deduce_bal = self._deduce_accounts_balance[a_code][ccy.id] \
+                        if ccy else self._deduce_accounts_balance[a_code]['_all_']
+                    amount -= deduce_bal
+                return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
@@ -460,12 +467,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         if account.type == 'view':
             amount = account.balance
-            if not account.parent_id:
-                # UF-1714
-                # accounts 8*, 9* are not displayed:
-                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
-                for a_code in self._deduce_accounts:
-                    amount -= self._deduce_accounts[a_code]['balance']
             return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
