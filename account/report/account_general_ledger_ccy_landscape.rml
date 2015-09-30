@@ -232,28 +232,16 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="37.0,54.0,99.0,71.0,71.0,99.0,57.0,71.0,71.0,71.0" style="Table7">
+    <blockTable colWidths="114.0,80.0,379.0,71.0,71.0,71.0" style="Table7">
       <tr>
         <td>
-          <para style="terp_tblheader_Details">Date</para>
+          <para style="terp_tblheader_Details">Entry Seq</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">JNRL</para>
+          <para style="terp_tblheader_Details">Posting Date</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">Partner</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Centre">Ref</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Centre">Move</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details">Entry Label</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Centre">Counterpart</para>
+          <para style="terp_tblheader_Details">Description</para>
         </td>
         <td>
           <para style="terp_tblheader_Details_Right">Debit</para>
@@ -304,28 +292,16 @@
       </blockTable>
       <section>
         <para style="terp_default_8">[[ repeatIn(lines(o, ccy=c), 'line') ]]</para>
-        <blockTable colWidths="142.0,33.0,99.0,71.0,71.0,71.0,99.0,57.0,71.0,71.0" style="Table9">
+        <blockTable colWidths="114.0,80.0,379.0,57.0,71.0,71.0" style="Table9">
           <tr>
+            <td>
+              <para style="terp_default_8">[[ line['move'] or '' ]]</para>
+            </td>
             <td>
               <para style="terp_default_8">[[ formatLang(line['ldate'],date=True) ]]</para>
             </td>
             <td>
-              <para style="terp_default_8">[[ line['lcode'] ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_8">[[ line['partner_name'] ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_8">[[ strip_name(line['lref'],15) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Centre_8">[[ strip_name(line['move'],15) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_8">[[ line['lname'] ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Centre_8">[[ strip_name(line['line_corresp'].replace(', ',','),25) ]]</para>
+              <para style="terp_default_8">[[ line['lname'] or '' ]]</para>
             </td>
             <td>
               <para style="terp_default_Right_8">[[ formatLang(get_line_debit(line), digits=get_digits(dp='Account')) ]]</para>

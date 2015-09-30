@@ -64,8 +64,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'display_account_view', default=True)
         self.show_move_lines = self._get_data_form(data,
             'display_details')
-        self.unreconciled = self._get_data_form(data,
-            'unreconciled')
+        # US-334/6: Only account 10100 and 10200 must never be displayed in \
+        # details when you tick "Unreconciled" because they are the only \
+        # account not reconciliable.
+        self.unreconciled_accounts = self._get_data_form(data,
+            'unreconciled', False) and ['10100', '10200',] or False
         self.context['state'] = data['form']['target_move']
 
         if 'instance_ids' in data['form']:
@@ -225,6 +228,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     and child_account.user_type.report_type \
                         not in self.account_report_types:
                     continue
+            if self.unreconciled_accounts:
+                if child_account.code in self.unreconciled_accounts:
+                    continue
             sql = """
                 SELECT count(id)
                 FROM account_move_line AS l
@@ -249,7 +255,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not res:
             return [account]
 
-        # account filtering
+        # account filtering account per account
         if self.account_ids or not self.show_account_views:
             # filter by account
             new_res = []
@@ -281,7 +287,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             move_state = ['posted', '']
         # First compute all counterpart strings for every move_id where this account appear.
         # Currently, the counterpart info is used only in landscape mode
-        sql = """
+        # desactivated since US-334
+        '''sql = """
             SELECT m1.move_id,
                 array_to_string(ARRAY(SELECT DISTINCT a.code
                                           FROM account_move_line m2
@@ -298,7 +305,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         counterpart_accounts = {}
         for i in counterpart_res:
             counterpart_accounts[i['move_id']] = i['counterpart']
-        del counterpart_res
+        del counterpart_res'''
 
         # Then select all account_move_line of this account
         if self.sortby == 'sort_journal_partner':
@@ -353,10 +360,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         account_sum = 0.0
         for l in res:
             l['move'] = l['move_name'] != '/' and l['move_name'] or ('*'+str(l['mmove_id']))
-            l['partner'] = l['partner_name'] or ''
+            #l['partner'] = l['partner_name'] or ''  # desactivated since US-334
             account_sum += l['debit'] - l['credit']
             l['progress'] = account_sum
-            l['line_corresp'] = l['mmove_id'] == '' and ' ' or counterpart_accounts[l['mmove_id']].replace(', ',',')
+            # counter part desactivated since us 354
+            #l['line_corresp'] = l['mmove_id'] == '' and ' ' or counterpart_accounts[l['mmove_id']].replace(', ',',')
             # Modification of amount Currency
             if l['credit'] > 0:
                 if l['amount_currency'] != None:
@@ -524,7 +532,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 res += "\n" + _('Profit & Loss accounts')
             elif data['form'].get('account_type') == 'bl':
                 res += "\n" + _('Balance Sheet accounts')
-        if self.unreconciled:
+        if self.unreconciled_accounts:
             if res == 'No Filter':
                 res = ''
             res += "\n" + _('Unreconciled')
