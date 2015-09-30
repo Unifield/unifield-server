@@ -83,8 +83,8 @@ class List(TinyWidget):
         if name != '_terp_list':
             self.source = self.name.replace('/', '/') or None
         
-        self.sort_order = ''
-        self.sort_key = ''
+        self.sort_order = kw.get('sort_order', '')
+        self.sort_key = kw.get('sort_key', '')
         #this Condition is for Dashboard to avoid new, edit, delete operation
         self.dashboard = 0
         self.noteditable = []
@@ -101,7 +101,6 @@ class List(TinyWidget):
         self.o2m = kw.get('o2m', 0)
         self.concurrency_info = None
         self.selector = None
-        
 
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
