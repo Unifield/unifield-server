@@ -180,13 +180,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell></Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Date</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">JRNL</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Partner</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Ref</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Move</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Label</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Counter part</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Seq</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Posting Date</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Description</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
@@ -194,11 +190,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % for o in get_children_accounts(a):
 <Row>
 <Cell ss:StyleID="ssBorder">
-</Cell>
-<Cell ss:StyleID="ssBorder">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder" ss:MergeAcross="4">
+<Cell ss:StyleID="ssBorder" ss:MergeAcross="2">
     <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
@@ -215,11 +209,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % for c in get_currencies(account=o):
 <Row>
 <Cell ss:StyleID="ssBorder">
-</Cell>
-<Cell ss:StyleID="ssBorder">
     <Data ss:Type="String">${(c.name or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder" ss:MergeAcross="4">
+<Cell ss:StyleID="ssBorder" ss:MergeAcross="2">
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
@@ -235,26 +227,15 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 
 % for line in lines(o, ccy=c):
 <Row>
+
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
+</Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(formatLang(line['ldate'],date=True)) or ''}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['lcode'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['partner_name'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['lref'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['move'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${((strip_name(line['line_corresp'].replace(',',', '),25)) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_debit(line)}</Data>
