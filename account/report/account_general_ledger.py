@@ -162,6 +162,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_prop_instances': self._get_prop_instances,
             'get_currencies': self.get_currencies,
             'get_display_info': self._get_display_info,
+            'get_show_move_lines': self.get_show_move_lines,
         })
         
         # company currency
@@ -612,6 +613,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         for label, val in info_data:
             res += "%s: %s\n" % (label, val, )
         return res
+
+    def get_show_move_lines(self):
+        return self.get_show_move_lines
                                             
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')

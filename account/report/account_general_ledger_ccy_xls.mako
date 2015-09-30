@@ -180,10 +180,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell></Cell>
 </Row>
 <Row>
+<Row>
+% if get_show_move_lines():
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Seq</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Posting Date</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Description</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Counter part</Data></Cell>
+% endif
+% if not get_show_move_lines():
+<Cell ss:StyleID="ssH"><Data ss:Type="String">CCY / Account</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
+% endif
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
