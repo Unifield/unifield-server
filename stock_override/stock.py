@@ -1682,6 +1682,7 @@ class stock_move(osv.osv):
         prodlot_obj = self.pool.get('stock.production.lot')
         for move in self.browse(cr, uid, ids, context):
             compare_date = context.get('rw_date', False)
+            move_unlinked = False
             if compare_date:
                 compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
             else:
@@ -1730,6 +1731,7 @@ class stock_move(osv.osv):
                                             # We update the linked documents
                                             self.update_linked_documents(cr, uid, [move.id], exist_move.id, context=context)
                                             self.unlink(cr, uid, [move.id], context)
+                                            move_unlinked = True
                                         else:
                                             self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'],
                                                                           'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
@@ -1750,7 +1752,7 @@ class stock_move(osv.osv):
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
-                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
+                        if not move_unlinked and move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
                             if not self.search(cr, uid, [('move_dest_id', '=', move.id)], context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
