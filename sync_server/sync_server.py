@@ -104,41 +104,80 @@ class entity_group(osv.osv):
     
 entity_group()
 
+class entity_activity(osv.osv):
+    _name = 'sync.server.entity.activity'
+    _description = "Instance Activity"
+    _log_access = False
+    _columns = {
+        'entity_id': fields.integer('Entity db id', select=1),
+        'datetime': fields.datetime('Last Activity'),
+        'activity': fields.char('Activity', size=128),
+    }
+    _defaults = {
+        'activity': 'Inactive',
+        'datetime': lambda *a: datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    _sql_constraints = [
+        ('entity_id_unique', 'UNIQUE(entity_id)', "Can't have multiple entity activity"),
+    ]
+entity_activity()
+
 class entity(osv.osv):
     """ OpenERP entity name and unique identifier """
     _name = "sync.server.entity"
     _description = "Synchronization Instance"
     _parent_store = True
 
-    def __init__(self, *args, **kwargs):
-        self._activity_pool = {}
-        return super(entity, self).__init__(*args, **kwargs)
+    def init(self, cr):
+        cr.execute("""select column_name
+            from information_schema.columns
+            where table_name='sync_server_entity' AND column_name='last_activity'
+        """)
+        if cr.fetchone():
+            # move existing column to the new object
+            cr.execute("""select ent.id, ent.last_activity
+                from sync_server_entity ent
+                left join sync_server_entity_activity act on act.entity_id = ent.id
+                where act.entity_id is null
+            """)
+            for row in cr.fetchall():
+                cr.execute("insert into sync_server_entity_activity (entity_id, datetime, activity) values (%s, %s, 'Inactive')", (row[0], row[1]))
 
     def _get_activity(self, cr, uid, ids, name, arg, context=None):
         res = {}
-        for entity in self.browse(cr, uid, ids, context=context):
-            if entity.identifier in self._activity_pool:
-                activity, date = self._activity_pool[entity.identifier]
-                delay = datetime.now() - date
-                res[entity.id] = _('%s (stalling)') % activity \
-                                 if (delay > MAX_ACTIVITY_DELAY and '...' in activity) \
-                                 else activity
+        act_obj = self.pool.get('sync.server.entity.activity')
+        activity_ids = act_obj.search(cr, uid, [('entity_id', 'in', ids)], context=context)
+        for id in ids:
+            res[id] = {
+                'activity': _('Inactive'),
+                'last_dateactivity': False
+            }
+        for activity in act_obj.browse(cr, uid, activity_ids, context=context):
+            instance_activity = activity.activity or ''
+            if not activity.datetime:
+                delay = timedelta()
             else:
-                res[entity.id] = _('Inactive')
+                delay = datetime.now() - datetime.strptime(activity.datetime, '%Y-%m-%d %H:%M:%S')
+
+            if delay > MAX_ACTIVITY_DELAY and '...' in instance_activity:
+                res[activity.entity_id]['activity'] =  _('%s (stalling)') % instance_activity
+            elif instance_activity:
+                res[activity.entity_id]['activity'] = instance_activity
+
+            res[activity.entity_id]['last_dateactivity'] = activity.datetime
         return res
 
     def set_activity(self, cr, uid, entity, activity, wait=False, context=None):
         if context is None:
             context = {}
 
-        now = datetime.now()
-        self._activity_pool[entity.identifier] = (activity, now)
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         no_update = dict(context, update=False)
         try:
             if not wait:
                 cr.execute("SAVEPOINT update_entity_last_activity")
-                cr.execute('select id from %s where id=%%s for update nowait'% self._table, (entity.id,), log_exceptions=False)
-            self.write(cr, 1, [entity.id], {'last_activity' : now.strftime("%Y-%m-%d %H:%M:%S")}, context=no_update)
+                cr.execute('select id from sync_server_entity_activity where entity_id=%s for update nowait', (entity.id,), log_exceptions=False)
+            cr.execute('update sync_server_entity_activity set datetime=%s, activity=%s where entity_id=%s', (now, activity, entity.id))
         except psycopg2.OperationalError, e:
             if not wait and e.pgcode == '55P03':
                 # can't acquire lock: ok the show must go on
@@ -161,8 +200,9 @@ class entity(osv.osv):
         'children_ids' : fields.one2many('sync.server.entity', 'parent_id', 'Children Instances'),
         'update_token' : fields.char('Update security token', size=256),
 
-        'activity' : fields.function(_get_activity, type='char', string="Activity", method=True),
-        'last_activity' : fields.datetime("Date of last activity", readonly=True),
+        'activity' : fields.function(_get_activity, type='char', string="Activity", method=True, multi="_get_act"),
+        'last_dateactivity': fields.function(_get_activity, type='datetime', string="Date of last activity", method=True, multi="_get_act"),
+        #'last_activity' : fields.datetime("Date of last activity", readonly=True),
 
         'parent_left' : fields.integer("Left Parent", select=1),
         'parent_right' : fields.integer("Right Parent", select=1),
@@ -298,7 +338,9 @@ class entity(osv.osv):
         if update:
             vals['state'] = 'updated'
             
-        return super(entity, self).create(cr, uid, vals, context=context)
+        newid = super(entity, self).create(cr, uid, vals, context=context)
+        self.pool.get('sync.server.entity.activity').create(cr, uid, {'entity_id': newid})
+        return newid
         
     def register(self, cr, uid, data, context=None):
         """
@@ -527,6 +569,23 @@ class entity(osv.osv):
                 context=context)
         ])
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        to_order = False
+        if not count and order and ('last_dateactivity' in order or 'activity' in order):
+            to_order = True
+            init_offset = offset
+            init_limit = limit
+            offset = 0
+            limit = None
+        ids = super(entity, self).search(cr, uid, args, offset, limit, order, context, count)
+        if ids and to_order:
+            order = order.replace('last_dateactivity', 'datetime')
+            limit_str = init_limit and ' limit %d' % init_limit or ''
+            offset_str = init_offset and ' offset %d' % init_offset or ''
+            cr.execute('select entity_id from sync_server_entity_activity where entity_id in %s order by ' + order + limit_str + offset_str, (tuple(ids),))
+            return [x[0] for x in cr.fetchall()]
+        return ids
+
     _constraints = [
         (_check_recursion, 'Error! You cannot create cycle in entities structure.', ['parent_id']),
     ]
@@ -535,7 +594,6 @@ class entity(osv.osv):
         ('identifier_unique', 'UNIQUE(identifier)', "Can't have multiple instances with the same identifier!"),
     ]
 entity()
-
 
 class sync_manager(osv.osv):
     _name = "sync.server.sync_manager"
@@ -805,8 +863,8 @@ class sync_server_monitor_email(osv.osv):
         children_cache = {}
 
         entities_id = entity_obj.search(cr, uid, [])
-        for entity in entity_obj.read(cr, uid, entities_id, ['last_activity']):
-            entities_last_activity[entity['id']] = entity['last_activity']
+        for entity in entity_obj.read(cr, uid, entities_id, ['last_dateactivity']):
+            entities_last_activity[entity['id']] = entity['last_dateactivity']
             ancestors_cache[entity['id']] = entity_obj._get_ancestor(cr, uid, entity['id'])
             children_cache[entity['id']] = entity_obj._get_all_children(cr, uid, entity['id'])
 
@@ -884,6 +942,7 @@ class sync_server_monitor_email(osv.osv):
 
     def check_not_sync(self, cr, uid, context=None):
         entity_obj = self.pool.get('sync.server.entity')
+        entity_activity_obj = self.pool.get('sync.server.entity.activity')
         date_tools = self.pool.get('date.tools')
 
         ids = self.search(cr, uid, [('name', '!=', False)])
@@ -891,9 +950,15 @@ class sync_server_monitor_email(osv.osv):
             return False
         template = self.browse(cr, uid, ids[0])
         thresold_date = (datetime.now() + timedelta(days=-template.nb_days)).strftime('%Y-%m-%d %H:%M:%S')
-        warn_ids = entity_obj.search(cr, uid, ['|', ('last_activity', '<=', thresold_date), '&', ('last_activity', '=', False), ('create_date', '<=', thresold_date), ('state', 'in', ['validated', 'updated'])])
-        if not warn_ids:
+        entity_to_check_ids = entity_obj.search(cr, uid, [('state', 'in', ['validated', 'updated'])])
+        if not entity_to_check_ids:
             return False
+        activity_ids = entity_activity_obj.search(cr, uid, [('entity_id', 'in', entity_to_check_ids), ('datetime', '<=', thresold_date)])
+        if not activity_ids:
+            return False
+        warn_ids = []
+        for act in entity_activity_obj.read(cr, uid, activity_ids, ['entity_id']):
+            warn_ids.append(act['entity_id'])
 
         emails = template.name.split(',')
         subject = _('SYNC_SERVER: instances did not perform any sync')
@@ -902,7 +967,7 @@ The sync server detected that the following instances did not perform any sync s
 ''') % template.nb_days
 
         for entity in entity_obj.browse(cr, uid, warn_ids):
-            body += _("  - %s last sync: %s\n") % (entity.name, entity.last_activity and date_tools.get_date_formatted(cr, uid, 'datetime', entity.last_activity) or _('never'))
+            body += _("  - %s last sync: %s\n") % (entity.name, entity.last_dateactivity and date_tools.get_date_formatted(cr, uid, 'datetime', entity.last_dateactivity) or _('never'))
 
         body += _("\n\nThis is an automatically generated email, please do not reply.\n")
 
