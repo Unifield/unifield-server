@@ -163,12 +163,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
 </Row>
 <Row>
-<Cell></Cell>
-<Cell></Cell>
 <Cell></Cell>
 <Cell></Cell>
 <Cell></Cell>
@@ -184,22 +180,26 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Seq</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Posting Date</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Description</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
 % if not get_show_move_lines():
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Account / CCY</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
 % endif
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Booking Balance</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
 </Row>
 % for o in get_children_accounts(a):
 <Row>
 <Cell ss:StyleID="ssBorder">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder" ss:MergeAcross="2">
+<Cell ss:StyleID="ssBorder" ss:MergeAcross="3">
     <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
@@ -209,7 +209,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="Number">${sum_credit_account(o)}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
+    <Data ss:Type="Number">0.</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber">
     <Data ss:Type="Number">${sum_balance_account(o)}</Data>
+</Cell>
+<Cell ss:StyleID="String">
+    <Data ss:Type="String"></Data>
 </Cell>
 </Row>
 
@@ -221,9 +227,19 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(formatLang(line['ldate'],date=True)) or ''}</Data>
 </Cell>
+% if get_show_move_lines():
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['move'] or '')|x}</Data>
 </Cell>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
+</Cell>
+% endif
+% if not get_show_move_lines():
+<Cell ss:StyleID="ssAccountLine"  ss:MergeAcross="2">
+    <Data ss:Type="String">${(line['move'] or '')|x}</Data>
+</Cell>
+% endif
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_debit(line)}</Data>
 </Cell>
@@ -231,7 +247,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="Number">${get_line_credit(line)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
+    <Data ss:Type="Number">0.</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_balance(line)}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
 </Cell>
 </Row>
 % endfor

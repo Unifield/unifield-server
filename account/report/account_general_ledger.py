@@ -169,6 +169,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_currencies': self.get_currencies,
             'get_display_info': self._get_display_info,
             'get_show_move_lines': self.get_show_move_lines,
+            'get_ccy_label': self.get_ccy_label,
         })
         
         # company currency
@@ -285,6 +286,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return res
 
     def lines(self, account):
+        if not self.show_move_lines:
+            return []
+
         """ Return all the account_move_line of account with their account code counterparts """
         move_state = ['draft','posted']
         if self.target_move == 'posted':
@@ -602,7 +606,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return res
 
     def get_show_move_lines(self):
-        return self.get_show_move_lines
+        return self.show_move_lines
+
+    def get_ccy_label(self, short_version=False):
+        if not self.show_move_lines:
+            return ''
+        return short_version and _('CUR') or _('Currency')
                                             
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')

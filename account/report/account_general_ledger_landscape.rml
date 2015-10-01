@@ -244,7 +244,7 @@
           <para style="terp_tblheader_Details">Description</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Currency</para>
+          <para style="terp_tblheader_Details">[[ get_ccy_label() ]]</para>
         </td>
         <td>
           <para style="terp_tblheader_Details_Right">Debit</para>
