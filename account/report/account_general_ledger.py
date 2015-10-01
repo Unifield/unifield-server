@@ -327,7 +327,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             m.name AS move_name, m.id AS mmove_id,per.code as period_code,
             c.symbol AS currency_code,
             i.id AS invoice_id, i.type AS invoice_type, i.number AS invoice_number,
-            p.name AS partner_name
+            p.name AS partner_name, c.name as currency_name
             FROM account_move_line l
             JOIN account_move m on (l.move_id=m.id)
             LEFT JOIN res_currency c on (l.currency_id=c.id)
@@ -348,7 +348,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 '' AS currency_code,
                 NULL AS currency_id,
                 '' AS invoice_id, '' AS invoice_type, '' AS invoice_number,
-                '' AS partner_name
+                '' AS partner_name, c.name as currency_name
                 FROM account_move_line l
                 LEFT JOIN account_move m on (l.move_id=m.id)
                 LEFT JOIN res_currency c on (l.currency_id=c.id)

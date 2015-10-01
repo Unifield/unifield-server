@@ -270,7 +270,7 @@
               <para style="terp_default_8">[[ strip_name(line['lname'], 34) or '' ]]</para>
             </td>
             <td>
-              <para style="terp_default_Right_8"></para>
+              <para style="terp_default_Right_8">[[ line['currency_name'] or '' ]]</para>
             </td>
             <td>
               <para style="terp_default_Right_8">[[ formatLang(get_line_debit(line), digits=get_digits(dp='Account')) ]]</para>

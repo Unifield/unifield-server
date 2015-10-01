@@ -232,7 +232,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String">${(line['move'] or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
+    <Data ss:Type="String">${(line['currency_name'] or '')|x}</Data>
 </Cell>
 % endif
 % if not get_show_move_lines():
