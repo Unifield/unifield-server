@@ -273,16 +273,16 @@
               <para style="terp_default_Right_8">[[ line['currency_name'] or '' ]]</para>
             </td>
             <td>
-              <para style="terp_default_Right_8">[[ formatLang(get_line_debit(line), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
             </td>
             <td>
-              <para style="terp_default_Right_8">[[ formatLang(get_line_credit(line), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
             </td>
             <td>
-              <para style="terp_default_Right_8"></para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
             </td>
             <td>
-              <para style="terp_default_Right_8">[[ formatLang(get_line_balance(line), digits=get_digits(dp='Account')) ]] </para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account')) ]]</para>
             </td>
           </tr>
         </blockTable>

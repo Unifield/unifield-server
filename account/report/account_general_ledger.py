@@ -323,10 +323,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             sql_sort='l.date, l.move_id'
         sql = """
-            SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,l.amount_currency,l.ref AS lref, l.name AS lname, COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit, COALESCE(l.debit_currency,0) as debit_currency, COALESCE(l.credit_currency,0) as credit_currency, l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
+            SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,
+            l.amount_currency,l.ref AS lref, l.name AS lname,
+            COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit,
+            COALESCE(l.debit_currency,0) as debit_currency,
+            COALESCE(l.credit_currency,0) as credit_currency,
+            l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
             m.name AS move_name, m.id AS mmove_id,per.code as period_code,
             c.symbol AS currency_code,
-            i.id AS invoice_id, i.type AS invoice_type, i.number AS invoice_number,
+            i.id AS invoice_id, i.type AS invoice_type,
+            i.number AS invoice_number,
             p.name AS partner_name, c.name as currency_name
             FROM account_move_line l
             JOIN account_move m on (l.move_id=m.id)
@@ -343,7 +349,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if res_lines and self.init_balance:
             #FIXME: replace the label of lname with a string translatable
             sql = """
-                SELECT 0 AS lid, '' AS ldate, '' AS lcode, COALESCE(SUM(l.amount_currency),0.0) AS amount_currency, '' AS lref, 'Initial Balance' AS lname, COALESCE(SUM(l.debit),0.0) AS debit, COALESCE(SUM(l.credit),0.0) AS credit,COALESCE(SUM(l.debit_currency),0.0) AS debit_currency, COALESCE(SUM(l.credit_currency),0.0) AS credit_currency, '' AS lperiod_id, '' AS lpartner_id,
+                SELECT 0 AS lid, '' AS ldate, '' AS lcode,
+                COALESCE(SUM(l.amount_currency),0.0) AS amount_currency,
+                '' AS lref,
+                'Initial Balance' AS lname, COALESCE(SUM(l.debit),0.0) AS debit,
+                COALESCE(SUM(l.credit),0.0) AS credit,COALESCE(SUM(l.debit_currency),0.0) AS debit_currency,
+                COALESCE(SUM(l.credit_currency),0.0) AS credit_currency, '' AS lperiod_id, '' AS lpartner_id,
                 '' AS move_name, '' AS mmove_id, '' AS period_code,
                 '' AS currency_code,
                 NULL AS currency_id,
@@ -454,34 +465,36 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         sum_credit = self._currency_conv(sum_credit)
         return sum_credit
 
-    def _sum_balance_account(self, account, ccy=False):
+    def _sum_balance_account(self, account, ccy=False, booking=False):
         if ccy:
             ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
         else:
             ccy_pattern = ""
 
         if account.type == 'view':
-            amount = account.balance
+            amount = account.balance_currency if booking else account.balance
             return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
-        self.cr.execute('SELECT (sum(debit) - sum(credit)) as tot_balance \
+        self.cr.execute(('SELECT (sum(debit{booking}) - sum(credit{booking})) as tot_balance \
                 FROM account_move_line l \
                 JOIN account_move am ON (am.id = l.move_id) \
                 WHERE (l.account_id = %s) \
                 AND (am.state IN %s) \
                 AND '+ self.query +' ' + ccy_pattern
-                ,(account.id, tuple(move_state)))
+                ).replace('{booking}', '_currency' if booking else ''),
+                (account.id, tuple(move_state)))
         sum_balance = self.cr.fetchone()[0] or 0.0
         if self.init_balance:
-            self.cr.execute('SELECT (sum(debit) - sum(credit)) as tot_balance \
+            self.cr.execute(('SELECT (sum(debit{booking}) - sum(credit{booking})) as tot_balance \
                     FROM account_move_line l \
                     JOIN account_move am ON (am.id = l.move_id) \
                     WHERE (l.account_id = %s) \
                     AND (am.state IN %s) \
                     AND '+ self.init_query +' ' + ccy_pattern
-                    ,(account.id, tuple(move_state)))
+                    ).replace('{booking}', '_currency' if booking else ''),
+                    (account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_balance += self.cr.fetchone()[0] or 0.0
         sum_balance = self._currency_conv(sum_balance)
@@ -500,9 +513,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return 'Date'
         
     def _get_output_currency_code(self, data):
-        if not self.output_currency_code:
-            return ''
-        return self.output_currency_code
+        return self.output_currency_code or ''
         
     def _get_filter_info(self, data):
         """ get filter info
@@ -535,14 +546,22 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             res += "\n" + _('Unreconciled')
         return res
         
-    def _get_line_debit(self, line):
-        return self._currency_conv(line['debit'])
+    def _get_line_debit(self, line, booking=False):
+        return self.__get_line_amount(line, 'debit', booking=booking)
         
-    def _get_line_credit(self, line):
-        return self._currency_conv(line['credit'])
+    def _get_line_credit(self, line, booking=False):
+        return self.__get_line_amount(line, 'credit', booking=booking)
         
-    def _get_line_balance(self, line):
-        return self._currency_conv(line['debit'] - line['credit'])
+    def _get_line_balance(self, line, booking=False):
+        return self._currency_conv(
+            self.__get_line_amount(line, 'debit', booking=booking, conv=False) \
+            - self.__get_line_amount(line, 'credit', booking=booking, conv=False)
+        )
+
+    def __get_line_amount(self, line, key, booking=False, conv=True):
+        if booking:
+            key += '_currency'
+        return (self._currency_conv(line[key]) if conv else line[key]) or 0.
         
     def _is_company_currency(self):
         if not self.output_currency_id or not self.currency_id \

@@ -241,16 +241,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Cell>
 % endif
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${get_line_debit(line)}</Data>
+    <Data ss:Type="Number">${get_line_debit(line, booking=True)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${get_line_credit(line)}</Data>
+    <Data ss:Type="Number">${get_line_credit(line, booking=True)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">0.</Data>
+    <Data ss:Type="Number">${get_line_debit(line, booking=True)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${get_line_balance(line)}</Data>
+    <Data ss:Type="Number">${get_line_balance(line, booking=False)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
