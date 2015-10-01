@@ -27,7 +27,7 @@ from tools.translate import _
 import tools
 import os
 import logging
-
+from threading import Lock
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
@@ -408,3 +408,44 @@ class email_configuration(osv.osv):
         (_update_email_config, 'Always true: update email configuration', [])
     ]
 email_configuration()
+
+class ir_cron_linux(osv.osv_memory):
+    _name = 'ir.cron.linux'
+    _description = 'Start memory cleaning cron job from linux crontab'
+    _columns = {
+    }
+
+    def __init__(self, *a, **b):
+        self._logger = logging.getLogger('ir.cron.linux')
+        self._jobs = {
+            'memory_clean': ('osv_memory.autovacuum', 'power_on', ()),
+            'save_puller': ('sync.server.update', '_save_puller', ())
+        }
+        self.running = {}
+        for job in self._jobs:
+            self.running[job] = Lock()
+
+        super(ir_cron_linux, self).__init__(*a, **b)
+
+    def execute_job(self, cr, uid, job, context=None):
+        if job not in self._jobs:
+            raise osv.except_osv(_('Warning !'), _('Job does not exists'))
+        if uid != 1:
+            raise osv.except_osv(_('Warning !'), _('Permission denied'))
+        if not self.running[job].acquire(False):
+            self._logger.info("Linux cron: job %s already running" % (job, ))
+            return False
+        try:
+            self._logger.info("Linux cron: starting job %s" % (job, ))
+            obj = self.pool.get(self._jobs[job][0])
+            fct = getattr(obj, self._jobs[job][1])
+            args = self._jobs[job][2]
+            fct(cr, uid, *args)
+            self._logger.info("Linux cron: job %s done" % (job, ))
+        except Exception, e:
+            self._logger.warning('Linux cron: job %s failed' % (job, ), exc_info=1)
+        finally:
+            self.running[job].release()
+        return True
+
+ir_cron_linux()
