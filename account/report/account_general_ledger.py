@@ -129,7 +129,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                         for c in ccy_brs:
                             self._deduce_accounts_balance[a_code][c.id] = \
                                 self._sum_balance_account(account, ccy=c)
-        print self._deduce_accounts_balance
         
         return res
 
@@ -285,18 +284,17 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         return res
 
-    def lines(self, account, ccy=False):
+    def lines(self, account):
         """ Return all the account_move_line of account with their account code counterparts """
-        if not self.show_move_lines:
-            return []
-
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted', '']
+
         # First compute all counterpart strings for every move_id where this account appear.
         # Currently, the counterpart info is used only in landscape mode
-        # desactivated since US-334
-        '''sql = """
+        # => desactivated since US-334
+        '''
+        sql = """
             SELECT m1.move_id,
                 array_to_string(ARRAY(SELECT DISTINCT a.code
                                           FROM account_move_line m2
@@ -333,13 +331,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             LEFT JOIN account_invoice i on (m.id =i.move_id)
             LEFT JOIN account_period per on (per.id=l.period_id)
             JOIN account_journal j on (l.journal_id=j.id)
-            WHERE %s AND m.state IN %s AND l.account_id = %%s{ccy} ORDER by %s
+            WHERE %s AND m.state IN %s AND l.account_id = %%s ORDER by %s
         """ %(self.query, tuple(move_state), sql_sort)
-        if ccy:
-            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
-        else:
-            ccy_pattern = ""
-        sql = sql.replace('{ccy}', ccy_pattern)
         self.cr.execute(sql, (account.id,))
         res_lines = self.cr.dictfetchall()
         res_init = []
@@ -360,19 +353,17 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 JOIN account_journal j on (l.journal_id=j.id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s
             """ %(self.init_query, tuple(move_state))
-            if ccy:
-                sql += ccy_pattern
             self.cr.execute(sql, (account.id,))
             res_init = self.cr.dictfetchall()
         res = res_init + res_lines
         account_sum = 0.0
         for l in res:
             l['move'] = l['move_name'] != '/' and l['move_name'] or ('*'+str(l['mmove_id']))
-            #l['partner'] = l['partner_name'] or ''  # desactivated since US-334
+            l['partner'] = l['partner_name'] or ''
             account_sum += l['debit'] - l['credit']
             l['progress'] = account_sum
             # counter part desactivated since us 354
-            #l['line_corresp'] = l['mmove_id'] == '' and ' ' or counterpart_accounts[l['mmove_id']].replace(', ',',')
+            # l['line_corresp'] = l['mmove_id'] == '' and ' ' or counterpart_accounts[l['mmove_id']].replace(', ',',')
             # Modification of amount Currency
             if l['credit'] > 0:
                 if l['amount_currency'] != None:
@@ -587,10 +578,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return data['form'].get(key, default)
 
     def _get_display_info(self, data):
-        display_mode = _('Accounting code and then booking currency')
-        if data['form'].get('display_account', False) == 'booking_account':
-            display_mode = _('Booking currency and then accounting code')
-
         if 'display_account' not in data['form']:
             display_account = _('All')
         else:
@@ -602,7 +589,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 display_account = _('With balance is not equal to 0')
 
         info_data = [
-            (_('Mode'), display_mode, ),
             (_('Accounts'), display_account, ),
             (_('Account header'),
                 _(self.show_account_views and 'Yes' or 'No'), ),

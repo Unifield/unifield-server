@@ -213,28 +213,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Cell>
 </Row>
 
-% for c in get_currencies(account=o):
+% for line in lines(o):
 <Row>
-<Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(c.name or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder" ss:MergeAcross="2">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="Number">${sum_debit_account(o, ccy=c)}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="Number">${sum_credit_account(o, ccy=c)}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="Number">${sum_balance_account(o, ccy=c)}</Data>
-</Cell>
-</Row>
-
-% for line in lines(o, ccy=c):
-<Row>
-
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
 </Cell>
@@ -254,7 +234,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="Number">${get_line_balance(line)}</Data>
 </Cell>
 </Row>
-% endfor
 % endfor
 % endfor
 % endfor
