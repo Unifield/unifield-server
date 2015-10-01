@@ -25,12 +25,10 @@
                 <field name="amount_currency" invisible="1" />
                 <newline/>
                 <field name="account_type" />
-                <field name="display_mode" />
-                <newline/>
                 <field name="display_account_view" />
-                <field name="display_details" />
                 <newline/>
                 <field name="unreconciled" />
+                <field name="display_details" />
                 <newline/>
                 <field name="instance_ids">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">

@@ -44,11 +44,6 @@ class account_report_general_ledger(osv.osv_memory):
             ('bl','Balance Sheet'),
         ], 'B/S / P&L account', required=True),
 
-        'display_mode': fields.selection([
-            ('account_booking', 'Accounting code and then booking currency'),
-            ('booking_account','Booking currency and then accounting code'),
-        ], 'Display mode', required=True),
-
         'display_account_view': fields.boolean("Account Header",
             help="Display view accounts ?"),
 
@@ -78,10 +73,9 @@ class account_report_general_ledger(osv.osv_memory):
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
 
         'account_type': 'all',
-        'display_mode': 'account_booking',
         'display_account_view': True,
         'display_details': False,
-        'unreconciled': False
+        'unreconciled': False,
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -110,8 +104,8 @@ class account_report_general_ledger(osv.osv_memory):
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         form_fields = [ 'landscape',  'initial_balance', 'amount_currency',
             'sortby', 'output_currency', 'instance_ids', 'export_format',
-            'account_type', 'display_mode', 'display_account_view',
-            'display_details', 'unreconciled', 'account_ids',
+            'account_type', 'display_account_view', 'display_details',
+            'unreconciled', 'account_ids',
         ]
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
@@ -121,26 +115,6 @@ class account_report_general_ledger(osv.osv_memory):
             if default_journals:
                 if len(default_journals) == len(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
-
-        if data['form']['display_mode'] == 'booking_account':
-            if data['form']['export_format'] and \
-                data['form']['export_format'] == 'xls':
-                    return {
-                        'type': 'ir.actions.report.xml',
-                        'report_name': 'account.general.ledger.ccy_xls',
-                        'datas': data,
-                    }
-            if data['form']['landscape']:
-                return {
-                   'type': 'ir.actions.report.xml',
-                    'report_name': 'account.general.ledger.ccy_landscape',
-                    'datas': data,
-                }
-            return {
-                   'type': 'ir.actions.report.xml',
-                    'report_name': 'account.general.ledger.ccy',
-                    'datas': data,
-                }
 
         if data['form']['export_format'] \
            and data['form']['export_format'] == 'xls':
