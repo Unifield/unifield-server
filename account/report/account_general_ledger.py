@@ -465,35 +465,33 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         sum_credit = self._currency_conv(sum_credit)
         return sum_credit
 
-    def _sum_balance_account(self, account, ccy=False, booking=False):
+    def _sum_balance_account(self, account, ccy=False):
         if ccy:
             ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
         else:
             ccy_pattern = ""
 
         if account.type == 'view':
-            amount = account.balance_currency if booking else account.balance
+            amount = account.balance
             return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
-        self.cr.execute(('SELECT (sum(debit{booking}) - sum(credit{booking})) as tot_balance \
+        self.cr.execute('SELECT (sum(debit) - sum(credit)) as tot_balance \
                 FROM account_move_line l \
                 JOIN account_move am ON (am.id = l.move_id) \
                 WHERE (l.account_id = %s) \
                 AND (am.state IN %s) \
-                AND '+ self.query +' ' + ccy_pattern
-                ).replace('{booking}', '_currency' if booking else ''),
+                AND '+ self.query +' ' + ccy_pattern,
                 (account.id, tuple(move_state)))
         sum_balance = self.cr.fetchone()[0] or 0.0
         if self.init_balance:
-            self.cr.execute(('SELECT (sum(debit{booking}) - sum(credit{booking})) as tot_balance \
+            self.cr.execute('SELECT (sum(debit) - sum(credit)) as tot_balance \
                     FROM account_move_line l \
                     JOIN account_move am ON (am.id = l.move_id) \
                     WHERE (l.account_id = %s) \
                     AND (am.state IN %s) \
-                    AND '+ self.init_query +' ' + ccy_pattern
-                    ).replace('{booking}', '_currency' if booking else ''),
+                    AND '+ self.init_query +' ' + ccy_pattern,
                     (account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_balance += self.cr.fetchone()[0] or 0.0
@@ -628,8 +626,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return self.show_move_lines
 
     def get_ccy_label(self, short_version=False):
-        if not self.show_move_lines:
-            return ''
         return short_version and _('CUR') or _('Currency')
                                             
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')

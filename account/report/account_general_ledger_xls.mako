@@ -186,7 +186,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Account / CCY</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
@@ -199,8 +199,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssBorder">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder" ss:MergeAcross="3">
+<Cell ss:StyleID="ssBorder" ss:MergeAcross="2">
     <Data ss:Type="String">${(o.name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
     <Data ss:Type="Number">${sum_debit_account(o)}</Data>
@@ -209,7 +212,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="Number">${sum_credit_account(o)}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
-    <Data ss:Type="Number">0.</Data>
+    <Data ss:Type="Number">${sum_balance_account(o)}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
     <Data ss:Type="Number">${sum_balance_account(o)}</Data>
@@ -227,19 +230,12 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(formatLang(line['ldate'],date=True)) or ''}</Data>
 </Cell>
-% if get_show_move_lines():
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['move'] or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['currency_name'] or '')|x}</Data>
 </Cell>
-% endif
-% if not get_show_move_lines():
-<Cell ss:StyleID="ssAccountLine"  ss:MergeAcross="2">
-    <Data ss:Type="String">${(line['move'] or '')|x}</Data>
-</Cell>
-% endif
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_debit(line, booking=True)}</Data>
 </Cell>
@@ -247,7 +243,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="Number">${get_line_credit(line, booking=True)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${get_line_debit(line, booking=True)}</Data>
+    <Data ss:Type="Number">${get_line_balance(line, booking=True)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_balance(line, booking=False)}</Data>
