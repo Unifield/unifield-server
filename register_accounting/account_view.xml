@@ -728,6 +728,9 @@
                                     <field name="amount" invisible="1"/>
                                     <field name="amount_in" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}" />
                                     <field name="amount_out" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                    <field name="is_transfer_with_change" invisible="1"/>
+                                    <button name="button_transfer" string="Transfer details" type="object"
+                                        icon="terp-stock_format-default" context="context" attrs="{'invisible': [('is_transfer_with_change', '=', False)]}"/>
                                     <field name="direct_invoice" invisible="1"/>
                                     <field name="invoice_id" invisible="1"/>
                                     <field name="number_imported_invoice"  invisible="1"/>
