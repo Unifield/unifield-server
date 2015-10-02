@@ -316,6 +316,33 @@
            </tr>
         </blockTable>
       </section>
+
+      <section>
+      <para style="terp_default_8">[[ repeatIn(get_currencies(account=o), 'c') ]]</para>
+      <blockTable colWidths="442.0,60.0,71.0,71.0,71.0,71.0" style="Table8">
+        <tr>
+          <td>
+            <para style="terp_default_Bold_9"></para>
+          </td>
+          <td>
+              <para style="terp_default_Bold_9_Right">[[ c.name or c.code or '']]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+           <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=False), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+        </tr>
+      </blockTable>
+      </section>
+
     </section>
 
   </story>

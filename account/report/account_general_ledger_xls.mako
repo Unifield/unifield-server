@@ -253,6 +253,35 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Cell>
 </Row>
 % endfor
+
+% for c in get_currencies(o):
+<Row>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssBorder" ss:MergeAcross="2">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String">${(c.name or c.code or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber">
+    <Data ss:Type="Number">${sum_debit_account(o, ccy=c, booking=True)}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber">
+    <Data ss:Type="Number">${sum_credit_account(o, ccy=c, booking=True)}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber">
+    <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=True)}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber">
+    <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=False)}</Data>
+</Cell>
+<Cell ss:StyleID="String">
+    <Data ss:Type="String"></Data>
+</Cell>
+</Row>
+
 % endfor
 % endfor
 </Table>

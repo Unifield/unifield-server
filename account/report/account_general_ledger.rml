@@ -206,7 +206,7 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="114.0,70.0,59.0,50.0,57.0,57.0,57.0,74.0" style="Table7">
+    <blockTable colWidths="114.0,70.0,59.0,29.0,64.0,64.0,64.0,74.0" style="Table7">
       <tr>
         <td>
           <para style="terp_tblheader_Details">Entry Seq</para>
@@ -236,7 +236,7 @@
     </blockTable>
     <section>
       <para style="terp_default_8">[[ repeatIn(get_children_accounts(a), 'o') ]]</para>
-      <blockTable colWidths="245.0,50.0,57.0,57.0,57.0,74.0" style="Table8">
+      <blockTable colWidths="245.0,29.0,64.0,64.0,64.0,74.0" style="Table8">
         <tr>
           <td>
             <para style="terp_default_Bold_9">[[ '..'*(o.level-1) ]] [[ o.code ]] [[ o.name ]]</para>
@@ -261,7 +261,7 @@
 
         <section>
         <para style="terp_default_8">[[ repeatIn(lines(o), 'line') ]]</para>
-        <blockTable colWidths="114.0,70.0,59.0,50.0,57.0,57.0,57.0,74.0" style="Table9">
+        <blockTable colWidths="114.0,70.0,59.0,29.0,64.0,64.0,64.0,74.0" style="Table9">
           <tr>
             <td>
               <para style="terp_default_8">[[ line['move'] or '' ]]</para>
@@ -289,6 +289,32 @@
             </td>
           </tr>
         </blockTable>
+        </section>
+
+        <section>
+      <para style="terp_default_8">[[ repeatIn(get_currencies(account=o), 'c') ]]</para>
+      <blockTable colWidths="245.0,29.0,64.0,64.0,64.0,74.0" style="Table8">
+        <tr>
+          <td>
+            <para style="terp_default_Bold_9"></para>
+          </td>
+          <td>
+              <para style="terp_default_Bold_9_Right">[[ c.name or c.code or '']]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+           <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=False), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+        </tr>
+      </blockTable>
       </section>
     </section>
 
