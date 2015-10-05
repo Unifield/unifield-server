@@ -69,6 +69,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssAccountLineNoWrap">
+<Alignment ss:Bottom="Top"/>
+<Font ss:Size="8" ss:Italic="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="ssAccountLine2">
 <Alignment ss:Bottom="Top" ss:WrapText="1"/>
 <Font ss:Size="8"/>
@@ -113,7 +123,12 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Column ss:AutoFitWidth="1" ss:Width="50" />
 <Column ss:AutoFitWidth="1" ss:Width="50" />
+% if get_show_move_lines():
+<Column ss:AutoFitWidth="1" ss:Width="300" />
+% endif
+% if not get_show_move_lines():
 <Column ss:AutoFitWidth="1" ss:Width="50" />
+% endif
 <Column ss:AutoFitWidth="1" ss:Width="50" />
 <Column ss:AutoFitWidth="1" ss:Width="50" />
 <Column ss:AutoFitWidth="1" ss:Width="50" />
@@ -177,22 +192,21 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 <Row>
 % if get_show_move_lines():
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Seq</Data></Cell>
+<Cell ss:StyleID="ssH" ss:MergeAcross="1"><Data ss:Type="String">Entry Seq</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Posting Date</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Description</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
 % if not get_show_move_lines():
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Account / CCY</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="ssH" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Booking Balance</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
+<Cell><Data ss:Type="String"></Data></Cell>
 </Row>
 % for o in get_children_accounts(a):
 <Row>
@@ -227,8 +241,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(formatLang(line['ldate'],date=True)) or ''}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['move'] or '')|x}</Data>
+<Cell ss:StyleID="ssAccountLineNoWrap">
+    <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['currency_name'] or '')|x}</Data>
@@ -267,9 +281,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Cell>
 <Cell ss:StyleID="ssNumber">
     <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=False)}</Data>
-</Cell>
-<Cell ss:StyleID="String">
-    <Data ss:Type="String"></Data>
 </Cell>
 </Row>
 % endfor
