@@ -371,7 +371,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'delivery_confirmed_date': time.strftime('%Y-%m-%d')}, context=context)
         res = super(sale_order, self).action_cancel(cr, uid, ids, context=context)
-        self.infolog(cr, uid, "The FO/IR id:%s has been canceled")
+        for order_id in ids:
+            self.infolog(cr, uid, "The FO/IR id:%s has been canceled" % order_id)
         return res
 
     #@@@override sale.sale_order._invoiced
@@ -1129,7 +1130,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.write(cr, uid, ids, {'state': 'done',
                                   'active': False}, context=context)
 
-        self.infolog(cr, uid, "The splitted FO id:%s has been closed")
+        for order_id in ids:
+            self.infolog(cr, uid, "The splitted FO id:%s has been closed" % order_id)
 
         return True
 

@@ -75,6 +75,7 @@ class split_sale_order_line_wizard(osv.osv_memory):
                     so_copy_data.update({'line_number': split.sale_line_id.line_number})
                 # Create the new line
                 new_line_id = line_obj.copy(cr, uid, split.sale_line_id.id, so_copy_data, context=context)
+                self.infolog(cr, uid, "The FO/IR line id:%s has been split" % split.sale_line_id.id)
 
         return {'type': 'ir.actions.act_window_close'}
 

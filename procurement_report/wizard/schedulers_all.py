@@ -60,6 +60,7 @@ class procurement_purchase_compute_all(osv.osv_memory):
 
         threaded_calculation = threading.Thread(target=self._procure_calculation_all_purchase, args=(cr, uid, ids, context))
         threaded_calculation.start()
+        self.infolog(cr, uid, "The \'Auto POs creation\' scheduler has been launched")
         return {'type': 'ir.actions.act_window_close'}
 
 procurement_purchase_compute_all()
