@@ -217,14 +217,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssNumber">
     <Data ss:Type="Number">${sum_balance_account(o)}</Data>
 </Cell>
-<Cell ss:StyleID="String">
-    <Data ss:Type="String"></Data>
-</Cell>
 </Row>
 
 % for line in lines(o):
 <Row>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssAccountLine" ss:MergeAcross="1">
     <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
@@ -247,9 +244,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_balance(line, booking=False)}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
 </Cell>
 </Row>
 % endfor
