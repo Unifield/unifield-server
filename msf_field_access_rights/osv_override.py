@@ -142,6 +142,20 @@ def create(self, cr, uid, vals, context=None):
 orm.orm.create = create
 
 
+def infolog(self, cr, uid, message):
+    import netsvc
+    logger = netsvc.Logger()
+    user = self.pool.get('res.users').read(cr, uid, uid, ['name'])['name']
+    logger.notifyChannel(
+       'INFOLOG: Model: %s :: User: %s :: ' % (self._name, user),
+        netsvc.LOG_INFO,
+        message,
+    )
+
+orm.orm.infolog = infolog
+orm.orm_template.infolog = infolog
+
+
 def _values_equate(field_type, current_value, new_value):
     """
     discern if two values differ or not, for each file type that is different in the database read() value and the web write vals data value (boring)  
