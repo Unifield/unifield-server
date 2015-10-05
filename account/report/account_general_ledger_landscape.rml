@@ -233,6 +233,7 @@
       <font color="white"> </font>
     </para>
     <blockTable colWidths="114.0,80.0,248.0,60.0,71.0,71.0,71.0,71.0" style="Table7">
+      [[ get_show_move_lines() or removeParentNode('blockTable') ]]
       <tr>
         <td>
           <para style="terp_tblheader_Details">Entry Seq</para>
@@ -242,6 +243,35 @@
         </td>
         <td>
           <para style="terp_tblheader_Details">Description</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details">[[ get_ccy_label() ]]</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Right">Debit</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Right">Credit</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Right">Booking Balance</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details_Right">Balance [[ get_output_currency_code(data) ]]</para>
+        </td>
+      </tr>
+    </blockTable>
+    <blockTable colWidths="114.0,80.0,248.0,60.0,71.0,71.0,71.0,71.0" style="Table7">
+      [[ not get_show_move_lines() or removeParentNode('blockTable') ]]
+      <tr>
+        <td>
+          <para style="terp_tblheader_Details"></para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details"></para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details"></para>
         </td>
         <td>
           <para style="terp_tblheader_Details">[[ get_ccy_label() ]]</para>

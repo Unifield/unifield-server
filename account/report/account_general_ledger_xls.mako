@@ -256,10 +256,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 
 % for c in get_currencies(o):
 <Row>
-<Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssBorder" ss:MergeAcross="2">
+<Cell ss:StyleID="ssBorder" ss:MergeAcross="3">
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
@@ -281,6 +278,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String"></Data>
 </Cell>
 </Row>
+% endfor
 
 % endfor
 % endfor
