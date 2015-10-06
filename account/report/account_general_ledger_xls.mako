@@ -30,6 +30,36 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssBorderColored1">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Interior ss:Color="#3498db" ss:Pattern="Solid" />
+</Style>
+<Style ss:ID="ssBorderColored2">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
+</Style>
+<Style ss:ID="ssBorderColored2Right">
+<Alignment ss:Vertical="Center" ss:Horizontal="Right"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
+</Style>
 <Style ss:ID="ssBorderDate">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
 <Borders>
@@ -50,6 +80,28 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
+<Style ss:ID="ssNumberColored1">
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
+<NumberFormat ss:Format="#,##0.00"/>
+<Interior ss:Color="#3498db" ss:Pattern="Solid" />
+</Style>
+<Style ss:ID="ssNumberColored2">
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
+<NumberFormat ss:Format="#,##0.00"/>
+<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
+</Style>
 <Style ss:ID="ssHeader">
 <Alignment ss:Vertical="Top" ss:WrapText="1"/>
 <Borders>
@@ -61,7 +113,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 <Style ss:ID="ssAccountLine">
 <Alignment ss:Bottom="Top" ss:WrapText="1"/>
-<Font ss:Size="8" ss:Italic="1"/>
+<Font ss:Size="8"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -69,9 +121,31 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssAccountLineColored1">
+<Alignment ss:Bottom="Top" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Interior ss:Color="#3498db" ss:Pattern="Solid" />
+</Style>
+<Style ss:ID="ssAccountLineColored2">
+<Alignment ss:Bottom="Top" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Italic="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
+</Style>
 <Style ss:ID="ssAccountLineNoWrap">
 <Alignment ss:Bottom="Top"/>
-<Font ss:Size="8" ss:Italic="1"/>
+<Font ss:Size="8"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -208,27 +282,34 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
 <Cell><Data ss:Type="String"></Data></Cell>
 </Row>
+
+<%
+ac_style_suffix = get_show_move_lines() and 'Colored1' or ''
+ccy_sub_total_style_suffix = 'Colored2'
+ccy_sub_total_style_right_suffix = get_show_move_lines() and 'Right' or ''
+%>
+
 % for o in get_children_accounts(a):
 <Row>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssBorder${ac_style_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder" ss:MergeAcross="2">
+<Cell ss:StyleID="ssBorder${ac_style_suffix}" ss:MergeAcross="2">
     <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssAccountLine${ac_style_suffix}">
     <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
+<Cell ss:StyleID="ssNumber${ac_style_suffix}">
     <Data ss:Type="Number">${sum_debit_account(o)}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
+<Cell ss:StyleID="ssNumber${ac_style_suffix}">
     <Data ss:Type="Number">${sum_credit_account(o)}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
+<Cell ss:StyleID="ssNumber${ac_style_suffix}">
     <Data ss:Type="Number">${sum_balance_account(o)}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
+<Cell ss:StyleID="ssNumber${ac_style_suffix}">
     <Data ss:Type="Number">${sum_balance_account(o)}</Data>
 </Cell>
 </Row>
@@ -264,22 +345,22 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 
 % for c in get_currencies(o):
 <Row>
-<Cell ss:StyleID="ssBorder" ss:MergeAcross="3">
-    <Data ss:Type="String"></Data>
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
+    <Data ss:Type="String">${(get_show_move_lines() and o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
     <Data ss:Type="String">${(c.name or c.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
+<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
     <Data ss:Type="Number">${sum_debit_account(o, ccy=c, booking=True)}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
+<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
     <Data ss:Type="Number">${sum_credit_account(o, ccy=c, booking=True)}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
+<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
     <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=True)}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
+<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
     <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=False)}</Data>
 </Cell>
 </Row>
