@@ -140,6 +140,9 @@ class initial_stock_inventory(osv.osv):
                 move_obj.action_done(cr, uid, move.id, context=context)
 
             self.write(cr, uid, [inv.id], {'state':'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+
+            self.infolog(cr, uid, 'The Initial stock inventory id:%s has been validated' % inv.id)
+
         return True
     
     def fill_lines(self, cr, uid, ids, context=None):
