@@ -1470,7 +1470,38 @@ class stock_inventory(osv.osv):
 
         # super function after production lot creation - production lot are therefore taken into account at stock move creation
         result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)
+
+        self.infolog(cr, uid, 'The %s inventor%s %s ha%s been confirmed' % (
+            self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
+            len(ids) > 1 and 'ies' or 'y',
+            ids,
+            len(ids) > 1 and 've' or 's',
+        ))
+
         return result
+
+    def action_cancel_draft(self, cr, uid, ids, context=None):
+        res = super(stock_inventory, self).action_cancel_draft(cr, uid, ids, context=context)
+
+        self.infolog(cr, uid, 'The %s inventor%s %s ha%s been re-set to draft' % (
+            self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
+            len(ids) > 1 and 'ies' or 'y',
+            ids,
+            len(ids) > 1 and 've' or 's',
+        ))
+
+        return res
+
+    def action_done(self, cr, uid, ids, context=None):
+        res = super(stock_inventory, self).action_done(cr, uid, ids, context=context)
+
+        self.infolog(cr, uid, 'The Physical inventor%s %s ha%s been validated' % (
+            len(ids) > 1 and 'ies' or 'y',
+            ids,
+            len(ids) > 1 and 've' or 's',
+        ))
+
+        return res
 
 stock_inventory()
 
