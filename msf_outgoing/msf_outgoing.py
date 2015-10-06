@@ -628,7 +628,9 @@ class shipment(osv.osv):
                 picking_obj.force_assign(cr, uid, [new_packing_id])
 
             # Log creation message
-            self.log(cr, uid, shipment.id, _('The new Shipment %s has been created.') % (shipment_name,))
+            message = _('The new Shipment id:%s has been created.') % (shipment.id,)
+            self.log(cr, uid, shipment.id, message)
+            self.infolog(cr, uid, message)
             # The shipment is automatically shipped, no more pack states in between.
             self.ship(cr, uid, [shipment_id], context=context)
 
@@ -2995,6 +2997,7 @@ class stock_picking(osv.osv):
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
             view_id = view_id and view_id[1] or False
             context.update({'picking_type': 'delivery_order', 'view_id': view_id})
+            self.infolog(cr, uid, "The picking ticket id:%s has been converted to delivery order" % obj.id)
             return {'name':_("Delivery Orders"),
                     'view_mode': 'form,tree',
                     'view_id': [view_id],
@@ -3065,6 +3068,7 @@ class stock_picking(osv.osv):
             self._hook_create_rw_out_sync_messages(cr, uid, [out.id], context, False)
 
         context.update({'picking_type': 'picking'})
+        self.infolog(cr, uid, "The delivery order id:%s has been converted to draft picking ticket" % out.id)
         return {'name': _('Picking Tickets'),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
