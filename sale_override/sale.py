@@ -1687,6 +1687,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
                    'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
                 }, context=context)
+                if line.type == 'make_to_stock':
+                    msg = _('The line id:%s of FO/IR id:%s has been sourced \'from stock\' with the move id:%s') % (
+                            line.id,
+                            line.order_id.id,
+                            move_id,
+                    )
+                    self.infolog(cr, uid, msg)
 
             prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
                'line_completed': _('Done (%s/%s)') % (line_done, line_total),

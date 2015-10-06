@@ -1349,6 +1349,9 @@ class procurement_order(osv.osv):
             
             # log message concerning RfQ creation
             rfq_obj.log(cr, uid, rfq_id, "The Request for Quotation '%s' has been created and must be completed before purchase order creation."%rfq_obj.browse(cr, uid, rfq_id, context=context).name, context={'rfq_ok': 1})
+            self.infolog(cr, uid, "The FO/IR line id:%s has been sourced on order to RfQ line id:%s of the RfQ id:%s" % (
+                sale_order_line.id, rfq_line_id, rfq_id,
+            ))
         # state of procurement is Tender
         self.write(cr, uid, ids, {'state': 'rfq'}, context=context)
         
@@ -1405,6 +1408,9 @@ class procurement_order(osv.osv):
             
             # log message concerning tender creation
             tender_obj.log(cr, uid, tender_id, "The tender '%s' has been created and must be completed before purchase order creation."%tender_obj.browse(cr, uid, tender_id, context=context).name)
+            self.infolog(cr, uid, "The FO/IR line id:%s has been sourced on order to tender line id:%s of the tender id:%s" % (
+                sale_order_line.id, tender_line_id, tender_id,
+            ))
         # state of procurement is Tender
         self.write(cr, uid, ids, {'state': 'tender'}, context=context)
         
