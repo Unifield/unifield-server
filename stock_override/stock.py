@@ -581,14 +581,20 @@ You cannot choose this supplier because some destination locations are not avail
 
     @check_cp_rw
     def force_assign(self, cr, uid, ids, context=None):
+        for pick_id in ids:
+            self.infolog(cr, uid, _('Force availability ran on id:%s') % pick_id)
         return super(stock_picking, self).force_assign(cr, uid, ids)
 
     @check_cp_rw
     def action_assign(self, cr, uid, ids, context=None):
+        for pick_id in ids:
+            self.infolog(cr, uid, _('Check availability ran on id:%s') % pick_id)
         return super(stock_picking, self).action_assign(cr, uid, ids, context=context)
 
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, *args, **kwargs):
+        for pick_id in ids:
+            self.infolog(cr, uid, _('Cancel availability ran on id:%s') % pick_id)
         return super(stock_picking, self).cancel_assign(cr, uid, ids)
 
  
@@ -639,6 +645,14 @@ You cannot choose this supplier because some destination locations are not avail
         # Re-source the sale.order.line
         fo_ids = set()
         for pick in self.browse(cr, uid, ids, context=context):
+            p_type = 'Internal move'
+            if pick.type == 'out' and pick.subtype == 'standard':
+                p_type = _('Outgoing delivery')
+            else:
+                p_type = _('Picking Ticket')
+
+            if pick.type != 'in':
+                self.infolog(cr, uid, _('The %s id:%s has been canceled (state: %s') % (p_type, pick.id, pick.state))
             # Don't delete lines if an Available PT is canceled
             if pick.type == 'out' and pick.subtype == 'picking' and pick.backorder_id and True:
                 continue
@@ -1401,6 +1415,8 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_id.id == product_tbd and move.from_wkf_line:
                 ids.pop(ids.index(move.id))
+            else:
+                self.infolog(cr, uid, _('Force availability run on stock move #%s of picking id:%s') % (move.line_number, move.picking_id.id))
 
         return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
@@ -1682,7 +1698,6 @@ class stock_move(osv.osv):
         prodlot_obj = self.pool.get('stock.production.lot')
         for move in self.browse(cr, uid, ids, context):
             compare_date = context.get('rw_date', False)
-            move_unlinked = False
             if compare_date:
                 compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
             else:
@@ -1731,7 +1746,6 @@ class stock_move(osv.osv):
                                             # We update the linked documents
                                             self.update_linked_documents(cr, uid, [move.id], exist_move.id, context=context)
                                             self.unlink(cr, uid, [move.id], context)
-                                            move_unlinked = True
                                         else:
                                             self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'],
                                                                           'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
@@ -1752,7 +1766,7 @@ class stock_move(osv.osv):
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
-                        if not move_unlinked and move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
+                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
                             if not self.search(cr, uid, [('move_dest_id', '=', move.id)], context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
@@ -1851,6 +1865,8 @@ class stock_move(osv.osv):
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, context=None):
         res = super(stock_move, self).cancel_assign(cr, uid, ids, context=context)
+        for move in self.browse(cr, uid, ids, context=context):
+            self.infolog(cr, uid, _('Cancel availability run on stock move #%s of picking id:%s') % (move.line_number, move.picking_id.id))
         res = []
 
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
