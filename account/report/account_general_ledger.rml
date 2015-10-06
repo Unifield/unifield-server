@@ -164,6 +164,7 @@
     <paraStyle name="terp_default_2" fontName="Helvetica" fontSize="2.0" leading="3" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Right_Bold_9" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Bold_9_Right" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_default_9_Right" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <images/>
   </stylesheet>
   <story>
@@ -306,7 +307,7 @@
       <blockTable colWidths="245.0,29.0,64.0,64.0,64.0,74.0" style="Table8_subtotal_ccy">
         <tr>
           <td>
-            <para style="terp_default_Bold_9"></para>
+            <para style="terp_default_9_Right">[[ get_show_move_lines() and o.code or '' ]]</para>
           </td>
           <td>
               <para style="terp_default_Bold_9_Right">[[ c.name or c.code or '']]</para>
