@@ -375,6 +375,9 @@ class tender(osv.osv):
                                                             'res_id': po_id,
                                                             'domain': [('rfq_ok', '=', True)],
                                                             }, context={'rfq_ok': True})
+                self.infolog(cr, uid, "The RfQ id:%s has been generated from tender id:%s" % (
+                    po_id, tender.id,
+                ))
             
         self.write(cr, uid, ids, {'state':'comparison'}, context=context)
         return True
@@ -458,6 +461,8 @@ class tender(osv.osv):
                             sol_obj.create(cr, uid, create_vals, context=context)
 
                         sol_ids.add(tender.sale_order_id.id)
+
+            self.infolog(cr, uid, "The tender id:%s has been closed" % tender.id)
 
         if sol_ids:
             so_obj.action_ship_proc_create(cr, uid, list(sol_ids), context=context)
@@ -659,6 +664,7 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, po_data, context=context)
                 po = po_obj.browse(cr, uid, po_id, context=context)
                 po_obj.log(cr, uid, po_id, 'The Purchase order %s for supplier %s has been created.'%(po.name, po.partner_id.name))
+                self.infolog(cr, uid, "The PO id:%s has been generated from tender" % po_id)
                 #UF-802: the PO created must be in draft state, and not validated!
                 #wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
                 
@@ -722,7 +728,8 @@ class tender(osv.osv):
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
-                
+            self.infolog(cr, uid, "The tender id:%s has been canceled" % tender.id)
+
         return True
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
@@ -1079,6 +1086,9 @@ class tender_line(osv.osv):
         Cancel the line if it is linked to a FO line
         '''
         to_remove = self.cancel_sourcing(cr, uid, ids, context=dict(context, fake_unlink=True))
+
+        for tl_id in ids:
+            self.infolog(cr, uid, "The tender line id:%s has been canceled" % tl_id)
 
         return self.unlink(cr, uid, to_remove, context=context)
 
@@ -1679,6 +1689,9 @@ class purchase_order(osv.osv):
                                        'tender_id': rfq.tender_id.id,
                                        'created_by_rfq': True}
                             tl_id = tl_obj.create(cr, uid, tl_vals, context=context)
+                            self.infolog(cr, uid, "The tender line id:%s has been created by the RfQ line id:%s" % (
+                                tl_id, line.id,
+                            ))
                         line_obj.write(cr, uid, [line.id], {'tender_line_id': tl_id}, context=context)
             elif rfq.rfq_ok:
                 line_ids = line_obj.search(cr, uid, [
@@ -1693,6 +1706,7 @@ price. Please set unit price on these lines or cancel them'''),
                     )
 
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
+            self.infolog(cr, uid, "The RfQ id:%s has been updated" % rfq.id)
 
         return {
             'type': 'ir.actions.act_window',
@@ -1759,6 +1773,7 @@ price. Please set unit price on these lines or cancel them'''),
             ids = [ids]
 
         for rfq in self.browse(cr, uid, ids, context=context):
+            self.infolog(cr, uid, "The RfQ id:%s has been closed" % rfq.id)
             if rfq.from_procurement:
                 for line in rfq.order_line:
                     if line.procurement_id:
@@ -1793,6 +1808,7 @@ price. Please set unit price on these lines or cancel them'''),
 #                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 #                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
         self.create_extra_lines_on_fo(cr, uid, ids, context=context)
+
 
         return self.write(cr, uid, ids, {'state': 'done'}, context=context)
 

@@ -1232,7 +1232,10 @@ stock moves which are already processed : '''
                 context['sale_id'] = l.link_so_id.original_so_id_sale_order.id
                 vals.update({'order_id': l.link_so_id.original_so_id_sale_order.id,
                              'state': 'done'})
-                sol_obj.create(cr, uid, vals, context=context)
+                sol_id = sol_obj.create(cr, uid, vals, context=context)
+                self.infolog(cr, uid, "The FO/IR line id:%s has been added from the PO line id:%s" % (
+                    sol_id, l.id,
+                ))
             context['sale_id'] = tmp_sale_context
 
             # If the order is an Internal request with External location, create a new
@@ -1259,6 +1262,9 @@ stock moves which are already processed : '''
                     pick_obj.action_confirm(cr, uid, pick_to_confirm, context=context)
 
             sol_ids.add(l.link_so_id.id)
+            self.infolog(cr, uid, "The FO/IR line id:%s has been added from the PO line id:%s" % (
+                new_line_id, l.id,
+            ))
 
         if sol_ids:
             so_obj.action_ship_proc_create(cr, uid, list(sol_ids), context=context)
@@ -1320,6 +1326,7 @@ stock moves which are already processed : '''
             context['wait_order'] = True
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po, so_ids=so_ids)
             del context['wait_order']
+            self.infolog(cr, uid, "The PO id:%s has been confirmed" % po.id)
 
         return True
 
@@ -3172,6 +3179,9 @@ class purchase_order_line(osv.osv):
             return self.ask_unlink(cr, uid, ids, context=context)
 
         res = super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
+
+        for pol_id in ids:
+            self.infolog(cr, uid, "The PO/RfQ line id:%s has been deleted" % pol_id)
 
         po_obj.wkf_confirm_trigger(cr, uid, order_ids, context=context)
 
