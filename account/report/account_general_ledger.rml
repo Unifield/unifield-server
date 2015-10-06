@@ -70,6 +70,16 @@
       <blockValign value="TOP"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
     </blockTableStyle>
+    <blockTableStyle id="Table8_header">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <blockBackground colorName="#3498db" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+    <blockTableStyle id="Table8_subtotal_ccy">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <blockBackground colorName="#cde1f0" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
     <blockTableStyle id="Table9">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
@@ -215,7 +225,7 @@
           <para style="terp_tblheader_Details">Posting Date</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">Description</para>
+          <para style="terp_tblheader_Details">Desc</para>
         </td>
         <td>
           <para style="terp_tblheader_Details_Right">[[ get_ccy_label(short_version=True) ]]</para>
@@ -236,7 +246,7 @@
     </blockTable>
     <section>
       <para style="terp_default_8">[[ repeatIn(get_children_accounts(a), 'o') ]]</para>
-      <blockTable colWidths="245.0,29.0,64.0,64.0,64.0,74.0" style="Table8">
+      <blockTable colWidths="245.0,29.0,64.0,64.0,64.0,74.0" style="Table8_header">
         <tr>
           <td>
             <para style="terp_default_Bold_9">[[ '..'*(o.level-1) ]] [[ o.code ]] [[ o.name ]]</para>
@@ -293,7 +303,7 @@
 
         <section>
       <para style="terp_default_8">[[ repeatIn(get_currencies(account=o), 'c') ]]</para>
-      <blockTable colWidths="245.0,29.0,64.0,64.0,64.0,74.0" style="Table8">
+      <blockTable colWidths="245.0,29.0,64.0,64.0,64.0,74.0" style="Table8_subtotal_ccy">
         <tr>
           <td>
             <para style="terp_default_Bold_9"></para>
