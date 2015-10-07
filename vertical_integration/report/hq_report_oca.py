@@ -197,7 +197,8 @@ class hq_report_oca(report_sxw.report_sxw):
                 # base on doc date instead posting in this case
                 # - 1st period accruals: doc date and posting same period
                 # - next accruals: doc date previous period (accrual of)
-                move_line_date = move_line.account_id.accrual_account \
+                move_line_date = move_line.journal_id \
+                    and move_line.journal_id.type == 'accrual' \
                     and move_line.document_date or move_line.date
 
                 cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line_date))
@@ -316,8 +317,22 @@ class hq_report_oca(report_sxw.report_sxw):
             currency = analytic_line.currency_id
             func_currency = analytic_line.move_id.functional_currency_id
             rate = ""
+
+            # US-478 - US-274/9 accrual account always refer to previous period
+            # base on doc date instead posting in this case
+            # - 1st period accruals: doc date and posting same period
+            # - next accruals: doc date previous period (accrual of)
+            ldate = analytic_line.date
+            if analytic_line.move_id:
+                if analytic_line.move_id.journal_id.type == 'accrual':
+                    ldate = analytic_line.document_date or analytic_line.date
+            elif analytic_line.journal_id \
+                and analytic_line.journal_id.code == 'ACC':
+                # sync border case no JI for the AJI
+                ldate = analytic_line.document_date or analytic_line.date
+
             if func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, analytic_line.date))
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, ldate))
                 if cr.rowcount:
                     rate = round(1 / cr.fetchall()[0][0], 8)
                     
