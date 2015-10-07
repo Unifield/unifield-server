@@ -427,9 +427,9 @@ class purchase_order_sync(osv.osv):
                         order_ids.append(line.order_id.id)
 
         # Remove the original PO lines that are not in the split PO
-        for original_line in original_po.order_line:
-            if original_line.id not in origin_lines:
-                line_obj.fake_unlink(cr, uid, [original_line.id], context=context)
+#        for original_line in original_po.order_line:
+#            if original_line.id not in origin_lines:
+#                line_obj.fake_unlink(cr, uid, [original_line.id], context=context)
         
         self.manage_split_po_lines(cr, uid, res_id, context=context)
 
