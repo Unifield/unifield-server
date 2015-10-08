@@ -1483,12 +1483,11 @@ class stock_inventory(osv.osv):
     def action_cancel_draft(self, cr, uid, ids, context=None):
         res = super(stock_inventory, self).action_cancel_draft(cr, uid, ids, context=context)
 
-        self.infolog(cr, uid, 'The %s inventor%s %s ha%s been re-set to draft' % (
-            self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
-            len(ids) > 1 and 'ies' or 'y',
-            ids,
-            len(ids) > 1 and 've' or 's',
-        ))
+        for inv_id in ids:
+            self.infolog(cr, uid, "The %s inventory id:%s has been re-set to draft" % (
+                self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
+                inv_id,
+            ))
 
         return res
 
