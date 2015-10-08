@@ -67,7 +67,7 @@ class ocba_export_wizard(osv.osv_memory):
             wizard.instance_id and wizard.instance_id.code or '',
             period_name)
 
-        #return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocb', 'datas': data}
+        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocba', 'datas': data}
 
 ocba_export_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
