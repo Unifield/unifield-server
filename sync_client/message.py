@@ -123,7 +123,7 @@ class local_message_rule(osv.osv):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-            partner_name = model_obj.browse(cr, uid, res_id).partner_id.name
+            partner_name = model_obj.browse(cr, uid, res_id)[rule.destination_name].name
 
             arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, context=context)
 #            temp = arguments[0] 
