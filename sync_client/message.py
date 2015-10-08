@@ -25,7 +25,6 @@ import tools
 import traceback
 import logging
 from sync_common import sync_log
-from psycopg2 import extensions
 
 from tools.safe_eval import safe_eval as eval
 
@@ -357,8 +356,7 @@ class message_received(osv.osv):
             #UTP-682: double check to make sure if the message has been executed, then skip it
             if message.run:
                 continue
-            cr.execute("SAVEPOINT exec_message")
-
+            cr.commit()
             try:
                 model, method = self.get_model_and_method(message.remote_call)
                 arg = self.get_arg(message.arguments)
@@ -369,9 +367,7 @@ class message_received(osv.osv):
                 except BaseException, e:
                     error = e # Keep this message for the exception below
                     self._logger.exception("Message execution %d failed!" % message.id)
-                    # rollback only if there is a transaction
-                    if extensions.TRANSACTION_STATUS_IDLE != cr._cnx.get_transaction_status():
-                        cr.execute("ROLLBACK TO SAVEPOINT exec_message")
+                    cr.rollback()
 
                     if isinstance(e, osv.except_osv):
                         error_msg = e.value
@@ -383,7 +379,6 @@ class message_received(osv.osv):
                         'log' : e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
                     }, context=context)
                 else:
-                    cr.execute("RELEASE SAVEPOINT exec_message")
                     self.write(cr, uid, message.id, {
                         'execution_date' : execution_date,
                         'run' : True,
