@@ -110,7 +110,11 @@ class local_message_rule(osv.osv):
         return False
 
     def _manual_create_sync_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, context=None):
+        if context is None:
+            context ={}
         if True:
+            at = context.get('active_test')
+            context['active_test'] = False
             partner_name = 'fake'
             
             rule = self.get_rule_by_remote_call(cr, uid, rule_method, context)
@@ -151,6 +155,10 @@ class local_message_rule(osv.osv):
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
             logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name)) 
+            if at is None:
+                del context['active_test']
+            else:
+                context['active_test'] = at
 
     #UF-2531: This method is to create manually a RW message for the return pack, of ship or ppl and put into the queue for the next USB sync
     def _manual_create_rw_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, context=None):
