@@ -581,21 +581,24 @@ You cannot choose this supplier because some destination locations are not avail
 
     @check_cp_rw
     def force_assign(self, cr, uid, ids, context=None):
+        res = super(stock_picking, self).force_assign(cr, uid, ids)
         for pick_id in ids:
-            self.infolog(cr, uid, _('Force availability ran on id:%s') % pick_id)
-        return super(stock_picking, self).force_assign(cr, uid, ids)
+            self.infolog(cr, uid, _('Force availability ran on stock.picking id:%s') % pick_id)
+        return res
 
     @check_cp_rw
     def action_assign(self, cr, uid, ids, context=None):
+        res = super(stock_picking, self).action_assign(cr, uid, ids, context=context)
         for pick_id in ids:
-            self.infolog(cr, uid, _('Check availability ran on id:%s') % pick_id)
-        return super(stock_picking, self).action_assign(cr, uid, ids, context=context)
+            self.infolog(cr, uid, _('Check availability ran on stock.picking id:%s') % pick_id)
+        return res
 
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, *args, **kwargs):
+        res = super(stock_picking, self).cancel_assign(cr, uid, ids)
         for pick_id in ids:
-            self.infolog(cr, uid, _('Cancel availability ran on id:%s') % pick_id)
-        return super(stock_picking, self).cancel_assign(cr, uid, ids)
+            self.infolog(cr, uid, _('Cancel availability ran on stock.picking id:%s') % pick_id)
+        return res
 
  
     @check_rw_warning
@@ -645,14 +648,6 @@ You cannot choose this supplier because some destination locations are not avail
         # Re-source the sale.order.line
         fo_ids = set()
         for pick in self.browse(cr, uid, ids, context=context):
-            p_type = 'Internal move'
-            if pick.type == 'out' and pick.subtype == 'standard':
-                p_type = _('Outgoing delivery')
-            else:
-                p_type = _('Picking Ticket')
-
-            if pick.type != 'in':
-                self.infolog(cr, uid, _('The %s id:%s has been canceled (state: %s') % (p_type, pick.id, pick.state))
             # Don't delete lines if an Available PT is canceled
             if pick.type == 'out' and pick.subtype == 'picking' and pick.backorder_id and True:
                 continue
@@ -1416,7 +1411,7 @@ class stock_move(osv.osv):
             if move.product_id.id == product_tbd and move.from_wkf_line:
                 ids.pop(ids.index(move.id))
             else:
-                self.infolog(cr, uid, _('Force availability run on stock move #%s of picking id:%s') % (move.line_number, move.picking_id.id))
+                self.infolog(cr, uid, _('Force availability run on stock move #%s (id:%s) of picking id:%s') % (move.line_number, move.id, move.picking_id.id))
 
         return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
@@ -1862,11 +1857,15 @@ class stock_move(osv.osv):
                 self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
         return True
 
+    def check_assign(self, cr, uid, ids, context=None):
+        res = super(stock_move, self).check_assign(cr, uid, ids, context=context)
+        for move_id in ids:
+            self.infolog(cr, uid, _('Check availability ran on stock.move id:%s') % move_id)
+        return res
+
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, context=None):
         res = super(stock_move, self).cancel_assign(cr, uid, ids, context=context)
-        for move in self.browse(cr, uid, ids, context=context):
-            self.infolog(cr, uid, _('Cancel availability run on stock move #%s of picking id:%s') % (move.line_number, move.picking_id.id))
         res = []
 
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
@@ -1875,6 +1874,11 @@ class stock_move(osv.osv):
 
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
+
+            self.infolog(cr, uid, _('Cancel availability run on stock move #%s (id:%s) of picking id:%s') % (
+                move_data['line_number'],
+                move_data['id'],
+                move_data['picking_id'][0]))
 
             for f in fields_to_read:
                 if f in ('product_qty', 'product_uos_qty'):
@@ -2444,6 +2448,10 @@ class stock_move_cancel_wizard(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context=context):
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
+            if wiz.move_id.has_to_be_resourced:
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled and resourced" % (wiz.move_id.id, wiz.move_id.picking_id.id))
+            else:
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled" % (wiz.move_id.id, wiz.move_id.picking_id.id))
             move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)], context=context)
             if move_ids and wiz.move_id.picking_id:
                 lines = wiz.move_id.picking_id.move_lines

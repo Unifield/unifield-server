@@ -371,8 +371,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'delivery_confirmed_date': time.strftime('%Y-%m-%d')}, context=context)
         res = super(sale_order, self).action_cancel(cr, uid, ids, context=context)
-        for order_id in ids:
-            self.infolog(cr, uid, "The FO/IR id:%s has been canceled" % order_id)
         return res
 
     #@@@override sale.sale_order._invoiced
@@ -1688,7 +1686,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                    'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
                 }, context=context)
                 if line.type == 'make_to_stock':
-                    msg = _('The line id:%s of FO/IR id:%s has been sourced \'from stock\' with the move id:%s') % (
+                    msg = _('The line id:%s of FO/IR id:%s has been sourced \'from stock\' with the stock.move id:%s') % (
                             line.id,
                             line.order_id.id,
                             move_id,
