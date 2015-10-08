@@ -33,23 +33,127 @@ from report import report_sxw
 
 
 class hq_report_ocba(report_sxw.report_sxw):
+    _export_fields_index = [
+        'DB ID',  # xmlid
+        'Proprietary instance',
+        'Journal Code',
+        'Entry Sequence',
+        'Description',
+        'Reference',
+        'Document Date',
+        'Posting Date',
+        'G/L Account',  # code
+        'Account description'
+        'Third Party',
+        'EE ID',  # nat/staff ID Number
+        'Partner DB ID',  # xmlid
+        'Destination',
+        'Cost Centre',
+        'Booking Debit',
+        'Booking Credit',
+        'Booking Currency',
+        'Functional Debit',
+        'Functional Credit',
+        'Functional Currency',
+        'Exchange rate',  # of exported month based on booking ccy
+        'Reconciliation code',  # only for B/S
+    ]
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
-    def _enc(self, st):
-        if isinstance(st, unicode):
-            return st.encode('utf8')
-        return st
+    def create(self, cr, uid, ids, data, context=None):
+        def get_wizard_data(data, form_data):
+            # top instance
+            form_data['instance_ids'] = data['form']['instance_ids']
 
-    def translate_country(self, cr, uid, pool, browse_instance, context={}):
-        mapping_obj = pool.get('country.export.mapping')
-        if browse_instance:
-            mapping_ids = mapping_obj.search(cr, uid, [('instance_id', '=', browse_instance.id)], context=context)
-            if len(mapping_ids) > 0:
-                mapping = mapping_obj.browse(cr, uid, mapping_ids[0], context=context)
-                return mapping.mapping_value
-        return "0"
+            # period
+            period = pool.get('account.period').browse(cr, uid,
+                data['form']['period_id'])# only for B/S)
+            form_data['period'] = period
+            form_data['period_id'] = period.id
+
+            # integration reference
+            integration_ref = ''
+            if len(data['form']['instance_ids']) > 0:
+                parent_instance = pool.get('msf.instance').browse(cr, uid,
+                    data['form']['instance_ids'][0], context=context)
+                if parent_instance:
+                    if period and period.date_start:
+                        integration_ref = parent_instance.code[:2] \
+                            + period.date_start[5:7]
+            form_data['integration_ref'] = integration_ref
+
+            # to export filter: (never exported or all)
+            selection = data['form'].get('selection', False)
+            if not selection:
+                raise osv.except_osv(_('Error'),
+                    _('No selection value for lines to select.'))
+            if selection == 'all':
+                to_export = ['f', 't']
+            elif selection == 'unexported':
+                to_export = ['f']
+            else:
+                raise osv.except_osv(_('Error'),
+                    _('Wrong value for selection: %s.') % (selection, ))
+            form_data['to_export'] = to_export
+
+        file_data = {
+            'entries': { 'file_name': 'entries', 'data': [], },
+            'fc': { 'file_name': 'contracts', 'data': [], },
+        }
+
+        # get wizard form values
+        pool = pooler.get_pool(cr.dbname)
+        form_data = {}
+        get_wizard_data(data, form_data)
+
+        # generate export data
+        move_line_ids, analytic_line_ids = self._generate_data(cr, uid,
+            file_data=file_data, form_data=form_data,
+            context=context)
+
+        # generate zip result and post processing
+        zip_buffer = self._generate_files(form_data['integration_ref'],
+            file_data)
+        self._mark_exported_entries(cr, uid, move_line_ids, analytic_line_ids)
+        return (zip_buffer.getvalue(), 'zip', )
+
+    def _generate_data(self, cr, uid, file_data=None, form_data=None,
+            context=None):
+        file_data['entries']['data'].append(['foo', 'bar', ])
+        file_data['fc']['data'].append(['grant', 'foobar', ])
+
+        pool = pooler.get_pool(cr.dbname)
+        aml_obj = pool.get('account.move.line')
+        aal_obj = pool.get('account.analytic.line')
+
+        # get not expense entries
+        domain = [
+            ('period_id', '=', form_data['period_id']),
+            ('instance_id', 'in', form_data['instance_ids']),
+            ('account_id.is_analytic_addicted', '=', False),  # not expense
+            ('state', '=', 'valid'),
+            ('journal_id.type', 'not in', ['hq', 'migration', ]),  # HQ/MIG entries already exist in SAP
+            ('exported', 'in', form_data['to_export']),
+        ]
+        move_line_ids = aml_obj.search(cr, uid, domain, context=context)
+        if move_line_ids:
+            for ji_br in aml_obj.browse(cr, uid, move_line_ids,
+                context=context):
+                add_ji(ji_br)
+
+        # get expense lines
+        domain = [
+            ('period_id', '=', form_data['period_id']),
+            ('instance_id', 'in', form_data['instance_ids']),
+            ('journal_id.type', 'not in', ['hq', 'engagement', 'migration', ]),  # HQ/ENG/MIG entries already exist in SAP
+            ('account_id.category', 'not in', ['FREE1', 'FREE2']),  # only FP dimension
+            ('exported', 'in', form_data['to_export']),
+        ]
+        analytic_line_ids = aal_obj.search(cr, uid, domain, context=context)
+
+        return (move_line_ids, analytic_line_ids, )
 
     def _generate_files(self, integration_ref, file_data):
         """
@@ -95,36 +199,22 @@ class hq_report_ocba(report_sxw.report_sxw):
                 (tuple(analytic_line_ids), )
             )
 
-    def create(self, cr, uid, ids, data, context=None):
-        file_data = {
-            'entries': { 'file_name': 'entries', 'data': [], },
-            'fc': { 'file_name': 'contracts', 'data': [], },
-        }
+    def _enc(self, st):
+        if isinstance(st, unicode):
+            return st.encode('utf8')
+        return st
 
-        pool = pooler.get_pool(cr.dbname)
-        move_line_ids = []
-        analytic_line_ids = []
+    def _translate_country(self, cr, uid, pool, browse_instance, context={}):
+        mapping_obj = pool.get('country.export.mapping')
+        if browse_instance:
+            mapping_ids = mapping_obj.search(cr, uid, [('instance_id', '=', browse_instance.id)], context=context)
+            if len(mapping_ids) > 0:
+                mapping = mapping_obj.browse(cr, uid, mapping_ids[0], context=context)
+                return mapping.mapping_value
+        return "0"
 
-        # get wizard form values
-        period = pool.get('account.period').browse(cr, uid,
-            data['form']['period_id'])
-        integration_ref = ''
-        if len(data['form']['instance_ids']) > 0:
-            parent_instance = pool.get('msf.instance').browse(cr, uid,
-                data['form']['instance_ids'][0], context=context)
-            if parent_instance:
-                if period and period.date_start:
-                    integration_ref = parent_instance.code[:2] \
-                        + period.date_start[5:7]
+    def _get_xml_id(self, id):
 
-        # generate export data
-        file_data['entries']['data'].append(['foo', 'bar', ])
-        file_data['fc']['data'].append(['grant', 'foobar', ])
-
-        # generate zip result and post processing
-        zip_buffer = self._generate_files(integration_ref, file_data)
-        self._mark_exported_entries(cr, uid, move_line_ids, analytic_line_ids)
-        return (zip_buffer.getvalue(), 'zip')
 
 hq_report_ocba('report.hq.ocba', 'account.move.line', False, parser=False)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
