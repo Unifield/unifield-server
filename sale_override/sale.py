@@ -537,7 +537,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
         'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current field order."),
         'pricelist_id': fields.many2one('product.pricelist', 'Currency', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Currency for current field order."),
-        'validated_date': fields.date(string='Validated date', help='Date on which the FO was validated.'),
+        'validated_date': fields.datetime(string='Validated date', help='Date on which the FO was validated.'),
         'invoice_quantity': fields.selection([('order', 'Ordered Quantities'), ('procurement', 'Shipped Quantities')], 'Invoice on', help="The sale order will automatically create the invoice proposition (draft invoice). Ordered and delivered quantities may not be the same. You have to choose if you want your invoice based on ordered or shipped quantities. If the product is a service, shipped quantities means hours spent on the associated tasks.", required=True, readonly=True),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
@@ -934,15 +934,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         self.write(cr, uid, ids, {
             'state': 'validated',
-            'validated_date': time.strftime('%Y-%m-%d'),
+            'validated_date': time.strftime('%Y-%m-%d %H:%M:%S'),
         }, context=context)
 
         # Display validation message to the user
         for order in order_brw_list:
             if not order.procurement_request:
-                self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
+                self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
             else:
-                self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated.' % order.name, context=context)
+                self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
 
         return True
 
