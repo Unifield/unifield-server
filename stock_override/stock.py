@@ -583,21 +583,21 @@ You cannot choose this supplier because some destination locations are not avail
     def force_assign(self, cr, uid, ids, context=None):
         res = super(stock_picking, self).force_assign(cr, uid, ids)
         for pick_id in ids:
-            self.infolog(cr, uid, _('Force availability ran on stock.picking id:%s') % pick_id)
+            self.infolog(cr, uid, 'Force availability ran on stock.picking id:%s' % pick_id)
         return res
 
     @check_cp_rw
     def action_assign(self, cr, uid, ids, context=None):
         res = super(stock_picking, self).action_assign(cr, uid, ids, context=context)
         for pick_id in ids:
-            self.infolog(cr, uid, _('Check availability ran on stock.picking id:%s') % pick_id)
+            self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s' % pick_id)
         return res
 
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, *args, **kwargs):
         res = super(stock_picking, self).cancel_assign(cr, uid, ids)
         for pick_id in ids:
-            self.infolog(cr, uid, _('Cancel availability ran on stock.picking id:%s') % pick_id)
+            self.infolog(cr, uid, 'Cancel availability ran on stock.picking id:%s' % pick_id)
         return res
 
  
@@ -1411,7 +1411,7 @@ class stock_move(osv.osv):
             if move.product_id.id == product_tbd and move.from_wkf_line:
                 ids.pop(ids.index(move.id))
             else:
-                self.infolog(cr, uid, _('Force availability run on stock move #%s (id:%s) of picking id:%s') % (move.line_number, move.id, move.picking_id.id))
+                self.infolog(cr, uid, 'Force availability run on stock move #%s (id:%s) of picking id:%s' % (move.line_number, move.id, move.picking_id.id))
 
         return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
@@ -1860,7 +1860,7 @@ class stock_move(osv.osv):
     def check_assign(self, cr, uid, ids, context=None):
         res = super(stock_move, self).check_assign(cr, uid, ids, context=context)
         for move_id in ids:
-            self.infolog(cr, uid, _('Check availability ran on stock.move id:%s') % move_id)
+            self.infolog(cr, uid, 'Check availability ran on stock.move id:%s' % move_id)
         return res
 
     @check_cp_rw
@@ -1875,7 +1875,7 @@ class stock_move(osv.osv):
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
 
-            self.infolog(cr, uid, _('Cancel availability run on stock move #%s (id:%s) of picking id:%s') % (
+            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s' % (
                 move_data['line_number'],
                 move_data['id'],
                 move_data['picking_id'][0]))

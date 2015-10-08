@@ -246,7 +246,7 @@ class real_average_consumption(osv.osv):
             context = {}
 
         for report_id in ids:
-            self.infolog(cr, uid, _('The consumption report id:%s has been canceled') % report_id)
+            self.infolog(cr, uid, 'The consumption report id:%s has been canceled' % report_id)
 
         self.write(cr, uid, ids, {'state':'cancel'}, context=context)
         
@@ -333,7 +333,7 @@ class real_average_consumption(osv.osv):
             #move_obj.write(cr, uid, move_ids, {'date': rac.period_to}, context=context)
 
         for report_id in ids:
-            self.infolog(cr, uid, _('The consumption report id:%s has been processed') % report_id)
+            self.infolog(cr, uid, 'The consumption report id:%s has been processed' % report_id)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
@@ -993,7 +993,7 @@ class real_consumption_change_location(osv.osv_memory):
 
         wiz = self.browse(cr, uid, ids[0], context=context)
 
-        self.infolog(cr, uid, _('Consumer location has been changed on consumption report id:%s from id:%s to id:%s') % (
+        self.infolog(cr, uid, 'Consumer location has been changed on consumption report id:%s from id:%s to id:%s' % (
             wiz.report_id.id, wiz.report_id.cons_location_id.id, wiz.location_id.id))
 
         self.pool.get('real.average.consumption').write(cr, uid, [wiz.report_id.id], {'cons_location_id': wiz.location_id.id}, context=context)
