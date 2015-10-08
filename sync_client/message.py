@@ -25,6 +25,7 @@ import tools
 import traceback
 import logging
 from sync_common import sync_log
+from psycopg2 import extensions
 
 from tools.safe_eval import safe_eval as eval
 
@@ -368,7 +369,10 @@ class message_received(osv.osv):
                 except BaseException, e:
                     error = e # Keep this message for the exception below
                     self._logger.exception("Message execution %d failed!" % message.id)
-                    cr.execute("ROLLBACK TO SAVEPOINT exec_message")
+                    # rollback only if there is a transaction
+                    if extensions.TRANSACTION_STATUS_IDLE != cr._cnx.get_transaction_status():
+                        cr.execute("ROLLBACK TO SAVEPOINT exec_message")
+
                     if isinstance(e, osv.except_osv):
                         error_msg = e.value
                     else:
