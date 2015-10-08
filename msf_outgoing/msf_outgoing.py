@@ -4151,7 +4151,6 @@ class stock_picking(osv.osv):
         fo_obj = self.pool.get('sale.order')
         if picking.sale_id:
             return_info = {}
-#       fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.validated_fo_update_original_po', context=context)
             if picking.sale_id.original_so_id_sale_order:
                 fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.original_so_id_sale_order.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
             else:
