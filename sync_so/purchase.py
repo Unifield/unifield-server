@@ -495,9 +495,6 @@ class purchase_order_sync(osv.osv):
 
         so_po_common = self.pool.get('so.po.common')
         line_obj = self.pool.get('purchase.order.line')
-        partner_type = so_po_common.get_partner_type(cr, uid, source, context)
-        if partner_type == 'section':
-            raise Exception, "Sorry, the push low is not available for intersection partner! " + source
 
         # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
         if context.get('restore_flag'):
@@ -515,6 +512,14 @@ class purchase_order_sync(osv.osv):
         header_result['order_line'] = so_po_common.get_lines(cr, uid, source, so_info, po_id, False, False, False, context)
         header_result['push_fo'] = True
         header_result['origin'] = so_dict.get('name', False)
+
+        partner_type = so_po_common.get_partner_type(cr, uid, source, context)  
+        if partner_type == 'section':
+            #US-620: If the FO type is donation or loan, then remove the analytic distribution
+            if so_info.order_type in ('loan', 'donation_st', 'donation_exp'):
+                del header_result['analytic_distribution_id']
+            else:
+                raise Exception, "Sorry, Push Flow for intersection partner is only available for Donation or Loan FOs! " + source
 
         # the case of intermission, the AD will be updated below, after creating the PO
         if partner_type == 'intermission':
