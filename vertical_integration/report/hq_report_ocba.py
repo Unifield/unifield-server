@@ -83,8 +83,8 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Partner DB ID': r.partner_id and finance_export.finance_archive._get_hash(cr, uid, [r.partner_id.id], 'res_partner') or '',
             'Destination': '',
             'Cost Centre': '',
-            'Booking Debit': self._enc_amount(r.debit_currency),
-            'Booking Credit': self._enc_amount(r.credit_currency),
+            'Booking Debit': self._enc_amount(r.is_addendum_line and r.debit_currency or 0.),
+            'Booking Credit': self._enc_amount(r.is_addendum_line and r.credit_currency or 0.),
             'Booking Currency': self._enc(r.currency_id and r.currency_id.name or ''),
             'Functional Debit': self._enc_amount(r.debit),
             'Functional Credit': self._enc_amount(r.credit),
@@ -205,9 +205,9 @@ class hq_report_ocba(report_sxw.report_sxw):
             ('period_id', '=', form_data['period_id']),
             ('instance_id', 'in', form_data['instance_ids']),
             ('account_id.is_analytic_addicted', '=', False),  # not expense
-            ('state', '=', 'valid'),
+            ('move_id.state', '=', 'posted'),  # JE posted
             ('journal_id.type', 'not in', ['hq', 'migration', ]),  # HQ/MIG entries already exist in SAP
-            ('exported', 'in', form_data['to_export']),
+            ('exported', 'in', form_data['to_export']),  # exported filter
         ]
         move_line_ids = aml_obj.search(cr, uid, domain, context=context)
         if move_line_ids:
@@ -221,7 +221,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             ('instance_id', 'in', form_data['instance_ids']),
             ('journal_id.type', 'not in', ['hq', 'engagement', 'migration', ]),  # HQ/ENG/MIG entries already exist in SAP
             ('account_id.category', 'not in', ['FREE1', 'FREE2']),  # only FP dimension
-            ('exported', 'in', form_data['to_export']),
+            ('exported', 'in', form_data['to_export']),  # exported filter
         ]
         analytic_line_ids = aal_obj.search(cr, uid, domain, context=context)
         if analytic_line_ids:
@@ -314,7 +314,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             elif r.journal_id and r.journal_id.code == 'ACC':
                 # sync border case no JI for the AJI
                 entry_dt = r.document_date or r.date
-                
+
         return get_month_rate(r.currency_id.id, entry_dt)
 
     def _enc(self, st):
