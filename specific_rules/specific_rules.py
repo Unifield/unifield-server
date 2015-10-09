@@ -1418,6 +1418,36 @@ class stock_inventory(osv.osv):
 
         return res
 
+    def check_integrity(self, cr, uid, ids, context=None):
+        """
+        Check if there is only one line with couple location/product
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        sql_req = """
+            SELECT count(l.id) AS nb_lines
+            FROM
+                %s_line l
+            WHERE
+                l.inventory_id in %%s
+            GROUP BY l.product_id, l.location_id
+            HAVING count(l.id) > 1
+            ORDER BY count(l.id) DESC""" % self._name.replace('.', '_')
+        cr.execute(sql_req, (tuple(ids),))
+        check_res = cr.dictfetchall()
+        if check_res:
+            raise osv.except_osv(
+                _("Error"),
+                _("""Some lines have the same couple location/product. Only
+one line per couple location/product is expected."""))
+
+        return True
+
+    def action_done(self, cr, uid, ids, context=None):
+        self.check_integrity(cr, uid, ids, context=context)
+        return super(stock_inventory, self).action_done(cr, uid, ids, context=context)
+
     def action_confirm(self, cr, uid, ids, context=None):
         '''
         if the line is perishable without prodlot, we create the prodlot
@@ -1425,6 +1455,9 @@ class stock_inventory(osv.osv):
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
         line_ids = []
+
+        self.check_integrity(cr, uid, ids, context=context)
+
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.inventory_line_id:

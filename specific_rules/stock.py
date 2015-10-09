@@ -68,6 +68,8 @@ class initial_stock_inventory(osv.osv):
         product_dict = {}
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
+
+        self.check_integrity(cr, uid, ids, context=context)
         
         for inventory in self.browse(cr, uid, ids, context=context):
             # Prevent confirmation with no lines
@@ -129,6 +131,8 @@ class initial_stock_inventory(osv.osv):
             
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        self.check_integrity(cr, uid, ids, context=context)
         
         move_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
