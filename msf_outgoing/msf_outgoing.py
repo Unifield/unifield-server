@@ -4578,9 +4578,15 @@ class stock_move(osv.osv):
                     if diff_qty < sol.product_uom_qty:
                         data_back = self.create_data_back(move)
                         out_move = self.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
-                        if out_move['move_id']:
-                            context.setdefault('not_resource_move', []).append(out_move['move_id'])
-                            self.action_cancel(cr, uid, [out_move['move_id']], context=context)
+                        out_move_id = False
+                        if out_move['moves']:
+                            out_move_id = sorted(out_move['moves'], key=lambda x: abs(x.product_qty-diff_qty))[0].id
+                        elif out_move['move_id']:
+                            out_move_id = out_move['move_id']
+
+                        if out_move_id:
+                            context.setdefault('not_resource_move', []).append(out_move_id)
+                            self.action_cancel(cr, uid, [out_move_id], context=context)
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
@@ -4588,11 +4594,12 @@ class stock_move(osv.osv):
                         sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
                         sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
-                if move.sale_line_id.order_id.procurement_request and move.sale_line_id.procurement_id:
+                if move.sale_line_id.procurement_id:
                     # Search OUT moves that have the same source and there are done
                     other_out_move_ids = self.search(cr, uid, [
                         ('sale_line_id', '=', move.sale_line_id.id),
-                        ('state', '=', 'done'),
+                        ('state', 'in', ['assigned', 'confirmed', 'done']),
+                        ('id', '!=', move.id),
                     ], context=context)
                     if other_out_move_ids:
                         proc_obj.write(cr, uid,

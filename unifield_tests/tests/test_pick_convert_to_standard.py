@@ -142,6 +142,15 @@ class PickConvertToStandardTest(ResourcingTest):
         self.c_proc_in_obj.do_incoming_shipment([proc_id])
         self.c_out_ids = self.c_pick_obj.search([('sale_id', '=', self.c_so_id), ('type', '=', 'out')])
 
+    def process_pick(self, pick_ids):
+        if isinstance(pick_ids, (int, long)):
+            pick_ids = [pick_ids]
+
+        for pick in pick_ids:
+            conv_res = self.c_pick_obj.convert_to_standard([pick])
+            out_id = conv_res.get('res_id')
+            self.process_out([out_id])
+
     def process_out(self, out_ids):
         proc_out_obj = self.c1.get('outgoing.delivery.processor')
         proc_out_move_obj = self.c1.get('outgoing.delivery.move.processor')
@@ -220,9 +229,6 @@ class PickConvertToStandardTest(ResourcingTest):
             v_ship_id = proc_obj.do_create_shipment([proc_res.get('res_id')]).get('res_id')
 
         return v_ship_id
-
-    def test_fake(self):
-        return
 
     def check_draft_pick_move_state(self, draft_picks):
         return
@@ -314,6 +320,8 @@ class PickConvertToStandardTest(ResourcingTest):
         self.process_incoming()
 
         self.process_out(out_ids)
+        valid_picks = self.c_pick_obj.search(domain + [('state', '=', 'assigned')])
+        self.process_pick(valid_picks)
 
         return draft_picks
 
@@ -350,6 +358,14 @@ class PickConvertToStandardTest(ResourcingTest):
         self.check_draft_pick_move_state(draft_picks)
 
         self.process_out(out_ids)
+
+        ppl_ids = self.c_pick_obj.search([('sale_id', '=', self.c_so_id), ('type', '=', 'out'), ('subtype', '=', 'ppl')])
+        ship_id = self.do_ppl(ppl_ids)
+
+        if ship_id:
+            v_ship_id = self.create_shipment(ship_id)
+            if v_ship_id:
+                self.c1.get('shipment').validate([v_ship_id])
 
         return draft_picks
 
