@@ -237,7 +237,7 @@ class UFTP326Test(ResourcingTest):
             "All IN are not canceled",
         )
         self.assert_(
-            all([x['state'] == 'done' for x in out_state]),
+            all([x['state'] in ('cancel', 'done') for x in out_state]),
             "All OUT/PICK are not canceled",
         )
 

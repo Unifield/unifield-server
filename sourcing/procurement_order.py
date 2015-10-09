@@ -536,6 +536,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if procurement.product_id.product_tmpl_id.supply_method <> 'buy':
                 return False
 
+            if procurement.purchase_id:
+                return True
+
             if procurement.supplier:
                 partner = procurement.supplier
             elif procurement.product_id.seller_id:

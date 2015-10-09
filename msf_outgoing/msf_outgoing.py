@@ -4161,6 +4161,17 @@ class stock_picking(osv.osv):
     def _manual_create_rw_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         return
 
+    def _create_sync_message_for_field_order(self, cr, uid, picking, context=None):
+        fo_obj = self.pool.get('sale.order')
+        if picking.sale_id:
+            return_info = {}
+            if picking.sale_id.original_so_id_sale_order:
+                fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.original_so_id_sale_order.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
+            else:
+                fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
+            fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.create_split_po', context=context)
+            fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.update_split_po', context=context)
+
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         override cancel state action from the workflow
@@ -4180,12 +4191,14 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         obj_data = self.pool.get('ir.model.data')
 
+
         # check the state of the picking
         for picking in self.browse(cr, uid, ids, context=context):
             # if draft and shipment is in progress, we cannot cancel
             if picking.subtype == 'picking' and picking.state in ('draft',):
                 if self.has_picking_ticket_in_progress(cr, uid, [picking.id], context=context)[picking.id]:
                     raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
+                self._create_sync_message_for_field_order(cr, uid, picking, context=context)
                 return super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
             # if not draft or qty does not match, the shipping is already in progress
             if picking.subtype == 'picking' and picking.state in ('done',):
@@ -4532,13 +4545,19 @@ class stock_move(osv.osv):
         '''
         pol_obj = self.pool.get('purchase.order.line')
         proc_obj = self.pool.get('procurement.order')
+        pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
 
         if context is None:
             context = {}
 
+        move_to_done = []
+        pick_to_check = set()
+
         for move in self.browse(cr, uid, ids, context=context):
+            if move.product_qty == 0.00:
+                move_to_done.append(move.id)
             """
             A stock move can be re-sourced but there are some conditions
 
@@ -4564,6 +4583,10 @@ class stock_move(osv.osv):
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
 
+            if pick_subtype == 'picking' and pick_state == 'draft':
+                pick_to_check.add(move.picking_id.id)
+                pick_obj._create_sync_message_for_field_order(cr, uid, move.picking_id, context=context)
+
             if pick_type == 'in' and move.purchase_line_id:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
@@ -4578,9 +4601,15 @@ class stock_move(osv.osv):
                     if diff_qty < sol.product_uom_qty:
                         data_back = self.create_data_back(move)
                         out_move = self.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
-                        if out_move['move_id']:
-                            context.setdefault('not_resource_move', []).append(out_move['move_id'])
-                            self.action_cancel(cr, uid, [out_move['move_id']], context=context)
+                        out_move_id = False
+                        if out_move['moves']:
+                            out_move_id = sorted(out_move['moves'], key=lambda x: abs(x.product_qty-diff_qty))[0].id
+                        elif out_move['move_id']:
+                            out_move_id = out_move['move_id']
+
+                        if out_move_id:
+                            context.setdefault('not_resource_move', []).append(out_move_id)
+                            self.action_cancel(cr, uid, [out_move_id], context=context)
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
@@ -4588,17 +4617,20 @@ class stock_move(osv.osv):
                         sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
                         sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
-                if move.sale_line_id.order_id.procurement_request and move.sale_line_id.procurement_id:
+                if move.sale_line_id.procurement_id:
                     # Search OUT moves that have the same source and there are done
                     other_out_move_ids = self.search(cr, uid, [
                         ('sale_line_id', '=', move.sale_line_id.id),
-                        ('state', '=', 'done'),
+                        ('state', 'in', ['assigned', 'confirmed', 'done']),
+                        ('id', '!=', move.id),
                     ], context=context)
                     if other_out_move_ids:
                         proc_obj.write(cr, uid,
                             [move.sale_line_id.procurement_id.id],
                             {'move_id': other_out_move_ids[0]},
                             context=context)
+
+        self.action_done(cr, uid, move_to_done, context=context)
 
         # Search only non unlink move
         ids = self.search(cr, uid, [('id', 'in', ids)])
@@ -4611,8 +4643,15 @@ class stock_move(osv.osv):
         for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
             if proc.state == 'draft':
                 wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_confirm', cr)
-#            else:
-#                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+            else:
+                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+
+        for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
+            if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
+                moves_to_done = self.search(cr, uid, [('picking_id', '=', ptc.id), ('product_qty', '=', 0.00), ('state', 'not in', ['done', 'cancel'])], context=context)
+                if moves_to_done:
+                    self.action_done(cr, uid, moves_to_done, context=context)
+                ptc.action_done(context=context)
 
         return res
 
