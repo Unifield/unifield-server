@@ -109,6 +109,53 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
+    def _manual_create_sync_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, context=None):
+        if context is None:
+            context ={}
+        if True:
+            at = context.get('active_test')
+            context['active_test'] = False
+            partner_name = 'fake'
+
+            rule = self.get_rule_by_remote_call(cr, uid, rule_method, context)
+            if not rule:
+                logger.info("Sorry, there is no message rule found for the method %s." % (rule_method)) 
+                return
+
+            model_obj = self.pool.get(model_name)
+            if res_id not in model_obj.search(cr, uid, eval(rule.domain), context=context):
+                return
+
+            msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+            partner_name = model_obj.browse(cr, uid, res_id)[rule.destination_name].name
+
+            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, context=context)
+            sale_name = ''
+            if 'name' in arguments[0]:
+                sale_name = arguments[0]['name']
+
+            identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [res_id], rule.server_id, context=context)
+            if not identifiers:
+                return
+            # Still create the message if an existing message was already in the system, as the return action could be repeat
+            xml_id = identifiers[res_id]
+            if msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], context=context):
+                return
+            data = {
+                    'identifier' : xml_id,
+                    'remote_call': rule.remote_call,
+                    'arguments': arguments,
+                    'destination_name': partner_name,
+                    'sent' : False,
+                    'generate_message' : True,
+            }
+            msg_to_send_obj.create(cr, uid, data, context=context)
+            logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name)) 
+            if at is None:
+                del context['active_test']
+            else:
+                context['active_test'] = at
+
     #UF-2531: This method is to create manually a RW message for the return pack, of ship or ppl and put into the queue for the next USB sync
     def _manual_create_rw_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, context=None):
         pick_obj = self.pool.get('stock.picking')
@@ -356,8 +403,7 @@ class message_received(osv.osv):
             #UTP-682: double check to make sure if the message has been executed, then skip it
             if message.run:
                 continue
-            cr.execute("SAVEPOINT exec_message")
-
+            cr.commit()
             try:
                 model, method = self.get_model_and_method(message.remote_call)
                 arg = self.get_arg(message.arguments)
@@ -368,7 +414,7 @@ class message_received(osv.osv):
                 except BaseException, e:
                     error = e # Keep this message for the exception below
                     self._logger.exception("Message execution %d failed!" % message.id)
-                    cr.execute("ROLLBACK TO SAVEPOINT exec_message")
+                    cr.rollback()
                     if isinstance(e, osv.except_osv):
                         error_msg = e.value
                     else:
@@ -379,7 +425,6 @@ class message_received(osv.osv):
                         'log' : e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
                     }, context=context)
                 else:
-                    cr.execute("RELEASE SAVEPOINT exec_message")
                     self.write(cr, uid, message.id, {
                         'execution_date' : execution_date,
                         'run' : True,
