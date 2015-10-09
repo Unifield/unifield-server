@@ -245,7 +245,8 @@ class stock_move(osv.osv):
         if move.purchase_line_id:
             proc = move.purchase_line_id.procurement_id
             if proc and proc.sale_order_line_ids and proc.sale_order_line_ids[0].order_id and proc.sale_order_line_ids[0].order_id.procurement_request:
-                location_dest_id = proc.sale_order_line_ids[0].order_id.location_requestor_id.id
+                if proc.sale_order_line_ids[0].order_id.location_requestor_id.usage != 'customer':
+                    location_dest_id = proc.sale_order_line_ids[0].order_id.location_requestor_id.id
         return location_dest_id
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
