@@ -222,6 +222,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             ('journal_id.type', 'not in', ['hq', 'engagement', 'migration', ]),  # HQ/ENG/MIG entries already exist in SAP
             ('account_id.category', 'not in', ['FREE1', 'FREE2']),  # only FP dimension
             ('exported', 'in', form_data['to_export']),  # exported filter
+            ('move_id.move_id.state', '=', 'posted'),  # move line of posted JE
         ]
         analytic_line_ids = aal_obj.search(cr, uid, domain, context=context)
         if analytic_line_ids:
