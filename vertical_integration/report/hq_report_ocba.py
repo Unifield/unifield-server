@@ -64,6 +64,9 @@ class hq_report_ocba(report_sxw.report_sxw):
     }
 
     def export_ji(self, cr, uid, r, file_data):
+        """
+        Export not expense entries (from JIs)
+        """
         rate = 0  # TODO
 
         self._add_row('entries', file_data=file_data, data={
@@ -76,8 +79,8 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Document Date': r.document_date or '',
             'Posting Date': r.date or '',
             'G/L Account': self._enc(r.account_id and r.account_id.code or ''),  # code
-            'Account description': r.account_id and r.account_id.name or '',
-            'Third Party': self._enc(r.partner_id and (r.partner_id.name or '')),  # US-497: extract name from partner_id (better than partner_txt)
+            'Account description': self._enc(r.account_id and r.account_id.name or ''),
+            'Third Party': self._enc(r.partner_id and r.partner_id.name or ''),  # US-497: extract name from partner_id (better than partner_txt)
             'EE ID': self._enc(r.employee_id and r.employee_id.identification_id or ''),  # nat/staff ID Number
             'Partner DB ID': r.partner_id and finance_export.finance_archive._get_hash(cr, uid, [r.partner_id.id], 'res_partner') or '',
             'Destination': '',
@@ -87,9 +90,51 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Booking Currency': self._enc(r.currency_id and r.currency_id.name or ''),
             'Functional Debit': self._enc_amount(r.debit),
             'Functional Credit': self._enc_amount(r.credit),
-            'Functional Currency': self._enc(r.functional_currency_id and r.currency_id.name or ''),
+            'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
             'Exchange rate': rate,  # of exported month based on booking ccy
             'Reconciliation code': self._enc(r.reconcile_txt),  # only for B/S)
+        })
+
+    def export_aji(self, cr, uid, r, file_data):
+        """
+        Export not expense entries (from AJIs)
+        """
+        rate = 0  # TODO
+
+        ee_id = ''
+        partner_db_id = ''
+        partner_txt = ''
+        if r.move_id:
+            ee_id = self._enc(r.move_id.employee_id and r.move_id.employee_id.identification_id or '')
+            partner_db_id = r.move_id.partner_id and finance_export.finance_archive._get_hash(cr, uid, [r.move_id.partner_id.id], 'res_partner') or ''
+            partner_txt = r.move_id.partner_id and r.move_id.partner_id.name or ''
+        # NOTE: if from sync no move line, no 3rd party link, only partner_txt:
+        # impossible to get EE ID/Partner ID hash
+
+        self._add_row('entries', file_data=file_data, data={
+            'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.analytic.line'),
+            'Proprietary instance': self._enc(r.instance_id and r.instance_id.name or ''),
+            'Journal Code': self._enc(r.journal_id and r.journal_id.code or ''),
+            'Entry Sequence': self._enc(r.entry_sequence or ''),
+            'Description': self._enc(r.name),
+            'Reference': self._enc(r.ref),
+            'Document Date': r.document_date or '',
+            'Posting Date': r.date or '',
+            'G/L Account': self._enc(r.general_account_id and r.general_account_id.code or ''),  # code
+            'Account description': self._enc(r.general_account_id and r.general_account_id.name or ''),
+            'Third Party': self._enc(partner_txt),
+            'EE ID': ee_id,  # nat/staff ID Number
+            'Partner DB ID': partner_db_id,
+            'Destination': self._enc(r.destination_id and r.destination_id.code or ''),
+            'Cost Centre': self._enc(r.cost_center_id and r.cost_center_id.code or ''),
+            'Booking Debit': self._enc_amount(r.amount_currency, debit=True),
+            'Booking Credit': self._enc_amount(r.amount_currency, debit=False),
+            'Booking Currency': self._enc(r.currency_id and r.currency_id.name or ''),
+            'Functional Debit': self._enc_amount(r.amount, debit=True),
+            'Functional Credit': self._enc_amount(r.amount, debit=False),
+            'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
+            'Exchange rate': rate,  # of exported month based on booking ccy
+            'Reconciliation code': '',  # no reconcile for expense account
         })
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -133,7 +178,6 @@ class hq_report_ocba(report_sxw.report_sxw):
 
         file_data = {
             'entries': { 'file_name': 'entries', 'data': [], 'count': 0, },
-            'fc': { 'file_name': 'contracts', 'data': [], 'count': 0, },
         }
 
         # get wizard form values
@@ -154,8 +198,6 @@ class hq_report_ocba(report_sxw.report_sxw):
 
     def _generate_data(self, cr, uid, file_data=None, form_data=None,
             context=None):
-        file_data['fc']['data'].append(['grant', 'foobar', ])
-
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
         aal_obj = pool.get('account.analytic.line')
@@ -184,6 +226,10 @@ class hq_report_ocba(report_sxw.report_sxw):
             ('exported', 'in', form_data['to_export']),
         ]
         analytic_line_ids = aal_obj.search(cr, uid, domain, context=context)
+        if analytic_line_ids:
+            for aji_br in aal_obj.browse(cr, uid, analytic_line_ids,
+                context=context):
+                self.export_aji(cr, uid, aji_br, file_data)
 
         return (move_line_ids, analytic_line_ids, )
 
@@ -250,8 +296,19 @@ class hq_report_ocba(report_sxw.report_sxw):
             return st.encode('utf8')
         return st
 
-    def _enc_amount(self, amount):
-        return str(amount) if amount else "0."
+    def _enc_amount(self, amount, debit=None):
+        res = "0.0"
+        if amount:
+            if debit is None:
+                res = str(amount)
+            else:
+                if debit:
+                    if amount < 0:
+                        res = str(abs(amount))
+                else:
+                    if amount > 0:
+                        res = str(amount)
+        return res
 
     def _translate_country(self, cr, uid, pool, browse_instance, context={}):
         mapping_obj = pool.get('country.export.mapping')

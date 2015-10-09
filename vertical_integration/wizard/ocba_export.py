@@ -62,7 +62,7 @@ class ocba_export_wizard(osv.osv_memory):
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         data['form'].update({'selection': wizard.selection})
 
-        target_file_name_pattern = '%s_%s_formatted data UF to OCB HQ system' 
+        target_file_name_pattern = '%s_%s_formatted data UF to OCBA HQ system'
         data['target_filename'] = target_file_name_pattern % (
             wizard.instance_id and wizard.instance_id.code or '',
             period_name)
