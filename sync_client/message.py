@@ -403,8 +403,7 @@ class message_received(osv.osv):
             #UTP-682: double check to make sure if the message has been executed, then skip it
             if message.run:
                 continue
-            cr.execute("SAVEPOINT exec_message")
-
+            cr.commit()
             try:
                 model, method = self.get_model_and_method(message.remote_call)
                 arg = self.get_arg(message.arguments)
@@ -415,7 +414,7 @@ class message_received(osv.osv):
                 except BaseException, e:
                     error = e # Keep this message for the exception below
                     self._logger.exception("Message execution %d failed!" % message.id)
-                    cr.execute("ROLLBACK TO SAVEPOINT exec_message")
+                    cr.rollback()
                     if isinstance(e, osv.except_osv):
                         error_msg = e.value
                     else:
@@ -426,7 +425,6 @@ class message_received(osv.osv):
                         'log' : e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
                     }, context=context)
                 else:
-                    cr.execute("RELEASE SAVEPOINT exec_message")
                     self.write(cr, uid, message.id, {
                         'execution_date' : execution_date,
                         'run' : True,
