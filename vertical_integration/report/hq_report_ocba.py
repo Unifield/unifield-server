@@ -31,33 +31,66 @@ from tools.translate import _
 
 from report import report_sxw
 
+from account_override import finance_export
+
 
 class hq_report_ocba(report_sxw.report_sxw):
-    _export_fields_index = [
-        'DB ID',  # xmlid
-        'Proprietary instance',
-        'Journal Code',
-        'Entry Sequence',
-        'Description',
-        'Reference',
-        'Document Date',
-        'Posting Date',
-        'G/L Account',  # code
-        'Account description'
-        'Third Party',
-        'EE ID',  # nat/staff ID Number
-        'Partner DB ID',  # xmlid
-        'Destination',
-        'Cost Centre',
-        'Booking Debit',
-        'Booking Credit',
-        'Booking Currency',
-        'Functional Debit',
-        'Functional Credit',
-        'Functional Currency',
-        'Exchange rate',  # of exported month based on booking ccy
-        'Reconciliation code',  # only for B/S
-    ]
+    _export_fields_index = {
+        'entries': [
+            'DB ID',  # xmlid
+            'Proprietary instance',
+            'Journal Code',
+            'Entry Sequence',
+            'Description',
+            'Reference',
+            'Document Date',
+            'Posting Date',
+            'G/L Account',  # code
+            'Account description',
+            'Third Party',
+            'EE ID',  # nat/staff ID Number
+            'Partner DB ID',  # xmlid
+            'Destination',
+            'Cost Centre',
+            'Booking Debit',
+            'Booking Credit',
+            'Booking Currency',
+            'Functional Debit',
+            'Functional Credit',
+            'Functional Currency',
+            'Exchange rate',  # of exported month based on booking ccy
+            'Reconciliation code',  # only for B/S
+        ]
+    }
+
+    def export_ji(self, cr, uid, r, file_data):
+        rate = 0  # TODO
+
+        self._add_row('entries', file_data=file_data, data={
+            'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.move.line'),
+            'Proprietary instance': self._enc(r.instance_id and r.instance_id.name or ''),
+            'Journal Code': self._enc(r.journal_id and r.journal_id.code or ''),
+            'Entry Sequence': self._enc(r.move_id and r.move_id.name or ''),
+            'Description': self._enc(r.name),
+            'Reference': self._enc(r.ref),
+            'Document Date': r.document_date or '',
+            'Posting Date': r.date or '',
+            'G/L Account': self._enc(r.account_id and r.account_id.code or ''),  # code
+            'Account description': r.account_id and r.account_id.name or '',
+            'Third Party': self._enc(r.partner_id and (r.partner_id.name or '')),  # US-497: extract name from partner_id (better than partner_txt)
+            'EE ID': self._enc(r.employee_id and r.employee_id.identification_id or ''),  # nat/staff ID Number
+            'Partner DB ID': r.partner_id and finance_export.finance_archive._get_hash(cr, uid, [r.partner_id.id], 'res_partner') or '',
+            'Destination': '',
+            'Cost Centre': '',
+            'Booking Debit': self._enc_amount(r.debit_currency),
+            'Booking Credit': self._enc_amount(r.credit_currency),
+            'Booking Currency': self._enc(r.currency_id and r.currency_id.name or ''),
+            'Functional Debit': self._enc_amount(r.debit),
+            'Functional Credit': self._enc_amount(r.credit),
+            'Functional Currency': self._enc(r.functional_currency_id and r.currency_id.name or ''),
+            'Exchange rate': rate,  # of exported month based on booking ccy
+            'Reconciliation code': self._enc(r.reconcile_txt),  # only for B/S)
+        })
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
@@ -99,8 +132,8 @@ class hq_report_ocba(report_sxw.report_sxw):
             form_data['to_export'] = to_export
 
         file_data = {
-            'entries': { 'file_name': 'entries', 'data': [], },
-            'fc': { 'file_name': 'contracts', 'data': [], },
+            'entries': { 'file_name': 'entries', 'data': [], 'count': 0, },
+            'fc': { 'file_name': 'contracts', 'data': [], 'count': 0, },
         }
 
         # get wizard form values
@@ -121,7 +154,6 @@ class hq_report_ocba(report_sxw.report_sxw):
 
     def _generate_data(self, cr, uid, file_data=None, form_data=None,
             context=None):
-        file_data['entries']['data'].append(['foo', 'bar', ])
         file_data['fc']['data'].append(['grant', 'foobar', ])
 
         pool = pooler.get_pool(cr.dbname)
@@ -141,7 +173,7 @@ class hq_report_ocba(report_sxw.report_sxw):
         if move_line_ids:
             for ji_br in aml_obj.browse(cr, uid, move_line_ids,
                 context=context):
-                add_ji(ji_br)
+                self.export_ji(cr, uid, ji_br, file_data)
 
         # get expense lines
         domain = [
@@ -154,6 +186,18 @@ class hq_report_ocba(report_sxw.report_sxw):
         analytic_line_ids = aal_obj.search(cr, uid, domain, context=context)
 
         return (move_line_ids, analytic_line_ids, )
+
+    def _add_row(self, data_key_name, file_data=None, data=None):
+        if file_data[data_key_name]['count'] == 0:
+            # add header
+            file_data[data_key_name]['data'].append(
+                [ f for f in self._export_fields_index[data_key_name] ])
+
+        row = []
+        for f in self._export_fields_index[data_key_name]:
+            row.append(data.get(f, ''))
+        file_data[data_key_name]['data'].append(row)
+        file_data[data_key_name]['count'] += 1
 
     def _generate_files(self, integration_ref, file_data):
         """
@@ -175,7 +219,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             tmp_fd.close()
 
             out_zipfile.write(tmp_fd.name,
-                "%s%s" % (file_prefix, file_data[f]['file_name'], ),
+                "%s%s.csv" % (file_prefix, file_data[f]['file_name'], ),
                 zipfile.ZIP_DEFLATED
             )
         out_zipfile.close()
@@ -200,9 +244,14 @@ class hq_report_ocba(report_sxw.report_sxw):
             )
 
     def _enc(self, st):
+        if not st:
+            return ''
         if isinstance(st, unicode):
             return st.encode('utf8')
         return st
+
+    def _enc_amount(self, amount):
+        return str(amount) if amount else "0."
 
     def _translate_country(self, cr, uid, pool, browse_instance, context={}):
         mapping_obj = pool.get('country.export.mapping')
@@ -212,9 +261,6 @@ class hq_report_ocba(report_sxw.report_sxw):
                 mapping = mapping_obj.browse(cr, uid, mapping_ids[0], context=context)
                 return mapping.mapping_value
         return "0"
-
-    def _get_xml_id(self, id):
-
 
 hq_report_ocba('report.hq.ocba', 'account.move.line', False, parser=False)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
