@@ -122,6 +122,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
         'select',
         'required',
         'readonly',
+        'force_readonly',
         'help',
         'editable',
         'translatable',
@@ -137,6 +138,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
     select = False
     required = False
     readonly = False
+    force_readonly = False
     help = None
     editable = True
     translatable = False
@@ -159,6 +161,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
         self.select = _boolean_attr(attrs, 'select')
         self.required = _boolean_attr(attrs, 'required')
         self.readonly = _boolean_attr(attrs, 'readonly')
+        self.force_readonly = _boolean_attr(attrs, 'force_readonly')
 
         self.translatable = attrs.get('translate', False)
 

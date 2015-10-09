@@ -31,7 +31,7 @@ import xml.dom.minidom
 import cherrypy
 import simplejson
 from openerp import validators
-from openerp.utils import rpc, icons, common, TinyDict, node_attributes, get_node_xpath
+from openerp.utils import rpc, icons, common, TinyDict, node_attributes, get_node_xpath, expr_eval
 from openerp.widgets import TinyWidget, TinyInputWidget, InputWidgetLabel, ConcurrencyInfo, get_widget, register_widget
 
 from _binary import Image
@@ -760,6 +760,7 @@ class Form(TinyInputWidget):
         self.hide_button_delete = attrs.get('hide_delete_button', False)
         self.hide_button_edit = attrs.get('hide_edit_button', False)
         self.hide_button_save = attrs.get('hide_save_button', False)
+        self.noteditable = False
         self.link = attrs.get('link', nolinks)
         self.model = model
         self.id = None
@@ -822,6 +823,14 @@ class Form(TinyInputWidget):
 
         self.state = values.get('state', values.get('x_state'))
 
+        # make editors
+        if values and attrs.get('noteditable'):
+            try:
+                if expr_eval(attrs.get('noteditable'), values):
+                    self.noteditable = True
+            except:
+                pass
+
         # store current record values in request object (see, self.parse & O2M default_get_ctx)
         if not hasattr(cherrypy.request, 'terp_record'):
             cherrypy.request.terp_record = TinyDict()
@@ -858,6 +867,14 @@ class Form(TinyInputWidget):
                 continue
 
             attrs = node_attributes(node)
+            if self.noteditable:
+                attrs['readonly'] = True
+                attrs['force_readonly'] = True
+                if 'attrs' in attrs and attrs['attrs'] and 'readonly' in attrs['attrs']:
+                    dictattr = eval(attrs['attrs'])
+                    if 'readonly' in dictattr:
+                        del dictattr['readonly']
+                    attrs['attrs'] = str(dictattr)
             attrs['prefix'] = prefix
             attrs['state'] = self.state
 
@@ -1003,6 +1020,8 @@ class Form(TinyInputWidget):
         if attrs.get('get_selection') and kind == 'selection' and attrs.get('type2') == 'many2one' and self.id:
             proxy = rpc.RPCProxy(self.model)
             attrs['selection'] = getattr(proxy, attrs['get_selection'])(self.id, name)
+        if attrs.get('force_readonly', False) and 'states' in attrs:
+            del attrs['states']
         field = get_widget(kind)(**attrs)
 
         if isinstance(field, TinyInputWidget):

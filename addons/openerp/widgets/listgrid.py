@@ -101,6 +101,7 @@ class List(TinyWidget):
         self.o2m = kw.get('o2m', 0)
         self.concurrency_info = None
         self.selector = None
+        self.force_readonly = kw.get('force_readonly', False)
 
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
@@ -111,7 +112,7 @@ class List(TinyWidget):
                 if (str(terp_params.source) == self.source) or (terp_params.source == '_terp_list' and terp_params.sort_key):
                     self.sort_key = terp_params.sort_key
                     self.sort_order = terp_params.sort_order
-        
+
         if self.selectable == 1:
             self.selector = 'radio'
 
@@ -403,6 +404,8 @@ class List(TinyWidget):
         for node in root.childNodes:
 
             if node.nodeName == 'button':
+                if self.force_readonly:
+                    continue
                 attrs = node_attributes(node)
                 if attrs.get('invisible', False):
                     visible = eval(attrs['invisible'], {'context':self.context})

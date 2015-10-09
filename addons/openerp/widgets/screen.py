@@ -107,6 +107,7 @@ class Screen(TinyInputWidget):
         self.selectable         = selectable
         self.editable           = editable
         self.readonly           = readonly
+        self.force_readonly     = kw.get('force_readonly', False)
         self.link               = nolinks
 
         # get calendar options
