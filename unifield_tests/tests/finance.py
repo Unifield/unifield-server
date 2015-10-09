@@ -511,9 +511,14 @@ class FinanceTest(UnifieldTest):
             if tda.account_id.id == account_id and \
                 tda.destination_id.id == dest_id:
                     return  # account/dest tuple already in FP
-        
-        aaa_obj.unit_test_add_account_destination_to_fp(account_id, dest_id,
-            fp_id, {'unit_test': 1})
+
+        tuple_dest_obj = db.get('account.destination.link')
+        tuple_id = tuple_dest_obj.search([('account_id', '=', account_id) , ('destination_id', '=', dest_id)])
+        if not tuple_id:
+            tuple_id = tuple_dest_obj.create({'account_id': account_id, 'destination_id': dest_id})
+        else:
+            tuple_id = tuple_id[0]
+        aaa_obj.write(fp_id, {'tuple_destination_account_ids': [(4, tuple_id)]})
         
     def analytic_distribution_create(self, db,
         breakdown_data=[(100., 'OPS', False, False)]):

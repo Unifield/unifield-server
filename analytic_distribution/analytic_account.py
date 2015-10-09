@@ -143,43 +143,5 @@ class analytic_account(osv.osv):
                 args[i] = ('id', 'in', fp_ids)
         return super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
-    def unit_test_add_account_destination_to_fp(self, cr, uid, account_id,
-        dest_id, fp_id, context=None):
-        """
-        for unit test only
-        create a relation between a funding pool and account/dest
-        
-        - will only be processed if 'unit_test' is found in context
-        - we do this server side as openerplib does not suport, for many2many,
-            the (4, id) tuple  (to add a link of an existing record)
-        """
-        if context is None or not 'unit_test' in context:
-            return False
-            
-        adl_obj = self.pool.get('account.destination.link')
-        
-        adl_ids = adl_obj.search(cr, uid, [
-            ('account_id', '=', account_id),
-            ('destination_id', '=', dest_id),
-        ], context=context)
-        
-        if not adl_ids:
-            # link FP to new account/destination link
-            res = self.write(cr, uid, [fp_id] , {
-                'tuple_destination_account_ids': [
-                    (0, 0, {
-                        'account_id': account_id,
-                        'destination_id': dest_id,
-                        'funding_pool_ids': [(4, fp_id)],
-                    }),
-                ],
-            }, context=context)
-        else:
-            # link FP to existing account/destination link
-            res = adl_obj.write(cr, uid, adl_ids, {
-                'funding_pool_ids': [(4, fp_id)],
-            }, context=context)
-        return res
-        
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
