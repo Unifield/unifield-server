@@ -1828,7 +1828,7 @@ stock moves which are already processed : '''
     def need_counterpart(self, cr, uid, ids, context=None):
         res = False
         for po in self.browse(cr, uid, ids, context=context):
-            if po.order_type == 'loan' and not po.loan_id and not po.is_a_counterpart and po.partner_id.partner_type not in ('internal', 'intermission'):
+            if po.order_type == 'loan' and not po.loan_id and not po.is_a_counterpart and po.partner_id.partner_type not in ('internal', 'intermission', 'section'):
                 res = True
 
         return res
@@ -1836,7 +1836,7 @@ stock moves which are already processed : '''
     def go_to_loan_done(self, cr, uid, ids, context=None):
         res = False
         for po in self.browse(cr, uid, ids, context=context):
-            if po.order_type not in ('loan', 'direct') or po.loan_id or (po.order_type == 'loan' and po.partner_id.partner_type in ('internal', 'intermission')):
+            if po.order_type not in ('loan', 'direct') or po.loan_id or (po.order_type == 'loan' and po.partner_id.partner_type in ('internal', 'intermission', 'section')):
                 res = True
 
         return res
@@ -1856,7 +1856,7 @@ stock moves which are already processed : '''
         partner_obj = self.pool.get('res.partner')
 
         for order in self.browse(cr, uid, ids):
-            if order.is_a_counterpart or (order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission')):
+            if order.is_a_counterpart or (order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission', 'section')):
                 # UTP-392: This PO is created by the synchro from a Loan FO of internal/intermission partner, so do not generate the counterpart FO
                 return
 
