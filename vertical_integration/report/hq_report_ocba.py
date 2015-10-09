@@ -67,8 +67,6 @@ class hq_report_ocba(report_sxw.report_sxw):
         """
         Export not expense entries (from JIs)
         """
-        rate = 0  # TODO
-
         self._add_row('entries', file_data=file_data, data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.move.line'),
             'Proprietary instance': self._enc(r.instance_id and r.instance_id.name or ''),
@@ -91,7 +89,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Functional Debit': self._enc_amount(r.debit),
             'Functional Credit': self._enc_amount(r.credit),
             'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
-            'Exchange rate': rate,  # of exported month based on booking ccy
+            'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=False)),
             'Reconciliation code': self._enc(r.reconcile_txt),  # only for B/S)
         })
 
@@ -133,7 +131,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Functional Debit': self._enc_amount(r.amount, debit=True),
             'Functional Credit': self._enc_amount(r.amount, debit=False),
             'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
-            'Exchange rate': rate,  # of exported month based on booking ccy
+            'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=True)),
             'Reconciliation code': '',  # no reconcile for expense account
         })
 
@@ -288,6 +286,36 @@ class hq_report_ocba(report_sxw.report_sxw):
                 "UPDATE account_analytic_line SET exported='t' WHERE id in %s",
                 (tuple(analytic_line_ids), )
             )
+
+    def _get_rate(self, cr, uid, r, is_analytic=False):
+        def get_month_rate(currency_id, entry_dt):
+            cr.execute(
+                "SELECT rate FROM res_currency_rate WHERE currency_id = %s" \
+                    " AND name <= %s ORDER BY name desc LIMIT 1" ,
+                (currency_id, entry_dt, )
+            )
+            return cr.rowcount and cr.fetchall()[0][0] or False
+
+        if r.currency_id.id == r.functional_currency_id.id:
+            return 1.
+
+        # US-478 accrual account (always refer to previous period)
+        # base on doc date instead posting in this case
+        # - 1st period accruals: doc date and posting same period
+        # - next accruals: doc date previous period (accrual of)
+        if not is_analytic:
+            entry_dt = r.journal_id and r.journal_id.type == 'accrual' \
+                and r.document_date or r.date
+        else:
+            entry_dt = r.date
+            if r.move_id:
+                if r.move_id.journal_id.type == 'accrual':
+                    entry_dt = r.document_date or r.date
+            elif r.journal_id and r.journal_id.code == 'ACC':
+                # sync border case no JI for the AJI
+                entry_dt = r.document_date or r.date
+                
+        return get_month_rate(r.currency_id.id, entry_dt)
 
     def _enc(self, st):
         if not st:
