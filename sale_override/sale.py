@@ -1184,7 +1184,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         for order in self.browse(cr, uid, ids):
             # UTP-392: don't create a PO if it is created by sync ofr the loan
-            if order.is_a_counterpart or (order.order_type == 'loan' and order.fo_created_by_po_sync):
+            if order.is_a_counterpart or order.order_type != 'loan':
                 return
 
             two_months = today() + RelativeDateTime(months=+2)
