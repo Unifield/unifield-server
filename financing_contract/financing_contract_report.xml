@@ -35,11 +35,22 @@
         header="False"/>
         
         <report id="contract_list"
-        string="Financing Contract List"
+        string="Financing Contract List - pdf"
         model="financing.contract.contract"
         name="financing.contract.list"
         target_filename="Contract List_%(instance_code)s_%(year)s%(month)s%(day)s"
         rml="financing_contract/report/contract_list.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
+
+        <report id="contract_list_xls"
+        string="Financing Contract List"
+        model="financing.contract.contract"
+        name="financing.contract.list_xls"
+        target_filename="Contract List_%(instance_code)s_%(year)s%(month)s%(day)s"
+        file="financing_contract/report/contract_list.mako"
+        report_type="webkit"
         auto="False"
         menu="True"
         header="False"/>

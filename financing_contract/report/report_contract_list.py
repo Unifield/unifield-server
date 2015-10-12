@@ -19,6 +19,7 @@
 #
 ##############################################################################
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import locale
 import pooler
 
@@ -93,3 +94,15 @@ class report_contract_list(report_sxw.rml_parse):
         return result
         
 report_sxw.report_sxw('report.financing.contract.list', 'financing.contract.contract', 'addons/financing_contract/report/contract_list.rml', parser=report_contract_list, header=False)
+
+
+class report_contract_list_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(report_contract_list_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        #ids = getIds(self, cr, uid, ids, context)
+        a = super(report_contract_list_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+report_contract_list_xls('report.financing.contract.list_xls', 'financing.contract.contract', 'addons/financing_contract/report/contract_list.mako', parser=report_contract_list, header='internal')
