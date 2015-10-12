@@ -758,6 +758,10 @@ class audittrail_log_line(osv.osv):
         search_ids = super(audittrail_log_line, self).search(cr, uid, args, offset=0,
                                                              limit=None, order=order,
                                                              context=context, count=count)
+        # US-313: check if the context provides active_model in order to search for inherited models for other fields, if not just return 
+        if 'active_model' not in context:
+            return search_ids
+        
         id_model_obj = self.pool.get('ir.model')
         model_id = context['active_model']
         current_obj = self.pool.get(model_id)
