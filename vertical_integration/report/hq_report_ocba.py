@@ -340,6 +340,8 @@ class hq_report_ocba(report_sxw.report_sxw):
         """
         res = "0.0"
         if amount:
+            if amount < 0.001:
+                amount = 0.
             if debit is None:
                 res = str(amount)
             else:
