@@ -60,6 +60,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
+<Font ss:Bold="1" />
 </Style>
 <Style ss:ID="ssLineString">
 <Alignment ss:Bottom="Top" ss:WrapText="1"/>
@@ -100,7 +101,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 default_col_width = 60
 cols = [
     ('code', 'Financing contract code', {'width': 80, }, ),
-    ( 'name', 'Financing contract name', {'width': 80, }, ),
+    ('name', 'Financing contract name', {'width': 80, }, ),
     ('instance', 'Prop instance', {'width': 80, }, ),
     ('donor_code', 'Donor code', {'width': 120, }, ),
     ('donor_grant_reference', 'Donor grant reference', {'width': 120, }, ),
@@ -109,11 +110,11 @@ cols = [
     ('eligibility_to_date', 'End eligibility date', ),
     ('grant_amount', 'Grant amount', {'type': 'Number', }, ),
     ('reporting_currency', 'CCY', ),
-    ('reporting_type', 'Reporting type', {'width': 80, }, ),
-    ('state', 'State', ),
+    ('reporting_type', 'Reporting type', {'width': 120, }, ),
+    ('state', 'State', {'width': 40, },),
     ('cost_centers', 'Cost centers associated', {'width': 120, 'auto_width': True, }, ),
-    ('earmarked_funding_pools', 'List of Funding pool associated for earmarked costs', {'width': 120,'auto_width': True, }, ),
-    ('total_project_funding_pools', 'List of Funding pool associated for total project costs', {'width': 120,'auto_width': True, }, ),
+    ('earmarked_funding_pools', 'List of Funding pool associated for earmarked costs', {'width': 120, 'auto_width': True, }, ),
+    ('total_project_funding_pools', 'List of Funding pool associated for total project costs', {'width': 120, 'auto_width': True, }, ),
 ]
 %>
     
