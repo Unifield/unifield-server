@@ -783,7 +783,7 @@ class stock_picking(osv.osv):
             values['price_unit'] = new_price
 
         service_non_stock_ok = False
-        if move.purchase_line_id and line.product_id.type in ('consu', 'service_recept'):
+        if move.purchase_line_id and line.product_id.type in ('consu', 'service_recep'):
             sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
             for sol_brw in sol_obj.browse(cr, uid, sol_ids, context=context):
                 if sol_brw.order_id.procurement_request:
