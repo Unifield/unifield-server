@@ -57,6 +57,91 @@ class sale_order(osv.osv):
 sale_order()
 
 
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+    _trace = True
+
+product_product()
+
+
+class product_template(osv.osv):
+    _name = 'product.template'
+    _inherit = 'product.template'
+    _trace = True
+
+product_template()
+
+
+class product_supplier(osv.osv):
+    _name = 'product.supplierinfo'
+    _inherit = 'product.supplierinfo'
+    _trace = True
+
+    def add_audit_line(self, cr, uid, name, object_id, res_id, fct_object_id,
+                       fct_res_id, sub_obj_name, field_description,
+                       trans_field_description, new_value, old_value, context=None):
+
+        audit_line_obj = self.pool.get('audittrail.log.line')
+        audit_seq_obj = self.pool.get('audittrail.log.sequence')
+        log = 1
+
+        domain = [
+            ('model', '=', 'product.template'),
+            ('res_id', '=', res_id),
+        ]
+
+        log_sequence = audit_seq_obj.search(cr, uid, domain)
+        if log_sequence:
+            log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
+            log = log_seq.get_id(code_or_id='id')
+
+        vals = {
+            'user_id': uid,
+            'method': 'write',
+            'name': name,
+            'object_id': object_id,
+            'res_id': res_id,
+            'fct_object_id': fct_object_id,
+            'fct_res_id': fct_res_id,
+            'sub_obj_name': sub_obj_name,
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'field_description': field_description,
+            'trans_field_description': trans_field_description,
+            'new_value': new_value,
+            'new_value_text': new_value,
+            'new_value_fct': new_value,
+            'old_value': old_value,
+            'old_value_text': old_value,
+            'old_value_fct': old_value,
+            'log': log,
+        }
+        audit_line_obj.create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        ir_model = self.pool.get('ir.model')
+        model_name = self._name
+        product_model_name = 'product.template'
+
+        object_id = ir_model.search(cr, uid, [('model', '=', product_model_name)], context=context)[0]
+        fct_object_id = ir_model.search(cr, uid, [('model', '=', model_name)], context=context)[0]
+
+        suppliers = self.browse(cr, uid, ids, context=context)
+        for supplier in suppliers:
+            if vals.get('sequence') and vals['sequence'] != supplier.sequence:
+                self.add_audit_line(cr, uid, 'sequence', object_id,
+                                    supplier.product_id.id, fct_object_id,
+                                    supplier.id, supplier.name.name, 'Supplier sequence',
+                                    'Supplier sequence', vals['sequence'],
+                                    supplier.sequence, context=context)
+
+        res = super(product_supplier, self).write(cr, uid, ids, vals,
+                                                  context=context)
+        return res
+
+product_supplier()
+
+
 class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
@@ -144,7 +229,7 @@ class account_bank_statement_line(osv.osv):
 
 account_bank_statement_line()
 
-class account_cashbox_line(osv.osv): 
+class account_cashbox_line(osv.osv):
     _name = 'account.cashbox.line'
     _inherit = 'account.cashbox.line'
     _trace = True
@@ -499,7 +584,7 @@ class audittrail_rule(osv.osv):
                     })
                     log_line_obj.create(cr, uid, vals)
 
-                elif method in  ('write', 'create'):
+                elif method in ('write', 'create'):
                     if method == 'create':
                         vals.update({
                             'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
@@ -666,6 +751,34 @@ class audittrail_log_line(osv.osv):
                 res = [('field_description', 'in', field_names)]
 
         return res
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+               context={}, count=False):
+
+        search_ids = super(audittrail_log_line, self).search(cr, uid, args, offset=0,
+                                                             limit=None, order=order,
+                                                             context=context, count=count)
+        id_model_obj = self.pool.get('ir.model')
+        model_id = context['active_model']
+        current_obj = self.pool.get(model_id)
+        inherit = False
+        for obj_class in current_obj._inherits:
+            inherit = True
+            args_inherit = [('model', '=', obj_class)]
+            obj_inherit = id_model_obj.search(cr, uid, args_inherit, context=context)
+            new_args = [('object_id', '=', obj_inherit[0]),
+                        ('res_id', '=', context['active_id'])]
+            ids = super(audittrail_log_line, self).search(cr, uid, new_args, offset=0,
+                                                          limit=None, order=order,
+                                                          context=context, count=count)
+            search_ids = search_ids + ids
+
+        if inherit and not isinstance(search_ids, (int, long)):
+            args_final = [('id', 'in', search_ids)]
+            search_ids = super(audittrail_log_line, self).search(cr, uid, args_final, offset=offset,
+                                                                 limit=limit, order=order,
+                                                                 context=context, count=count)
+        return search_ids
 
 
     _columns = {
