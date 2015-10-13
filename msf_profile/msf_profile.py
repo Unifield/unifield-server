@@ -126,6 +126,12 @@ class patch_scripts(osv.osv):
             if vals:
                 po_obj.write(cr, uid, [po['id']], vals)
 
+    def disable_crondoall(self, cr, uid, *a, **b):
+        cron_obj = self.pool.get('ir.cron')
+        cron_ids = cron_obj.search(cr, uid, [('doall', '=', True), ('active', 'in', ['t', 'f'])])
+        if cron_ids:
+            cron_obj.write(cr, uid, cron_ids, {'doall': False})
+
 patch_scripts()
 
 
