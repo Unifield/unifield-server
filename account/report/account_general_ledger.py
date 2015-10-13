@@ -179,6 +179,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_display_info': self._get_display_info,
             'get_show_move_lines': self.get_show_move_lines,
             'get_ccy_label': self.get_ccy_label,
+            'get_title': self._get_title,
         })
         
         # company currency
@@ -658,6 +659,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def get_ccy_label(self, short_version=False):
         return short_version and _('CUR') or _('Currency')
+
+    def _get_title(self):
+        if hasattr(self, 'title'):
+            return self.title or ''
+        return ''
                                             
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')

@@ -5,7 +5,7 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>General Ledger</Title>
+<Title>${get_title()|x}</Title>
 </DocumentProperties>
 <Styles>
 <Style ss:ID="ssCell">
