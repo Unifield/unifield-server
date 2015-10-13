@@ -64,8 +64,39 @@ class account_balance_report(osv.osv_memory):
         return {}
 
     def _print_report(self, cr, uid, ids, data, context=None):
-        data = self.pre_print_report(cr, uid, ids, data, context=context)
+        """data = self.pre_print_report(cr, uid, ids, data, context=context)
         return {'type': 'ir.actions.report.xml', 'report_name': 'account.account.balance', 'datas': data}
+        """
+        # US-334: General ledger and Trial balance report common parser/templates
+        if context is None:
+            context = {}
+        data = self.pre_print_report(cr, uid, ids, data, context=context)
+        data['form']['report_mode'] = 'tb'  # trial balance mode
+
+        form_fields = [ 'initial_balance', 'instance_ids', 'export_format',
+            'account_type', 'account_ids', ]
+        data['form'].update(self.read(cr, uid, ids, form_fields)[0])
+
+        if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
+            data['form'].update({'initial_balance': False})
+        if data['form']['journal_ids']:
+            default_journals = self._get_journals(cr, uid, context=context)
+            if default_journals:
+                if len(default_journals) == len(data['form']['journal_ids']):
+                    data['form']['all_journals'] = True
+
+        if data['form']['export_format'] \
+           and data['form']['export_format'] == 'xls':
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.general.ledger_xls',
+                'datas': data,
+            }
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.general.ledger_landscape',
+            'datas': data,
+            }
 
 account_balance_report()
 

@@ -99,13 +99,11 @@ class account_report_general_ledger(osv.osv_memory):
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form']['report_mode'] = 'gl'  # general ledger mode
 
-        form_fields = [ 'landscape',  'initial_balance', 'amount_currency',
-            'sortby', 'output_currency', 'instance_ids', 'export_format',
-            'account_type', 'display_account_view', 'display_details',
-            'unreconciled', 'account_ids',
-        ]
-
+        form_fields = [ 'initial_balance', 'amount_currency', 'sortby',
+            'output_currency', 'instance_ids', 'export_format',
+            'account_type', 'unreconciled', 'account_ids', ]
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
+
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form'].update({'initial_balance': False})
         if data['form']['journal_ids']:
