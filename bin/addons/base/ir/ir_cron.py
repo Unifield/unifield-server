@@ -70,7 +70,7 @@ class ir_cron(osv.osv, netsvc.Agent):
         'interval_type' : lambda *a: 'months',
         'numbercall' : lambda *a: 1,
         'active' : lambda *a: 1,
-        'doall' : lambda *a: 1
+        'doall' : lambda *a: 0
     }
 
     def _check_args(self, cr, uid, ids, context=None):
