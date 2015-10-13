@@ -38,7 +38,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
-<Interior ss:Color="#3498db" ss:Pattern="Solid" />
+##<Interior ss:Color="#3498db" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssBorderColored2">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
@@ -48,7 +48,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
-<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
+##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssBorderColored2Right">
 <Alignment ss:Vertical="Center" ss:Horizontal="Right"/>
@@ -58,7 +58,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
-<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
+##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssBorderDate">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
@@ -89,7 +89,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="#,##0.00"/>
-<Interior ss:Color="#3498db" ss:Pattern="Solid" />
+##<Interior ss:Color="#3498db" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssNumberColored2">
 <Borders>
@@ -100,7 +100,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="#,##0.00"/>
-<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
+##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssHeader">
 <Alignment ss:Vertical="Top" ss:WrapText="1"/>
@@ -130,7 +130,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
-<Interior ss:Color="#3498db" ss:Pattern="Solid" />
+##<Interior ss:Color="#3498db" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssAccountLineColored2">
 <Alignment ss:Bottom="Top" ss:WrapText="1"/>
@@ -141,7 +141,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
-<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
+##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssAccountLineNoWrap">
 <Alignment ss:Bottom="Top"/>
