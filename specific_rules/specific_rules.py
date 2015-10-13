@@ -1439,8 +1439,8 @@ class stock_inventory(osv.osv):
         if check_res:
             raise osv.except_osv(
                 _("Error"),
-                _("""Some lines have the same couple location/product. Only
-one line per couple location/product is expected."""))
+                _("""Some lines have the same data for Location/Product/Batch/
+Expiry date. Only one line with same data is expected."""))
 
         return True
 
