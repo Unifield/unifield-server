@@ -1058,7 +1058,7 @@ class Connection(osv.osv):
 
     _defaults = {
         'active': True,
-        'host' : 'sync.unifield.org',
+        'host' : 'sync.unifield.net',
         'port' : 8070,
         'protocol': 'netrpc_gzip',
         'login' : 'admin',

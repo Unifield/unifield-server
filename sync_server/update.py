@@ -83,7 +83,7 @@ class puller_ids_rel(osv.osv):
 
     _columns = {
         'update_id' : fields.many2one('sync.server.update',
-            required=True, string="Update"),
+            required=True, string="Update", select=1),
         'entity_id' : fields.many2one('sync.server.entity',
             required=True, string="Instance"),
         'create_date' : fields.datetime('Pull Date'),
@@ -95,6 +95,19 @@ class puller_ids_rel(osv.osv):
         except KeyError:
             pass
         super(puller_ids_rel, self).create(cr, uid, vals, context=context)
+
+    def _auto_init(self, cr, context=None):
+        super(puller_ids_rel, self)._auto_init(cr, context)
+        foreign_key_to_delete = [
+            'sync_server_entity_rel_create_uid_fkey',
+            'sync_server_entity_rel_entity_id_fkey',
+            'sync_server_entity_rel_update_id_fkey',
+            'sync_server_entity_rel_write_uid_fkey'
+        ]
+        for to_del in foreign_key_to_delete:
+            cr.execute("SELECT conname FROM pg_constraint WHERE conname = %s", (to_del, ))
+            if cr.fetchone():
+                cr.execute("ALTER table sync_server_entity_rel DROP CONSTRAINT %s" % (to_del,))
 
     def init(self, cr):
         cr.execute("""\
@@ -171,6 +184,9 @@ class update(osv.osv):
         if self._table in existing_tables:
             cr.execute("""DELETE FROM %s WHERE rule_id IS NULL""" % self._table)
         super(update, self)._auto_init(cr, context=context)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'sync_server_update_sequence_id_index'")
+        if not cr.fetchone():
+            cr.execute("CREATE INDEX sync_server_update_sequence_id_index on sync_server_update (sequence, id)")
 
     def __init__(self, pool, cr):
         self._cache_pullers = SavePullerCache(self)

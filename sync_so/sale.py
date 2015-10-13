@@ -104,6 +104,11 @@ class sale_order_sync(osv.osv):
             default.update({'fo_created_by_po_sync': False})
         return super(sale_order_sync, self).copy(cr, uid, id, default, context=context)
 
+    def _manual_create_sync_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
+
+
     def create_so(self, cr, uid, source, po_info, context=None):
         self._logger.info("+++ Create an FO at %s from a PO (normal flow) at %s"%(cr.dbname, source))
         if not context:
@@ -324,5 +329,67 @@ class sale_order_sync(osv.osv):
                     ('product_uom_qty' in line_changes)
                 logger.is_product_price_modified |= \
                     ('price_unit' in line_changes)
+
+    def _hook_create_sync_split_fo_messages(self, cr, uid, split_ids, original_id, context=None):
+        """
+        Generate sync. messages manually for the FOs in ids
+        """
+        rule_obj = self.pool.get('sync.client.message_rule')
+        msg_to_send_obj = self.pool.get('sync.client.message_to_send')
+
+        if isinstance(split_ids, (int, long)):
+            split_ids = [split_ids]
+
+        res = super(sale_order_sync, self)._hook_create_sync_split_fo_messages(cr, uid, split_ids, original_id, context=context)
+
+        def generate_msg_to_send(rule, model_obj, object_id, partner_name):
+            arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
+            identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
+            if not identifiers:
+                return
+
+            xml_id = identifiers[object_id]
+            existing_message_id = msg_to_send_obj.search(cr, uid, [
+                ('identifier', '=', xml_id),
+                ('destination_name', '=', partner_name),
+            ], context=context)
+            if existing_message_id:
+                return
+
+            # if not then create a new one --- FOR THE GIVEN FO AND DESTINATION
+            data = {
+                'identifier': xml_id,
+                'remote_call': rule.remote_call,
+                'arguments': arguments,
+                'destination_name': partner_name,
+                'sent': False,
+                'generate_message': True,
+            }
+            return msg_to_send_obj.create(cr, uid, data, context=context)
+
+        nfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.normal_fo_create_po', context=context)
+        vfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.validated_fo_update_original_po', context=context)
+        csp_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.create_split_po', context=context)
+
+        nfo_model_obj = nfo_rule and self.pool.get(nfo_rule.model) or None
+        vfo_model_obj = vfo_rule and self.pool.get(vfo_rule.model) or None
+        csp_model_obj = csp_rule and self.pool.get(csp_rule.model) or None
+
+        if original_id:
+            orig_partner_name = self.browse(cr, uid, original_id, context=context).partner_id.name
+            available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain), context=context)
+            if nfo_model_obj and nfo_rule and original_id in available_nfo_ids:
+                generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner_name)
+            if vfo_model_obj and vfo_rule:
+                generate_msg_to_send(vfo_rule, vfo_model_obj, original_id, orig_partner_name)
+
+        if split_ids and csp_rule and csp_model_obj:
+            available_split_ids = self.search(cr, uid, eval(csp_rule.domain), context=context)
+            for fo in self.browse(cr, uid, split_ids, context=context):
+                if fo.id in available_split_ids:
+                    generate_msg_to_send(csp_rule, csp_model_obj, fo.id, fo.partner_id.name)
+
+        return
+
 
 sale_order_sync()
