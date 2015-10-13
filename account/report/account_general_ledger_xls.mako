@@ -39,25 +39,26 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 ##<Interior ss:Color="#3498db" ss:Pattern="Solid" />
+<Font ss:Bold="1" />
 </Style>
 <Style ss:ID="ssBorderColored2">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
+##<Borders>
+##  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+##  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+##  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+##  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+##</Borders>
 ##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssBorderColored2Right">
 <Alignment ss:Vertical="Center" ss:Horizontal="Right"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
+##<Borders>
+##<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+##<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+## <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+##<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+##</Borders>
 ##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssBorderDate">
@@ -90,6 +91,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="#,##0.00"/>
 ##<Interior ss:Color="#3498db" ss:Pattern="Solid" />
+<Font ss:Bold="1" />
 </Style>
 <Style ss:ID="ssNumberColored2">
 <Borders>
@@ -297,7 +299,7 @@ ccy_sub_total_style_right_suffix = get_show_move_lines() and 'Right' or ''
 <Cell ss:StyleID="ssBorder${ac_style_suffix}" ss:MergeAcross="2">
     <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine${ac_style_suffix}">
+<Cell ss:StyleID="ssBorder${ac_style_suffix}">
     <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ac_style_suffix}">
