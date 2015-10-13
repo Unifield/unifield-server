@@ -27,9 +27,8 @@ class account_report_general_ledger(osv.osv_memory):
     _description = "General Ledger Report"
 
     _columns = {
-        'landscape': fields.boolean("Landscape Mode"),
         'initial_balance': fields.boolean("Include initial balances",
-                                          help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
+            help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
         'sortby': fields.selection([('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')], 'Sort By', required=True),
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
@@ -44,18 +43,19 @@ class account_report_general_ledger(osv.osv_memory):
             ('bl','Balance Sheet'),
         ], 'B/S / P&L account', required=True),
 
-        'display_account_view': fields.boolean("Account Header",
-            help="Display view accounts ?"),
-
-        'display_details': fields.boolean("Display details",
-            help="Display details of the entries mouvement per account"),
-
         'unreconciled': fields.boolean("Unreconciled",
             help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
 
         'account_ids': fields.many2many('account.account',
             'account_report_general_ledger_account_account_rel',
             'report_id', 'account_id', 'Accounts'),
+
+        'filter': fields.selection([
+            ('filter_no', 'No Filters'),
+            ('filter_date_doc', 'Document Date'),
+            ('filter_date', 'Posting Date'),
+            ('filter_period', 'Periods')
+        ], "Filter by", required=True),
     }
     
     def _get_journals(self, cr, uid, context=None):
@@ -102,11 +102,14 @@ class account_report_general_ledger(osv.osv_memory):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
+        data['form']['report_mode'] = 'gl'  # general ledger mode
+
         form_fields = [ 'landscape',  'initial_balance', 'amount_currency',
             'sortby', 'output_currency', 'instance_ids', 'export_format',
             'account_type', 'display_account_view', 'display_details',
             'unreconciled', 'account_ids',
         ]
+
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form'].update({'initial_balance': False})
@@ -123,18 +126,12 @@ class account_report_general_ledger(osv.osv_memory):
                 'report_name': 'account.general.ledger_xls',
                 'datas': data,
             }
-        if data['form']['landscape']:
-            return { 
-                'type': 'ir.actions.report.xml',
-                'report_name': 'account.general.ledger_landscape',
-                'datas': data,
-            }
-        return { 
+        return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'account.general.ledger',
+            'report_name': 'account.general.ledger_landscape',
             'datas': data,
-        }
-        
+            }
+
         
 account_report_general_ledger()
 

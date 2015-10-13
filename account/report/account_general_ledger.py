@@ -59,16 +59,25 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.account_report_types = [ 'asset', 'liability', ]
             else:  # all
                 self.account_report_types = False
+
+        # settings regarding report mode
+        # default general ledger mode
+        self.show_account_views = True
+        self.show_move_lines = True
+        self.title = _('General Ledger')
+        if 'report_mode' in data['form']:
+            if data['form']['report_mode'] == 'tb':
+                # trial balance mode
+                self.show_account_views = True
+                self.show_move_lines = False
+                self.title = _('Trial Balance')
+
         self.account_ids = self._get_data_form(data, 'account_ids')
-        self.show_account_views = self._get_data_form(data,
-            'display_account_view', default=True)
-        self.show_move_lines = self._get_data_form(data,
-            'display_details')
         # US-334/6: Only account 10100 and 10200 must never be displayed in \
         # details when you tick "Unreconciled" because they are the only \
         # account not reconciliable.
         self.unreconciled_accounts = self._get_data_form(data,
-            'unreconciled', False) and ['10100', '10200',] or False
+            'unreconciled', False) and ['10100', '10200', ] or False
         self.context['state'] = data['form']['target_move']
 
         if 'instance_ids' in data['form']:
