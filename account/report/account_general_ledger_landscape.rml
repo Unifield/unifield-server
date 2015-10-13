@@ -85,12 +85,13 @@
     <blockTableStyle id="Table8_header">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
-      <blockBackground colorName="#3498db" start="0,0" stop="-1,0"/>
+      <!-- <blockBackground colorName="#3498db" start="0,0" stop="-1,0"/> -->
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
     </blockTableStyle>
     <blockTableStyle id="Table8_subtotal_ccy">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
-      <blockBackground colorName="#cde1f0" start="0,0" stop="-1,0"/>
+      <!-- <blockBackground colorName="#cde1f0" start="0,0" stop="-1,0"/> -->
     </blockTableStyle>
     <blockTableStyle id="Table9">
       <blockAlignment value="LEFT"/>
@@ -366,19 +367,19 @@
             <para style="terp_default_9_Right">[[ get_show_move_lines() and o.code or '' ]]</para>
           </td>
           <td>
-              <para style="terp_default_Bold_9_Right">[[ c.name or c.code or '']]</para>
+              <para style="terp_default_9_Right">[[ c.name or c.code or '']]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(sum_debit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(sum_credit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
           </td>
            <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=False), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=False), digits=get_digits(dp='Account')) ]]</para>
           </td>
         </tr>
       </blockTable>
