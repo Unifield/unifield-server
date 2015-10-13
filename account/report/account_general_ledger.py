@@ -550,30 +550,33 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         get_start_period, get_end_period
         are from common_report_header
         """
-        res = ''
-        f = self._get_filter(data)
-        if not f:
-            return res
+        if not data.get('form', False):
+            return ''
+        infos = []
 
-        if f == 'No Filter':
-            res = f
-        elif f == 'Date':
-            res = self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
-        elif f == 'Periods':
-            res = self.get_start_period(data) + ' - ' + self.get_end_period(data)
+        # date/period
+        if data.get('form', False) and data['form'].get('filter', False):
+            line = ''
+            if data['form']['filter'] in ('filter_date', 'filter_date_doc', ):
+                line = _('Posting') if data['form']['filter'] == 'filter_date' else _('Document')
+                line += " %s " % (_('Date'), )
+                line += self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
+            elif data['form']['filter'] == 'filter_period':
+                line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
+            if line:
+                infos.append(line)
 
+        # account type
         if data['form'].get('account_type'):
-            if res == 'No Filter':
-                res = ''
             if data['form'].get('account_type') == 'pl':
-                res += "\n" + _('Profit & Loss accounts')
+                infos.append(_('Profit & Loss accounts'))
             elif data['form'].get('account_type') == 'bl':
-                res += "\n" + _('Balance Sheet accounts')
+                infos.append(_('Balance Sheet accounts'))
+
+        # reconciled account
         if self.unreconciled_accounts:
-            if res == 'No Filter':
-                res = ''
-            res += "\n" + _('Unreconciled')
-        return res
+            infos.append(_('Unreconciled'))
+        return infos and "\n".join(infos) or ''
         
     def _get_line_debit(self, line, booking=False):
         return self.__get_line_amount(line, 'debit', booking=booking)

@@ -127,6 +127,8 @@ class common_report_header(object):
         if data.get('form', False) and data['form'].get('filter', False):
             if data['form']['filter'] == 'filter_date':
                 return _('Date')
+            elif data['form']['filter'] == 'filter_date_doc':
+                return _('Document Date')
             elif data['form']['filter'] == 'filter_period':
                 return _('Periods')
         return _('No Filter')
