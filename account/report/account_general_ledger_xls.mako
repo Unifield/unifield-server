@@ -136,7 +136,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 <Style ss:ID="ssAccountLineColored2">
 <Alignment ss:Bottom="Top" ss:WrapText="1"/>
-<Font ss:Size="8" ss:Italic="1"/>
+<Font ss:Size="8" />
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
