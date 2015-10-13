@@ -197,7 +197,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="50" />
 % if get_show_move_lines():
 <Column ss:AutoFitWidth="1" ss:Width="300" />
@@ -318,7 +318,10 @@ ccy_sub_total_style_right_suffix = get_show_move_lines() and 'Right' or ''
 
 % for line in lines(o):
 <Row>
-<Cell ss:StyleID="ssAccountLine" ss:MergeAcross="1">
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
