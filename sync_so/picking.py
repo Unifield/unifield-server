@@ -826,7 +826,7 @@ class stock_picking(osv.osv):
             list_asset = []
             # only treat for the internal partner
             for move in pick.move_lines:
-                if move.state not in ('done'):
+                if move.state not in ('done', 'cancel'):
                     continue
                 # Get batch number object
                 if move.prodlot_id:
