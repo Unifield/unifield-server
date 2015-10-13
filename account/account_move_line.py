@@ -60,10 +60,16 @@ class account_move_line(osv.osv):
         where_move_lines_by_date = ''
 
         if context.get('date_from', False) and context.get('date_to', False):
-            if initial_bal:
-                where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date < '" +context['date_from']+"')"
+            if context.get('date_fromto_docdate', False):
+                if initial_bal:
+                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date < '" +context['date_from']+"')"
+                else:
+                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date >= '" +context['date_from']+"' AND document_date <= '"+context['date_to']+"')"
             else:
-                where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date >= '" +context['date_from']+"' AND date <= '"+context['date_to']+"')"
+                if initial_bal:
+                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date < '" +context['date_from']+"')"
+                else:
+                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date >= '" +context['date_from']+"' AND date <= '"+context['date_to']+"')"
 
         if state:
             if state.lower() not in ['all']:

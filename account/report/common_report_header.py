@@ -47,6 +47,10 @@ class common_report_header(object):
         elif filter == 'filter_date':
             self._set_context_val('date_from', form['date_from'])
             self._set_context_val('date_to', form['date_to'])
+        elif filter == 'filter_date_doc':
+            self._set_context_val('date_fromto_docdate', True)
+            self._set_context_val('date_from', form['date_from'])
+            self._set_context_val('date_to', form['date_to'])
 
     def _set_context_val(self, key, val):
         if self.context and not key in self.context:
