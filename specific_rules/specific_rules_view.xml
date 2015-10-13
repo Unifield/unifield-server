@@ -491,6 +491,8 @@
                         <field name="ssl_check" invisible="True" />
                         <field name="dg_check" />
                         <field name="np_check" />
+                        <button name="btn_dl" type="object" string="Line is duplicated" icon="gtk-warning" attrs="{'invisible': [('duplicate_line', '=', False)]}" />
+                        <field name="duplicate_line" invisible="True" />
                     <field name="has_problem" invisible="True" />
                     </field>
                 </data>

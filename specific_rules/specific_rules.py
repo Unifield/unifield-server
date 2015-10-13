@@ -1762,6 +1762,16 @@ class stock_inventory_line(osv.osv):
                or not self._check_batch_management(cr, uid, [obj.id]):
                    result[obj.id]['has_problem'] = True
 
+            result[obj.id]['duplicate_line'] = False
+            if self.search(cr, uid, [
+                ('inventory_id', '=', obj.inventory_id.id),
+                ('location_id', '=', obj.location_id.id),
+                ('product_id', '=', obj.product_id.id),
+                ('prod_lot_id', '=', obj.prod_lot_id and obj.prod_lot_id.id or False),
+                ('expiry_date', '=', obj.expiry_date or False),
+                ('id', '!=', obj.id),
+            ], limit=1, context=context):
+                result[obj.id]['duplicate_line'] = True
         return result
 
     def _check_batch_management(self, cr, uid, ids, context=None):
@@ -1810,6 +1820,7 @@ class stock_inventory_line(osv.osv):
         'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
         'has_problem': fields.function(_get_checks_all, method=True, string='Has problem', type='boolean', readonly=True, multi="m"),
+        'duplicate_line': fields.function(_get_checks_all, method=True, string='Duplicate line', type='boolean', readonly=True, multi="m"),
         'dont_move': fields.boolean(string='Don\'t create stock.move for this line'),
     }
 
@@ -1835,6 +1846,15 @@ class stock_inventory_line(osv.osv):
                      ['prod_lot_id']),
                     (_uom_constraint, 'Constraint error on Uom', [])
                     ]
+
+    def btn_dl(self, cr, uid, ids, context=None):
+        """
+        Return the information message that the line is duplicated
+        """
+        raise osv.except_osv(
+            _('Error'),
+            _('An other line in this inventory has the same parameters. Please remove it.')
+        )
 
 stock_inventory_line()
 
