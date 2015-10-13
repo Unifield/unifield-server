@@ -64,17 +64,12 @@ class account_report_general_ledger(osv.osv_memory):
         return self.pool.get('account.journal').search(cr, uid, domain, context=context)
     
     _defaults = {
-        'landscape': True,
         'amount_currency': True,
         'sortby': 'sort_date',
         'initial_balance': False,
-        'amount_currency': True,
         'export_format': 'pdf',
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
-
         'account_type': 'all',
-        'display_account_view': True,
-        'display_details': False,
         'unreconciled': False,
     }
     

@@ -19,7 +19,45 @@
             </xpath>
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="display_account"/>
+                <field name="initial_balance" attrs="{'readonly':[('fiscalyear_id','=', False)]}"/>
                 <newline/>
+                <field name="export_format"/>
+                <field name="account_type" />
+                <newline/>
+                <field name="instance_ids">
+                    <tree noteditable="1" editable="top" string="Proprietary Instances">
+                        <field name="code" />
+                        <field name="name" />
+                    </tree>
+                </field>
+                <newline/>
+            </xpath>
+
+            <xpath expr="//field[@name='journal_ids']" position="replace">
+                <group col="4" colspan="4">
+                    <button name="remove_journals" string="Remove all journals" type="object" colspan="1" />
+                    <label string="" colspan="3" />
+                    <field name="journal_ids" colspan="4" nolabel="1" noteditable="1">
+                        <tree noteditable="1" editable="top" string="Account Journal">
+                            <field name="instance_id" />
+                            <field name="code" />
+                            <field name="name" />
+                            <field name="type" />
+                        </tree>
+                    </field>
+                </group>
+            </xpath>
+
+            <xpath expr="//page[@name='journal_ids']" position="after">
+                <page string="Accounts filter" name="account_ids">
+                    <field name="account_ids" colspan="4" nolabel="1">
+                        <tree noteditable="1" editable="top" string="Account">
+                            <field name="code" />
+                            <field name="name" />
+                            <field name="type" />
+                        </tree>
+                    </field>
+                </page>
             </xpath>
             </data>
           </field>

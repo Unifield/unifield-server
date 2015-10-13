@@ -19,16 +19,49 @@
 #
 ##############################################################################
 
-from osv import osv
+from osv import fields, osv
 
 class account_balance_report(osv.osv_memory):
     _inherit = "account.common.account.report"
     _name = 'account.balance.report'
     _description = 'Trial Balance Report'
 
-    _defaults = {
-        'journal_ids': [],
+    _columns = {
+        'initial_balance': fields.boolean("Include initial balances",
+            help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
+        'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
+        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
+
+        # us-334: General ledger report improvements
+        'account_type': fields.selection([
+            ('all', 'All'),
+            ('pl','Profit & Loss'),
+            ('bl','Balance Sheet'),
+        ], 'B/S / P&L account', required=True),
+
+        'account_ids': fields.many2many('account.account',
+            'account_report_general_ledger_account_account_rel',
+            'report_id', 'account_id', 'Accounts'),
+
+        'filter': fields.selection([
+            ('filter_no', 'No Filters'),
+            ('filter_date_doc', 'Document Date'),
+            ('filter_date', 'Posting Date'),
+            ('filter_period', 'Periods')
+        ], "Filter by", required=True),
     }
+
+    _defaults = {
+        'initial_balance': False,
+        'export_format': 'pdf',
+        'account_type': 'all',
+    }
+
+    def remove_journals(self, cr, uid, ids, context=None):
+        if ids:
+            self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
+                       context=context)
+        return {}
 
     def _print_report(self, cr, uid, ids, data, context=None):
         data = self.pre_print_report(cr, uid, ids, data, context=context)
