@@ -1075,7 +1075,7 @@
                                 <field name="dg_check" />
                                 <field name="np_check" />
                                 <field name="comment" />
-                                <button name="btn_dl" type="object" string="Line is duplicated" icon="gtk-warning" attrs="    {'invisible': [('duplicate_line', '=', False)]}" />
+                                <button name="btn_dl" type="object" string="Line is duplicated" icon="gtk-dialog-warning" attrs="{'invisible': [('duplicate_line', '=', False)]}" />
                                 <field name="duplicate_line" invisible="True" />  
                                 <field name="has_problem" invisible="True" />
                                 <button name="%(stock.action_view_stock_inventory_line_split)d"
