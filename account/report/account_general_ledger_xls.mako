@@ -286,9 +286,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 
 <%
-ac_style_suffix = get_show_move_lines() and 'Colored1' or ''
+ac_style_suffix = 'Colored1'
 ccy_sub_total_style_suffix = 'Colored2'
-ccy_sub_total_style_right_suffix = get_show_move_lines() and 'Right' or ''
+ccy_sub_total_style_right_suffix = 'Right'
 %>
 
 % for o in get_children_accounts(a):
