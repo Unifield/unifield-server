@@ -51,10 +51,16 @@ class account_balance_report(osv.osv_memory):
         ], "Filter by", required=True),
     }
 
+    def _get_journals(self, cr, uid, context=None):
+        """exclude extra-accounting journals from this report (IKD, ODX)."""
+        domain = [('type', 'not in', ['inkind', 'extra'])]
+        return self.pool.get('account.journal').search(cr, uid, domain, context=context)
+
     _defaults = {
         'initial_balance': False,
         'export_format': 'pdf',
         'account_type': 'all',
+        'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
     }
 
     def remove_journals(self, cr, uid, ids, context=None):
@@ -79,6 +85,12 @@ class account_balance_report(osv.osv_memory):
 
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form'].update({'initial_balance': False})
+
+        if data['form']['journal_ids']:
+            default_journals = self._get_journals(cr, uid, context=context)
+            if default_journals:
+                if len(default_journals) == len(data['form']['journal_ids']):
+                    data['form']['all_journals'] = True
 
         if data['form']['export_format'] \
            and data['form']['export_format'] == 'xls':
