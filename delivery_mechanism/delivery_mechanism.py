@@ -119,7 +119,7 @@ class stock_picking_processing_info(osv.osv_memory):
             'res_model': 'stock.picking',
             'view_id': [view_id, tree_view_id],
             'view_type': 'form',
-            'view_mode': 'tree,form',
+            'view_mode': 'form,tree',
             'search_view_id': src_view_id,
             'target': 'same',
             'domain': [('type', '=', 'in')],
