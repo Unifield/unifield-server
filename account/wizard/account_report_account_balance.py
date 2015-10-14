@@ -92,18 +92,15 @@ class account_balance_report(osv.osv_memory):
                 if len(default_journals) == len(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
 
+        action = {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.general.ledger_landscape',  # PDF
+            'datas': data,
+        }
         if data['form']['export_format'] \
            and data['form']['export_format'] == 'xls':
-            return {
-                'type': 'ir.actions.report.xml',
-                'report_name': 'account.general.ledger_xls',
-                'datas': data,
-            }
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'account.general.ledger_landscape',
-            'datas': data,
-            }
+            action['report_name'] = 'account.general.ledger_xls'
+        return action
 
 account_balance_report()
 
