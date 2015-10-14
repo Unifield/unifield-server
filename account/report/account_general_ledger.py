@@ -647,10 +647,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         info_data = [
             (_('Accounts'), display_account, ),
-            (_('Account header'),
-                _(self.show_account_views and 'Yes' or 'No'), ),
-            (_('Details'),
-                _(self.show_move_lines and 'Yes' or 'No'), ),
         ]
 
         res = ""
