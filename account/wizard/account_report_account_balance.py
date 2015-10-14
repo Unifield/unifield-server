@@ -79,11 +79,6 @@ class account_balance_report(osv.osv_memory):
 
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form'].update({'initial_balance': False})
-        if data['form']['journal_ids']:
-            default_journals = self._get_journals(cr, uid, context=context)
-            if default_journals:
-                if len(default_journals) == len(data['form']['journal_ids']):
-                    data['form']['all_journals'] = True
 
         if data['form']['export_format'] \
            and data['form']['export_format'] == 'xls':

@@ -87,7 +87,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids, context=self.context)
         
         # output currency
-        self.output_currency_id = data['form']['output_currency']
+        self.output_currency_id = 'output_currency' in data['form'] \
+            and data['form']['output_currency']
         self.output_currency_code = ''
         if self.output_currency_id:
             ouput_cur_r = self.pool.get('res.currency').read(self.cr,
