@@ -292,6 +292,9 @@ ccy_sub_total_style_right_suffix = 'Right'
 %>
 
 % for o in get_children_accounts(a):
+<%
+account_first_ccy_subtotal_line = True
+%>
 <Row>
 <Cell ss:StyleID="ssBorder${ac_style_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
@@ -351,7 +354,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 % for c in get_currencies(o):
 <Row>
 <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
-    <Data ss:Type="String">${(get_show_move_lines() and o.code or '')|x}</Data>
+    <Data ss:Type="String">${(account_first_ccy_subtotal_line and get_show_move_lines() and o.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
     <Data ss:Type="String">${(c.name or c.code or '')|x}</Data>
@@ -369,6 +372,9 @@ ccy_sub_total_style_right_suffix = 'Right'
     <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=False)}</Data>
 </Cell>
 </Row>
+<%
+account_first_ccy_subtotal_line = False
+%>
 % endfor
 
 % endfor
