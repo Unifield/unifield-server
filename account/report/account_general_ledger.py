@@ -186,10 +186,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         # company currency
         self.uid = uid
         self.currency_id = False
+        self.currency_name = ''
         self.instance_id = False
         user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
         if user and user[0] and user[0].company_id:
             self.currency_id = user[0].company_id.currency_id.id
+            self.currency_name = user[0].company_id.currency_id and user[0].company_id.currency_id.name or ''
             if user[0].company_id.instance_id:
                 self.instance_id = user[0].company_id.instance_id.id
         if not self.currency_id:
@@ -543,7 +545,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return 'Date'
         
     def _get_output_currency_code(self, data):
-        return self.output_currency_code or ''
+        return self.output_currency_code or self.currency_name
         
     def _get_filter_info(self, data):
         """ get filter info
