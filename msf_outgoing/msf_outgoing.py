@@ -2993,17 +2993,23 @@ class stock_picking(osv.osv):
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
+            tree_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')
             view_id = view_id and view_id[1] or False
-            context.update({'picking_type': 'delivery_order', 'view_id': view_id})
+            tree_view_id = tree_view_id and tree_view_id[1] or False
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_out_search')
+            search_view_id = search_view_id and search_view_id[1] or False
+            context.update({'picking_type': 'delivery_order', 'view_id': view_id, 'search_view_id': search_view_id})
             return {'name':_("Delivery Orders"),
                     'view_mode': 'form,tree',
-                    'view_id': [view_id],
+                    'view_id': [view_id, tree_view_id],
+                    'search_view_id': search_view_id,
                     'view_type': 'form',
                     'res_model': 'stock.picking',
                     'res_id': new_pick_id or obj.id,
                     'type': 'ir.actions.act_window',
                     'target': 'crush',
                     'context': context,
+                    'domain': [('type', '=', 'out'), ('subtype', '=', 'standard')],
                     }
 
 
@@ -3027,7 +3033,11 @@ class stock_picking(osv.osv):
         move_to_update = []
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+        tree_view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_tree')
         view_id = view_id and view_id[1] or False
+        tree_view_id = tree_view_id and tree_view_id[1] or False
+        search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_search')
+        search_view_id = search_view_id and search_view_id[1] or False
 
         for out in self.browse(cr, uid, ids, context=context):
             if out.state in ('cancel', 'done'):
@@ -3064,15 +3074,17 @@ class stock_picking(osv.osv):
         if not context.get('sync_message_execution', False):
             self._hook_create_rw_out_sync_messages(cr, uid, [out.id], context, False)
 
-        context.update({'picking_type': 'picking'})
+        context.update({'picking_type': 'picking', 'search_view_id': search_view_id})
         return {'name': _('Picking Tickets'),
                 'view_mode': 'form,tree',
-                'view_id': [view_id],
+                'view_id': [view_id, tree_view_id],
+                'search_view_id': search_view_id,
                 'view_type': 'form',
                 'res_model': 'stock.picking',
                 'res_id': out.id,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
+                'domain': [('type', '=', 'out'), ('subtype', '=', 'picking')],
                 'context': context}
 
     def do_partial_out(self, cr, uid, wizard_ids, context=None):
