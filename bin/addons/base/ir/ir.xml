@@ -1508,7 +1508,6 @@
                         <newline/>
                         <field name="nextcall"/>
                         <field name="numbercall"/>
-                        <field name="doall"/>
                     </page>
                     <page string="Technical Data" groups="base.group_extended">
                         <separator string="Action to Trigger" colspan="4"/>
