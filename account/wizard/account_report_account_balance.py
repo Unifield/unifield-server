@@ -94,7 +94,7 @@ class account_balance_report(osv.osv_memory):
 
         action = {
             'type': 'ir.actions.report.xml',
-            'report_name': 'account.general.ledger_landscape',  # PDF
+            'report_name': 'account.general.ledger_landscape_tb',  # PDF
             'datas': data,
         }
         if data['form']['export_format'] \
