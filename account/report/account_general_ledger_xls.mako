@@ -43,22 +43,22 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 <Style ss:ID="ssBorderColored2">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
-##<Borders>
+<Borders>
 ##  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-##  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-##  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
 ##  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-##</Borders>
+</Borders>
 ##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssBorderColored2Right">
 <Alignment ss:Vertical="Center" ss:Horizontal="Right"/>
-##<Borders>
-##<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-##<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-## <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-##<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-##</Borders>
+<Borders>
+##  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+##  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
 ##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssBorderDate">
@@ -95,10 +95,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 <Style ss:ID="ssNumberColored2">
 <Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+##  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+##  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="#,##0.00"/>
@@ -138,10 +138,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Alignment ss:Bottom="Top" ss:WrapText="1"/>
 <Font ss:Size="8" />
 <Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+##  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+##  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 ##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
