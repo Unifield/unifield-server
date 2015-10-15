@@ -62,13 +62,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         # settings regarding report mode
         # default general ledger mode
-        self.show_account_views = True
         self.show_move_lines = True
         self.title = _('General Ledger')
         if 'report_mode' in data['form']:
             if data['form']['report_mode'] == 'tb':
                 # trial balance mode
-                self.show_account_views = True
                 self.show_move_lines = False
                 self.title = _('Trial Balance')
 
@@ -276,16 +274,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not res:
             return [account]
 
-        # account filtering account per account
-        if self.account_ids or not self.show_account_views:
-            # filter by account
+        if self.account_ids:
+            # account filtering account per account
             new_res = []
             for a in res:
-                # 1st filter account views ?
-                if not self.show_account_views and a.type == 'view':
-                    continue
-
-                # 2nd filter by account (integrate parents of filtered account)
+                # filter by account (integrate parents of filtered account)
                 if not a.id in self.account_ids:
                     new_res.append(a)
                 else:
