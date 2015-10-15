@@ -1094,6 +1094,23 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 _('You cannot confirm the sourcing of a line to an internal customer with an internal supplier.'),
             )
 
+        self.check_confirm_order(cr, uid, ids, context=context)
+
+        return True
+
+    def check_confirm_order(self, cr, uid, ids, context=None):
+        """
+        Run the confirmation of the FO/IR if all lines are confirmed
+        """
+        # Objects
+        order_obj = self.pool.get('sale.order')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         order_to_check = {}
         for line in self.read(cr, uid, ids, ['order_id', 'estimated_delivery_date', 'price_unit', 'product_uom_qty'], context=context):
             order_data = order_obj.read(cr, uid, line['order_id'][0], ['procurement_request', 'order_type'], context=context)
