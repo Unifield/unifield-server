@@ -137,6 +137,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                         for c in ccy_brs:
                             self._deduce_accounts_balance[a_code][c.id] = \
                                 self._sum_balance_account(account, ccy=c)
+
+        if self.account_ids:
+            # add parent(s) of filtered accounts
+            self.account_ids += self.pool.get('account.account')._get_parent_of(
+                    self.cr, self.uid, self.account_ids)
         
         return res
 
@@ -250,6 +255,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if self.unreconciled_accounts:
                 if child_account.code in self.unreconciled_accounts:
                     continue
+            if self.account_ids and child_account.id not in self.account_ids:
+                    continue  # filtered account
+
             sql = """
                 SELECT count(id)
                 FROM account_move_line AS l
@@ -271,25 +279,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             else:
                 if not ccy or (ccy and num_entry > 0):
                     res.append(child_account)
-        if not res:
-            return [account]
 
-        if self.account_ids:
-            # account filtering account per account
-            new_res = []
-            for a in res:
-                # filter by account (integrate parents of filtered account)
-                if not a.id in self.account_ids:
-                    new_res.append(a)
-                else:
-                    for ca in a.child_parent_ids:
-                        if ca.id in self.account_ids:
-                            new_res.append(a)
-                            break
-
-            res = new_res
-
-        return res
+        return res or [account]
 
     def lines(self, account):
         if not self.show_move_lines:
