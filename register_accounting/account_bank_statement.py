@@ -271,6 +271,10 @@ class account_bank_statement(osv.osv):
             if not self.check_status_condition(cr, uid, st.state, journal_type=j_type):
                 continue
 
+            # US-665 Do not permit closing Bank/Cheque Register if previous register is not closed! (confirm state)
+            if st.prev_reg_id and st.prev_reg_id.state != 'confirm':
+                raise osv.except_osv(_('Error'), _('Please close previous register before closing this one!'))
+
             # modification of balance_check for cheque registers
             if st.journal_id.type in ['bank', 'cash']:
                 self.balance_check(cr, uid, st.id, journal_type=j_type, context=context)
