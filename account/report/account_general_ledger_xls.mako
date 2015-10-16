@@ -197,21 +197,19 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="64" />
 % if get_show_move_lines():
 <Column ss:AutoFitWidth="1" ss:Width="300" />
 % endif
 % if not get_show_move_lines():
-<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="150" />
 % endif
 <Column ss:AutoFitWidth="1" ss:Width="50" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="64" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
