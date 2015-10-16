@@ -375,10 +375,7 @@ class update_received(osv.osv):
                 group_key = (update.sequence_number, 1, -update.rule_sequence)
             else:
                 group_key = (update.sequence_number, 0,  update.rule_sequence)
-            try:
-                update_groups[group_key].append(update)
-            except KeyError:
-                update_groups[group_key] = [update]
+            update_groups.setdefault(group_key, []).append(update)
         self.write(cr, uid, update_ids, {'execution_date': fields.datetime.now()}, context=context)
 
         def secure_import_data(obj, fields, values):

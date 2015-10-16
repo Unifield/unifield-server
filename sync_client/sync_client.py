@@ -623,20 +623,17 @@ class Entity(osv.osv):
         # Sort updates by rule_sequence
         whole = updates.browse(cr, uid, update_ids, context=context)
         update_groups = dict()
-
         for update in whole:
             group_key = (update.sequence_number, update.rule_sequence)
-            try:
-                update_groups[group_key].append(update.id)
-            except KeyError:
-                update_groups[group_key] = [update.id]
+            update_groups.setdefault(group_key, []).append(update.id)
 
         try:
             if logger: logger_index = logger.append()
             done = []
             imported, deleted = 0, 0
-            for rule_seq in sorted(update_groups.keys()):
-                update_ids = update_groups[rule_seq]
+            update_group_items = update_groups.items()
+            update_group_items.sort()
+            for rule_seq, update_ids in update_group_items:
                 while update_ids:
                     to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
                     messages, imported_executed, deleted_executed = \
@@ -647,7 +644,7 @@ class Entity(osv.osv):
                     imported += imported_executed
                     deleted += deleted_executed
                     # Do nothing with messages
-                    done.extend(to_do)
+                    done += to_do
                     if logger:
                         logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
                                                      % (imported, deleted, update_count))
