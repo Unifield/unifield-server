@@ -393,51 +393,73 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.tot_currency = self.tot_currency + l['amount_currency']
         return res
 
-    def _sum_debit_account(self, account, ccy=False, booking=False):
+    def __sum_amount_account_check_view(self, account, field, ccy=False):
         """
-        ccy: filter ccy entries
-        booking: not applicable for view accounts (used for account total lines
-        by ccy)
+        :return : (is_view, amount, )
         """
-        if ccy:
-            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
-        else:
-            ccy_pattern = ""
-
         if account.type == 'view':
-            amount = account.debit
+            amount = getattr(account, field)
             if not account.parent_id:
                 # deduce balance of not displayed accounts
                 for a_code in self._deduce_accounts_index:
                     deduce_bal = self._deduce_accounts_balance[a_code][ccy.id] \
                         if ccy else self._deduce_accounts_balance[a_code]['_all_']
                     amount -= deduce_bal
-            return self._currency_conv(amount)
+            return True, self._currency_conv(amount)
+
+        return False, 0.
+
+    def __sum_amount_account(self, account, move_state, mode,
+            ccy=False, booking=False, initial_balance=False):
+        if mode == 'debit':
+            field = 'sum(debit{booking})'
+        elif mode == 'credit':
+            field = 'sum(credit{booking})'
+        elif mode == 'balance':
+            field = '(sum(debit{booking}) - sum(credit{booking}))'
+        else:
+            raise osv.except_osv(_('Error'), _('Mode not supported'))
+
+        query = self.init_query if initial_balance else self.query
+
+        if ccy:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
+        else:
+            ccy_pattern = ""
+
+        sql = 'SELECT {field} \
+            FROM account_move_line l \
+            JOIN account_move am ON (am.id = l.move_id) \
+            WHERE (l.account_id = %s) \
+            AND (am.state IN %s) \
+            AND ' + query + ' ' + ccy_pattern
+        sql = sql.replace('{field}', field).replace(
+            '{booking}', '_currency' if booking else '')
+
+        self.cr.execute(sql, (account.id, tuple(move_state), ))
+        return self.cr.fetchone()[0] or 0.0
+
+    def _sum_debit_account(self, account, ccy=False, booking=False):
+        """
+        ccy: filter ccy entries
+        booking: not applicable for view accounts (used for account total lines
+        by ccy)
+        """
+        is_view, amount = self.__sum_amount_account_check_view(account,
+            'debit', ccy=ccy)
+        if is_view:
+            return amount
+
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
-        self.cr.execute(('SELECT sum(debit{booking}) \
-                FROM account_move_line l \
-                JOIN account_move am ON (am.id = l.move_id) \
-                WHERE (l.account_id = %s) \
-                AND (am.state IN %s) \
-                AND '+ self.query +' ' + ccy_pattern
-                ).replace('{booking}', '_currency' if booking else ''),
-                (account.id, tuple(move_state)))
-        sum_debit = self.cr.fetchone()[0] or 0.0
-        if self.init_balance:
-            self.cr.execute(('SELECT sum(debit{booking}) \
-                    FROM account_move_line l \
-                    JOIN account_move am ON (am.id = l.move_id) \
-                    WHERE (l.account_id = %s) \
-                    AND (am.state IN %s) \
-                    AND '+ self.init_query +' ' + ccy_pattern
-                    ).replace('{booking}', '_currency' if booking else ''),
-                    (account.id, tuple(move_state)))
-            # Add initial balance to the result
-            sum_debit += self.cr.fetchone()[0] or 0.0
-        sum_debit = self._currency_conv(sum_debit)
-        return sum_debit
+
+        amount = self.__sum_amount_account(account, move_state, 'debit',
+            ccy=ccy, booking=booking, initial_balance=False)
+        if self.init_balance:  # add initial balance
+            amount += self.__sum_amount_account(account, move_state, 'debit',
+                ccy=ccy, booking=booking, initial_balance=True)
+        return self._currency_conv(amount)
 
     def _sum_credit_account(self, account, ccy=False, booking=False):
         """
@@ -445,45 +467,21 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         booking: not applicable for view accounts (used for account total lines
         by ccy)
         """
-        if ccy:
-            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
-        else:
-            ccy_pattern = ""
+        is_view, amount = self.__sum_amount_account_check_view(account,
+            'credit', ccy=ccy)
+        if is_view:
+            return amount
 
-        if account.type == 'view':
-            amount = account.credit
-            if not account.parent_id:
-                # deduce balance of not displayed accounts
-                for a_code in self._deduce_accounts_index:
-                    deduce_bal = self._deduce_accounts_balance[a_code][ccy.id] \
-                        if ccy else self._deduce_accounts_balance[a_code]['_all_']
-                    amount -= deduce_bal
-                return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
-        self.cr.execute(('SELECT sum(credit{booking}) \
-                FROM account_move_line l \
-                JOIN account_move am ON (am.id = l.move_id) \
-                WHERE (l.account_id = %s) \
-                AND (am.state IN %s) \
-                AND '+ self.query +' ' + ccy_pattern
-                ).replace('{booking}', '_currency' if booking else ''),
-                (account.id, tuple(move_state)))
-        sum_credit = self.cr.fetchone()[0] or 0.0
-        if self.init_balance:
-            self.cr.execute(('(SELECT sum(credit{booking}) \
-                    FROM account_move_line l \
-                    JOIN account_move am ON (am.id = l.move_id) \
-                    WHERE (l.account_id = %s) \
-                    AND (am.state IN %s) \
-                    AND '+ self.init_query +' ' + ccy_pattern
-                    ).replace('{booking}', '_currency' if booking else ''),
-                    (account.id, tuple(move_state)))
-            # Add initial balance to the result
-            sum_credit += self.cr.fetchone()[0] or 0.0
-        sum_credit = self._currency_conv(sum_credit)
-        return sum_credit
+
+        amount = self.__sum_amount_account(account, move_state, 'credit',
+            ccy=ccy, booking=booking, initial_balance=False)
+        if self.init_balance:  # add initial balance
+            amount += self.__sum_amount_account(account, move_state, 'credit',
+                ccy=ccy, booking=booking, initial_balance=True)
+        return self._currency_conv(amount)
 
     def _sum_balance_account(self, account, ccy=False, booking=False):
         """
@@ -497,33 +495,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             ccy_pattern = ""
 
         if account.type == 'view':
-            amount = account.balance
-            return self._currency_conv(amount)
+            return self._currency_conv(account.balance)
+
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
-        self.cr.execute(('SELECT (sum(debit{booking}) - sum(credit{booking})) as tot_balance \
-                FROM account_move_line l \
-                JOIN account_move am ON (am.id = l.move_id) \
-                WHERE (l.account_id = %s) \
-                AND (am.state IN %s) \
-                AND '+ self.query +' ' + ccy_pattern
-                ).replace('{booking}', '_currency' if booking else ''),
-                (account.id, tuple(move_state)))
-        sum_balance = self.cr.fetchone()[0] or 0.0
-        if self.init_balance:
-            self.cr.execute(('SELECT (sum(debit{booking}) - sum(credit{booking})) as tot_balance \
-                    FROM account_move_line l \
-                    JOIN account_move am ON (am.id = l.move_id) \
-                    WHERE (l.account_id = %s) \
-                    AND (am.state IN %s) \
-                    AND '+ self.init_query +' ' + ccy_pattern
-                    ).replace('{booking}', '_currency' if booking else ''),
-                    (account.id, tuple(move_state)))
-            # Add initial balance to the result
-            sum_balance += self.cr.fetchone()[0] or 0.0
-        sum_balance = self._currency_conv(sum_balance)
-        return sum_balance
+
+        amount = self.__sum_amount_account(account, move_state, 'balance',
+            ccy=ccy, booking=booking, initial_balance=False)
+        if self.init_balance:  # add initial balance
+            amount += self.__sum_amount_account(account, move_state, 'balance',
+                ccy=ccy, booking=booking, initial_balance=True)
+        return self._currency_conv(amount)
 
     def _get_account(self, data):
         if data['model'] == 'account.account':
