@@ -15,9 +15,8 @@
             </xpath>
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="display_account"/>
-                <field name="sortby"/>
+                <field name="sortby" invisible="1" />
                 <field name="initial_balance" attrs="{'readonly':[('fiscalyear_id','=', False)]}"/>
-                <newline/>
                 <field name="export_format"/>
                 <newline/>   
                 <field name="output_currency" invisible="1" />
