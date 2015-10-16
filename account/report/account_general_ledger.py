@@ -456,7 +456,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         amount = self.__sum_amount_account(account, move_state, 'debit',
             ccy=ccy, booking=booking, initial_balance=False)
-        if self.init_balance:  # add initial balance
+        if not ccy and self.init_balance:
+            # add initial balance (except for booking ccy breakdown subtotals)
             amount += self.__sum_amount_account(account, move_state, 'debit',
                 ccy=ccy, booking=booking, initial_balance=True)
         return self._currency_conv(amount)
@@ -478,7 +479,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         amount = self.__sum_amount_account(account, move_state, 'credit',
             ccy=ccy, booking=booking, initial_balance=False)
-        if self.init_balance:  # add initial balance
+        if not ccy and self.init_balance:
+            # add initial balance (except for booking ccy breakdown subtotals)
             amount += self.__sum_amount_account(account, move_state, 'credit',
                 ccy=ccy, booking=booking, initial_balance=True)
         return self._currency_conv(amount)
