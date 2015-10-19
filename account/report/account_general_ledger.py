@@ -113,30 +113,21 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
         common_report_header._set_context(self, data)
 
-        # UF-1714
-        # accounts 8*, 9* are not displayed:
-        # we have to deduce debit/credit/balance amounts of MSF account view (root account)
+        # UF-1714 accounts 8*, 9* are not displayed:
+        # we have to deduce debit/credit/balance amounts of MSF account view
+        # (root account)
         a_obj = self.pool.get('account.account')
-        self._deduce_accounts_index = [ '8', '9', ]
-        self._deduce_accounts_balance = {}
-        for a_code in self._deduce_accounts_index:
-            a_ids = a_obj.search(self.cr, self.uid, [('code', '=', a_code)])
+        deduce_accounts_index = [ '8', '9', ]
+        self._deduce_accounts_data = { 'debit': 0, 'credit': 0, }
+        if deduce_accounts_index:
+            a_ids = a_obj.search(self.cr, self.uid,
+                [('code', 'in', [ c for c in deduce_accounts_index ])])
             if a_ids:
-                account = a_obj.browse(self.cr, self.uid, [a_ids[0], ],
-                    context=self.context)[0]
-                if account:
-                    self._deduce_accounts_balance[a_code] = {}
-
-                    # all ccy amounts (regarding move lines)
-                    self._deduce_accounts_balance[a_code]['_all_'] = \
-                        self._sum_balance_account(account)
-
-                    # per ccy amounts (regarding move lines)
-                    ccy_brs = self.get_currencies(account=account)
-                    if ccy_brs:
-                        for c in ccy_brs:
-                            self._deduce_accounts_balance[a_code][c.id] = \
-                                self._sum_balance_account(account, ccy=c)
+                for account in a_obj.browse(self.cr, self.uid, a_ids):
+                    self._deduce_accounts_data['debit'] += \
+                        self._sum_debit_account(account)
+                    self._deduce_accounts_data['credit'] += \
+                        self._sum_credit_account(account)
 
         if self.account_ids:
             # add parent(s) of filtered accounts
@@ -392,10 +383,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             amount = getattr(account, field)
             if not account.parent_id:
                 # deduce balance of not displayed accounts
-                for a_code in self._deduce_accounts_index:
-                    deduce_bal = self._deduce_accounts_balance[a_code][ccy.id] \
-                        if ccy else self._deduce_accounts_balance[a_code]['_all_']
-                    amount -= deduce_bal
+                    amount -= self._deduce_accounts_data[field]
+                    self._deduce_accounts_data[field] = 0  # mark as deduced
             return True, self._currency_conv(amount)
 
         return False, 0.
