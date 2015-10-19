@@ -541,7 +541,9 @@ class Entity(osv.osv):
         if not res[0]: raise Exception, res[1]
 
         updates_count = self.retrieve_update(cr, uid, max_packet_size, recover=recover, context=context)
-        self._logger.info("::::::::The instance " + entity.name + " pulled: " + str(res[1]) + " messages and " + str(updates_count) + " updates.")        
+        log_info = ("::::::::The instance ", entity.name, " pulled: ",
+                str(res[1]), " messages and ", str(updates_count), " updates.")
+        self._logger.info(''.join(log_info))
         updates_executed = self.execute_updates(cr, uid, context=context)
         if updates_executed == 0 and updates_count > 0:
             self._logger.warning("No update to execute, this case should never occurs.")
