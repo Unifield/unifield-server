@@ -43,7 +43,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         obj_move = self.pool.get('account.move.line')
         
         self.sortby = data['form'].get('sortby', 'sort_date')
-        self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context',{}))
+        used_context = data['form'].get('used_context',{})
+        self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=used_context)
         ctx2 = data['form'].get('used_context',{}).copy()
         ctx2.update({'initial_bal': True})
         self.init_query = obj_move._query_get(self.cr, self.uid, obj='l', context=ctx2)
@@ -121,13 +122,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self._deduce_accounts_data = { 'debit': 0, 'credit': 0, }
         if deduce_accounts_index:
             a_ids = a_obj.search(self.cr, self.uid,
-                [('code', 'in', [ c for c in deduce_accounts_index ])])
+                [('code', 'in', [ c for c in deduce_accounts_index ])],
+                context=used_context)
             if a_ids:
-                for account in a_obj.browse(self.cr, self.uid, a_ids):
-                    self._deduce_accounts_data['debit'] += \
-                        self._sum_debit_account(account)
-                    self._deduce_accounts_data['credit'] += \
-                        self._sum_credit_account(account)
+                for account in a_obj.browse(self.cr, self.uid, a_ids,
+                    context=used_context):
+                    self._deduce_accounts_data['debit'] += account.debit
+                    self._deduce_accounts_data['credit'] += account.credit
 
         if self.account_ids:
             # add parent(s) of filtered accounts
