@@ -163,7 +163,7 @@ class local_message_rule(osv.osv):
         if usb_entity == pick_obj.REMOTE_WAREHOUSE or not rule_method or not res_id:
             partner_name = 'fake'
             
-            full_method = model_name + "." + rule_method
+            full_method = '.'.join((model_name, rule_method))
             rule = self.get_rule_by_remote_call(cr, uid, full_method, context)
             if not rule:
                 logger.info("Sorry, there is no RW message rule found for the method %s." % (full_method)) 
