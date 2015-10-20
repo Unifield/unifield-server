@@ -264,12 +264,20 @@ class product_attributes(osv.osv):
     def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        for product in self.browse(cr, uid, ids, context=context):
-            res[product.id] = {'no_external': product.state.no_external or product.international_status.no_external or False,
-                               'no_esc': product.state.no_esc or product.international_status.no_esc or False,
-                               'no_internal': product.state.no_internal or product.international_status.no_internal or False,
-                               'no_consumption': product.state.no_consumption or product.international_status.no_consumption or False,
-                               'no_storage': product.state.no_storage or product.international_status.no_storage or False}
+        product_state = self.pool.get('product.status')
+        for product in self.read(cr, uid, ids, ['state'], context=context):
+            res[product['id']] = {
+                'no_external': False,
+                'no_esc': False,
+                'no_internal': False,
+                'no_consumption': False,
+                'no_storage': False
+            }
+            if product['state']:
+                fields = ['no_external', 'no_esc', 'no_internal', 'no_consumption', 'no_storage']
+                state = product_state.read(cr, uid, product['state'][0], fields, context=context)
+                for f in fields:
+                    res[product.id][f] = state[f] or False
 
         return res
 
