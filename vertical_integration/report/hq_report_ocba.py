@@ -39,6 +39,7 @@ class hq_report_ocba(report_sxw.report_sxw):
     # like for OCA: 2 for entries, 8 for ccy rate
     _ENTRIES_DIGITS = 2
     _EXCHANGE_RATE_DIGITS = 8
+    _CUR_ADJ_JOURNAL_TYPE = ('cur_adj', 'revaluation', )
 
     _export_fields_index = {
         'entries': [
@@ -73,7 +74,8 @@ class hq_report_ocba(report_sxw.report_sxw):
         Export not expense entries (from JIs)
         """
         if r.account_id and r.account_id.shrink_entries_for_hq:
-            # account with 'shrink entries for HQ': sum booking/func balance
+            # account with 'shrink entries for HQ':
+            # pivot data with sum booking/func balance
             key = (
                 r.account_id.code,
                 r.currency_id.name,
@@ -82,11 +84,16 @@ class hq_report_ocba(report_sxw.report_sxw):
                 build_data['shrink'][key] = {
                     'booking': 0.,
                     'func': 0.,
+                    'func_no_cur_adj':  0.,  # func debit with no FXA currency adjustement entries
                     'account_name': r.account_id.name or '',
                 }
             build_data['shrink'][key]['booking'] += \
                 r.debit_currency - r.credit_currency
-            build_data['shrink'][key]['func'] += r.debit - r.credit
+            func_balance = r.debit - r.credit
+            build_data['shrink'][key]['func'] += func_balance
+            if r.journal_id \
+                and not r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE:
+                build_data['shrink'][key]['func_no_cur_adj'] += func_balance
             return
 
         self._add_row('entries', file_data=file_data, data={
@@ -118,15 +125,26 @@ class hq_report_ocba(report_sxw.report_sxw):
     def export_shrinked_entries(self, cr, uid, file_data, build_data, key):
         account_code, ccy_name = key
         entry_data = build_data['shrink'][key]
-        period = build_data['period']
 
+        # shrink entry balance sum amounts
+        booking = entry_data['booking']
+        func = entry_data['func']
+        if booking == 0. and func == "0.":
+            # skip null entry
+            return
+        func_no_cur_adj = entry_data['func_no_cur_adj']
+
+        # auto seq number for shrink entry
+        period = build_data['period']
         seq_number = build_data['move_prefix'] + "-" + \
             period.date_start[5:7] + "-" + \
             period.date_start[:4] + "-" + \
             account_code + "-" + ccy_name
-        booking = entry_data['booking']
-        func =entry_data['func']
-        rate = 0.  # TODO: and deduce FXA like in OCA VI
+
+        # rate fxa entries deduced
+        rate = booking / func_no_cur_adj if func_no_cur_adj else 0.
+
+        # line description from account code, ccy, period
         description = "Subtotal - %s - %s - %s" % (account_code, ccy_name,
             build_data['period_name'], )
 
