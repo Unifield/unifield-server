@@ -73,11 +73,21 @@ class hq_report_ocba(report_sxw.report_sxw):
         Export not expense entries (from JIs)
         """
         if r.account_id and r.account_id.shrink_entries_for_hq:
-            key = (r.account_id.code, r.currency_id.name, )
-            if not 'shrink' in build_data:
-                build_data['shrink'] = {}
+            # account with 'shrink entries for HQ': sum booking/func balance
+            key = (
+                r.account_id.code,
+                r.currency_id.name,
+                build_data['period_name'],
+            )
             if not key in build_data['shrink']:
-                build_data['shrink'][key] = {}
+                build_data['shrink'][key] = {
+                    'booking': 0.,
+                    'func': 0.,
+                }
+            build_data['shrink'][key]['booking'] += \
+                r.debit_currency - r.credit_currency
+            build_data['shrink'][key]['func'] += r.debit - r.credit
+            return
 
         self._add_row('entries', file_data=file_data, data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.move.line'),
@@ -104,6 +114,9 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=False), digits=self._EXCHANGE_RATE_DIGITS),
             'Reconciliation code': self._enc(r.reconcile_txt),  # only for B/S)
         })
+
+    def export_shrinked_entries(self, cr, uid, r, build_data):
+        pass
 
     def export_aji(self, cr, uid, r, file_data, build_data):
         """
@@ -218,7 +231,11 @@ class hq_report_ocba(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
         aal_obj = pool.get('account.analytic.line')
-        build_data = {}
+        build_data = {
+            'period_name': pool.get('account.period').browse(cr, uid,
+                form_data['period_id']).code or '',
+            'shrink': {},
+        }
 
         # get not expense entries
         domain = [
