@@ -77,12 +77,12 @@ class hq_report_ocba(report_sxw.report_sxw):
             key = (
                 r.account_id.code,
                 r.currency_id.name,
-                build_data['period_name'],
             )
             if not key in build_data['shrink']:
                 build_data['shrink'][key] = {
                     'booking': 0.,
                     'func': 0.,
+                    'account_name': r.account_id.name or '',
                 }
             build_data['shrink'][key]['booking'] += \
                 r.debit_currency - r.credit_currency
@@ -115,14 +115,53 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Reconciliation code': self._enc(r.reconcile_txt),  # only for B/S)
         })
 
-    def export_shrinked_entries(self, cr, uid, r, build_data):
-        pass
+    def export_shrinked_entries(self, cr, uid, file_data, build_data, key):
+        account_code, ccy_name = key
+        entry_data = build_data['shrink'][key]
+        period = build_data['period']
+
+        seq_number = build_data['move_prefix'] + "-" + \
+            period.date_start[5:7] + "-" + \
+            period.date_start[:4] + "-" + \
+            account_code + "-" + ccy_name
+        booking = entry_data['booking']
+        func =entry_data['func']
+        rate = 0.  # TODO: and deduce FXA like in OCA VI
+        description = "Subtotal - %s - %s - %s" % (account_code, ccy_name,
+            build_data['period_name'], )
+
+        self._add_row('entries', file_data=file_data, data={
+            'DB ID': '',
+            'Proprietary instance': '',
+            'Journal Code': '',
+            'Entry Sequence': seq_number,
+            'Description': self._enc(description),
+            'Reference': '',
+            'Document Date': build_data['default_date'],
+            'Posting Date': build_data['default_date'],
+            'G/L Account': self._enc(account_code or ''),
+            'Account description': self._enc(entry_data['account_name']),
+            'Third Party': '',
+            'EE ID': '',
+            'Partner DB ID': '',
+            'Destination': '',
+            'Cost Centre': '',
+            'Booking Debit': self._enc_amount(booking < 0 and booking or 0.),
+            'Booking Credit': self._enc_amount(booking > 0 and booking or 0.),
+            'Booking Currency': self._enc(ccy_name or ''),
+            'Functional Debit': self._enc_amount(func < 0 and func or 0.),
+            'Functional Credit': self._enc_amount(func > 0 and func or 0.),
+            'Functional Currency': self._enc(build_data['functional_ccy']),
+            'Exchange rate': self._enc_amount(rate,
+                digits=self._EXCHANGE_RATE_DIGITS),
+            'Reconciliation code': '',
+        })
 
     def export_aji(self, cr, uid, r, file_data, build_data):
         """
         Export not expense entries (from AJIs)
         """
-        rate = 0  # TODO
+        rate = 0
 
         ee_id = ''
         partner_db_id = ''
@@ -231,9 +270,31 @@ class hq_report_ocba(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
         aal_obj = pool.get('account.analytic.line')
+
+        # set internal build data
+        period = pool.get('account.period').browse(cr, uid,
+            form_data['period_id'])
+
+        functional_ccy = ""
+        country_code = "0"
+        move_prefix = "0"
+        if len(form_data['instance_ids']) > 0:
+            parent_instance = pool.get('msf.instance').browse(cr, uid,
+                form_data['instance_ids'][0], context=context)
+            if parent_instance:
+                country_code = self._translate_country(cr, uid, pool,
+                    parent_instance, context=context)
+                if period and period.date_start:
+                    move_prefix = parent_instance.move_prefix[:2]
+
         build_data = {
-            'period_name': pool.get('account.period').browse(cr, uid,
-                form_data['period_id']).code or '',
+            'period': period,
+            'period_name': period and period.code or '',
+            'default_date': period and period.date_stop and \
+                datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "",
+            'functional_ccy': functional_ccy,
+            'country_code': country_code,
+            'move_prefix': move_prefix,
             'shrink': {},
         }
 
@@ -251,6 +312,11 @@ class hq_report_ocba(report_sxw.report_sxw):
             for ji_br in aml_obj.browse(cr, uid, move_line_ids,
                 context=context):
                 self.export_ji(cr, uid, ji_br, file_data, build_data)
+
+        # export skrinked entries for hq
+        # (data build in 'build_data' during 'export_ji')
+        for key in build_data['shrink']:
+            self.export_shrinked_entries(cr, uid, file_data, build_data, key)
 
         # get expense lines
         domain = [
