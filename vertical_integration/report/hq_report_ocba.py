@@ -39,7 +39,8 @@ class hq_report_ocba(report_sxw.report_sxw):
     # like for OCA: 2 for entries, 8 for ccy rate
     _ENTRIES_DIGITS = 2
     _EXCHANGE_RATE_DIGITS = 8
-    _CUR_ADJ_JOURNAL_TYPE = ('cur_adj', 'revaluation', )
+    #_CUR_ADJ_JOURNAL_TYPE = ('cur_adj', 'revaluation', )
+    _CUR_ADJ_JOURNAL_TYPE = False
 
     _export_fields_index = {
         'entries': [
@@ -91,12 +92,15 @@ class hq_report_ocba(report_sxw.report_sxw):
                 r.debit_currency - r.credit_currency
             func_balance = r.debit - r.credit
             build_data['shrink'][key]['func'] += func_balance
-            if r.journal_id \
-                and not r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE:
+            if not self._CUR_ADJ_JOURNAL_TYPE:
                 build_data['shrink'][key]['func_no_cur_adj'] += func_balance
+            else:
+                if  r.journal_id \
+                    and not r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE:
+                    build_data['shrink'][key]['func_no_cur_adj'] += func_balance
             return
 
-        self._add_row('entries', file_data=file_data, data={
+        data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.move.line'),
             'Proprietary instance': self._enc(r.instance_id and r.instance_id.name or ''),
             'Journal Code': self._enc(r.journal_id and r.journal_id.code or ''),
@@ -120,7 +124,8 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
             'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=False), digits=self._EXCHANGE_RATE_DIGITS),
             'Reconciliation code': self._enc(r.reconcile_txt),  # only for B/S)
-        })
+        }
+        self._add_row('entries', file_data=file_data, data=data)
 
     def export_shrinked_entries(self, cr, uid, file_data, build_data, key):
         account_code, ccy_name = key
@@ -129,7 +134,7 @@ class hq_report_ocba(report_sxw.report_sxw):
         # shrink entry balance sum amounts
         booking = entry_data['booking']
         func = entry_data['func']
-        if booking == 0. and func == "0.":
+        if booking == 0. and func == 0.:
             # skip null entry
             return
         func_no_cur_adj = entry_data['func_no_cur_adj']
@@ -148,7 +153,7 @@ class hq_report_ocba(report_sxw.report_sxw):
         description = "Subtotal - %s - %s - %s" % (account_code, ccy_name,
             build_data['period_name'], )
 
-        self._add_row('entries', file_data=file_data, data={
+        data={
             'DB ID': '',
             'Proprietary instance': '',
             'Journal Code': '',
@@ -164,16 +169,17 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Partner DB ID': '',
             'Destination': '',
             'Cost Centre': '',
-            'Booking Debit': self._enc_amount(booking < 0 and booking or 0.),
-            'Booking Credit': self._enc_amount(booking > 0 and booking or 0.),
+            'Booking Debit': self._enc_amount(booking, debit=True),
+            'Booking Credit': self._enc_amount(booking, debit=False),
             'Booking Currency': self._enc(ccy_name or ''),
-            'Functional Debit': self._enc_amount(func < 0 and func or 0.),
-            'Functional Credit': self._enc_amount(func > 0 and func or 0.),
-            'Functional Currency': self._enc(build_data['functional_ccy']),
+            'Functional Debit': self._enc_amount(func, debit=True),
+            'Functional Credit': self._enc_amount(func, debit=False),
+            'Functional Currency': self._enc(build_data['functional_ccy_name']),
             'Exchange rate': self._enc_amount(rate,
                 digits=self._EXCHANGE_RATE_DIGITS),
             'Reconciliation code': '',
-        })
+        }
+        self._add_row('entries', file_data=file_data, data=data)
 
     def export_aji(self, cr, uid, r, file_data, build_data):
         """
@@ -196,9 +202,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             # FXA entries no booking
             booking_amount = 0.
 
-        self._enc_amount(r.amount_currency, debit=True)
-
-        self._add_row('entries', file_data=file_data, data={
+        data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.analytic.line'),
             'Proprietary instance': self._enc(r.instance_id and r.instance_id.name or ''),
             'Journal Code': self._enc(r.journal_id and r.journal_id.code or ''),
@@ -222,7 +226,8 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
             'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=True), digits=self._EXCHANGE_RATE_DIGITS),
             'Reconciliation code': '',  # no reconcile for expense account
-        })
+        }
+        self._add_row('entries', file_data=file_data, data=data)
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
@@ -293,7 +298,8 @@ class hq_report_ocba(report_sxw.report_sxw):
         period = pool.get('account.period').browse(cr, uid,
             form_data['period_id'])
 
-        functional_ccy = ""
+        functional_ccy_name = pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.currency_id.name
         country_code = "0"
         move_prefix = "0"
         if len(form_data['instance_ids']) > 0:
@@ -310,7 +316,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             'period_name': period and period.code or '',
             'default_date': period and period.date_stop and \
                 datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "",
-            'functional_ccy': functional_ccy,
+            'functional_ccy_name': functional_ccy_name,
             'country_code': country_code,
             'move_prefix': move_prefix,
             'shrink': {},
@@ -456,7 +462,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             digits=self._ENTRIES_DIGITS
 
         if isinstance(amount, float):
-            if amount < 0.001:
+            if abs(amount) < 0.001:
                 amount = 0.
             if debit is not None:
                 if debit:
