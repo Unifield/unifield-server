@@ -618,7 +618,7 @@ class Entity(osv.osv):
 
         # Get a list of updates to execute
         # Warning: execution order matter
-        update_ids = updates.search(cr, uid, [('run', '=', False)], order='id asc', context=context)
+        update_ids = updates.search(cr, uid, [('run', '=', False)], context=context)
         update_count = len(update_ids)
         if not update_count: return 0
 
