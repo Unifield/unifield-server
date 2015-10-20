@@ -35,6 +35,11 @@ from account_override import finance_export
 
 
 class hq_report_ocba(report_sxw.report_sxw):
+    # digits decimal number for amounts
+    # like for OCA: 2 for entries, 8 for ccy rate
+    _ENTRIES_DIGITS = 2
+    _EXCHANGE_RATE_DIGITS = 8
+
     _export_fields_index = {
         'entries': [
             'DB ID',  # xmlid
@@ -63,10 +68,17 @@ class hq_report_ocba(report_sxw.report_sxw):
         ]
     }
 
-    def export_ji(self, cr, uid, r, file_data):
+    def export_ji(self, cr, uid, r, file_data, build_data):
         """
         Export not expense entries (from JIs)
         """
+        if r.account_id and r.account_id.shrink_entries_for_hq:
+            key = (r.account_id.code, r.currency_id.name, )
+            if not 'shrink' in build_data:
+                build_data['shrink'] = {}
+            if not key in build_data['shrink']:
+                build_data['shrink'][key] = {}
+
         self._add_row('entries', file_data=file_data, data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.move.line'),
             'Proprietary instance': self._enc(r.instance_id and r.instance_id.name or ''),
@@ -89,11 +101,11 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Functional Debit': self._enc_amount(r.debit),
             'Functional Credit': self._enc_amount(r.credit),
             'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
-            'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=False)),
+            'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=False), digits=self._EXCHANGE_RATE_DIGITS),
             'Reconciliation code': self._enc(r.reconcile_txt),  # only for B/S)
         })
 
-    def export_aji(self, cr, uid, r, file_data):
+    def export_aji(self, cr, uid, r, file_data, build_data):
         """
         Export not expense entries (from AJIs)
         """
@@ -138,7 +150,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Functional Debit': self._enc_amount(r.amount, debit=True),
             'Functional Credit': self._enc_amount(r.amount, debit=False),
             'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
-            'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=True)),
+            'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=True), digits=self._EXCHANGE_RATE_DIGITS),
             'Reconciliation code': '',  # no reconcile for expense account
         })
 
@@ -206,6 +218,7 @@ class hq_report_ocba(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
         aal_obj = pool.get('account.analytic.line')
+        build_data = {}
 
         # get not expense entries
         domain = [
@@ -220,7 +233,7 @@ class hq_report_ocba(report_sxw.report_sxw):
         if move_line_ids:
             for ji_br in aml_obj.browse(cr, uid, move_line_ids,
                 context=context):
-                self.export_ji(cr, uid, ji_br, file_data)
+                self.export_ji(cr, uid, ji_br, file_data, build_data)
 
         # get expense lines
         domain = [
@@ -235,7 +248,7 @@ class hq_report_ocba(report_sxw.report_sxw):
         if analytic_line_ids:
             for aji_br in aal_obj.browse(cr, uid, analytic_line_ids,
                 context=context):
-                self.export_aji(cr, uid, aji_br, file_data)
+                self.export_aji(cr, uid, aji_br, file_data, build_data)
 
         return (move_line_ids, analytic_line_ids, )
 
@@ -332,26 +345,29 @@ class hq_report_ocba(report_sxw.report_sxw):
             return st.encode('utf8')
         return st
 
-    def _enc_amount(self, amount, debit=None):
+    def _enc_amount(self, amount, debit=None, digits=False):
         """
         :param amount: amount
         :param debit: for AJI specify if is for the debit or credit csv output
         :return:
         """
-        res = "0.0"
-        if amount:
+        if not digits:
+            digits=self._ENTRIES_DIGITS
+
+        if isinstance(amount, float):
             if amount < 0.001:
                 amount = 0.
-            if debit is None:
-                res = str(amount)
-            else:
+            if debit is not None:
                 if debit:
-                    if amount < 0:
-                        res = str(abs(amount))
+                    # ensure debit
+                    amount = amount < 0 and abs(round(amount, digits)) or 0.
                 else:
-                    if amount > 0:
-                        res = str(amount)
-        return res
+                    # ensure credit
+                    amount = amount > 0 and round(amount, digits) or 0.
+        else:
+            amount = round(0., digits)
+
+        return str(amount)
 
     def _translate_country(self, cr, uid, pool, browse_instance, context={}):
         mapping_obj = pool.get('country.export.mapping')
