@@ -51,6 +51,48 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_332_patch(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            # create MSFID for product.nomenclature
+            nomen_obj = self.pool.get('product.nomenclature')
+            nomen_ids = nomen_obj.search(cr, uid, [('msfid', '=', False)], order='level asc, id')
+
+            for nomen_id in nomen_ids:
+                nomen = nomen_obj.browse(cr, uid, nomen_id, context={})
+                msfid = ""
+                if not nomen.msfid:
+                    nomen_parent = nomen.parent_id
+                    if nomen_parent and nomen_parent.msfid:
+                        msfid = nomen_parent.msfid + "-"
+                    name_first_word = nomen.name.split(' ')[0]
+                    msfid += name_first_word
+                    # Search same msfid
+                    ids = nomen_obj.search(cr, uid, [('msfid', '=', msfid)])
+                    if ids:
+                        msfid += str(nomen.id)
+                    nomen_obj.write(cr, uid, nomen.id, {'msfid': msfid})
+
+            # create MSFID for product.category
+            categ_obj = self.pool.get('product.category')
+            categ_ids = categ_obj.search(cr, uid, [('msfid', '=', False), ('family_id', '!=', False)], order='id')
+
+            for categ in categ_obj.browse(cr, uid, categ_ids, context={}):
+                msfid = ""
+                if not categ.msfid and categ.family_id and categ.family_id.name:
+                    msfid = categ.family_id.name[0:4]
+                    ids = categ_obj.search(cr, uid, [('msfid', '=', msfid)])
+                    if ids:
+                        msfid += str(categ.id)
+                    categ_obj.write(cr, uid, categ.id, {'msfid': msfid})
+
     def update_parent_budget_us_489(self, cr, uid, *a, **b):
         logger = logging.getLogger('update')
         c = self.pool.get('res.users').browse(cr, uid, uid).company_id

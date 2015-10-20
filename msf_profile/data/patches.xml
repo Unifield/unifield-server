@@ -20,5 +20,9 @@
             <field name="method">disable_crondoall</field>
         </record>
 
+        <record id="us_332_patch" model="patch.scripts">
+            <field name="method">us_332_patch</field>
+        </record>
+
     </data>
 </openerp>
