@@ -1110,7 +1110,6 @@ class FinanceTestCorCases(FinanceTest):
         ]
         
         # simu of cor for each invoice JIs
-        self.set_correction_transaction(start=True)
         for ji_br in db.get('account.move.line').browse(ji_ids):
             self.simulation_correction_wizard(db, ji_br.id,
                 cor_date=self.get_orm_fy_date(2, 7),
@@ -1126,7 +1125,6 @@ class FinanceTestCorCases(FinanceTest):
                 expected_ad_cor=new_ad,
                 check_sequence_number=True
             )
-        self.set_correction_transaction(start=False)
             
         # 1st invoice line change account to 60000 for 10th Feb
         # should be deny as already analytically corrected
