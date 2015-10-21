@@ -1279,7 +1279,7 @@ class stock_move(osv.osv):
         res = {}
         for m in self.browse(cr, uid, ids, context=context):
             res[m.id] = False
-            if m.purchase_line_id and m.purchase_line_id.price_unit != m.price_unit:
+            if m.purchase_line_id and abs(m.purchase_line_id.price_unit - m.price_unit) > 10**-3:
                 res[m.id] = True
 
         return res
@@ -1380,8 +1380,9 @@ class stock_move(osv.osv):
         move = self.browse(cr, uid, ids[0], context=context)
         if move.price_changed:
             func_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
-            price_unit = self.pool.get('res.currency').compute(cr, uid,
-                func_curr_id, move.price_currency_id.id, move.price_unit, round=True)
+            price_unit = move.price_unit
+#            price_unit = self.pool.get('res.currency').compute(cr, uid,
+#                func_curr_id, move.price_currency_id.id, move.price_unit, round=True)
             raise osv.except_osv(
                 _('Information'),
                 _('The initial unit price (coming from Purchase order line) is %s %s - The new unit price is %s %s') % (
@@ -1681,6 +1682,7 @@ class stock_move(osv.osv):
         prodlot_obj = self.pool.get('stock.production.lot')
         for move in self.browse(cr, uid, ids, context):
             compare_date = context.get('rw_date', False)
+            move_unlinked = False
             if compare_date:
                 compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
             else:
@@ -1729,6 +1731,7 @@ class stock_move(osv.osv):
                                             # We update the linked documents
                                             self.update_linked_documents(cr, uid, [move.id], exist_move.id, context=context)
                                             self.unlink(cr, uid, [move.id], context)
+                                            move_unlinked = True
                                         else:
                                             self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'],
                                                                           'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
@@ -1749,7 +1752,7 @@ class stock_move(osv.osv):
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
-                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
+                        if not move_unlinked and move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
                             if not self.search(cr, uid, [('move_dest_id', '=', move.id)], context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)

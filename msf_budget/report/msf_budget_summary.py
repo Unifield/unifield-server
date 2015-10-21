@@ -22,6 +22,17 @@ from osv import fields, osv
 from tools.translate import _
 
 
+def filter_chars(text):
+    # US-583: exclude chars in action name
+    # (chars to exclude list obtained using string.printable and testing)
+    exclude_list = "\"'`^\@~;$&#"
+    
+    res = text
+    for c in exclude_list:
+        res = res.replace(c, '')
+    return res
+    
+
 class msf_budget_summary(osv.osv_memory):
     _name = "msf.budget.summary"
 
@@ -151,8 +162,6 @@ class msf_budget_summary(osv.osv_memory):
                 _('Only childest budgets are drillable'))
 
         # build tree
-        if 'commitment' in context:
-            del context['commitment']
         root_id = mbsl_obj.build_tree(cr, uid, summary_br, context=context)
 
         # set action
@@ -161,7 +170,7 @@ class msf_budget_summary(osv.osv_memory):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
             'msf_budget', 'view_msf_budget_summary_budget_line_tree')[1]
         res = {
-            'name': name,
+            'name': filter_chars(name),
             'type': 'ir.actions.act_window',
             'res_model': 'msf.budget.summary.line',
             'view_type': 'tree',
@@ -214,7 +223,20 @@ class msf_budget_summary_line(osv.osv_memory):
     }
 
     def build_tree(self, cr, uid, summary_line_br, context=None):
+        aa_obj = self.pool.get('account.account')
         mbl_obj = self.pool.get('msf.budget.line')
+        
+        if context is None:
+            context = {}
+        context['commitment'] = 1
+        
+        # get account tree
+        account_ids = aa_obj.search(cr, uid, [])
+        account_tree = {}
+        for a in aa_obj.read(cr, uid, account_ids, ['parent_id', ],
+            context=context):
+            account_tree[a['id']] = a['parent_id'] and a['parent_id'][0] \
+                or False
 
         # create root node
         vals = {
@@ -233,32 +255,37 @@ class msf_budget_summary_line(osv.osv_memory):
         # build nodes from budget lines
         id = False
         parent_level_ids = {}
-        fields = ['name', 'budget_amount', 'actual_amount', 'balance']
+        fields = [ 'name', 'budget_amount', 'actual_amount', 'balance', ]
 
         budget_lines_ids = mbl_obj.search(cr, uid, [
             ('budget_id', '=', summary_line_br.budget_id.id),
             ('line_type', 'in', ('view', 'normal')),
         ], context=context)
 
-        for bl_r in mbl_obj.read(cr, uid, budget_lines_ids, fields,
-            context=context):
+        # mapping between build tree lines and budget lines by account
+        mapping = {}
+        
+        # get line truely in parent_left order
+        # (the native order of budget lines)
+        line_read = {}
+        for bl_r in mbl_obj.read(cr, uid, budget_lines_ids,
+            fields + [ 'account_id', 'comm_amount', ], context=context):
+            line_read[bl_r['id']] = bl_r
+            
+        for bl_id in budget_lines_ids:
+            bl_r = line_read[bl_id]
 
             # get account level
             parts = bl_r['name'].split(' ')
             account = parts and parts[0] or ''
-            len_account = len(account)
-
-            # set parent from level
-            if len_account == 1:
-                # reinitialize parent level ids for accounts 6, 7, ...
-                parent_level_ids = {}
-                parent_id = root_id
-            elif 1 < len_account < 4:
-                parent_id = parent_level_ids.get(len_account - 1, False)
-            elif len_account == 5:
-                parent_id = parent_level_ids.get(3, False)
-            else:
-                parent_id = False
+ 
+            # parent mapping
+            account_id = bl_r['account_id'][0]
+            parent_id = root_id
+            if account_tree.get(account_id):
+                parent_account = account_tree[account_id]
+                if parent_account in mapping:
+                    parent_id = mapping[parent_account]
 
             # set vals
             vals = {
@@ -270,33 +297,29 @@ class msf_budget_summary_line(osv.osv_memory):
             }
             for f in fields:
                 vals[f] = bl_r[f]
+                if f == 'actual_amount':
+                    # include commitments
+                    vals[f] += bl_r['comm_amount']
 
             # create node
             id = self.create(cr, uid, vals, context=context)
+            mapping[account_id] = id
             if not id:
                 break
-            if not root_id:
-               root_id = id
-
-            # update parent for next iteration
-            if 1 <= len_account < 4:
-                parent_level_ids[len_account] = id
-
+  
         return root_id
 
     def action_open_analytic_lines(self, cr, uid, ids, context):
         def get_analytic_domain(sl_br):
             cc_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(cr,
                 uid, sl_br.budget_id.cost_center_id)
-            gl_accound_ids = self.pool.get('account.account').search(cr, uid, [
-                ('code', 'like', sl_br.account),
-            ], context=context)
 
             return [
                 ('cost_center_id', 'in', cc_ids),
                 ('date', '>=', sl_br.budget_id.fiscalyear_id.date_start),
                 ('date', '<=', sl_br.budget_id.fiscalyear_id.date_stop),
-                ('general_account_id', 'in', gl_accound_ids),
+                ('general_account_id', 'child_of',
+                    [sl_br.budget_line_id.account_id.id]),
             ]
 
         res = {}
@@ -306,16 +329,18 @@ class msf_budget_summary_line(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
-        if 'commitment' in context:
-            del context['commitment']
 
         sl_br = self.browse(cr, uid, ids[0], context=context)
+        if not sl_br.budget_line_id:
+            # no AJI drill for the root line: only from 1 level (like 6, 7)
+            raise osv.except_osv(_('Warning'),
+                _('You can not drill analytic journal items of the root line'))
         name = self._aji_label_pattern.format(
             budget_code=sl_br.budget_id.code or '',
             budget_line=sl_br.name or '')
 
         res = {
-            'name': name,
+            'name': filter_chars(name),
             'type': 'ir.actions.act_window',
             'res_model': 'account.analytic.line',
             'view_type': 'form',

@@ -104,7 +104,11 @@ class account_cheque_register(osv.osv):
         """
         When you click on "Open Cheque Register"
         """
-        return self.write(cr, uid, ids, {'state': 'open'}, context=context)
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for chq in self.browse(cr, uid, ids, context=context):
+            self.write(cr, uid, [chq.id], {'state' : 'open', 'name': chq.journal_id.name})
+        return True
 
     def button_confirm_cheque(self, cr, uid, ids, context=None):
         """
