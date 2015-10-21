@@ -1954,7 +1954,8 @@ class account_bank_statement_line(osv.osv):
             saveddate = False
             if values.get('date'):
                 saveddate = values['date']
-            self._update_move_from_st_line(cr, uid, ids, values, context=context)
+            if not context.get('sync_update_execution'):
+                self._update_move_from_st_line(cr, uid, ids, values, context=context)
             if saveddate:
                 values['date'] = saveddate
 
