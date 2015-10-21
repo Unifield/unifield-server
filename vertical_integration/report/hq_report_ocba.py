@@ -88,11 +88,14 @@ class hq_report_ocba(report_sxw.report_sxw):
                     'is_cur_adj': self._CUR_ADJ_JOURNAL_TYPE \
                         and r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE,
                     'account_name': r.account_id.name or '',
+                    'ids': [],  # shrinked ids
                 }
 
+            # sum/append shrink amount/ids
             build_data['shrink'][key]['booking'] += \
                 r.debit_currency - r.credit_currency
             build_data['shrink'][key]['func'] += r.debit - r.credit
+            build_data['shrink'][key]['ids'].append(r.id)
             return
 
         data={
@@ -154,7 +157,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             build_data['period_name'], )
 
         data={
-            'DB ID': '',
+            'DB ID': finance_export.finance_archive._get_hash(cr, uid, entry_data['ids'], 'account.move.line'),
             'Proprietary instance': '',
             'Journal Code': self._enc(journal_code),
             'Entry Sequence': seq_number,
