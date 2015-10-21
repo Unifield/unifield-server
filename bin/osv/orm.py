@@ -3236,7 +3236,7 @@ class orm(orm_template):
             select = [ids]
         else:
             select = ids
-        select = map(lambda x: isinstance(x, dict) and x['id'] or x, select)
+        select = [isinstance(x, dict) and x['id'] or x for x in select]
         result = self._read_flat(cr, user, select, fields, context, load)
 
         for r in result:
