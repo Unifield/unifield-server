@@ -338,26 +338,15 @@ class journal_items_corrections(osv.osv_memory):
         aml_obj = self.pool.get('account.move.line')
         # Fetch old line
         old_line = wizard.move_line_id
-        unit_test_diff = False
-        unit_test_new_account_id = False
-        if context.get('unit_test', False):
-            # SPECIFIC FOR FINANCE_UNIT TESTING
-            if isinstance(context['unit_test'], dict) and \
-                context['unit_test'].get('move_line_id', False) and \
-                context['unit_test'].get('diff', False):
-                old_line = self.pool.get('account.move.line').browse(cr, uid, 
-                    context['unit_test']['move_line_id'], context=context)
-                unit_test_diff = context['unit_test']['diff']
-                unit_test_new_account_id = context['unit_test'].get('new_account_id', False)
         # Verify what have changed between old line and new one
         new_lines = wizard.to_be_corrected_ids
         # compare lines
-        comparison = unit_test_diff or self.compare_lines(cr, uid, old_line.id, new_lines[0].id, context=context)
+        comparison = self.compare_lines(cr, uid, old_line.id, new_lines[0].id, context=context)
         # Result
         res = [] # no result yet
         # Correct account
         if comparison == 1:
-            res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, unit_test_new_account_id or new_lines[0].account_id.id, distrib_id, context=context)
+            res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
         # Correct third parties

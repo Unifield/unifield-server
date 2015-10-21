@@ -705,7 +705,7 @@ class FinanceTest(UnifieldTest):
         wiz_br = wizard_cor_obj.browse(wizard_cor_obj.create(vals))
 
         # set the generated correction line
-        wiz_cor_line = self.get_first(wiz_br.to_be_corrected_ids)
+        wiz_cor_line = wiz_br.to_be_corrected_ids.next()
         self.assert_(
             wiz_cor_line != False,
             'error generating a correction line'
@@ -918,22 +918,15 @@ class FinanceTest(UnifieldTest):
                         'old_account_id': old_account_id,
                         'account_id': new_account_id,
                     })
-                wizard_ad_obj.write([wizard_ad_id], ad_wiz_vals,
-                    {'unit_test': 1})
-                
+                wizard_ad_obj.write([wizard_ad_id], ad_wiz_vals)
+                             
                 # confirm the wizard with adoc context values to process a
                 # correction
                 context = {
                     'from': 'wizard.journal.items.corrections',
                     'from_list_grid': 1,
-                    'wiz_id': wizard_ad_id,
-                    'unit_test': { # DO NOT REMOVE
-                        'move_line_id': ji_to_correct_id,
-                        'diff': 1 if new_account_id else 4,
-                    }
+                    'wiz_id': wiz_br.id,
                 }
-                if new_account_id:
-                    context['unit_test']['new_account_id'] = new_account_id
                 wizard_ad_obj.button_confirm([wizard_ad_id], context)
                 return  # G/L account change already processed line above
  
@@ -941,7 +934,7 @@ class FinanceTest(UnifieldTest):
             # G/L correction without AD correction: confirm wizard
             # (with an AD correction, cor is confirmed by AD wizard)
             # action_confirm(ids, context=None, distrib_id=False)
-            wizard_cor_obj.action_confirm([wiz_br.id], {'unit_test': 1}, False)
+            wizard_cor_obj.action_confirm([wiz_br.id], {}, False)
             
     def check_sequence_number(self, model_obj, entries_ids, is_analytic=False,
         od_type=None, db_name=''):
