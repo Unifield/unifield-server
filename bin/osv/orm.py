@@ -466,13 +466,13 @@ class orm_template(object):
                 'name': k,
                 'field_description': f.string.replace("'", " "),
                 'ttype': f._type,
-                'relation': f._obj or '',
-                'view_load': (f.view_load and 1) or 0,
+                'relation': f._obj or u'',
+                'view_load': (f.view_load and True) or False,
                 'select_level': tools.ustr(f.select or 0),
-                'readonly': (f.readonly and 1) or 0,
-                'required': (f.required and 1) or 0,
-                'selectable': (f.selectable and 1) or 0,
-                'translate': (f.translate and 1) or 0,
+                'readonly': (f.readonly and True) or False,
+                'required': (f.required and True) or False,
+                'selectable': (f.selectable and True) or False,
+                'translate': (f.translate and True) or False,
                 'relation_field': (f._type=='one2many' and isinstance(f, fields.one2many)) and f._fields_id or '',
             }
 
@@ -509,8 +509,6 @@ class orm_template(object):
             else:
                 for key, val in vals.items():
                     if cols[k][key] != vals[key]:
-                        cr.execute('update ir_model_fields set field_description=%s where model=%s and name=%s', (vals['field_description'], vals['model'], vals['name']))
-                        cr.commit()
                         cr.execute("""UPDATE ir_model_fields SET
                             model_id=%s, field_description=%s, ttype=%s, relation=%s,
                             view_load=%s, select_level=%s, readonly=%s ,required=%s, selectable=%s, relation_field=%s, translate=%s
