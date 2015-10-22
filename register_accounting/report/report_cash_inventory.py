@@ -30,7 +30,7 @@ class cash_inventory(report_sxw.rml_parse):
             'getNow': self.get_now,
         })
 
-    def get_now(self, show_datetime=True):
+    def get_now(self, show_datetime=False):
         date_tools_obj = self.pool.get('date.tools')
         res = datetime.datetime.now()
         return date_tools_obj.datetime2orm(res) if show_datetime \

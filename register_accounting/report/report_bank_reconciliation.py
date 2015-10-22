@@ -58,7 +58,7 @@ class bank_reconciliation(report_sxw.rml_parse):
                 amount -= line.amount_in
         return amount
 
-    def get_now(self, show_datetime=True):
+    def get_now(self, show_datetime=False):
         date_tools_obj = self.pool.get('date.tools')
         res = datetime.datetime.now()
         return date_tools_obj.datetime2orm(res) if show_datetime \
