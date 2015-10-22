@@ -20,12 +20,21 @@
 ##############################################################################
 
 from report import report_sxw
+import datetime
+
 
 class cash_inventory(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(cash_inventory, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
+            'getNow': self.get_now,
         })
+
+    def get_now(self, show_datetime=True):
+        date_tools_obj = self.pool.get('date.tools')
+        res = datetime.datetime.now()
+        return date_tools_obj.datetime2orm(res) if show_datetime \
+            else date_tools_obj.date2orm(res.date())
 
 report_sxw.report_sxw('report.cash.inventory', 'account.bank.statement', 'addons/register_accounting/report/cash_inventory.rml', parser=cash_inventory)
 
