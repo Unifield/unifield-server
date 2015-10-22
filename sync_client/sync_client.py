@@ -541,7 +541,9 @@ class Entity(osv.osv):
         if not res[0]: raise Exception, res[1]
 
         updates_count = self.retrieve_update(cr, uid, max_packet_size, recover=recover, context=context)
-        self._logger.info("::::::::The instance " + entity.name + " pulled: " + str(res[1]) + " messages and " + str(updates_count) + " updates.")        
+        log_info = ("::::::::The instance ", entity.name, " pulled: ",
+                str(res[1]), " messages and ", str(updates_count), " updates.")
+        self._logger.info(''.join(log_info))
         updates_executed = self.execute_updates(cr, uid, context=context)
         if updates_executed == 0 and updates_count > 0:
             self._logger.warning("No update to execute, this case should never occurs.")
@@ -616,27 +618,24 @@ class Entity(osv.osv):
 
         # Get a list of updates to execute
         # Warning: execution order matter
-        update_ids = updates.search(cr, uid, [('run', '=', False)], order='id asc', context=context)
+        update_ids = updates.search(cr, uid, [('run', '=', False)], context=context)
         update_count = len(update_ids)
         if not update_count: return 0
 
         # Sort updates by rule_sequence
         whole = updates.browse(cr, uid, update_ids, context=context)
         update_groups = dict()
-
         for update in whole:
             group_key = (update.sequence_number, update.rule_sequence)
-            try:
-                update_groups[group_key].append(update.id)
-            except KeyError:
-                update_groups[group_key] = [update.id]
+            update_groups.setdefault(group_key, []).append(update.id)
 
         try:
             if logger: logger_index = logger.append()
             done = []
             imported, deleted = 0, 0
-            for rule_seq in sorted(update_groups.keys()):
-                update_ids = update_groups[rule_seq]
+            update_group_items = update_groups.items()
+            update_group_items.sort()
+            for rule_seq, update_ids in iter(update_group_items):
                 while update_ids:
                     to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
                     messages, imported_executed, deleted_executed = \
@@ -647,7 +646,7 @@ class Entity(osv.osv):
                     imported += imported_executed
                     deleted += deleted_executed
                     # Do nothing with messages
-                    done.extend(to_do)
+                    done += to_do
                     if logger:
                         logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
                                                      % (imported, deleted, update_count))
@@ -923,6 +922,7 @@ class Entity(osv.osv):
 
         return True
 
+
     @sync_process()
     def sync_withbackup(self, cr, uid, context=None):
         """
@@ -1058,7 +1058,7 @@ class Connection(osv.osv):
 
     _defaults = {
         'active': True,
-        'host' : 'sync.unifield.org',
+        'host' : 'sync.unifield.net',
         'port' : 8070,
         'protocol': 'netrpc_gzip',
         'login' : 'admin',
