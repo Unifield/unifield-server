@@ -2056,6 +2056,14 @@ class account_bank_statement_line(osv.osv):
                 if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
                     raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
             previous_state = ''.join(absl.state)
+            if absl.state == 'draft':
+                # US-673: temp posted line generates 2 creation updates
+                # if the line is temp posted between the 2 rules, the 1st upd to create the line is not sent
+                # update ir_model_data create_date to now(), so the 2 updates will be generated together at the next sync
+                cr.execute("""update ir_model_data set create_date=NOW() where
+                    model=%s and res_id=%s and module='sd'
+                    """, (self._name, absl.id))
+
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
             elif absl.state == "temp" and postype == "temp" and absl.direct_invoice == False:
