@@ -93,7 +93,7 @@ class FinanceTestCorCases(FinanceTest):
             # 'CC': [(Prop Instance, is_target), ]
             
             # C1 tree
-            'HT101': [ ('HQC1', True), ],
+            'HT101': [ ('HQ1C1', True), ],
             'HT120': [ ('HQ1C1', True), ],
             'HT111': [ ('HQ1C1', False), ('HQ1C1P1', True), ],
             'HT112': [ ('HQ1C1', False), ('HQ1C1P1', True), ],
@@ -162,14 +162,27 @@ class FinanceTestCorCases(FinanceTest):
         def get_instance_id_from_code(db, code):
             instance_ids = db.get('msf.instance').search(
                 [('code', '=', self.get_db_name_from_suffix(code))])
-                
             if not instance_ids:
                 # default dev instance (db/prop instances name from a RB)
                 target_instance_code = "%s%s" % (
                     self._db_instance_prefix or self_db_prefix, code, )
                 instance_ids = db.get('msf.instance').search(
                         [('code', '=', target_instance_code)])
-                self.assert_(instance_ids != False, "instance not found")
+                if not instance_ids:
+                   # instance doesn't exist, create it
+                   newcode = self.get_db_name_from_suffix(code)
+                   return db.get('msf.instance').create({
+                        'code': newcode,
+                        'reconcile_prefix': newcode,
+                        'move_prefix': newcode,
+                        'name': newcode,
+                        'level': 'coordo',
+                        'instance': newcode,
+                        'state': 'inactive',
+                        'parent_id': self.get_company(db).instance_id.id,
+                        'instance_identifier': newcode,
+                   })
+                #self.assert_(instance_ids != False, "instance not found")
             
             return instance_ids and instance_ids[0] or False
         
@@ -237,6 +250,17 @@ class FinanceTestCorCases(FinanceTest):
                             ('code', '=', parent_code),
                         ])
                         parent_id = parent_ids and parent_ids[0] or False
+                        if not parent_id:
+                            parent_id = aaa_obj.create({
+                                  'type': 'view',
+                                  'category': 'OC',
+                                  'code': parent_code,
+                                  'currency_id': company.currency_id.id,
+                                  'date_start': time.strftime('%Y-01-01'),
+                                  'name': parent_code,
+                                  'state': 'open',
+                                  'parent_id': aaa_obj.search([('type', '=', 'view'), ('category', '=', 'OC'), ('parent_id', '=', False)])[0],
+                            })
                         parent_cc_ids[parent_code] = parent_id
                     else:
                         parent_id = parent_cc_ids.get(parent_code, False)
