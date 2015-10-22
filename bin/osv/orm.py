@@ -3268,7 +3268,7 @@ class orm(orm_template):
                      ] + self._inherits.values()
 
         res = []
-        if len(fields_pre):
+        if fields_pre:
             def convert_field(f):
                 f_qual = "%s.%s" % (self._table, f) # need fully-qualified references in case len(tables) > 1
                 if f in ('create_date', 'write_date'):
@@ -3298,18 +3298,18 @@ class orm(orm_template):
                 else:
                     cr.execute(query, (tuple(sub_ids),))
                 res.extend(cr.dictfetchall())
-        else:
-            res = map(lambda x: {'id': x}, ids)
+            for f in fields_pre:
+                if f == self.CONCURRENCY_CHECK_FIELD:
+                    continue
+                if self._columns[f].translate:
+                    ids = [x['id'] for x in res]
+                    #TODO: optimize out of this loop
+                    res_trans = self.pool.get('ir.translation')._get_ids(cr, user, self._name+','+f, 'model', context.get('lang', False) or 'en_US', ids)
+                    for r in res:
+                        r[f] = res_trans.get(r['id'], False) or r[f]
 
-        for f in fields_pre:
-            if f == self.CONCURRENCY_CHECK_FIELD:
-                continue
-            if self._columns[f].translate:
-                ids = [x['id'] for x in res]
-                #TODO: optimize out of this loop
-                res_trans = self.pool.get('ir.translation')._get_ids(cr, user, self._name+','+f, 'model', context.get('lang', False) or 'en_US', ids)
-                for r in res:
-                    r[f] = res_trans.get(r['id'], False) or r[f]
+        else:
+            res = [{'id':x} for x in ids]
 
         for table in self._inherits:
             col = self._inherits[table]
