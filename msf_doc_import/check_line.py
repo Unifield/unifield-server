@@ -491,7 +491,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
         expiry_date = row.cells[ed_cell_nb].data
 
     if not bn_ids and product_id and batch_name and expiry_date:
-        bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name), ('life_date', '=', expiry_date)])
+        bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name), ('life_date', '=', expiry_date.strftime('%Y-%m-%d'))])
         if bn_ids:
             batch_number = bn_ids[0]
 
@@ -502,7 +502,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
 
         # Set an error message for non matching between BN and Expiry date
         if expiry_date:
-            warning_list.append(_('The expiry date %s not corresponding to the expiry date of the Batch Number %s − The expiry date of the batch has been set instead.') % (expiry_date.strftime(date_format), batch_name))
+            warning_list.append(_('The expiry date %s not corresponding to the expiry date of the Batch Number %s - The expiry date of the batch has been set instead.') % (expiry_date.strftime(date_format), batch_name))
 
         # Set expiry date with the life date of the BN
         expiry_date = bn_obj.browse(cr, uid, batch_number).life_date
