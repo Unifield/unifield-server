@@ -20,6 +20,7 @@
 ##############################################################################
 
 from report import report_sxw
+import datetime
 
 
 class bank_reconciliation(report_sxw.rml_parse):
@@ -30,6 +31,7 @@ class bank_reconciliation(report_sxw.rml_parse):
         self.context = context
         self.localcontext.update({
             'get_amount_pending_cheque': self.get_amount_pending_cheque,
+            'getNow': self.get_now,
         })
 
     def get_amount_pending_cheque(self, obj):
@@ -55,6 +57,12 @@ class bank_reconciliation(report_sxw.rml_parse):
                 amount += line.amount_out
                 amount -= line.amount_in
         return amount
+
+    def get_now(self, show_datetime=True):
+        date_tools_obj = self.pool.get('date.tools')
+        res = datetime.datetime.now()
+        return date_tools_obj.datetime2orm(res) if show_datetime \
+            else date_tools_obj.date2orm(res.date())
 
 
 report_sxw.report_sxw('report.bank.reconciliation', 'account.bank.statement', 'addons/register_accounting/report/bank_reconciliation.rml', parser=bank_reconciliation)
