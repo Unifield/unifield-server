@@ -99,6 +99,15 @@
 
       <spacer length="24"/>
 
+      <para style="text"><b>Bank account number:</b></para>
+      <blockTable colWidths="180mm" rowHeights="10mm" style="table_comments">
+        <tr>
+          <td></td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
 
       <para style="text">Register state: <b>[[ getSel(o, 'state') ]]</b></para>
       <para style="text">Register opening date: <b>[[ o.date or '' ]]</b></para>
