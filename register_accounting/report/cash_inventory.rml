@@ -163,8 +163,7 @@
       <para style="text">Register opening date: <b>[[ o.date or '' ]]</b></para>
       <para style="text">Register closing date: <b>[[ o.closing_date and o.closing_date != "False" and o.closing_date or '']]</b></para>
       <para style="text">Report date: <b>[[ time.strftime("%Y-%m-%d %H:%M") ]]</b></para>
-      <para style="text">End of month balance state: <b>[[ o.closing_balance_frozen and 'Confirmed' or 'Not confirmed' ]]</b></para>
-      <!--<para style="text">Confirmation date: <b>@TODO</b></para> -->
+      <para style="text">End of month balance state: <b>[[ o.closing_balance_frozen and 'Confirmed' or 'Not confirmed' ]][[ o.closing_balance_frozen and o.closing_balance_frozen_date and (' ' + formatLang(o.closing_balance_frozen_date, date=True)) or '' ]]</b></para>
       <para style="text"></para>
       <para style="text"></para>
 
