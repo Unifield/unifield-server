@@ -698,6 +698,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
             context = {}
 
         real_args = []
+        real_args_append = real_args.append
         for item in args:
             if isinstance(item, (tuple, list)):
                 if len(item) != 3:
@@ -714,20 +715,21 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                     ids_list = sub_obj.search_ext(cr, user, sub_domain, context=context)
                     if ids_list:
                         new_ids = []
+                        new_ids_append = new_ids.append
                         for data in sub_obj.read(cr, user, ids_list, [field], context=context):
                             if isinstance(data[field], (tuple, list)) \
                                and len(data[field]) == 2 \
                                and isinstance(data[field][0], (int, long)) \
                                and isinstance(data[field][1], basestring):
-                                new_ids.append(data[field][0])
+                                new_ids_append(data[field][0])
                             else:
-                                new_ids.append(data[field])
+                                new_ids_append(data[field])
                         ids_list = new_ids
-                    real_args.append((item[0], item[1], ids_list))
+                    real_args_append((item[0], item[1], ids_list))
                 else:
-                    real_args.append(item)
+                    real_args_append(item)
             else:
-                real_args.append(item)
+                real_args_append(item)
 
         context['rw_sync_in_progress'] = True
         return self.search(cr, user, real_args, offset=offset, limit=limit, order=order, context=context, count=count)
