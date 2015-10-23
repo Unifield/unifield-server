@@ -1083,7 +1083,8 @@ MochiKit.Base.update(ListView.prototype, {
             _terp_view_mode : this.view_mode})
         }, null, {
             height: '98%',
-            max_height: 550
+            max_height: 550,
+            width: '95%'
         });
     }
 });
