@@ -2879,6 +2879,10 @@ class stock_inventory(osv.osv):
                                                   _('You can not cancel inventory which has any account move with posted state.'))
                          account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
+            if self._name == 'initial.stock.inventory':
+                self.infolog(cr, uid, "The Initial Stock inventory id:%s has been canceled" % inv.id)
+            else:
+                self.infolog(cr, uid, "The Physical inventory id:%s has been canceled" % inv.id)
         return True
 
 stock_inventory()
