@@ -201,7 +201,7 @@
             <td class="side_spacing">
                 <table width="100%">
                     <tr>
-                        <td class="imp-header" align="right">
+                        <td class="imp-header" align="left">
                             <a class="button-a" href="javascript: void(0)" onclick="window.frameElement.close()">${_("Close")}</a>
                             <a class="button-a" href="javascript: void(0)" onclick="do_import();">${_("Import File")}</a>
                         </td>
