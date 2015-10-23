@@ -510,14 +510,15 @@ class FinanceTestCorCases(FinanceTest):
     def _get_default_date(self):
         return self.get_orm_fy_rand_month_date(DEFAULT_DATE_MONTH)
 
-    def _register_set(self, db, period_id=DEFAULT_DATE_PERIOD_ID,
+    def _register_set(self, db, period_id=None,
             ccy_name=False):
         dataset_meta = self._get_dataset_meta()
 
         db = self.c1
         aj_obj = db.get('account.journal')
         abs_obj = db.get('account.bank.statement')
-
+        if period_id is None:
+            period_id = db.get('account.period').search([('number', '=', DEFAULT_DATE_PERIOD_ID)], 0, 1, 'id')[0]
         if not ccy_name:
             ccy_name = dataset_meta.functional_ccy
 
