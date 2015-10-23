@@ -26,6 +26,8 @@ from lxml import etree
 import logging
 import copy
 from datetime import datetime
+import netsvc
+
 
 def _get_instance_level(self, cr, uid):
     """
@@ -145,6 +147,18 @@ def create(self, cr, uid, vals, context=None):
         return res
 
 orm.orm.create = create
+
+
+def infolog(self, cr, uid, message):
+    logger = netsvc.Logger()
+    logger.notifyChannel(
+       'INFOLOG: Model: %s :: User: %s :: ' % (self._name, uid),
+        netsvc.LOG_INFO,
+        message,
+    )
+
+orm.orm.infolog = infolog
+orm.orm_memory.infolog = infolog
 
 
 def _values_equate(field_type, current_value, new_value):
