@@ -444,7 +444,6 @@ class Entity(osv.osv):
 
             # a dict of already deleted objects (not to delete them two times)
             del_obj_dict = {} # {model:[id_list]}
-            update_context = dict(context or {}, sync_update_creation=True)
             client_rule = self.pool.get('sync.client.rule')
             for rule_id in client_rule.search(cr, uid, [('type', '!=', 'USB')], context=context):
                 rule = self.pool.get('sync.client.rule').browse(cr, uid,
