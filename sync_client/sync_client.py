@@ -441,20 +441,9 @@ class Entity(osv.osv):
 
         def prepare_update(session):
             updates_count = 0
-
-            # a dict of already deleted objects (not to delete them two times)
-            del_obj_dict = {} # {model:[id_list]}
-            client_rule = self.pool.get('sync.client.rule')
-            for rule_id in client_rule.search(cr, uid, [('type', '!=', 'USB')], context=context):
-                rule = self.pool.get('sync.client.rule').browse(cr, uid,
-                        rule_id, context=context)
-                cur_del_obj_list = del_obj_dict.has_key(rule.model) and\
-                        del_obj_dict[rule.model] or []
-                nb_normal, nb_delete, del_obj_list = \
-                        updates.create_update(cr, uid, rule, session,
-                                cur_del_obj_list, context=context)
-                del_obj_dict.setdefault(rule.model, []).extend(del_obj_list)
-                updates_count += nb_normal + nb_delete
+            for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [('type', '!=', 'USB')], context=context):
+                updates_count += sum(updates.create_update(
+                    cr, uid, rule_id, session, context=context))
             return updates_count
 
         entity = self.get_entity(cr, uid, context)

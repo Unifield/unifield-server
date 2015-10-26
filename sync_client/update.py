@@ -135,7 +135,8 @@ class update_to_send(osv.osv):
     def _auto_init(self, cr, context=None):
         super(update_to_send, self)._auto_init(cr, context=context)
 
-    def create_update(self, cr, uid, rule, session_id, deleted_object_list=[], context=None):
+    def create_update(self, cr, uid, rule_id, session_id, context=None):
+        rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         update = self
 
         def create_normal_update(self, rule, context):
@@ -183,24 +184,15 @@ class update_to_send(osv.osv):
 
             return len(ids_to_compute)
 
-        def create_delete_update(self, rule, deleted_object_list, context):
+        def create_delete_update(self, rule, context):
             if not rule.can_delete:
-                return 0, []
+                return 0
 
             ids_to_delete = self.need_to_push(cr, uid,
                 self.search_deleted(cr, uid, module='sd', context=context),
                 context=context)
-
-            # more than one rule can apply on this model with can_delete=True.
-            # In this case there will be as much update as rule number to
-            # delete it. The following code check if updates have already been
-            # created to delete this objects. If yes don't create another for
-            # this ids.
-            if deleted_object_list:
-                # remove the already deleted ids
-                ids_to_delete = tuple(set(ids_to_delete)-set(deleted_object_list))
             if not ids_to_delete:
-                return 0, []
+                return 0
 
             sdrefs = self.get_sd_ref(cr, uid, ids_to_delete, context=context)
             for id in ids_to_delete:
@@ -212,15 +204,15 @@ class update_to_send(osv.osv):
                     'is_deleted' : True,
                 }, context=context)
                 update._logger.debug("Created 'delete' update: model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
+
             self.clear_synchronization(cr, uid, ids_to_delete, context=context)
-            return len(ids_to_delete), ids_to_delete
+
+            return len(ids_to_delete)
 
         update_context = dict(context or {}, sync_update_creation=True)
         obj = self.pool.get(rule.model)
         assert obj, "Cannot find model %s of rule id=%d!" % (rule.model, rule.id)
-        normal_update = create_normal_update(obj, rule, update_context)
-        delete_update = create_delete_update(obj, rule, deleted_object_list, update_context)
-        return (normal_update,) + delete_update
+        return (create_normal_update(obj, rule, update_context), create_delete_update(obj, rule, update_context))
 
     def create_package(self, cr, uid, session_id=None, packet_size=None, context=None):
         domain = session_id and [('session_id', '=', session_id), ('sent', '=', False)] or [('sent', '=', False)]
