@@ -337,8 +337,7 @@ class update(osv.osv):
             @return : list of browse record of the updates to send
         """
         update_to_send = []
-        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
-        children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
+        server_entity = self.pool.get('sync.server.entity')
         for update in self.browse(cr, uid, update_ids, context=context):
             if update.rule_id.direction == 'bi-private':
                 if update.is_deleted:
@@ -346,22 +345,35 @@ class update(osv.osv):
                 elif not update.owner:
                     privates = []
                 else:
-                    privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
+                    privates = server_entity._get_ancestor(cr, uid, update.owner.id, context=context) + \
                                [update.owner.id]
             else:
                 privates = []
-            if not update.rule_id:
-                update_to_send.append(update)
-            elif (update.rule_id.direction == 'up' and update.source.id in children) or \
-               (update.rule_id.direction == 'down' and update.source.id in ancestor) or \
-               (update.rule_id.direction == 'bidirectional') or \
-               (entity.id in privates) or \
-               (recover and entity.id == update.source.id):
-                
+
+            def check_group_for_append():
                 source_rules_ids = self.pool.get('sync_server.sync_rule')._get_groups_per_rule(cr, uid, update.source, context)
                 s_group = source_rules_ids.get(update.rule_id.id, [])
                 if any(group.id in s_group for group in entity.group_ids):
                     update_to_send.append(update)
+
+
+            if not update.rule_id:
+                update_to_send.append(update)
+            elif update.rule_id.direction == 'up':
+                children = server_entity._get_all_children(cr, uid, entity.id, context=context)
+                if update.source.id in children:
+                    check_group_for_append()
+
+            elif update.rule_id.direction == 'down':
+                ancestor = server_entity._get_ancestor(cr, uid, entity.id, context=context)
+                if update.source.id in ancestor:
+                    check_group_for_append()
+
+            elif update.rule_id.direction == 'bidirectional' or \
+               (entity.id in privates) or \
+               (recover and entity.id == update.source.id):
+                check_group_for_append()
+
         return update_to_send
 
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
