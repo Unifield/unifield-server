@@ -140,8 +140,9 @@ class invoice(report_sxw.rml_parse):
         res = []
         index = 1
         for m in pl.move_lines:
-            res.append((index, m))
-            index += 1
+            if not m.not_shipped:
+                res.append((index, m))
+                index += 1
         return sorted(res, key=lambda x: x[1].sale_line_id and x[1].sale_line_id.line_number or x[1].line_number)
 
     def _get_total(self, pf):
@@ -151,7 +152,7 @@ class invoice(report_sxw.rml_parse):
         """
         res = 0.
         for move in pf.move_lines:
-            if move.total_amount:
+            if not move.not_shipped and move.total_amount:
                 res += move.total_amount
         return res
 
