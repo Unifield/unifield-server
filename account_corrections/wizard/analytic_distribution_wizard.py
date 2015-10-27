@@ -146,6 +146,24 @@ class analytic_distribution_wizard(osv.osv_memory):
         seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
         entry_seq = "%s-%s-%s" % (move_prefix, code, seqnum)
 
+        # US-676: check wizard lines total matches JI amount
+        # the wizard already check distri is 100% allocated
+        # => so if gap: due to distri input mode changes (rounding issues)
+        # (distri done for example in amount mode, later corrected in defaults
+        # mode (percentage))
+        # => deduce the gap (as we are in 100% distri) to the greater amount
+        # line like was done for US-119
+        # => apply these deduce only if: lines are created as some line are
+        # created/resplit. do nothing if only cc/dest of lines changes.
+        total_rounded_amount = 0.
+        greater_amount = {  # US-676
+            'wl': False,  # wizard line with greater amount
+            'aji_id': False,  # related aji: not touched wizard line one or created, overrided, reversed
+            'amount': 0.,  # greater amount
+            'fix_amount': 0,  # fixed amount
+            'date': orig_date,  # greater amount posted date
+        }
+
         #####
         ## FUNDING POOL
         ###
@@ -182,6 +200,16 @@ class analytic_distribution_wizard(osv.osv_memory):
                     to_override.append(wiz_line)
 
                 old_line_ok.append(old_line.id)
+            total_rounded_amount += round(wiz_line.amount, 2)
+            if wiz_line.amount > greater_amount['amount']:
+                greater_amount.update({
+                    'amount': wiz_line.amount,
+                    'wl':wiz_line,
+                })
+        match_amount_diff = abs(total_rounded_amount - abs(ml.debit_currency))
+        if match_amount_diff > 0.001:
+            greater_amount['fix_amount'] = \
+                greater_amount['amount'] - match_amount_diff
 
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
             # distribution line deleted by user
@@ -232,6 +260,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             if period_closed:
                 self.pool.get('account.analytic.line').write(cr, uid, created_analytic_line_ids[new_distrib_line], {'journal_id': correction_journal_id})
                 have_been_created.append(created_analytic_line_ids[new_distrib_line])
+            if created_analytic_line_ids and greater_amount['fix_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
+                greater_amount['aji_id'] = created_analytic_line_ids[0]
+                greater_amount['date'] = create_date
 
         #####
         ## FP: TO DELETE
@@ -287,6 +318,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             for ret_id in ret:
                 self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
                 cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, ret[ret_id]) )
+            if ret and greater_amount['fix_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
+                greater_amount['aji_id'] = ret[ret.keys()[0]]
+                greater_amount['date'] = wizard.date
         # UFTP-194: Set missing entry sequence for created analytic lines
         if have_been_created:
             cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (entry_seq, to_reverse_ids[0], tuple(have_been_created)))
@@ -329,6 +363,39 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'percentage': line.percentage,
                     'destination_id': line.destination_id.id
                 })
+            if greater_amount['fix_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
+                greater_amount['aji_id'] = to_override_ids[0]
+                greater_amount['date'] = date_to_use
+
+        #####
+        # US-676
+        if greater_amount['fix_amount']:
+            if not greater_amount['aji_id'] and greater_amount['wl']:
+                # untouched greater amount, get analytic line id:
+                # (not in to_create, to_delete, to_override, to_reverse)
+                aji_ids = self.pool.get(
+                    'account.analytic.line').search(cr, uid, [
+                        ('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%greater_amount['wl'].distribution_line_id.id),
+                        ('is_reversal', '=', False),
+                        ('is_reallocated', '=', False),
+                    ])
+                if aji_ids:
+                    greater_amount['aji_id'] = aji_ids[0]
+
+            if greater_amount['aji_id']:
+                # US-676 greater amount update to fix (deduce) rounding gap
+                new_context = context.copy()
+                new_context['date'] = greater_amount['date']
+                amount_func = self.pool.get('res.currency').compute(cr, uid,
+                    greater_amount['wl'].currency_id.id, company_currency_id,
+                    greater_amount['fix_amount'], round=False,
+                    context=new_context)
+
+                self.pool.get('account.analytic.line').write(cr, uid,
+                    [greater_amount['aji_id']], {
+                        'amount_currency': -1 * greater_amount['fix_amount'],
+                        'amount': -1 * amount_func,
+                    })
 
         #####
         ## Set move line as corrected upstream if needed
