@@ -63,6 +63,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             #+ to construct object research !
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True,
             domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+        'is_percentage_amount_touched': fields.boolean('Is percentage/amount updated ?', invisible=True),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -142,6 +143,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'percentage': _get_remaining_allocation,
         'amount': _get_remaining_allocation,
         'type': lambda *a: 'cost.center',
+        'is_percentage_amount_touched': False,
     }
 
     def onchange_percentage(self, cr, uid, ids, percentage, total_amount):
@@ -153,7 +155,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not percentage or not total_amount:
             return {}
         amount = abs((total_amount * percentage) / 100)
-        return {'value': {'amount': amount}}
+        return {'value': {'amount': amount, 'is_percentage_amount_touched': True}}
 
     def onchange_amount(self, cr, uid, ids, amount, total_amount):
         """
@@ -352,8 +354,12 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             wiz = self.browse(cr, uid, ids, context=context)
             if wiz and wiz[0].wizard_id and wiz[0].wizard_id.total_amount:
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].wizard_id.total_amount) * 100.0)})
-        if vals.get('percentage', False) == 0.0:
-            raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
+        if vals.get('is_percentage_amount_touched', False):
+            if vals.get('percentage', False) == 0.0:
+                raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
+        else:
+            if 'percentage' in vals:
+                del vals['percentage']
         res = super(analytic_distribution_wizard_lines, self).write(cr, uid, ids, vals, context=context)
         # Retrieve wizard_id field
         data = self.read(cr, uid, [ids[0]], ['wizard_id'], context=context)
