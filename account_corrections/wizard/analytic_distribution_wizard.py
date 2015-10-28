@@ -206,7 +206,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'amount': wiz_line.amount,
                     'wl':wiz_line,
                 })
-        match_amount_diff = abs(total_rounded_amount - abs(ml.debit_currency))
+        match_amount_diff = abs(total_rounded_amount - abs(wizard.amount))
         if match_amount_diff > 0.001:
             greater_amount['fix_amount'] = \
                 greater_amount['amount'] - match_amount_diff
