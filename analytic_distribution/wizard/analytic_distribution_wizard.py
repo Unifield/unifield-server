@@ -166,7 +166,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not amount or not total_amount:
             return {}
         percentage = abs((amount / total_amount) * 100)
-        return {'value': {'percentage': percentage}}
+        return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}}
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -360,6 +360,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         else:
             if 'percentage' in vals:
                 del vals['percentage']
+            if 'amount' in vals:
+                del vals['amount']
         res = super(analytic_distribution_wizard_lines, self).write(cr, uid, ids, vals, context=context)
         # Retrieve wizard_id field
         data = self.read(cr, uid, [ids[0]], ['wizard_id'], context=context)
