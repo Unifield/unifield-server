@@ -281,7 +281,7 @@ class stock_incoming_processor(osv.osv):
             # display warning
             result['warning'] = {
                 'title': _('Error'),
-                'message': _('You want to receive the IN on an other location than Cross Docking but "Cross docking" was checked. As you are re-routing these products to a different destination, please ensure you cancel any transport document(OUT/PICK etc) if it is no longer needed for the original requesting location.')
+                'message': _('You want to receive the IN into a location which is NOT Cross Docking but "Cross docking" was originally checked. As you are re-routing these products to a different destination, please ensure you cancel any transport document(OUT/PICK etc) if it is no longer needed for the original requesting location.')
             }
         elif picking.purchase_id and dest_type == 'to_cross_docking' and not picking.purchase_id.cross_docking_ok:
             # display warning
