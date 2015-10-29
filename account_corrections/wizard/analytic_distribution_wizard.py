@@ -388,15 +388,15 @@ class analytic_distribution_wizard(osv.osv_memory):
                 aji_rec = aal_obj.read(cr, uid, [greater_amount['aji_id']],
                     ['amount_currency', 'currency_id', ], context=context)[0]
                 if aji_rec:
+                    fix_aji_old_amount = aji_rec['amount_currency']
                     fix_aji_currency_id = aji_rec['currency_id'] \
                         and aji_rec['currency_id'][0] or False
-                    fix_aji_amount_currency = aji_rec['amount_currency']
 
                     # fix booking amount
-                    if aji_rec['amount_currency'] < 0:
-                        fix_aji_amount_currency += greater_amount['gap_amount']
-                    else:
-                        fix_aji_amount_currency -= greater_amount['gap_amount']
+                    fix_aji_amount_currency = greater_amount['wl'].amount \
+                        - greater_amount['gap_amount']
+                    if fix_aji_old_amount < 0:
+                        fix_aji_amount_currency *= -1
                     aji_fix_vals = {
                         'amount_currency': fix_aji_amount_currency,
                     }
