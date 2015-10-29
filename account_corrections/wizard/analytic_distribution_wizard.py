@@ -160,7 +160,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             'wl': False,  # wizard line with greater amount
             'aji_id': False,  # related aji: not touched wizard line one or created, overrided, reversed
             'amount': 0.,  # greater amount
-            'fix_amount': 0,  # fixed amount
+            'gap_amount': 0,  # gap amount to fix from greater amount line
             'date': orig_date,  # greater amount posted date
         }
 
@@ -206,10 +206,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'amount': wiz_line.amount,
                     'wl':wiz_line,
                 })
-        match_amount_diff = abs(total_rounded_amount - abs(wizard.amount))
-        if match_amount_diff > 0.001:
-            greater_amount['fix_amount'] = \
-                greater_amount['amount'] - match_amount_diff
+        match_amount_diff = total_rounded_amount - abs(wizard.amount)
+        if abs(match_amount_diff) > 0.001:
+            greater_amount['gap_amount'] = match_amount_diff
 
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
             # distribution line deleted by user
@@ -260,7 +259,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if period_closed:
                 self.pool.get('account.analytic.line').write(cr, uid, created_analytic_line_ids[new_distrib_line], {'journal_id': correction_journal_id})
                 have_been_created.append(created_analytic_line_ids[new_distrib_line])
-            if created_analytic_line_ids and greater_amount['fix_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
+            if created_analytic_line_ids and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
                 greater_amount['aji_id'] = created_analytic_line_ids[created_analytic_line_ids.keys()[0]]
                 greater_amount['date'] = create_date
 
@@ -318,7 +317,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             for ret_id in ret:
                 self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
                 cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, ret[ret_id]) )
-            if ret and greater_amount['fix_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
+            if ret and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
                 greater_amount['aji_id'] = ret[ret.keys()[0]]
                 greater_amount['date'] = wizard.date
         # UFTP-194: Set missing entry sequence for created analytic lines
@@ -363,18 +362,19 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'percentage': line.percentage,
                     'destination_id': line.destination_id.id
                 })
-            if greater_amount['fix_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
+            if greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
                 greater_amount['aji_id'] = to_override_ids[0]
                 greater_amount['date'] = date_to_use
 
         #####
         # US-676
-        if greater_amount['fix_amount']:
+        if greater_amount['gap_amount']:
+            aal_obj = self.pool.get('account.analytic.line')
+
             if not greater_amount['aji_id'] and greater_amount['wl']:
                 # untouched greater amount, get analytic line id:
                 # (not in to_create, to_delete, to_override, to_reverse)
-                aji_ids = self.pool.get(
-                    'account.analytic.line').search(cr, uid, [
+                aji_ids = aal_obj.search(cr, uid, [
                         ('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%greater_amount['wl'].distribution_line_id.id),
                         ('is_reversal', '=', False),
                         ('is_reallocated', '=', False),
@@ -384,18 +384,36 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             if greater_amount['aji_id']:
                 # US-676 greater amount update to fix (deduce) rounding gap
-                new_context = context.copy()
-                new_context['date'] = greater_amount['date']
-                amount_func = self.pool.get('res.currency').compute(cr, uid,
-                    greater_amount['wl'].currency_id.id, company_currency_id,
-                    greater_amount['fix_amount'], round=False,
-                    context=new_context)
+                # we read the aji created for distri then fix it
+                aji_rec = aal_obj.read(cr, uid, [greater_amount['aji_id']],
+                    ['amount_currency', 'currency_id', ], context=context)[0]
+                if aji_rec:
+                    fix_aji_currency_id = aji_rec['currency_id'] \
+                        and aji_rec['currency_id'][0] or False
+                    fix_aji_amount_currency = aji_rec['amount_currency']
 
-                self.pool.get('account.analytic.line').write(cr, uid,
-                    [greater_amount['aji_id']], {
-                        'amount_currency': -1 * greater_amount['fix_amount'],
-                        'amount': -1 * amount_func,
-                    })
+                    # fix booking amount
+                    if aji_rec['amount_currency'] < 0:
+                        fix_aji_amount_currency += greater_amount['gap_amount']
+                    else:
+                        fix_aji_amount_currency -= greater_amount['gap_amount']
+                    aji_fix_vals = {
+                        'amount_currency': fix_aji_amount_currency,
+                    }
+
+                    # then recompute functional amount
+                    if fix_aji_currency_id:
+                        new_context = context.copy()
+                        new_context['date'] = greater_amount['date']
+                        aji_fix_vals['amount'] = \
+                            self.pool.get('res.currency').compute(cr, uid,
+                            fix_aji_currency_id, company_currency_id,
+                            fix_aji_amount_currency, round=False,
+                            context=new_context)
+
+                    # fix aji
+                    aal_obj.write(cr, uid, [greater_amount['aji_id']],
+                        aji_fix_vals, context=context)
 
         #####
         ## Set move line as corrected upstream if needed
