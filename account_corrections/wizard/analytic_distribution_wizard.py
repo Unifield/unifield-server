@@ -261,7 +261,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 self.pool.get('account.analytic.line').write(cr, uid, created_analytic_line_ids[new_distrib_line], {'journal_id': correction_journal_id})
                 have_been_created.append(created_analytic_line_ids[new_distrib_line])
             if created_analytic_line_ids and greater_amount['fix_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
-                greater_amount['aji_id'] = created_analytic_line_ids[0]
+                greater_amount['aji_id'] = created_analytic_line_ids[created_analytic_line_ids.keys()[0]]
                 greater_amount['date'] = create_date
 
         #####
