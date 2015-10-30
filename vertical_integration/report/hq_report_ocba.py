@@ -286,7 +286,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             context=context)
 
         # generate zip result and post processing
-        zip_buffer = self._generate_files(form_data['integration_ref'],
+        zip_buffer = self._generate_files(data['target_filename_suffix'],
             file_data)
         self._mark_exported_entries(cr, uid, move_line_ids, analytic_line_ids)
         return (zip_buffer.getvalue(), 'zip', )
@@ -374,14 +374,13 @@ class hq_report_ocba(report_sxw.report_sxw):
         file_data[data_key_name]['data'].append(row)
         file_data[data_key_name]['count'] += 1
 
-    def _generate_files(self, integration_ref, file_data):
+    def _generate_files(self, target_filename, file_data):
         """
         :return zip buffer
         """
         zip_buffer = StringIO.StringIO()
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")
         tmp_fds = []
-        file_prefix = integration_ref and (integration_ref + '_') or ''
 
         # fill zip file
         for f in file_data:
@@ -393,10 +392,8 @@ class hq_report_ocba(report_sxw.report_sxw):
                 writer.writerow(map(self._enc, line))
             tmp_fd.close()
 
-            out_zipfile.write(tmp_fd.name,
-                "%s%s.csv" % (file_prefix, file_data[f]['file_name'], ),
-                zipfile.ZIP_DEFLATED
-            )
+            out_zipfile.write(tmp_fd.name, target_filename + ".csv",
+                zipfile.ZIP_DEFLATED)
         out_zipfile.close()
 
         # delete temporary files

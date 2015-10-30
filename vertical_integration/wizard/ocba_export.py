@@ -62,12 +62,14 @@ class ocba_export_wizard(osv.osv_memory):
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         data['form'].update({'selection': wizard.selection})
 
-        target_file_name_pattern = "OCBA_%s_%s_%s"
-        data['target_filename'] = target_file_name_pattern % (
+        data['target_filename_suffix'] = "%s_%s_%s" % (
             wizard.instance_id and wizard.instance_id.code or '',  # instance code
             wizard.period_id and wizard.period_id.date_start.replace('-', '') or '',  # period date
-            strftime('%y%m%d%H%M%S'),  # period of extractions
+            strftime('%y%m%d%H%M%S'),  # timestamp of extractions
         )
+        data['target_filename'] = data['target_filename_suffix']
+        if not data['target_filename'].startswith('OCBA'):
+            data['target_filename'] = 'OCBA_' + data['target_filename']
 
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocba', 'datas': data}
 
