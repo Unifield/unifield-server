@@ -821,7 +821,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el[0], 'destination_id': el[1]}, context=context)
             # else change current cost center
             else:
-                res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el]}, context=context)
+                res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el], 'is_percentage_amount_touched': True}, context=context)
             if res:
                 update_lines.append(res)
         # Delete useless cost center lines
