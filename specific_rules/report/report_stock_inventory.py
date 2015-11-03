@@ -196,7 +196,7 @@ location will be shown.""",
         self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
 
         new_cr.commit()
-        new_cr.close()
+        new_cr.close(True)
 
         return True
 

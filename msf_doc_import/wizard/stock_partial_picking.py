@@ -761,7 +761,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
         self.write(cr, uid, ids, vals, context=context)
         self.check_lines(cr, uid, ids, context)
         cr.commit()
-        cr.close()
+        cr.close(True)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.partial.picking',
                 'view_type': 'form',

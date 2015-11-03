@@ -345,7 +345,7 @@ Importation completed in %s!
 #            purchase_obj.write(cr, uid, wiz.po_id.id, {'import_in_progress': False}, context)
             if not context.get('yml_test', False):
                 cr.commit()
-                cr.close()
+                cr.close(True)
 
 
     def import_file(self, cr, uid, ids, context=None):

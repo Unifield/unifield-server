@@ -446,7 +446,7 @@ Find in attachment the rejected lines'''%(nb_error)
 
         errorfile.close()
         cr.commit()
-        cr.close()
+        cr.close(True)
 
     def import_csv(self, cr, uid, ids, context=None):
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))

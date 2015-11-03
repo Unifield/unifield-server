@@ -1217,7 +1217,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         if new_cursor:
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return True
 

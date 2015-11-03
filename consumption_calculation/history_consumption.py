@@ -266,7 +266,7 @@ class product_history_consumption(osv.osv):
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
         new_cr.commit()
-        new_cr.close()
+        new_cr.close(True)
 
         return
 

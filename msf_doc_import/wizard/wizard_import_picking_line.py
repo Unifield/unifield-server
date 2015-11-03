@@ -321,7 +321,7 @@ class wizard_import_pick_line(osv.osv_memory):
                 pick_obj.write(cr, uid, picking.id, {'state': picking.state_before_import, 'import_in_progress': False}, context)
         if not context.get('yml_test', False):
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return True
 

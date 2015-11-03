@@ -653,7 +653,7 @@ class weekly_forecast_report(osv.osv):
             self.write(new_cr, uid, [report.id], {'status': 'error', 'progress_comment': progress_comment}, context=context)
             new_cr.commit()
 
-        new_cr.close()
+        new_cr.close(True)
 
         return True
 

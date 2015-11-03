@@ -594,15 +594,15 @@ class wizard_register_import(osv.osv_memory):
 
             # Close cursor
             cr.commit()
-            cr.close()
+            cr.close(True)
         except osv.except_osv as osv_error:
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
-            cr.close()
+            cr.close(True)
         except Exception as e:
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
-            cr.close()
+            cr.close(True)
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
