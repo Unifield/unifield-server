@@ -541,7 +541,7 @@ class Entity(osv.osv):
         if not res[0]: raise Exception, res[1]
 
         updates_count = self.retrieve_update(cr, uid, max_packet_size, recover=recover, context=context)
-        self._logger.info("::::::::The instance " + entity.name + " pulled: " + str(res[1]) + " messages and " + str(updates_count) + " updates.")        
+        self._logger.info("::::::::The instance " + entity.name + " pulled: " + str(res[1]) + " messages and " + str(updates_count) + " updates.")
         updates_executed = self.execute_updates(cr, uid, context=context)
         if updates_executed == 0 and updates_count > 0:
             self._logger.warning("No update to execute, this case should never occurs.")
@@ -577,8 +577,8 @@ class Entity(osv.osv):
         last = (last_seq >= max_seq)
         updates_count = 0
         logger_index = None
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         while not last:
-            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
             res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
             if res and res[0]:
                 updates_count += updates.unfold_package(cr, uid, res[1], context=context)
@@ -623,20 +623,17 @@ class Entity(osv.osv):
         # Sort updates by rule_sequence
         whole = updates.browse(cr, uid, update_ids, context=context)
         update_groups = dict()
-
         for update in whole:
             group_key = (update.sequence_number, update.rule_sequence)
-            try:
-                update_groups[group_key].append(update.id)
-            except KeyError:
-                update_groups[group_key] = [update.id]
+            update_groups.setdefault(group_key, []).append(update.id)
 
         try:
             if logger: logger_index = logger.append()
             done = []
             imported, deleted = 0, 0
-            for rule_seq in sorted(update_groups.keys()):
-                update_ids = update_groups[rule_seq]
+            update_group_items = update_groups.items()
+            update_group_items.sort()
+            for rule_seq, update_ids in iter(update_group_items):
                 while update_ids:
                     to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
                     messages, imported_executed, deleted_executed = \
@@ -647,7 +644,7 @@ class Entity(osv.osv):
                     imported += imported_executed
                     deleted += deleted_executed
                     # Do nothing with messages
-                    done.extend(to_do)
+                    done += to_do
                     if logger:
                         logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
                                                      % (imported, deleted, update_count))
@@ -922,6 +919,7 @@ class Entity(osv.osv):
 
 
         return True
+
 
     @sync_process()
     def sync_withbackup(self, cr, uid, context=None):

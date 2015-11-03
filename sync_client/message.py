@@ -242,11 +242,10 @@ class message_to_send(osv.osv):
         '''
         obj_ids = []
         identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids_temp, rule.server_id, context=context)
-        for obj_id in obj_ids_temp:
-            # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
-            ids = self.search(cr, uid, [('identifier', '=', identifiers[obj_id])], context=context)
-            if not ids:
-                obj_ids.append(obj_id)
+
+        # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
+        obj_ids = [obj_id for obj_id in obj_ids_temp if not \
+                self.search(cr, uid, [('identifier', '=', identifiers[obj_id])], context=context)]
 
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}

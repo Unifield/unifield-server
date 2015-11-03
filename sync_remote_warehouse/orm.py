@@ -13,7 +13,7 @@ def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
     
 orm.orm.get_unique_xml_name = get_unique_xml_name
 
-def usb_need_to_push(self, cr, uid, ids, context=None):
+def usb_need_to_push(self, cr, uid, context=None):
         """
         
         Check if records need to be pushed to the next USB synchronization process
@@ -33,13 +33,10 @@ def usb_need_to_push(self, cr, uid, ids, context=None):
             - watched fields are present in modified fields
 
         Return type:
-            - If a list of ids is given, it returns a list of filtered ids.
-            - If an id is given, it returns the id itself or False it the
-              record doesn't need to be pushed.
+            - it returns a list of ids to push.
 
         :param cr: database cursor
         :param uid: current user id
-        :param ids: id or list of the ids of the records to read
         :param context: optional context arguments, like lang, time zone
         :type context: dictionary
         :return: list of ids that need to be pushed (or False for per record call)
