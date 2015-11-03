@@ -331,6 +331,8 @@ class ConnectionPool(object):
             for i, (cnx, used) in enumerate(self._connections):
                 if not used:
                     self._connections.pop(i)
+                    if not cnx.closed:
+                        cnx.close()
                     self._debug('Removing old connection at index %d: %r', i, cnx.dsn)
                     break
             else:
@@ -353,11 +355,15 @@ class ConnectionPool(object):
             if cnx is connection:
                 self._connections.pop(i)
                 if keep_in_pool:
-                    self._connections.append((cnx, False))
-                    self._debug('Put connection to %r in pool', cnx.dsn)
-                else:
-                    self._debug('Forgot connection to %r', cnx.dsn)
-                    cnx.close()
+                    try:
+                        result = psycopg2.connect(dsn=cnx.dsn, connection_factory=PsycoConnection)
+                    except psycopg2.Error, e:
+                        self.__logger.exception('Connection to the database failed')
+                        raise
+                    self._connections.append((result, True))
+                    self._debug('Create new connection')
+                self._debug('Forgot connection to %r', cnx.dsn)
+                cnx.close()
                 break
         else:
             raise PoolError('This connection does not below to the pool')
