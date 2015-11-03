@@ -109,6 +109,7 @@ class BackupConfig(osv.osv):
                 # US-386: Check if file/path exists and raise exception, no need to prepare the backup, thus no pg_dump is executed
                 outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"), suffix, get_server_version()))
                 bkpfile = open(outfile,"wb")
+                bkpfile.close()
             except Exception, e:
                 # If there is exception with the opening of the file
                 if isinstance(e, IOError):
@@ -118,7 +119,7 @@ class BackupConfig(osv.osv):
                 self._logger.exception('Cannot perform the backup %s' % error)
                 raise osv.except_osv(_('Error! Cannot perform the backup'), error)
 
-            cmd = ['pg_dump', '--format=c', '--no-owner']
+            cmd = ['pg_dump', '--format=c', '--no-owner', '-f', outfile]
             if tools.config['db_user']:
                 cmd.append('--username=' + tools.config['db_user'])
             if tools.config['db_host']:
@@ -127,15 +128,10 @@ class BackupConfig(osv.osv):
                 cmd.append('--port=' + str(tools.config['db_port']))
             cmd.append(cr.dbname)
 
-            stdin, stdout = tools.exec_pg_command_pipe(*tuple(cmd))
-            stdin.close()
-            data = stdout.read()
-            res = stdout.close()
+            res = tools.exec_pg_command(*tuple(cmd))
             if res:
                 raise Exception, "Couldn't dump database"
             self._unset_pg_psw_env_var()
-            bkpfile.write(data)
-            bkpfile.close()
             return "Backup done"
         raise Exception, "No backup defined"
 
