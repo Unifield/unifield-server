@@ -313,56 +313,6 @@ class update(osv.osv):
             return 0
         seq = self.browse(cr, uid, ids, context=context)[0].sequence
         return seq
-    
-    def get_update_to_send(self,cr, uid, entity, update_ids, recover=False, context=None):
-        """
-            Called by get_package during the client instance pull process.
-            Return a list of browse_record with only the updates that really need to be send to the client.
-            It filter according to the rules:
-             - rule's directionality is 'up' and update source is a child of entity
-             - rule's directionality is 'down' and update source is an ancestor of entity
-             - rule's directionality is 'bidirectional' (synchronize every where)
-             - rule's directionality is 'bi-private': only the ancestors of update's owner field value
-               are allowed to get the update.
-            Then, it checks the groups.
-
-            @param cr : cr
-            @param uid : uid
-            @param entity : browse_record(sync.server.entity) : client instance entity
-            @param update_ids : list of update ids
-            @param recover : flag : if set to True, update of the same source than the entity who try to pull
-                are sent to the entity. Default is False.
-            @param context : context
-
-            @return : list of browse record of the updates to send
-        """
-        update_to_send = []
-        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
-        children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
-        for update in self.browse(cr, uid, update_ids, context=context):
-            if update.rule_id.direction == 'bi-private':
-                if update.is_deleted:
-                    privates = [entity.id]
-                elif not update.owner:
-                    privates = []
-                else:
-                    privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
-                               [update.owner.id]
-            else:
-                privates = []
-            if not update.rule_id:
-                update_to_send.append(update)
-            elif (update.rule_id.direction == 'up' and update.source.id in children) or \
-               (update.rule_id.direction == 'down' and update.source.id in ancestor) or \
-               (update.rule_id.direction == 'bidirectional') or \
-               (entity.id in privates) or \
-               (recover and entity.id == update.source.id):
-                
-                source_rules_ids = self.pool.get('sync_server.sync_rule')._get_groups_per_rule(cr, uid, update.source, context)
-                s_group = source_rules_ids.get(update.rule_id.id, [])
-                if any(group.id in s_group for group in entity.group_ids):
-                    update_to_send.append(update)
-        return update_to_send
 
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         """
@@ -428,6 +378,10 @@ class update(osv.osv):
         timed_out = False
         start_time = time.time()
         self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, offset, max_size))
+
+        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
+        children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
+        cache_rule = {}
         while not ids or not update_to_send:
             if not restrict_oc_version and time.time() - start_time > 500:
                 timed_out = True
@@ -437,19 +391,47 @@ class update(osv.osv):
             ids = map(lambda x:x[0], cr.fetchall())
             if not ids and update_master is None:
                 break
-            for update in self.get_update_to_send(cr, uid, entity, ids, recover, context):
-                if update_master is None:
-                    update_master = update
-                    update_to_send.append(update_master)
-                elif update.model == update_master.model and \
-                   update.rule_id.id == update_master.rule_id.id and \
-                   update.source.id == update_master.source.id and \
-                   update.is_deleted == update_master.is_deleted and \
-                   len(update_to_send) < max_size:
-                    update_to_send.append(update)
+
+            for update_to_compute in self.browse(cr, uid, ids, context=context):
+                update = False
+                if update_to_compute.rule_id.direction == 'bi-private':
+                    if update_to_compute.is_deleted:
+                        privates = [entity.id]
+                    elif not update_to_compute.owner:
+                        privates = []
+                    else:
+                        privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update_to_compute.owner.id, context=context) + \
+                                   [update_to_compute.owner.id]
                 else:
-                    ids = ids[:ids.index(update.id)]
-                    break
+                    privates = []
+
+                if not update_to_compute.rule_id:
+                    update = update_to_compute
+                elif (update_to_compute.rule_id.direction == 'up' and update_to_compute.source.id in children) or \
+                   (update_to_compute.rule_id.direction == 'down' and update_to_compute.source.id in ancestor) or \
+                   (update_to_compute.rule_id.direction == 'bidirectional') or \
+                   (entity.id in privates) or \
+                   (recover and entity.id == update_to_compute.source.id):
+
+                    if update_to_compute.source not in cache_rule:
+                        cache_rule[update_to_compute.source] = self.pool.get('sync_server.sync_rule')._get_groups_per_rule(cr, uid, update_to_compute.source, context)
+                    s_group = cache_rule[update_to_compute.source].get(update_to_compute.rule_id.id, [])
+                    if any(group.id in s_group for group in entity.group_ids):
+                        update = update_to_compute
+
+                if update:
+                    if update_master is None:
+                        update_master = update
+                        update_to_send.append(update_master)
+                    elif update.model == update_master.model and \
+                       update.rule_id.id == update_master.rule_id.id and \
+                       update.source.id == update_master.source.id and \
+                       update.is_deleted == update_master.is_deleted and \
+                       len(update_to_send) < max_size:
+                        update_to_send.append(update)
+                    else:
+                        ids = ids[:ids.index(update.id)]
+                        break
             offset += len(ids)
         if timed_out and not update_to_send:
             # send a fake update to keep to connection open
