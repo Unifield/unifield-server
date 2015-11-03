@@ -229,10 +229,10 @@ class Cursor(object):
         self.sql_log = False
 
     @check
-    def close(self):
-        return self._close(False)
+    def close(self, drop=False):
+        return self._close(False, drop=drop)
 
-    def _close(self, leak=False):
+    def _close(self, leak=False, drop=False):
         if not self._obj:
             return
 
@@ -255,7 +255,7 @@ class Cursor(object):
             self._cnx.leaked = True
         else:
             keep_in_pool = self.dbname not in ('template1', 'template0', 'postgres')
-            self._pool.give_back(self._cnx, keep_in_pool=keep_in_pool)
+            self._pool.give_back(self._cnx, keep_in_pool=keep_in_pool and not drop)
 
     @check
     def autocommit(self, on):
@@ -356,8 +356,8 @@ class ConnectionPool(object):
                     self._connections.append((cnx, False))
                     self._debug('Put connection to %r in pool', cnx.dsn)
                 else:
-                    cnx.close()
                     self._debug('Forgot connection to %r', cnx.dsn)
+                    cnx.close()
                 break
         else:
             raise PoolError('This connection does not below to the pool')
