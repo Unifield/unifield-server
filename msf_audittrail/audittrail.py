@@ -139,6 +139,75 @@ class product_supplier(osv.osv):
                                                   context=context)
         return res
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Create an audit log lines when create a new supplierinfo
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        ir_model = self.pool.get('ir.model')
+        prod_model = self.pool.get('product.template')
+        model_name = self._name
+        product_model_name = 'product.template'
+
+        object_id = ir_model.search(cr, uid, [('model', '=', product_model_name)], context=context)[0]
+        fct_object_id = ir_model.search(cr, uid, [('model', '=', model_name)], context=context)[0]
+
+        for supplierinfo in self.browse(cr, uid, ids, context=context):
+            old_seller = []
+            seller_ids = supplierinfo.product_id.seller_ids
+            for seller in seller_ids:
+                old_seller.append((seller.sequence, seller.name.name))
+
+            res = super(product_supplier, self).unlink(cr, uid, [supplierinfo.id], context=context)
+
+            product_brw = self.pool.get('product.template').browse(cr, uid, supplierinfo.product_id.id, context=context)
+            new_seller = []
+            for seller in product_brw.seller_ids:
+                new_seller.append((seller.sequence, seller.name.name))
+
+            self.add_audit_line(cr, uid, 'seller_ids', object_id,
+                            product_brw.id, False, False,
+                            False, prod_model._columns['seller_ids'].string,
+                            False, new_seller, old_seller, context=context)
+
+        return res
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Create an audit log lines when create a new supplierinfo
+        """
+        ir_model = self.pool.get('ir.model')
+        prod_model = self.pool.get('product.template')
+        model_name = self._name
+        product_model_name = 'product.template'
+
+        object_id = ir_model.search(cr, uid, [('model', '=', product_model_name)], context=context)[0]
+        fct_object_id = ir_model.search(cr, uid, [('model', '=', model_name)], context=context)[0]
+
+        old_seller = []
+        if vals.get('product_id', None):
+            seller_ids = prod_model.browse(cr, uid, vals.get('product_id'), context=context).seller_ids
+            for seller in seller_ids:
+                old_seller.append((seller.sequence, seller.name.name))
+
+        res = super(product_supplier, self).create(cr, uid, vals, context=context)
+
+        new_seller = list(old_seller)
+        seller = self.browse(cr, uid, res, context=context)
+        new_seller.append((seller.sequence, seller.name.name))
+
+        self.add_audit_line(cr, uid, 'seller_ids', object_id,
+                            vals.get('product_id'), False, False,
+                            False, prod_model._columns['seller_ids'].string,
+                            False, new_seller, old_seller, context=context)
+
+        return res
+
 product_supplier()
 
 
