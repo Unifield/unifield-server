@@ -156,7 +156,7 @@ def base_module_upgrade(cr, pool, upgrade_now=False):
     #base_ids = modules.search(cr, 1, [('name', '=', 'sync_client')]) #for tests
     modules.button_upgrade(cr, 1, base_ids)
     if upgrade_now:
-        logger.info("Starting base upgrade process")
+        logger.info("--------------- STARTING BASE UPGRADE PROCESS -----------------")
         pool.get('base.module.upgrade').upgrade_module(cr, 1, [])
 
 
