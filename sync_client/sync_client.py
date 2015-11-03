@@ -89,7 +89,7 @@ class BackgroundProcess(Thread):
         except:
             pass
         finally:
-            cr.close()
+            cr.close(True)
 
 def sync_subprocess(step='status', defaults_logger={}):
     def decorator(fn):
@@ -247,7 +247,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 if make_log:
                     logger.close()
                     if self.sync_cursor is not None:
-                        self.sync_cursor.close()
+                        self.sync_cursor.close(True)
                 else:
                     logger.write()
             return res
@@ -991,7 +991,7 @@ class Entity(osv.osv):
             #except StandardError:
             #    return False
             self.aborting = True
-            self.sync_cursor.close()
+            self.sync_cursor.close(True)
         return True
 
 Entity()
