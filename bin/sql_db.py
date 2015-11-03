@@ -32,6 +32,7 @@ import psycopg2.extensions
 import warnings
 import pooler
 from tools import SKIPPED_ELEMENT_TYPES, cache
+import time
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 
@@ -299,7 +300,7 @@ class ConnectionPool(object):
         self._lock = threading.Lock()
 
     def __repr__(self):
-        used = len([1 for c, u in self._connections[:] if u])
+        used = len([1 for c, u, t in self._connections[:] if u])
         count = len(self._connections)
         return "ConnectionPool(used=%d/count=%d/max=%d)" % (used, count, self._maxconn)
 
@@ -311,24 +312,32 @@ class ConnectionPool(object):
         self._debug('Borrow connection to %r', dsn)
 
         # free leaked connections
-        for i, (cnx, _) in tools.reverse_enumerate(self._connections):
+        for i, (cnx, _, t) in tools.reverse_enumerate(self._connections):
             if getattr(cnx, 'leaked', False):
                 delattr(cnx, 'leaked')
                 self._connections.pop(i)
-                self._connections.append((cnx, False))
+                self._connections.append((cnx, False, t))
                 self.__logger.warn('%r: Free leaked connection to %r', self, cnx.dsn)
 
-        for i, (cnx, used) in enumerate(self._connections):
+        for i, (cnx, used, t) in enumerate(self._connections):
             if not used and dsn_are_equals(cnx.dsn, dsn):
                 self._connections.pop(i)
-                self._connections.append((cnx, True))
+                if time.time() - t > 3600:
+                    cnx.close()
+                    try:
+                        cnx = psycopg2.connect(dsn=dsn, connection_factory=PsycoConnection)
+                        t = time.time()
+                    except psycopg2.Error, e:
+                        self.__logger.exception('Connection to the database failed')
+                        raise
+                self._connections.append((cnx, True, t))
                 self._debug('Existing connection found at index %d', i)
 
                 return cnx
 
         if len(self._connections) >= self._maxconn:
             # try to remove the oldest connection not used
-            for i, (cnx, used) in enumerate(self._connections):
+            for i, (cnx, used, t) in enumerate(self._connections):
                 if not used:
                     self._connections.pop(i)
                     if not cnx.closed:
@@ -344,26 +353,22 @@ class ConnectionPool(object):
         except psycopg2.Error, e:
             self.__logger.exception('Connection to the database failed')
             raise
-        self._connections.append((result, True))
+        self._connections.append((result, True, time.time()))
         self._debug('Create new connection')
         return result
 
     @locked
     def give_back(self, connection, keep_in_pool=True):
         self._debug('Give back connection to %r', connection.dsn)
-        for i, (cnx, used) in enumerate(self._connections):
+        for i, (cnx, used, t) in enumerate(self._connections):
             if cnx is connection:
                 self._connections.pop(i)
                 if keep_in_pool:
-                    try:
-                        result = psycopg2.connect(dsn=cnx.dsn, connection_factory=PsycoConnection)
-                    except psycopg2.Error, e:
-                        self.__logger.exception('Connection to the database failed')
-                        raise
-                    self._connections.append((result, True))
-                    self._debug('Create new connection')
-                self._debug('Forgot connection to %r', cnx.dsn)
-                cnx.close()
+                    self._connections.append((cnx, False, t))
+                    self._debug('Put connection to %r in pool', cnx.dsn)
+                else:
+                    self._debug('Forgot connection to %r', cnx.dsn)
+                    cnx.close()
                 break
         else:
             raise PoolError('This connection does not below to the pool')
@@ -371,7 +376,7 @@ class ConnectionPool(object):
     @locked
     def close_all(self, dsn):
         self.__logger.info('%r: Close all connections', self)
-        for i, (cnx, used) in tools.reverse_enumerate(self._connections):
+        for i, (cnx, used, t) in tools.reverse_enumerate(self._connections):
             if dsn_are_equals(cnx.dsn, dsn):
                 cnx.close()
                 self._connections.pop(i)
