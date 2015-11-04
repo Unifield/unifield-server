@@ -500,6 +500,7 @@ class audittrail_rule(osv.osv):
             keyword = 'client_action_relate'
             value = 'ir.actions.act_window,' + str(action_id)
             obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False)
+            cr.execute('update ir_values set sequence = 99999 where model=%s and key=\'action\' and name=%s', (thisrule.object_id.model, 'View_log_' + thisrule.object_id.model))
             # End Loop
 
         # Check if an export model already exist for audittrail.rule
