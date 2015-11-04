@@ -679,6 +679,8 @@ class audittrail_rule(osv.osv):
                         record = {}
 
                     for field in fields_to_trace.keys():
+                        if inherits and rule.object_id.name == inherits.keys()[-1] and field not in self.pool.get(inherits.keys()[-1])._columns:
+                            continue
                         old_value = record.get(field, False)
                         new_value = current[res_id].get(field, False)
                         if old_value != new_value:
