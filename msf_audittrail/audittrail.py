@@ -637,7 +637,7 @@ class audittrail_rule(osv.osv):
                 inherit_field_id = False
                 if inherits:
                     inherits_field = inherits.values()[-1]
-                    inherit_field_id = self.pool.get(rule.object_id.model% endfor).read(cr, uid, res_id, [inherits_field])[inherits_field][0]
+                    inherit_field_id = self.pool.get(rule.object_id.model).read(cr, uid, res_id, [inherits_field])[inherits_field][0]
 
                 vals = {
                     'name': rule.object_id.name,
