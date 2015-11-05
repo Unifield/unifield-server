@@ -1551,6 +1551,7 @@ class stock_inventory_line(osv.osv):
         prod lot changes, update the expiry date
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
+        prod_obj = self.pool.get('product.product')
         result = {'value':{}}
         # reset expiry date or fill it
         if prod_lot_id:
@@ -1559,12 +1560,13 @@ class stock_inventory_line(osv.osv):
             expiry_date = False
         result['value']['expiry_date'] = expiry_date
         if expiry_date:
+            prod_brw = prod_obj.browse(cr, uid, product)
             # UFTP-50: got an expiry value,
             # flagging hidden_perishable_mandatory to True:
             # expiry_date field should pass to not readable bc available,
             # and to be sendable by client into create/write vals
             # for adhoc comment column
-            result['value']['hidden_perishable_mandatory'] = True
+            result['value']['hidden_perishable_mandatory'] = not prod_brw.batch_management and prod_brw.perishable
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
         return result
@@ -1689,9 +1691,9 @@ class stock_inventory_line(osv.osv):
                             hidden_perishable_mandatory=False,
                             )
         # complete expiry date from production lot - needed if not created from GUI
-        prodlot_obj = self.pool.get('stock.production.lot')
-        if vals.get('prod_lot_id', False):
-            vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
+        #prodlot_obj = self.pool.get('stock.production.lot')
+        #if vals.get('prod_lot_id', False):
+        #    vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
         # call super
         result = super(stock_inventory_line, self).create(cr, uid, vals, context=context)
         return result

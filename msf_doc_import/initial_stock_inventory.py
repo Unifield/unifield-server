@@ -218,8 +218,13 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         import_to_correct = True
                         error_list.append(_('Batch is missing'))
                     else:
-                        batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry)], context=context)
+                        if batch_name:
+                            batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry), ('name', '=', batch_name)], context=context)
+                        else:
+                            batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry)], context=context)
                         if not batch_ids:
+                            if batch_name:
+                                expiry = False
                             batch = False
                             to_correct_ok = True
                             import_to_correct = True
@@ -234,12 +239,12 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         comment += err_exp_message
                         comment += '\n'
 
-            if not expiry and batch:
-                expiry = batch_obj.read(cr, uid, [batch], ['life_date'], context=context)[0]['life_date']
-                err_exp_message = _('Expiry date not set. Get the expiry date from batch')
-                error_list.append(err_exp_message)
-                comment += err_exp_message
-                comment += '\n'
+#            if not expiry and batch:
+#                expiry = batch_obj.read(cr, uid, [batch], ['life_date'], context=context)[0]['life_date']
+#                err_exp_message = _('Expiry date not set. Get the expiry date from batch')
+#                error_list.append(err_exp_message)
+#                comment += err_exp_message
+#                comment += '\n'
 
             # Quantity
             p_qty = row.cells[5].data
@@ -369,13 +374,16 @@ class stock_inventory_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         comment = ''
+        pl_obj = self.pool.get('stock.production.lot')
         hidden_batch_management_mandatory = False
         hidden_perishable_mandatory = False
 
         if vals.get('product_id', False):
             product = self.pool.get('product.product').browse(cr, uid, vals.get('product_id'), context=context)
             hidden_batch_management_mandatory = product.batch_management
-            hidden_perishable_mandatory = product.perishable
+            hidden_perishable_mandatory = not product.batch_management and product.perishable
+            vals['hidden_batch_management_mandatory'] = hidden_batch_management_mandatory
+            vals['hidden_perishable_mandatory'] = hidden_perishable_mandatory
 
         location_id = vals.get('location_id')
         batch = vals.get('prod_lot_id')
@@ -390,8 +398,25 @@ class stock_inventory_line(osv.osv):
                 comment += _('Batch not found.\n')
             else:
                 comment += _('Batch is missing.\n')
-        if hidden_perishable_mandatory and not expiry:
+                vals['expiry_date'] = False
+
+        if hidden_perishable_mandatory and not expiry and not batch and batch_name:
+            comment += _('Batch not found.\n')
+        elif hidden_perishable_mandatory and not expiry:
             comment += _('Expiry date is missing.\n')
+            vals['expiry_date'] = False
+
+        if batch and expiry and pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date'] != expiry:
+            comment += _('Expiry date and batch not consistent')
+            vals.update({
+                'prod_lot_id': False,
+                'expiry_date': False,
+            })
+
+        if hidden_batch_management_mandatory and batch and not expiry:
+            expiry = pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date']
+            vals['expiry_date'] = expiry
+            comment += _('Please check Expiry Date is correct!')
 
         if not comment:
             if vals.get('comment'):
@@ -419,7 +444,9 @@ class stock_inventory_line(osv.osv):
         batch_name = vals.get('batch_name') or line.batch_name
 
         hidden_batch_management_mandatory = product.batch_management
-        hidden_perishable_mandatory = product.perishable
+        hidden_perishable_mandatory = not product.batch_management and product.perishable
+        vals['hidden_batch_management_mandatory'] = hidden_batch_management_mandatory
+        vals['hidden_perishable_mandatory'] = hidden_perishable_mandatory
 
         if not location_id:
             comment += _('Location is missing.\n')
