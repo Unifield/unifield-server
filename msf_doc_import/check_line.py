@@ -372,7 +372,7 @@ def compute_uom_value(cr, uid, **kwargs):
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
     obj_data = kwargs['obj_data']
-    cell_nb = kwargs.get('cell_nb', 4)
+    cell_nb = kwargs.get('cell_nb', 3)
     msg = ''
     try:
         if row.cells[cell_nb] and row.cells[cell_nb].data is not None:
