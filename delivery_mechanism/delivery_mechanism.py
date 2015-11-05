@@ -354,6 +354,8 @@ class stock_move(osv.osv):
                'product_id': move.product_id.id,
                'product_uom': move.product_uom.id,
                'product_qty': move.product_qty,
+               'location_dest_id': move.location_dest_id.id,
+               'move_cross_docking_ok': move.move_cross_docking_ok,
                }
         return res
 
@@ -1214,6 +1216,8 @@ class stock_picking(osv.osv):
                             'product_uom': data_back['product_uom'],
                             'product_uos': data_back['product_uom'],
                             'product_id': data_back['product_id'],
+                            'location_dest_id': data_back['location_dest_id'],
+                            'move_cross_docking_ok': data_back['move_cross_docking_ok'],
                             'prodlot_id': False,
                             'state': 'assigned',
                             'move_dest_id': False,
