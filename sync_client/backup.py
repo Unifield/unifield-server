@@ -215,13 +215,15 @@ class backup_download(osv.osv):
                     full_name = os.path.join(path, f)
                     if os.path.isfile(full_name):
                         stat = os.stat(full_name)
-                        data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime))}
-                        if full_name in all_bck:
-                            self.write(cr, uid, [all_bck[full_name]], data, context=context)
-                            del all_bck[full_name]
-                        else:
-                            data.update({'name': f, 'path': full_name})
-                            self.create(cr, uid, data, context=context)
+                        #US-653: Only list the files with size > 0 to avoid web side error
+                        if stat.st_size:
+                            data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime))}
+                            if full_name in all_bck:
+                                self.write(cr, uid, [all_bck[full_name]], data, context=context)
+                                del all_bck[full_name]
+                            else:
+                                data.update({'name': f, 'path': full_name})
+                                self.create(cr, uid, data, context=context)
         if all_bck:
             self.unlink(cr, uid, all_bck.values(), context=context)
         return True
