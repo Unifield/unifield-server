@@ -771,6 +771,7 @@ class FinanceTest(UnifieldTest):
                             if ad_line_vals or 'per' in replace_vals:
                                 # (always needed percentage in vals)
                                 ad_line_vals['percentage'] = percent
+                                ad_line_vals['is_percentage_amount_touched'] = True
                                 wizard_adl_obj.write([adwl_r['id']],
                                     ad_line_vals)
 
@@ -823,6 +824,7 @@ class FinanceTest(UnifieldTest):
                             if ad_line_vals or 'per' in replace_vals:
                                 # (always needed percentage in vals)
                                 ad_line_vals['percentage'] = percent
+                                ad_line_vals['is_percentage_amount_touched'] = True
                                 wizard_adfpl_obj.write([adwl_r['id']],
                                     ad_line_vals)
 
@@ -881,6 +883,7 @@ class FinanceTest(UnifieldTest):
                         'percentage': percent,
                         'currency_id': ccy_id,
                         'destination_id': dest_id,
+                        'is_percentage_amount_touched': True,
                     })
 
                     # set fp line
@@ -894,6 +897,7 @@ class FinanceTest(UnifieldTest):
                         'currency_id': ccy_id,
                         'destination_id': dest_id,
                         'cost_center_id': cc_id,
+                        'is_percentage_amount_touched': True,
                     })
 
                 if ad_line_vals and ad_fp_line_vals:

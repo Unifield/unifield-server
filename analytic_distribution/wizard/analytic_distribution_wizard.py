@@ -63,6 +63,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             #+ to construct object research !
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True,
             domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+        'is_percentage_amount_touched': fields.boolean('Is percentage/amount updated ?', invisible=True),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -142,6 +143,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'percentage': _get_remaining_allocation,
         'amount': _get_remaining_allocation,
         'type': lambda *a: 'cost.center',
+        'is_percentage_amount_touched': False,
     }
 
     def onchange_percentage(self, cr, uid, ids, percentage, total_amount):
@@ -153,7 +155,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not percentage or not total_amount:
             return {}
         amount = abs((total_amount * percentage) / 100)
-        return {'value': {'amount': amount}}
+        return {'value': {'amount': amount, 'is_percentage_amount_touched': True}}
 
     def onchange_amount(self, cr, uid, ids, amount, total_amount):
         """
@@ -164,7 +166,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not amount or not total_amount:
             return {}
         percentage = abs((amount / total_amount) * 100)
-        return {'value': {'percentage': percentage}}
+        return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}}
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -352,8 +354,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             wiz = self.browse(cr, uid, ids, context=context)
             if wiz and wiz[0].wizard_id and wiz[0].wizard_id.total_amount:
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].wizard_id.total_amount) * 100.0)})
-        if vals.get('percentage', False) == 0.0:
-            raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
+        if vals.get('is_percentage_amount_touched', False):
+            if vals.get('percentage', False) == 0.0:
+                raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
+        else:
+            if 'percentage' in vals:
+                del vals['percentage']
+            if 'amount' in vals:
+                del vals['amount']
         res = super(analytic_distribution_wizard_lines, self).write(cr, uid, ids, vals, context=context)
         # Retrieve wizard_id field
         data = self.read(cr, uid, [ids[0]], ['wizard_id'], context=context)
@@ -813,7 +821,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el[0], 'destination_id': el[1]}, context=context)
             # else change current cost center
             else:
-                res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el]}, context=context)
+                res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el], 'is_percentage_amount_touched': True}, context=context)
             if res:
                 update_lines.append(res)
         # Delete useless cost center lines
