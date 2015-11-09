@@ -1418,6 +1418,36 @@ class stock_inventory(osv.osv):
 
         return res
 
+    def check_integrity(self, cr, uid, ids, context=None):
+        """
+        Check if there is only one line with couple location/product
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        sql_req = """
+            SELECT count(l.id) AS nb_lines
+            FROM
+                %s_line l
+            WHERE
+                l.inventory_id in %%s
+            GROUP BY l.product_id, l.location_id, l.prod_lot_id, l.expiry_date
+            HAVING count(l.id) > 1
+            ORDER BY count(l.id) DESC""" % self._name.replace('.', '_')
+        cr.execute(sql_req, (tuple(ids),))
+        check_res = cr.dictfetchall()
+        if check_res:
+            raise osv.except_osv(
+                _("Error"),
+                _("""Some lines have the same data for Location/Product/Batch/
+Expiry date. Only one line with same data is expected."""))
+
+        return True
+
+    def action_done(self, cr, uid, ids, context=None):
+        self.check_integrity(cr, uid, ids, context=context)
+        return super(stock_inventory, self).action_done(cr, uid, ids, context=context)
+
     def action_confirm(self, cr, uid, ids, context=None):
         '''
         if the line is perishable without prodlot, we create the prodlot
@@ -1425,6 +1455,9 @@ class stock_inventory(osv.osv):
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
         line_ids = []
+
+        self.check_integrity(cr, uid, ids, context=context)
+
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.inventory_line_id:
@@ -1759,6 +1792,16 @@ class stock_inventory_line(osv.osv):
                or not self._check_batch_management(cr, uid, [obj.id]):
                    result[obj.id]['has_problem'] = True
 
+            result[obj.id]['duplicate_line'] = False
+            if self.search(cr, uid, [
+                ('inventory_id', '=', obj.inventory_id.id),
+                ('location_id', '=', obj.location_id.id),
+                ('product_id', '=', obj.product_id.id),
+                ('prod_lot_id', '=', obj.prod_lot_id and obj.prod_lot_id.id or False),
+                ('expiry_date', '=', obj.expiry_date or False),
+                ('id', '!=', obj.id),
+            ], limit=1, context=context):
+                result[obj.id]['duplicate_line'] = True
         return result
 
     def _check_batch_management(self, cr, uid, ids, context=None):
@@ -1807,6 +1850,7 @@ class stock_inventory_line(osv.osv):
         'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
         'has_problem': fields.function(_get_checks_all, method=True, string='Has problem', type='boolean', readonly=True, multi="m"),
+        'duplicate_line': fields.function(_get_checks_all, method=True, string='Duplicate line', type='boolean', readonly=True, multi="m"),
         'dont_move': fields.boolean(string='Don\'t create stock.move for this line'),
     }
 
@@ -1832,6 +1876,15 @@ class stock_inventory_line(osv.osv):
                      ['prod_lot_id']),
                     (_uom_constraint, 'Constraint error on Uom', [])
                     ]
+
+    def btn_dl(self, cr, uid, ids, context=None):
+        """
+        Return the information message that the line is duplicated
+        """
+        raise osv.except_osv(
+            _('Error'),
+            _('An other line in this inventory has the same parameters. Please remove it.')
+        )
 
 stock_inventory_line()
 
