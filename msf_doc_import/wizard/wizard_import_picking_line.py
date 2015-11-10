@@ -233,7 +233,7 @@ class wizard_import_pick_line(osv.osv_memory):
                                                                                 product_id=to_write.get('product_id'),)
 
                             # Create the internal batch number if not exists
-                            if product.perishable and batch_value['expired_date'] and not batch_value['prodlot_id']:
+                            if not product.batch_management and product.perishable and batch_value['expired_date'] and not batch_value['prodlot_id']:
                                 batch_value['prodlot_id'] = bn_obj.create(cr, uid, {
                                     'type': 'internal',
                                     'product_id': product.id,
