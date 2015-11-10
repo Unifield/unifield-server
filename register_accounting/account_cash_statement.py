@@ -103,7 +103,7 @@ class account_cash_statement(osv.osv):
             # US_410: retrieving previous closing balance even closing balance is not freezed
             # if prev_reg.closing_balance_frozen:
             if journal.type == 'bank':
-                vals.update({'balance_start': prev_reg.msf_calculated_balance})
+                vals.update({'balance_start': prev_reg.balance_end_real})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists (or discard if they come from sync)
         if prev_reg_id and not sync_update:
@@ -161,7 +161,7 @@ class account_cash_statement(osv.osv):
             ids = [ids] # Calculate the starting balance
 
         # Prepare some values
-        st = self.browse(cr, uid, ids)[0]
+        st = self.browse(cr, uid, ids, context=context)[0]
 
         # Complete closing balance with all elements of starting balance
         cashbox_line_obj = self.pool.get('account.cashbox.line')

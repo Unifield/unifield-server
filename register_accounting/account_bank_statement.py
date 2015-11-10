@@ -242,7 +242,7 @@ class account_bank_statement(osv.osv):
                 raise osv.except_osv(_('Error'),
                                      _('The associated period is closed'))
             else:
-                return self.write(cr, uid, ids, {'state': 'open'})
+                return self.write(cr, uid, [register.id], {'state': 'open', 'name': register.journal_id.name})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
         """
@@ -270,6 +270,10 @@ class account_bank_statement(osv.osv):
 #            company_currency_id = st.journal_id.company_id.currency_id.id
             if not self.check_status_condition(cr, uid, st.state, journal_type=j_type):
                 continue
+
+            # US-665 Do not permit closing Bank/Cheque Register if previous register is not closed! (confirm state)
+            if st.prev_reg_id and st.prev_reg_id.state != 'confirm':
+                raise osv.except_osv(_('Error'), _('Please close previous register before closing this one!'))
 
             # modification of balance_check for cheque registers
             if st.journal_id.type in ['bank', 'cash']:
@@ -1954,7 +1958,8 @@ class account_bank_statement_line(osv.osv):
             saveddate = False
             if values.get('date'):
                 saveddate = values['date']
-            self._update_move_from_st_line(cr, uid, ids, values, context=context)
+            if not context.get('sync_update_execution'):
+                self._update_move_from_st_line(cr, uid, ids, values, context=context)
             if saveddate:
                 values['date'] = saveddate
 

@@ -208,7 +208,7 @@
 								   on_change="change_min_date()" required="1" />
                             <field name="min_date_manually" invisible="1" />
 							<field name="sale_id" invisible="True" />
-							<field name="subtype" invisible="True" />
+							<field name="subtype" invisible="True" readonly="True" />
 							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
 						</group>
 					</group>

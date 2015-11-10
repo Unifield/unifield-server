@@ -83,6 +83,7 @@ def main():
         # Run tests
         campaign = HTMLTestRunner.HTMLTestRunner(
             stream=output,
+            verbosity=2,
             title='Example tests',
             description='A suite of tests that permit to test PyUnit class'
         )

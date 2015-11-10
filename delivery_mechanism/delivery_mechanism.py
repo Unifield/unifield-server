@@ -111,7 +111,21 @@ class stock_picking_processing_info(osv.osv_memory):
 
         mem_brw = self.browse(cr, uid, ids[0], context=context)
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
-        return {'type': 'ir.actions.act_window_close'}
+        tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1]
+        src_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_search')[1]
+        context.update({'picking_type': 'incoming', 'view_id': view_id})
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'view_id': [view_id, tree_view_id],
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'search_view_id': src_view_id,
+            'target': 'same',
+            'domain': [('type', '=', 'in')],
+            'res_id': [mem_brw.picking_id.id],
+            'context': context,
+        }
 
     def reset_incoming(self, cr, uid, ids, context=None):
         '''
@@ -783,7 +797,7 @@ class stock_picking(osv.osv):
             values['price_unit'] = new_price
 
         service_non_stock_ok = False
-        if move.purchase_line_id and line.product_id.type in ('consu', 'service_recept'):
+        if move.purchase_line_id and line.product_id.type in ('consu', 'service_recep'):
             sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
             for sol_brw in sol_obj.browse(cr, uid, sol_ids, context=context):
                 if sol_brw.order_id.procurement_request:
@@ -1342,11 +1356,14 @@ class stock_picking(osv.osv):
 
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
+            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1]
+            src_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_search')[1]
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
                 'res_id': wizard.picking_id.id,
-                'view_id': [view_id],
+                'view_id': [view_id, tree_view_id],
+                'search_view_id': src_view_id,
                 'view_mode': 'form, tree',
                 'view_type': 'form',
                 'target': 'crush',

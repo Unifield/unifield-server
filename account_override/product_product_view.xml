@@ -40,6 +40,7 @@
             <field name="arch" type="xml">
                 <search string="Products Categories">
                     <field name="name" select="1"/>
+                    <field name="msfid" select="1"/>
                 </search>
             </field>
         </record>

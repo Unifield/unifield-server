@@ -445,6 +445,9 @@ class procurement_request(osv.osv):
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         self.pool.get('sale.order.line').write(cr, uid, line_ids, {'state': 'cancel'}, context=context)
 
+        for ir_id in ids:
+            self.infolog(cr, uid, "The IR id:%s has been canceled" % ir_id)
+
         return True
 
     def validate_procurement(self, cr, uid, ids, context=None):
@@ -453,16 +456,19 @@ class procurement_request(osv.osv):
         It is the action called on the activity of the workflow.
         '''
         obj_data = self.pool.get('ir.model.data')
+        line_obj = self.pool.get('sale.order.line')
         nomen_manda_0 = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1]
         nomen_manda_1 = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1]
         nomen_manda_2 = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1]
         nomen_manda_3 = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1]
         uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         nb_lines = 0
+        line_ids = []
         for req in self.browse(cr, uid, ids, context=context):
             if len(req.order_line) <= 0:
                 raise osv.except_osv(_('Error'), _('You cannot validate an Internal request with no lines !'))
             for line in req.order_line:
+                line_ids.append(line.id)
                 if line.nomen_manda_0.id == nomen_manda_0 \
                 or line.nomen_manda_1.id == nomen_manda_1 \
                 or line.nomen_manda_2.id == nomen_manda_2 \
@@ -473,6 +479,8 @@ class procurement_request(osv.osv):
                     raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !') % nb_lines)
+            self.log(cr, uid, req.id, _("The internal request '%s' has been validated (nb lines: %s).") % (req.name, len(req.order_line)), context=context)
+        line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
@@ -501,7 +509,7 @@ class procurement_request(osv.osv):
                         raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
                         the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
                         """))
-            message = _("The internal request '%s' has been confirmed.") % (request.name,)
+            message = _("The internal request '%s' has been confirmed (nb lines: %s).") % (request.name, len(request.order_line))
             proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
             context.update({'view_id': proc_view and proc_view[1] or False})
             self.log(cr, uid, request.id, message, context=context)
@@ -662,6 +670,9 @@ class procurement_request_line(osv.osv):
         'product_ok': False,
         'comment_ok': True,
     }
+
+    def update_supplier_on_line(self, cr, uid, ids, context=None):
+        return True
 
 
     def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):

@@ -380,6 +380,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 self.write(cr, uid, ids, {'cross_docking_ok': True}, context=context)
             else:
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
+            self.infolog(cr, uid, "The source location of the stock moves of the picking id:%s has been changed to cross-docking location" % (pick.id))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids)
         self.action_assign(cr, uid, ids, context)
@@ -423,6 +424,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
             else:
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
+            self.infolog(cr, uid, "The source location of the stock moves of the picking id:%s has been changed to stock location" % (pick.id))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids)
         self.action_assign(cr, uid, ids, context)
@@ -619,6 +621,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.state != 'done':
                 todo.append(move.id)
+                self.infolog(cr, uid, "The source location of the stock move id:%s has been changed to cross-docking location" % (move.id))
         ret = True
         picking_todo = []
         if todo:
@@ -672,6 +675,8 @@ class stock_move(osv.osv):
                     self.write(cr, uid, move.id, {'location_id': move.picking_id.warehouse_id.lot_stock_id.id,
                                                   'move_cross_docking_ok': False}, context=context)
                 todo.append(move.id)
+                self.infolog(cr, uid, "The source location of the stock move id:%s has been changed to stock location" % (move.id))
+            # below we cancel availability to recheck it
 
         if todo:
             # we cancel availability
@@ -681,7 +686,6 @@ class stock_move(osv.osv):
             
             #FEFO
             self.fefo_update(cr, uid, todo, context)
-            # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)
             # we cancel availability
