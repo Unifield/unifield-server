@@ -3223,6 +3223,7 @@ class stock_picking(osv.osv):
                     break
 
             rw_full_process = context.get('rw_full_process', False)
+            to_be_replicated = True
             if rw_full_process:
                 del context['rw_full_process']
             if need_new_picking and not rw_full_process:
@@ -3232,7 +3233,14 @@ class stock_picking(osv.osv):
                     'state':'draft',
                 }
                 context['allow_copy'] = True
+                
+                
                 new_picking_id = picking_obj.copy(cr, uid, picking.id, cp_vals, context=context)
+                # US-327: if it's an internal picking and in partial process, then set the already_replicated to True, so no replicate needed 
+                if picking.type == 'internal' and (usb_entity == self.REMOTE_WAREHOUSE or context.get('sync_message_execution', False)):
+                    to_be_replicated = False                
+                    self.write(cr, uid, [new_picking_id], {'already_replicated': True}, context=context)
+                
                 context['allow_copy'] = False
                 move_obj.write(cr, uid, processed_moves, {'picking_id': new_picking_id}, context=context)
 
@@ -3248,7 +3256,7 @@ class stock_picking(osv.osv):
 
                 if picking.type == 'internal':
                     update_vals.update({'associate_pick_name': picking.name})
-                if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+                if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False) and to_be_replicated:
                     update_vals.update({'already_replicated': False})
 
                 if len(update_vals) > 0:
@@ -3288,7 +3296,7 @@ class stock_picking(osv.osv):
 
             delivered_pack = self.browse(cr, uid, delivered_pack_id, context=context)
             res[picking.id] = {'delivered_picking': delivered_pack.id or False}
-
+            
             if picking.type == 'out' and picking.sale_id and picking.sale_id.procurement_request:
                 wf_service.trg_write(uid, 'sale.order', picking.sale_id.id, cr)
 
