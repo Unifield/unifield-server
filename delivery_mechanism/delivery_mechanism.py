@@ -804,7 +804,7 @@ class stock_picking(osv.osv):
             wizard.source_type = None
             values.update({
                 'location_dest_id': db_data.get('cd_loc'),
-                'cd_from_bo': True,
+                'cd_from_bo': False,
             })
         elif wizard.dest_type == 'to_stock' or service_non_stock_ok:
             # Below, "source_type" is only used for the outgoing shipment. We set it to "None because by default it is
