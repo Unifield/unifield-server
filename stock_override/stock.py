@@ -2450,7 +2450,7 @@ class stock_move_cancel_wizard(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context=context):
             move_id = wiz.move_id.id
-            pick_id = wiz.picking_id.id
+            pick_id = wiz.move_id.picking_id.id
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
             move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)], context=context)
             if move_ids and  wiz.move_id.has_to_be_resourced:
