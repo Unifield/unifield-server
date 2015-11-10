@@ -227,9 +227,20 @@ class wizard_import_pick_line(osv.osv_memory):
                             # Cell 6: Batch Number and Cell 7 : Expiry date
                             batch_value = {}
                             batch_value = check_line.compute_batch_expiry_value(cr, uid, row=row, to_write=to_write, bn_obj=bn_obj,
+                                                                                product_obj=product_obj,
                                                                                 bn_cell_nb=6, ed_cell_nb=7, 
                                                                                 date_format=date_format,
                                                                                 product_id=to_write.get('product_id'),)
+
+                            # Create the internal batch number if not exists
+                            if product.perishable and batch_value['expired_date'] and not batch_value['prodlot_id']:
+                                batch_value['prodlot_id'] = bn_obj.create(cr, uid, {
+                                    'type': 'internal',
+                                    'product_id': product.id,
+                                    'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial'),
+                                    'life_date': batch_value['expired_date'],
+                                }, context=context)
+
                             to_write.update({'prodlot_id': batch_value['prodlot_id'],
                                              'expired_date': batch_value['expired_date'],
                                              'error_list': batch_value['error_list']})
