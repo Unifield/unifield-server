@@ -2449,12 +2449,15 @@ class stock_move_cancel_wizard(osv.osv_memory):
         wf_service = netsvc.LocalService("workflow")
 
         for wiz in self.browse(cr, uid, ids, context=context):
+            move_id = wiz.move_id.id
+            pick_id = wiz.picking_id.id
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
             move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)], context=context)
             if move_ids and  wiz.move_id.has_to_be_resourced:
-                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled and resourced" % (wiz.move_id.id, wiz.move_id.picking_id.id))
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled and resourced" % (move_id, picking_id))
             else:
-                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled" % (wiz.move_id.id, wiz.move_id.picking_id.id))
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled" % (move_id, picking_id))
+
             if move_ids and wiz.move_id.picking_id:
                 lines = wiz.move_id.picking_id.move_lines
                 if all(l.state == 'cancel' for l in lines):
