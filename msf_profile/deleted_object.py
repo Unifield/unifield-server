@@ -80,7 +80,7 @@ class extended_orm_delete_method:
         is_blacklisted = False
         model_deleted_black_list = ['funding.pool.distribution.line',
                                     'ir.actions.act_window',
-                                    'ir.actions.report.xml ',
+                                    'ir.actions.report.xml',
                                     'ir.model.access',
                                     'ir.model.data',
                                     'ir.rule',
