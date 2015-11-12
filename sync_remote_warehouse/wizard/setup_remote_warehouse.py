@@ -40,6 +40,7 @@ class setup_remote_warehouse(osv.osv_memory):
         'picking.ticket',
         'stock.picking.internal',
         'stock.picking.out',
+        'stock.picking',
         'procurement.request',
         'sale.order',
         'purchase.order',
