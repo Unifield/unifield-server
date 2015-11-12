@@ -49,6 +49,6 @@
         <menuitem id="menu_deleted_object"
                   name="Deleted Object"
                   action="deleted_object_list_action"
-                  parent="object_query.menu_preferences" />
+                  parent="base.menu_audit" />
     </data>
 </openerp>

@@ -79,8 +79,15 @@ class extended_orm_delete_method:
         # we don't need to keep a track of all deleted objects
         is_blacklisted = False
         model_deleted_black_list = ['funding.pool.distribution.line',
+                                    'ir.actions.act_window',
+                                    'ir.actions.report.xml ',
+                                    'ir.model.access',
                                     'ir.model.data',
-                                    'ir.model.access']
+                                    'ir.rule',
+                                    'ir.sequence.type',
+                                    'ir.translation',
+                                    'ir.values',
+                                    ]
         if self._name in model_deleted_black_list or\
                 isinstance(self, orm.orm_memory): # don't track object from
                                                   # orm.orm_memory class
