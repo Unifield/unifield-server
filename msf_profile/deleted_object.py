@@ -71,6 +71,10 @@ class extended_orm_delete_method:
         res = original_unlink(self, cr, uid, ids, context=context)
         if not res:
             return res
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         # we don't need to keep a track of all deleted objects
         is_blacklisted = False
