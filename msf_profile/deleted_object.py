@@ -31,10 +31,12 @@ class deleted_object(osv.osv):
     _name = 'deleted.object'
     _auto = True
     _log_access = False
+    _order = 'deletion_date desc, model, deleted_obj_id'
 
     _columns={
         'model': fields.char('Object Model', size=64),
         'deleted_obj_id': fields.integer('Deleted Object ID'),
+        'deleted_obj_sd_ref': fields.char('Deleted Object SD Ref', size=128),
         'deletion_date': fields.datetime('Deletion Date'),
         'user_id': fields.many2one('res.users', 'User who delete'),
     }
@@ -77,34 +79,27 @@ class extended_orm_delete_method:
             ids = [ids]
 
         # we don't need to keep a track of all deleted objects
-        is_blacklisted = False
         model_deleted_black_list = ['funding.pool.distribution.line',
-                                    'ir.actions.act_window',
-                                    'ir.actions.report.xml',
-                                    'ir.model.access',
-                                    'ir.model.data',
-                                    'ir.rule',
-                                    'ir.sequence.type',
-                                    'ir.translation',
-                                    'ir.values',
                                     ]
         if self._name in model_deleted_black_list or\
+		        self._name.startswith('ir.') or\
                 isinstance(self, orm.orm_memory): # don't track object from
                                                   # orm.orm_memory class
             return res
         user = self.pool.get("res.users").browse(cr, uid, uid)
         deletion_date = time.strftime('%Y-%m-%d %H:%M:%S')
+        obj_sd_ref = self.pool.get(self._name).get_sd_ref(cr, uid, ids)
         for sub_ids in cr.split_for_in_conditions(ids):
-            if not is_blacklisted:
-                # keep a track of deleted object if there are not blacklisted
-                # by creating a delete_object
-                for obj_id in sub_ids:
-                    vals = {'model': self._name,
-                            'deleted_obj_id': obj_id,
-                            'deletion_date': deletion_date,
-                            'user_id': uid,}
-                    deleted_obj_module = self.pool.get('deleted.object')
-                    del_obj = deleted_obj_module.create(cr, uid, vals)
+            # keep a track of deleted object if there are not blacklisted
+            # by creating a delete_object
+            for obj_id in sub_ids:
+                vals = {'model': self._name,
+                        'deleted_obj_id': obj_id,
+                        'deleted_obj_sd_ref': obj_sd_ref[obj_id],
+                        'deletion_date': deletion_date,
+                        'user_id': uid,}
+                deleted_obj_module = self.pool.get('deleted.object')
+                del_obj = deleted_obj_module.create(cr, uid, vals)
         return res
 
 for symbol in filter(lambda sym: isinstance(sym, types.MethodType),

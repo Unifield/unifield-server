@@ -9,6 +9,7 @@
                 <tree string="Deleted Object">
                     <field name="model" />
                     <field name="deleted_obj_id" />
+                    <field name="deleted_obj_sd_ref" />
                     <field name="deletion_date" />
                     <field name="user_id" />
                 </tree>
@@ -22,6 +23,7 @@
                 <form string="Deleted Object" hide_duplicate_button="1">
                     <field name="model" />
                     <field name="deleted_obj_id" />
+                    <field name="deleted_obj_sd_ref" />
                     <field name="deletion_date" />
                     <field name="user_id" />
                 </form>
@@ -35,6 +37,7 @@
                 <search>
                     <field name="model"/>
                     <field name="deleted_obj_id"/>
+                    <field name="deleted_obj_sd_ref" />
                     <field name="deletion_date"/>
                     <field name="user_id"/>
                 </search>
