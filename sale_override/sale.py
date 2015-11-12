@@ -2319,17 +2319,20 @@ class sale_order_line(osv.osv):
         When delete a FO/IR line, check if the FO/IR must be confirmed
         """
         lines_to_check = []
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for line in self.read(cr, uid, ids, ['order_id'], context=context):
             ltc_ids = self.search(cr, uid, [
                 ('order_id', '=', line['order_id'][0]),
                 ('id', '!=', line['id']),
             ], limit=1, context=context)
-            if ltc_ids[0] not in lines_to_check:
+            if ltc_ids and ltc_ids[0] not in lines_to_check:
                 lines_to_check.append(ltc_ids[0])
 
         res = super(sale_order_line, self).unlink(cr, uid, ids, context=context)
 
-        self.check_confirm_order(cr, uid, lines_to_check, context=context)
+        if lines_to_check:
+            self.check_confirm_order(cr, uid, lines_to_check, context=context)
 
         return res
 
