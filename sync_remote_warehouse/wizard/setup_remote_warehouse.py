@@ -59,7 +59,17 @@ class setup_remote_warehouse(osv.osv_memory):
         sync_menu_xml_id_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'sync_client', 'connection_manager_menu');
         sync_menu_id = self.pool.get('ir.model.data').read(cr, uid, sync_menu_xml_id_id, ['res_id'])['res_id'];
         self.pool.get('ir.ui.menu').write(cr, uid, sync_menu_id, {'active': active})
-    
+
+    def _remove_location_menu_in_rw(self, cr, uid):
+        #US-702: Remove 2 menus on RW instance 
+        menu_xml_id_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_config_locations', 'menu_stock_location_configuration_wizard');
+        menu_id = self.pool.get('ir.model.data').read(cr, uid, menu_xml_id_id, ['res_id'])['res_id'];
+        self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': False})
+        
+        menu_xml_id_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_config_locations', 'menu_stock_remove_location_wizard');
+        menu_id = self.pool.get('ir.model.data').read(cr, uid, menu_xml_id_id, ['res_id'])['res_id'];
+        self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': False})
+           
     def _sync_disconnect(self, cr, uid):
         """ reset connection on connection manager """
         server_connection_pool = self.pool.get('sync.client.sync_server_connection')
@@ -166,6 +176,9 @@ class setup_remote_warehouse(osv.osv_memory):
             context = {}
         """ Perform actions necessary to set up this instance as a remote warehouse """
         self._set_sync_menu_active(cr, uid, False)
+        # US-702: Remove location menu items in RW
+        self._remove_location_menu_in_rw(cr, uid)
+     
         self._sync_disconnect(cr, uid)
         self._set_entity_type(cr, uid, entity_id, self.remote_warehouse)
         self._set_sequence_suffix(cr, uid, suffix="-RW", context=context)
