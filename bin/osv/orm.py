@@ -971,6 +971,7 @@ class orm_template(object):
                      current_module, res, mode=mode, xml_id=xml_id,
                      noupdate=noupdate, res_id=res_id, context=context)
             except except_osv, e:
+                cr.rollback()
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
                 #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
