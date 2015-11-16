@@ -528,16 +528,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if line:
                 infos.append(line)
 
-        # account type
-        if data['form'].get('account_type'):
-            if data['form'].get('account_type') == 'pl':
-                infos.append(_('Profit & Loss accounts'))
-            elif data['form'].get('account_type') == 'bl':
-                infos.append(_('Balance Sheet accounts'))
-
-        # reconciled account
-        if self.unreconciled_accounts:
-            infos.append(_('Unreconciled'))
         return infos and "\n".join(infos) or ''
         
     def _get_line_debit(self, line, booking=False):
@@ -598,8 +588,27 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return data['form'].get(key, default)
 
     def _get_display_info(self, data):
+        info_data = []
+        yes_str = _('Yes')
+        no_str = _('No')
+        all_str = _('All')
+
+        # account type
+        if data['form'].get('account_type'):
+            if data['form'].get('account_type') == 'pl':
+                ac = _('Profit & Loss')
+            elif data['form'].get('account_type') == 'bl':
+                ac = _('Balance Sheet')
+        else:
+            ac = all_str
+        info_data.append((_('Account Type'), ac, ))
+
+        # reconciled account
+        info_data.append((_('Unreconciled'),
+            self.unreconciled_accounts and yes_str or no_str, ))
+
         if 'display_account' not in data['form']:
-            display_account = _('All')
+            display_account = all_str
         else:
             if data['form']['display_account'] == 'bal_all':
                 display_account = _('All')
@@ -607,10 +616,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 display_account = _('With movements')
             else:
                 display_account = _('With balance is not equal to 0')
-
-        info_data = [
-            (_('Accounts'), display_account, ),
-        ]
+        info_data.append((_('Accounts'), display_account, ))
 
         res = ""
         for label, val in info_data:
