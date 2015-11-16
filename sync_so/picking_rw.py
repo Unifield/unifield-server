@@ -668,7 +668,7 @@ class stock_picking(osv.osv):
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
                 existing_pick = self.search(cr, uid, [('name', '=', pick_name), ('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
                 if existing_pick:
-                    message = "Sorry, the PICK: " + pick_name + " existed already in " + cr.dbname
+                    message = "Sorry, the document: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
@@ -695,13 +695,40 @@ class stock_picking(osv.osv):
                             if not proc:
                                 proc_obj.write(cr, uid, move.sale_line_id.procurement_id.id, {'move_id': move.id}, context=context)
                 
-                message = "The PICK: " + pick_name + " has been well replicated in " + cr.dbname
+                message = "The document: " + pick_name + " has been well replicated in " + cr.dbname
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
                 self._logger.info(message)
                 raise Exception, message
+        elif rw_type == self.CENTRAL_PLATFORM  and not origin and 'OUT' in pick_name and 'RW' in pick_name: #US-702: sync also the OUT from scratch, no link to IR/FO
+                existing_pick = self.search(cr, uid, [('name', '=', pick_name), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
+                if existing_pick:
+                    message = "Sorry, the OUT: " + pick_name + " existed already in " + cr.dbname
+                    self._logger.info(message)
+                    return message
+
+                header_result = {}
+                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+                picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                header_result['move_lines'] = picking_lines
+                state = header_result['state']
+                del header_result['state']
+                
+                pick_id = self.create(cr, uid, header_result , context=context)
+                if state != 'draft': # if draft, do nothing
+                    wf_service = netsvc.LocalService("workflow")
+                    wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = header_result.get('date_done')
+                    self.action_assign(cr, uid, [pick_id], context=context)
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = False
+                
+                message = "The OUT: " + pick_name + " has been well replicated in " + cr.dbname
         else:
-            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+            message = "Sorry, this case is not available!"
+            self._logger.info(message)
+            raise Exception, message
             
         self._logger.info(message)
         return message
@@ -914,13 +941,25 @@ class stock_picking(osv.osv):
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         message = "Unknown error, please check the log file."
         origin = pick_dict['origin']
+        
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.CENTRAL_PLATFORM:
-            if origin:
-                header_result = {}
-                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+            header_result = {}
+            self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+            
+            #US-702: In case of the OUT from scratch from RW, the partial closed must be checked in advance
+            pick_ids = None
+            if origin: # first search for the OUT with origin (normal OUT)
                 pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
-                if pick_ids:
+            else: # this must be an OUT from scratch, search for backorder or name if full processed
+                if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+                    sdref, rw_sdref_counterpart = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
+                    if sdref:
+                        pick_ids = self.search(cr, uid, [('rw_sdref_counterpart', '=', sdref)], context=context)
+                else:
+                    pick_ids = self.search(cr, uid, [('name', '=', pick_name)], context=context)
+            
+            if pick_ids: # If exist the OUT, process it
                     state = pick_dict['state']
                     if state == 'done':   
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
@@ -945,13 +984,8 @@ class stock_picking(osv.osv):
                         
                         message = "The OUT " + pick_name + " has been successfully closed in " + cr.dbname
                         self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
-        
-                else:
-                    message = "The OUT: " + pick_name + " not found in " + cr.dbname
-                    self._logger.info(message)
-                    raise Exception, message
             else:
-                message = "Sorry, the case without the origin FO or IR is not yet available!"
+                message = "The OUT: " + pick_name + " not found in " + cr.dbname
                 self._logger.info(message)
                 raise Exception, message
                 
