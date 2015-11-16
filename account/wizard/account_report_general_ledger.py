@@ -105,7 +105,7 @@ class account_report_general_ledger(osv.osv_memory):
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
 
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
-            data['form'].update({'initial_balance': False})
+            data['form']['initial_balance'] = False
 
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)

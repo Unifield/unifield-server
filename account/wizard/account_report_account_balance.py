@@ -79,12 +79,13 @@ class account_balance_report(osv.osv_memory):
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form']['report_mode'] = 'tb'  # trial balance mode
 
+        data['form']['initial_balance'] = False
         form_fields = [ 'initial_balance', 'instance_ids', 'export_format',
             'account_type', 'account_ids', ]
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
 
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
-            data['form'].update({'initial_balance': False})
+            data['form']['initial_balance'] = False
 
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
