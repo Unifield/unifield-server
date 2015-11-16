@@ -259,7 +259,8 @@ class stock_move(osv.osv):
         if move.purchase_line_id:
             proc = move.purchase_line_id.procurement_id
             if proc and proc.sale_order_line_ids and proc.sale_order_line_ids[0].order_id and proc.sale_order_line_ids[0].order_id.procurement_request:
-                location_dest_id = proc.sale_order_line_ids[0].order_id.location_requestor_id.id
+                if proc.sale_order_line_ids[0].order_id.location_requestor_id.usage != 'customer':
+                    location_dest_id = proc.sale_order_line_ids[0].order_id.location_requestor_id.id
         return location_dest_id
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
@@ -367,6 +368,8 @@ class stock_move(osv.osv):
                'product_id': move.product_id.id,
                'product_uom': move.product_uom.id,
                'product_qty': move.product_qty,
+               'location_dest_id': move.location_dest_id.id,
+               'move_cross_docking_ok': move.move_cross_docking_ok,
                }
         return res
 
@@ -815,7 +818,7 @@ class stock_picking(osv.osv):
             wizard.source_type = None
             values.update({
                 'location_dest_id': db_data.get('cd_loc'),
-                'cd_from_bo': True,
+                'cd_from_bo': False,
             })
         elif wizard.dest_type == 'to_stock' or service_non_stock_ok:
             # Below, "source_type" is only used for the outgoing shipment. We set it to "None because by default it is
@@ -1227,6 +1230,8 @@ class stock_picking(osv.osv):
                             'product_uom': data_back['product_uom'],
                             'product_uos': data_back['product_uom'],
                             'product_id': data_back['product_id'],
+                            'location_dest_id': data_back['location_dest_id'],
+                            'move_cross_docking_ok': data_back['move_cross_docking_ok'],
                             'prodlot_id': False,
                             'state': 'assigned',
                             'move_dest_id': False,
