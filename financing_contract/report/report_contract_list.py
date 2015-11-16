@@ -19,6 +19,7 @@
 #
 ##############################################################################
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import locale
 import pooler
 
@@ -36,6 +37,8 @@ class report_contract_list(report_sxw.rml_parse):
         Make a list of given contract with their info
         """
         # Prepare some values
+        pool = pooler.get_pool(self.cr.dbname)
+
         result = []
         reporting_types = dict(self.pool.get('financing.contract.format')._columns['reporting_type'].selection)
 
@@ -60,21 +63,46 @@ class report_contract_list(report_sxw.rml_parse):
                 total_project_funding_pools = total_project_funding_pools[:-2]
             if len(cost_centers) > 2:
                 cost_centers = cost_centers[:-2]
+
+            if contract.state:
+                state = pool.get('fields.tools').get_selection_name(
+                    self.cr, self.uid,
+                    object='financing.contract.contract', field='state',
+                    key=contract.state)
+            else:
+                state = ''
                     
-            values = {'code': contract.code,
-                      'name': contract.name,
-                      'donor_grant_reference': contract.donor_grant_reference,
-                      'hq_grant_reference': contract.hq_grant_reference,
-                      'cost_centers': cost_centers,
-                      'eligibility_from_date': contract.eligibility_from_date,
-                      'eligibility_to_date': contract.eligibility_to_date,
-                      'grant_amount': contract.grant_amount,
-                      'reporting_currency': contract.reporting_currency.name,
-                      'reporting_type': reporting_types[contract.reporting_type],
-                      'earmarked_funding_pools': earmarked_funding_pools,
-                      'total_project_funding_pools': total_project_funding_pools}
+            values = {
+                'instance': contract.instance_id and contract.instance_id.code or '',
+                'code': contract.code,
+                'name': contract.name,
+                'donor_code': contract.donor_id and contract.donor_id.code or '',
+                'donor_grant_reference': contract.donor_grant_reference,
+                'hq_grant_reference': contract.hq_grant_reference,
+                'cost_centers': cost_centers,
+                'eligibility_from_date': contract.eligibility_from_date,
+                'eligibility_to_date': contract.eligibility_to_date,
+                'grant_amount': contract.grant_amount,
+                'reporting_currency': contract.reporting_currency.name,
+                'reporting_type': reporting_types[contract.reporting_type],
+                'state': state,
+                'earmarked_funding_pools': earmarked_funding_pools,
+                'total_project_funding_pools': total_project_funding_pools,
+            }
             result.append(values)
 
         return result
         
 report_sxw.report_sxw('report.financing.contract.list', 'financing.contract.contract', 'addons/financing_contract/report/contract_list.rml', parser=report_contract_list, header=False)
+
+
+class report_contract_list_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(report_contract_list_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        #ids = getIds(self, cr, uid, ids, context)
+        a = super(report_contract_list_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+report_contract_list_xls('report.financing.contract.list_xls', 'financing.contract.contract', 'addons/financing_contract/report/contract_list.mako', parser=report_contract_list, header='internal')
