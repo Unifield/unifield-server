@@ -172,6 +172,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances,
             'get_currencies': self.get_currencies,
+            'get_currencies_account_subtotals': \
+                self.get_currencies_account_subtotals,
             'get_display_info': self._get_display_info,
             'get_show_move_lines': self.get_show_move_lines,
             'get_ccy_label': self.get_ccy_label,
@@ -232,6 +234,30 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             ], order='name')
             res = rc_obj.browse(self.cr, self.uid, ordered_ids)
 
+        return res
+
+    def get_currencies_account_subtotals(self, account):
+        ccy_brs = self.get_currencies(account=account)
+        res = []
+
+        if ccy_brs:
+            for ccy in ccy_brs:
+                line = {
+                    'account_code': self.get_show_move_lines() \
+                        and account and account.code or '',
+                    'ccy_name': ccy.name or ccy.code or '',
+                    'debit': self._sum_debit_account(account, ccy=ccy,
+                        booking=True),
+                    'credit': self._sum_credit_account(account, ccy=ccy,
+                        booking=True),
+                    'bal': self._sum_balance_account(account, ccy=ccy,
+                        booking=True),
+                }
+                # append the line if amount (and compute functional bal)
+                if line['debit'] or line['credit'] or line['bal']:
+                    line['bal_func'] = self._sum_balance_account(account,
+                        ccy=ccy, booking=False),
+                    res.append(line)
         return res
 
     def get_children_accounts(self, account, ccy=False):
@@ -543,7 +569,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if line:
                 infos.append(line)
 
-        return infos and "\n".join(infos) or ''
+        return infos and ", \n".join(infos) or ''
         
     def _get_line_debit(self, line, booking=False):
         return self.__get_line_amount(line, 'debit', booking=booking)
@@ -631,10 +657,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 display_account = _('With balance is not equal to 0')
         info_data.append((_('Accounts'), display_account, ))
 
-        res = ""
-        for label, val in info_data:
-            res += "%s: %s\n" % (label, val, )
-        return res
+        res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
+        return ', \n'.join(res)
 
     def get_show_move_lines(self):
         return self.show_move_lines

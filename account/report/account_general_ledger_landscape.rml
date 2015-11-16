@@ -360,26 +360,26 @@
       </section>
 
       <section>
-      <para style="terp_default_8">[[ repeatIn(get_currencies(account=o), 'c') ]]</para>
+      <para style="terp_default_8">[[ repeatIn(get_currencies_account_subtotals(account=o), 'sub') ]]</para>
       <blockTable colWidths="442.0,60.0,71.0,71.0,71.0,71.0" style="Table8_subtotal_ccy">
         <tr>
           <td>
-            <para style="terp_default_9_Right">[[ get_show_move_lines() and o.code or '' ]]</para>
+            <para style="terp_default_9_Right">[[ sub.get('account_code', '') or '' ]]</para>
           </td>
           <td>
-              <para style="terp_default_9_Right">[[ c.name or c.code or '']]</para>
+              <para style="terp_default_9_Right">[[ sub.get('ccy_name', '') or '' ]]</para>
           </td>
           <td>
-            <para style="terp_default_9_Right">[[ formatLang(sum_debit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(sub.get('debit', 0.) or 0., digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_9_Right">[[ formatLang(sum_credit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(sub.get('credit', 0.) or 0., digits=get_digits(dp='Account')) ]]</para>
           </td>
            <td>
-            <para style="terp_default_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(sub.get('bal', 0.) or 0., digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=False), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(sub.get('bal_func', 0.) or 0., digits=get_digits(dp='Account')) ]]</para>
           </td>
         </tr>
       </blockTable>
