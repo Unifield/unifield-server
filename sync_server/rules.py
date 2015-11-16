@@ -341,6 +341,10 @@ class sync_rule(osv.osv):
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
 
+        # it is not possible to have an active invalidate rule
+        if values.has_key('status') and values['status'] == 'invalid':
+            values.update({'active' : False})
+          
         rule_to_check = []
         for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','included_fields'], context=context):
             dirty = False
@@ -645,6 +649,10 @@ class message_rule(osv.osv):
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
 
+        # it is not possible to have an active invalidate rule
+        if values.has_key('status') and values['status'] == 'invalid':
+            values.update({'active' : False})
+          
         rule_to_check = []
         for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','remote_call', 'arguments', 'destination_name'], context=context):
             dirty = False
