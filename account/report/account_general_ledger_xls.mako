@@ -179,7 +179,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="Sheet">
 <%
-    max = 11
+    col_count = 9
     if data['model'] == 'account.account':
         header_company_or_chart_of_account = 'Company'
     else:
@@ -189,11 +189,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     else:
        journals = ', '.join([lt or '' for lt in get_journal(data)])
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
-    prop_instances_list = get_prop_instances(data)
-    if prop_instances_list:
-        prop_instances = ', '.join([lt or '' for lt in get_prop_instances(data)])
-    else:
-        prop_instances = 'All Instances'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="64" />
@@ -210,18 +205,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
+<Column ss:AutoFitWidth="1" ss:Width="64" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Journals</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Display</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Entries Sorted By</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Proprietary Instances</Data></Cell>
+<Cell ss:StyleID="ssH" ss:MergeAcross="1"><Data ss:Type="String">Proprietary Instances</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
 </Row>
 % for a in objects:
 <Row>
@@ -241,28 +234,19 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${(get_sortby(data) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${(prop_instances or '')|x}</Data>
+<Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
+    <Data ss:Type="String">${(get_prop_instances(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
 </Row>
 <Row>
+% for x in range(col_count):
 <Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
+% endfor
 </Row>
 <Row>
 % if get_show_move_lines():
@@ -281,6 +265,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Booking Balance</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
 <Cell><Data ss:Type="String"></Data></Cell>
+% if not get_show_move_lines():
+<Cell><Data ss:Type="String"></Data></Cell>
+% endif
 </Row>
 
 <%

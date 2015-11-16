@@ -581,13 +581,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         
     def _get_prop_instances(self, data):
         instances = []
-        if data.get('form', False) \
-            and data['form'].get('display_details', False) \
-            and data['form'].get('instance_ids', False):
-            self.cr.execute('select code from msf_instance where id IN %s',
-                (tuple(data['form']['instance_ids']),))
+        if data.get('form', False):
+            if data['form'].get('instance_ids', False):
+                self.cr.execute('select code from msf_instance where id IN %s',
+                    (tuple(data['form']['instance_ids']),))
+            else:
+                self.cr.execute('select code from msf_instance',
+                    (tuple(data['form']['instance_ids']),))
             instances = [x for x, in self.cr.fetchall()]
-        return instances
+        return ', '.join(instances)
 
     # internal filter functions
     def _get_data_form(self, data, key, default=False):
