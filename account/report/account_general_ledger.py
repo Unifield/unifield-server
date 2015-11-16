@@ -195,15 +195,22 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.context = context
 
     def _sum_currency_amount_account(self, account):
-        self.cr.execute('SELECT sum(l.amount_currency) AS tot_currency \
-                FROM account_move_line l \
-                WHERE l.account_id = %s AND %s' %(account.id, self.query))
+        reconcile_pattern = self.unreconciled_accounts and \
+            " AND (reconcile_txt is null OR reconcile_txt = '')" or ''
+
+        sql = 'SELECT sum(l.amount_currency) AS tot_currency \
+            FROM account_move_line l \
+            WHERE l.account_id = %s AND %s' + reconcile_pattern
+        self.cr.execute(sql % (account.id, self.query, ))
         sum_currency = self.cr.fetchone()[0] or 0.0
+
         if self.init_balance:
-            self.cr.execute('SELECT sum(l.amount_currency) AS tot_currency \
-                            FROM account_move_line l \
-                            WHERE l.account_id = %s AND %s '%(account.id, self.init_query))
+            sql = 'SELECT sum(l.amount_currency) AS tot_currency \
+                FROM account_move_line l \
+                WHERE l.account_id = %s AND %s ' + reconcile_pattern
+            self.cr.execute(sql % (account.id, self.init_query, ))
             sum_currency += self.cr.fetchone()[0] or 0.0
+
         return sum_currency
 
     def get_currencies(self, account=False):
@@ -330,8 +337,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             LEFT JOIN account_invoice i on (m.id =i.move_id)
             LEFT JOIN account_period per on (per.id=l.period_id)
             JOIN account_journal j on (l.journal_id=j.id)
-            WHERE %s AND m.state IN %s AND l.account_id = %%s ORDER by %s
+            WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
         """ %(self.query, tuple(move_state), sql_sort)
+        sql = sql.replace('{{reconcile}}',
+                self.unreconciled_accounts and \
+                    " AND (reconcile_txt is null OR reconcile_txt = '')" or '')
         self.cr.execute(sql, (account.id,))
         res_lines = self.cr.dictfetchall()
         res_init = []
@@ -355,8 +365,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 LEFT JOIN res_partner p on (l.partner_id=p.id)
                 LEFT JOIN account_invoice i on (m.id =i.move_id)
                 JOIN account_journal j on (l.journal_id=j.id)
-                WHERE %s AND m.state IN %s AND l.account_id = %%s
+                WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}}
             """ %(self.init_query, tuple(move_state))
+            sql = sql.replace('{{reconcile}}',
+                self.unreconciled_accounts and \
+                    " AND (reconcile_txt is null OR reconcile_txt = '')" or '')
             self.cr.execute(sql, (account.id,))
             res_init = self.cr.dictfetchall()
         res = res_init + res_lines
@@ -407,13 +420,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
         else:
             ccy_pattern = ""
+        reconcile_pattern = self.unreconciled_accounts and \
+            " AND (reconcile_txt is null OR reconcile_txt = '')" or ''
 
         sql = 'SELECT {field} \
             FROM account_move_line l \
             JOIN account_move am ON (am.id = l.move_id) \
             WHERE (l.account_id = %s) \
             AND (am.state IN %s) \
-            AND ' + query + ' ' + ccy_pattern
+            AND ' + query + ' ' + ccy_pattern + reconcile_pattern
         sql = sql.replace('{field}', field).replace(
             '{booking}', '_currency' if booking else '')
 
