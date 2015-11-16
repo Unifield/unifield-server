@@ -243,8 +243,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if ccy_brs:
             for ccy in ccy_brs:
                 line = {
-                    'account_code': self.get_show_move_lines() \
-                        and account and account.code or '',
+                    'account_code': account and account.code or '',
                     'ccy_name': ccy.name or ccy.code or '',
                     'debit': self._sum_debit_account(account, ccy=ccy,
                         booking=True),
