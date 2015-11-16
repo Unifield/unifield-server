@@ -184,10 +184,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         header_company_or_chart_of_account = 'Company'
     else:
         header_company_or_chart_of_account = 'Chart of Account'
-    if 'all_journals' in data['form']:
-       journals = 'All Journals'
-    else:
-       journals = ', '.join([lt or '' for lt in get_journal(data)])
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
@@ -225,7 +221,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String">${(get_fiscalyear(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${(journals or '')|x}</Data>
+    <Data ss:Type="String">${(get_journals_str(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${get_display_info(data)|x}</Data>

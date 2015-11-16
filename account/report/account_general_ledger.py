@@ -156,6 +156,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_children_accounts': self.get_children_accounts,
             'get_fiscalyear': self._get_fiscalyear,
             'get_journal': self._get_journal,
+            'get_journals_str': self._get_journals_str,
             'get_account': self._get_account,
             'get_start_period': self.get_start_period,
             'get_end_period': self.get_end_period,
@@ -214,6 +215,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             sum_currency += self.cr.fetchone()[0] or 0.0
 
         return sum_currency
+
+    def _get_journals_str(self, data):
+        if 'all_journals' in data['form']:
+            return _('All Journals')
+        return ', '.join(self._get_journal(data))
 
     def get_currencies(self, account=False):
         res = []

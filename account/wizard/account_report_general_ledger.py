@@ -110,7 +110,7 @@ class account_report_general_ledger(osv.osv_memory):
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:
-                if len(default_journals) == len(data['form']['journal_ids']):
+                if set(default_journals) == set(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
 
         if data['form']['export_format'] \

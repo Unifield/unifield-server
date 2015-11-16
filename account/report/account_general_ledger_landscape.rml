@@ -222,7 +222,7 @@
           <para style="terp_default_Centre_8">[[ get_fiscalyear(data) or '' ]]</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[', '.join([ lt or '' for lt in get_journal(data) ]) ]]</para>
+          <para style="terp_default_Centre_8">[[ get_journals_str(data) or '' ]]</para>
         </td>
         <td>
           <para style="terp_default_Centre_8">[[ get_display_info(data) ]]</para>
