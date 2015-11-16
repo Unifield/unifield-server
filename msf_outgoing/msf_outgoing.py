@@ -1984,7 +1984,9 @@ class stock_picking(osv.osv):
             result[stock_picking['id']] = values
 
             if stock_picking['pack_family_memory_ids']:
-                for family in self.pool.get('pack.family.memory').read(cr, uid, stock_picking['pack_family_memory_ids'], ['num_of_packs', 'total_weight', 'total_volume'], context=context):
+                for family in self.pool.get('pack.family.memory').browse(cr, uid, stock_picking['pack_family_memory_ids'], context=context):
+                    if family.shipment_id and family.shipment_id.parent_id and family.not_shipped:
+                        continue
                     # number of packs from pack_family
                     num_of_packs = family['num_of_packs']
                     values['num_of_packs'] += int(num_of_packs)
