@@ -1868,6 +1868,7 @@ class stock_picking(osv.osv):
             context = {}
         # reset one2many fields
         default.update(backorder_ids=[])
+        default.update(already_replicated=False)
         default.update(previous_step_ids=[])
         default.update(pack_family_memory_ids=[])
         default.update(in_ref=False)
@@ -2556,7 +2557,8 @@ class stock_picking(osv.osv):
             if 'name' in vals and 'OUT-CONSO' in vals['name']:
                 vals.update(already_replicated=False,)
             #UF-2531: When the INT from scratch created in RW, just set it for sync to CP
-            if usb_entity == self.REMOTE_WAREHOUSE and 'type' in vals and vals['type']=='internal':
+            if usb_entity == self.REMOTE_WAREHOUSE and (('type' in vals and vals['type']=='internal') or 
+                                                        ('origin' not in vals or vals['origin']==False)): #US-702 Sync also the OUT from scratch in RW
                 vals.update(already_replicated=False,)
 
         # the action adds subtype in the context depending from which screen it is created
