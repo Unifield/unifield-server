@@ -100,7 +100,7 @@ class hq_report_ocba(report_sxw.report_sxw):
 
         data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.move.line'),
-            'Proprietary instance': self._enc(r.instance_id and r.instance_id.name or ''),
+            'Proprietary instance': self._enc(r.instance_id and r.instance_id.code or r.instance_id.name or ''),
             'Journal Code': self._enc(r.journal_id and r.journal_id.code or ''),
             'Entry Sequence': self._enc(r.move_id and r.move_id.name or ''),
             'Description': self._enc(r.name),
@@ -207,7 +207,7 @@ class hq_report_ocba(report_sxw.report_sxw):
 
         data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.analytic.line'),
-            'Proprietary instance': self._enc(r.instance_id and r.instance_id.name or ''),
+            'Proprietary instance': self._enc(r.instance_id and r.instance_id.code or r.instance_id.name or ''),
             'Journal Code': self._enc(r.journal_id and r.journal_id.code or ''),
             'Entry Sequence': self._enc(r.entry_sequence or ''),
             'Description': self._enc(r.name),
