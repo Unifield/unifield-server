@@ -609,22 +609,20 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         all_str = _('All')
 
         # account type
+        ac = all_str
         if data['form'].get('account_type'):
             if data['form'].get('account_type') == 'pl':
                 ac = _('Profit & Loss')
             elif data['form'].get('account_type') == 'bl':
                 ac = _('Balance Sheet')
-        else:
-            ac = all_str
         info_data.append((_('Account Type'), ac, ))
 
         # reconciled account
         info_data.append((_('Unreconciled'),
             self.unreconciled_accounts and yes_str or no_str, ))
 
-        if 'display_account' not in data['form']:
-            display_account = all_str
-        else:
+        display_account = all_str
+        if 'display_account' in data['form']:
             if data['form']['display_account'] == 'bal_all':
                 display_account = _('All')
             elif data['form']['display_account'] == 'bal_movement':

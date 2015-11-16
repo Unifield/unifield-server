@@ -337,6 +337,13 @@ account_first_ccy_subtotal_line = True
 % endfor
 
 % for c in get_currencies(o):
+<%
+debit = sum_debit_account(o, ccy=c, booking=True)
+credit = sum_credit_account(o, ccy=c, booking=True)
+bal = sum_balance_account(o, ccy=c, booking=True)
+show_line = debit or credit or bal
+%>
+% if show_line:
 <Row>
 <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
     <Data ss:Type="String">${(account_first_ccy_subtotal_line and get_show_move_lines() and o.code or '')|x}</Data>
@@ -345,13 +352,13 @@ account_first_ccy_subtotal_line = True
     <Data ss:Type="String">${(c.name or c.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${sum_debit_account(o, ccy=c, booking=True)}</Data>
+    <Data ss:Type="Number">${debit}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${sum_credit_account(o, ccy=c, booking=True)}</Data>
+    <Data ss:Type="Number">${credit}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=True)}</Data>
+    <Data ss:Type="Number">${bal}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
     <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=False)}</Data>
@@ -360,6 +367,7 @@ account_first_ccy_subtotal_line = True
 <%
 account_first_ccy_subtotal_line = False
 %>
+% endif
 % endfor
 
 % endfor
