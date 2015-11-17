@@ -111,7 +111,21 @@ class stock_picking_processing_info(osv.osv_memory):
 
         mem_brw = self.browse(cr, uid, ids[0], context=context)
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
-        return {'type': 'ir.actions.act_window_close'}
+        tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1]
+        src_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_search')[1]
+        context.update({'picking_type': 'incoming', 'view_id': view_id})
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'view_id': [view_id, tree_view_id],
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'search_view_id': src_view_id,
+            'target': 'same',
+            'domain': [('type', '=', 'in')],
+            'res_id': [mem_brw.picking_id.id],
+            'context': context,
+        }
 
     def reset_incoming(self, cr, uid, ids, context=None):
         '''
@@ -166,7 +180,8 @@ class stock_move(osv.osv):
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             # UF-1797: when we duplicate a doc we delete the link with the poline
-            defaults.update(purchase_line_id=False)
+            if 'purchase_line_id' not in defaults:
+                defaults.update(purchase_line_id=False)
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
                 input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
@@ -675,7 +690,10 @@ class stock_picking(osv.osv):
 
         average_values = {}
 
-        move_currency_id = move.company_id.currency_id.id
+        if move.price_currency_id:
+            move_currency_id = move.price_currency_id.id
+        else:
+            move_currency_id = move.company_id.currency_id.id
         context['currency_id'] = move_currency_id
 
         qty = line.quantity
@@ -706,6 +724,9 @@ class stock_picking(osv.osv):
                 if product_availability[line.product_id.id]:
                     new_std_price = ((current_price * product_availability[line.product_id.id])
                                      + (new_price * qty)) / (product_availability[line.product_id.id] + qty)
+
+            new_std_price = currency_obj.compute(cr, uid, line.currency.id, move.company_id.currency_id.id,
+                                                 new_std_price, round=True, context=context)
 
             # Write the field according to price type field
             product_obj.write(cr, uid, [line.product_id.id], {'standard_price': new_std_price})
@@ -776,7 +797,7 @@ class stock_picking(osv.osv):
             values['price_unit'] = new_price
 
         service_non_stock_ok = False
-        if move.purchase_line_id and line.product_id.type in ('consu', 'service_recept'):
+        if move.purchase_line_id and line.product_id.type in ('consu', 'service_recep'):
             sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
             for sol_brw in sol_obj.browse(cr, uid, sol_ids, context=context):
                 if sol_brw.order_id.procurement_request:
@@ -989,6 +1010,7 @@ class stock_picking(osv.osv):
                         done_moves.append(move.id)
                     else:
                         values['state'] = 'assigned'
+                        values['purchase_line_id'] = move.purchase_line_id and move.purchase_line_id.id or False
                         context['keepLineNumber'] = True
                         new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                         context['keepLineNumber'] = False
@@ -1049,6 +1071,7 @@ class stock_picking(osv.osv):
                                 ('picking_id', '=', out_move.picking_id.backorder_id.id),
                                 ('sale_line_id', '=', out_move.sale_line_id.id),
                                 ('state', '=', 'done'),
+                                ('in_out_updated', '=', False),
                             ], context=context)
                             while bo_moves:
                                 boms = move_obj.browse(cr, uid, bo_moves, context=context)
@@ -1063,6 +1086,7 @@ class stock_picking(osv.osv):
                                             ('picking_id', '=', bom.picking_id.backorder_id.id),
                                             ('sale_line_id', '=', bom.sale_line_id.id),
                                             ('state', '=', 'done'),
+                                            ('in_out_updated', '=', False),
                                         ], context=context))
 
                         if uom_partial_qty < out_move.product_qty:
@@ -1332,11 +1356,14 @@ class stock_picking(osv.osv):
 
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
+            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1]
+            src_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_search')[1]
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
                 'res_id': wizard.picking_id.id,
-                'view_id': [view_id],
+                'view_id': [view_id, tree_view_id],
+                'search_view_id': src_view_id,
                 'view_mode': 'form, tree',
                 'view_type': 'form',
                 'target': 'crush',
@@ -1436,7 +1463,7 @@ class stock_picking(osv.osv):
                         ptc = self.browse(cr, uid, mirror_pick.id, context=context)
                         if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
                             ptc.action_done(context=context)
-                        elif mirror_pick.subtype == 'picking' and mirror_pick.state == 'draft':
+                        elif mirror_pick.subtype == 'picking' and ptc.state == 'draft':
                             # If there are still some lines available with qty 0, then check if any in progress PICK, if all complete, then close the PICK
                             self.validate(cr, uid, [mirror_pick.id], context=context)
 

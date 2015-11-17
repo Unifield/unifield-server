@@ -176,5 +176,174 @@
             sequence="99"
             parent="parent_import_products" />
 
+        <!-- US-332 Import Nomenclatures -->
+        <record id="view_import_nomenclature" model="ir.ui.view">
+            <field name="name">Import Nomenclatures</field>
+            <field name="model">import_nomenclature</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Nomenclatures">
+                    <group col="8">
+                        <group colspan="3">
+                            <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
+                            <newline/>
+                            <label colspan="4" width="220" string="Supported file formats: *.csv (Comma-separated values)"/>
+                            <label colspan="4" width="220" string="Please double-check that the file encoding is set to UTF-8 (sometimes called Unicode) when the translator exports it."/>
+                            <label colspan="4" width="220"/>
+                        </group>
+                        <separator orientation="vertical" rowspan="15"/>
+                        <group colspan="4" col="4">
+                            <separator string="Import Datas" colspan="4"/>
+                            <newline/>
+                            <field name="object" width="200" readonly="1"/>
+                            <field name="ignore"/>
+                            <field name="file" colspan="4"/>
+                        </group>
+                        <group colspan="8" col="8">
+                            <separator string="" colspan="8"/>
+                            <label colspan="6" width="220"/>
+                                <button special="cancel" string="_Close" icon="gtk-cancel" />
+                                <button name="import_csv" string="_Import" type="object" icon="gtk-ok"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="import_nomenclature_end" model="ir.ui.view">
+            <field name="name">import.nomenclature.end</field>
+            <field name="model">import_nomenclature</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Import product in progress">
+                    <label colspan="4" string="The importation of nomenclatures are in progress. At the end of the importation, a log file will be created if there are errors during importation."/>
+                    <label colspan="4" string="You can access to this log file under the menu Nomenclature / Import Products / View Log" />
+                    <separator colspan="4" />
+                    <button special="cancel" icon="gtk-close" string="Close window" />
+                </form>
+            </field>
+        </record>
+
+        <act_window name="Import Nomenclatures"
+            res_model="import_nomenclature"
+            src_model="import_nomenclature"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            id="action_import_nomenclature"/>
+
+        <menuitem
+            id="parent_import_nomenclature"
+            parent="purchase.menu_product_in_config_purchase"
+            sequence="6"
+            name="Import Nomenclatures" />
+
+        <menuitem
+            action="action_import_nomenclature"
+            sequence="5"
+            id="menu_action_import_nomenclature"
+            parent="parent_import_nomenclature"/>
+
+        <record id="import_request_action_nomenclature" model="ir.actions.act_window">
+            <field name="name">View Logs</field>
+            <field name="res_model">res.request</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_type">form</field>
+            <field name="domain">[('name', 'ilike', 'Product Nomenclature')]</field>
+        </record>
+
+        <menuitem
+            action="import_request_action_nomenclature"
+            id="menu_import_request_nomenclature"
+            sequence="99"
+            parent="parent_import_nomenclature" />
+        <!-- End import Nomenclatures -->
+
+        <!-- US-332 Import Product Category -->
+        <record id="view_import_category" model="ir.ui.view">
+            <field name="name">Import Product category</field>
+            <field name="model">import_category</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Product category">
+                    <group col="8">
+                        <group colspan="3">
+                            <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
+                            <newline/>
+                            <label colspan="4" width="220" string="Supported file formats: *.csv (Comma-separated values)"/>
+                            <label colspan="4" width="220" string="Please double-check that the file encoding is set to UTF-8 (sometimes called Unicode) when the translator exports it."/>
+                            <label colspan="4" width="220"/>
+                        </group>
+                        <separator orientation="vertical" rowspan="15"/>
+                        <group colspan="4" col="4">
+                            <separator string="Import Datas" colspan="4"/>
+                            <newline/>
+                            <field name="object" width="200" readonly="1"/>
+                            <field name="ignore"/>
+                            <field name="file" colspan="4"/>
+                        </group>
+                        <group colspan="8" col="8">
+                            <separator string="" colspan="8"/>
+                            <label colspan="6" width="220"/>
+                                <button special="cancel" string="_Close" icon="gtk-cancel" />
+                                <button name="import_csv" string="_Import" type="object" icon="gtk-ok"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="import_category_end" model="ir.ui.view">
+            <field name="name">import.category.end</field>
+            <field name="model">import_category</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Import category in progress">
+                    <label colspan="4" string="The importation of category are in progress. At the end of the importation, a log file will be created if there are errors during importation."/>
+                    <label colspan="4" string="You can access to this log file under the menu category / Import category / View Log" />
+                    <separator colspan="4" />
+                    <button special="cancel" icon="gtk-close" string="Close window" />
+                </form>
+            </field>
+        </record>
+
+
+        <act_window name="Import Category"
+            res_model="import_category"
+            src_model="import_category"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            id="action_import_category"/>
+
+        <menuitem
+            id="parent_import_category"
+            parent="account.menu_configuration_misc"
+            sequence="5"
+            name="Import Product Category" />
+
+        <menuitem
+            action="action_import_category"
+            sequence="5"
+            id="menu_action_import_category"
+            parent="parent_import_category"/>
+
+        <record id="import_request_action_category" model="ir.actions.act_window">
+            <field name="name">View Logs</field>
+            <field name="res_model">res.request</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_type">form</field>
+            <field name="domain">[('name', 'ilike', 'Product Category')]</field>
+        </record>
+
+        <menuitem
+            action="import_request_action_category"
+            id="menu_import_request_category"
+            sequence="10"
+            parent="parent_import_category" />
+
+        <!-- End import Product Category -->
     </data>
 </openerp>

@@ -42,14 +42,14 @@
                         <page string="Invoice">
                             <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]" required="1"/>
                             <field name="check_total" readonly="1" invisible="1"/>
-                            <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id': 
-                                address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
+                            <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id':
+                                address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}"
                                 name="invoice_line" nolabel="1">
                                 <tree editable="bottom" string="Invoice lines" colors="red:analytic_distribution_state == 'invalid' or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none','valid')">
                                     <field name="name"/>
                                     <field name="reference"/>
                                     <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
-                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
+                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
                                         context="{'d_journal_id': parent.journal_id , 'd_partner_id': parent.partner_id, 'd_address_invoice_id':parent.address_invoice_id,'d_date_invoice': parent.date_invoice, 'd_register_posting_date': parent.register_posting_date, 'd_document_date': parent.document_date, 'd_account_id': parent.account_id, 'd_partner_bank_id': parent.partner_bank_id, 'd_payment_term': parent.payment_term, 'd_name': parent.name, 'd_origine': parent.origin, 'd_address_contact_id': parent.address_contact_id, 'd_user_id': parent.user_id, 'd_comment': parent.comment,'d_reference': parent.reference}"
                                         />
                                     <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
@@ -60,8 +60,8 @@
                                     <field name="price_unit"/>
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
-                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, 
-                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, 
+                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type,
+                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id,
                                         {'company_id': parent.company_id})"/>
                                     <field invisible="True" name="uos_id"/>
                                     <field invisible="1" name="inactive_product"/>
@@ -77,7 +77,7 @@
                         </page>
                         <page string="Other Info">
                             <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)"/>
-                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)" 
+                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)"
                                 widget="selection" groups="base.group_multi_company"/>
                             <newline/>
                             <field name="payment_term" widget="selection"/>
@@ -141,7 +141,7 @@
             <field name="inherit_id" eval="False" />
             <field name="priority">250</field>
             <field name="arch" type="xml">
-                <form string="Supplier Invoice" hide_duplicate_button="1" hide_new_button="1">
+                <form string="Supplier Invoice" hide_save_button="1" hide_duplicate_button="1" hide_new_button="1">
                     <group colspan="4" col="8">
                         <field name="is_direct_invoice" invisible="1" readonly="1"/>
                         <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True)]}" />
@@ -185,7 +185,7 @@
                                     <field name="name"/>
                                     <field name="reference" />
                                     <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
-                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
+                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
                                         context="{'d_journal_id': parent.journal_id , 'd_partner_id': parent.partner_id, 'd_address_invoice_id':parent.address_invoice_id,'d_date_invoice': parent.date_invoice, 'd_register_posting_date': parent.register_posting_date, 'd_document_date': parent.document_date, 'd_account_id': parent.account_id, 'd_partner_bank_id': parent.partner_bank_id, 'd_payment_term': parent.payment_term, 'd_name': parent.name, 'd_origine': parent.origin, 'd_address_contact_id': parent.address_contact_id, 'd_user_id': parent.user_id, 'd_comment': parent.comment, 'd_reference': parent.reference}"
                                         />
                                     <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
@@ -196,8 +196,8 @@
                                     <field name="price_unit"/>
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
-                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, 
-                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, 
+                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type,
+                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id,
                                         {'company_id': parent.company_id})"/>
                                     <field invisible="True" name="uos_id"/>
                                     <field name="inactive_product" invisible="1"  />
@@ -210,7 +210,7 @@
                         </page>
                         <page string="Other Info">
                             <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
-                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)" 
+                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)"
                                 widget="selection" groups="base.group_multi_company" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
                             <newline/>
                             <field name="payment_term" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
@@ -294,7 +294,7 @@
                 </xpath>
             </field>
         </record>
-            
+
         <record id="invoice_form_2" model="ir.ui.view">
             <field name="name">account.invoice.form.2</field>
             <field name="model">account.invoice</field>
@@ -318,7 +318,7 @@
                 </data>
             </field>
         </record>
-            
+
         <record id="invoice_supplier_form_2" model="ir.ui.view">
             <field name="name">account.invoice.supplier.form.2</field>
             <field name="model">account.invoice</field>
@@ -327,6 +327,9 @@
             <field name="priority">55</field>
             <field name="arch" type="xml">
                 <data>
+                    <field name="check_total" position="after">
+                        <field name="supplier_reference"/>
+                    </field>
                     <field name="journal_id" position="replace">
                         <field name="journal_id" domain="[('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)"/>
                         <field name="vat_ok" invisible="1" />

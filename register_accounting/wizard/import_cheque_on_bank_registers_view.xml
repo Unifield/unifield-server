@@ -33,9 +33,9 @@
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_ids"
-                            domain="[('journal_id', '=', journal_id), 
-                            ('currency_id', '=', currency_id), ('reconcile_id', '=', False), ('is_cheque', '=', True), 
-                            ('from_import_cheque_id', '=', False), ('move_id.state', '=', 'posted')]" 
+                            domain="[('journal_id', '=', journal_id),
+                            ('currency_id', '=', currency_id), ('reconcile_id', '=', False), ('is_cheque', '=', True),
+                            ('from_import_cheque_id', '=', False), ('move_id.state', '=', 'posted')]"
                             context="{'from': 'wizard_import_cheque'}" nolabel="1" colspan="4"/>
                         <newline/>
                     </group>
@@ -45,7 +45,7 @@
                         <button icon="gtk-execute" string="Import" name="action_import" type="object" states="draft,open"/>
                     </group>
                     <separator string="" colspan="6"/>
-                    <field name="imported_lines_ids" colspan="4" nolabel="1" 
+                    <field name="imported_lines_ids" colspan="4" nolabel="1"
                         attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}">
                         <tree editable="bottom" hide_new_button="1">
                             <field name="cheque_number"/>

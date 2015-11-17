@@ -625,9 +625,17 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Case where this move line have a link to some statement lines
             if ml.statement_id and ml.move_id.statement_line_ids:
                 for st_line in ml.move_id.statement_line_ids:
-                    absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
-                    # we informs new move line that it have correct a statement line
-                    self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
+                    # US-303: only update the statement line that links to this move line
+                    if st_line.cash_return_move_line_id:
+                        if st_line.cash_return_move_line_id.id == ml.id:
+                            absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
+                            # we informs new move line that it have correct a statement line
+                            self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
+                            break
+                    else:
+                        #US-303: If not the case, then we inform the new move line that it has corrected a statement line
+                        absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
+                        self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
             # if not, this move line should have a direct link to a register line
             elif ml.statement_id and ml.corrected_st_line_id:
                 absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)

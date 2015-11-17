@@ -205,10 +205,12 @@ class product_attributes(osv.osv):
     def init(self, cr):
         if hasattr(super(product_attributes, self), 'init'):
             super(product_attributes, self).init(cr)
+        mod_obj = self.pool.get('ir.module.module')
+        mode = mod_obj.search(cr, 1, [('name', '=', 'product_attributes'), ('state', '=', 'to install')]) and 'init' or 'update'
         logging.getLogger('init').info('HOOK: module product_attributes: loading product_attributes_data.xml')
         pathname = path.join('product_attributes', 'product_attributes_data.xml')
         file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'product_attributes', file, {}, mode='init', noupdate=False)
+        tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
 
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -262,12 +264,20 @@ class product_attributes(osv.osv):
     def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        for product in self.browse(cr, uid, ids, context=context):
-            res[product.id] = {'no_external': product.state.no_external or product.international_status.no_external or False,
-                               'no_esc': product.state.no_esc or product.international_status.no_esc or False,
-                               'no_internal': product.state.no_internal or product.international_status.no_internal or False,
-                               'no_consumption': product.state.no_consumption or product.international_status.no_consumption or False,
-                               'no_storage': product.state.no_storage or product.international_status.no_storage or False}
+        product_state = self.pool.get('product.status')
+        for product in self.read(cr, uid, ids, ['state'], context=context):
+            res[product['id']] = {
+                'no_external': False,
+                'no_esc': False,
+                'no_internal': False,
+                'no_consumption': False,
+                'no_storage': False
+            }
+            if product['state']:
+                fields = ['no_external', 'no_esc', 'no_internal', 'no_consumption', 'no_storage']
+                state = product_state.read(cr, uid, product['state'][0], fields, context=context)
+                for f in fields:
+                    res[product.id][f] = state[f] or False
 
         return res
 

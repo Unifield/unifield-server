@@ -208,7 +208,7 @@
 								   on_change="change_min_date()" required="1" />
                             <field name="min_date_manually" invisible="1" />
 							<field name="sale_id" invisible="True" />
-							<field name="subtype" invisible="True" />
+							<field name="subtype" invisible="True" readonly="True" />
 							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
 						</group>
 					</group>
@@ -253,7 +253,7 @@
                                     <field name="pt_created" invisible="1" />
                                     <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}"   context="{'from_button': True}"  />
 								</tree>
-								<form string="Stock Moves">
+                                <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
 									<group colspan="2" col="4">
 										<separator colspan="4" string="Move Information"/>
 										<field name="name" invisible="1" colspan="4" />

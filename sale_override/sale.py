@@ -62,6 +62,42 @@ class sync_order_label(osv.osv):
 
 sync_order_label()
 
+class sync_sale_order_line_split(osv.osv):
+    _name = 'sync.sale.order.line.split'
+    _rec_name = 'partner_id'
+
+    _columns = {
+        'partner_id': fields.many2one(
+            'res.partner',
+            'Partner',
+            readonly=True,
+        ),
+        'old_sync_order_line_db_id': fields.text(
+            string='Sync order line DB Id of the splitted line',
+            required=True,
+            readonly=True,
+        ),
+        'new_sync_order_line_db_id': fields.text(
+            string='Sync order line DB ID of the new created line',
+            required=True,
+            readonly=True,
+        ),
+        'old_line_qty': fields.float(
+            digits=(16,2),
+            string='Old line qty',
+            required=True,
+            readonly=True,
+        ),
+        'new_line_qty': fields.float(
+            digit=(16,2),
+            string='New line qty',
+            required=True,
+            readonly=True,
+        ),
+    }
+
+sync_sale_order_line_split()
+
 class sale_order_sourcing_progress(osv.osv):
     _name = 'sale.order.sourcing.progress'
     _rec_name = 'order_id'
@@ -498,7 +534,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
         'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current field order."),
         'pricelist_id': fields.many2one('product.pricelist', 'Currency', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Currency for current field order."),
-        'validated_date': fields.date(string='Validated date', help='Date on which the FO was validated.'),
+        'validated_date': fields.datetime(string='Validated date', help='Date on which the FO was validated.'),
         'invoice_quantity': fields.selection([('order', 'Ordered Quantities'), ('procurement', 'Shipped Quantities')], 'Invoice on', help="The sale order will automatically create the invoice proposition (draft invoice). Ordered and delivered quantities may not be the same. You have to choose if you want your invoice based on ordered or shipped quantities. If the product is a service, shipped quantities means hours spent on the associated tasks.", required=True, readonly=True),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
@@ -856,6 +892,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.analytic_distribution_checks(cr, uid, order_brw_list)
 
         for order in order_brw_list:
+            line_ids = []
+            for line in order.order_line:
+                line_ids.append(line.id)
             no_price_lines = []
             if order.order_type == 'regular':
                 cr.execute('SELECT line_number FROM sale_order_line WHERE (price_unit*product_uom_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (order.id,))
@@ -893,17 +932,20 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 'Please change the currency to choose a compatible currency.'),
                 )
 
+            if not order.procurement_request:
+                line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
+
         self.write(cr, uid, ids, {
             'state': 'validated',
-            'validated_date': time.strftime('%Y-%m-%d'),
+            'validated_date': time.strftime('%Y-%m-%d %H:%M:%S'),
         }, context=context)
 
         # Display validation message to the user
         for order in order_brw_list:
             if not order.procurement_request:
-                self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
+                self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
             else:
-                self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated.' % order.name, context=context)
+                self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
 
         return True
 
@@ -1010,6 +1052,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
+
+            split_fo_ids = [x for x in split_fo_dic.values() if x]
+            self._hook_create_sync_split_fo_messages(cr, uid, split_fo_ids, so.id, context=context) # US-599: Create the sync messages for validated FO and split FO
+
         return True
 
     def get_original_name(self, cr, uid, order, context=None):
@@ -1048,6 +1094,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=dict(context, procurement_request=order.procurement_request))
 
         return order_id
+
+    def _hook_create_sync_split_fo_messages(self, cr, uid, split_ids, original_id, context=None):
+        """
+        Overrided on sync_module_prod/sync_so/sale.py
+        """
+        return True
 
     def sale_except_correction(self, cr, uid, ids, context=None):
         '''
@@ -1090,6 +1142,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
         self.write(cr, uid, ids, {'state': 'done',
                                   'active': False}, context=context)
+
+        for order_id in ids:
+            self.infolog(cr, uid, "The splitted FO id:%s has been closed" % order_id)
+
         return True
 
     def get_po_ids_from_so_ids(self, cr, uid, ids, context=None):
@@ -1138,7 +1194,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         for order in self.browse(cr, uid, ids):
             # UTP-392: don't create a PO if it is created by sync ofr the loan
-            if order.is_a_counterpart or (order.order_type == 'loan' and order.fo_created_by_po_sync):
+            if order.is_a_counterpart or order.order_type != 'loan':
                 return
 
             two_months = today() + RelativeDateTime(months=+2)
@@ -1640,10 +1696,20 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 
+                if line.type == 'make_to_stock' and line.procurement_id:
+                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_check', cr)
+
                 line_done += 1
                 prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
                    'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
                 }, context=context)
+                if line.type == 'make_to_stock':
+                    msg = 'The line id:%s of FO/IR id:%s has been sourced \'from stock\' with the stock.move id:%s' % (
+                            line.id,
+                            line.order_id.id,
+                            move_id,
+                    )
+                    self.infolog(cr, uid, msg)
 
             prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
                'line_completed': _('Done (%s/%s)') % (line_done, line_total),
@@ -2155,6 +2221,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'context': context,
         }
 
+    def _manual_create_sync_message(self, cr, uid, res_id, return_info, rule_method, context=None):
+        return
+
 sale_order()
 
 
@@ -2245,6 +2314,29 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        When delete a FO/IR line, check if the FO/IR must be confirmed
+        """
+        lines_to_check = []
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for line in self.read(cr, uid, ids, ['order_id'], context=context):
+            ltc_ids = self.search(cr, uid, [
+                ('order_id', '=', line['order_id'][0]),
+                ('id', '!=', line['id']),
+            ], limit=1, context=context)
+            if ltc_ids and ltc_ids[0] not in lines_to_check:
+                lines_to_check.append(ltc_ids[0])
+
+        res = super(sale_order_line, self).unlink(cr, uid, ids, context=context)
+
+        if lines_to_check:
+            self.check_confirm_order(cr, uid, lines_to_check, context=context)
+
+        return res
+
+
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
         Check if there is restriction on lines
@@ -2317,6 +2409,13 @@ class sale_order_line(osv.osv):
                 cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
 
+#            self.pool.get('sale.order.line.cancel').create(cr, uid, {
+#                'sync_order_line_db_id': line.original_line_id and line.original_line_id.sync_order_line_db_id or line.sync_order_line_db_id,
+#                'partner_id': line.order_id.partner_id.id,
+#                'partner_type': line.order_id.partner_id.partner_type,
+#                'resource_ok': True,
+#            }, context=context)
+
             # UFTP-82:
             # do not delete cancelled IR line from PO cancelled
             # see purchase_override/purchase.py
@@ -2324,7 +2423,13 @@ class sale_order_line(osv.osv):
             # - purchase_order_line.cancel_sol()
             if not 'update_or_cancel_line_not_delete' in context \
                 or not context['update_or_cancel_line_not_delete']:
+                tmp_ctx = context.get('call_unlink', None)
+                context['call_unlink'] = True
                 self.unlink(cr, uid, [line.id], context=context)
+                if tmp_ctx is None:
+                    del context['call_unlink']
+                else:
+                    context['call_unlink'] = tmp_ctx
             elif line.order_id.procurement_request:
                 # UFTP-82: flagging SO is an IR and its PO is cancelled
                 self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
@@ -2614,7 +2719,12 @@ class sale_order_line(osv.osv):
         '''
         context = context is None and {} or context
 
-        if not context.get('noraise') and not context.get('import_in_progress'):
+        if context.get('button') in ['button_remove_lines', 'check_lines_to_fix', 'add_multiple_lines', 'wizard_import_ir_line']:
+            return True
+        cond1 = not context.get('noraise')
+        cond2 = not context.get('import_in_progress')
+
+        if cond1 and cond2:
             empty_lines = False
             if ids and not 'product_uom_qty' in vals:
                 empty_lines = self.search(cr, uid, [

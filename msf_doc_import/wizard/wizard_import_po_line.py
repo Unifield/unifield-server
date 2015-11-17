@@ -315,12 +315,14 @@ class wizard_import_po_line(osv.osv_memory):
                     wiz.po_id.location_id.id, context=context).get('warning', {}).get('message', '').upper()
                 categ_log = categ_log.replace('THIS', 'THE')
 
-        error_log += '\n'.join(error_list)
-        if error_log:
-            error_log = _("Reported errors for ignored lines : \n") + error_log
-        end_time = time.time()
-        total_time = str(round(end_time-start_time)) + _(' second(s)')
-        final_message = _('''
+        wizard_vals = {'state': 'done'}
+        try:
+            error_log += '\n'.join(error_list)
+            if error_log:
+                error_log = _("Reported errors for ignored lines : \n") + error_log
+            end_time = time.time()
+            total_time = str(round(end_time-start_time)) + _(' second(s)')
+            final_message = _('''
 %s
 Importation completed in %s!
 # of imported lines : %s on %s lines
@@ -330,18 +332,20 @@ Importation completed in %s!
 
 %s
 ''') % (categ_log, total_time, complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
-#        try:
-        wizard_vals = {'message': final_message, 'state': 'done'}
-        if line_with_error:
-            file_to_export = wiz_common_import.export_file_with_error(
-                cr, uid, ids, line_with_error=line_with_error, header_index=header_index, context=context)
-            wizard_vals.update(file_to_export)
-        self.write(cr, uid, ids, wizard_vals, context=context)
-        # we reset the state of the PO to draft (initial state)
-        purchase_obj.write(cr, uid, wiz.po_id.id, {'state': 'draft', 'import_in_progress': False}, context)
-        if not context.get('yml_test', False):
-            cr.commit()
-            cr.close()
+            wizard_vals['message'] = final_message
+            if line_with_error:
+                file_to_export = wiz_common_import.export_file_with_error(
+                    cr, uid, ids, line_with_error=line_with_error, header_index=header_index, context=context)
+                wizard_vals.update(file_to_export)
+        except:
+            cr.rollback()
+        finally:
+            # we reset the state of the PO to draft (initial state)
+            self.write(cr, uid, ids, wizard_vals, context=context)
+#            purchase_obj.write(cr, uid, wiz.po_id.id, {'import_in_progress': False}, context)
+            if not context.get('yml_test', False):
+                cr.commit()
+                cr.close()
 
 
     def import_file(self, cr, uid, ids, context=None):
@@ -378,15 +382,15 @@ Importation completed in %s!
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user
             # can't update the PO in the same time (all fields are readonly)
-            purchase_obj.write(
-                cr, uid, po_id,
-                {'state': 'done', 'import_in_progress': True}, context=context)
+#            purchase_obj.write(
+#                cr, uid, po_id,
+#                {'import_in_progress': True}, context=context)
         if not context.get('yml_test'):
             thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
             thread.start()
         else:
             self._import(cr, uid, ids, context)
-        msg_to_return = _("Please note that %s is temporary closed during the import to "
+        msg_to_return = _("Please note that %s is temporary not editable during the import to "
             "avoid conflict accesses (you can see the loading on the PO note "
             "tab check box). At the end of the load, POXX will be back in the "
             "right state. You can refresh the screen if you need to follow "

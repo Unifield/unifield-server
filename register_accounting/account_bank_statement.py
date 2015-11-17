@@ -242,7 +242,7 @@ class account_bank_statement(osv.osv):
                 raise osv.except_osv(_('Error'),
                                      _('The associated period is closed'))
             else:
-                return self.write(cr, uid, ids, {'state': 'open'})
+                return self.write(cr, uid, [register.id], {'state': 'open', 'name': register.journal_id.name})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
         """
@@ -270,6 +270,10 @@ class account_bank_statement(osv.osv):
 #            company_currency_id = st.journal_id.company_id.currency_id.id
             if not self.check_status_condition(cr, uid, st.state, journal_type=j_type):
                 continue
+
+            # US-665 Do not permit closing Bank/Cheque Register if previous register is not closed! (confirm state)
+            if st.prev_reg_id and st.prev_reg_id.state != 'confirm':
+                raise osv.except_osv(_('Error'), _('Please close previous register before closing this one!'))
 
             # modification of balance_check for cheque registers
             if st.journal_id.type in ['bank', 'cash']:
@@ -667,7 +671,7 @@ class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
 
-    _order = 'sequence_for_reference desc, document_date desc'
+    _order = 'sequence_for_order desc, sequence_for_reference desc, document_date desc, date desc, id desc'
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -922,12 +926,21 @@ class account_bank_statement_line(osv.osv):
             ids = [ids]
         res = {}
         for line in self.browse(cr, uid, ids):
-            res[line.id] = ''
+            res[line.id] = {
+                'sequence_for_reference': '',
+                'sequence_for_order': line.id
+            }
             if len(line.move_ids) > 0:
-                res[line.id] = line.move_ids[0].name
+                res[line.id] = {
+                    'sequence_for_reference': line.move_ids[0].name,
+                    'sequence_for_order': 0
+                }
             else:
                 # UFTP-201: If there is no move linked to this reg line, get the current value of ref
-                res[line.id] = line.sequence_for_reference
+                res[line.id] = {
+                    'sequence_for_reference': line.sequence_for_reference,
+                    'sequence_for_order': not line.sequence_for_reference and line.id or 0
+                }
 
         return res
 
@@ -1021,8 +1034,12 @@ class account_bank_statement_line(osv.osv):
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled",
             type='boolean', store=False),
         # WARNING: Due to UTP-348, store = True for sequence_for_reference field is mandatory! Otherwise this breaks Cheque Inventory report.
-        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char", store={'account.bank.statement.line': (lambda self, cr, uid, ids, c=None: ids, ['move_ids'], 10),
-                                                                                                                     'account.move': (_get_bank_statement_line_ids, ['statement_line_ids'], 10)}, size=64),
+        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char",
+            store={
+                'account.bank.statement.line': (lambda self, cr, uid, ids, c=None: ids, ['move_ids'], 10),
+                'account.move': (_get_bank_statement_line_ids, ['statement_line_ids'], 10)
+            }, size=64, multi='_seq_for_ref_order'),
+        'sequence_for_order': fields.function(_get_sequence, method=True, string="Sequence (for order)", type="float", store=True, readonly=1, multi='_seq_for_ref_order'),
         'date': fields.date('Posting Date', required=True),
         'document_date': fields.date(string="Document Date", required=True),
         'cheque_number': fields.char(string="Cheque Number", size=120),
@@ -1084,32 +1101,21 @@ class account_bank_statement_line(osv.osv):
         move_ids = self._get_move_ids(cr, uid, ids, context=context)
         # Search valid ids
         domain = [('account_id.category', '=', 'FUNDING'), ('move_id.move_id', 'in', move_ids)]
-        alternate_domain = []
 
         # BKLG-60: for cash advance register lines, filtering on new
         # cash_return_move_line_id link field
         absl_brs = self.browse(cr, uid, ids, context=context)
-        if len(ids) == 1:
-            if not absl_brs[0].invoice_id and absl_brs[0].account_id and \
-                not absl_brs[0].account_id.is_analytic_addicted:
-                    # one register line selected from cash return
-                    # but not a debit one (closing_op adv line)
-                    # => no AJIs to display
-                    # NOTE: for imported invoices we let the default behaviour
-                    # (display of invoice AJIs)
-                    alternate_domain = [('id', '=', 0)]  # fake no result domain
-        if not alternate_domain:
-            cash_adv_return_move_line_ids = [
-                absl.cash_return_move_line_id.id \
-                for absl in absl_brs \
-                if not absl.invoice_id and absl.from_cash_return and \
-                    absl.cash_return_move_line_id
-                # NOTE: for imported invoices we let the default behaviour
-                # (display of invoice AJIs)
-            ]
-            if cash_adv_return_move_line_ids:
-                domain.append(('move_id', 'in', cash_adv_return_move_line_ids))
- 
+        cash_adv_return_move_line_ids = [
+            absl.cash_return_move_line_id.id \
+            for absl in absl_brs \
+            if not absl.invoice_id and absl.from_cash_return and \
+                absl.cash_return_move_line_id
+            # NOTE: for imported invoices we let the default behaviour
+            # (display of invoice AJIs)
+        ]
+        if cash_adv_return_move_line_ids:
+            domain.append(('move_id', 'in', cash_adv_return_move_line_ids))
+
         context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
         return {
             'name': _('Analytic Journal Items'),
@@ -1118,7 +1124,7 @@ class account_bank_statement_line(osv.osv):
             'view_type': 'form',
             'view_mode': 'tree,form',
             'context': context,
-            'domain': alternate_domain or domain,
+            'domain': domain,
             'target': 'current',
         }
 
@@ -1920,20 +1926,20 @@ class account_bank_statement_line(osv.osv):
                 if line.get('analytic_distribution_id', False):
                     old_distrib = line.get('analytic_distribution_id')[0]
 
-                # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync  
+                # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync
                 if not context.get('sync_update_execution'):
-                    values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance 
+                    values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance
 
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 res.append(tmp)
 
                 new_distrib = values.get('analytic_distribution_id', False)
-                # US-351: Fixed the wrong condition 
+                # US-351: Fixed the wrong condition
                 if new_distrib and old_distrib != new_distrib and line.get('first_move_line_id', False) and line.get('move_ids', False):
                     first_move_line_id = line.get('first_move_line_id')[0]
                     move_ids = line.get('move_ids')[0]
                     if isinstance(move_ids, (int, long)):
-                        move_ids = [move_ids] 
+                        move_ids = [move_ids]
 
                     # US-289: If there is a change in the DA, then populate it to the move line (and thus analytic lines)
                     ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', account_id), ('id', 'not in', [first_move_line_id]), ('move_id', 'in', move_ids)])
@@ -1943,7 +1949,7 @@ class account_bank_statement_line(osv.osv):
                         # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
                         self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': account_id}, check=False, update_check=False)
 
-        # US-289: The following block is moved down after the employee update, so that the call to _update_move_from_st_line will also update 
+        # US-289: The following block is moved down after the employee update, so that the call to _update_move_from_st_line will also update
         # the distribution analytic in case there is a change of this value on the reg line, issued from the new block right above
 
         # In case of Temp Posting, we also update attached account move lines
@@ -1952,7 +1958,8 @@ class account_bank_statement_line(osv.osv):
             saveddate = False
             if values.get('date'):
                 saveddate = values['date']
-            self._update_move_from_st_line(cr, uid, ids, values, context=context)
+            if not context.get('sync_update_execution'):
+                self._update_move_from_st_line(cr, uid, ids, values, context=context)
             if saveddate:
                 values['date'] = saveddate
 

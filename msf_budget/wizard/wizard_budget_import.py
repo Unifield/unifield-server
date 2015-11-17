@@ -25,6 +25,8 @@ from tools.translate import _
 import base64
 import StringIO
 import csv
+import time
+
 
 class imported_msf_budget_line(osv.osv):
     _name = 'imported.msf.budget.line'
@@ -51,12 +53,14 @@ class imported_msf_budget_line(osv.osv):
 
 imported_msf_budget_line()
 
+
 class wizard_budget_import(osv.osv_memory):
     _name = 'wizard.budget.import'
     _description = 'Budget Import'
 
     _columns = {
         'import_file': fields.binary("CSV File"),
+        'import_date': fields.integer("Import date"),
     }
 
     def split_budgets(self, import_data):
@@ -211,6 +215,7 @@ class wizard_budget_import(osv.osv_memory):
         # Some checks
         if context is None:
             context = {}
+
         # Prepare some values
         budgets_2be_approved = {}
         tool_obj = self.pool.get('msf.budget.tools')
@@ -233,6 +238,22 @@ class wizard_budget_import(osv.osv_memory):
             # Then check that file is here
             if not wiz_file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
+
+            # US-212: If multi-click on import button, we check
+            # if the same file was imported in the 5 last seconds
+            imports = self.search(cr, uid, [], context=context)
+            for import_db in imports:
+                if import_db != w.get('id', 0):
+                    import_obj = self.read(cr, uid, import_db,
+                                           ['import_file', 'import_date'],
+                                           context=context)
+                    search_import_file = import_obj.get('import_file', False)
+                    date = time.time() - 5
+                    date_import = import_obj['import_date']
+
+                    if search_import_file == wiz_file and date_import >= date:
+                        return {}
+
             # And finally read it!
             import_file = base64.decodestring(wiz_file)
             import_string = StringIO.StringIO(import_file)
@@ -278,6 +299,8 @@ class wizard_budget_import(osv.osv_memory):
                 tool_obj.create_budget_lines(cr, uid, budget_id, seq, context=context)
                 # Delete lines that comes from the given sequence
                 cr.execute(sql, (seq,))
+
+        self.write(cr, uid, ids, {'import_date': time.time()}, context=context)
         # Open a different wizard regarding number of budget to be approved.
         #+ - if budget to approve, use a wizard to permit user to approve budget
         #+ - otherwise use a wizard for user to inform user the import is OK

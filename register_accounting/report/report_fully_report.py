@@ -30,7 +30,21 @@ class report_fully_report(report_sxw.rml_parse):
             'getMoveLines': self.getMoveLines,
             'getAnalyticLines': self.getAnalyticLines,
             'getImportedMoveLines': self.getImportedMoveLines,
+            'getRegRef': self.getRegRef,
         })
+
+    def getRegRef(self, reg_line):
+        invoice = False
+        if reg_line.direct_invoice_move_id:
+            return reg_line.direct_invoice_move_id.name
+        if reg_line.imported_invoice_line_ids:
+            num = []
+            for inv in reg_line.imported_invoice_line_ids:
+                num.append(inv.move_id.name)
+            return " ".join(num)
+        if reg_line.from_import_cheque_id and reg_line.from_import_cheque_id.move_id:
+            return reg_line.from_import_cheque_id.move_id.name
+        return reg_line.ref or ''
 
     def filter_regline(self, regline_br):
         """
@@ -70,8 +84,8 @@ class report_fully_report(report_sxw.rml_parse):
         aml_ids = aml_obj.search(self.cr, self.uid, domain)
         if aml_ids:
             res = aml_obj.browse(self.cr, self.uid, aml_ids)
-
-        return sorted(res, key=lambda x: x.line_number)
+        # US_297: Sort by invoice.number instead line_number
+        return sorted(res, key=lambda x: (x.invoice.number, x.line_number))
 
     def getMoveLines(self, move_brs, regline_br):
         """

@@ -243,12 +243,13 @@ class mass_reallocation_wizard(osv.osv_memory):
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company and company.instance_id and company.instance_id.level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
+                    ('move_id', '=', False),
                     ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]
@@ -288,12 +289,18 @@ class mass_reallocation_wizard(osv.osv_memory):
                 dd = l.document_date
             if l.date > pd:
                 pd = l.date
+
         if dd > pd:
             raise osv.except_osv(_('Error'), _('Maximum document date is superior to maximum of posting date. Check selected analytic lines dates first.'))
-        if date < dd:
-            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s') % (dd,))
+
+        # US-192 posting date regarding max doc date
+        msg = _('Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s') % (dd,)
+        self.pool.get('finance.tools').check_document_date(cr, uid,
+            dd, date, custom_msg=msg, context=context)
+
         if date < pd:
-            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Document Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s') % (pd,))
+            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Posting Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s') % (pd,))
+
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -349,12 +356,13 @@ class mass_reallocation_wizard(osv.osv_memory):
             ]
             if level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
+                    ('move_id', '=', False),
                     ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]

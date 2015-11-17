@@ -145,6 +145,10 @@
    <Alignment ss:Horizontal="Left" ss:Vertical="Top"/>
    <Borders/>
   </Style>
+  <Style ss:ID="NoPack">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Arial-Bold" x:Family="Swiss" ss:Size="13" ss:Color="#FF0000"/>
+  </Style>
   <Style ss:ID="s104">
    <Alignment ss:Vertical="Center"/>
    <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="13" ss:Color="#000000"/>
@@ -405,6 +409,11 @@
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s118"/>
 </Row>
+   % if not p['pf']:
+   <Row>
+       <Cell ss:StyleID="NoPack" ss:MergeAcross="11"><Data ss:Type="String">NO PACK FAMILIES IN THIS PPL</Data></Cell>
+   </Row>
+   % endif
    % for pf in getParcel(p['pf']):
    <Row>
     <Cell ss:StyleID="s135" ss:MergeAcross="1"><Data ss:Type="String">Parcel No: ${(pf.from_pack)|x} to ${(pf.to_pack)|x}</Data></Cell>

@@ -52,7 +52,7 @@ class wizard_import_product_list(osv.osv):
                               The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order :
                               Product Code*, Product Description*, Comment"""),
         'message': fields.text(string='Message', readonly=True),
-        'list_id': fields.many2one('product.list', string='List', required=True),
+        'list_id': fields.many2one('product.list', string='List', required=True, ondelete='cascade'),
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
         'filename_template': fields.char('Templates', size=256),
@@ -137,6 +137,21 @@ class wizard_import_product_list(osv.osv):
                     p_value = {}
                     p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_id': p_value['default_code'], 'error_list': p_value['error_list']})
+
+                    if list_browse.type == 'sublist' and list_browse.parent_id:
+                        pll_ids = list_line_obj.search(cr, uid, [
+                            ('list_id', '=', list_browse.parent_id.id),
+                            ('name', '=', to_write.get('product_id')),
+                        ], context=context)
+                        if not pll_ids:
+                            to_write.setdefault('error_list', []).append(_('Product not allowed.'))
+                            error_log += _('Line %s in the Excel file was added to the file of the lines with errors. Details: Product not in the parent list %s.') % (line_num, list_browse.parent_id.name)
+                            line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                            ignore_lines += 1
+                            line_ignored_num.append(line_num)
+                            percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                            cr.rollback()
+                            continue
 
                     # Cell 1: Product Description
                     if not to_write.get('product_id'):
