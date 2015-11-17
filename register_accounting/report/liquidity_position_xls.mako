@@ -299,6 +299,9 @@
           <Data ss:Type="String">${_('Calculated Balance in register currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
+          <Data ss:Type="String">${_('Register Balance in register currency')}</Data>
+        </Cell>
+        <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Register Currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
@@ -335,6 +338,9 @@
         <Cell ss:StyleID="s26">
           <Data ss:Type="Number">${ (formatLang(reg['calculated_balance'], digits=2, grouping=True) or '0.00') }</Data>
         </Cell>
+        <Cell ss:StyleID="s26">
+          <Data ss:Type="Number">${ (formatLang(reg['register_balance'], digits=2, grouping=True) or '0.00') }</Data>
+        </Cell>
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">${ (reg['currency']) }</Data>
         </Cell>
@@ -352,6 +358,7 @@
 
       % for cur in getReg()[reg_type]['currency_amounts']: 
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
+        <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
@@ -384,6 +391,7 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
 
         <Cell ss:MergeAcross="2" ss:StyleID="s49">
           <Data ss:Type="String">Total ${ reg_type }:</Data>
@@ -408,6 +416,7 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
+         <Cell ss:StyleID="s25c"/>
         <Cell ss:MergeAcross="1" ss:StyleID="s49">
           <Data ss:Type="String">Grand Total:</Data>
         </Cell>
