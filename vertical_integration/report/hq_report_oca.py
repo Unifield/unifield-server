@@ -217,7 +217,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 'extra',
             )
 
-            # For first report: as if
+            # For first report: as it
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
                               move_line.move_id and move_line.move_id.name or "",
@@ -342,6 +342,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 and analytic_line.journal_id.type == 'revaluation' or False
                     
             # For first report: as is
+            booking_amounts_indexes = [13, 14, ]
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
                               analytic_line.entry_sequence or "",
@@ -364,10 +365,14 @@ class hq_report_oca(report_sxw.report_sxw):
                               rate]
             first_result_lines.append(formatted_data)
             if is_analytic_cur_adj_entry or is_analytic_rev_entry:
-                # US-478/3: FXA/REV entry, raw data, always rate of 1
+                # US-478/3: FXA/REV entry, raw data,
+                # - always rate of 1 for functional
+                # - always 0 booking amounts
                 # without impacting formatted_data for other files
                 first_result_lines[-1][-1] = 1.
-
+                # FXA/REV entry
+                for i in booking_amounts_indexes:
+                    first_result_lines[-1][i] = "0.00"
             if analytic_line.journal_id \
                 and analytic_line.journal_id.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
