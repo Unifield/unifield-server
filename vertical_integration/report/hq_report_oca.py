@@ -31,6 +31,7 @@ from tools.translate import _
 
 from report import report_sxw
 
+ZERO_CELL_CONTENT = "0.0"
 
 class hq_report_oca(report_sxw.report_sxw):
 
@@ -185,7 +186,7 @@ class hq_report_oca(report_sxw.report_sxw):
             account = move_line.account_id
             currency = move_line.currency_id
             func_currency = move_line.functional_currency_id
-            rate = "0.00"
+            rate = ZERO_CELL_CONTENT
             
             is_cur_adj_entry = move_line.journal_id \
                 and move_line.journal_id.type == 'cur_adj' or False
@@ -356,11 +357,11 @@ class hq_report_oca(report_sxw.report_sxw):
                               analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",
                               analytic_line.account_id and analytic_line.account_id.code or "",
                               analytic_line.partner_txt or "",
-                              analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
-                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00",
+                              analytic_line.amount_currency > 0 and ZERO_CELL_CONTENT or round(-analytic_line.amount_currency, 2),
+                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
                               currency and currency.name or "",
-                              analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
-                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00",
+                              analytic_line.amount > 0 and ZERO_CELL_CONTENT or round(-analytic_line.amount, 2),
+                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or ZERO_CELL_CONTENT,
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
@@ -372,7 +373,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 first_result_lines[-1][-1] = 1.
                 # FXA/REV entry
                 for i in booking_amounts_indexes:
-                    first_result_lines[-1][i] = "0.00"
+                    first_result_lines[-1][i] = ZERO_CELL_CONTENT
             if analytic_line.journal_id \
                 and analytic_line.journal_id.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
@@ -385,7 +386,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                         "1",
                                         account and account.code + " " + account.name or "0",
                                         currency and currency.name or "0",
-                                        analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or "0.00",
+                                        analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
                                         "0",
                                         rate,
                                         analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
