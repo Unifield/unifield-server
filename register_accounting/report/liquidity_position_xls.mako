@@ -416,8 +416,7 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
-         <Cell ss:StyleID="s25c"/>
-        <Cell ss:MergeAcross="1" ss:StyleID="s49">
+        <Cell ss:MergeAcross="2" ss:StyleID="s49">
           <Data ss:Type="String">Grand Total:</Data>
         </Cell>
         <Cell ss:StyleID="s50">
