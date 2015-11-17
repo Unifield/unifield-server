@@ -6,7 +6,7 @@
             <field name="model">deleted.object</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Deleted Object">
+                <tree string="Deleted Object" hide_new_button="1" hide_delete_button="1">
                     <field name="model" />
                     <field name="deleted_obj_id" />
                     <field name="deleted_obj_sd_ref" />
@@ -20,7 +20,7 @@
             <field name="model">deleted.object</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Deleted Object" hide_duplicate_button="1">
+                <form string="Deleted Object" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1" hide_edit_button="1">
                     <field name="model" />
                     <field name="deleted_obj_id" />
                     <field name="deleted_obj_sd_ref" />
