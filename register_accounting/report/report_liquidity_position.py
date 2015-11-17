@@ -110,7 +110,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                     'func_amount_balanced': 0
                 }
             # Create currency values
-            if currency not in reg_types[journal.type]['currency_amounts']:
+            if currency.name not in reg_types[journal.type]['currency_amounts']:
                 reg_types[journal.type]['currency_amounts'][currency.name] = {
                     'amount_calculated': 0,
                     'amount_balanced': 0,
