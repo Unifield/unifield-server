@@ -177,7 +177,7 @@ class setup_remote_warehouse(osv.osv_memory):
         """ Perform actions necessary to set up this instance as a remote warehouse """
         self._set_sync_menu_active(cr, uid, False)
         # US-702: Remove location menu items in RW
-        self._set_location_menu_in_rw(cr, uid, False)
+        #self._set_location_menu_in_rw(cr, uid, False)
      
         self._sync_disconnect(cr, uid)
         self._set_entity_type(cr, uid, entity_id, self.remote_warehouse)
@@ -205,7 +205,7 @@ class setup_remote_warehouse(osv.osv_memory):
         self._revert_remote_warehouse(cr, uid, entity_id,context=context)
         self._set_entity_type(cr, uid, entity_id, self.central_platform)
         # us-702: Reset it back for the current instance CP
-        self._set_location_menu_in_rw(cr, uid, True)
+        #self._set_location_menu_in_rw(cr, uid, True)
         
         #US-27: Remove the following call, as it is called already in _revert_remote_warehouse
 #        self._set_sequence_suffix(cr, uid, suffix="", context=None)
