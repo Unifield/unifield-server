@@ -85,9 +85,10 @@
 
       <section>
         [[ repeatIn(getReg()[reg_type]['currency_amounts'], 'cur') ]]
-        <blockTable htmlSpans="1" style="table" colWidths="94mm,22mm,10mm,22mm,22mm,10mm">
+        <blockTable htmlSpans="1" style="table" colWidths="72mm,22mm,22mm,10mm,22mm,22mm,10mm">
           <tr>
             <td><para style="right">Subtotal [[ str(cur) ]]</para></td>
+            <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_calculated'], digits=2, grouping=True) or '0.00' ]]</para></td>
             <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_balanced'], digits=2, grouping=True) or '0.00' ]]</para></td>
             <td><para style="text">[[ str(cur) ]]</para></td>
             <td><para style="right">[[ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getFuncCurrencyId(), getReg()[reg_type]['currency_amounts'][cur]['amount_calculated']), digits=2, grouping=True) or '0.00' ]]</para></td>
