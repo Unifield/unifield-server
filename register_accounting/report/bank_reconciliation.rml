@@ -90,15 +90,6 @@
 
       <spacer length="24"/>
 
-      <para style="text"><b>Comments:</b></para>
-      <blockTable colWidths="180mm" rowHeights="20mm" style="table_comments">
-        <tr>
-          <td>[[ format(o.notes or '') ]]</td>
-        </tr>
-      </blockTable>
-
-      <spacer length="24"/>
-
       <para style="text"><b>Bank account number:</b></para>
       <blockTable colWidths="180mm" rowHeights="10mm" style="table_comments">
         <tr>
@@ -108,6 +99,14 @@
 
       <spacer length="24"/>
 
+      <para style="text"><b>Comments:</b></para>
+      <blockTable colWidths="180mm" rowHeights="20mm" style="table_comments">
+        <tr>
+          <td>[[ format(o.notes or '') ]]</td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
 
       <para style="text">Register state: <b>[[ getSel(o, 'state') ]]</b></para>
       <para style="text">Register opening date: <b>[[ o.date and formatLang(o.date, date=True) or '' ]]</b></para>
