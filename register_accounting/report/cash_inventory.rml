@@ -133,7 +133,6 @@
       <blockTable colWidths="90mm, 90mm" style="table_reconciliation">
         <tr>
           <td>
-            <para style="center"><b>Opening balance</b></para>
             <para>Opening balance: <b>[[ o.balance_start and o.balance_start or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>Cash Transaction: <b>[[ o.total_entry_encoding and o.total_entry_encoding or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>Calculated Balance: <b>[[ o.msf_calculated_balance and o.msf_calculated_balance or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
@@ -141,7 +140,6 @@
             <para>Unrecorded expenses: <b>[[ o.unrecorded_expenses_amount and o.unrecorded_expenses_amount or '0.0']]</b> [[ o.currency and o.currency.name or '' ]]</para>
           </td>
           <td>
-            <para style="center"><b>Closing balance</b></para>
             <para>Theoretical balance: <b>[[ o.balance_end and o.balance_end or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>CashBox Balance: <b>[[ o.balance_end_cash and o.balance_end_cash or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>Gap: <b>[[ o.closing_gap and o.closing_gap or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
