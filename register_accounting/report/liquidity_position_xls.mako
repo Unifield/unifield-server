@@ -134,7 +134,7 @@
     </Style>
 
     <Style ss:ID="s35">
-      <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+      <Alignment ss:Vertical="Center" />
     </Style>
 
     <Style ss:ID="s38">
@@ -276,7 +276,7 @@
           <Data ss:Type="String">${ reg_type }</Data>
         </Cell>
       </Row>
-      <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
+      <Row  ss:AutoFitHeight="1" ss:StyleID="s35">
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Proprietary instance')}</Data>
         </Cell>
