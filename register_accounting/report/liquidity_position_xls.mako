@@ -248,7 +248,7 @@
 
       <Row>
         <Cell ss:StyleID="s25b" >
-          <Data ss:Type="String">${_('LIQUIDITY POSITION')}</Data>
+          <Data ss:Type="String">${_('LIQUIDITY POSITION')} ${getPeriodName()}</Data>
         </Cell>
       </Row>
       <Row ss:Height="13.5"/>
