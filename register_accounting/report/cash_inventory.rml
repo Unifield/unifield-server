@@ -59,7 +59,7 @@
     <section>
       [[ repeatIn(objects,'o') ]]
       <title>Cash Reconciliation</title>
-      <para style="center"><b>[[ o.period_id and o.period_id.code or '' ]]</b></para>
+      <para style="center"><b>Period: [[ o.period_id and o.period_id.code or '' ]]</b></para>
       <para style="center"><b>[[ o.period_id and o.period_id.date_stop and formatLang(o.period_id.date_stop, date=True) or '' ]]</b></para>
 
       <spacer length="5"/>
