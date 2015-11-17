@@ -55,13 +55,14 @@
           <td><para style="center"><b>[[ reg_type.title() ]]</b></para></td>
         </tr>
       </blockTable>
-      <blockTable htmlSpans="1" style="table_header" colWidths="20mm,25mm,15mm,25mm,25mm,10mm,25mm,25mm,10mm">
+      <blockTable htmlSpans="1" style="table_header" colWidths="18mm,18mm,14mm,22mm,22mm,22mm,10mm,22mm,22mm,10mm">
         <tr>
           <td><para style="text">Instance</para></td>
           <td><para style="text">Journal Code - Journal Name</para></td>
           <td><para style="text">State</para></td>
           <td><para style="text">Opening Balance</para></td>
           <td><para style="text">Calculated Balance</para></td>
+          <td><para style="text">Register Balance</para></td>
           <td><para style="text">Reg. ccy</para></td>
           <td><para style="text">Calculated Balance</para></td>
           <td><para style="text">Register Balance</para></td>
@@ -74,6 +75,7 @@
           <td><para style="text">[[ reg['state'] ]]</para></td>
           <td><para style="right">[[ formatLang(reg['opening_balance'], digits=2, grouping=True) or '0.00']]</para></td>
           <td><para style="right">[[ formatLang(reg['calculated_balance'], digits=2, grouping=True) or '0.00']]</para></td>
+          <td><para style="right">[[ formatLang(reg['register_balance'], digits=2, grouping=True) or '0.00' ]]</para></td>
           <td><para style="text">[[ reg['currency'] ]]</para></td>
           <td><para style="right">[[ formatLang(reg['func_calculated_balance'], digits=2, grouping=True) or '0.00' ]]</para></td>
           <td><para style="right">[[ formatLang(reg['func_register_balance'], digits=2, grouping=True) or '0.00' ]]</para></td>
@@ -83,7 +85,7 @@
 
       <section>
         [[ repeatIn(getReg()[reg_type]['currency_amounts'], 'cur') ]]
-        <blockTable htmlSpans="1" style="table" colWidths="85mm,25mm,10mm,25mm,25mm,10mm">
+        <blockTable htmlSpans="1" style="table" colWidths="94mm,22mm,10mm,22mm,22mm,10mm">
           <tr>
             <td><para style="right">Subtotal [[ str(cur) ]]</para></td>
             <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_balanced'], digits=2, grouping=True) or '0.00' ]]</para></td>
@@ -95,7 +97,7 @@
         </blockTable>
       </section>
 
-      <blockTable htmlSpans="1" style="table_header" colWidths="120mm,25mm,25mm,10mm">
+      <blockTable htmlSpans="1" style="table_header" colWidths="126mm,22mm,22mm,10mm">
         <tr>
           <td><para style="right"><b>Total [[ reg_type ]]</b></para></td>
           <td><para style="right">[[ formatLang(getReg()[reg_type]['func_amount_calculated'], digits=2, grouping=True) or '0.00' ]]</para></td>
@@ -106,7 +108,7 @@
       <spacer length="24"/>
     </section>  
 
-    <blockTable htmlSpans="1" style="table_header" colWidths="120mm,25mm,25mm,10mm">
+    <blockTable htmlSpans="1" style="table_header" colWidths="126mm,22mm,22mm,10mm">
       <tr>
         <td><para style="right"><b>Grand Total:</b></para></td>
         <td><para style="right">[[ formatLang(getTotalReg(), digits=2, grouping=True) or '0.00' ]]</para></td>
