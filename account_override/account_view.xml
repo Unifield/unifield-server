@@ -76,7 +76,7 @@
                 <data>
                     <group string="Group By..." position="replace">
                         <group expand="0" string="Group By...">
-                            <filter string="Internal Type" icon="terp-stock_symbol-selection" domain="" context="{'group_by':'type'}"/>
+                            <filter string="Internal Type" icon="terp-stock_symbol-selection" context="{'group_by':'type'}"/>
                         </group>
                     </group>
                 </data>

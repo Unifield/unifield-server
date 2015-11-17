@@ -27,6 +27,7 @@ class account_invoice(osv.osv):
     _inherit = 'account.invoice'
 
     _columns = {
+        'supplier_reference': fields.char('Supplier reference', size=128),
         'picking_id': fields.many2one('stock.picking', string="Picking"),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order',
             help="Purchase Order from which invoice have been generated"),

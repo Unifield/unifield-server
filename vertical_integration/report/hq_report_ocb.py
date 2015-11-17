@@ -66,6 +66,7 @@ class finance_archive(finance_export.finance_archive):
         partner_obj = pool.get('res.partner')
         partner_name_column_number = 10
         partner_id_column_number = 21
+        employee_name_column = 22
         for line in data:
             tmp_line = list(line)
             line_ids = str(line[column_number])
@@ -77,7 +78,8 @@ class finance_archive(finance_export.finance_archive):
             if len(tmp_line) > (partner_id_column_number - 1):
                 partner_id = tmp_line[partner_id_column_number - 1]
                 if partner_id:
-                    partner_id_present = True
+                    # US-497: extract name from partner_id (better than partner_txt)
+                    tmp_line[partner_name_column_number - 1] = partner_obj.read(cr, uid, partner_id, ['name'])['name']
             # If not partner_id, then check 'Third Party' column to search it by name
             if not partner_id_present:
                 partner_name = tmp_line[partner_name_column_number - 1]
@@ -86,7 +88,7 @@ class finance_archive(finance_export.finance_archive):
                     # UFT-8 encoding
                     if isinstance(partner_name, unicode):
                         partner_name = partner_name.encode('utf-8')
-                    partner_ids = partner_obj.search(cr, uid, [('name', '=ilike', partner_name), ('active', 'in', ['t', 'f'])])
+                    partner_ids = partner_obj.search(cr, uid, [('name', '=ilike', partner_name), ('active', 'in', ['t', 'f'])], order='id')
                     if partner_ids:
                         partner_id = partner_ids[0]
             # If we get some ids, fetch the partner hash
@@ -99,9 +101,24 @@ class finance_archive(finance_export.finance_archive):
                 tmp_line.append('')
             emplid = tmp_line[partner_id_column_number - 2]
 
+            if not emplid and not partner_id and tmp_line[partner_name_column_number - 1]:
+                employee_obj = pool.get('hr.employee')
+                # we don't have partner and employee, if update employee creation is not run check if he duplicates in the DB
+                partner_name = tmp_line[partner_name_column_number - 1]
+                if isinstance(partner_name, unicode):
+                    partner_name = partner_name.encode('utf-8')
+                emp_ids = employee_obj.search(cr, uid, [('name', '=', partner_name), ('active', 'in', ['t', 'f'])])
+                if emp_ids:
+                    empl_code = employee_obj.read(cr, uid, emp_ids[0], ['identification_id'])['identification_id']
+                    if empl_code:
+                        tmp_line[partner_id_column_number - 2] = empl_code
+
             if emplid:
                 partner_hash = ''
+                if tmp_line[employee_name_column - 1]:
+                    tmp_line[partner_name_column_number - 1] = tmp_line[employee_name_column - 1]
             tmp_line[partner_id_column_number - 1] = partner_hash
+            del(tmp_line[employee_name_column - 1])
             # Add result to new_data
             new_data.append(self.line_to_utf8(tmp_line))
         res = self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
@@ -390,7 +407,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                        c.name AS "booking_currency", 
                        CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, 
                        CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
-                       cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id
+                       cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name
                 FROM account_analytic_line AS al, 
                      account_account AS a, 
                      account_analytic_account AS aa, 
@@ -444,7 +461,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             'bs_entries': """
                 SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, 
                        a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name,
-                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid"
+                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", aml.partner_id, hr.name_resource as hr_name
                 FROM account_move_line aml left outer join hr_employee hr on hr.id = aml.employee_id, 
                      account_account AS a, 
                      res_currency AS c, 
@@ -490,7 +507,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         instance = pool.get('msf.instance').browse(cr, uid, instance_id)
-        instance_name = instance.code[0:3] # Take only 3 first digits
+        instance_name = instance.code or ''
         processrequests = [
             {
                 'headers': ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive'],

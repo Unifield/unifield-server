@@ -247,8 +247,6 @@ osv.object_proxy.exec_workflow_cr = exec_workflow_cr
 super_create = orm.orm_memory.create
 
 def create(self, cr, user, vals, context=None):
-    if user == 1 and context is None:
-        logging.getLogger('orm_memory').warning("".join(["Traceback:\n"] + traceback.format_stack()[:-1] + ["Possible mistake on the caller method. Please check if the context argument has been given.\n"]).strip())
     return super_create(self, cr, (context or {}).get('real_user', user), vals, context=context)
 
 orm.orm_memory.create = create

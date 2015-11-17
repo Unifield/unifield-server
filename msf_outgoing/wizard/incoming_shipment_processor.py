@@ -63,13 +63,15 @@ class stock_incoming_processor(osv.osv):
         'direct_incoming': fields.boolean(
             string='Direct to Requesting Location',
         ),
-        'draft': fields.boolean('Draft')
+        'draft': fields.boolean('Draft'),
+        'already_processed': fields.boolean('Already processed'),
     }
 
     _defaults = {
         'dest_type': 'default',
         'direct_incoming': True,
         'draft': lambda *a: False,
+        'already_processed': lambda *a: False,
     }
 
 
@@ -175,6 +177,17 @@ class stock_incoming_processor(osv.osv):
         for proc in self.browse(cr, uid, ids, context=context):
             picking_id = proc.picking_id.id
             total_qty = 0.00
+
+            if proc.already_processed:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot process two times the same IN. Please '\
+'return to IN form view and re-try.'),
+                )
+
+            self.write(cr, uid, [proc.id], {
+                'already_processed': True,
+            }, context=context)
 
             for line in proc.move_ids:
                 # If one line as an error, return to wizard

@@ -1232,7 +1232,10 @@ stock moves which are already processed : '''
                 context['sale_id'] = l.link_so_id.original_so_id_sale_order.id
                 vals.update({'order_id': l.link_so_id.original_so_id_sale_order.id,
                              'state': 'done'})
-                sol_obj.create(cr, uid, vals, context=context)
+                sol_id = sol_obj.create(cr, uid, vals, context=context)
+                self.infolog(cr, uid, "The FO/IR line id:%s has been added from the PO line id:%s" % (
+                    sol_id, l.id,
+                ))
             context['sale_id'] = tmp_sale_context
 
             # If the order is an Internal request with External location, create a new
@@ -1259,6 +1262,9 @@ stock moves which are already processed : '''
                     pick_obj.action_confirm(cr, uid, pick_to_confirm, context=context)
 
             sol_ids.add(l.link_so_id.id)
+            self.infolog(cr, uid, "The FO/IR line id:%s has been added from the PO line id:%s" % (
+                new_line_id, l.id,
+            ))
 
         if sol_ids:
             so_obj.action_ship_proc_create(cr, uid, list(sol_ids), context=context)
@@ -1320,6 +1326,7 @@ stock moves which are already processed : '''
             context['wait_order'] = True
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po, so_ids=so_ids)
             del context['wait_order']
+            self.infolog(cr, uid, "The PO id:%s has been confirmed" % po.id)
 
         return True
 
@@ -1467,7 +1474,37 @@ stock moves which are already processed : '''
                     if so.procurement_request and so.location_requestor_id.usage == 'customer' \
                                               and line.procurement_id.move_id \
                                               and not line.procurement_id.move_id.processed_stock_move:
-                        out_move_id = line.procurement_id.move_id
+                        # In case of replacement of a non-stockable product by a stockable product
+                        if line.product_id.id != line.procurement_id.product_id.id and  line.procurement_id.product_id.type in ('service', 'service_recep', 'consu') and line.product_id.type == 'product':
+                            # Get OUT linked to IR
+                            pick_to_confirm = None
+                            out_ids = []
+                            if line.procurement_id.sale_id:
+                                out_ids = pick_obj.search(cr, uid, [
+                                    ('sale_id', '=', line.procurement_id.sale_id.id),
+                                    ('type', '=', 'out'),
+                                    ('state', 'in', ['draft', 'confirmed', 'assigned']),
+                                ], context=context)
+                            if not out_ids:
+                                picking_data = so_obj._get_picking_data(cr, uid, so)
+                                out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
+                                pick_to_confirm = out_ids
+
+                            move_data = so_obj._get_move_data(cr, uid, so, sol, out_ids[0], context=context)
+                            new_move_id = move_obj.create(cr, uid, move_data, context=context)
+                            out_move_id = line.procurement_id.move_id.id
+                            proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': new_move_id}, context=context)
+                            move_obj.write(cr, uid, [out_move_id], {'state': 'draft'}, context=context)
+                            move_obj.unlink(cr, uid, [out_move_id], context=context)
+
+                            if pick_to_confirm:
+                                wf_service = netsvc.LocalService("workflow")
+                                for pick_to_confirm_id in pick_to_confirm:
+                                    wf_service.trg_validate(uid, 'stock.picking', pick_to_confirm_id, 'button_confirm', cr)
+                                #pick_obj.action_confirm(cr, uid, pick_to_confirm, context=context)
+                            out_move_id = move_obj.browse(cr, uid, new_move_id, context=context)
+                        else:
+                            out_move_id = line.procurement_id.move_id
                         # If there is a non-stockable or service product, remove the OUT
                         # stock move and update the stock move on the procurement
                         if context.get('wait_order') and line.product_id.type in ('service', 'service_recep', 'consu') and out_move_id.picking_id:
@@ -1485,13 +1522,23 @@ stock moves which are already processed : '''
                             continue
 
                         minus_qty = 0.00
-                        bo_moves = []
-                        if out_move_id.picking_id and out_move_id.picking_id.backorder_id:
-                            bo_moves = move_obj.search(cr, uid, [
-                                ('picking_id', '=', out_move_id.picking_id.backorder_id.id),
+                        bo_moves = []   # Moves already processed
+                        sp_moves = []   # Moves in same picking related to same FO/IR line
+                        if out_move_id.picking_id:
+                            sp_moves = move_obj.search(cr, uid, [
+                                ('picking_id', '=', out_move_id.picking_id.id),
                                 ('sale_line_id', '=', out_move_id.sale_line_id.id),
-                                ('state', '=', 'done'),
+                                ('id', '!=', out_move_id.id),
+                                ('state', 'in', ['confirmed', 'assigned']),
                             ], context=context)
+
+                            if out_move_id.picking_id.backorder_id:
+                                bo_moves = move_obj.search(cr, uid, [
+                                    ('picking_id', '=', out_move_id.picking_id.backorder_id.id),
+                                    ('sale_line_id', '=', out_move_id.sale_line_id.id),
+                                    ('state', '=', 'done'),
+                                ], context=context)
+
                             while bo_moves:
                                 boms = move_obj.browse(cr, uid, bo_moves, context=context)
                                 bo_moves = []
@@ -1501,11 +1548,18 @@ stock moves which are already processed : '''
                                     else:
                                         minus_qty += bom.product_qty
                                         if bom.picking_id and bom.picking_id.backorder_id:
-                                            bo_moves.extend(move_obj.search(cr, uid, [
-                                                ('picking_id', '=', bom.picking_id.backorder_id.id),
-                                                ('sale_line_id', '=', bom.sale_line_id.id),
-                                                ('state', '=', 'done'),
-                                            ], context=context))
+                                            if bom.picking_id.backorder_id:
+                                                bo_moves.extend(move_obj.search(cr, uid, [
+                                                    ('picking_id', '=', bom.picking_id.backorder_id.id),
+                                                    ('sale_line_id', '=', bom.sale_line_id.id),
+                                                    ('state', '=', 'done'),
+                                                ], context=context))
+
+                        for sp_move in move_obj.browse(cr, uid, sp_moves, context=context):
+                            if sp_move.product_uom.id != out_move_id.product_uom.id:
+                                minus_qty += uom_obj._compute_qty(cr, uid, bom.product_uom.id, bom.product_qty, out_move_id.product_uom.id)
+                            else:
+                                minus_qty += sp_move.product_qty
 
                         if out_move_id.product_uom.id != line.product_uom.id:
                             minus_qty = uom_obj._compute_qty(cr, uid, out_move_id.product_uom.id, minus_qty, line.product_uom.id)
@@ -1637,6 +1691,7 @@ stock moves which are already processed : '''
 
         # corresponding sale order
         so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        so_ids = so_obj.search(cr, uid, [('id', 'in', so_ids), ('procurement_request', '=', False)], context=context)
         # from so, list corresponding po
         all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
 
@@ -1655,6 +1710,7 @@ stock moves which are already processed : '''
                                                                  ('type', '=', 'make_to_order'),
                                                                  ('product_id', '!=', False),
                                                                  ('procurement_id.state', '!=', 'cancel'),
+                                                                 ('order_id.procurement_request', '=', False),
                                                                  ('state', 'not in', ['confirmed', 'done'])], context=context)
 
             all_exp_sol_not_confirmed_ids = exp_sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids)], context=context)
@@ -1809,7 +1865,7 @@ stock moves which are already processed : '''
     def need_counterpart(self, cr, uid, ids, context=None):
         res = False
         for po in self.browse(cr, uid, ids, context=context):
-            if po.order_type == 'loan' and not po.loan_id and not po.is_a_counterpart and po.partner_id.partner_type not in ('internal', 'intermission'):
+            if po.order_type == 'loan' and not po.loan_id and not po.is_a_counterpart and po.partner_id.partner_type not in ('internal', 'intermission', 'section'):
                 res = True
 
         return res
@@ -1817,7 +1873,7 @@ stock moves which are already processed : '''
     def go_to_loan_done(self, cr, uid, ids, context=None):
         res = False
         for po in self.browse(cr, uid, ids, context=context):
-            if po.order_type not in ('loan', 'direct') or po.loan_id or (po.order_type == 'loan' and po.partner_id.partner_type in ('internal', 'intermission')):
+            if po.order_type not in ('loan', 'direct') or po.loan_id or (po.order_type == 'loan' and po.partner_id.partner_type in ('internal', 'intermission', 'section')):
                 res = True
 
         return res
@@ -1837,7 +1893,7 @@ stock moves which are already processed : '''
         partner_obj = self.pool.get('res.partner')
 
         for order in self.browse(cr, uid, ids):
-            if order.is_a_counterpart or (order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission')):
+            if order.is_a_counterpart or (order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission', 'section')):
                 # UTP-392: This PO is created by the synchro from a Loan FO of internal/intermission partner, so do not generate the counterpart FO
                 return
 
@@ -2546,8 +2602,14 @@ class purchase_order_line(osv.osv):
                 merged_id = line.merged_id.id
                 change_price_ok = line.change_price_ok
                 c = context.copy()
+                tmp_import_in_progress = context.get('import_in_progress')
+                context['import_in_progress'] = True
                 c.update({'change_price_ok': change_price_ok})
                 self.write(cr, uid, line_id, {'merged_id': False}, context=context)
+                if tmp_import_in_progress:
+                    context.update({'import_in_progress': tmp_import_in_progress})
+                else:
+                    del context['import_in_progress']
                 res_merged = merged_line_obj._update(cr, uid, merged_id, line.id, -line.product_qty, line.price_unit, context=c)
 
                 # Create or update an existing merged line with the new product
@@ -3016,6 +3078,13 @@ class purchase_order_line(osv.osv):
 
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                 diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line_qty, sol.product_uom.id)
+                # In case of the product qty of the PO line is decrease before the cancelation, check if there
+                # is some other PO lines related to this FO line, then cancel the whole line.
+                if 'pol_qty' not in context and sol.procurement_id:
+                    pol_ids = self.search(cr, uid, [('procurement_id', '=', sol.procurement_id.id)], context=context)
+                    if len(pol_ids) == 1 and pol_ids[0] == line.id:
+                        diff_qty = sol.product_uom_qty
+
                 sol_to_update.setdefault(sol.id, 0.00)
                 sol_to_update[sol.id] += diff_qty
                 if line.has_to_be_resourced:
@@ -3163,6 +3232,9 @@ class purchase_order_line(osv.osv):
             return self.ask_unlink(cr, uid, ids, context=context)
 
         res = super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
+
+        for pol_id in ids:
+            self.infolog(cr, uid, "The PO/RfQ line id:%s has been deleted" % pol_id)
 
         po_obj.wkf_confirm_trigger(cr, uid, order_ids, context=context)
 

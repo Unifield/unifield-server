@@ -71,8 +71,36 @@ class purchase_order(osv.osv):
             res = False
         return res
 
+    def _get_import_progress(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if there are import wizard associated to POs
+        """
+        wiz_obj = self.pool.get('wizard.import.po.line')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for po_id in ids:
+            res[po_id] = wiz_obj.search(cr, 1, [
+                ('po_id', '=', po_id),
+                ('state', '=', 'in_progress'),
+            ], limit=1, context=context) and True or False
+
+        return res
+
     _columns = {
-        'import_in_progress': fields.boolean(string='Importing'),
+        'import_in_progress': fields.function(
+            _get_import_progress,
+            method=True,
+            type='boolean',
+            string='Import in progress',
+            store=False,
+        ),
         'import_filenames': fields.one2many('purchase.order.simu.import.file', 'order_id', string='Imported files', readonly=True),
     }
 
@@ -292,7 +320,7 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for var in self.browse(cr, uid, ids, context=context):
-            if not var.from_sync and var.partner_type != 'external':
+            if not var.from_sync and var.partner_type not in ('external', 'esc'):
                 raise osv.except_osv(_('Warning !'), _("""You can\'t cancel the PO because it may have already been synchronized,
                 the cancellation should then come from the supplier instance (and synchronize down to the requestor instance)."""))
         return True

@@ -243,11 +243,11 @@ class SyncCancelINTest(ResourcingTest):
             pick_res[p_move.picking_id.state] += 1
 
         self.assert_(
-            pick_res['done'] == 0 and pick_res['shipped'] == 2,
+            pick_res['done'] == 2 and pick_res['shipped'] == 2,
             "The number of IN by states is not correct :: Should be {'done': 0, 'shipped': 2} :: It is %s" % pick_res,
         )
         self.assert_(
-            res['cancel'] == 0 and res['assigned'] == 2,
+            res['cancel'] == 2 and res['assigned'] == 2,
             "The number of IN moves by states is not correct :: Should be {'cancel': 0, 'assigned': 2} :: It is %s" % res,
         )
 
@@ -348,11 +348,11 @@ class SyncCancelINTest(ResourcingTest):
             pick_res[p_move.picking_id.state] += 1
 
         self.assert_(
-            pick_res['done'] == 0 and pick_res['shipped'] == 2,
+            pick_res['done'] == 2 and pick_res['shipped'] == 2,
             "The number of IN by states is not correct :: Should be {'done': 0, 'shipped': 2} :: It is %s" % pick_res,
         )
         self.assert_(
-            res['cancel'] == 0 and res['assigned'] == 2,
+            res['cancel'] == 2 and res['assigned'] == 2,
             "The number of IN moves by states is not correct :: Should be {'cancel': 0, 'assigned': 2} :: It is %s" % res,
         )
 

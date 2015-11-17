@@ -138,15 +138,15 @@ class real_average_consumption(osv.osv):
         'activity_id': fields.many2one('stock.location', string='Activity', domain=[('usage', '=', 'customer')], required=1),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'line_ids': fields.one2many('real.average.consumption.line', 'rac_id', string='Lines'),
         'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True),
         'created_ok': fields.boolean(string='Out moves created'),
         'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
         'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
     }
@@ -245,6 +245,9 @@ class real_average_consumption(osv.osv):
         if context is None:
             context = {}
 
+        for report_id in ids:
+            self.infolog(cr, uid, 'The consumption report id:%s has been canceled' % report_id)
+
         self.write(cr, uid, ids, {'state':'cancel'}, context=context)
         
         return {'type': 'ir.actions.act_window',
@@ -328,7 +331,9 @@ class real_average_consumption(osv.osv):
             # Confirm all moves
             move_obj.action_done(cr, uid, move_ids, context=context)
             #move_obj.write(cr, uid, move_ids, {'date': rac.period_to}, context=context)
-            
+
+        for report_id in ids:
+            self.infolog(cr, uid, 'The consumption report id:%s has been processed' % report_id)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
@@ -988,6 +993,9 @@ class real_consumption_change_location(osv.osv_memory):
 
         wiz = self.browse(cr, uid, ids[0], context=context)
 
+        self.infolog(cr, uid, 'Consumer location has been changed on consumption report id:%s from id:%s to id:%s' % (
+            wiz.report_id.id, wiz.report_id.cons_location_id.id, wiz.location_id.id))
+
         self.pool.get('real.average.consumption').write(cr, uid, [wiz.report_id.id], {'cons_location_id': wiz.location_id.id}, context=context)
         self.pool.get('real.average.consumption').button_update_stock(cr, uid, [wiz.report_id.id], context=context)
 
@@ -1033,14 +1041,14 @@ class monthly_review_consumption(osv.osv):
         'company_id': fields.many2one('res.company', string='Company', readonly=True),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
         'line_ids': fields.one2many('monthly.review.consumption.line', 'mrc_id', string='Lines'),
         'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
     }
     

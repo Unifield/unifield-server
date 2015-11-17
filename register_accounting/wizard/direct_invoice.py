@@ -228,6 +228,13 @@ class wizard_account_invoice(osv.osv):
         # UTP-1041 : additional reference field functionality
         if inv['reference'] is False:
             inv_number = inv_obj.browse(cr, uid, inv_id, context=context).number
+
+            # US-364/1: display the sequence number in the register line
+            # reference field if no reference set in DI header
+            absl_obj.write(cr, uid, [reg_line_id], {
+                'ref': inv_number,
+            }, context=context)
+
             absl = absl_obj.browse(cr, uid, reg_line_id, context=context)
             am = absl.move_ids[0]
             aml_obj = self.pool.get('account.move.line')

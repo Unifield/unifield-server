@@ -119,7 +119,7 @@ class account_fiscalyear(osv.osv):
         # Then sequence creation on all journals
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('instance_id', '=', current_instance_id)])
         for journal in self.pool.get('account.journal').browse(cr, uid, journal_ids, context=context):
-            self.pool.get('account.journal').create_fiscalyear_sequence(cr, uid, res, name, journal.code.lower(), vals['date_start'], journal.sequence_id and journal.sequence_id.id or False, context=context)
+            self.pool.get('account.journal').create_fiscalyear_sequence(cr, uid, res, name, "journal_%s"%(journal.id), vals['date_start'], journal.sequence_id and journal.sequence_id.id or False, context=context)
         return res
 
     def uf_close_fy(self, cr, uid, ids, context=None):

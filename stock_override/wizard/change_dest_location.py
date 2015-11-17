@@ -125,6 +125,11 @@ class change_dest_location(osv.osv_memory):
             self.write(cr, uid, [wizard.id], {'warn_msg': warn_msg,
                                               'state': 'end'}, context=context)
 
+            self.infolog(cr, uid, "The destination location has been changed on Internal picking id:%s to id:%s" % (
+                wizard.picking_id.id,
+                wizard.dest_location_id.id,
+            ))
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'change.dest.location',
                 'res_id': ids[0],

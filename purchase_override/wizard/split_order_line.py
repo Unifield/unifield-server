@@ -112,9 +112,16 @@ class split_purchase_order_line_wizard(osv.osv_memory):
             elif split.new_line_qty != rounding(split.new_line_qty, split.purchase_line_id.product_uom.rounding):
                 raise osv.except_osv(_('Error'), _('The new quantity must be a multiple of %s !') % split.purchase_line_id.product_uom.rounding)
             else:
+                self.infolog(cr, uid, "The PO line id:%s has been split" % (
+                    split.purchase_line_id.id,
+                ))
+
                 # Change the qty of the old line
                 po_line_obj.write(cr, uid, [split.purchase_line_id.id], {'product_qty': split.original_qty - split.new_line_qty,
                                                                          'price_unit': split.purchase_line_id.price_unit,}, context=context)
+                # Change the qty on the linked procurement order
+                #if split.purchase_line_id.procurement_id:
+                #    proc_obj.write(cr, uid, [split.purchase_line_id.procurement_id.id], {'product_qty': split.original_qty - split.new_line_qty})
 
                 # we treat two different cases
                 # 1) the check box impact corresponding Fo is checked
@@ -149,7 +156,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     # and force merge the line to this po (even if it is not draft anymore)
                     # run the procurement, the make_po function detects the link to original po
                     # and force merge the line to this po (even if it is not draft anymore)
-                    new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id', 'line_number'], context=context)
+                    new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id', 'line_number', 'sync_order_line_db_id'], context=context)
                     new_proc_id = new_data_so[0]['procurement_id'][0]
 
                     if external_ir and split.purchase_line_id and split.purchase_line_id.move_dest_id:
@@ -174,11 +181,22 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                         proc_obj.write(cr, uid, [new_proc_id], {'close_move': False, 'move_id': new_move_id}, context=context)
                         move_obj.unlink(cr, uid, proc_move_id, context=context)
 
+                    if link_wiz.order_id.partner_id.partner_type != 'external':
+                        self.pool.get('sync.sale.order.line.split').create(cr, uid, {
+                            'partner_id': link_wiz.order_id.partner_id.id,
+                            'old_sync_order_line_db_id': link_wiz.sync_order_line_db_id,
+                            'new_sync_order_line_db_id': new_data_so[0]['sync_order_line_db_id'],
+                            'new_line_qty': split.new_line_qty,
+                            'old_line_qty': split.original_qty,
+                        }, context=context)
+
                     wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
+                    new_po_ids = po_line_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
+                    if context.get('split_sync_order_line_db_id'):
+                        po_line_obj.write(cr, uid, new_po_ids, {'sync_order_line_db_id': context.get('split_sync_order_line_db_id')}, context=context)
                     # if original po line is confirmed, we action_confirm new line
                     if split.purchase_line_id.state == 'confirmed':
                         # the correct line number according to new line number policy is set in po_line_values_hook of order_line_number/order_line_number.py/procurement_order
-                        new_po_ids = po_line_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
                         po_line_obj.action_confirm(cr, uid, new_po_ids, context=context)
                         if context.get('from_simu_screen'):
                             return new_po_ids[0]

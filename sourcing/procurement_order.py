@@ -336,7 +336,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
 
             if po_values:
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], po_values, context=dict(context, import_in_progress=True))
-            self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
+            pol_id = self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
 
             if ir_to_link:
                 self.pool.get('procurement.request.sourcing.document').chk_create(
@@ -346,6 +346,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                         'sourcing_document_type': 'po',
                         'sourcing_document_id': purchase_ids[0],
                     }, context=context)
+
+            if line:
+                self.infolog(cr, uid, "The FO/IR line id:%s has been sourced on order to the PO line id:%s of the PO id:%s" % (line.id, pol_id, purchase_ids[0]))
 
             return purchase_ids[0]
         else:
@@ -376,6 +379,10 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                         'sourcing_document_type': 'po',
                         'sourcing_document_id': purchase_id,
                     }, context=context)
+
+            if line:
+                self.infolog(cr, uid, "The FO/IR line id:%s has been sourced on order to the PO id:%s" % (
+                    line.id, purchase_id))
 
             return purchase_id
 
@@ -535,6 +542,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         for procurement in self.browse(cr, uid, ids):
             if procurement.product_id.product_tmpl_id.supply_method <> 'buy':
                 return False
+
+            if procurement.purchase_id:
+                return True
 
             if procurement.supplier:
                 partner = procurement.supplier

@@ -125,10 +125,15 @@ class UFTP416FOTest(UFTP416Test):
             nb_lines = 0
             cancel = 0
             not_cancel = 0
+            product_canceled = False
+            product_line = 0
             for m_line in c_out.move_lines:
                 nb_lines += 1
                 if m_line.state == 'cancel':
-                    cancel += 1
+                    if product_canceled != m_line.product_id.id:
+                        cancel += 1
+                        product_canceled = m_line.product_id.id
+                    product_line += 1
                 else:
                     not_cancel += 1
 
@@ -137,7 +142,7 @@ class UFTP416FOTest(UFTP416Test):
                 "There are more than one OUT line canceled :: %s" % cancel,
             )
             self.assert_(
-                not_cancel == nb_lines - 1,
+                not_cancel == nb_lines - product_line,
                 "There are not the good number of lines not canceled :: %s" % not_cancel,
             )
 
