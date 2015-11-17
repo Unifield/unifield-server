@@ -47,7 +47,6 @@
 
     <section>
       [[ repeatIn(objects,'o') ]]
-      <para style="text_right">Report date: [[ formatLang(getNow(show_datetime=False), date=True) ]]</para>
       <title>Bank Reconciliation</title>
       <para style="center"><b>Period: [[ o.period_id and o.period_id.code or '' ]]</b></para>
       <para style="center"><b>[[ o.period_id and o.period_id.date_stop and formatLang(o.period_id.date_stop, date=True) or '' ]]</b></para>
