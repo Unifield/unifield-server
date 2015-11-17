@@ -401,8 +401,8 @@ class stock_location_configuration_wizard(osv.osv_memory):
         #US-702: This action can only be done in RW instances            
         picking_obj = self.pool.get('stock.picking')
         usb_entity = picking_obj._get_usb_entity_type(cr, uid)
-        if usb_entity == picking_obj.CENTRAL_PLATFORM:
-            raise osv.except_osv(_('Error !'), _('This action can only be performed at the Remote Warehouse instance!'))
+        if usb_entity == picking_obj.REMOTE_WAREHOUSE:
+            raise osv.except_osv(_('Info!'), _('This action can only be performed at the main instance (CP) and sync to RW!'))
             
         data_obj = self.pool.get('ir.model.data')
         location_obj = self.pool.get('stock.location')
@@ -623,8 +623,8 @@ Please click on the 'Children locations' button to see all children locations.''
         #US-702: This action can only be done in RW instances            
         picking_obj = self.pool.get('stock.picking')
         usb_entity = picking_obj._get_usb_entity_type(cr, uid)
-        if usb_entity == picking_obj.CENTRAL_PLATFORM:
-            raise osv.except_osv(_('Error !'), _('This action can only be performed at the Remote Warehouse instance!'))
+        if usb_entity == picking_obj.REMOTE_WAREHOUSE:
+            raise osv.except_osv(_('Info!'), _('This action can only be performed at the main instance (CP) and sync to RW!'))
         
         '''
         Deactivate the selected location
