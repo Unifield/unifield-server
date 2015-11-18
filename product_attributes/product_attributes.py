@@ -800,7 +800,7 @@ class product_attributes(osv.osv):
             # Check if the product is in an invoice
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
                                                             ('invoice_id', '!=', False),
-                                                            ('invoice_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                            ('invoice_id.state', 'not in', ['open', 'paid', 'proforma', 'proforma2', 'cancel'])], context=context)
 
             # Check if the product has stock in internal locations
             has_stock = product.qty_available
