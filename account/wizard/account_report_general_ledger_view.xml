@@ -15,14 +15,15 @@
             </xpath>
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="display_account"/>
-                <field name="sortby"/>
+                <field name="sortby" invisible="1" />
                 <field name="initial_balance" attrs="{'readonly':[('fiscalyear_id','=', False)]}"/>
-                <newline/>
                 <field name="export_format"/>
-                <field name="landscape" attrs="{'invisible': [('export_format', '=', 'xls')]}"/>
                 <newline/>   
                 <field name="output_currency" invisible="1" />
                 <field name="amount_currency" invisible="1" />
+                <newline/>
+                <field name="account_type" />
+                <field name="unreconciled" />
                 <newline/>
                 <field name="instance_ids">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
@@ -46,6 +47,18 @@
                         </tree>
                     </field>
                 </group>
+            </xpath>
+
+            <xpath expr="//page[@name='journal_ids']" position="after">
+                <page string="Accounts filter" name="account_ids">
+                    <field name="account_ids" colspan="4" nolabel="1">
+                        <tree noteditable="1" editable="top" string="Account">
+                            <field name="code" />
+                            <field name="name" />
+                            <field name="type" />
+                        </tree>
+                    </field>
+                </page>
             </xpath>
             
             </data>

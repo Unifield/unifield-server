@@ -43,14 +43,42 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         obj_move = self.pool.get('account.move.line')
         
         self.sortby = data['form'].get('sortby', 'sort_date')
-        self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context',{}))
+        used_context = data['form'].get('used_context',{})
+        self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=used_context)
         ctx2 = data['form'].get('used_context',{}).copy()
         ctx2.update({'initial_bal': True})
         self.init_query = obj_move._query_get(self.cr, self.uid, obj='l', context=ctx2)
         self.init_balance = data['form']['initial_balance']
         self.display_account = data['form']['display_account']
         self.target_move = data['form'].get('target_move', 'all')
+        self.account_report_types = self._get_data_form(data, 'account_type')
+        if self.account_report_types:
+            # convert wizard selection to account.account.type 'report_type'
+            if self.account_report_types == 'pl':
+                self.account_report_types = [ 'income', 'expense', ]
+            elif self.account_report_types == 'bl':
+                self.account_report_types = [ 'asset', 'liability', ]
+            else:  # all
+                self.account_report_types = False
+
+        # settings regarding report mode
+        # default general ledger mode
+        self.show_move_lines = True
+        self.title = _('General Ledger')
+        if 'report_mode' in data['form']:
+            if data['form']['report_mode'] == 'tb':
+                # trial balance mode
+                self.show_move_lines = False
+                self.title = _('Trial Balance')
+
+        self.account_ids = self._get_data_form(data, 'account_ids')
+        # US-334/6: Only account 10100 and 10200 must never be displayed in \
+        # details when you tick "Unreconciled" because they are the only \
+        # account not reconciliable.
+        self.unreconciled_accounts = self._get_data_form(data,
+            'unreconciled', False) and ['10100', '10200', ] or False
         self.context['state'] = data['form']['target_move']
+
         if 'instance_ids' in data['form']:
             self.context['instance_ids'] = data['form']['instance_ids']
         if (data['model'] == 'ir.ui.menu'):
@@ -58,7 +86,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids, context=self.context)
         
         # output currency
-        self.output_currency_id = data['form']['output_currency']
+        self.output_currency_id = 'output_currency' in data['form'] \
+            and data['form']['output_currency']
         self.output_currency_code = ''
         if self.output_currency_id:
             ouput_cur_r = self.pool.get('res.currency').read(self.cr,
@@ -85,24 +114,26 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
         common_report_header._set_context(self, data)
 
-        # UF-1714
-        # accounts 8*, 9* are not displayed:
-        # we have to deduce debit/credit/balance amounts of MSF account view (root account)
-        self._deduce_accounts = { 
-            '8': {'debit': 0., 'credit': 0., 'balance': 0. },
-            '9': {'debit': 0., 'credit': 0., 'balance': 0. },
-        }
+        # UF-1714 accounts 8*, 9* are not displayed:
+        # we have to deduce debit/credit/balance amounts of MSF account view
+        # (root account)
         a_obj = self.pool.get('account.account')
-        for a_code in self._deduce_accounts:
-            a_ids = a_obj.search(self.cr, self.uid, [('code', '=', a_code)])
+        deduce_accounts_index = [ '8', '9', ]
+        self._deduce_accounts_data = { 'debit': 0, 'credit': 0, }
+        if deduce_accounts_index:
+            a_ids = a_obj.search(self.cr, self.uid,
+                [('code', 'in', [ c for c in deduce_accounts_index ])],
+                context=used_context)
             if a_ids:
-                if isinstance(a_ids, (int, long)):
-                    a_ids = [a_ids]
-                account = a_obj.browse(self.cr, self.uid, a_ids, context=self.context)[0]
-                if account:
-                    self._deduce_accounts[a_code]['debit'] = self._sum_debit_account(account)
-                    self._deduce_accounts[a_code]['credit'] = self._sum_credit_account(account)
-                    self._deduce_accounts[a_code]['balance'] = self._sum_balance_account(account)
+                for account in a_obj.browse(self.cr, self.uid, a_ids,
+                    context=used_context):
+                    self._deduce_accounts_data['debit'] += account.debit
+                    self._deduce_accounts_data['credit'] += account.credit
+
+        if self.account_ids:
+            # add parent(s) of filtered accounts
+            self.account_ids += self.pool.get('account.account')._get_parent_of(
+                    self.cr, self.uid, self.account_ids)
         
         return res
 
@@ -125,6 +156,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_children_accounts': self.get_children_accounts,
             'get_fiscalyear': self._get_fiscalyear,
             'get_journal': self._get_journal,
+            'get_journals_str': self._get_journals_str,
             'get_account': self._get_account,
             'get_start_period': self.get_start_period,
             'get_end_period': self.get_end_period,
@@ -140,15 +172,24 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_line_balance': self._get_line_balance,
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances,
+            'get_currencies': self.get_currencies,
+            'get_currencies_account_subtotals': \
+                self.get_currencies_account_subtotals,
+            'get_display_info': self._get_display_info,
+            'get_show_move_lines': self.get_show_move_lines,
+            'get_ccy_label': self.get_ccy_label,
+            'get_title': self._get_title,
         })
         
         # company currency
         self.uid = uid
         self.currency_id = False
+        self.currency_name = ''
         self.instance_id = False
         user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
         if user and user[0] and user[0].company_id:
             self.currency_id = user[0].company_id.currency_id.id
+            self.currency_name = user[0].company_id.currency_id and user[0].company_id.currency_id.name or ''
             if user[0].company_id.instance_id:
                 self.instance_id = user[0].company_id.instance_id.id
         if not self.currency_id:
@@ -157,18 +198,74 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.context = context
 
     def _sum_currency_amount_account(self, account):
-        self.cr.execute('SELECT sum(l.amount_currency) AS tot_currency \
-                FROM account_move_line l \
-                WHERE l.account_id = %s AND %s' %(account.id, self.query))
+        reconcile_pattern = self.unreconciled_accounts and \
+            " AND (reconcile_txt is null OR reconcile_txt = '')" or ''
+
+        sql = 'SELECT sum(l.amount_currency) AS tot_currency \
+            FROM account_move_line l \
+            WHERE l.account_id = %s AND %s' + reconcile_pattern
+        self.cr.execute(sql % (account.id, self.query, ))
         sum_currency = self.cr.fetchone()[0] or 0.0
+
         if self.init_balance:
-            self.cr.execute('SELECT sum(l.amount_currency) AS tot_currency \
-                            FROM account_move_line l \
-                            WHERE l.account_id = %s AND %s '%(account.id, self.init_query))
+            sql = 'SELECT sum(l.amount_currency) AS tot_currency \
+                FROM account_move_line l \
+                WHERE l.account_id = %s AND %s ' + reconcile_pattern
+            self.cr.execute(sql % (account.id, self.init_query, ))
             sum_currency += self.cr.fetchone()[0] or 0.0
+
         return sum_currency
 
-    def get_children_accounts(self, account):
+    def _get_journals_str(self, data):
+        if 'all_journals' in data['form']:
+            return _('All Journals')
+        return ', '.join(self._get_journal(data))
+
+    def get_currencies(self, account=False):
+        res = []
+
+        sql = """
+            SELECT DISTINCT(l.currency_id)
+            FROM account_move_line AS l
+            WHERE %s
+        """ % (self.query)
+        if account:
+            sql += " and l.account_id=%d" % (account.id, )
+        self.cr.execute(sql)
+        rows = self.cr.fetchall()
+        if rows:
+            rc_obj = self.pool.get('res.currency')
+            ordered_ids = rc_obj.search(self.cr, self.uid, [
+                ('id', 'in', [ r[0] for r in rows ]),
+            ], order='name')
+            res = rc_obj.browse(self.cr, self.uid, ordered_ids)
+
+        return res
+
+    def get_currencies_account_subtotals(self, account):
+        ccy_brs = self.get_currencies(account=account)
+        res = []
+
+        if ccy_brs:
+            for ccy in ccy_brs:
+                line = {
+                    'account_code': account and account.code or '',
+                    'ccy_name': ccy.name or ccy.code or '',
+                    'debit': self._sum_debit_account(account, ccy=ccy,
+                        booking=True),
+                    'credit': self._sum_credit_account(account, ccy=ccy,
+                        booking=True),
+                    'bal': self._sum_balance_account(account, ccy=ccy,
+                        booking=True),
+                }
+                # append the line if amount (and compute functional bal)
+                if line['debit'] or line['credit'] or line['bal']:
+                    line['bal_func'] = self._sum_balance_account(account,
+                        ccy=ccy, booking=False),
+                    res.append(line)
+        return res
+
+    def get_children_accounts(self, account, ccy=False):
         res = []
         currency_obj = self.pool.get('res.currency')
          
@@ -178,11 +275,26 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if child_account.code.startswith('8') or child_account.code.startswith('9'):
                 # UF-1714: exclude accounts '8*'/'9*'
                 continue
+            if self.account_report_types:
+                # filter by B/S P&L report type
+                if child_account.user_type \
+                    and child_account.user_type.report_type \
+                    and child_account.user_type.report_type \
+                        not in self.account_report_types:
+                    continue
+            if self.unreconciled_accounts:
+                if child_account.code in self.unreconciled_accounts:
+                    continue
+            if self.account_ids and child_account.id not in self.account_ids:
+                    continue  # filtered account
+
             sql = """
                 SELECT count(id)
                 FROM account_move_line AS l
                 WHERE %s AND l.account_id = %%s
             """ % (self.query)
+            if ccy:
+                sql += " and l.currency_id = %d" % (ccy.id, )
             self.cr.execute(sql, (child_account.id,))
             num_entry = self.cr.fetchone()[0] or 0
             sold_account = self._sum_balance_account(child_account)
@@ -195,17 +307,24 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     if not currency_obj.is_zero(self.cr, self.uid, currency, sold_account):
                         res.append(child_account)
             else:
-                res.append(child_account)
-        if not res:
-            return [account]
-        return res
+                if not ccy or (ccy and num_entry > 0):
+                    res.append(child_account)
+
+        return res or [account]
+
     def lines(self, account):
+        if not self.show_move_lines:
+            return []
+
         """ Return all the account_move_line of account with their account code counterparts """
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted', '']
+
         # First compute all counterpart strings for every move_id where this account appear.
         # Currently, the counterpart info is used only in landscape mode
+        # => desactivated since US-334
+        '''
         sql = """
             SELECT m1.move_id,
                 array_to_string(ARRAY(SELECT DISTINCT a.code
@@ -223,7 +342,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         counterpart_accounts = {}
         for i in counterpart_res:
             counterpart_accounts[i['move_id']] = i['counterpart']
-        del counterpart_res
+        del counterpart_res'''
 
         # Then select all account_move_line of this account
         if self.sortby == 'sort_journal_partner':
@@ -231,11 +350,17 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             sql_sort='l.date, l.move_id'
         sql = """
-            SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,l.amount_currency,l.ref AS lref, l.name AS lname, COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit, COALESCE(l.debit_currency,0) as debit_currency, COALESCE(l.credit_currency,0) as credit_currency, l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
+            SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,
+            l.amount_currency,l.ref AS lref, l.name AS lname,
+            COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit,
+            COALESCE(l.debit_currency,0) as debit_currency,
+            COALESCE(l.credit_currency,0) as credit_currency,
+            l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
             m.name AS move_name, m.id AS mmove_id,per.code as period_code,
             c.symbol AS currency_code,
-            i.id AS invoice_id, i.type AS invoice_type, i.number AS invoice_number,
-            p.name AS partner_name
+            i.id AS invoice_id, i.type AS invoice_type,
+            i.number AS invoice_number,
+            p.name AS partner_name, c.name as currency_name
             FROM account_move_line l
             JOIN account_move m on (l.move_id=m.id)
             LEFT JOIN res_currency c on (l.currency_id=c.id)
@@ -243,28 +368,39 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             LEFT JOIN account_invoice i on (m.id =i.move_id)
             LEFT JOIN account_period per on (per.id=l.period_id)
             JOIN account_journal j on (l.journal_id=j.id)
-            WHERE %s AND m.state IN %s AND l.account_id = %%s ORDER by %s
+            WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
         """ %(self.query, tuple(move_state), sql_sort)
+        sql = sql.replace('{{reconcile}}',
+                self.unreconciled_accounts and \
+                    " AND (reconcile_txt is null OR reconcile_txt = '')" or '')
         self.cr.execute(sql, (account.id,))
         res_lines = self.cr.dictfetchall()
         res_init = []
         if res_lines and self.init_balance:
             #FIXME: replace the label of lname with a string translatable
             sql = """
-                SELECT 0 AS lid, '' AS ldate, '' AS lcode, COALESCE(SUM(l.amount_currency),0.0) AS amount_currency, '' AS lref, 'Initial Balance' AS lname, COALESCE(SUM(l.debit),0.0) AS debit, COALESCE(SUM(l.credit),0.0) AS credit,COALESCE(SUM(l.debit_currency),0.0) AS debit_currency, COALESCE(SUM(l.credit_currency),0.0) AS credit_currency, '' AS lperiod_id, '' AS lpartner_id,
+                SELECT 0 AS lid, '' AS ldate, '' AS lcode,
+                COALESCE(SUM(l.amount_currency),0.0) AS amount_currency,
+                '' AS lref,
+                'Initial Balance' AS lname, COALESCE(SUM(l.debit),0.0) AS debit,
+                COALESCE(SUM(l.credit),0.0) AS credit,COALESCE(SUM(l.debit_currency),0.0) AS debit_currency,
+                COALESCE(SUM(l.credit_currency),0.0) AS credit_currency, '' AS lperiod_id, '' AS lpartner_id,
                 '' AS move_name, '' AS mmove_id, '' AS period_code,
                 '' AS currency_code,
                 NULL AS currency_id,
                 '' AS invoice_id, '' AS invoice_type, '' AS invoice_number,
-                '' AS partner_name
+                '' AS partner_name, c.name as currency_name
                 FROM account_move_line l
                 LEFT JOIN account_move m on (l.move_id=m.id)
                 LEFT JOIN res_currency c on (l.currency_id=c.id)
                 LEFT JOIN res_partner p on (l.partner_id=p.id)
                 LEFT JOIN account_invoice i on (m.id =i.move_id)
                 JOIN account_journal j on (l.journal_id=j.id)
-                WHERE %s AND m.state IN %s AND l.account_id = %%s
+                WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}}
             """ %(self.init_query, tuple(move_state))
+            sql = sql.replace('{{reconcile}}',
+                self.unreconciled_accounts and \
+                    " AND (reconcile_txt is null OR reconcile_txt = '')" or '')
             self.cr.execute(sql, (account.id,))
             res_init = self.cr.dictfetchall()
         res = res_init + res_lines
@@ -274,7 +410,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             l['partner'] = l['partner_name'] or ''
             account_sum += l['debit'] - l['credit']
             l['progress'] = account_sum
-            l['line_corresp'] = l['mmove_id'] == '' and ' ' or counterpart_accounts[l['mmove_id']].replace(', ',',')
+            # counter part desactivated since us 354
+            # l['line_corresp'] = l['mmove_id'] == '' and ' ' or counterpart_accounts[l['mmove_id']].replace(', ',',')
             # Modification of amount Currency
             if l['credit'] > 0:
                 if l['amount_currency'] != None:
@@ -283,107 +420,122 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.tot_currency = self.tot_currency + l['amount_currency']
         return res
 
-    def _sum_debit_account(self, account):
+    def __sum_amount_account_check_view(self, account, field, ccy=False):
+        """
+        :return : (is_view, amount, )
+        """
         if account.type == 'view':
-            amount = account.debit
+            amount = getattr(account, field)
             if not account.parent_id:
-                # UF-1714
-                # accounts 8*, 9* are not displayed:
-                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
-                for a_code in self._deduce_accounts:
-                    amount -= self._deduce_accounts[a_code]['debit']
-            return self._currency_conv(amount)
-        move_state = ['draft','posted']
-        if self.target_move == 'posted':
-            move_state = ['posted','']
-        self.cr.execute('SELECT sum(debit) \
-                FROM account_move_line l \
-                JOIN account_move am ON (am.id = l.move_id) \
-                WHERE (l.account_id = %s) \
-                AND (am.state IN %s) \
-                AND '+ self.query +' '
-                ,(account.id, tuple(move_state)))
-        sum_debit = self.cr.fetchone()[0] or 0.0
-        if self.init_balance:
-            self.cr.execute('SELECT sum(debit) \
-                    FROM account_move_line l \
-                    JOIN account_move am ON (am.id = l.move_id) \
-                    WHERE (l.account_id = %s) \
-                    AND (am.state IN %s) \
-                    AND '+ self.init_query +' '
-                    ,(account.id, tuple(move_state)))
-            # Add initial balance to the result
-            sum_debit += self.cr.fetchone()[0] or 0.0
-        sum_debit = self._currency_conv(sum_debit)
-        return sum_debit
+                # deduce balance of not displayed accounts
+                    amount -= self._deduce_accounts_data[field]
+                    self._deduce_accounts_data[field] = 0  # mark as deduced
+            return True, self._currency_conv(amount)
 
-    def _sum_credit_account(self, account):
-        if account.type == 'view':
-            amount = account.credit
-            if not account.parent_id:
-                # UF-1714
-                # accounts 8*, 9* are not displayed:
-                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
-                for a_code in self._deduce_accounts:
-                    amount -= self._deduce_accounts[a_code]['credit']
-            return self._currency_conv(amount)
-        move_state = ['draft','posted']
-        if self.target_move == 'posted':
-            move_state = ['posted','']
-        self.cr.execute('SELECT sum(credit) \
-                FROM account_move_line l \
-                JOIN account_move am ON (am.id = l.move_id) \
-                WHERE (l.account_id = %s) \
-                AND (am.state IN %s) \
-                AND '+ self.query +' '
-                ,(account.id, tuple(move_state)))
-        sum_credit = self.cr.fetchone()[0] or 0.0
-        if self.init_balance:
-            self.cr.execute('SELECT sum(credit) \
-                    FROM account_move_line l \
-                    JOIN account_move am ON (am.id = l.move_id) \
-                    WHERE (l.account_id = %s) \
-                    AND (am.state IN %s) \
-                    AND '+ self.init_query +' '
-                    ,(account.id, tuple(move_state)))
-            # Add initial balance to the result
-            sum_credit += self.cr.fetchone()[0] or 0.0
-        sum_credit = self._currency_conv(sum_credit)
-        return sum_credit
+        return False, 0.
 
-    def _sum_balance_account(self, account):
-        if account.type == 'view':
-            amount = account.balance
-            if not account.parent_id:
-                # UF-1714
-                # accounts 8*, 9* are not displayed:
-                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
-                for a_code in self._deduce_accounts:
-                    amount -= self._deduce_accounts[a_code]['balance']
-            return self._currency_conv(amount)
+    def __sum_amount_account(self, account, move_state, mode,
+            ccy=False, booking=False, initial_balance=False):
+        if mode == 'debit':
+            field = 'sum(debit{booking})'
+        elif mode == 'credit':
+            field = 'sum(credit{booking})'
+        elif mode == 'balance':
+            field = '(sum(debit{booking}) - sum(credit{booking}))'
+        else:
+            raise osv.except_osv(_('Error'), _('Mode not supported'))
+
+        query = self.init_query if initial_balance else self.query
+
+        if ccy:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
+        else:
+            ccy_pattern = ""
+        reconcile_pattern = self.unreconciled_accounts and \
+            " AND (reconcile_txt is null OR reconcile_txt = '')" or ''
+
+        sql = 'SELECT {field} \
+            FROM account_move_line l \
+            JOIN account_move am ON (am.id = l.move_id) \
+            WHERE (l.account_id = %s) \
+            AND (am.state IN %s) \
+            AND ' + query + ' ' + ccy_pattern + reconcile_pattern
+        sql = sql.replace('{field}', field).replace(
+            '{booking}', '_currency' if booking else '')
+
+        self.cr.execute(sql, (account.id, tuple(move_state), ))
+        return self.cr.fetchone()[0] or 0.0
+
+    def _sum_debit_account(self, account, ccy=False, booking=False):
+        """
+        ccy: filter ccy entries
+        booking: not applicable for view accounts (used for account total lines
+        by ccy)
+        """
+        is_view, amount = self.__sum_amount_account_check_view(account,
+            'debit', ccy=ccy)
+        if is_view:
+            return amount
+
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
-        self.cr.execute('SELECT (sum(debit) - sum(credit)) as tot_balance \
-                FROM account_move_line l \
-                JOIN account_move am ON (am.id = l.move_id) \
-                WHERE (l.account_id = %s) \
-                AND (am.state IN %s) \
-                AND '+ self.query +' '
-                ,(account.id, tuple(move_state)))
-        sum_balance = self.cr.fetchone()[0] or 0.0
-        if self.init_balance:
-            self.cr.execute('SELECT (sum(debit) - sum(credit)) as tot_balance \
-                    FROM account_move_line l \
-                    JOIN account_move am ON (am.id = l.move_id) \
-                    WHERE (l.account_id = %s) \
-                    AND (am.state IN %s) \
-                    AND '+ self.init_query +' '
-                    ,(account.id, tuple(move_state)))
-            # Add initial balance to the result
-            sum_balance += self.cr.fetchone()[0] or 0.0
-        sum_balance = self._currency_conv(sum_balance)
-        return sum_balance
+
+        amount = self.__sum_amount_account(account, move_state, 'debit',
+            ccy=ccy, booking=booking, initial_balance=False)
+        if not ccy and self.init_balance:
+            # add initial balance (except for booking ccy breakdown subtotals)
+            amount += self.__sum_amount_account(account, move_state, 'debit',
+                ccy=ccy, booking=booking, initial_balance=True)
+        return self._currency_conv(amount)
+
+    def _sum_credit_account(self, account, ccy=False, booking=False):
+        """
+        ccy: filter ccy entries
+        booking: not applicable for view accounts (used for account total lines
+        by ccy)
+        """
+        is_view, amount = self.__sum_amount_account_check_view(account,
+            'credit', ccy=ccy)
+        if is_view:
+            return amount
+
+        move_state = ['draft','posted']
+        if self.target_move == 'posted':
+            move_state = ['posted','']
+
+        amount = self.__sum_amount_account(account, move_state, 'credit',
+            ccy=ccy, booking=booking, initial_balance=False)
+        if not ccy and self.init_balance:
+            # add initial balance (except for booking ccy breakdown subtotals)
+            amount += self.__sum_amount_account(account, move_state, 'credit',
+                ccy=ccy, booking=booking, initial_balance=True)
+        return self._currency_conv(amount)
+
+    def _sum_balance_account(self, account, ccy=False, booking=False):
+        """
+        ccy: filter ccy entries
+        booking: not applicable for view accounts (used for account total lines
+        by ccy)
+        """
+        if ccy:
+            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
+        else:
+            ccy_pattern = ""
+
+        if account.type == 'view':
+            return self._currency_conv(account.balance)
+
+        move_state = ['draft','posted']
+        if self.target_move == 'posted':
+            move_state = ['posted','']
+
+        amount = self.__sum_amount_account(account, move_state, 'balance',
+            ccy=ccy, booking=booking, initial_balance=False)
+        if self.init_balance:  # add initial balance
+            amount += self.__sum_amount_account(account, move_state, 'balance',
+                ccy=ccy, booking=booking, initial_balance=True)
+        return self._currency_conv(amount)
 
     def _get_account(self, data):
         if data['model'] == 'account.account':
@@ -398,9 +550,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return 'Date'
         
     def _get_output_currency_code(self, data):
-        if not self.output_currency_code:
-            return ''
-        return self.output_currency_code
+        return self.output_currency_code or self.currency_name
         
     def _get_filter_info(self, data):
         """ get filter info
@@ -408,27 +558,40 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         get_start_period, get_end_period
         are from common_report_header
         """
-        res = ''
-        f = self._get_filter(data)
-        if not f:
-            return res
+        if not data.get('form', False):
+            return ''
+        infos = []
 
-        if f == 'No Filter':
-            res = f
-        elif f == 'Date':
-            res = self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
-        elif f == 'Periods':
-            res = self.get_start_period(data) + ' - ' + self.get_end_period(data)
-        return res
+        # date/period
+        if data.get('form', False) and data['form'].get('filter', False):
+            line = ''
+            if data['form']['filter'] in ('filter_date', 'filter_date_doc', ):
+                line = _('Posting') if data['form']['filter'] == 'filter_date' else _('Document')
+                line += " %s " % (_('Date'), )
+                line += self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
+            elif data['form']['filter'] == 'filter_period':
+                line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
+            if line:
+                infos.append(line)
+
+        return infos and ", \n".join(infos) or ''
         
-    def _get_line_debit(self, line):
-        return self._currency_conv(line['debit'])
+    def _get_line_debit(self, line, booking=False):
+        return self.__get_line_amount(line, 'debit', booking=booking)
         
-    def _get_line_credit(self, line):
-        return self._currency_conv(line['credit'])
+    def _get_line_credit(self, line, booking=False):
+        return self.__get_line_amount(line, 'credit', booking=booking)
         
-    def _get_line_balance(self, line):
-        return self._currency_conv(line['debit'] - line['credit'])
+    def _get_line_balance(self, line, booking=False):
+        return self._currency_conv(
+            self.__get_line_amount(line, 'debit', booking=booking, conv=False) \
+            - self.__get_line_amount(line, 'credit', booking=booking, conv=False)
+        )
+
+    def __get_line_amount(self, line, key, booking=False, conv=True):
+        if booking:
+            key += '_currency'
+        return (self._currency_conv(line[key]) if conv else line[key]) or 0.
         
     def _is_company_currency(self):
         if not self.output_currency_id or not self.currency_id \
@@ -454,13 +617,68 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         
     def _get_prop_instances(self, data):
         instances = []
-        if data.get('form', False) and data['form'].get('instance_ids', False):
-            self.cr.execute('select code from msf_instance where id IN %s',(tuple(data['form']['instance_ids']),))
+        if data.get('form', False):
+            if data['form'].get('instance_ids', False):
+                self.cr.execute('select code from msf_instance where id IN %s',
+                    (tuple(data['form']['instance_ids']),))
+            else:
+                self.cr.execute('select code from msf_instance',
+                    (tuple(data['form']['instance_ids']),))
             instances = [x for x, in self.cr.fetchall()]
-        return instances
+        return ', '.join(instances)
+
+    # internal filter functions
+    def _get_data_form(self, data, key, default=False):
+        if not 'form' in data or not key in data['form']:
+            return default
+        return data['form'].get(key, default)
+
+    def _get_display_info(self, data):
+        info_data = []
+        yes_str = _('Yes')
+        no_str = _('No')
+        all_str = _('All')
+
+        # account type
+        ac = all_str
+        if data['form'].get('account_type'):
+            if data['form'].get('account_type') == 'pl':
+                ac = _('Profit & Loss')
+            elif data['form'].get('account_type') == 'bl':
+                ac = _('Balance Sheet')
+        info_data.append((_('Account Type'), ac, ))
+
+        # reconciled account
+        info_data.append((_('Unreconciled'),
+            self.unreconciled_accounts and yes_str or no_str, ))
+
+        display_account = all_str
+        if 'display_account' in data['form']:
+            if data['form']['display_account'] == 'bal_all':
+                display_account = _('All')
+            elif data['form']['display_account'] == 'bal_movement':
+                display_account = _('With movements')
+            else:
+                display_account = _('With balance is not equal to 0')
+        info_data.append((_('Accounts'), display_account, ))
+
+        res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
+        return ', \n'.join(res)
+
+    def get_show_move_lines(self):
+        return self.show_move_lines
+
+    def get_ccy_label(self, short_version=False):
+        return short_version and _('CUR') or _('Currency')
+
+    def _get_title(self):
+        if hasattr(self, 'title'):
+            return self.title or ''
+        return ''
                                             
-report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
+#report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
+report_sxw.report_sxw('report.account.general.ledger_landscape_tb', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
 
 
 class general_ledger_xls(SpreadsheetReport):
@@ -471,6 +689,7 @@ class general_ledger_xls(SpreadsheetReport):
         #ids = getIds(self, cr, uid, ids, context)
         a = super(general_ledger_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
+
 general_ledger_xls('report.account.general.ledger_xls', 'account.account', 'addons/account/report/account_general_ledger_xls.mako', parser=general_ledger, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -70,6 +70,16 @@
       <blockValign value="TOP"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
     </blockTableStyle>
+    <blockTableStyle id="Table8_header">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <blockBackground colorName="#3498db" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+    <blockTableStyle id="Table8_subtotal_ccy">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <blockBackground colorName="#cde1f0" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
     <blockTableStyle id="Table9">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
@@ -154,6 +164,7 @@
     <paraStyle name="terp_default_2" fontName="Helvetica" fontSize="2.0" leading="3" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Right_Bold_9" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Bold_9_Right" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_default_9_Right" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <images/>
   </stylesheet>
   <story>
@@ -162,16 +173,16 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="82.0,82.0,82.0,169.0,123.0" style="Table13">
+    <blockTable colWidths="82.0,82.0,146.0,146.0,82.0" style="Table13">
       <tr>
         <td>
-          <para style="terp_tblheader_General_Centre">Chart of Account</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_General_Centre">Fiscal Year</para>
+          <para style="terp_tblheader_General_Centre">Chart of Account / FY</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">Journal</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_General_Centre">Display</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">Filters By [[ get_filter(data)!='No Filter' and get_filter(data) ]]</para>
@@ -181,16 +192,16 @@
         </td>
       </tr>
     </blockTable>
-    <blockTable colWidths="82.0,82.0,82.0,169.0,123.0" style="Table1">
+    <blockTable colWidths="82.0,82.0,146.0,146.0,82.0" style="Table1">
       <tr>
         <td>
-          <para style="terp_default_Centre_8">[[ get_account(data) or '' ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Centre_8">[[ get_fiscalyear(data) or '' ]]</para>
+          <para style="terp_default_Centre_8">[[ get_account(data) or '' ]] / [[ get_fiscalyear(data) or '' ]]</para>
         </td>
         <td>
           <para style="terp_default_Centre_8">[[', '.join([ lt or '' for lt in get_journal(data) ]) ]]</para>
+        </td>
+        <td>
+          <para style="terp_default_Centre_8">[[ get_display_info(data) ]]</para>
         </td>
         <td>
           <para style="terp_default_Centre_8">[[ get_filter_info(data) ]]</para>
@@ -206,28 +217,19 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="40.0,28.0,48.0,42.0,42.0,48.0,28.0,57.0,57.0,74.0,74.0" style="Table7">
+    <blockTable colWidths="114.0,70.0,59.0,29.0,64.0,64.0,64.0,74.0" style="Table7">
       <tr>
         <td>
-          <para style="terp_tblheader_Details">Date</para>
+          <para style="terp_tblheader_Details">Entry Seq</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">JNRL</para>
+          <para style="terp_tblheader_Details">Posting Date</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">Partner</para>
+          <para style="terp_tblheader_Details">Desc</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Centre">Ref</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Centre">Move</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details">Entry Label</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Centre">Counterpart</para>
+          <para style="terp_tblheader_Details_Right">[[ get_ccy_label(short_version=True) ]]</para>
         </td>
         <td>
           <para style="terp_tblheader_Details_Right">Debit</para>
@@ -236,168 +238,97 @@
           <para style="terp_tblheader_Details_Right">Credit</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Balance</para>
+          <para style="terp_tblheader_Details_Right">Booking Balance</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Currency</para>
+          <para style="terp_tblheader_Details_Right">Balance [[ get_output_currency_code(data) ]]</para>
         </td>
       </tr>
     </blockTable>
     <section>
       <para style="terp_default_8">[[ repeatIn(get_children_accounts(a), 'o') ]]</para>
-      <blockTable colWidths="278.0,57.0,57.0,74.0,74.0" style="Table8">
+      <blockTable colWidths="245.0,29.0,64.0,64.0,64.0,74.0" style="Table8_header">
         <tr>
           <td>
             <para style="terp_default_Bold_9">[[ '..'*(o.level-1) ]] [[ o.code ]] [[ o.name ]]</para>
           </td>
           <td>
+              <para style="terp_default_Bold_9_Right">[[ get_output_currency_code(data) ]]</para>
+          </td>
+          <td>
             <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_account(o), digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
             <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_account(o), digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o), digits=get_digits(dp='Account')) ]] </para>
-          </td>
+              <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o), digits=get_digits(dp='Account')) ]]</para>
+            </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ get_output_currency_code(data) ]]</para>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o), digits=get_digits(dp='Account')) ]]</para>
           </td>
         </tr>
       </blockTable>
-      <section>
+
+        <section>
         <para style="terp_default_8">[[ repeatIn(lines(o), 'line') ]]</para>
-        <blockTable colWidths="47.0,21.0,48.0,42.0,42.0,48.0,28.0,57.0,57.0,74.0,74.0" style="Table9">
+        <blockTable colWidths="114.0,70.0,59.0,29.0,64.0,64.0,64.0,74.0" style="Table9">
           <tr>
+            <td>
+              <para style="terp_default_8">[[ line['move'] or '' ]]</para>
+            </td>
             <td>
               <para style="terp_default_8">[[ formatLang(line['ldate'],date=True) ]]</para>
             </td>
             <td>
-              <para style="terp_default_8">[[ line['lcode'] ]]</para>
+              <para style="terp_default_8">[[ strip_name(line['lname'], 34) or '' ]]</para>
             </td>
             <td>
-              <para style="terp_default_8">[[ strip_name(line['partner_name'],10) ]]</para>
+              <para style="terp_default_Right_8">[[ line['currency_name'] or '' ]]</para>
             </td>
             <td>
-              <para style="terp_default_8">[[ strip_name(line['lref'],8) ]]</para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
             </td>
             <td>
-              <para style="terp_default_8">[[ strip_name(line['move'],8) ]]</para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
             </td>
             <td>
-              <para style="terp_default_8">[[ strip_name(line['lname'],10) ]]</para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
             </td>
             <td>
-              <para style="terp_default_Centre_8">[[ strip_name(line['line_corresp'].replace(', ',','),10) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_8">[[ formatLang(get_line_debit(line), digits=get_digits(dp='Account')) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_8">[[ formatLang(get_line_credit(line), digits=get_digits(dp='Account')) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_8">[[ formatLang(get_line_balance(line), digits=get_digits(dp='Account')) ]] </para>
-            </td>
-            <td>
-              <para style="P1">[[ get_output_currency_code(data) ]]</para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account')) ]]</para>
             </td>
           </tr>
         </blockTable>
-      </section>
-    </section>
-    <blockTable colWidths="40.0,28.0,82.0,42.0,42.0,71.0,42.0,57.0,57.0,77.0" style="Table10">
-      <tr>
-        <td>
-          <para style="terp_tblheader_Details">[[ removeParentNode('blockTable') ]]</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details">JNRL</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details">Partner</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Centre">Ref</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Centre">Move</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details">Entry Label</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Centre">Counterpart</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Right">Debit</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Right">Credit</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_Details_Right">Balance</para>
-        </td>
-      </tr>
-    </blockTable>
-    <section>
-      <para style="terp_default_8">[[ repeatIn(get_children_accounts(a), 'o') ]]</para>
-      <blockTable colWidths="349.0,57.0,57.0,77.0" style="Table11">
+        </section>
+
+        <section>
+      <para style="terp_default_8">[[ repeatIn(get_currencies(account=o), 'c') ]]</para>
+      <blockTable colWidths="245.0,29.0,64.0,64.0,64.0,74.0" style="Table8_subtotal_ccy">
         <tr>
           <td>
-            <para style="terp_default_Bold_9">[[ data['form']['amount_currency'] == False or removeParentNode('blockTable') ]] [[ '..'*(o.level-1) ]] [[ o.code ]] [[ o.name ]]</para>
+            <para style="terp_default_9_Right">[[ get_show_move_lines() and o.code or '' ]]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_account(o), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_Bold_9_Right">[[ c.name or c.code or '']]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_account(o), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o), digits=get_digits(dp='Account')) ]] <font face="Helvetica" size="8.0">[[ get_output_currency_code(data) ]]</font></para>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+           <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=True), digits=get_digits(dp='Account')) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o, ccy=c, booking=False), digits=get_digits(dp='Account')) ]]</para>
           </td>
         </tr>
       </blockTable>
-      <section>
-        <para style="terp_default_8">[[ repeatIn(lines(o), 'line') ]]</para>
-        <blockTable colWidths="40.0,28.0,82.0,42.0,42.0,71.0,42.0,57.0,57.0,77.0" style="Table6">
-          <tr>
-            <td>
-              <para style="terp_default_8">[[ data['form']['amount_currency'] == False or removeParentNode('blockTable') ]] [[ formatLang(line['ldate'],date=True) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_8">[[ line['lcode'] ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_8">[[ strip_name(line['partner_name'],20) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_8">[[ strip_name(line['lref'],9) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_8">[[ strip_name(line['move'],9) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_8">[[ strip_name(line['lname'],18) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Centre_8">[[ strip_name(line['line_corresp'].replace(', ',','),20) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_8">[[ formatLang(line['debit'], digits=get_digits(dp='Account')) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_8">[[ formatLang(line['credit'], digits=get_digits(dp='Account')) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_8">[[ formatLang(line['progress'], digits=get_digits(dp='Account')) ]] <font face="Helvetica" size="8.0">[[ company.currency_id.name ]]</font></para>
-            </td>
-          </tr>
-        </blockTable>
-        <para style="terp_default_2">
-          <font color="white"> </font>
-        </para>
       </section>
     </section>
+
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>

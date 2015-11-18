@@ -27,15 +27,35 @@ class account_report_general_ledger(osv.osv_memory):
     _description = "General Ledger Report"
 
     _columns = {
-        'landscape': fields.boolean("Landscape Mode"),
         'initial_balance': fields.boolean("Include initial balances",
-                                          help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
+            help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
         'sortby': fields.selection([('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')], 'Sort By', required=True),
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         #'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
+
+        # us-334: General ledger report improvements
+        'account_type': fields.selection([
+            ('all', 'All'),
+            ('pl','Profit & Loss'),
+            ('bl','Balance Sheet'),
+        ], 'B/S / P&L account', required=True),
+
+        'unreconciled': fields.boolean("Unreconciled",
+            help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
+
+        'account_ids': fields.many2many('account.account',
+            'account_report_general_ledger_account_account_rel',
+            'report_id', 'account_id', 'Accounts'),
+
+        'filter': fields.selection([
+            ('filter_no', 'No Filters'),
+            ('filter_date_doc', 'Document Date'),
+            ('filter_date', 'Posting Date'),
+            ('filter_period', 'Periods')
+        ], "Filter by", required=True),
     }
     
     def _get_journals(self, cr, uid, context=None):
@@ -44,13 +64,13 @@ class account_report_general_ledger(osv.osv_memory):
         return self.pool.get('account.journal').search(cr, uid, domain, context=context)
     
     _defaults = {
-        'landscape': True,
         'amount_currency': True,
         'sortby': 'sort_date',
         'initial_balance': False,
-        'amount_currency': True,
         'export_format': 'pdf',
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
+        'account_type': 'all',
+        'unreconciled': False,
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -77,14 +97,22 @@ class account_report_general_ledger(osv.osv_memory):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['landscape',  'initial_balance', 'amount_currency', 'sortby', 'output_currency', 'instance_ids', 'export_format'])[0])
+        data['form']['report_mode'] = 'gl'  # general ledger mode
+
+        form_fields = [ 'initial_balance', 'amount_currency', 'sortby',
+            'output_currency', 'instance_ids', 'export_format',
+            'account_type', 'unreconciled', 'account_ids', ]
+        data['form'].update(self.read(cr, uid, ids, form_fields)[0])
+
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
-            data['form'].update({'initial_balance': False})
+            data['form']['initial_balance'] = False
+
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:
-                if len(default_journals) == len(data['form']['journal_ids']):
+                if set(default_journals) == set(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
+
         if data['form']['export_format'] \
            and data['form']['export_format'] == 'xls':
             return { 
@@ -92,18 +120,12 @@ class account_report_general_ledger(osv.osv_memory):
                 'report_name': 'account.general.ledger_xls',
                 'datas': data,
             }
-        if data['form']['landscape']:
-            return { 
-                'type': 'ir.actions.report.xml',
-                'report_name': 'account.general.ledger_landscape',
-                'datas': data,
-            }
-        return { 
+        return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'account.general.ledger',
+            'report_name': 'account.general.ledger_landscape',
             'datas': data,
-        }
-        
+            }
+
         
 account_report_general_ledger()
 
