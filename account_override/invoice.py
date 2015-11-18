@@ -1267,7 +1267,7 @@ class account_invoice_line(osv.osv):
                 # User has updated the direct invoice. The (parent) statement
                 # line needs to be updated, and then the move lines deleted
                 # and re-created. Ticket US-713.
-                self.pool.get('account.invoice')._direct_invoice_updated(cr, uid, [invl.invoice_id.id], context)
+                self.pool.get('account.invoice')._direct_invoice_updated(cr, uid, [invoice.id], context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
