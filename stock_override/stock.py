@@ -1370,6 +1370,10 @@ class stock_move(osv.osv):
                     """
                     if move.purchase_line_id:
                         vals['cancel_only'] = True
+
+                if move.sale_line_id and move.sale_line_id.type == 'make_to_order':
+                    vals['cancel_only'] = True
+
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -2481,12 +2485,28 @@ stock_move_cancel_wizard()
 class stock_picking_cancel_wizard(osv.osv_memory):
     _name = 'stock.picking.cancel.wizard'
 
+    def _get_allow_cr(self, cr, uid, context=None):
+        """
+        Define if the C&R are allowed on the wizard
+        """
+        if context is None:
+            context = {}
+
+        picking_id = context.get('active_id')
+        for move in self.pool.get('stock.picking').browse(cr, uid, picking_id, context=context).move_lines:
+            if move.sale_line_id and move.sale_line_id.type == 'make_to_order':
+                return False
+
+        return True
+
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
+        'allow_cr': fields.boolean(string='Allow Cancel and resource'),
     }
 
     _defaults = {
         'picking_id': lambda self, cr, uid, c: c.get('active_id'),
+        'allow_cr': _get_allow_cr,
     }
 
     def just_cancel(self, cr, uid, ids, context=None):

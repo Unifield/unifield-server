@@ -118,7 +118,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         self._check_browse_param(order, method='_get_sale_order_state')
 
-        if order and order.state == 'done' and order.split_type_sale_order == 'original_sale_order':
+        if order and not order.procurement_request and order.state == 'done' and order.split_type_sale_order == 'original_sale_order':
             return 'split_so'
         elif order:
             return order.state
