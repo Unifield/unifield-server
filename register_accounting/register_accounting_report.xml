@@ -4,7 +4,7 @@
 
         <report id="cash_inventory"
         string="Cash Reconciliation"
-        target_filename="Cash Inventory_${name}_%(year)s%(month)s%(day)s"
+        target_filename="Cash Reconciliation_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="cash.inventory"
         rml="register_accounting/report/cash_inventory.rml"
