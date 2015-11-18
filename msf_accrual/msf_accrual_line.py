@@ -59,8 +59,11 @@ class msf_accrual_line(osv.osv):
         'accrual_amount': fields.float('Accrual Amount', required=True),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True),
-        'third_party_type': fields.selection([('res.partner', 'Partner'),
-                                              ('hr.employee', 'Employee')], 'Third Party', required=True),
+        'third_party_type': fields.selection([
+                ('', ''),
+                ('res.partner', 'Partner'),
+                ('hr.employee', 'Employee'),
+            ], 'Third Party', required=False),
         'partner_id': fields.many2one('res.partner', 'Third Party Partner', ondelete="restrict"),
         'employee_id': fields.many2one('hr.employee', 'Third Party Employee', ondelete="restrict"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -80,19 +83,8 @@ class msf_accrual_line(osv.osv):
         'functional_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
     }
-    
-    def create(self, cr, uid, vals, context=None):
-        if context is None:
-            context = {}
-        if 'document_date' in vals and vals.get('period_id', False):
-            # US-192 check doc date regarding post date
-            # => read (as date readonly in form) to get posting date: 
-            # is end of period
-            posting_date = self.pool.get('account.period').read(cr, uid,
-                vals['period_id'], ['date_stop', ],
-                context=context)['date_stop']
-            self.pool.get('finance.tools').check_document_date(cr, uid,
-                vals['document_date'], posting_date, context=context)
+
+    def _create_write_set_vals(self, cr, uid, vals, context=None):
         if 'third_party_type' in vals:
             if vals['third_party_type'] == 'hr.employee' and 'employee_id' in vals:
                 employee = self.pool.get('hr.employee').browse(cr, uid, vals['employee_id'], context=context)
@@ -100,6 +92,8 @@ class msf_accrual_line(osv.osv):
             elif vals['third_party_type'] == 'res.partner' and 'partner_id' in vals:
                 partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
                 vals['third_party_name'] = partner.name
+            elif not vals['third_party_type']:
+                vals['partner_id'] = False
         if 'period_id' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)
             vals['date'] = period.date_stop
@@ -109,6 +103,22 @@ class msf_accrual_line(osv.osv):
                 currency_name = self.pool.get('res.currency').browse(cr, uid, vals['currency_id'], context=context).name
                 formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
                 raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+
+        if 'document_date' in vals and vals.get('period_id', False):
+            # US-192 check doc date regarding post date
+            # => read (as date readonly in form) to get posting date: 
+            # is end of period
+            posting_date = self.pool.get('account.period').read(cr, uid,
+                vals['period_id'], ['date_stop', ],
+                context=context)['date_stop']
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                vals['document_date'], posting_date, context=context)
+
+        self._create_write_set_vals(cr, uid, vals, context=context)
         return super(msf_accrual_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -123,22 +133,8 @@ class msf_accrual_line(osv.osv):
             for r in self.read(cr, uid, ids, ['date', ], context=context):
                 self.pool.get('finance.tools').check_document_date(cr, uid,
                     vals['document_date'], r['date'], context=context)
-        if 'third_party_type' in vals:
-            if vals['third_party_type'] == 'hr.employee' and 'employee_id' in vals:
-                employee = self.pool.get('hr.employee').browse(cr, uid, vals['employee_id'], context=context)
-                vals['third_party_name'] = employee.name
-            elif vals['third_party_type'] == 'res.partner' and 'partner_id' in vals:
-                partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
-                vals['third_party_name'] = partner.name
-        if 'period_id' in vals:
-            period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)
-            vals['date'] = period.date_stop
-        if 'currency_id' in vals and 'date' in vals:
-            cr.execute("SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(vals['currency_id'], vals['date']))
-            if not cr.rowcount:
-                currency_name = self.pool.get('res.currency').browse(cr, uid, vals['currency_id'], context=context).name
-                formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
-                raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
+
+        self._create_write_set_vals(cr, uid, vals, context=context)
         return super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
     
     def button_cancel(self, cr, uid, ids, context=None):
