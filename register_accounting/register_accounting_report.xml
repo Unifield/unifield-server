@@ -3,7 +3,7 @@
     <data>
 
         <report id="cash_inventory"
-        string="Cash Inventory"
+        string="Cash Reconciliation"
         target_filename="Cash Inventory_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="cash.inventory"

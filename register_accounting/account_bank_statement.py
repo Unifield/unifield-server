@@ -2681,7 +2681,7 @@ class ir_values(osv.osv):
             new_act = []
             for v in values:
                 if v[1] == 'Bank Reconciliation' and context['journal_type'] == 'bank' \
-                or v[1] == 'Cash Inventory' and context['journal_type'] == 'cash' \
+                or v[1] == 'Cash Reconciliation' and context['journal_type'] == 'cash' \
                 or v[1] == 'Open Advances' and context['journal_type'] == 'cash' \
                 or v[1] == 'Cheque Inventory' and context['journal_type'] == 'cheque' \
                 or v[1] == 'Pending Cheque' and context['journal_type'] == 'cheque' \
