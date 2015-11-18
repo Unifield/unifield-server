@@ -1263,6 +1263,11 @@ class account_invoice_line(osv.osv):
                 amount += vals.get('price_unit', 0.0) * vals.get('quantity', 0.0)
                 self.pool.get('account.invoice').write(cr, uid, [invoice.id], {'check_total': amount}, context)
                 self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invoice.register_line_ids], {'amount': -1 * amount}, context)
+
+                # User has updated the direct invoice. The (parent) statement
+                # line needs to be updated, and then the move lines deleted
+                # and re-created. Ticket US-713.
+                self.pool.get('account.invoice')._direct_invoice_updated(cr, uid, [invl.invoice_id.id], context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1292,6 +1297,11 @@ class account_invoice_line(osv.osv):
                     amount += l.price_subtotal
                 self.pool.get('account.invoice').write(cr, uid, [invl.invoice_id.id], {'check_total': amount}, context)
                 self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invl.invoice_id.register_line_ids], {'amount': -1 * amount}, context)
+
+                # User has updated the direct invoice. The (parent) statement
+                # line needs to be updated, and then the move lines deleted
+                # and re-created. Ticket US-713.
+                self.pool.get('account.invoice')._direct_invoice_updated(cr, uid, [invl.invoice_id.id], context)
         return res
 
     def copy(self, cr, uid, inv_id, default=None, context=None):
