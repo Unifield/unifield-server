@@ -175,6 +175,7 @@ class msf_accrual_line(osv.osv):
                 reverse_cancel_description = "CANCEL - REV - " + accrual_line.description
                 
                 # Create move lines
+                booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'  # reverse of initial entry
                 accrual_move_line_vals = {
                     'accrual': True,
                     'move_id': move_id,
@@ -187,9 +188,10 @@ class msf_accrual_line(osv.osv):
                     'account_id': accrual_line.accrual_account_id.id,
                     'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                     'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                    'debit_currency': accrual_line.accrual_amount,
+                    booking_field: abs(accrual_line.accrual_amount),
                     'currency_id': accrual_line.currency_id.id,
                 }
+                booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
                 expense_move_line_vals = {
                     'accrual': True,
                     'move_id': move_id,
@@ -202,12 +204,13 @@ class msf_accrual_line(osv.osv):
                     'account_id': accrual_line.expense_account_id.id,
                     'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                     'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                    'credit_currency': accrual_line.accrual_amount,
+                    booking_field: abs(accrual_line.accrual_amount),
                     'currency_id': accrual_line.currency_id.id,
                     'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                 }
                 
                 # and their reversal (source_date to keep the old change rate)
+                booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
                 reversal_accrual_move_line_vals = {
                     'accrual': True,
                     'move_id': reversal_move_id,
@@ -221,9 +224,10 @@ class msf_accrual_line(osv.osv):
                     'account_id': accrual_line.accrual_account_id.id,
                     'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                     'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                    'credit_currency': accrual_line.accrual_amount,
+                    booking_field: abs(accrual_line.accrual_amount),
                     'currency_id': accrual_line.currency_id.id,
                 }
+                booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                 reversal_expense_move_line_vals = {
                     'accrual': True,
                     'move_id': reversal_move_id,
@@ -237,7 +241,7 @@ class msf_accrual_line(osv.osv):
                     'account_id': accrual_line.expense_account_id.id,
                     'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                     'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                    'debit_currency': accrual_line.accrual_amount,
+                    booking_field: abs(accrual_line.accrual_amount),
                     'currency_id': accrual_line.currency_id.id,
                     'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                 }
