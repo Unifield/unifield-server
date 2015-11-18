@@ -56,6 +56,7 @@
         'wizard/wizard_cashbox_write_off.xml',
         'wizard/wizard_temp_posting.xml',
         'wizard/wizard_hard_posting.xml',
+        'wizard/wizard_liquidity_position.xml',
         'account_cash_statement_sequence.xml',
         'wizard/wizard_cash_return.xml',
         'account_invoice_view.xml',

@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<document filename="liquidity_position.pdf">
+  <docinit>
+    <color id="CMYK_YELLOW" CMYK="rgb(255,255,153)"/>
+  </docinit>
+  <template pageSize="(595.0,842.0)" title="liquidity_position" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
+      <pageGraphics>
+        <fill color="blue"/>
+        <image x="18mm" y="270mm" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+        <setFont name="Helvetica" size="8"/>
+        <fill color="black"/>
+        <drawString x="285" y="10.0">Page <pageNumber /></drawString>
+      </pageGraphics>
+    </pageTemplate>
+  </template>
+
+  <stylesheet>
+
+    <blockTableStyle id="table_header">
+      <lineStyle kind="GRID" colorName="grey"/>
+      <lineStyle kind="OUTLINE" colorName="grey" thickness="2"/>
+      <blockValign value="MIDDLE"/>
+      <blockValign value="TOP" start="0,0" stop="-1,0"/>
+      <blockBackground colorName="peachpuff" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+
+    <blockTableStyle id="table">
+      <lineStyle kind="GRID" colorName="grey"/>
+      <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+      <blockValign value="MIDDLE"/>
+      <blockValign value="TOP" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+
+    <paraStyle name="right" fontName="Helvetica" fontSize="8" alignment="RIGHT"/>
+    <paraStyle name="center" fontName="Helvetica" fontSize="8" alignment="CENTER"/>
+    <paraStyle name="text" fontName="Helvetica" fontSize="8"/>
+
+  </stylesheet>
+
+  <story>
+
+    
+    <title style="text">Liquidity Position [[ getPeriodName() ]]</title>
+    <para style="center">Report edition date: [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]</para>
+    <spacer length="24"/>
+
+    <section>
+      [[ repeatIn(getRegistersByType(), 'reg_type') ]]
+        <condPageBreak height="9cm"/>
+
+        <blockTable htmlSpans="1" style="table_header" colWidths="180mm">
+        <tr>
+          <td><para style="center"><b>[[ reg_type.title() ]]</b></para></td>
+        </tr>
+      </blockTable>
+      <blockTable htmlSpans="1" style="table_header" colWidths="18mm,18mm,14mm,22mm,22mm,22mm,10mm,22mm,22mm,10mm">
+        <tr>
+          <td><para style="text">Instance</para></td>
+          <td><para style="text">Journal Code - Journal Name</para></td>
+          <td><para style="text">State</para></td>
+          <td><para style="text">Opening Balance</para></td>
+          <td><para style="text">Calculated Balance</para></td>
+          <td><para style="text">Register Balance</para></td>
+          <td><para style="text">Reg. ccy</para></td>
+          <td><para style="text">Calculated Balance</para></td>
+          <td><para style="text">Register Balance</para></td>
+          <td><para style="text">Fun. ccy</para></td>
+        </tr>
+        <tr>
+          [[ repeatIn(getReg()[reg_type]['registers'], 'reg') ]]
+          <td><para style="text">[[ reg['instance'] ]]</para></td>
+          <td><para style="text">[[ reg['journal_code'] ]] - [[ reg['journal_name'] ]]</para></td>
+          <td><para style="text">[[ reg['state'] ]]</para></td>
+          <td><para style="right">[[ formatLang(reg['opening_balance'], digits=2, grouping=True) or '0.00']]</para></td>
+          <td><para style="right">[[ formatLang(reg['calculated_balance'], digits=2, grouping=True) or '0.00']]</para></td>
+          <td><para style="right">[[ formatLang(reg['register_balance'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="text">[[ reg['currency'] ]]</para></td>
+          <td><para style="right">[[ formatLang(reg['func_calculated_balance'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="right">[[ formatLang(reg['func_register_balance'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="text">[[ getFuncCurrency() ]]</para></td>
+        </tr>
+      </blockTable>
+
+      <section>
+        [[ repeatIn(getReg()[reg_type]['currency_amounts'], 'cur') ]]
+        <blockTable htmlSpans="1" style="table" colWidths="72mm,22mm,22mm,10mm,22mm,22mm,10mm">
+          <tr>
+            <td><para style="right">Subtotal [[ str(cur) ]]</para></td>
+            <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_calculated'], digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_balanced'], digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="text">[[ str(cur) ]]</para></td>
+            <td><para style="right">[[ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getFuncCurrencyId(), getReg()[reg_type]['currency_amounts'][cur]['amount_calculated']), digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="right">[[ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getFuncCurrencyId(), getReg()[reg_type]['currency_amounts'][cur]['amount_balanced']), digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="text">[[ getFuncCurrency() ]]</para></td>
+          </tr>
+        </blockTable>
+      </section>
+
+      <blockTable htmlSpans="1" style="table_header" colWidths="126mm,22mm,22mm,10mm">
+        <tr>
+          <td><para style="right"><b>Total [[ reg_type ]]</b></para></td>
+          <td><para style="right">[[ formatLang(getReg()[reg_type]['func_amount_calculated'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="right">[[ formatLang(getReg()[reg_type]['func_amount_balanced'], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="text">[[ getFuncCurrency() ]] </para></td>
+        </tr>
+      </blockTable>
+      <spacer length="24"/>
+    </section>  
+
+    <blockTable htmlSpans="1" style="table_header" colWidths="126mm,22mm,22mm,10mm">
+      <tr>
+        <td><para style="right"><b>Grand Total:</b></para></td>
+        <td><para style="right">[[ formatLang(getTotalReg(), digits=2, grouping=True) or '0.00' ]]</para></td>
+        <td><para style="right">[[ formatLang(getTotalCalc(), digits=2, grouping=True) or '0.00' ]]</para></td>
+        <td><para style="text">[[ getFuncCurrency() ]]</para></td>
+      </tr>
+    </blockTable>
+
+  </story>
+</document>
