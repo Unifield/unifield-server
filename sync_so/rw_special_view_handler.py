@@ -180,5 +180,16 @@ class pack_type_rw(osv.osv):
     
 pack_type_rw()
 
+class product_rw(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+    
+    # Do not show the button new, duplicate in the tree and form view
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        so_po_common = self.pool.get('so.po.common')
+        res = super(product_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
+        return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type, so_po_common.REMOTE_WAREHOUSE)
+    
+product_rw()
 
 
