@@ -34,11 +34,13 @@ class deleted_object(osv.osv):
     _order = 'deletion_date desc, model, deleted_obj_id'
 
     _columns={
-        'model': fields.char('Object Model', size=64),
-        'deleted_obj_id': fields.integer('Deleted Object ID'),
-        'deleted_obj_sd_ref': fields.char('Deleted Object SD Ref', size=128),
-        'deletion_date': fields.datetime('Deletion Date'),
-        'user_id': fields.many2one('res.users', 'User who delete'),
+        'model': fields.char('Object Model', size=64, readonly=True),
+        'deleted_obj_id': fields.integer('Deleted Object ID', readonly=True),
+        'deleted_obj_sd_ref': fields.char('Deleted Object SD Ref', size=128,
+            read_only=True),
+        'deletion_date': fields.datetime('Deletion Date', read_only=True),
+        'user_id': fields.many2one('res.users', 'User who delete',
+            read_only=True),
     }
 
 deleted_object()
