@@ -586,7 +586,7 @@
                                 on_change="onchange_move()"
                                 >
                                 <tree
-                                    colors="grey:scrapped==True; red: inactive_product == True"
+                                    colors="grey:scrapped==True; red: inactive_product == True or to_correct_ok == True"
                                     string="Stock Moves"
                                     hide_new_button="context.get('from_wkf')"
                                     hide_delete_button="context.get('from_wkf')"
@@ -613,6 +613,7 @@
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
+                                    <field name="to_correct_ok" invisible="1" />
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <field name="price_changed" invisible="1" />
                                     <button name="get_price_changed" type="object" string="Price changed" icon="terp-dolar_ok!" attrs="{'invisible': ['|', ('price_changed', '=', False), ('fake_state', '!=', 'done')]}" />
