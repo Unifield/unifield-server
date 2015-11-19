@@ -328,6 +328,19 @@ class msf_accrual_line(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
+
+    def button_delete(self, cr, uid, ids, context=None):
+        return self.unlink(cr, uid, ids, context=context)
+
+    def unlink(self, cr, uid, ids, context=None):
+        if not ids:
+            return
+        for rec in self.browse(cr, uid, ids, context=context):
+            if rec.state != 'draft':
+                raise osv.except_osv(_('Warning'),
+                    _('You can only delete draft accruals'))
+        return super(msf_accrual_line, self).unlink(cr, uid, ids,
+            context=context)
     
 msf_accrual_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

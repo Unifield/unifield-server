@@ -43,7 +43,8 @@
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
                     <tree string="Accruals Management" 
-                        colors="red:not analytic_distribution_id; blue:analytic_distribution_id and state != 'posted'; black: state == 'posted'">
+                        colors="red:not analytic_distribution_id; blue:analytic_distribution_id and state != 'posted'; black: state == 'posted'"
+                        hide_delete_button="1">
                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                         <field name="document_date"/>
                         <field name="date"/>
@@ -61,6 +62,7 @@
                         <field name="functional_amount"/>
                         <field name="functional_currency_id"/>
                         <field name="state"/>
+                        <button name="button_delete" states="draft" string="Delete" type="object" icon="gtk-del"/>
                     </tree>
                 </field>
             </record>
