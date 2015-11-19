@@ -30,6 +30,7 @@ from register_tools import _set_third_parties
 from register_tools import create_cashbox_lines
 from register_tools import open_register_view
 import time
+import datetime
 import decimal_precision as dp
 
 
@@ -175,6 +176,7 @@ class account_bank_statement(osv.osv):
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]},
             help="Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank statement is equal to that amount."),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
+        'closing_balance_frozen_date': fields.date("Closing balance frozen date"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, readonly=True),
@@ -429,7 +431,12 @@ class account_bank_statement(osv.osv):
         for reg in self.browse(cr, uid, ids, context=context):
             # Validate register only if this one is open
             if reg.state == 'open':
-                res_id = self.write(cr, uid, [reg.id], {'closing_balance_frozen': True}, context=context)
+                now_orm = self.pool.get('date.tools').date2orm(
+                    datetime.datetime.now().date())
+                res_id = self.write(cr, uid, [reg.id], {
+                        'closing_balance_frozen': True,
+                        'closing_balance_frozen_date': now_orm,
+                    }, context=context)
                 res.append(res_id)
             # Create next starting balance for cash registers
             if reg.journal_id.type == 'cash':
@@ -2693,7 +2700,7 @@ class ir_values(osv.osv):
             new_act = []
             for v in values:
                 if v[1] == 'Bank Reconciliation' and context['journal_type'] == 'bank' \
-                or v[1] == 'Cash Inventory' and context['journal_type'] == 'cash' \
+                or v[1] == 'Cash Reconciliation' and context['journal_type'] == 'cash' \
                 or v[1] == 'Open Advances' and context['journal_type'] == 'cash' \
                 or v[1] == 'Cheque Inventory' and context['journal_type'] == 'cheque' \
                 or v[1] == 'Pending Cheque' and context['journal_type'] == 'cheque' \

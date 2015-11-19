@@ -3,14 +3,20 @@
     <data>
 
         <report id="cash_inventory"
-        string="Cash Inventory"
-        target_filename="Cash Inventory_${name}_%(year)s%(month)s%(day)s"
+        string="Cash Reconciliation"
+        target_filename="Cash Reconciliation_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="cash.inventory"
         rml="register_accounting/report/cash_inventory.rml"
         auto="False"
         menu="True"
         header="False"/>
+
+        <!-- put this entry on top -->
+        <function model="ir.values" name="write">
+            <function model="ir.values" name="search" eval="[[('key', '=', 'action'), ('key2', '=', 'client_print_multi'), ('model', '=', 'account.bank.statement'), ('name', '=', 'Cash Reconciliation')]]" />
+            <value eval="{'sequence': 99}" />
+        </function>
 
         <report id="bank_reconciliation"
         string="Bank Reconciliation"
