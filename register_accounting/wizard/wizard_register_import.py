@@ -233,6 +233,10 @@ class wizard_register_import(osv.osv_memory):
         processed = 0
         errors = []
         cheque_numbers = []
+        try:
+            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            msf_fp_id = 0
 
         try:
             # Update wizard
@@ -522,6 +526,7 @@ class wizard_register_import(osv.osv_memory):
                                 fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['funding_pool']]), ('code', '=', line[cols['funding_pool']])])
                                 if fp_ids:
                                     r_fp = fp_ids[0]
+
                         except IndexError, e:
                             pass
                         # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
@@ -540,7 +545,7 @@ class wizard_register_import(osv.osv_memory):
                         'credit': r_credit or 0.0,
                         'cost_center_id': r_cc or False,
                         'destination_id': r_destination or False,
-                        'funding_pool_id': r_fp or False,
+                        'funding_pool_id': r_fp or msf_fp_id,
                         'document_date': r_document_date or False,
                         'date': r_date or False,
                         'currency_id': r_currency or False,
