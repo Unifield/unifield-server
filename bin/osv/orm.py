@@ -3714,12 +3714,11 @@ class orm(orm_template):
                 for f in direct:
                     if self._columns[f].translate:
                         src_trans = self.pool.get(self._name).read(cr, user, ids, [f])[0][f]
-                        if not src_trans:
-                            src_trans = vals[f]
+                        if not src_trans or not vals.get(f, None):
+                            src_trans = vals.get(f, None)
                             # Inserting value to DB
                             self.write(cr, user, ids, {f: vals[f]})
                         self.pool.get('ir.translation')._set_ids(cr, user, self._name+','+f, 'model', context['lang'], ids, vals[f], src_trans)
-
 
         # call the 'set' method of fields which are not classic_write
         upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)

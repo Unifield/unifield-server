@@ -125,8 +125,11 @@ class ir_translation(osv.osv):
                                           limit=None, order=None,
                                           context=context, count=False)
             if translation_ids:
-                values = {'value': value, 'src': src}
-                self.write(cr, uid, translation_ids[0], values, context=context)
+                if not value:
+                    self.unlink(cr, uid, translation_ids, context=context)
+                else:
+                    values = {'value': value, 'src': src}
+                    self.write(cr, uid, translation_ids[0], values, context=context)
             else:
                 self.create(cr, uid, {
                     'lang': lang,
