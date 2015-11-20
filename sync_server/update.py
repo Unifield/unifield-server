@@ -188,12 +188,13 @@ class update(osv.osv):
         if not cr.fetchone():
             cr.execute("CREATE INDEX sync_server_update_sequence_id_index on sync_server_update (sequence, id)")
 
-    def __init__(self, pool, cr):
-        self._cache_pullers = SavePullerCache(self)
-        super(update, self).__init__(pool, cr)
+#    def __init__(self, pool, cr):
+#        self._cache_pullers = SavePullerCache(self)
+#        super(update, self).__init__(pool, cr)
 
     def _save_puller(self, cr, uid, context=None):
-        return self._cache_pullers.merge(cr, uid, context)
+        return True
+#        return self._cache_pullers.merge(cr, uid, context)
 
     def unfold_package(self, cr, uid, entity, packet, context=None):
         """
@@ -451,7 +452,12 @@ class update(osv.osv):
             return None
 
         # Point of no return
-        self._cache_pullers.add(entity, update_to_send)
+#        self._cache_pullers.add(entity, update_to_send)
+        for update in iter(update_to_send):
+            self.pool.get('sync.server.puller_logs').create(cr, 1, {
+                'update_id': update.id,
+                'entity_id': entity.id,
+            }, context=context)
 
         ## Package template
         data = {

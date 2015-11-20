@@ -616,43 +616,33 @@ class Entity(osv.osv):
 
         # Get a list of updates to execute
         # Warning: execution order matter
-        update_ids = updates.search(cr, uid, [('run', '=', False)], order='id asc', context=context)
+        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, rule_sequence, id asc', context=context)
         update_count = len(update_ids)
         if not update_count: return 0
-
-        # Sort updates by rule_sequence
-        whole = updates.browse(cr, uid, update_ids, context=context)
-        update_groups = dict()
-        for update in whole:
-            group_key = (update.sequence_number, update.rule_sequence)
-            update_groups.setdefault(group_key, []).append(update.id)
 
         try:
             if logger: logger_index = logger.append()
             done = []
             imported, deleted = 0, 0
-            update_group_items = update_groups.items()
-            update_group_items.sort()
-            for rule_seq, update_ids in iter(update_group_items):
-                while update_ids:
-                    to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
-                    messages, imported_executed, deleted_executed = \
-                        updates.execute_update(cr, uid,
-                            to_do,
-                            priorities=priorities_stuff,
-                            context=context)
-                    imported += imported_executed
-                    deleted += deleted_executed
-                    # Do nothing with messages
-                    done += to_do
-                    if logger:
-                        logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
-                                                     % (imported, deleted, update_count))
-                        logger.write()
-                    # intermittent commit
-                    if len(done) >= MAX_EXECUTED_UPDATES:
-                        done[:] = []
-                        cr.commit()
+            while update_ids:
+                to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
+                messages, imported_executed, deleted_executed = \
+                    updates.execute_update(cr, uid,
+                        to_do,
+                        priorities=priorities_stuff,
+                        context=context)
+                imported += imported_executed
+                deleted += deleted_executed
+                # Do nothing with messages
+                done += to_do
+                if logger:
+                    logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
+                                                 % (imported, deleted, update_count))
+                    logger.write()
+                # intermittent commit
+                if len(done) >= MAX_EXECUTED_UPDATES:
+                    done[:] = []
+                    cr.commit()
         finally:
             cr.commit()
 
