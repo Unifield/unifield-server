@@ -103,6 +103,17 @@ class finance_archive():
           - model
         Then create a md5
         """
+        return self._get_hash(cr, uid, ids, model)
+
+    @staticmethod
+    def _get_hash(cr, uid, ids, model):
+        """
+        Create a concatenation of:
+          - dbname
+          - ids
+          - model
+        Then create a md5
+        """
         # Prepare some values
         md5sum = md5()
         is_list = False
