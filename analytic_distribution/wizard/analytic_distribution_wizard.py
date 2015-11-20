@@ -508,7 +508,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.commitment_line_id and el.commitment_line_id.commit_id and el.commitment_line_id.commit_id.state in ['done']:
                 res[el.id] = False
             # verify accrual line state
-            if el.accrual_line_id and el.accrual_line_id.state in ['posted']:
+            if el.accrual_line_id and el.accrual_line_id.state != 'draft':
                 res[el.id] = False
             # verify sale order state
             if el.sale_order_id and el.sale_order_id.state not in ['draft', 'validated']:
