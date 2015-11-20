@@ -1868,6 +1868,7 @@ class stock_picking(osv.osv):
             context = {}
         # reset one2many fields
         default.update(backorder_ids=[])
+        default.update(already_replicated=False)
         default.update(previous_step_ids=[])
         default.update(pack_family_memory_ids=[])
         default.update(in_ref=False)
@@ -2558,7 +2559,8 @@ class stock_picking(osv.osv):
             if 'name' in vals and 'OUT-CONSO' in vals['name']:
                 vals.update(already_replicated=False,)
             #UF-2531: When the INT from scratch created in RW, just set it for sync to CP
-            if usb_entity == self.REMOTE_WAREHOUSE and 'type' in vals and vals['type']=='internal':
+            if usb_entity == self.REMOTE_WAREHOUSE and (('type' in vals and vals['type']=='internal') or 
+                                                        ('origin' not in vals or vals['origin']==False)): #US-702 Sync also the OUT from scratch in RW
                 vals.update(already_replicated=False,)
 
         # the action adds subtype in the context depending from which screen it is created
@@ -3225,6 +3227,7 @@ class stock_picking(osv.osv):
                     break
 
             rw_full_process = context.get('rw_full_process', False)
+            to_be_replicated = True
             if rw_full_process:
                 del context['rw_full_process']
             if need_new_picking and not rw_full_process:
@@ -3234,7 +3237,13 @@ class stock_picking(osv.osv):
                     'state':'draft',
                 }
                 context['allow_copy'] = True
+
                 new_picking_id = picking_obj.copy(cr, uid, picking.id, cp_vals, context=context)
+                # US-327: if it's an internal picking and in partial process, then set the already_replicated to True, so no replicate needed 
+                if picking.type == 'internal' and (usb_entity == self.REMOTE_WAREHOUSE or context.get('sync_message_execution', False)):
+                    to_be_replicated = False
+                    self.write(cr, uid, [new_picking_id], {'already_replicated': True}, context=context)
+
                 context['allow_copy'] = False
                 move_obj.write(cr, uid, processed_moves, {'picking_id': new_picking_id}, context=context)
 
@@ -3250,7 +3259,7 @@ class stock_picking(osv.osv):
 
                 if picking.type == 'internal':
                     update_vals.update({'associate_pick_name': picking.name})
-                if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+                if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False) and to_be_replicated:
                     update_vals.update({'already_replicated': False})
 
                 if len(update_vals) > 0:
@@ -3293,6 +3302,10 @@ class stock_picking(osv.osv):
 
             if picking.type == 'out' and picking.sale_id and picking.sale_id.procurement_request:
                 wf_service.trg_write(uid, 'sale.order', picking.sale_id.id, cr)
+
+        # US-379: point 2) Generate RW messages manually and put into the queue when a partial OUT is done
+        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+            self._manual_create_rw_messages(cr, uid, context=context)
 
         return res
 
@@ -3516,6 +3529,7 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
         proc_obj = self.pool.get('validate.picking.processor')
+        usb_entity = self._get_usb_entity_type(cr, uid)
 
         if context is None:
             context = {}
@@ -3553,10 +3567,16 @@ class stock_picking(osv.osv):
                         })
 
             # Create the new ppl object
-            ppl_number = picking.name.split("/")[1]
+            #US-702: If the PPL is from RW, then add the suffix RW, if it is created via RW Sync in CP, then use the one from the context (name sent by RW instance)
+            ppl_number = 'PPL/%s' % picking.name.split("/")[1]
+            if context.get('rw_backorder_name', False):
+                ppl_number = context.get('rw_backorder_name')
+                del context['rw_backorder_name']
+            elif usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False) and ppl_number:
+                ppl_number = ppl_number + "-RW"
             # We want the copy to keep the batch number reference from picking ticket to pre-packing list
             cp_vals = {
-                'name': 'PPL/%s' % ppl_number,
+                'name': ppl_number,
                 'subtype': 'ppl',
                 'previous_step_id': picking.id,
                 'backorder_id': False,
@@ -3695,7 +3715,6 @@ class stock_picking(osv.osv):
         context.update({'picking_type': 'picking_ticket', 'ppl_screen': True})
 
         # UF-2531: Run the creation of message at RW at some important points
-        usb_entity = self._get_usb_entity_type(cr, uid)
         if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
             self._manual_create_rw_messages(cr, uid, context=context)
 
