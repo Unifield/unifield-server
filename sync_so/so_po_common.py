@@ -308,9 +308,15 @@ class so_po_common(osv.osv_memory):
 
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
+
+        # US-379: Fixed the price list retrieval 
         if 'pricelist_id' in header_info:
             price_list = header_info.get('pricelist_id')
-        else:        
+            if price_list:
+                price_list = self.pool.get('product.pricelist').find_sd_ref(cr, uid, xmlid_to_sdref(price_list['id']), context=context)
+
+        # at the end, if there is no price list, just use the one from the partner
+        if not price_list:
             price_list = self.get_price_list_id(cr, uid, partner_id, context)
 
         header_result['client_order_ref'] = source + "." + header_info.get('name')
