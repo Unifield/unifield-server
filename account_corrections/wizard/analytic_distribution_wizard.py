@@ -179,27 +179,41 @@ class analytic_distribution_wizard(osv.osv_memory):
                 to_create.append(wiz_line)
             else:
                 old_line = self.pool.get('funding.pool.distribution.line').browse(cr, uid, wiz_line.distribution_line_id.id)
-                # existing line, test modifications
-                # for FP, percentage, CC or destination changes regarding contracts
-                if old_line.analytic_id.id != wiz_line.analytic_id.id \
-                    or old_line.percentage != wiz_line.percentage \
-                    or old_line.cost_center_id.id != wiz_line.cost_center_id.id \
-                    or old_line.destination_id.id != wiz_line.destination_id.id:
-                    # FP account changed or % modified
-                    if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [old_line.analytic_id.id]):
-                        raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(old_line.analytic_id.code))
 
-                if (old_line.cost_center_id.id != wiz_line.cost_center_id.id or
-                        old_line.destination_id.id != wiz_line.destination_id.id or
-                        old_line.percentage != wiz_line.percentage):
-                    if period_closed:
+                if old_line:
+                    #US-714: For HQ Entries, always create the COR and REV even the period is closed
+                    original_al_id = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%old_line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+                    is_HQ_entries = False
+                    if original_al_id and len(original_al_id) == 1:
+                        original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
+                        if original_al.journal_id.code == 'HQ':
+                            is_HQ_entries = True
+
+                    # In case it's an HQ entries, just generate the REV and COR
+                    if is_HQ_entries:
                         to_reverse.append(wiz_line)
                     else:
-                        to_override.append(wiz_line)
-                elif old_line.analytic_id.id != wiz_line.analytic_id.id:
-                    to_override.append(wiz_line)
+                        # existing line, test modifications
+                        # for FP, percentage, CC or destination changes regarding contracts
+                        if old_line.analytic_id.id != wiz_line.analytic_id.id \
+                            or old_line.percentage != wiz_line.percentage \
+                            or old_line.cost_center_id.id != wiz_line.cost_center_id.id \
+                            or old_line.destination_id.id != wiz_line.destination_id.id:
+                            # FP account changed or % modified
+                            if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [old_line.analytic_id.id]):
+                                raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(old_line.analytic_id.code))
 
-                old_line_ok.append(old_line.id)
+                        if (old_line.cost_center_id.id != wiz_line.cost_center_id.id or
+                                old_line.destination_id.id != wiz_line.destination_id.id or
+                                old_line.percentage != wiz_line.percentage):
+                            if period_closed:
+                                to_reverse.append(wiz_line)
+                            else:
+                                to_override.append(wiz_line)
+                        elif old_line.analytic_id.id != wiz_line.analytic_id.id:
+                            to_override.append(wiz_line)
+
+                    old_line_ok.append(old_line.id)
             total_rounded_amount += round(wiz_line.amount, 2)
             if wiz_line.amount > greater_amount['amount']:
                 greater_amount.update({
