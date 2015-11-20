@@ -2433,45 +2433,135 @@ class account_bank_statement_line(osv.osv):
         """
         Open the attached invoice
         """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # special processing for cash_return
         cash_return = False
         for st_line in self.browse(cr, uid, ids, context=context):
             if not st_line.invoice_id:
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
             if st_line.from_cash_return:
                 cash_return = True
-        invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
-        view_name = 'direct_supplier_invoice_form'
-        name = _('Supplier Direct Invoice')
+                break
         if cash_return:
+            invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
             view_name = 'invoice_supplier_form_2'
             name = _('Supplier Invoice')
-        # Search the customized view we made for Supplier Invoice (for * Register's users)
-        irmd_obj = self.pool.get('ir.model.data')
-        view_ids = irmd_obj.search(cr, uid, [('name', '=', view_name), ('model', '=', 'ir.ui.view')])
-        # Préparation de l'élément permettant de trouver la vue à  afficher
-        if view_ids:
-            view = irmd_obj.read(cr, uid, view_ids[0])
-            view_id = (view.get('res_id'), view.get('name'))
-        else:
-            raise osv.except_osv(_('Error'), _("View not found."))
+            # Search the customized view we made for Supplier Invoice (for * Register's users)
+            irmd_obj = self.pool.get('ir.model.data')
+            view_ids = irmd_obj.search(cr, uid, [('name', '=', view_name), ('model', '=', 'ir.ui.view')])
+            # Préparation de l'élément permettant de trouver la vue à  afficher
+            if view_ids:
+                view = irmd_obj.read(cr, uid, view_ids[0])
+                view_id = (view.get('res_id'), view.get('name'))
+            else:
+                raise osv.except_osv(_('Error'), _("View not found."))
+            context.update({
+                'active_id': ids[0],
+                'type': invoice.type,
+                'journal_type': invoice.journal_id.type,
+                'active_ids': ids,
+                'from_register': True,
+                })
+            return {
+                'name': name,
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.invoice',
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'view_id': view_id,
+                'res_id': invoice.id,
+                'context': context,
+            }
+
+        ## Direct Invoice processing using temp objects
+
+        # Prepare some values
+        invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
+
+        # recreate invoice line as temp objects
+        wiz_invoice_line = self.pool.get('account.direct.invoice.wizard.line')
+        ivl_wizard_id_list = []
+        for ivl in invoice.invoice_line:
+            ivl_values = {
+                    'account_id':ivl.account_id.id,
+                    'analytic_distribution_state':ivl.analytic_distribution_state,
+                    'analytic_distribution_state_recap':ivl.analytic_distribution_state_recap,
+                    'analytic_distribution_id': ivl.analytic_distribution_id.id,
+                    'have_analytic_distribution_from_header':ivl.have_analytic_distribution_from_header,
+                    'inactive_product':ivl.inactive_product,
+                    'is_allocatable':ivl.is_allocatable,
+                    'is_corrected':ivl.is_corrected,
+                    'is_temp_object': True,
+                    'name':ivl.name,
+                    'price_unit':ivl.price_unit,
+                    'price_subtotal':ivl.price_subtotal,
+                    'product_id':ivl.product_id.id,
+                    'quantity':ivl.quantity,
+                    'reference':ivl.reference,
+                    'uos_id':ivl.uos_id.id,
+                    }
+            ivl_id = wiz_invoice_line.create(cr, uid, ivl_values, context=context)
+            ivl_wizard_id_list.append(ivl_id)
+
+        browse_ivl_wizard_id_list = wiz_invoice_line.browse(cr, uid,
+                ivl_wizard_id_list, context=context)
+
+        # Prepare values for wizard
+        vals = {
+            'account_id': invoice.account_id.id,
+            'address_invoice_id': invoice.address_invoice_id.id,
+            'address_contact_id': invoice.address_contact_id.id,
+            'amount_total': invoice.amount_total,
+            'analytic_distribution_id': invoice.analytic_distribution_id.id,
+            'check_total': invoice.check_total,
+            'comment': invoice.comment,
+            'company_id':invoice.company_id.id,
+            'currency_id': invoice.currency_id.id,
+            'date_invoice': invoice.date_invoice,
+            'document_date': invoice.document_date,
+            'fake_currency_id': invoice.fake_currency_id.id,
+            'invoice_line': [(6, 0, ivl_wizard_id_list)],
+            'is_temp_object': True,
+            'is_direct_invoice': invoice.is_direct_invoice,
+            'journal_id': invoice.journal_id.id,
+            'name': invoice.name,
+            'number': invoice.number,
+            'origin': invoice.origin,
+            'partner_id': invoice.partner_id.id,
+            'partner_bank_id':invoice.partner_bank_id.id,
+            'payment_term': invoice.payment_term,
+            'reference': invoice.reference,
+            'register_posting_date': invoice.register_posting_date,
+            'state': invoice.state,
+            'user_id': invoice.user_id.id,
+            }
+        # Create the wizard
+        wiz_obj = self.pool.get('account.direct.invoice.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+
+        # Update some context values
         context.update({
             'active_id': ids[0],
-            'type': invoice.type,
-            'journal_type': invoice.journal_id.type,
             'active_ids': ids,
-            'from_register': True,
-            })
+        })
+        # Open it!
         return {
-            'name': name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.invoice',
-            'target': 'new',
-            'view_mode': 'form',
-            'view_type': 'form',
-            'view_id': view_id,
-            'res_id': invoice.id,
-            'context': context,
+                'name': _('Temp Account Invoice'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.direct.invoice.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
         }
+
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """

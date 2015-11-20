@@ -68,6 +68,7 @@
         'register_accounting_report.xml',
         'account_wizard.xml',
         'wizard/wizard_register_import.xml',
+        'wizard/account_direct_invoice_wizard_view.xml',
     ],
     "demo_xml" : [],
     "test": [
