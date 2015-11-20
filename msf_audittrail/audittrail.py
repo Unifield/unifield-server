@@ -673,15 +673,20 @@ class audittrail_rule(osv.osv):
                         new_value = current[res_id].get(field, False)
 
                         # Don't trace two times the translatable fields
-                        tr_domain  = [
-                            ('name', '=', '%s,%s' % (rule.object_id.model, field)),
-                            ('res_id', '=', res_id),
-                            ('type', '=', 'model'),
-                        ]
-                        if context.get('lang'):
-                            tr_domain.append(('lang', '=', context.get('lang', 'en_US')),)
-                        if fields_to_trace[field].translate and self.pool.get('ir.translation').search(cr, uid, tr_domain):
-                            continue
+                        if fields_to_trace[field].translate:
+                            tr_domain  = [
+                                ('name', '=', '%s,%s' % (rule.object_id.model, field)),
+                                ('res_id', '=', res_id),
+                                ('type', '=', 'model'),
+                            ]
+                            if context.get('lang'):
+                                tr_domain.append(('lang', '=', context.get('lang', 'en_US')),)
+                            if new_value:
+                                tr_domain.append(('value', '=', new_value))
+                            tr_ids = self.pool.get('ir.translation').search(cr, uid, tr_domain)
+
+                            if tr_ids:
+                                continue
 
                         if old_value != new_value:
                             if fields_to_trace[field].ttype == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10]:
