@@ -47,6 +47,19 @@ class msf_accrual_line(osv.osv):
                                                                           round=True,
                                                                           context=date_context)
         return res
+
+    def _get_entry_sequence(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        if not ids:
+            return res
+        for rec in self.browse(cr, uid, ids, context=context):
+            res[rec.id] = rec.state != 'draft' \
+                and rec.analytic_distribution_id \
+                and rec.analytic_distribution_id.move_line_ids \
+                and rec.analytic_distribution_id.move_line_ids[0] \
+                and rec.analytic_distribution_id.move_line_ids[0].move_id.name \
+                or ''
+        return res
     
     _columns = {
         'date': fields.date("Date"),
@@ -74,6 +87,8 @@ class msf_accrual_line(osv.osv):
                                    ('cancel', 'Cancelled')], 'Status', required=True),
         # Field to store the third party's name for list view
         'third_party_name': fields.char('Third Party', size=64),
+        'entry_sequence': fields.function(_get_entry_sequence, method=True,
+            store=False, string="Number", type="char", readonly="True"),
     }
     
     _defaults = {
