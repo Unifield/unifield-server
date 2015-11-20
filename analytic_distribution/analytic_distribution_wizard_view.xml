@@ -136,6 +136,16 @@
             context="{'analytic_account_from': context.get('analytic_account_from', False) }"
             target="new"/>
 
+        <act_window id="action_mass_reallocation_search"
+            name="Mass reallocation - All search results"
+            res_model="mass.reallocation.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="{'all_search': True, 'search_domain': search_domain, 'analytic_account_from': context.get('analytic_account_from', False) }"
+            target="new"/>
+
     <!-- Mass reallocation wizard -->
         <record id="mass_reallocation_wizard_view" model="ir.ui.view">
             <field name="name">Mass Reallocation Wizard</field>
@@ -149,6 +159,22 @@
                     <field name="date" colspan="2" /><label string="" colspan="2"/>
                     <newline/>
                     <field name="display_fp" invisible="1"/>
+                    <field name="is_process_in_progress" invisible="1" />
+                    <group col="2" colspan="2">
+                        <html>
+                            <p id="is_process_in_progress_p"
+                                style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                                Mass reallocation is already running ...
+                            </p>
+                            <script language="javascript">
+                                var is_displayed = $('#is_process_in_progress').val();
+                                if (is_displayed == "1") {
+                                    msg_dom = $('#is_process_in_progress_p')
+                                    msg_dom.show();
+                                }
+                            </script>
+                        </html>
+                    </group>
                     <separator string="Items to check"/>
                     <newline/>
                     <field name="line_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}"/>

@@ -928,7 +928,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if company and company.instance_id and company.instance_id.level in ['section', 'coordo']:
             # UF-1746: Set also all other move lines as corrected upstream to disallow projet user to correct any move line of this move.
             move_ids = [x and x.get('move_id', False) and x.get('move_id')[0] for x in self.read(cr, uid, ids, ['move_id'], context=context)]
-            ml_ids = self.search(cr, uid, [('move_id', 'in', move_ids)])
+            ml_ids = self.search(cr, uid, [('move_id', 'in', move_ids), ('corrected_upstream', '!=', True)])
             self.write(cr, uid, ml_ids, {'corrected_upstream': True}, check=False, update_check=False, context=context)
         return True
 
