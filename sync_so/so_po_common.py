@@ -309,6 +309,7 @@ class so_po_common(osv.osv_memory):
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
 
+        price_list = False
         # US-379: Fixed the price list retrieval 
         if 'pricelist_id' in header_info:
             price_list = header_info.get('pricelist_id')
