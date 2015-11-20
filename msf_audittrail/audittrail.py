@@ -685,7 +685,7 @@ class audittrail_rule(osv.osv):
                                 tr_domain.append(('value', '=', new_value))
                             tr_ids = self.pool.get('ir.translation').search(cr, uid, tr_domain)
 
-                            if tr_ids:
+                            if not tr_ids:
                                 continue
 
                         if old_value != new_value:
