@@ -314,6 +314,12 @@ class stock_picking(osv.osv):
                 else:
                     wizard_obj = self.pool.get('internal.picking.processor')
 
+                if pick.type == 'out' and pick.subtype == 'picking':
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('You cannot do this action on a Picking Ticket. Please check you are in the right view.')
+                    )
+
                 # US-148
                 if pick.type == 'in':
                     args = [('picking_id', '=', pick.id),

@@ -35,6 +35,7 @@ import invoice_date
 import down_payment
 import transfer_with_change
 import wizard_register_import
+import wizard_liquidity_position
 
 
 

@@ -93,21 +93,51 @@ def _populate_third_party_name(self, cr, uid, obj_id, field_name, name=None, con
     aml_obj = self.pool.get('account.move.line')
     aal_obj = self.pool.get('account.analytic.line')
 
-    # search all register lines that linked to this employee
-    absl_ids = absl_obj.search(cr, uid, [(field_name, '=', obj_id)], context = context)
-    for absl in absl_ids:
-        # search for the account.move.line that linked to the given register_line to update the partner_txt field
-        aml_ids = aml_obj.search(cr, uid, [('move_id', '=', absl)], context = context)
-        for aml in aml_obj.browse(cr, uid, aml_ids, context=context):
-            if aml.partner_txt != name: # only call write if needed
-                aml_obj.write(cr, uid, aml.id, {'partner_txt': name}, context=context)
+    # search all register lines that linked to this employee/partner
+    domain = [
+        (field_name, '=', obj_id),
+        # FIX of BKLG-80: only temp posted
+        # http://jira.unifield.org/browse/BKLG-80?focusedCommentId=39205&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-39205
+        ('state', '=', 'temp'),
+    ]
 
-                # perform changes to the account.analytic.line, a bit tricky, it must be done with sql, otherwise it will use always the "previous" value
-                # NOTE: pay attention that the write of move line deleted the current analytic line then recreates new analytic lines!
-                aal_ids = aal_obj.search(cr, uid, [('move_id', '=', aml.id)], context = context)
-                for aal in aal_obj.browse(cr, uid, aal_ids, context=context):
-                    if aal.partner_txt != name: # only call write if needed
-                        cr.execute("UPDATE %s SET partner_txt = '%s' WHERE id = %s" % (aal_obj._table, name, aal.id))
+    absl_ids = absl_obj.search(cr, uid, domain, context=context)
+    for absl in absl_ids:
+        # search for the account.move.line that linked to the given
+        je_ids = absl_obj._get_move_ids(cr, uid, [absl], context=context)
+        domain = [
+            ('move_id', 'in', je_ids),
+            # just in case of posted JIs returned by _get_move_ids
+            ('move_id.state', '=', 'draft'),
+            # only records with previous name
+            ('partner_txt', '!=', name),  
+        ]
+        aml_ids = aml_obj.search(cr, uid, domain, context=context)
+
+        if aml_ids:
+            # register_line to update the partner_txt field
+            # (using write to send sync messages)
+            aml_obj.write(cr, uid, aml_ids, {'partner_txt': name},
+                context=context)
+
+            # get reg line AJIs
+            domain = [
+                ('account_id.category', 'in', ('FUNDING', 'FREE1', 'FREE2')),
+                ('move_id', 'in', aml_ids),
+            ]
+            aal_ids = aal_obj.search(cr, uid, domain, context=context)
+
+            if aal_ids:
+                """
+                perform changes to regline JIs AJIs,
+                a bit tricky, it must be done with sql,
+                otherwise it will use always the "previous" value
+                NOTE: pay attention that the write of move line deleted the
+                current analytic line then recreates new analytic lines!
+                """
+                sql = "UPDATE account_analytic_line SET partner_txt = %s" \
+                    " WHERE id in %s"
+                cr.execute(sql, (name, tuple(aal_ids), ))
     return True
 
 def _get_third_parties_name(self, cr, uid, vals, context=None):

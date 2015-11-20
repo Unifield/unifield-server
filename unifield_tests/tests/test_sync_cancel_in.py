@@ -8,7 +8,7 @@ from resourcing import ResourcingTest
 import time
 
 
-class SyncCancelINTest(ResourcingTest):
+class SyncINTest(ResourcingTest):
 
     def setUp(self):
         """
@@ -16,7 +16,7 @@ class SyncCancelINTest(ResourcingTest):
         two lines.
         :return:
         """
-        super(SyncCancelINTest, self).setUp()
+        super(SyncINTest, self).setUp()
 
         if not hasattr(self, 'procurement_request'):
             self.procurement_request = False
@@ -33,6 +33,7 @@ class SyncCancelINTest(ResourcingTest):
         self.c_lc_obj = self.c1.get('sale.order.leave.close')
         self.c_so_cancel_obj = self.c1.get('sale.order.cancelation.wizard')
         self.c_pick_obj = self.c1.get('stock.picking')
+        self.c_move_obj = self.c1.get('stock.move')
         self.c_enter_reason_obj = self.c1.get('enter.reason')
         self.c_proc_in_obj = self.c1.get('stock.incoming.processor')
         self.c_move_in_obj = self.c1.get('stock.move.in.processor')
@@ -148,6 +149,9 @@ class SyncCancelINTest(ResourcingTest):
         # Get the IN associated to this PO
         self.c_in_ids = self.c_pick_obj.search([('purchase_id', '=', self.c_po_id), ('type', '=', 'in')])
         self.c_out_ids = self.c_pick_obj.search([('sale_id', '=', self.c_so_id), ('type', '=', 'out')])
+
+
+class SyncCancelINTest(SyncINTest):
 
     def tearDown(self):
         return
@@ -356,5 +360,43 @@ class SyncCancelINTest(ResourcingTest):
             "The number of IN moves by states is not correct :: Should be {'cancel': 0, 'assigned': 2} :: It is %s" % res,
         )
 
-def get_test_class():
-    return SyncCancelINTest
+class IRExtCuINTest(SyncINTest):
+
+    def setUp(self):
+        self.procurement_request = True
+        super(IRExtCuINTest, self).setUp()
+
+    def test_change_in_destination_type(self):
+        """
+        At reception, change the destination type from 'Cross-docking' to
+        'Stock'.
+        In case of IR to External location, don't write the requestor location
+        as destination location of the automatic generated INT.
+        """
+        # Process partially the IN
+        in_origin = self.c_pick_obj.read(self.c_in_ids[0], ['origin'])['origin']
+        proc_res = self.c_pick_obj.action_process(self.c_in_ids)
+        proc_id = proc_res.get('res_id')
+        self.c_proc_in_obj.copy_all([proc_id])
+        self.c_proc_in_obj.write([proc_id], {'dest_type': 'to_stock'})
+        self.c_proc_in_obj.do_incoming_shipment([proc_id])
+
+        # Check INT moves destination locations
+        int_ids = self.c_pick_obj.search([('origin', '=', in_origin)])
+        int_move_ids = self.c_move_obj.search([('picking_id', 'in', int_ids)])
+        for int_move in self.c_move_obj.browse(int_move_ids):
+            self.assert_(
+                int_move.location_dest_id.usage != 'customer',
+                "The destination location of the internal move is a customer location and shouldn't",
+            )
+
+        # Change OUT source location and process the OUT
+        self.c_pick_obj.button_stock_all(self.c_out_ids)
+        for out_id in self.c_out_ids:
+            proc_res = self.c_pick_obj.action_process([out_id])
+            self.c_proc_out_obj.copy_all([proc_res.get('res_id')])
+            self.c_proc_out_obj.do_partial([proc_res.get('res_id')])
+
+
+def get_test_suite():
+    return SyncCancelINTest, IRExtCuINTest

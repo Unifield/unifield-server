@@ -468,6 +468,7 @@ class sale_order_line_followup(osv.osv_memory):
                                'confirmed_wait': _('Confirmed (waiting)'),
                                'approved': _('Confirmed'),
                                'done': _('Closed'),
+                               'sourced': _('Sourced'),
                                'cancel': _('Cancelled'),
                                'except_picking': _('Exception'),
                                'except_invoice': _('Exception'),}

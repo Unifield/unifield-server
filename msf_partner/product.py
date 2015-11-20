@@ -68,7 +68,7 @@ class product_supplierinfo(osv.osv):
         'get_first_price': fields.function(_get_manu_price_dates, method=True, type="float", string="Indicative Price", digits_compute=dp.get_precision('Purchase Price Computation'), multi="compt_f"),
         'get_first_currency': fields.function(_get_manu_price_dates, method=True, type="many2one", relation="res.currency", string="Currency", multi="compt_f"),
         'get_till_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid till date", multi="compt_f"),
-        'get_from_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid form date", multi="compt_f"),
+        'get_from_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid from date", multi="compt_f"),
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the the supplier info without removing it."),
     }
     

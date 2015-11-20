@@ -78,6 +78,8 @@ class freight_manifest(report_sxw.rml_parse):
         line_obj = {}
 
         for line in lines:
+            if line.not_shipped:
+                continue
             if line.currency_id:
                 self.cur = line.currency_id.name
             self.parcetot += line.num_of_packs

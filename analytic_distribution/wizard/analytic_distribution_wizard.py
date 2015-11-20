@@ -63,6 +63,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             #+ to construct object research !
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True,
             domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+        'is_percentage_amount_touched': fields.boolean('Is percentage/amount updated ?', invisible=True),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -142,6 +143,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'percentage': _get_remaining_allocation,
         'amount': _get_remaining_allocation,
         'type': lambda *a: 'cost.center',
+        'is_percentage_amount_touched': False,
     }
 
     def onchange_percentage(self, cr, uid, ids, percentage, total_amount):
@@ -153,7 +155,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not percentage or not total_amount:
             return {}
         amount = abs((total_amount * percentage) / 100)
-        return {'value': {'amount': amount}}
+        return {'value': {'amount': amount, 'is_percentage_amount_touched': True}}
 
     def onchange_amount(self, cr, uid, ids, amount, total_amount):
         """
@@ -164,7 +166,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not amount or not total_amount:
             return {}
         percentage = abs((amount / total_amount) * 100)
-        return {'value': {'percentage': percentage}}
+        return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}}
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -352,8 +354,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             wiz = self.browse(cr, uid, ids, context=context)
             if wiz and wiz[0].wizard_id and wiz[0].wizard_id.total_amount:
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].wizard_id.total_amount) * 100.0)})
-        if vals.get('percentage', False) == 0.0:
-            raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
+        if vals.get('is_percentage_amount_touched', False):
+            if vals.get('percentage', False) == 0.0:
+                raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
+        else:
+            if 'percentage' in vals:
+                del vals['percentage']
+            if 'amount' in vals:
+                del vals['amount']
         res = super(analytic_distribution_wizard_lines, self).write(cr, uid, ids, vals, context=context)
         # Retrieve wizard_id field
         data = self.read(cr, uid, [ids[0]], ['wizard_id'], context=context)
@@ -813,7 +821,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el[0], 'destination_id': el[1]}, context=context)
             # else change current cost center
             else:
-                res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el]}, context=context)
+                res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el], 'is_percentage_amount_touched': True}, context=context)
             if res:
                 update_lines.append(res)
         # Delete useless cost center lines
@@ -910,6 +918,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if line in wiz_lines:
                 wiz_lines.remove(line)
                 processed_line_ids.append(line.get('id'))
+        distrib_changed = len(wiz_lines) > 0
         # Write changes for line that already exists
         for i in range(0,len(wiz_lines)):
             line = wiz_lines[i]
@@ -935,8 +944,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         search_ids = line_obj.search(cr, uid, [('distribution_id', '=', distrib.id)], context=context)
         for obj_id in search_ids:
             if obj_id not in processed_line_ids:
+                distrib_changed = True
                 line_obj.unlink(cr, uid, obj_id, context=context)
-        return True
+        return distrib_changed
 
     def _check_analytic_account_validity(self, cr, uid, ids, context=None):
         """
@@ -995,7 +1005,6 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         wiz2 = self.browse(cr, uid, ids, context=context)[0]
         line_totals = 0.0
         if wiz2.state == 'cc':
@@ -1043,9 +1052,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                         obj_id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [obj_id], {'analytic_distribution_id': distrib_id}, context=context)
             # Finally do registration for each type
+            new_distrib = False
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
                 # Compare and write modifications done on analytic lines
-                self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
+                new_distrib = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context) or new_distrib
                 # Create funding pool lines from CC lines if wizard is from PO/FO
                 # PAY ATTENTION THAT break avoid problem that delete new created funding pool
                 if line_type == 'cost.center' and wiz.state == 'cc' and (wiz.purchase_id or wiz.purchase_line_id or wiz.sale_order_id or wiz.sale_order_line_id):
@@ -1087,7 +1097,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if wizard_account_invoice:
             return wizard_account_invoice
         # Validate account_move if we come from a Journal Entry or a Journal Item
-        if wiz and (wiz.move_id or wiz.move_line_id):
+        if wiz and (wiz.move_id or wiz.move_line_id) and new_distrib:
             move_id = False
             if wiz.move_id:
                 move_id = wiz.move_id.id
@@ -1104,7 +1114,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                     reversal = True
                 if line.corrected:
                     correction = True
+            # AD changed at header level: all JIs should recreate AJI
+            # if an AD is set on a new line, this JI and all JIs in the same move can be valide
             self.pool.get('account.move').validate(cr, uid, [move_id])
+
             # As analytic lines were deleted and recreated, we need to recreate links between reversal, corrections, etc.
             if reversal or correction:
                 for line in move.line_id:
@@ -1124,18 +1137,21 @@ class analytic_distribution_wizard(osv.osv_memory):
             # check account presence
             if not wiz.account_id:
                 raise osv.except_osv(_('Warning'), _('Seems that no G/L account was found for this Register Analytic Distribution Wizard. Please give one.'))
-            distribution_id = wiz.distribution_id and wiz.distribution_id.id or False
-            # write analytic distribution on move line and validate move
-            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', wiz.register_line_id.account_id.id), ('id', 'not in', [wiz.register_line_id.first_move_line_id.id]), ('move_id', 'in', [x and x.id for x in wiz.register_line_id.move_ids])])
-            # copy distribution
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, distribution_id, {}, context=context)
-            new_register_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, distribution_id, {}, context=context)
-            # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
-            self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': wiz.account_id.id}, check=False, update_check=False)
-            self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.register_line_id.id], {'account_id': wiz.account_id.id, 'analytic_distribution_id': new_register_distribution_id}, context=context)
-            self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
-        # Update analytic lines
-        self.update_analytic_lines(cr, uid, ids, context=context)
+            if wiz.account_id.id != wiz.register_line_id.account_id.id or new_distrib:
+                distribution_id = wiz.distribution_id and wiz.distribution_id.id or False
+                # write analytic distribution on move line and validate move
+                ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', wiz.register_line_id.account_id.id), ('id', 'not in', [wiz.register_line_id.first_move_line_id.id]), ('move_id', 'in', [x and x.id for x in wiz.register_line_id.move_ids])])
+                # copy distribution
+                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, distribution_id, {}, context=context)
+                new_register_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, distribution_id, {}, context=context)
+                # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
+                self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': wiz.account_id.id}, check=False, update_check=False)
+                self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.register_line_id.id], {'account_id': wiz.account_id.id, 'analytic_distribution_id': new_register_distribution_id}, context=context)
+                # account.move validate is called in account.bank.statement.line write
+                #self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
+        elif new_distrib:
+            # Update analytic lines
+            self.update_analytic_lines(cr, uid, ids, context=context)
 
         if wiz and wiz.move_line_id and wiz.move_line_id.move_id and \
             wiz.move_line_id.move_id.imported:

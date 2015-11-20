@@ -628,7 +628,9 @@ class shipment(osv.osv):
                 picking_obj.force_assign(cr, uid, [new_packing_id])
 
             # Log creation message
-            self.log(cr, uid, shipment.id, _('The new Shipment %s has been created.') % (shipment_name,))
+            message = _('The new Shipment %s has been created.')
+            self.log(cr, uid, shipment.id, message%(shipment_name,))
+            self.infolog(cr, uid, message%(shipment.id,))
             # The shipment is automatically shipped, no more pack states in between.
             self.ship(cr, uid, [shipment_id], context=context)
 
@@ -1982,7 +1984,9 @@ class stock_picking(osv.osv):
             result[stock_picking['id']] = values
 
             if stock_picking['pack_family_memory_ids']:
-                for family in self.pool.get('pack.family.memory').read(cr, uid, stock_picking['pack_family_memory_ids'], ['num_of_packs', 'total_weight', 'total_volume'], context=context):
+                for family in self.pool.get('pack.family.memory').browse(cr, uid, stock_picking['pack_family_memory_ids'], context=context):
+                    if family.shipment_id and family.shipment_id.parent_id and family.not_shipped:
+                        continue
                     # number of packs from pack_family
                     num_of_packs = family['num_of_packs']
                     values['num_of_packs'] += int(num_of_packs)
@@ -2853,8 +2857,17 @@ class stock_picking(osv.osv):
         pick_to_check = set()
 
         for obj in self.browse(cr, uid, ids, context=context):
-            # the convert function should only be called on draft picking ticket
-            assert obj.subtype == 'picking' and obj.state in ('draft', 'assigned'), 'the convert function should only be called on draft picking ticket objects'
+            if obj.subtype == 'standard':
+                raise osv.except_osv(
+                    _('Bad state'),
+                    _('The document you want to convert is already a standard OUT'),
+                )
+
+            if obj.subtype != 'picking' or obj.state not in ('draft', 'assigned'):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The convert function should only be called on draft picking ticket objects'),
+                )
 #            if self.has_picking_ticket_in_progress(cr, uid, [obj.id], context=context)[obj.id]:
 #                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
 
@@ -2864,7 +2877,7 @@ class stock_picking(osv.osv):
                 new_name = context.get('rw_backorder_name')
                 del context['rw_backorder_name']
 
-            self.log(cr, uid, obj.id, _('The Preparation Picking (%s) has been converted to simple Out (%s).') % (obj.name, new_name))
+            self.log(cr, uid, obj.id, _('The Picking Ticket (%s) has been converted to simple Out (%s).') % (obj.name, new_name))
 
             keep_move = self._get_keep_move(cr, uid, [obj.id], context=context).get(obj.id, None)
 
@@ -2993,17 +3006,23 @@ class stock_picking(osv.osv):
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
+            tree_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')
             view_id = view_id and view_id[1] or False
-            context.update({'picking_type': 'delivery_order', 'view_id': view_id})
+            tree_view_id = tree_view_id and tree_view_id[1] or False
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_out_search')
+            search_view_id = search_view_id and search_view_id[1] or False
+            context.update({'picking_type': 'delivery_order', 'view_id': view_id, 'search_view_id': search_view_id})
             return {'name':_("Delivery Orders"),
                     'view_mode': 'form,tree',
-                    'view_id': [view_id],
+                    'view_id': [view_id, tree_view_id],
+                    'search_view_id': search_view_id,
                     'view_type': 'form',
                     'res_model': 'stock.picking',
                     'res_id': new_pick_id or obj.id,
                     'type': 'ir.actions.act_window',
                     'target': 'crush',
                     'context': context,
+                    'domain': [('type', '=', 'out'), ('subtype', '=', 'standard')],
                     }
 
 
@@ -3027,9 +3046,18 @@ class stock_picking(osv.osv):
         move_to_update = []
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+        tree_view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_tree')
         view_id = view_id and view_id[1] or False
+        tree_view_id = tree_view_id and tree_view_id[1] or False
+        search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_search')
+        search_view_id = search_view_id and search_view_id[1] or False
 
         for out in self.browse(cr, uid, ids, context=context):
+            if out.subtype == 'picking':
+                raise osv.except_osv(
+                    _('Bad document'),
+                    _('The document you want to convert is already a Picking Ticket')
+                )
             if out.state in ('cancel', 'done'):
                 raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
 
@@ -3064,15 +3092,17 @@ class stock_picking(osv.osv):
         if not context.get('sync_message_execution', False):
             self._hook_create_rw_out_sync_messages(cr, uid, [out.id], context, False)
 
-        context.update({'picking_type': 'picking'})
+        context.update({'picking_type': 'picking', 'search_view_id': search_view_id})
         return {'name': _('Picking Tickets'),
                 'view_mode': 'form,tree',
-                'view_id': [view_id],
+                'view_id': [view_id, tree_view_id],
+                'search_view_id': search_view_id,
                 'view_type': 'form',
                 'res_model': 'stock.picking',
                 'res_id': out.id,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
+                'domain': [('type', '=', 'out'), ('subtype', '=', 'picking')],
                 'context': context}
 
     def do_partial_out(self, cr, uid, wizard_ids, context=None):
@@ -3415,6 +3445,7 @@ class stock_picking(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
             # We force availability
             self.force_assign(cr, uid, [new_picking_id])
+            self.infolog(cr, uid, "The Validated Picking Ticket id:%s has been generated by the Draft Picking Ticket id:%s" % (new_picking_id, picking.id))
 
         # Just to avoid an error on kit test because view_picking_ticket_form is not still loaded when test is ran
         msf_outgoing = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
@@ -3655,6 +3686,8 @@ class stock_picking(osv.osv):
             # if the flow type is in quick mode, we perform the ppl steps automatically
             if picking.flow_type == 'quick' and new_ppl:
                 return self.quick_mode(cr, uid, new_ppl.id, context=context)
+
+            self.infolog(cr, uid, "The Validated Picking Ticket id:%s has been validated" % (picking.id))
 
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
