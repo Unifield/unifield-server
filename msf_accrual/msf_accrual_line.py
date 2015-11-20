@@ -56,10 +56,11 @@ class msf_accrual_line(osv.osv):
             es = ''
             if rec.state != 'draft' and rec.analytic_distribution_id \
                 and rec.analytic_distribution_id.move_line_ids:
-                    # get the NOT REV entry (REV posting date is M+1)
+                    # get the NOT REV entry
+                    # (same period as REV posting date is M+1)
                     move_line_br = False
                     for mv in rec.analytic_distribution_id.move_line_ids:
-                        if mv.date == rec.date:
+                        if mv.period_id.id == rec.period_id.id:
                             move_line_br = mv
                             break
                     if move_line_br:
