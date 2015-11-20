@@ -53,12 +53,19 @@ class msf_accrual_line(osv.osv):
         if not ids:
             return res
         for rec in self.browse(cr, uid, ids, context=context):
-            res[rec.id] = rec.state != 'draft' \
-                and rec.analytic_distribution_id \
-                and rec.analytic_distribution_id.move_line_ids \
-                and rec.analytic_distribution_id.move_line_ids[0] \
-                and rec.analytic_distribution_id.move_line_ids[0].move_id.name \
-                or ''
+            es = ''
+            if rec.state != 'draft' and rec.analytic_distribution_id \
+                and rec.analytic_distribution_id.move_line_ids:
+                    # get the NOT REV entry (REV posting date is M+1)
+                    move_line_br = False
+                    for mv in rec.analytic_distribution_id.move_line_ids:
+                        if mv.date == rec.date:
+                            move_line_br = mv
+                            break
+                    if move_line_br:
+                        es = move_line_br.move_id \
+                             and move_line_br.move_id.name or ''
+            res[rec.id] = es
         return res
     
     _columns = {
