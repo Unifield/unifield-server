@@ -54,7 +54,8 @@
                         <field name="third_party_name"/>
                         <field name="analytic_distribution_id" invisible="1"/>
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" 
-                            icon="terp-stock_symbol-selection" context="context"/>
+                            icon="terp-stock_symbol-selection" context="context"
+                             states="draft" />
                         <field name="expense_account_id"/>
                         <field name="accrual_account_id"/>
                         <field name="accrual_amount"/>
