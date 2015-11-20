@@ -2324,7 +2324,7 @@ class sale_order_line(osv.osv):
                 ('order_id', '=', line['order_id'][0]),
                 ('id', '!=', line['id']),
             ], limit=1, context=context)
-            if ltc_ids[0] not in lines_to_check:
+            if ltc_ids and ltc_ids[0] not in lines_to_check:
                 lines_to_check.append(ltc_ids[0])
 
         res = super(sale_order_line, self).unlink(cr, uid, ids, context=context)
