@@ -435,7 +435,7 @@ class update(osv.osv):
         start_time = time.time()
         self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, offset, max_size))
         while not ids or not update_to_send:
-            if not restrict_oc_version and time.time() - start_time > 500:
+            if time.time() - start_time > 500:
                 timed_out = True
                 break
             query = base_query % (offset, max_size)
