@@ -22,6 +22,8 @@
 import time
 
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+
 
 class log_line(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -62,6 +64,8 @@ class log_line(report_sxw.rml_parse):
 
 
 report_sxw.report_sxw('report.msf.log.line', 'audittrail.log.line', 'addons/msf_audittrail/report/log_line.rml', parser=log_line, header="internal landscape")
+
+SpreadsheetReport('report.msf.log.line_xls', 'audittrail.log.line', 'addons/msf_audittrail/report/log_line_xls.mako', parser=log_line)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

@@ -57,6 +57,160 @@ class sale_order(osv.osv):
 sale_order()
 
 
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+    _trace = True
+
+product_product()
+
+
+class product_template(osv.osv):
+    _name = 'product.template'
+    _inherit = 'product.template'
+    _trace = True
+
+product_template()
+
+
+class product_supplier(osv.osv):
+    _name = 'product.supplierinfo'
+    _inherit = 'product.supplierinfo'
+    _trace = True
+
+    def add_audit_line(self, cr, uid, name, object_id, res_id, fct_object_id,
+                       fct_res_id, sub_obj_name, field_description,
+                       trans_field_description, new_value, old_value, context=None):
+
+        audit_line_obj = self.pool.get('audittrail.log.line')
+        audit_seq_obj = self.pool.get('audittrail.log.sequence')
+        log = 1
+
+        domain = [
+            ('model', '=', 'product.template'),
+            ('res_id', '=', res_id),
+        ]
+
+        log_sequence = audit_seq_obj.search(cr, uid, domain)
+        if log_sequence:
+            log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
+            log = log_seq.get_id(code_or_id='id')
+
+        vals = {
+            'user_id': uid,
+            'method': 'write',
+            'name': name,
+            'object_id': object_id,
+            'res_id': res_id,
+            'fct_object_id': fct_object_id,
+            'fct_res_id': fct_res_id,
+            'sub_obj_name': sub_obj_name,
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'field_description': field_description,
+            'trans_field_description': trans_field_description,
+            'new_value': new_value,
+            'new_value_text': new_value,
+            'new_value_fct': new_value,
+            'old_value': old_value,
+            'old_value_text': old_value,
+            'old_value_fct': old_value,
+            'log': log,
+        }
+        audit_line_obj.create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        ir_model = self.pool.get('ir.model')
+        model_name = self._name
+        product_model_name = 'product.template'
+
+        object_id = ir_model.search(cr, uid, [('model', '=', product_model_name)], context=context)[0]
+        fct_object_id = ir_model.search(cr, uid, [('model', '=', model_name)], context=context)[0]
+
+        suppliers = self.browse(cr, uid, ids, context=context)
+        for supplier in suppliers:
+            if vals.get('sequence') and vals['sequence'] != supplier.sequence:
+                self.add_audit_line(cr, uid, 'sequence', object_id,
+                                    supplier.product_id.id, fct_object_id,
+                                    supplier.id, supplier.name.name, 'Supplier sequence',
+                                    'Supplier sequence', vals['sequence'],
+                                    supplier.sequence, context=context)
+
+        res = super(product_supplier, self).write(cr, uid, ids, vals,
+                                                  context=context)
+        return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Create an audit log lines when create a new supplierinfo
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        ir_model = self.pool.get('ir.model')
+        prod_model = self.pool.get('product.template')
+        model_name = self._name
+        product_model_name = 'product.template'
+
+        object_id = ir_model.search(cr, uid, [('model', '=', product_model_name)], context=context)[0]
+        fct_object_id = ir_model.search(cr, uid, [('model', '=', model_name)], context=context)[0]
+
+        for supplierinfo in self.browse(cr, uid, ids, context=context):
+            old_seller = []
+            seller_ids = supplierinfo.product_id.seller_ids
+            for seller in seller_ids:
+                old_seller.append((seller.sequence, seller.name.name))
+
+            res = super(product_supplier, self).unlink(cr, uid, [supplierinfo.id], context=context)
+
+            product_brw = self.pool.get('product.template').browse(cr, uid, supplierinfo.product_id.id, context=context)
+            new_seller = []
+            for seller in product_brw.seller_ids:
+                new_seller.append((seller.sequence, seller.name.name))
+
+            self.add_audit_line(cr, uid, 'seller_ids', object_id,
+                            product_brw.id, False, False,
+                            False, prod_model._columns['seller_ids'].string,
+                            False, new_seller, old_seller, context=context)
+
+        return res
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Create an audit log lines when create a new supplierinfo
+        """
+        ir_model = self.pool.get('ir.model')
+        prod_model = self.pool.get('product.template')
+        model_name = self._name
+        product_model_name = 'product.template'
+
+        object_id = ir_model.search(cr, uid, [('model', '=', product_model_name)], context=context)[0]
+        fct_object_id = ir_model.search(cr, uid, [('model', '=', model_name)], context=context)[0]
+
+        old_seller = []
+        if vals.get('product_id', None):
+            seller_ids = prod_model.browse(cr, uid, vals.get('product_id'), context=context).seller_ids
+            for seller in seller_ids:
+                old_seller.append((seller.sequence, seller.name.name))
+
+        res = super(product_supplier, self).create(cr, uid, vals, context=context)
+
+        new_seller = list(old_seller)
+        seller = self.browse(cr, uid, res, context=context)
+        new_seller.append((seller.sequence, seller.name.name))
+
+        self.add_audit_line(cr, uid, 'seller_ids', object_id,
+                            vals.get('product_id'), False, False,
+                            False, prod_model._columns['seller_ids'].string,
+                            False, new_seller, old_seller, context=context)
+
+        return res
+
+product_supplier()
+
+
 class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
@@ -144,7 +298,7 @@ class account_bank_statement_line(osv.osv):
 
 account_bank_statement_line()
 
-class account_cashbox_line(osv.osv): 
+class account_cashbox_line(osv.osv):
     _name = 'account.cashbox.line'
     _inherit = 'account.cashbox.line'
     _trace = True
@@ -346,6 +500,7 @@ class audittrail_rule(osv.osv):
             keyword = 'client_action_relate'
             value = 'ir.actions.act_window,' + str(action_id)
             obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False)
+            cr.execute('update ir_values set sequence = 99999 where model=%s and key=\'action\' and name=%s', (thisrule.object_id.model, 'View_log_' + thisrule.object_id.model))
             # End Loop
 
         # Check if an export model already exist for audittrail.rule
@@ -445,12 +600,18 @@ class audittrail_rule(osv.osv):
                 obj_ids = []
 
             model_name_tolog = rule.object_id.model
+            model_id_tolog = rule.object_id.id
             parent_field = False
             if rule.parent_field_id:
                 parent_field_display = rule.name_get_field_id.name
                 parent_field = rule.parent_field_id.name
                 model_name_tolog = rule.parent_field_id.relation
                 model_parent_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
+
+            inherits = self.pool.get(model_name_tolog)._inherits
+            if inherits:
+                model_name_tolog = inherits.keys()[-1]
+                model_id_tolog = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
 
             if method in ('write', 'create'):
                 original_fields = current.values()[0].keys()
@@ -474,12 +635,17 @@ class audittrail_rule(osv.osv):
                 if parent_field:
                     parent_field_id = new_values_computed[res_id][parent_field][0]
 
+                inherit_field_id = False
+                if inherits:
+                    inherits_field = inherits.values()[-1]
+                    inherit_field_id = self.pool.get(rule.object_id.model).read(cr, uid, res_id, [inherits_field])[inherits_field][0]
+
                 vals = {
                     'name': rule.object_id.name,
                     'method': method,
-                    'object_id': rule.object_id.id,
+                    'object_id': model_id_tolog,
                     'user_id': uid_orig,
-                    'res_id': parent_field_id or res_id,
+                    'res_id': parent_field_id or inherit_field_id or res_id,
                 }
 
                 # Add the name of the created sub-object
@@ -488,9 +654,9 @@ class audittrail_rule(osv.osv):
                     vals.update({
                         'sub_obj_name': new_values_computed[res_id][parent_field_display],
                         'rule_id': rule.id,
-                        'fct_object_id': rule.object_id.id,
+                        'fct_object_id': model_id_tolog,
                         'object_id': model_parent_id,
-                        'fct_res_id': res_id
+                        'fct_res_id': inherit_field_id or res_id,
                     })
                 if method == 'unlink':
                     vals.update({
@@ -499,7 +665,7 @@ class audittrail_rule(osv.osv):
                     })
                     log_line_obj.create(cr, uid, vals)
 
-                elif method in  ('write', 'create'):
+                elif method in ('write', 'create'):
                     if method == 'create':
                         vals.update({
                             'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
@@ -515,6 +681,25 @@ class audittrail_rule(osv.osv):
                     for field in fields_to_trace.keys():
                         old_value = record.get(field, False)
                         new_value = current[res_id].get(field, False)
+
+                        # Don't trace two times the translatable fields
+                        if fields_to_trace[field].translate:
+                            tr_domain  = [
+                                ('name', '=', '%s,%s' % (rule.object_id.model, field)),
+                                ('res_id', '=', res_id),
+                                ('type', '=', 'model'),
+                            ]
+                            if context.get('lang'):
+                                tr_domain.append(('lang', '=', context.get('lang', 'en_US')),)
+                            if new_value:
+                                tr_domain.append(('value', '=', new_value))
+                            tr_ids = self.pool.get('ir.translation').search(cr, uid, tr_domain)
+                            if not new_value and tr_ids:
+                                old_value = self.pool.get('ir.translation').read(cr, uid, tr_ids[0], ['value'])['value']
+
+                            if not tr_ids:
+                                continue
+
                         if old_value != new_value:
                             if fields_to_trace[field].ttype == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10]:
                                 continue
@@ -569,7 +754,7 @@ class audittrail_log_line(osv.osv):
     """
     _name = 'audittrail.log.line'
     _description = "Log Line"
-    _order = 'timestamp asc'
+    _order = 'timestamp desc'
 
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
@@ -666,6 +851,38 @@ class audittrail_log_line(osv.osv):
                 res = [('field_description', 'in', field_names)]
 
         return res
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+               context={}, count=False):
+
+        search_ids = super(audittrail_log_line, self).search(cr, uid, args, offset=0,
+                                                             limit=None, order=order,
+                                                             context=context, count=count)
+        # US-313: check if the context provides active_model in order to search for inherited models for other fields, if not just return 
+        if 'active_model' not in context:
+            return search_ids
+        
+        id_model_obj = self.pool.get('ir.model')
+        model_id = context['active_model']
+        current_obj = self.pool.get(model_id)
+        inherit = False
+        for obj_class in current_obj._inherits:
+            inherit = True
+            args_inherit = [('model', '=', obj_class)]
+            obj_inherit = id_model_obj.search(cr, uid, args_inherit, context=context)
+            new_args = [('object_id', '=', obj_inherit[0]),
+                        ('res_id', '=', context['active_id'])]
+            ids = super(audittrail_log_line, self).search(cr, uid, new_args, offset=0,
+                                                          limit=None, order=order,
+                                                          context=context, count=count)
+            search_ids = search_ids + ids
+
+        if inherit and not isinstance(search_ids, (int, long)):
+            args_final = [('id', 'in', search_ids)]
+            search_ids = super(audittrail_log_line, self).search(cr, uid, args_final, offset=offset,
+                                                                 limit=limit, order=order,
+                                                                 context=context, count=count)
+        return search_ids
 
 
     _columns = {
