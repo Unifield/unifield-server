@@ -518,12 +518,31 @@ class procurement_request(osv.osv):
 
         return True
 
+    def test_state_done(self, cr, uid, ids, mode, *args):
+        if not self.test_state(cr, uid, ids, mode, *args):
+            return False
+
+        for ir in self.browse(cr, uid, ids):
+            is_out = ir.location_requestor_id.usage == 'customer'
+            if not is_out:
+                return True
+
+            ir_lines = [x.id for x in ir.order_line]
+            out_move_ids = self.pool.get('stock.move').search(cr, uid, [
+                ('picking_id.type', '=', 'out'),
+                ('sale_line_id', 'in', ir_lines),
+                ('state', 'not in', ['done', 'cancel']),
+            ])
+            if out_move_ids:
+                return False
+
+        return True
+
     def procurement_done(self, cr, uid, ids, context=None):
         '''
         Creates all procurement orders according to lines
         '''
         self.write(cr, uid, ids, {'state': 'done'})
-
         return True
 
     def pricelist_id_change(self, cr, uid, ids, pricelist_id):
