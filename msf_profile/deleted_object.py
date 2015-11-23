@@ -89,7 +89,11 @@ class extended_orm_delete_method:
                                                   # orm.orm_memory class
             return res
         deletion_date = time.strftime('%Y-%m-%d %H:%M:%S')
-        obj_sd_ref = self.pool.get(self._name).get_sd_ref(cr, uid, ids)
+        model_obj = self.pool.get(self._name)
+        if not hasattr(model_obj, 'get_sd_ref'):
+            # sync client not installed
+            return res
+        obj_sd_ref = model_obj.get_sd_ref(cr, uid, ids)
         for sub_ids in cr.split_for_in_conditions(ids):
             # keep a track of deleted object if there are not blacklisted
             # by creating a delete_object
