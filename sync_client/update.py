@@ -144,37 +144,47 @@ class update_to_send(osv.osv):
             export_fields = eval(rule.included_fields or '[]')
             if 'id' not in export_fields:
                 export_fields.append('id')
-
-            ids_to_compute = self.need_to_push(cr, uid,
-                self.search_ext(cr, uid, domain, context=context),
+            ids_need_to_push = self.need_to_push(cr, uid, [], 
                 [m.group(0) for m in map(re_fieldname.match, export_fields)],
+                empty_ids=True,
                 context=context)
+            if not ids_need_to_push:
+                return 0
+            domain.append(('id', 'in', ids_need_to_push))
+
+            ids_to_compute = self.search_ext(cr, uid, domain, context=context)
             if not ids_to_compute:
                 return 0
 
             owners = self.get_destination_name(cr, uid,
                 ids_to_compute, rule.owner_field, context)
-            datas = self.export_data(cr, uid, ids_to_compute,
-                export_fields, context=context)['datas']
-            sdrefs = self.get_sd_ref(cr, uid, ids_to_compute,
-                field=['name','version','force_recreation','id'], context=context)
-            ustr_export_fields = tools.ustr(export_fields)
-            for (id, row) in zip(ids_to_compute, datas):
-                sdref, version, force_recreation, data_id = sdrefs[id]
-                for owner in (owners[id] if hasattr(owners[id], '__iter__') else [owners[id]]):
-                    update_id = update.create(cr, uid, {
-                        'session_id' : session_id,
-                        'rule_id' : rule.id,
-                        'owner' : owner,
-                        'model' : self._name,
-                        'sdref' : sdref,
-                        'version' : version + 1,
-                        'force_recreation' : force_recreation,
-                        'fields' : ustr_export_fields,
-                        'values' : tools.ustr(row),
-                        'handle_priority' : rule.handle_priority,
-                    }, context=context)
-                    update._logger.debug("Created 'normal' update model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
+            min_offset = 0
+            max_offset = len(ids_to_compute)
+
+            while min_offset < max_offset:
+                offset = min_offset + 200 < max_offset and min_offset +200 or max_offset
+                datas = self.export_data(cr, uid, ids_to_compute[min_offset:offset],
+                    export_fields, context=context)['datas']
+                sdrefs = self.get_sd_ref(cr, uid, ids_to_compute,
+                    field=['name','version','force_recreation','id'], context=context)
+                ustr_export_fields = tools.ustr(export_fields)
+                for (id, row) in zip(ids_to_compute[min_offset:offset], datas):
+                    sdref, version, force_recreation, data_id = sdrefs[id]
+                    for owner in (owners[id] if hasattr(owners[id], '__iter__') else [owners[id]]):
+                        update_id = update.create(cr, uid, {
+                            'session_id' : session_id,
+                            'rule_id' : rule.id,
+                            'owner' : owner,
+                            'model' : self._name,
+                            'sdref' : sdref,
+                            'version' : version + 1,
+                            'force_recreation' : force_recreation,
+                            'fields' : ustr_export_fields,
+                            'values' : tools.ustr(row),
+                            'handle_priority' : rule.handle_priority,
+                        }, context=context)
+                        update._logger.debug("Created 'normal' update model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
+                min_offset += 200
 
             self.clear_synchronization(cr, uid, ids_to_compute, context=context)
 
@@ -185,7 +195,7 @@ class update_to_send(osv.osv):
                 return 0
 
             ids_to_delete = self.need_to_push(cr, uid,
-                self.search_deleted(cr, uid, [('module','=','sd')], context=context),
+                self.search_deleted(cr, uid, module='sd', context=context),
                 context=context)
             if not ids_to_delete:
                 return 0
@@ -249,13 +259,18 @@ class update_to_send(osv.osv):
         return (ids_in_package, data)
 
     def sync_finished(self, cr, uid, update_ids, sync_field='sync_date', context=None):
-        for update in self.browse(cr, uid, update_ids, context=context):
-            try:
-                self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                    update.sdref, {'version':update.version,sync_field:update.create_date},
-                    context=context)
-            except ValueError:
-                self._logger.warning("Cannot find record %s during pushing update process!" % update.sdref)
+        min_offset = 0
+        max_offset = len(update_ids)
+        while min_offset < max_offset:
+            offset = (min_offset + 200) < max_offset and min_offset + 200 or max_offset
+            for update in self.browse(cr, uid, update_ids[min_offset:offset], context=context):
+                try:
+                    self.pool.get('ir.model.data').update_sd_ref(cr, uid,
+                        update.sdref, {'version':update.version,sync_field:update.create_date},
+                        context=context)
+                except ValueError:
+                    self._logger.warning("Cannot find record %s during pushing update process!" % update.sdref)
+            min_offset += 200
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
         self._logger.debug(_("Push finished: %d updates") % len(update_ids))
 
@@ -375,10 +390,7 @@ class update_received(osv.osv):
                 group_key = (update.sequence_number, 1, -update.rule_sequence)
             else:
                 group_key = (update.sequence_number, 0,  update.rule_sequence)
-            try:
-                update_groups[group_key].append(update)
-            except KeyError:
-                update_groups[group_key] = [update]
+            update_groups.setdefault(group_key, []).append(update)
         self.write(cr, uid, update_ids, {'execution_date': fields.datetime.now()}, context=context)
 
         def secure_import_data(obj, fields, values):

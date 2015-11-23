@@ -108,7 +108,7 @@ class MonitorLogger(object):
     def close(self):
         self.switch('status', self.final_status)
         self.write()
-        self.cr.close()
+        self.cr.close(True)
         del self.cr
 
     def link(self, model, column, res_id):

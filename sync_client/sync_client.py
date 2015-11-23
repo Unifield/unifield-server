@@ -89,7 +89,7 @@ class BackgroundProcess(Thread):
         except:
             pass
         finally:
-            cr.close()
+            cr.close(True)
 
 def sync_subprocess(step='status', defaults_logger={}):
     def decorator(fn):
@@ -247,7 +247,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 if make_log:
                     logger.close()
                     if self.sync_cursor is not None:
-                        self.sync_cursor.close()
+                        self.sync_cursor.close(True)
                 else:
                     logger.write()
             return res
@@ -541,7 +541,7 @@ class Entity(osv.osv):
         if not res[0]: raise Exception, res[1]
 
         updates_count = self.retrieve_update(cr, uid, max_packet_size, recover=recover, context=context)
-        self._logger.info("::::::::The instance " + entity.name + " pulled: " + str(res[1]) + " messages and " + str(updates_count) + " updates.")        
+        self._logger.info("::::::::The instance " + entity.name + " pulled: " + str(res[1]) + " messages and " + str(updates_count) + " updates.")
         updates_executed = self.execute_updates(cr, uid, context=context)
         if updates_executed == 0 and updates_count > 0:
             self._logger.warning("No update to execute, this case should never occurs.")
@@ -577,8 +577,8 @@ class Entity(osv.osv):
         last = (last_seq >= max_seq)
         updates_count = 0
         logger_index = None
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         while not last:
-            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
             res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
             if res and res[0]:
                 updates_count += updates.unfold_package(cr, uid, res[1], context=context)
@@ -616,46 +616,33 @@ class Entity(osv.osv):
 
         # Get a list of updates to execute
         # Warning: execution order matter
-        update_ids = updates.search(cr, uid, [('run', '=', False)], order='id asc', context=context)
+        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, rule_sequence, id asc', context=context)
         update_count = len(update_ids)
         if not update_count: return 0
-
-        # Sort updates by rule_sequence
-        whole = updates.browse(cr, uid, update_ids, context=context)
-        update_groups = dict()
-
-        for update in whole:
-            group_key = (update.sequence_number, update.rule_sequence)
-            try:
-                update_groups[group_key].append(update.id)
-            except KeyError:
-                update_groups[group_key] = [update.id]
 
         try:
             if logger: logger_index = logger.append()
             done = []
             imported, deleted = 0, 0
-            for rule_seq in sorted(update_groups.keys()):
-                update_ids = update_groups[rule_seq]
-                while update_ids:
-                    to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
-                    messages, imported_executed, deleted_executed = \
-                        updates.execute_update(cr, uid,
-                            to_do,
-                            priorities=priorities_stuff,
-                            context=context)
-                    imported += imported_executed
-                    deleted += deleted_executed
-                    # Do nothing with messages
-                    done.extend(to_do)
-                    if logger:
-                        logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
-                                                     % (imported, deleted, update_count))
-                        logger.write()
-                    # intermittent commit
-                    if len(done) >= MAX_EXECUTED_UPDATES:
-                        done[:] = []
-                        cr.commit()
+            while update_ids:
+                to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
+                messages, imported_executed, deleted_executed = \
+                    updates.execute_update(cr, uid,
+                        to_do,
+                        priorities=priorities_stuff,
+                        context=context)
+                imported += imported_executed
+                deleted += deleted_executed
+                # Do nothing with messages
+                done += to_do
+                if logger:
+                    logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
+                                                 % (imported, deleted, update_count))
+                    logger.write()
+                # intermittent commit
+                if len(done) >= MAX_EXECUTED_UPDATES:
+                    done[:] = []
+                    cr.commit()
         finally:
             cr.commit()
 
@@ -923,6 +910,7 @@ class Entity(osv.osv):
 
         return True
 
+
     @sync_process()
     def sync_withbackup(self, cr, uid, context=None):
         """
@@ -991,7 +979,7 @@ class Entity(osv.osv):
             #except StandardError:
             #    return False
             self.aborting = True
-            self.sync_cursor.close()
+            self.sync_cursor.close(True)
         return True
 
 Entity()

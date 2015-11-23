@@ -63,6 +63,7 @@ def check_domain(self, cr, uid, rec, context=None):
     message = "* Domain syntax... "
     try:
         domain = eval(rec.domain)
+        domain.append(('id', 'in', [1, 2, 3]))
         self.pool.get(rec.model_id).search_ext(cr, uid, domain, context=None)
     except:
         message += "failed!\n"
