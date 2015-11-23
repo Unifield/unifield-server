@@ -125,10 +125,8 @@ class browse_record_list(list):
         super(browse_record_list, self).__init__(lst)
         self.context = context
 
-
 class browse_record(object):
     logger = netsvc.Logger()
-
     def __init__(self, cr, uid, id, table, cache, context=None, list_class=None, fields_process=None):
         '''
         table : the object (inherited from orm)
@@ -248,7 +246,7 @@ class browse_record(object):
                                         # the target is not loaded yet.
                                         continue
                                     new_data[field_name] = browse_record(self._cr,
-                                        self._uid, value, obj, self._cache,
+                                        self._uid, value, obj, {},
                                         context=self._context,
                                         list_class=self._list_class,
                                         fields_process=self._fields_process)
@@ -259,7 +257,7 @@ class browse_record(object):
                         else:
                             new_data[field_name] = browse_null()
                     elif field_column._type in ('one2many', 'many2many') and len(result_line[field_name]):
-                        new_data[field_name] = self._list_class([browse_record(self._cr, self._uid, id, self._table.pool.get(field_column._obj), self._cache, context=self._context, list_class=self._list_class, fields_process=self._fields_process) for id in result_line[field_name]], self._context)
+                        new_data[field_name] = self._list_class([browse_record(self._cr, self._uid, id, self._table.pool.get(field_column._obj), {}, context=self._context, list_class=self._list_class, fields_process=self._fields_process) for id in result_line[field_name]], self._context)
                     elif field_column._type in ('reference'):
                         if result_line[field_name]:
                             if isinstance(result_line[field_name], browse_record):
@@ -275,7 +273,7 @@ class browse_record(object):
                                 ref_id = long(ref_id)
                                 if ref_id:
                                     obj = self._table.pool.get(ref_obj)
-                                    new_data[field_name] = browse_record(self._cr, self._uid, ref_id, obj, self._cache, context=self._context, list_class=self._list_class, fields_process=self._fields_process)
+                                    new_data[field_name] = browse_record(self._cr, self._uid, ref_id, obj, {}, context=self._context, list_class=self._list_class, fields_process=self._fields_process)
                                 else:
                                     new_data[field_name] = browse_null()
                         else:
@@ -466,13 +464,13 @@ class orm_template(object):
                 'name': k,
                 'field_description': f.string.replace("'", " "),
                 'ttype': f._type,
-                'relation': f._obj or '',
-                'view_load': (f.view_load and 1) or 0,
+                'relation': f._obj or u'',
+                'view_load': (f.view_load and True) or False,
                 'select_level': tools.ustr(f.select or 0),
-                'readonly': (f.readonly and 1) or 0,
-                'required': (f.required and 1) or 0,
-                'selectable': (f.selectable and 1) or 0,
-                'translate': (f.translate and 1) or 0,
+                'readonly': (f.readonly and True) or False,
+                'required': (f.required and True) or False,
+                'selectable': (f.selectable and True) or False,
+                'translate': (f.translate and True) or False,
                 'relation_field': (f._type=='one2many' and isinstance(f, fields.one2many)) and f._fields_id or '',
             }
 
@@ -509,8 +507,6 @@ class orm_template(object):
             else:
                 for key, val in vals.items():
                     if cols[k][key] != vals[key]:
-                        cr.execute('update ir_model_fields set field_description=%s where model=%s and name=%s', (vals['field_description'], vals['model'], vals['name']))
-                        cr.commit()
                         cr.execute("""UPDATE ir_model_fields SET
                             model_id=%s, field_description=%s, ttype=%s, relation=%s,
                             view_load=%s, select_level=%s, readonly=%s ,required=%s, selectable=%s, relation_field=%s, translate=%s
@@ -1227,11 +1223,12 @@ class orm_template(object):
                         sel = field_col.selection(self, cr, user, context)
                     # translate each selection option
                     sel2 = []
+                    sel2_append = sel2.append
                     for (key, val) in sel:
                         val2 = None
                         if val:
                             val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
-                        sel2.append((key, val2 or val))
+                        sel2_append((key, val2 or val))
                     sel = sel2
                     res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
@@ -3237,7 +3234,7 @@ class orm(orm_template):
             select = [ids]
         else:
             select = ids
-        select = map(lambda x: isinstance(x, dict) and x['id'] or x, select)
+        select = [isinstance(x, dict) and x['id'] or x for x in select]
         result = self._read_flat(cr, user, select, fields, context, load)
 
         for r in result:
@@ -3269,7 +3266,7 @@ class orm(orm_template):
                      ] + self._inherits.values()
 
         res = []
-        if len(fields_pre):
+        if fields_pre:
             def convert_field(f):
                 f_qual = "%s.%s" % (self._table, f) # need fully-qualified references in case len(tables) > 1
                 if f in ('create_date', 'write_date'):
@@ -3299,18 +3296,18 @@ class orm(orm_template):
                 else:
                     cr.execute(query, (tuple(sub_ids),))
                 res.extend(cr.dictfetchall())
-        else:
-            res = map(lambda x: {'id': x}, ids)
+            for f in fields_pre:
+                if f == self.CONCURRENCY_CHECK_FIELD:
+                    continue
+                if self._columns[f].translate:
+                    ids = [x['id'] for x in res]
+                    #TODO: optimize out of this loop
+                    res_trans = self.pool.get('ir.translation')._get_ids(cr, user, self._name+','+f, 'model', context.get('lang', False) or 'en_US', ids)
+                    for r in res:
+                        r[f] = res_trans.get(r['id'], False) or r[f]
 
-        for f in fields_pre:
-            if f == self.CONCURRENCY_CHECK_FIELD:
-                continue
-            if self._columns[f].translate:
-                ids = [x['id'] for x in res]
-                #TODO: optimize out of this loop
-                res_trans = self.pool.get('ir.translation')._get_ids(cr, user, self._name+','+f, 'model', context.get('lang', False) or 'en_US', ids)
-                for r in res:
-                    r[f] = res_trans.get(r['id'], False) or r[f]
+        else:
+            res = [{'id':x} for x in ids]
 
         for table in self._inherits:
             col = self._inherits[table]
@@ -3673,33 +3670,38 @@ class orm(orm_template):
             parents_changed = map(operator.itemgetter(0), cr.fetchall())
 
         upd0 = []
+        upd0_append = upd0.append
         upd1 = []
+        upd1_append = upd1.append
         upd_todo = []
+        upd_todo_append = upd_todo.append
         updend = []
+        updend_append = updend.append
         direct = []
+        direct_append = direct.append
         totranslate = context.get('lang', False) and (context['lang'] != 'en_US')
         for field in vals:
             if field in self._columns:
                 if self._columns[field]._classic_write and not (hasattr(self._columns[field], '_fnct_inv')):
                     if (not totranslate) or not self._columns[field].translate:
-                        upd0.append('"'+field+'"='+self._columns[field]._symbol_set[0])
-                        upd1.append(self._columns[field]._symbol_set[1](vals[field]))
-                    direct.append(field)
+                        upd0_append('"'+field+'"='+self._columns[field]._symbol_set[0])
+                        upd1_append(self._columns[field]._symbol_set[1](vals[field]))
+                    direct_append(field)
                 else:
-                    upd_todo.append(field)
+                    upd_todo_append(field)
             else:
-                updend.append(field)
+                updend_append(field)
             if field in self._columns \
                     and hasattr(self._columns[field], 'selection') \
                     and vals[field]:
                 self._check_selection_field_value(cr, user, field, vals[field], context=context)
 
         if self._log_access:
-            upd0.append('write_uid=%s')
-            upd0.append('write_date=now()')
+            upd0_append('write_uid=%s')
+            upd0_append('write_date=now()')
             
             # if user is fakeUid object, use realId, otherwise use user
-            upd1.append(hasattr(user, 'realUid') and user.realUid or user)
+            upd1_append(hasattr(user, 'realUid') and user.realUid or user)
 
         if len(upd0):
             self.check_access_rule(cr, user, ids, 'write', context=context)
@@ -3824,6 +3826,7 @@ class orm(orm_template):
             ids = [ids]
 
         done = []
+        done_append = done.append
 
         result += self._store_get_values(cr, uid, ids, keys, context)
         result.sort()
@@ -3832,7 +3835,7 @@ class orm(orm_template):
                 continue
             if not (object, ids, fields2) in done:
                 self.pool.get(object)._store_set_values(cr, uid, ids, fields2, context)
-                done.append((object, ids, fields2))
+                done_append((object, ids, fields2))
         return True
     #
     # TODO: Should set perm to user.xxx
@@ -3873,6 +3876,8 @@ class orm(orm_template):
                 tocreate[v] = {'id': vals[self._inherits[v]]}
         (upd0, upd1, upd2) = ('', '', [])
         upd_todo = []
+        upd2_append = upd2.append
+        upd_todo_append = upd_todo.append
         for v in vals.keys():
             if v in self._inherit_fields:
                 (table, col, col_detail, original_parent) = self._inherit_fields[v]
@@ -3904,7 +3909,7 @@ class orm(orm_template):
 
             upd0 += ',' + self._inherits[table]
             upd1 += ',%s'
-            upd2.append(record_id)
+            upd2_append(record_id)
 
         #Start : Set bool fields to be False if they are not touched(to make search more powerful)
         bool_fields = [x for x in self._columns.keys() if self._columns[x]._type=='boolean']
@@ -3944,10 +3949,10 @@ class orm(orm_template):
             if self._columns[field]._classic_write:
                 upd0 = upd0 + ',"' + field + '"'
                 upd1 = upd1 + ',' + self._columns[field]._symbol_set[0]
-                upd2.append(self._columns[field]._symbol_set[1](vals[field]))
+                upd2_append(self._columns[field]._symbol_set[1](vals[field]))
             else:
                 if not isinstance(self._columns[field], fields.related):
-                    upd_todo.append(field)
+                    upd_todo_append(field)
             if field in self._columns \
                     and hasattr(self._columns[field], 'selection') \
                     and vals[field]:
@@ -3956,7 +3961,7 @@ class orm(orm_template):
             upd0 += ',create_uid,create_date'
             upd1 += ',%s,now()'
             # if user is fakeUid object, use realId, otherwise use user
-            upd2.append(hasattr(user, 'realUid') and user.realUid or user)
+            upd2_append(hasattr(user, 'realUid') and user.realUid or user)
         cr.execute('insert into "'+self._table+'" (id'+upd0+") values ("+str(id_new)+upd1+')', tuple(upd2))
         self.check_access_rule(cr, user, [id_new], 'create', context=context)
         upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
