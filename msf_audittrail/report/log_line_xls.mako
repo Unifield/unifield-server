@@ -82,7 +82,7 @@
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.log or '')|x}</Data></Cell>
         % if line.timestamp:
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.timestamp|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.timestamp[:10]|n}T${line.timestamp[11:].000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
