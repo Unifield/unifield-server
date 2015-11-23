@@ -608,6 +608,11 @@ class audittrail_rule(osv.osv):
                 model_name_tolog = rule.parent_field_id.relation
                 model_parent_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
 
+            inherits = self.pool.get(model_name_tolog)._inherits
+            if inherits:
+                model_name_tolog = inherits.keys()[-1]
+                model_id_tolog = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
+
             if method in ('write', 'create'):
                 original_fields = current.values()[0].keys()
                 fields_to_trace = {}
@@ -630,12 +635,17 @@ class audittrail_rule(osv.osv):
                 if parent_field:
                     parent_field_id = new_values_computed[res_id][parent_field][0]
 
+                inherit_field_id = False
+                if inherits:
+                    inherits_field = inherits.values()[-1]
+                    inherit_field_id = self.pool.get(rule.object_id.model).read(cr, uid, res_id, [inherits_field])[inherits_field][0]
+
                 vals = {
                     'name': rule.object_id.name,
                     'method': method,
                     'object_id': model_id_tolog,
                     'user_id': uid_orig,
-                    'res_id': parent_field_id or res_id,
+                    'res_id': parent_field_id or inherit_field_id or res_id,
                 }
 
                 # Add the name of the created sub-object
@@ -646,7 +656,7 @@ class audittrail_rule(osv.osv):
                         'rule_id': rule.id,
                         'fct_object_id': model_id_tolog,
                         'object_id': model_parent_id,
-                        'fct_res_id': res_id,
+                        'fct_res_id': inherit_field_id or res_id,
                     })
                 if method == 'unlink':
                     vals.update({
