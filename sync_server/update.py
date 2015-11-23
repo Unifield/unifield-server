@@ -408,6 +408,12 @@ class update(osv.osv):
         if not rules:
             return None
 
+        if not recover and last_seq == 0:
+            # first sync get only master data
+            cr.execute("select id from sync_server_sync_rule where id in (" + ','.join(map(str, rules)) + ") and master_data='t'");
+            rules = [x[0] for x in cr.fetchall()]
+
+
         base_query = " ".join(("""SELECT "sync_server_update".id FROM "sync_server_update" WHERE""",
                                "sync_server_update.rule_id IN (" + ','.join(map(str, rules)) + ")",
                                "AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""" % (last_seq, max_seq)))

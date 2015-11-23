@@ -132,9 +132,11 @@ class sync_rule(osv.osv):
         'active': fields.boolean('Active'),
         'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True),
         'handle_priority': fields.boolean('Handle Priority'),
+        'master_data': fields.boolean('Master Data'),
     }
 
     _defaults = {
+        'master_data': True,
         'domain': '[]',
         'active': False,
         'status': 'invalid',
