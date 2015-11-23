@@ -120,7 +120,7 @@ class sync_rule(osv.osv):
                     ], 'Directionality', required = True,),
         'domain':fields.text('Domain', required = False),
         'owner_field':fields.char('Owner Field', size = 64, required = False),
-        'sequence_number': fields.integer('Sequence', required = True),
+        'sequence_number': fields.integer('Sequence', required = True, group_operator="count"),
         'included_fields_sel': fields.many2many('ir.model.fields', 'ir_model_fields_rules_rel', 'field', 'name', 'Select Fields'),
         'included_fields':fields.text('Fields to include', required = False),
         'forced_values_sel': fields.one2many('sync_server.sync_rule.forced_values', 'sync_rule_id', 'Select Forced Values'),
@@ -327,7 +327,12 @@ class sync_rule(osv.osv):
             if model_ids:
                 values['model_ref'] = model_ids[0]
 
-        return super(sync_rule, self).create(cr, uid, values, context=context)
+        new_id = super(sync_rule, self).create(cr, uid, values, context=context)
+        check = self.validate_rules(cr, uid, [new_id], context=context)
+        if check['state'] != 'valid':
+            raise osv.except_osv(_("Warning"), check['message'])
+
+        return new_id
 
     def write(self, cr, uid, ids, values, context=None):
         if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
@@ -336,14 +341,16 @@ class sync_rule(osv.osv):
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
 
-        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','included_fields'], context=context):
+        rule_to_check = []
+        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','included_fields','status'], context=context):
             dirty = False
             for k in rule_data.keys():
                 if k in values and values[k] != rule_data[k]:
                     dirty = True
 
             if dirty:
-                values.update({'active' : False, 'status' : 'invalid'})
+                rule_to_check.append(rule_data['id'])
+                #values.update({'active' : False, 'status' : 'invalid'})
 
         if 'applies_to_type' in values:
             if values['applies_to_type']:
@@ -351,7 +358,12 @@ class sync_rule(osv.osv):
             else:
                 values['type_id'] = False
 
-        return super(sync_rule, self).write(cr, uid, ids, values, context=context)
+        res = super(sync_rule, self).write(cr, uid, ids, values, context=context)
+        if rule_to_check:
+            check = self.validate_rules(cr, uid, rule_to_check, context=context)
+            if check['state'] != 'valid':
+                raise osv.except_osv(_("Warning"), check['message'])
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         cr.execute("""SAVEPOINT unlink_rule""")
@@ -458,7 +470,7 @@ class sync_rule(osv.osv):
 
     check_domain = check_domain
 
-    def validate(self, cr, uid, ids, context=None):
+    def validate_rules(self, cr, uid, ids, context=None):
         error = False
         message = []
         for rec in self.browse(cr, uid, ids, context=context):
@@ -469,6 +481,13 @@ class sync_rule(osv.osv):
             mess, err = self.check_fields(cr, uid, rec, title="* Included fields syntax... ", context=context)
             error = err or error
             message.append(mess)
+            # Check for valid status
+            message.append(_("* Valid status... "))
+            if rec.status == 'invalid':
+                message.append('failed! Rule has status=invalid\n')
+                error=True
+            else:
+                message.append('pass.\n')
             # Check force values syntax (can be empty)
             mess, err = self.check_forced_values(cr, uid, rec, context)
             error = err or error
@@ -489,11 +508,16 @@ class sync_rule(osv.osv):
             else:
                 message.append("pass.\n")
 
-            message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
-            message_body = ''.join(message)
-            message_data = {'state': 'valid' if not error else 'invalid',
-                            'message' : message_header + message_body,
-                            'sync_rule' : rec.id}
+        message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
+        message_body = ''.join(message)
+        return {
+            'state': 'valid' if not error else 'invalid',
+            'message' : message_header + message_body,
+            'sync_rule' : rec.id
+        }
+
+    def validate(self, cr, uid, ids, context=None):
+        message_data = self.validate_rules(cr, uid, ids, context=context)
         wiz_id = self.pool.get('sync_server.rule.validation.message').create(cr, uid, message_data, context=context)
         return {
             'name': 'Rule Validation Message',
@@ -542,7 +566,7 @@ class message_rule(osv.osv):
         'type_name': fields.related('type_id', 'name', type='char', string='Group Name'),
         'domain': fields.text('Domain', required = False),
         'filter_method' : fields.char('Filter Method', size=64, help='The method to use to find target records instead of a domain.'),
-        'sequence_number': fields.integer('Sequence', required = True),
+        'sequence_number': fields.integer('Sequence', required = True, group_operator="count"),
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
         'destination_name': fields.char('Field to extract destination', size=256, required = True),
@@ -614,6 +638,13 @@ class message_rule(osv.osv):
 
         return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model} }
 
+    def create(self, cr, uid, values, context=None):
+        new_id = super(message_rule, self).create(cr, uid, values, context=context)
+        check = self.validate_rules(cr, uid, [new_id], context=context)
+        if check['state'] != 'valid':
+            raise osv.except_osv(_("Warning"), check['message'])
+        return new_id
+
     def write(self, cr, uid, ids, values, context=None):
         if 'included_fields_sel' in values:
             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
@@ -621,14 +652,21 @@ class message_rule(osv.osv):
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
 
-        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','remote_call', 'arguments', 'destination_name'], context=context):
+        rule_to_check = []
+        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','remote_call', 'arguments', 'destination_name', 'status'], context=context):
             dirty = False
             for k in rule_data.keys():
                 if k in values and values[k] != rule_data[k]:
                     dirty = True
             if dirty:
-                values.update({'active' : False, 'status' : 'invalid'})
-        return super(message_rule, self).write(cr, uid, ids, values, context=context)
+                rule_to_check.append(rule_data['id'])
+                #values.update({'active' : False, 'status' : 'invalid'})
+        res = super(message_rule, self).write(cr, uid, ids, values, context=context)
+        if rule_to_check:
+            check = self.validate_rules(cr, uid, rule_to_check, context=context)
+            if check['state'] != 'valid':
+                raise osv.except_osv(_("Warning"), check['message'])
+        return res
 
     ## Checkers & Validator ##################################################
 
@@ -663,7 +701,8 @@ class message_rule(osv.osv):
 
         return (message, error)
 
-    def validate(self, cr, uid, ids, context=None):
+
+    def validate_rules(self, cr, uid, ids, context=None):
         error = False
         message = []
         for rec in self.browse(cr, uid, ids, context=context):
@@ -684,8 +723,15 @@ class message_rule(osv.osv):
                 error = err or error
                 message.append(mess)
             elif not hasattr(self.pool.get(rec.model_id), rec.filter_method):
-                message.append('Filter Method %s does not exist on object %s' % (rec.filter_method, rec.model_id))
+                message.append('Filter Method %s does not exist on object %s\n' % (rec.filter_method, rec.model_id))
                 error = True
+
+            message.append(_("* Valid status... "))
+            if rec.status == 'invalid':
+                message.append('failed! Rule has status=invalid\n')
+                error = True
+            else:
+                message.append('pass.\n')
 
             # Remote Call Possible
             call_tree = rec.remote_call.split('.')
@@ -716,11 +762,16 @@ class message_rule(osv.osv):
             else:
                 message.append("pass.\n")
 
-            message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
-            message_body = ' '.join(message)
-            message_data = {'state': 'valid' if not error else 'invalid',
-                            'message' : message_header + message_body,
-                            'message_rule' : rec.id}
+        message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
+        message_body = ' '.join(message)
+        return {
+            'state': 'valid' if not error else 'invalid',
+            'message' : message_header + message_body,
+            'message_rule' : rec.id
+        }
+
+    def validate(self, cr, uid, ids, context=None):
+        message_data = self.validate_rules(cr, uid, ids, context=context)
         wiz_id = self.pool.get('sync_server.rule.validation.message').create(cr, uid, message_data, context=context)
         return {
             'name': 'Rule Validation Message',
