@@ -540,7 +540,7 @@ class product_likely_expire_report(osv.osv):
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
         new_cr.commit()
-        new_cr.close()
+        new_cr.close(True)
 
         return {
             'type': 'ir.actions.act_window',

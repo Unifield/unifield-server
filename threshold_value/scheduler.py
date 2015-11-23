@@ -120,7 +120,7 @@ Created documents : \n'''
         
         if use_new_cursor:
             cr.commit()
-            cr.close()
+            cr.close(True)
             
         return {}
 

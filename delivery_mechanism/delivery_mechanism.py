@@ -908,7 +908,7 @@ class stock_picking(osv.osv):
                 }, context=context)
         finally:
             # Close the cursor
-            new_cr.close()
+            new_cr.close(True)
 
         return res
 

@@ -114,7 +114,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         finally:
             values = {'process_in_progress': False}
             super(mass_reallocation_verification_wizard, self).write(cr, uid, ids, values, context=context)
-            cr.close()
+            cr.close(True)
 
     def button_validate(self, cr, uid, ids, context=None):
         """

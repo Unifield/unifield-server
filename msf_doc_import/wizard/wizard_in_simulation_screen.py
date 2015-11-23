@@ -496,7 +496,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
                     cr.commit()
-                    cr.close()
+                    cr.close(True)
                     return res
 
                 '''
@@ -791,11 +791,11 @@ class wizard_import_in_simulation_screen(osv.osv):
 
                 res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
                 cr.commit()
-                cr.close()
+                cr.close(True)
                 return res
 
             cr.commit()
-            cr.close()
+            cr.close(True)
 
             # Clear the cache
             PRODUCT_CODE_ID = {}
@@ -805,7 +805,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         except Exception, e:
             self.write(cr, uid, ids, {'message': e}, context=context)
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return {'type': 'ir.actions.act_window_close'}
 

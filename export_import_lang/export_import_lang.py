@@ -103,7 +103,7 @@ class base_language_export(osv.osv_memory):
                 'datas': out,
             })
             cr.commit()
-            cr.close()
+            cr.close(True)
         except Exception, e:
             cr.rollback()
             req_id = self.pool.get('res.request').create(cr, uid, {
@@ -116,7 +116,7 @@ class base_language_export(osv.osv_memory):
                 ''')% (e,),
             })
             cr.commit()
-            cr.close()
+            cr.close(True)
             raise
         logging.getLogger('export').info('Export translation ended')
 
@@ -186,7 +186,7 @@ class base_language_import(osv.osv_memory):
             self.write(cr, uid, [ids[0]], {'data': ''})
             tools.cache.clean_caches_for_db(cr.dbname)
             cr.commit()
-            cr.close()
+            cr.close(True)
         except Exception, e:
             cr.rollback()
             self.write(cr, uid, [ids[0]], {'data': ''})
@@ -200,7 +200,7 @@ class base_language_import(osv.osv_memory):
                 ''')% (e,),
             })
             cr.commit()
-            cr.close()
+            cr.close(True)
             raise
         logging.getLogger('export').info('Import translation ended')
 
@@ -260,7 +260,7 @@ class res_lang(osv.osv):
             })
 
         cr.commit()
-        cr.close()
+        cr.close(True)
 
     def unlink(self, cr, uid, ids, context=None):
         languages = self.read(cr, uid, ids, ['code','active'], context=context)

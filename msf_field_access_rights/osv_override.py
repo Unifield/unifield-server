@@ -224,18 +224,19 @@ def _values_equate(field_type, current_value, new_value):
 
 
 def _get_family(obj, family):
+    family_append = family.append
     if hasattr(obj, '_inherits'):
         if obj._inherits:
             for key in obj._inherits:
                 if key not in family:
-                    family.append(key)
+                    family_append(key)
                 if key != obj._name:
                     _get_family(obj.pool.get(key), family)
             
     if hasattr(obj, '_inherit'):
         if obj._inherit:
             if obj._inherit not in family:
-                family.append(obj._inherit)
+                family_append(obj._inherit)
             if obj._inherit != obj._name:
                 _get_family(obj.pool.get(obj._inherit), family)
 

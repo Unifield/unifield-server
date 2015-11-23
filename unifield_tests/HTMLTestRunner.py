@@ -90,7 +90,7 @@ Version in 0.7.1
 # TODO: color stderr
 # TODO: simplify javascript using ,ore than 1 class in the class attribute?
 
-import datetime
+from datetime import datetime, timedelta
 import StringIO
 import sys
 import unittest
@@ -426,9 +426,11 @@ a.popup_link:hover {
 <col align='right' />
 <col align='right' />
 <col align='right' />
+<col align='right' />
 </colgroup>
 <tr id='header_row'>
     <td>Test Group/Test case</td>
+    <td>Duration</td>
     <td>Count</td>
     <td>Pass</td>
     <td>Fail</td>
@@ -438,6 +440,7 @@ a.popup_link:hover {
 %(test_list)s
 <tr id='total_row'>
     <td>Total</td>
+    <td>%(duration)s</td>
     <td>%(count)s</td>
     <td>%(Pass)s</td>
     <td>%(fail)s</td>
@@ -450,6 +453,7 @@ a.popup_link:hover {
     REPORT_CLASS_TMPL = r"""
 <tr class='%(style)s'>
     <td>%(desc)s</td>
+    <td>%(duration)s</td>
     <td>%(count)s</td>
     <td>%(Pass)s</td>
     <td>%(fail)s</td>
@@ -462,6 +466,7 @@ a.popup_link:hover {
     REPORT_TEST_WITH_OUTPUT_TMPL = r"""
 <tr id='%(tid)s' class='%(Class)s'>
     <td class='%(style)s'><div class='testcase'>%(desc)s</div></td>
+    <td class='%(style)s'><div class='testcase'>%(duration)s</div></td>
     <td colspan='5' align='center'>
 
     <!--css div popup start-->
@@ -487,6 +492,7 @@ a.popup_link:hover {
     REPORT_TEST_NO_OUTPUT_TMPL = r"""
 <tr id='%(tid)s' class='%(Class)s'>
     <td class='%(style)s'><div class='testcase'>%(desc)s</div></td>
+    <td class='%(style)s'><div class='testcase'>%(duration)s</div></td>
     <td colspan='5' align='center'>%(status)s</td>
 </tr>
 """ # variables: (tid, Class, style, desc, status)
@@ -520,6 +526,7 @@ class _TestResult(TestResult):
         self.success_count = 0
         self.failure_count = 0
         self.error_count = 0
+        self.start_time = 0
         self.verbosity = verbosity
 
         # result is a list of result in 4 tuple
@@ -531,8 +538,8 @@ class _TestResult(TestResult):
         # )
         self.result = []
 
-
     def startTest(self, test):
+        self.start_time = datetime.now()
         TestResult.startTest(self, test)
         # just one buffer for both stdout and stderr
         self.outputBuffer = StringIO.StringIO()
@@ -568,7 +575,8 @@ class _TestResult(TestResult):
         self.success_count += 1
         TestResult.addSuccess(self, test)
         output = self.complete_output()
-        self.result.append((0, test, output, ''))
+        current_test_duration = datetime.now() - self.start_time
+        self.result.append((0, test, current_test_duration, output, ''))
         if self.verbosity > 1:
             sys.stderr.write('ok ')
             sys.stderr.write(str(test))
@@ -581,7 +589,8 @@ class _TestResult(TestResult):
         TestResult.addError(self, test, err)
         _, _exc_str = self.errors[-1]
         output = self.complete_output()
-        self.result.append((2, test, output, _exc_str))
+        current_test_duration = datetime.now() - self.start_time
+        self.result.append((2, test, current_test_duration, output, _exc_str))
         if self.verbosity > 1:
             sys.stderr.write('E  ')
             sys.stderr.write(str(test))
@@ -594,7 +603,8 @@ class _TestResult(TestResult):
         TestResult.addFailure(self, test, err)
         _, _exc_str = self.failures[-1]
         output = self.complete_output()
-        self.result.append((1, test, output, _exc_str))
+        current_test_duration = datetime.now() - self.start_time
+        self.result.append((1, test, current_test_duration, output, _exc_str))
         if self.verbosity > 1:
             sys.stderr.write('F  ')
             sys.stderr.write(str(test))
@@ -618,16 +628,15 @@ class HTMLTestRunner(Template_mixin):
         else:
             self.description = description
 
-        self.startTime = datetime.datetime.now()
-
 
     def run(self, test):
         "Run the given test case or test suite."
+        start_time = datetime.now()
         result = _TestResult(self.verbosity)
         test(result)
-        self.stopTime = datetime.datetime.now()
+        self.total_duration = str(datetime.now() - start_time)
         self.generateReport(test, result)
-        print >>sys.stderr, '\nTime Elapsed: %s' % (self.stopTime-self.startTime)
+        print >>sys.stderr, '\nTime Elapsed: %s' % (self.total_duration)
         return result
 
 
@@ -636,12 +645,12 @@ class HTMLTestRunner(Template_mixin):
         # Here at least we want to group them together by class.
         rmap = {}
         classes = []
-        for n,t,o,e in result_list:
+        for n,t,d,o,e in result_list:
             cls = t.__class__
             if not rmap.has_key(cls):
                 rmap[cls] = []
                 classes.append(cls)
-            rmap[cls].append((n,t,o,e))
+            rmap[cls].append((n,t,d,o,e))
         r = [(cls, rmap[cls]) for cls in classes]
         return r
 
@@ -651,8 +660,6 @@ class HTMLTestRunner(Template_mixin):
         Return report attributes as a list of (name, value).
         Override this to add custom attributes.
         """
-        startTime = str(self.startTime)[:19]
-        duration = str(self.stopTime - self.startTime)
         status = []
         if result.success_count: status.append('Pass %s'    % result.success_count)
         if result.failure_count: status.append('Failure %s' % result.failure_count)
@@ -662,8 +669,8 @@ class HTMLTestRunner(Template_mixin):
         else:
             status = 'none'
         return [
-            ('Start Time', startTime),
-            ('Duration', duration),
+            ('Start Time', str(result.start_time)),
+            ('Duration', str(self.total_duration)),
             ('Status', status),
         ]
 
@@ -710,12 +717,14 @@ class HTMLTestRunner(Template_mixin):
         rows = []
         sortedResult = self.sortResult(result.result)
         for cid, (cls, cls_results) in enumerate(sortedResult):
+            test_class_duration = timedelta(0)
             # subtotal for a class
             np = nf = ne = 0
-            for n,t,o,e in cls_results:
+            for n,t,d,o,e in cls_results:
                 if n == 0: np += 1
                 elif n == 1: nf += 1
                 else: ne += 1
+                test_class_duration += d
 
             # format class description
             if cls.__module__ == "__main__":
@@ -728,6 +737,7 @@ class HTMLTestRunner(Template_mixin):
             row = self.REPORT_CLASS_TMPL % dict(
                 style = ne > 0 and 'errorClass' or nf > 0 and 'failClass' or 'passClass',
                 desc = desc,
+                duration = test_class_duration,
                 count = np+nf+ne,
                 Pass = np,
                 fail = nf,
@@ -736,11 +746,12 @@ class HTMLTestRunner(Template_mixin):
             )
             rows.append(row)
 
-            for tid, (n,t,o,e) in enumerate(cls_results):
-                self._generate_report_test(rows, cid, tid, n, t, o, e)
+            for tid, (n,t,d,o,e) in enumerate(cls_results):
+                self._generate_report_test(rows, cid, tid, n, t,d, o, e)
 
         report = self.REPORT_TMPL % dict(
             test_list = ''.join(rows),
+            duration = self.total_duration,
             count = str(result.success_count+result.failure_count+result.error_count),
             Pass = str(result.success_count),
             fail = str(result.failure_count),
@@ -749,7 +760,7 @@ class HTMLTestRunner(Template_mixin):
         return report
 
 
-    def _generate_report_test(self, rows, cid, tid, n, t, o, e):
+    def _generate_report_test(self, rows, cid, tid, n, t,d, o, e):
         # e.g. 'pt1.1', 'ft1.1', etc
         has_output = bool(o or e)
         tid = (n == 0 and 'p' or 'f') + 't%s.%s' % (cid+1,tid+1)
@@ -782,6 +793,7 @@ class HTMLTestRunner(Template_mixin):
             Class = (n == 0 and 'hiddenRow' or 'none'),
             style = n == 2 and 'errorCase' or (n == 1 and 'failCase' or 'none'),
             desc = desc,
+            duration = d,
             script = script,
             status = self.STATUS[n],
         )
