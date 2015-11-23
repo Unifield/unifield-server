@@ -344,8 +344,20 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         'company_id': fields.related('invoice_id','company_id',type='many2one',
             relation='res.company', string='Company', store=True, readonly=True),
         'partner_id': fields.related('invoice_id','partner_id',type='many2one',
-            relation='res.partner', string='Partner',store=True)
+            relation='res.partner', string='Partner',store=True),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        'newline': fields.boolean('New line'),
             }
+
+
+    _defaults = {
+        'newline': lambda *a: True,
+        'have_analytic_distribution_from_header': lambda *a: True,
+        'is_allocatable': lambda *a: True,
+        'analytic_distribution_state_recap': lambda *a: '',
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
+    }
 
     def onchange_account_id(self, cr, uid, ids, fposition_id, account_id):
         if not account_id:
