@@ -37,7 +37,7 @@
                 'object_id': object_ids[0],
                 'domain_filter': "[]",
                 'log_write': True,
-                'log_unlink': True,
+                'log_unlink': False,
                 'log_create': False,
                 'field_ids': [(6, 0, fields_ids)],
                 }
@@ -62,7 +62,7 @@
                 'object_id': object_ids[0],
                 'domain_filter': "[]",
                 'log_write': True,
-                'log_unlink': True,
+                'log_unlink': False,
                 'log_create': False,
                 'field_ids': [(6, 0, fields_ids)],
                 }
