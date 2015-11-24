@@ -615,6 +615,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
         'direct_invoice_id': fields.many2one('wizard.account.invoice', string="Direct Invoice"),
         'direct_invoice_line_id': fields.many2one('wizard.account.invoice.line', string="Direct Invoice Line"),
+        'account_direct_invoice_wizard_id': fields.many2one('account.direct.invoice.wizard', string="Direct Invoice Wizard"),
+        'account_direct_invoice_wizard_line_id': fields.many2one('account.direct.invoice.wizard.line', string="Direct Invoice Wizard Line"),
         'sale_order_id': fields.many2one('sale.order', string="Sale Order"),
         'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
         'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True),
@@ -1093,6 +1095,29 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'res_id': direct_invoice_id,
                     'context': context,
                 }
+        if wiz and wiz.account_direct_invoice_wizard_id:
+            # Get direct_invoice id
+            direct_invoice_id = (wiz.account_direct_invoice_wizard_id and wiz.account_direct_invoice_wizard_id.id)
+            # Get register from which we come from
+            direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr, uid, [direct_invoice_id], context=context)[0]
+            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            if register_id:
+                context.update({
+                    'active_id': register_id,
+                    'type': 'in_invoice',
+                    'journal_type': 'purchase',
+                    'active_ids': register_id,
+                    })
+                return {
+                    'name': "Supplier Direct Invoice Wizard",
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'account.direct.invoice.wizard',
+                    'target': 'new',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'res_id': direct_invoice_id,
+                    'context': context,
+                }
         wizard_account_invoice = self._check_open_wizard_account_invoice(cr, uid, wiz, context)
         if wizard_account_invoice:
             return wizard_account_invoice
@@ -1330,6 +1355,29 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'name': "Supplier Direct Invoice",
                     'type': 'ir.actions.act_window',
                     'res_model': 'wizard.account.invoice',
+                    'target': 'new',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'res_id': direct_invoice_id,
+                    'context': context,
+                }
+        if wiz and wiz.account_direct_invoice_wizard_id:
+            # Get direct_invoice id
+            direct_invoice_id = (wiz.account_direct_invoice_wizard_id and wiz.account_direct_invoice_wizard_id.id)
+            # Get register from which we come from
+            direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr, uid, [direct_invoice_id], context=context)[0]
+            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            if register_id:
+                context.update({
+                    'active_id': register_id,
+                    'type': 'in_invoice',
+                    'journal_type': 'purchase',
+                    'active_ids': register_id,
+                    })
+                return {
+                    'name': "Supplier Direct Invoice Wizard",
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'account.direct.invoice.wizard',
                     'target': 'new',
                     'view_mode': 'form',
                     'view_type': 'form',

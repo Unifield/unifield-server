@@ -31,6 +31,37 @@ import decimal_precision as dp
 class account_direct_invoice_wizard(osv.osv_memory):
     _name = 'account.direct.invoice.wizard'
     _description = 'Account Invoice Temp Object'
+
+    def _get_type(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        res = context.get('type', 'out_invoice')
+        if context.get('search_default_supplier', False) and context.get('default_supplier', False):
+            res = 'in_invoice'
+        return res
+
+    def _get_journal(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        type_inv = context.get('type', 'out_invoice')
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        company_id = context.get('company_id', user.company_id.id)
+        type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
+        refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
+        journal_obj = self.pool.get('account.journal')
+        res = journal_obj.search(cr, uid, [('type', '=', type2journal.get(type_inv, 'sale')),
+                                            ('company_id', '=', company_id),
+                                            ('refund_journal', '=', refund_journal.get(type_inv, False))],
+                                                limit=1)
+        return res and res[0] or False
+
+    def _get_currency(self, cr, uid, context=None):
+        user = pooler.get_pool(cr.dbname).get('res.users').browse(cr, uid, [uid], context=context)[0]
+        if user.company_id:
+            return user.company_id.currency_id.id
+        return pooler.get_pool(cr.dbname).get('res.currency').search(cr, uid, [('rate','=', 1.0)])[0]
+
+
     _columns = {
             'account_id': fields.many2one('account.account', 'Account',
                 required=True, readonly=True,
@@ -96,6 +127,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
                 help="The partner reference of this invoice."),
             'register_posting_date': fields.date(string=\
                     "Register posting date for Direct Invoice", required=False),
+            'register_id': fields.many2one('account.bank.statement', 'Register', readonly=True),
             'user_id': fields.many2one('res.users', 'Salesman', readonly=True),
             'state': fields.selection([
                 ('draft','Draft'),
@@ -105,7 +137,25 @@ class account_direct_invoice_wizard(osv.osv_memory):
                 ('paid','Paid'),
                 ('cancel','Cancelled')
                 ],'State', select=True, readonly=True,),
+            'type': fields.selection([
+                ('out_invoice','Customer Invoice'),
+                ('in_invoice','Supplier Invoice'),
+                ('out_refund','Customer Refund'),
+                ('in_refund','Supplier Refund'),
+                ],'Type', readonly=True, select=True, change_default=True),
+
             }
+
+    _defaults = {
+        'payment_term': False,
+        'type': _get_type,
+        'state': 'draft',
+        'journal_id': _get_journal,
+        'currency_id': _get_currency,
+        'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.invoice', context=c),
+        'check_total': 0.0,
+        'user_id': lambda s, cr, u, c: u,
+    }
 
 
     def button_dummy_compute_total(self, cr, uid, ids, context=None):
@@ -117,8 +167,77 @@ class account_direct_invoice_wizard(osv.osv_memory):
         # dans de vrais élément puis d'appeler le vrais
         # button_close_direct_invoice ou au moins les fonction qu'il appelle
         # voir unifield_wm/register_accounting/invoice.py +363
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         return True
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on an invoice
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        invoice = self.browse(cr, uid, ids[0], context=context)
+        amount = 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = invoice.currency_id and invoice.currency_id.id or company_currency
+        for line in invoice.invoice_line:
+            amount += line.price_subtotal
+        # Get analytic_distribution_id
+        distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
+        account_id = invoice.account_id and invoice.account_id.id
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'direct_invoice_id': invoice.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+            'account_id': account_id or False,
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'name': _('Global analytic distribution'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
+
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Reset analytic distribution on all invoice lines.
+        To do this, just delete the analytic_distribution id link on each invoice line.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        invl_obj = self.pool.get(self._name + '.line') # PAY ATTENTION to wizard.account.invoice.line
+        # Search invoice lines
+        to_reset = invl_obj.search(cr, uid, [('invoice_id', 'in', ids)])
+        invl_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        return True
+
+
+
 
 account_direct_invoice_wizard()
 
@@ -366,6 +485,66 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         fpos = fposition_id and self.pool.get('account.fiscal.position').browse(cr, uid, fposition_id) or False
         res = self.pool.get('account.fiscal.position').map_tax(cr, uid, fpos, taxes)
         return {'value':{'invoice_line_tax_id': res}}
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on an invoice line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No invoice line given. Please save your invoice line before.'))
+        # Prepare some values
+        invoice_line = self.browse(cr, uid, ids[0], context=context)
+        negative_inv = False
+        amount = invoice_line.price_subtotal or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = invoice_line.invoice_id.currency_id and invoice_line.invoice_id.currency_id.id or company_currency
+        # Change amount sign if necessary
+        if invoice_line.invoice_id.type in ['out_invoice', 'in_refund']:
+            negative_inv = True
+        if negative_inv:
+            amount = -1 * amount
+        # Get analytic distribution id from this line
+        distrib_id = invoice_line and invoice_line.analytic_distribution_id and invoice_line.analytic_distribution_id.id or False
+        # Prepare values for wizard
+        vals = {
+            #'invoice_id': invoice_line.invoice_id.id,
+            #'invoice_line_id': invoice_line.id,
+            'account_direct_invoice_wizard_id': invoice_line.invoice_id.id, #XXX à checker
+            'account_direct_invoice_wizard_line_id': invoice_line.id, # XXX à checker
+            'total_amount': amount,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+            'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
+            'posting_date': invoice_line.invoice_id.date_invoice,
+            'document_date': invoice_line.invoice_id.document_date,
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'name': _('Analytic distribution'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
 
 
 account_direct_invoice_wizard_line()

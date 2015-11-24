@@ -2509,9 +2509,6 @@ class account_bank_statement_line(osv.osv):
             ivl_id = wiz_invoice_line.create(cr, uid, ivl_values, context=context)
             ivl_wizard_id_list.append(ivl_id)
 
-        browse_ivl_wizard_id_list = wiz_invoice_line.browse(cr, uid,
-                ivl_wizard_id_list, context=context)
-
         # Prepare values for wizard
         vals = {
             'account_id': invoice.account_id.id,
@@ -2535,10 +2532,12 @@ class account_bank_statement_line(osv.osv):
             'origin': invoice.origin,
             'partner_id': invoice.partner_id.id,
             'partner_bank_id':invoice.partner_bank_id.id,
-            'payment_term': invoice.payment_term,
+            #'payment_term': invoice.payment_term,
             'reference': invoice.reference,
             'register_posting_date': invoice.register_posting_date,
+            'register_id': invoice.register_line_ids[0].statement_id.id,
             'state': invoice.state,
+            'type': invoice.type,
             'user_id': invoice.user_id.id,
             }
         # Create the wizard
