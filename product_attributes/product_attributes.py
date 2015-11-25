@@ -265,7 +265,8 @@ class product_attributes(osv.osv):
         res = {}
 
         product_state = self.pool.get('product.status')
-        for product in self.read(cr, uid, ids, ['state'], context=context):
+        intl_state = self.pool.get('product.international.status')
+        for product in self.read(cr, uid, ids, ['state', 'international_status'], context=context):
             res[product['id']] = {
                 'no_external': False,
                 'no_esc': False,
@@ -273,11 +274,17 @@ class product_attributes(osv.osv):
                 'no_consumption': False,
                 'no_storage': False
             }
+            fields = ['no_external', 'no_esc', 'no_internal', 'no_consumption', 'no_storage']
+            state = None
+            intl = None
             if product['state']:
-                fields = ['no_external', 'no_esc', 'no_internal', 'no_consumption', 'no_storage']
                 state = product_state.read(cr, uid, product['state'][0], fields, context=context)
+            if product['international_status']:
+                intl = intl_state.read(cr, uid, product['international_status'][0], fields, context=context)
+
+            if state or intl:
                 for f in fields:
-                    res[product.id][f] = state[f] or False
+                    res[product['id']][f] = (state and state[f]) or (intl and intl[f]) or False
 
         return res
 
