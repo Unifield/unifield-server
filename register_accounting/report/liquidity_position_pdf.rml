@@ -11,7 +11,7 @@
         <image x="18mm" y="270mm" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
         <setFont name="Helvetica" size="8"/>
         <fill color="black"/>
-        <drawString x="285" y="10.0">Page <pageNumber /></drawString>
+        <drawString x="20.0" y="10.0">Page : <pageNumber /></drawString>
       </pageGraphics>
     </pageTemplate>
   </template>
