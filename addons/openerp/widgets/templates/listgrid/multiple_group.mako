@@ -153,11 +153,18 @@ elif selector:
   % for ch in grp_row.get('child_rec'):
   <tr class="grid-row grid-row-group" id="${grp_row.get('groups_id')}" parent="${grp_row.get('group_by_id')}"
       record="${ch.get('id')}" style="cursor: pointer;">
+            % for field, field_attrs in hiddens:
+                % if field in ch:
+                    ${ch[field].display()}
+                % endif
+            % endfor
 
       % if editable:
           <td class="grid-cell">
+              % if (not ch.get('id') or ch.get('id') not in noteditable) and not hide_edit_button:
               <img src="/openerp/static/images/iconset-b-edit.gif" class="listImage" border="0"
                    title="${_('Edit')}" onclick="editRecord(${ch.get('id')}, '${source}')"/>
+              % endif
           </td>
       % elif selector:
           <td class="grid-cell selector">
@@ -190,12 +197,12 @@ elif selector:
 
       % if editable:
           <td class="grid-cell selector">
+              % if not hide_delete_button:
               <img src="/openerp/static/images/iconset-b-remove.gif" class="listImage" border="0"
                    title="${_('Delete')}" onclick="new ListView('${name}').remove(${ch.get('id')})"/>
+              % endif
           </td>
       % endif
-
-
   </tr>
 
   % if 'sequence' in map(lambda x: x[0], itertools.chain(headers,hiddens)):
@@ -223,6 +230,9 @@ elif selector:
 
   % endfor
 % endfor
+<script type="text/javascript">
+list_hookAttrChange('${name}');
+</script>
 
 
 % endif
