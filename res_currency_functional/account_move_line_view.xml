@@ -111,6 +111,8 @@
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
                     <field name="move_state" invisible="1"/>
+                    <field name="account_type" invisible="1" />
+                    <field name="statement_id" invisible="1" />
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="transfer_journal_id" invisible="1"/>
