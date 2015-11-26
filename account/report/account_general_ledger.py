@@ -115,11 +115,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         common_report_header._set_context(self, data)
 
         # UF-1714 accounts 8*, 9* are not displayed:
-        # we have to deduce debit/credit/balance amounts of MSF account view
-        # (root account)
-        a_obj = self.pool.get('account.account')
+        # have to deduce 8/9 balance amounts to MSF account view (root account)
         deduce_accounts_index = [ '8', '9', ]
-        self._deduce_accounts_data = { 'debit': 0, 'credit': 0, }
+        a_obj = self.pool.get('account.account')
+        self._deduce_accounts_balance = 0
         if deduce_accounts_index:
             a_ids = a_obj.search(self.cr, self.uid,
                 [('code', 'in', [ c for c in deduce_accounts_index ])],
@@ -127,8 +126,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if a_ids:
                 for account in a_obj.browse(self.cr, self.uid, a_ids,
                     context=used_context):
-                    self._deduce_accounts_data['debit'] += account.debit
-                    self._deduce_accounts_data['credit'] += account.credit
+                    self._deduce_accounts_balance += \
+                        account.debit - account.credit
 
         if self.account_ids:
             # add parent(s) of filtered accounts
@@ -428,8 +427,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             amount = getattr(account, field)
             if not account.parent_id:
                 # deduce balance of not displayed accounts
-                    amount -= self._deduce_accounts_data[field]
-                    self._deduce_accounts_data[field] = 0  # mark as deduced
+                    amount -= self._deduce_accounts_balance
             return True, self._currency_conv(amount)
 
         return False, 0.
