@@ -124,8 +124,8 @@ class hq_report_ocba(report_sxw.report_sxw):
             period.date_start[5:7], period.date_start[:4],
             account_code, ccy_name, journal_code,
         )
-
-        rate = booking / func if func != 0 else 0.
+            
+        rate = booking / func if func != 0 and booking != 0 else 1.
         if entry_data['is_cur_adj']:
             booking = 0.  # always 0 for FXA entries
             rate = 1.
@@ -410,6 +410,9 @@ class hq_report_ocba(report_sxw.report_sxw):
         if self._CUR_ADJ_JOURNAL_TYPE \
             and r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE:
             return 1.  # FXA entries always rate 1
+        if not is_analytic \
+            and r.debit_currency == 0 and r.credit_currency == 0:
+            return 1.
 
         # US-478 accrual account (always refer to previous period)
         # base on doc date instead posting in this case
