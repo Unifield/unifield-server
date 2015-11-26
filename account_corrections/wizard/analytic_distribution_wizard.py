@@ -186,7 +186,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     is_HQ_entries = False
                     if original_al_id and len(original_al_id) == 1:
                         original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
-                        if original_al.journal_id.code == 'HQ':
+                        if original_al.journal_id.type == 'hq':
                             is_HQ_entries = True
 
                     # In case it's an HQ entries, just generate the REV and COR
