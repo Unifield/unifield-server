@@ -55,7 +55,7 @@
   </Style>
 </Styles>
 ## ==================================== we loop over the log lines "objects" == audittrail_log_lines  ====================================================
-<ss:Worksheet ss:Name="${"%s"%(order_name(objects[0].id) or 'Sheet1')|x}" ss:Protected="1">
+<ss:Worksheet ss:Name="${"%s"%(order_name(objects[0].id)[:31] or 'Sheet1')|x}" ss:Protected="1">
 ## definition of the columns' size
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="30" />
