@@ -407,6 +407,9 @@ class hq_report_ocba(report_sxw.report_sxw):
 
         if r.currency_id.id == r.functional_currency_id.id:
             return 1.
+        if self._CUR_ADJ_JOURNAL_TYPE \
+            and r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE:
+            return 1.  # FXA entries always rate 1
 
         # US-478 accrual account (always refer to previous period)
         # base on doc date instead posting in this case
