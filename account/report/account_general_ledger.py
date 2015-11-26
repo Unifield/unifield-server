@@ -72,11 +72,20 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.title = _('Trial Balance')
 
         self.account_ids = self._get_data_form(data, 'account_ids')
+
         # US-334/6: Only account 10100 and 10200 must never be displayed in \
         # details when you tick "Unreconciled" because they are the only \
         # account not reconciliable.
-        self.unreconciled_accounts = self._get_data_form(data,
-            'unreconciled', False) and ['10100', '10200', ] or False
+        a_obj = self.pool.get('account.account')
+        self.unreconciled_filter = self._get_data_form(data, 'unreconciled', False)
+        if self.unreconciled_filter:
+            self.unreconciliable_accounts = a_obj.search(self.cr, self.uid, [
+                    ('reconcile', '=', False),
+                    ('type', '=', 'liquidity'),
+                ], context=self.context)
+        else:
+            self.unreconciliable_accounts = []
+
         self.context['state'] = data['form']['target_move']
 
         if 'instance_ids' in data['form']:
@@ -117,7 +126,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         # UF-1714 accounts 8*, 9* are not displayed:
         # have to deduce 8/9 balance amounts to MSF account view (root account)
         deduce_accounts_index = [ '8', '9', ]
-        a_obj = self.pool.get('account.account')
         self._deduce_accounts_balance = 0
         if deduce_accounts_index:
             a_ids = a_obj.search(self.cr, self.uid,
@@ -197,8 +205,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.context = context
 
     def _sum_currency_amount_account(self, account):
-        reconcile_pattern = self.unreconciled_accounts and \
-            " AND (reconcile_txt is null OR reconcile_txt = '')" or ''
+        reconcile_pattern = self.unreconciled_filter and \
+            " AND reconcile_id is null" or ''
 
         sql = 'SELECT sum(l.amount_currency) AS tot_currency \
             FROM account_move_line l \
@@ -281,8 +289,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     and child_account.user_type.report_type \
                         not in self.account_report_types:
                     continue
-            if self.unreconciled_accounts:
-                if child_account.code in self.unreconciled_accounts:
+            if self.unreconciled_filter:
+                if child_account.id in self.unreconciliable_accounts:
+                    # unreconciliable filter:
+                    # do not display unreciliable account
                     continue
             if self.account_ids and child_account.id not in self.account_ids:
                     continue  # filtered account
@@ -366,12 +376,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             LEFT JOIN res_partner p on (l.partner_id=p.id)
             LEFT JOIN account_invoice i on (m.id =i.move_id)
             LEFT JOIN account_period per on (per.id=l.period_id)
+            LEFT JOIN account_account ac on (ac.id=l.account_id)
             JOIN account_journal j on (l.journal_id=j.id)
             WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
         """ %(self.query, tuple(move_state), sql_sort)
         sql = sql.replace('{{reconcile}}',
-                self.unreconciled_accounts and \
-                    " AND (reconcile_txt is null OR reconcile_txt = '')" or '')
+                self.unreconciled_filter and \
+                    " AND reconcile_id is null and ac.reconcile ='t'" or '')
         self.cr.execute(sql, (account.id,))
         res_lines = self.cr.dictfetchall()
         res_init = []
@@ -394,12 +405,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 LEFT JOIN res_currency c on (l.currency_id=c.id)
                 LEFT JOIN res_partner p on (l.partner_id=p.id)
                 LEFT JOIN account_invoice i on (m.id =i.move_id)
+                LEFT JOIN account_account ac on (ac.id=l.account_id)
                 JOIN account_journal j on (l.journal_id=j.id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}}
             """ %(self.init_query, tuple(move_state))
             sql = sql.replace('{{reconcile}}',
-                self.unreconciled_accounts and \
-                    " AND (reconcile_txt is null OR reconcile_txt = '')" or '')
+                self.unreconciled_filter and \
+                    " AND reconcile_id is null and ac.reconcile ='t'" or '')
             self.cr.execute(sql, (account.id,))
             res_init = self.cr.dictfetchall()
         res = res_init + res_lines
@@ -449,8 +461,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
         else:
             ccy_pattern = ""
-        reconcile_pattern = self.unreconciled_accounts and \
-            " AND (reconcile_txt is null OR reconcile_txt = '')" or ''
+        reconcile_pattern = self.unreconciled_filter and \
+            " AND reconcile_id is null" or ''
 
         sql = 'SELECT {field} \
             FROM account_move_line l \
@@ -648,7 +660,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         # reconciled account
         info_data.append((_('Unreconciled'),
-            self.unreconciled_accounts and yes_str or no_str, ))
+            self.unreconciled_filter and yes_str or no_str, ))
 
         display_account = all_str
         if 'display_account' in data['form']:
