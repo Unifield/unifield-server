@@ -306,8 +306,10 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             vals['inventory_line_id'].append((0, 0, to_write))
 
         # write order line on Inventory
+        context['import_in_progress'] = True
         vals.update({'file_to_import': False})
         self.write(cr, uid, ids, vals, context=context)
+        context['import_in_progress'] = False
 
         view_id = obj_data.get_object_reference(cr, uid, 'specific_rules','stock_initial_inventory_form_view')[1]
 
@@ -373,6 +375,8 @@ class stock_inventory_line(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         comment = ''
         pl_obj = self.pool.get('stock.production.lot')
         hidden_batch_management_mandatory = False
@@ -422,7 +426,7 @@ class stock_inventory_line(osv.osv):
             if vals.get('comment'):
                 comment = vals.get('comment')
             vals.update({'comment': comment, 'to_correct_ok': False})
-        else:
+        elif context.get('import_in_progress'):
             vals.update({'comment': comment, 'to_correct_ok': True})
 
         res = super(stock_inventory_line, self).create(cr, uid, vals, context=context)
