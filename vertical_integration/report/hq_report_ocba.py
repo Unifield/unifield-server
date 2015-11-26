@@ -108,15 +108,14 @@ class hq_report_ocba(report_sxw.report_sxw):
 
     def export_shrinked_entries(self, cr, uid, file_data, build_data, key):
         account_code, ccy_name, journal_code = key
-        entry_data = build_data['shrink'][key]
 
         # shrink entry balance sum amounts (per account/ccy/journal)
-        # (booking always 1 (func) for FXA entries)
-        booking = 0. if entry_data['is_cur_adj'] else entry_data['booking']
-        func = entry_data['func']
-        if booking == 0. and func == 0.:
+        entry_data = build_data['shrink'][key]
+        if entry_data['booking'] == 0. and entry_data['func'] == 0.:
             # skip null entry
             return
+        booking = entry_data['booking']
+        func = entry_data['func']
 
         # auto seq number for shrink entry
         period = build_data['period']
@@ -126,11 +125,10 @@ class hq_report_ocba(report_sxw.report_sxw):
             account_code, ccy_name, journal_code,
         )
 
-        # rate (always 1 (func) for FXA entries)
+        rate = booking / func if func != 0 and booking != 0 else 1.
         if entry_data['is_cur_adj']:
+            booking = 0.  # always 0 for FXA entries
             rate = 1.
-        else:
-            rate = booking / func if func != 0 else 0.
 
         # line description from account code, ccy, journal, period
         description = "Subtotal - %s - %s - %s - %s" % (
@@ -408,6 +406,12 @@ class hq_report_ocba(report_sxw.report_sxw):
             return cr.rowcount and cr.fetchall()[0][0] or False
 
         if r.currency_id.id == r.functional_currency_id.id:
+            return 1.
+        if self._CUR_ADJ_JOURNAL_TYPE \
+            and r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE:
+            return 1.  # FXA entries always rate 1
+        if not is_analytic \
+            and r.debit_currency == 0 and r.credit_currency == 0:
             return 1.
 
         # US-478 accrual account (always refer to previous period)

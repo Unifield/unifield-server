@@ -23,7 +23,7 @@ from osv import fields
 from osv import osv
 
 from time import strftime
-from time import strptime
+
 
 class ocb_matching_export_wizard(osv.osv_memory):
     _name = "ocb.matching.export.wizard"
@@ -47,8 +47,10 @@ class ocb_matching_export_wizard(osv.osv_memory):
             data['form'].update({'instance_ids': [wizard.instance_id.id] + [x.id for x in wizard.instance_id.child_ids]})
         period_name = ''
 
-        data['target_filename'] = '%s_matching_export' % (
-            wizard.instance_id and wizard.instance_id.code or '', )
+        data['target_filename'] = '%s_%s_matching_export' % (
+            wizard.instance_id and wizard.instance_id.code or '',
+            strftime('%Y%m'),
+        )
 
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocb.matching', 'datas': data}
 
