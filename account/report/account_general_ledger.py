@@ -614,14 +614,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         
     def _currency_conv(self, amount):
         if not amount or amount == 0.:
-            return amount
-        if self._is_company_currency():
-            return amount
-        amount = self.pool.get('res.currency').compute(self.cr, self.uid,
-                                                self.currency_id,
-                                                self.output_currency_id,
-                                                amount)
-        if not amount:
+            return 0.
+        if not self._is_company_currency():
+            amount = self.pool.get('res.currency').compute(self.cr, self.uid,
+                self.currency_id, self.output_currency_id, amount)
+        if not amount or abs(amount) < 0.001:
             amount = 0.
         return amount
         
