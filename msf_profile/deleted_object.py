@@ -90,7 +90,7 @@ class extended_orm_delete_method:
             return res
         deletion_date = time.strftime('%Y-%m-%d %H:%M:%S')
         model_obj = self.pool.get(self._name)
-        if not hasattr(model_obj, 'get_sd_ref'):
+        if not self.pool.get('sync.client.entity'):
             # sync client not installed
             return res
         obj_sd_ref = model_obj.get_sd_ref(cr, uid, ids)
