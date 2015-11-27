@@ -755,6 +755,17 @@ class product_product(osv.osv):
     def get_sub_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
 
+    def copy(self, cr, uid, old_id, new_vals=None, context=None):
+        res = super(product_product, self).copy(cr, uid, old_id, new_vals, context=context)
+        if new_vals.get('default_code', None) == 'XXX':
+            # Delete the translations linked to this new product
+            tr_obj = self.pool.get('ir.translation')
+            tr_ids = tr_obj.search(cr, uid, [('xml_id', '=', 'product_XXX')], context=context)
+            if tr_ids:
+                tr_obj.unlink(cr, uid, tr_ids, context=context)
+
+        return res
+
     def create(self, cr, uid, vals, context=None):
         '''
         override to complete nomenclature_description
