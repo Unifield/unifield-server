@@ -826,6 +826,7 @@ class finance_tools(osv.osv):
         check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
         check_range_end = posting_date
         if not (check_range_start <= document_date <= check_range_end):
+            import pdb; pdb.set_trace()
             if show_date:
                 msg = _('Document date (%s) should be in posting date FY') % (
                     document_date, )

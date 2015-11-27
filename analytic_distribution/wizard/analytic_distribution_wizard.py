@@ -1049,7 +1049,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'),
                     ('commitment_line_id', 'account.commitment.line'), ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
                     ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move'),
-                    ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line')]:
+                    ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line'),
+                    ('account_direct_invoice_wizard_id','account.direct.invoice.wizard'),
+                    ('account_direct_invoice_wizard_line_id','account.direct.invoice.wizard.line'),]:
                     if getattr(wiz, el[0], False):
                         obj_id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [obj_id], {'analytic_distribution_id': distrib_id}, context=context)
@@ -1095,9 +1097,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'res_id': direct_invoice_id,
                     'context': context,
                 }
-        if wiz and wiz.account_direct_invoice_wizard_id:
+        if wiz and (wiz.account_direct_invoice_wizard_id or wiz.account_direct_invoice_wizard_line_id):
             # Get direct_invoice id
-            direct_invoice_id = (wiz.account_direct_invoice_wizard_id and wiz.account_direct_invoice_wizard_id.id)
+            direct_invoice_id = (wiz.account_direct_invoice_wizard_id and wiz.account_direct_invoice_wizard_id.id) or\
+                    (wiz.account_direct_invoice_wizard_line_id and\
+                            wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
             # Get register from which we come from
             direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr, uid, [direct_invoice_id], context=context)[0]
             register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
@@ -1361,18 +1365,21 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'res_id': direct_invoice_id,
                     'context': context,
                 }
-        if wiz and wiz.account_direct_invoice_wizard_id:
+        if wiz and (wiz.account_direct_invoice_wizard_id or wiz.account_direct_invoice_wizard_line_id):
             # Get direct_invoice id
-            direct_invoice_id = (wiz.account_direct_invoice_wizard_id and wiz.account_direct_invoice_wizard_id.id)
+            direct_invoice_id = (wiz.account_direct_invoice_wizard_id and wiz.account_direct_invoice_wizard_id.id) or\
+                    (wiz.account_direct_invoice_wizard_line_id and\
+                            wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
             # Get register from which we come from
             direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr, uid, [direct_invoice_id], context=context)[0]
-            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
-            if register_id:
+            #register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            #if register_id:
+            if True: # XXX
                 context.update({
-                    'active_id': register_id,
+            #        'active_id': register_id,
                     'type': 'in_invoice',
                     'journal_type': 'purchase',
-                    'active_ids': register_id,
+            #        'active_ids': register_id,
                     })
                 return {
                     'name': "Supplier Direct Invoice Wizard",

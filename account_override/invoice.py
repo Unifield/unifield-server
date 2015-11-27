@@ -1250,25 +1250,7 @@ class account_invoice_line(osv.osv):
                 sequence = invoice.sequence_id
                 line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
-        res = super(account_invoice_line, self).create(cr, uid, vals, context)
-        if vals.get('invoice_id', False):
-            inv_obj_name = 'account.invoice'
-            if self._name != 'account.invoice.line':
-                inv_obj_name = 'wizard.account.invoice'
-            invoice = self.pool.get(inv_obj_name).browse(cr, uid, vals.get('invoice_id'))
-            if invoice and invoice.is_direct_invoice and invoice.state == 'draft':
-                amount = 0.0
-                for l in invoice.invoice_line:
-                    amount += l.price_subtotal
-                amount += vals.get('price_unit', 0.0) * vals.get('quantity', 0.0)
-                self.pool.get('account.invoice').write(cr, uid, [invoice.id], {'check_total': amount}, context)
-                self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invoice.register_line_ids], {'amount': -1 * amount}, context)
-
-                # User has updated the direct invoice. The (parent) statement
-                # line needs to be updated, and then the move lines deleted
-                # and re-created. Ticket US-713.
-                self.pool.get('account.invoice')._direct_invoice_updated(cr, uid, [invoice.id], context)
-        return res
+        return super(account_invoice_line, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -1297,11 +1279,6 @@ class account_invoice_line(osv.osv):
                     amount += l.price_subtotal
                 self.pool.get('account.invoice').write(cr, uid, [invl.invoice_id.id], {'check_total': amount}, context)
                 self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invl.invoice_id.register_line_ids], {'amount': -1 * amount}, context)
-
-                # User has updated the direct invoice. The (parent) statement
-                # line needs to be updated, and then the move lines deleted
-                # and re-created. Ticket US-713.
-                self.pool.get('account.invoice')._direct_invoice_updated(cr, uid, [invl.invoice_id.id], context)
         return res
 
     def copy(self, cr, uid, inv_id, default=None, context=None):

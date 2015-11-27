@@ -2484,6 +2484,43 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
 
+        # Prepare values for wizard
+        vals = {
+            'account_id': invoice.account_id.id,
+            'address_invoice_id': invoice.address_invoice_id.id,
+            'address_contact_id': invoice.address_contact_id.id,
+            'amount_total': invoice.amount_total,
+            'analytic_distribution_id': invoice.analytic_distribution_id.id,
+            #'check_total': invoice.check_total,
+            'comment': invoice.comment,
+            'company_id':invoice.company_id.id,
+            'currency_id': invoice.currency_id.id,
+            'date_invoice': invoice.date_invoice,
+            'document_date': invoice.document_date,
+            #'fake_currency_id': invoice.fake_currency_id.id,
+            #'invoice_wizard_line': [(6, 0, ivl_wizard_id_list)],
+            'is_temp_object': True,
+            'is_direct_invoice': invoice.is_direct_invoice,
+            'journal_id': invoice.journal_id.id,
+            'name': invoice.name,
+            'number': invoice.number,
+            'origin': invoice.origin,
+            'original_invoice_id': invoice.id,
+            'partner_id': invoice.partner_id.id,
+            'partner_bank_id':invoice.partner_bank_id.id,
+            'payment_term': invoice.payment_term or False,
+            'reference': invoice.reference,
+            'register_posting_date': invoice.register_posting_date,
+            'register_line_id': invoice.register_line_ids[0].id,
+            'register_id': invoice.register_line_ids[0].statement_id.id,
+            'state': invoice.state,
+            'type': invoice.type,
+            'user_id': invoice.user_id.id,
+            }
+        # Create the wizard
+        wiz_obj = self.pool.get('account.direct.invoice.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+
         # recreate invoice line as temp objects
         wiz_invoice_line = self.pool.get('account.direct.invoice.wizard.line')
         ivl_wizard_id_list = []
@@ -2495,10 +2532,12 @@ class account_bank_statement_line(osv.osv):
                     'analytic_distribution_id': ivl.analytic_distribution_id.id,
                     'have_analytic_distribution_from_header':ivl.have_analytic_distribution_from_header,
                     'inactive_product':ivl.inactive_product,
+                    'invoice_wizard_id':wiz_id,
                     'is_allocatable':ivl.is_allocatable,
                     'is_corrected':ivl.is_corrected,
                     'is_temp_object': True,
                     'name':ivl.name,
+                    'original_invoice_line_id':ivl.id,
                     'price_unit':ivl.price_unit,
                     'price_subtotal':ivl.price_subtotal,
                     'product_id':ivl.product_id.id,
@@ -2509,40 +2548,10 @@ class account_bank_statement_line(osv.osv):
             ivl_id = wiz_invoice_line.create(cr, uid, ivl_values, context=context)
             ivl_wizard_id_list.append(ivl_id)
 
-        # Prepare values for wizard
-        vals = {
-            'account_id': invoice.account_id.id,
-            'address_invoice_id': invoice.address_invoice_id.id,
-            'address_contact_id': invoice.address_contact_id.id,
-            'amount_total': invoice.amount_total,
-            'analytic_distribution_id': invoice.analytic_distribution_id.id,
-            'check_total': invoice.check_total,
-            'comment': invoice.comment,
-            'company_id':invoice.company_id.id,
-            'currency_id': invoice.currency_id.id,
-            'date_invoice': invoice.date_invoice,
-            'document_date': invoice.document_date,
-            'fake_currency_id': invoice.fake_currency_id.id,
-            'invoice_line': [(6, 0, ivl_wizard_id_list)],
-            'is_temp_object': True,
-            'is_direct_invoice': invoice.is_direct_invoice,
-            'journal_id': invoice.journal_id.id,
-            'name': invoice.name,
-            'number': invoice.number,
-            'origin': invoice.origin,
-            'partner_id': invoice.partner_id.id,
-            'partner_bank_id':invoice.partner_bank_id.id,
-            #'payment_term': invoice.payment_term,
-            'reference': invoice.reference,
-            'register_posting_date': invoice.register_posting_date,
-            'register_id': invoice.register_line_ids[0].statement_id.id,
-            'state': invoice.state,
-            'type': invoice.type,
-            'user_id': invoice.user_id.id,
-            }
-        # Create the wizard
-        wiz_obj = self.pool.get('account.direct.invoice.wizard')
-        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # update the wizard with the invoice_line ids
+        wiz_obj.write(cr, uid, [wiz_id], {'invoice_wizard_line': [(6, 0,
+            ivl_wizard_id_list)]}, context=context)
+
 
         # Update some context values
         context.update({
