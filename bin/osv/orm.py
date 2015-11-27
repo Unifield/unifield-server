@@ -4487,6 +4487,7 @@ class orm(orm_template):
 
         for record in translation_records:
             del record['id']
+            del record['xml_id']
             record['res_id'] = new_id
             trans_obj.create(cr, uid, record, context=context)
 
