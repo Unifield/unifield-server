@@ -259,9 +259,10 @@ class account_direct_invoice_wizard(osv.osv_memory):
         absl_obj = self.pool.get('account.bank.statement.line')
         inv_obj = self.pool.get('account.invoice')
         invl_obj = self.pool.get('account.invoice.line')
+        wiz_obj = self
+        wiz_line_obj = self.pool.get('account.direct.invoice.wizard.line')
 
         # Get the original invoice
-        wiz_obj = self.pool.get('account.direct.invoice.wizard')
         inv_id = wiz_obj.browse(cr, uid, ids, context)[0].original_invoice_id.id
         invoice = inv_obj.browse(cr, uid, inv_id)
 
@@ -283,34 +284,30 @@ class account_direct_invoice_wizard(osv.osv_memory):
         vals['invoice_line'] = []
         amount = 0
         if inv['invoice_wizard_line']:
-            for line in self.pool.get('account.direct.invoice.wizard.line').read(cr, uid,
-                    inv['invoice_wizard_line'], ['product_id','account_id',
-                        'account_analytic_id', 'quantity',
-                        'original_invoice_line_id', 'price_unit',
-                        'price_subtotal','name', 'uos_id','analytic_distribution_id','reference']):
+            for line in wiz_line_obj.browse(cr, uid,
+                    inv['invoice_wizard_line']):
                 # line level reference overrides header level reference
                 line_reference = False
-                if line['reference']:
-                    line_reference = line['reference']
+                if line.reference:
+                    line_reference = line.reference
                 elif inv['reference']:
                     line_reference = inv['reference']
-                vals['invoice_line'].append((line['original_invoice_line_id'],
+                vals['invoice_line'].append((line.original_invoice_line_id.id,
                     {
-                        'product_id': line['product_id'],
-                        'account_id': line['account_id'],
-                        'account_analytic_id': line['account_analytic_id'],
-                        'analytic_distribution_id': line['analytic_distribution_id'],
-                        'quantity': line['quantity'] ,
+                        'product_id': line.product_id.id,
+                        'account_id': line.account_id.id,
+                        'account_analytic_id': line.account_analytic_id.id,
+                        'analytic_distribution_id': line.analytic_distribution_id.id,
+                        'quantity': line.quantity,
                         'invoice_id': vals['original_invoice_id'],
-                        'price_unit': line['price_unit'] ,
-                        'price_subtotal': line['price_subtotal'],
-                        'name': line['name'],
-                        'uos_id': line['uos_id'],
+                        'price_unit': line.price_unit,
+                        'price_subtotal': line.price_subtotal,
+                        'name': line.name,
+                        'uos_id': line.uos_id.id,
                         'reference': line_reference,
                     })
                 )
-                amount += line['price_subtotal']
-
+                amount += line.price_subtotal
         # Retrieve period
         register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id']], context=context)[0]
         period = register and register.period_id and register.period_id.id or False
@@ -324,7 +321,6 @@ class account_direct_invoice_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('Register Line posting date is outside of the register period!'))
             elif vals['date_invoice'] > vals['register_posting_date']:
                 raise osv.except_osv(_('Warning'), _('Direct Invoice posting date must be sooner or equal to the register line posting date!'))
-
         vals.update({'date_invoice': vals['date_invoice']})
         vals.update({'register_posting_date': vals['register_posting_date']})
 
@@ -356,14 +352,16 @@ class account_direct_invoice_wizard(osv.osv_memory):
         for original_line_id in tuple(set(invl_id_list) - set(not_deleted_id_list)):
             invl_obj.unlink(cr, uid, original_line_id, context=context)
 
-        # Set this invoice as direct invoice
-        inv_obj.write(cr, uid, [inv_id], {'is_direct_invoice': True})
-
-        # update the invoice check_total with all lines
+        # update the invoice check_total with all line and
+        # link invoice and register_line
         amount = 0.0
         for l in invoice.invoice_line:
             amount += l.price_subtotal
-        inv_obj.write(cr, uid, [invoice.id], {'check_total': amount}, context)
+        inv_obj.write(cr, uid, [inv_id],
+                {'check_total': amount,
+                 'is_direct_invoice': True,
+                 'register_line_ids': [(4, vals['register_line_id'])]},
+                context)
         absl_obj.write(cr, uid, [x.id for x in invoice.register_line_ids], {'amount': -1 * amount}, context)
 
         # Update the attached register line and link the invoice to the register
@@ -385,34 +383,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         }
         absl_obj.write(cr, uid, [reg_line_id], values)
 
-        # Temp post the line
-        absl_obj.button_temp_posting(cr, uid, [reg_line_id], context=context)
-
-        # Link invoice and register_line
-        inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
-
-        # fix the reference UFTP-167
-        inv_obj.fix_aal_aml_reference(cr, uid, inv_id, context=context)
-
-        # UTP-1041 : additional reference field functionality
-        if inv['reference'] is False:
-            inv_number = inv_obj.browse(cr, uid, inv_id, context=context).number
-
-            # US-364/1: display the sequence number in the register line
-            # reference field if no reference set in DI header
-            absl_obj.write(cr, uid, [reg_line_id], {
-                'ref': inv_number,
-            }, context=context)
-
-            absl = absl_obj.browse(cr, uid, reg_line_id, context=context)
-            am = absl.move_ids[0]
-            aml_obj = self.pool.get('account.move.line')
-            aml_ids = aml_obj.search(cr, uid,[('move_id','=',am.id)], context=context)
-            amls = aml_obj.browse(cr, uid, aml_ids, context=context)
-            for aml in amls:
-                aml_obj.write(cr, uid, aml.id, {'reference': inv_number}, context=context, check=False, update_check=False)
         # Delete the wizard lines:
-        wiz_line_obj = self.pool.get('account.direct.invoice.wizard.line')
         wiz_line_obj.unlink(cr, uid, inv['invoice_wizard_line'], context=context)
 
         # Delete the wizard
@@ -527,7 +498,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
         """
-        Reset analytic distribution on all invoice lines.
+        Reset analytic distribution on all account direct invoice wizard lines.
         To do this, just delete the analytic_distribution id link on each invoice line.
         """
         if context is None:
@@ -535,7 +506,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        invl_obj = self.pool.get(self._name + '.line') # PAY ATTENTION to wizard.account.invoice.line
+        invl_obj = self.pool.get(self._name + '.line')
         # Search invoice lines
         to_reset = invl_obj.search(cr, uid, [('invoice_wizard_id', 'in', ids)])
         invl_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
@@ -642,27 +613,6 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
                 }
         return res
 
-    def _have_been_corrected(self, cr, uid, ids, name, args, context=None):
-        """
-        Return True if ALL elements are OK:
-         - a journal items is linked to this invoice line
-         - the journal items is linked to an analytic line that have been reallocated
-        """
-        if context is None:
-            context = {}
-        res = {}
-
-        def has_ana_reallocated(move):
-            for ml in move.move_lines or []:
-                for al in ml.analytic_lines or []:
-                    if al.is_reallocated:
-                        return True
-            return False
-
-        for il in self.browse(cr, uid, ids, context=context):
-            res[il.id] = has_ana_reallocated(il)
-        return res
-
     def _amount_line(self, cr, uid, ids, prop, unknow_none, unknow_dict):
         res = {}
         tax_obj = self.pool.get('account.tax')
@@ -677,26 +627,6 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
             if line.invoice_wizard_id:
                 cur = line.invoice_wizard_id.currency_id
                 res[line.id] = cur_obj.round(cr, uid, cur.rounding, res[line.id])
-        return res
-
-    def _get_lines(self, cr, uid, ids, name, arg, context=None):
-        res = {}
-        for invoice in self.browse(cr, uid, ids, context=context):
-            id = invoice.id
-            res[id] = []
-            if not invoice.move_id:
-                continue
-            data_lines = [x for x in invoice.move_id.line_id if x.account_id.id == invoice.account_id.id]
-            partial_ids = []
-            for line in data_lines:
-                ids_line = []
-                if line.reconcile_id:
-                    ids_line = line.reconcile_id.line_id
-                elif line.reconcile_partial_id:
-                    ids_line = line.reconcile_partial_id.line_partial_ids
-                l = map(lambda x: x.id, ids_line)
-                partial_ids.append(line.id)
-                res[id] =[x for x in l if x <> line.id and x not in partial_ids]
         return res
 
     _columns = {
@@ -730,16 +660,8 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
             ondelete='cascade', select=True),
         'is_allocatable': fields.function(_get_is_allocatable, method=True,
             type='boolean', string="Is allocatable?", readonly=True, store=False),
-        'is_corrected': fields.function(_have_been_corrected, method=True,
-            string="Have been corrected?", type='boolean',
-            readonly=True, help="This informs system if this item have been "
-            "corrected in analytic lines. Criteria: the invoice line is linked"
-            "to a journal items that have analytic item which is reallocated.",
-            store=False),
         'is_temp_object': fields.boolean('is it a temp object in RAM',
             readonly=True, help='This is automatic field'),
-        'move_lines':fields.function(_get_lines, method=True, type='many2many',
-            relation='account.move.line', string='Entry Lines'),
         'reference': fields.char(string="Reference", size=64),
         'name': fields.char('Description', size=256, required=True),
         'origin': fields.char('Origin', size=512,
@@ -791,12 +713,9 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
     }
 
     def onchange_account_id(self, cr, uid, ids, fposition_id, account_id):
-        if not account_id:
-            return {}
-        taxes = self.pool.get('account.account').browse(cr, uid, account_id).tax_ids
-        fpos = fposition_id and self.pool.get('account.fiscal.position').browse(cr, uid, fposition_id) or False
-        res = self.pool.get('account.fiscal.position').map_tax(cr, uid, fpos, taxes)
-        return {'value':{'invoice_line_tax_id': res}}
+        # just call the original method from account.invoice.line
+        return self.pool.get('account.invoice.line').onchange_account_id(cr, uid, ids,
+                fposition_id, account_id)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -915,7 +834,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         return res
 
     def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, context=None):
-        # just call the original method from accoun.invoice.line
+        # just call the original method from account.invoice.line
         return self.pool.get('account.invoice.line').product_id_change(cr, uid, ids,
         product, uom, qty=qty, name=name, type=type, partner_id=partner_id,
         fposition_id=fposition_id, price_unit=price_unit,

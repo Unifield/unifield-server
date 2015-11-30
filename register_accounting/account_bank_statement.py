@@ -2534,7 +2534,6 @@ class account_bank_statement_line(osv.osv):
                     'inactive_product':ivl.inactive_product,
                     'invoice_wizard_id':wiz_id,
                     'is_allocatable':ivl.is_allocatable,
-                    'is_corrected':ivl.is_corrected,
                     'is_temp_object': True,
                     'name':ivl.name,
                     'original_invoice_line_id':ivl.id,
