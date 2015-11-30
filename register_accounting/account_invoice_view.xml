@@ -246,7 +246,7 @@
             <field name="type">tree</field>
             <field name="priority">250</field>
             <field name="arch" type="xml">
-                <tree noteditable="1" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" string="Invoice" hide_new_button="1" >
+                <tree noteditable="1" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" string="Invoice" hide_new_button="1" hide_delete_button="1">
                     <field name="document_date"/>
                     <field name="date_invoice"/>
                     <field name="number"/>
