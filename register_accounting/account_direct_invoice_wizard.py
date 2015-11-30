@@ -897,7 +897,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not ids:
-            return False
+            raise osv.except_osv(_('Error'), _('No invoice line given.'))
 
         invoice_wizard_id = self.browse(cr, uid, ids)[0].invoice_wizard_id
         for invl in self.browse(cr, uid, ids):
