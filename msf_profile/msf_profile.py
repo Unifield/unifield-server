@@ -174,6 +174,26 @@ class patch_scripts(osv.osv):
         if cron_ids:
             cron_obj.write(cr, uid, cron_ids, {'doall': False})
 
+    def bar_action_patch(self, cr, uid, *a, **b):
+        rules_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        data_obj = self.pool.get('ir.model.data')
+        view_obj = self.pool.get('ir.ui.view')
+        rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False)])
+        view_to_gen = {}
+        for rule in rules_obj.read(cr, uid, rule_ids, ['view_id']):
+            view_to_gen[rule['view_id'][0]] = True
+            rules_obj.unlink(cr, uid, rule['id'])
+            d_ids = data_obj.search(cr, uid, [
+                ('module', '=', 'sd'),
+                ('model', '=', 'msf_button_access_rights.button_access_rule'),
+                ('res_id', '=', rule['id'])
+                ])
+            if d_ids:
+                data_obj.unlink(cr, uid, d_ids)
+        for view in view_to_gen:
+            view_obj.generate_button_access_rules(cr, uid, view)
+
+
 patch_scripts()
 
 
