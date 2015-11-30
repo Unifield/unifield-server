@@ -833,9 +833,10 @@ class button_access_rule(osv.osv):
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         bar = self.browse(cr, uid, res_id)
         view_xml_id = self.pool.get('ir.ui.view').get_xml_id(cr, 1, [bar.view_id.id])
-        button_name = ''
         if bar.type == 'action' and bar.xmlname:
             button_name = bar.xmlname
+        else:
+            button_name = bar.name
         return get_valid_xml_name('BAR', view_xml_id[bar.view_id.id], button_name)
 
     def _get_is_remote_wh(self, cr, uid, ids, field_name, args, context=None):
