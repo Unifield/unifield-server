@@ -808,8 +808,8 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not ids:
-            raise osv.except_osv(_('Error'), _('No invoice line given. "
-                "Please save your invoice line before.'))
+            raise osv.except_osv(_('Error'), _('No invoice line given. '
+                'Please save your invoice line before.'))
         # Prepare some values
         invoice_line = self.browse(cr, uid, ids[0], context=context)
         negative_inv = False
@@ -829,8 +829,8 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
                 invoice_line.analytic_distribution_id.id or False
         # Prepare values for wizard
         vals = {
-            'account_direct_invoice_wizard_line_id': invoice_line.id,
             'total_amount': amount,
+            'account_direct_invoice_wizard_line_id': invoice_line.id,
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
@@ -861,11 +861,10 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
 
     def create(self, cr, uid, vals, context=None):
         """
-        Give a line_number to invoice line.
-        NB: This appends only for account invoice line and not other object (for an example direct invoice line)
-        If invoice is a Direct Invoice and is in draft state:
-         - compute total amount (check_total field)
-         - write total to the register line
+        - Set the price_subtotal if not set to the current line,
+        - Update the account.direct.invoice.wizard check_total with this
+          new line amount,
+        - Call the super method.
         """
         if not context:
             context = {}
@@ -874,7 +873,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         # price_subtotal is not set
         if not vals.get('price_subtotal', 0.0):
             line_amount = vals.get('price_unit', 0.0) * vals.get('quantity', 0.0)
-            vals['price_subtotal'] = line_amount 
+            vals['price_subtotal'] = line_amount
 
         # update the total of the account.direct.invoice.wizard
         wiz_obj = self.pool.get('account.direct.invoice.wizard')
@@ -883,42 +882,44 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         for l in invoice.invoice_wizard_line:
             amount += l.price_subtotal
         amount += vals['price_subtotal']
-        wiz_obj.write(cr, uid, [invoice.id], {'amount_total': amount,
-                                              'check_total': amount}, context)
+        wiz_obj.write(cr, uid, [invoice.id], {'check_total': amount}, context)
         return super(account_direct_invoice_wizard_line, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
-        Give a line_number in invoice_id in vals
-        NB: This appends only for account invoice line and not other object (for an example direct invoice line)
-        If invoice is a Direct Invoice and is in draft state:
-         - compute total amount (check_total field)
-         - write total to the register line
+        - call the super write method
+        - set up the price_subtotal of the current line
+        - compute total amount (check_total fieldu) and pdate the
+          account.direct.invoice.wizard check_total
         """
-
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        res = super(account_direct_invoice_wizard_line, self).write(cr, uid, ids, vals, context)
+        if not ids:
+            return False
+
+        invoice_wizard_id = self.browse(cr, uid, ids)[0].invoice_wizard_id
         for invl in self.browse(cr, uid, ids):
-            super(account_direct_invoice_wizard_line, self).write(cr, uid,
-                    [invl.id], {'price_subtotal': invl.price_unit * invl.quantity}, context)
-            amount = 0.0
-            for l in invl.invoice_wizard_id.invoice_wizard_line:
-                amount += l.price_subtotal
-            self.pool.get('account.direct.invoice.wizard').write(cr, uid,
-                    [invl.invoice_wizard_id.id], {'amount_total': amount,
-                        'check_total': amount}, context)
+            vals.update({'price_subtotal': invl.price_unit * invl.quantity})
+            res = super(account_direct_invoice_wizard_line, self).write(cr, uid,
+                    [invl.id], vals, context)
+
+        # update the check_total on the account.direct.invoice.wizard
+        amount = 0.0
+        for l in invoice_wizard_id.invoice_wizard_line:
+            amount += l.price_subtotal
+        self.pool.get('account.direct.invoice.wizard').write(cr, uid,
+                [invoice_wizard_id.id], {'check_total': amount}, context)
+
         return res
 
     def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, context=None):
         # just call the original method from accoun.invoice.line
-        res = self.pool.get('account.invoice.line').product_id_change(cr, uid, ids,
+        return self.pool.get('account.invoice.line').product_id_change(cr, uid, ids,
         product, uom, qty=qty, name=name, type=type, partner_id=partner_id,
         fposition_id=fposition_id, price_unit=price_unit,
         address_invoice_id=address_invoice_id, currency_id=currency_id,
         context=context)
-        return res
 
 account_direct_invoice_wizard_line()
