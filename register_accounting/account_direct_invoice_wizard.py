@@ -310,9 +310,6 @@ class account_direct_invoice_wizard(osv.osv_memory):
                     })
                 )
                 amount += line['price_subtotal']
-        # Give the total of invoice in the "check_total" field. This permit not to encount problems when validating invoice.
-        # XXX to delete ?
-        #vals.update({'check_total': amount})
 
         # Retrieve period
         register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id']], context=context)[0]
@@ -362,7 +359,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         # Set this invoice as direct invoice
         inv_obj.write(cr, uid, [inv_id], {'is_direct_invoice': True})
 
-        # update the check_total with all lines
+        # update the invoice check_total with all lines
         amount = 0.0
         for l in invoice.invoice_line:
             amount += l.price_subtotal
@@ -431,7 +428,6 @@ class account_direct_invoice_wizard(osv.osv_memory):
         view['type'] = 'ir.actions.act_window_close'
         return view
 
-
     def _direct_invoice_updated(self, cr, uid, ids, context=None):
         """
         User has updated the direct invoice. The (parent) statement line needs to be updated, and then
@@ -460,7 +456,6 @@ class account_direct_invoice_wizard(osv.osv_memory):
 
         # fix the reference UFTP-167
         self.fix_aal_aml_reference(cr, uid, ids[0], context=context)
-
         return True
 
     def invoice_reset_wizard(self, cr, uid, ids, context=None):
@@ -777,10 +772,10 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
             relation='res.company', string='Company', store=True, readonly=True),
         'partner_id': fields.related('invoice_wizard_id','partner_id',type='many2one',
             relation='res.partner', string='Partner',store=True),
-        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True,
+                type='char', string='Comment', store=False, multi='inactive'),
         'newline': fields.boolean('New line'),
             }
-
 
     _defaults = {
         'quantity': lambda *x: 1,
@@ -813,13 +808,15 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not ids:
-            raise osv.except_osv(_('Error'), _('No invoice line given. Please save your invoice line before.'))
+            raise osv.except_osv(_('Error'), _('No invoice line given. "
+                "Please save your invoice line before.'))
         # Prepare some values
         invoice_line = self.browse(cr, uid, ids[0], context=context)
         negative_inv = False
         amount = invoice_line.price_subtotal or 0.0
         # Search elements for currency
-        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid,
+                context=context).company_id.currency_id.id
         currency = invoice_line.invoice_wizard_id.currency_id and \
                 invoice_line.invoice_wizard_id.currency_id.id or company_currency
         # Change amount sign if necessary
