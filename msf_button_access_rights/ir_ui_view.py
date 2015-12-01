@@ -168,7 +168,8 @@ class ir_ui_view(osv.osv):
         for button in buttons:
             xmlname = False
             if button.get('type') == 'action':
-                xmlid = data_obj.search(cr, uid, [('res_id', '=', button['name']), ('module', '!=', 'sd'), ('model', '=', 'ir.actions.act_window')])
+                model = self.pool.get('ir.actions.actions').read(cr, uid, int(button['name']), ['type'])['type']
+                xmlid = data_obj.search(cr, uid, [('res_id', '=', button['name']), ('module', '!=', 'sd'), ('model', '=', model)])
                 if xmlid:
                     data = data_obj.read(cr, uid, xmlid[0], ['module', 'name'])
                     xmlname = '%s.%s' % (data['module'], data['name'])
