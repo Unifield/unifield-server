@@ -33,7 +33,10 @@ restart_delay = 5
 
 md5hex_size = (md5().digest_size * 8 / 4)
 base_version = '8' * md5hex_size
-re_version = re.compile(r'^\s*([a-fA-F0-9]{'+str(md5hex_size)+r'}\b)')
+
+# match 4 groups : md5sum <space> date (yyyy-mm-dd) <space> time (hh:mm:ss) <space> version
+#example : 694d9c65bce826551df26cefcc6565e1 2015-11-27 16:15:00 UF2.0rc3
+re_version = re.compile(r'^\s*([a-fA-F0-9]{'+str(md5hex_size)+r'}\b)\s*(\d+-\d+-\d+)\s*(\d+:\d+:\d+)\s*(.*)')
 logger = logging.getLogger('updater')
 
 def restart_server():
@@ -66,17 +69,22 @@ def parse_version_file(filepath):
     """Short method to parse a "version file"
     Basically, a file where each line starts with the sum of a patch"""
     assert os.path.isfile(filepath), "The file `%s' must be a file!" % filepath
-    versions = []
+    versions_dict = {}
     with open(filepath, 'r') as f:
         for line in f:
             line = line.rstrip()
             if not line: continue
             try:
-                m = re_version.match(line)
-                versions.append( m.group(1) )
+                result = re_version.findall(line)
+                if not result: continue
+                md5sum, date, time, version_name = result[0]
+                versions_dict[md5sum] = {'date': date,
+                                         'time': time,
+                                         'version_name': version_name,
+                                         }
             except AttributeError:
                 raise Exception("Unable to parse version from file `%s': %s" % (filepath, line))
-    return versions
+    return versions_dict
 
 def get_server_version():
     """Autocratically get the current versions of the server
@@ -174,8 +182,7 @@ def do_update():
         else:
             warn(lock_file, 'removed')
         ## Now, update
-        application_time = now()
-        revisions = []
+        revisions = {}
         files = None
         try:
             ## Revisions that going to be installed
@@ -259,9 +266,11 @@ def do_update():
                             os.rename(f, bak)
                         warn("`%s' -> `%s'" % (target, f))
                         os.rename(target, f)
-            add_versions([(x, application_time) for x in revisions])
+            add_versions([(md5, data_dict['date'],
+                           data_dict['time'],
+                           data_dict['version_name']) for md5, data_dict in revisions_dict.items()])
             warn("Update successful.")
-            warn("Revisions added: ", ", ".join(revisions))
+            warn("Revisions added: ", ", ".join(revisions_dict.keys()))
             ## No database update here. I preferred to set modules to update just after the preparation
             ## The reason is, when pool is populated, it will starts by upgrading modules first
 
@@ -342,13 +351,13 @@ def do_prepare(cr, revision_ids):
     for rev in version.browse(cr, 1, revision_ids):
         # Check presence of the patch
         if not rev.patch:
-            missing.append( rev )
+            missing.append(rev)
             continue
         # Check if the file match the expected sum
-        patch = b64decode( rev.patch )
+        patch = b64decode(rev.patch)
         local_sum = md5(patch).hexdigest()
         if local_sum != rev.sum:
-            corrupt.append( rev )
+            corrupt.append(rev)
         elif not (corrupt or missing):
             # Extract the Zip
             f = StringIO(patch)
@@ -358,7 +367,7 @@ def do_prepare(cr, revision_ids):
             finally:
                 f.close()
             # Store to list of updates
-            new_revisions.append( (rev.sum, ("[%s] %s - %s" % (rev.importance, rev.date, rev.name))) )
+            new_revisions.append( (rev.sum, ("[%s] %s - %s - %s" % (rev.importance, rev.date, rev.name, rev.version_name))) )
             if rev.state == 'not-installed':
                 need_restart.append(rev.id)
     # Remove corrupted patches
