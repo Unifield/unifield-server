@@ -69,7 +69,7 @@ def parse_version_file(filepath):
     """Short method to parse a "version file"
     Basically, a file where each line starts with the sum of a patch"""
     assert os.path.isfile(filepath), "The file `%s' must be a file!" % filepath
-    versions_dict = {}
+    versions = []
     with open(filepath, 'r') as f:
         for line in f:
             line = line.rstrip()
@@ -78,12 +78,13 @@ def parse_version_file(filepath):
                 result = re_version.findall(line)
                 if not result: continue
                 md5sum, date, version_name = result[0]
-                versions_dict[md5sum] = {'date': date,
-                                         'name': version_name,
-                                         }
+                versions.append({'md5sum': md5sum,
+                                 'date': date,
+                                 'name': version_name,
+                                })
             except AttributeError:
                 raise Exception("Unable to parse version from file `%s': %s" % (filepath, line))
-    return versions_dict
+    return versions
 
 def get_server_version():
     """Autocratically get the current versions of the server
@@ -97,7 +98,6 @@ def add_versions(versions, filepath=server_version_file):
     if not versions:
         return
     with open(filepath, 'a') as f:
-        import pdb; pdb.set_trace()
         for ver in versions:
             f.write((" ".join([unicode(x) for x in ver]) if hasattr(ver, '__iter__') else ver)+os.linesep)
 
@@ -266,9 +266,8 @@ def do_update():
                             os.rename(f, bak)
                         warn("`%s' -> `%s'" % (target, f))
                         os.rename(target, f)
-            import pdb; pdb.set_trace()
-            add_versions([(md5, data_dict['date'],
-                           data_dict['name']) for md5, data_dict in revisions_dict.items()])
+            add_versions([(x['md5sum'], x['date'],
+                           x['name']) for x in revisions])
             warn("Update successful.")
             warn("Revisions added: ", ", ".join(revisions_dict.keys()))
             ## No database update here. I preferred to set modules to update just after the preparation
@@ -421,7 +420,7 @@ def test_do_upgrade(cr):
     db_versions = []
     for ver in cr.fetchall():
         db_versions.append(ver[0])
-    if set(server_version) - set(db_versions) - set([base_version]):
+    if set([x['md5sum'] for x in server_version]) - set(db_versions) - set([base_version]):
         return True
     return False
 
@@ -433,8 +432,8 @@ def do_upgrade(cr, pool):
 
     db_versions = versions.read(cr, 1, versions.search(cr, 1, [('state','=','installed')]), ['sum'])
     db_versions = map(lambda x:x['sum'], db_versions)
-    server_lack_versions = set(db_versions) - set(server_version)
-    db_lack_versions = set(server_version) - set(db_versions) - set([base_version])
+    server_lack_versions = set(db_versions) - set([x['md5sum'] for x in server_version])
+    db_lack_versions = set([x['md5sum'] for x in server_version]) - set(db_versions) - set([base_version])
 
     if server_lack_versions:
         revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
