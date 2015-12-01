@@ -34,9 +34,9 @@ restart_delay = 5
 md5hex_size = (md5().digest_size * 8 / 4)
 base_version = '8' * md5hex_size
 
-# match 4 groups : md5sum <space> date (yyyy-mm-dd) <space> time (hh:mm:ss) <space> version
+# match 3 groups : md5sum <space> date (yyyy-mm-dd hh:mm:ss) <space> version
 #example : 694d9c65bce826551df26cefcc6565e1 2015-11-27 16:15:00 UF2.0rc3
-re_version = re.compile(r'^\s*([a-fA-F0-9]{'+str(md5hex_size)+r'}\b)\s*(\d+-\d+-\d+)\s*(\d+:\d+:\d+)\s*(.*)')
+re_version = re.compile(r'^\s*([a-fA-F0-9]{'+str(md5hex_size)+r'}\b)\s*(\d+-\d+-\d+\s*\d+:\d+:\d+)\s*(.*)')
 logger = logging.getLogger('updater')
 
 def restart_server():
@@ -77,10 +77,9 @@ def parse_version_file(filepath):
             try:
                 result = re_version.findall(line)
                 if not result: continue
-                md5sum, date, time, version_name = result[0]
+                md5sum, date, version_name = result[0]
                 versions_dict[md5sum] = {'date': date,
-                                         'time': time,
-                                         'version_name': version_name,
+                                         'name': version_name,
                                          }
             except AttributeError:
                 raise Exception("Unable to parse version from file `%s': %s" % (filepath, line))
@@ -98,6 +97,7 @@ def add_versions(versions, filepath=server_version_file):
     if not versions:
         return
     with open(filepath, 'a') as f:
+        import pdb; pdb.set_trace()
         for ver in versions:
             f.write((" ".join([unicode(x) for x in ver]) if hasattr(ver, '__iter__') else ver)+os.linesep)
 
@@ -266,9 +266,9 @@ def do_update():
                             os.rename(f, bak)
                         warn("`%s' -> `%s'" % (target, f))
                         os.rename(target, f)
+            import pdb; pdb.set_trace()
             add_versions([(md5, data_dict['date'],
-                           data_dict['time'],
-                           data_dict['version_name']) for md5, data_dict in revisions_dict.items()])
+                           data_dict['name']) for md5, data_dict in revisions_dict.items()])
             warn("Update successful.")
             warn("Revisions added: ", ", ".join(revisions_dict.keys()))
             ## No database update here. I preferred to set modules to update just after the preparation
@@ -367,7 +367,7 @@ def do_prepare(cr, revision_ids):
             finally:
                 f.close()
             # Store to list of updates
-            new_revisions.append( (rev.sum, ("[%s] %s - %s - %s" % (rev.importance, rev.date, rev.name, rev.version_name))) )
+            new_revisions.append( (rev.sum, ("[%s] %s - %s" % (rev.importance, rev.date, rev.name))) )
             if rev.state == 'not-installed':
                 need_restart.append(rev.id)
     # Remove corrupted patches
