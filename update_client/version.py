@@ -38,12 +38,12 @@ class version(osv.osv):
         return dict(cr.fetchall())
 
     _columns = {
-        'name' : fields.char(string='Tag', size=256, readonly=True),
+        'name' : fields.char(string='Version', size=256, readonly=True),
         'patch' : fields.binary('Patch', readonly=True),
         'sum' : fields.char(string="Commit Hash", size=256, required=True, readonly=True),
         'date' : fields.datetime(string="Revision Date", readonly=True),
         'comment' : fields.text("Comment", readonly=True),
-        'version_name' : fields.text("Version", readonly=True),
+        #'version_name' : fields.text("Version", readonly=True),
         'state' : fields.selection([('not-installed','Not Installed'),('need-restart','Need Restart'),('installed','Installed')], string="State", readonly=True),
         'applied' : fields.datetime("Applied", readonly=True),
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
@@ -67,15 +67,17 @@ class version(osv.osv):
         try:
             now = fields.datetime.now()
             current_versions = self.read(cr, 1, self.search(cr, 1, []),
-                    ['id','sum','state', 'version_name'])
+                    ['id','sum','state', 'name'])
             versions_id = dict([(x['sum'], x['id']) for x in current_versions])
             current_versions.append( {'sum':base_version,'state':'installed'} )
             # Create non-existing versions in db
             server_version_keys = server_version.keys()
+            import pdb; pdb.set_trace()
             for rev in set(server_version_keys) - set([x['sum'] for x in current_versions]):
                 versions_id[rev] = self.create(cr, 1, {'sum':rev,
                     'state':'installed', 'applied':now, 'version':version,
-                    'version_name':server_version[rev]['version_name']})
+                    'name':server_version[rev]['name'],
+                    'date':server_version[rev]['date']})
             # Update existing ones
             self.write(cr, 1, [x['id'] for x in current_versions \
                                if x['sum'] in server_version_keys and not x['state'] == 'installed'], \
@@ -213,6 +215,7 @@ class entity(osv.osv):
             else:
                 raise
         if res[0]:
+            import pdb; pdb.set_trace()
             revisions._update(cr, uid, res[1].get('revisions', []), context=context)
             return ((res[1]['status'] != 'failed'), res[1]['message'])
         else:

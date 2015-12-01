@@ -61,8 +61,8 @@ class BackupConfig(osv.osv):
         revisions = self.pool.get('sync_client.version')
         current_revision = revisions._get_last_revision(cr, uid, context=context)
         # get the version name from db
-        if current_revision and current_revision.version_name:
-            version = current_revision.version_name
+        if current_revision and current_revision.name:
+            version = current_revision.name
         # if nothing found, take it from the release.py file
         else:
             version = release.version or ""
