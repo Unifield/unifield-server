@@ -30,13 +30,6 @@ import re
 import time
 import logging
 
-def get_server_version():
-    version = release.version or ""
-    ver_match = re.match('(.*)-\d{8}-\d{6}$', version)
-    if ver_match:
-        version = ver_match.group(1)
-    return version
-
 class BackupConfig(osv.osv):
     """ Backup configurations """
     _name = "backup.config"
@@ -63,6 +56,20 @@ class BackupConfig(osv.osv):
         'afterautomaticsync' : True,
         'beforepatching': False,
     }
+
+    def get_server_version(self, cr, uid, context=None):
+        revisions = self.pool.get('sync_client.version')
+        current_revision = revisions._get_last_revision(cr, uid, context=context)
+        # get the version name from db
+        if current_revision and current_revision.version_name:
+            version = current_revision.version_name
+        # if nothing found, take it from the release.py file
+        else:
+            version = release.version or ""
+            ver_match = re.match('(.*)-\d{8}-\d{6}$', version)
+            if ver_match:
+                version = ver_match.group(1)
+        return version
 
     def _set_pg_psw_env_var(self):
         if os.name == 'nt' and not os.environ.get('PGPASSWORD', ''):
@@ -107,7 +114,10 @@ class BackupConfig(osv.osv):
             self._set_pg_psw_env_var()
             try:
                 # US-386: Check if file/path exists and raise exception, no need to prepare the backup, thus no pg_dump is executed
-                outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"), suffix, get_server_version()))
+                outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" %
+                        (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
+                            suffix, self.get_server_version(cr, uid,
+                                context=context)))
                 bkpfile = open(outfile,"wb")
                 bkpfile.close()
             except Exception, e:

@@ -43,6 +43,7 @@ class version(osv.osv):
         'sum' : fields.char(string="Commit Hash", size=256, required=True, readonly=True),
         'date' : fields.datetime(string="Revision Date", readonly=True),
         'comment' : fields.text("Comment", readonly=True),
+        'version_name' : fields.text("Version", readonly=True),
         'state' : fields.selection([('not-installed','Not Installed'),('need-restart','Need Restart'),('installed','Installed')], string="State", readonly=True),
         'applied' : fields.datetime("Applied", readonly=True),
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
@@ -65,20 +66,24 @@ class version(osv.osv):
     def init(self, cr):
         try:
             now = fields.datetime.now()
-            current_versions = self.read(cr, 1, self.search(cr, 1, []), ['id','sum','state'])
+            current_versions = self.read(cr, 1, self.search(cr, 1, []),
+                    ['id','sum','state', 'version_name'])
             versions_id = dict([(x['sum'], x['id']) for x in current_versions])
             current_versions.append( {'sum':base_version,'state':'installed'} )
             # Create non-existing versions in db
-            for rev in set(server_version) - set([x['sum'] for x in current_versions]):
-                versions_id[rev] = self.create(cr, 1, {'sum':rev, 'state':'installed', 'applied':now})
+            server_version_keys = server_version.keys()
+            for rev in set(server_version_keys) - set([x['sum'] for x in current_versions]):
+                versions_id[rev] = self.create(cr, 1, {'sum':rev,
+                    'state':'installed', 'applied':now, 'version':version,
+                    'version_name':server_version[rev]['version_name']})
             # Update existing ones
             self.write(cr, 1, [x['id'] for x in current_versions \
-                               if x['sum'] in server_version and not x['state'] == 'installed'], \
+                               if x['sum'] in server_version_keys and not x['state'] == 'installed'], \
                               {'state':'installed','applied':now})
             # Set last revision (assure last update has the last applied date)
             time.sleep(1)
-            if len(server_version) > 1:
-                self.write(cr, 1, [versions_id[server_version[-1]]], {'applied':fields.datetime.now()})
+            if len(server_version_keys) > 1:
+                self.write(cr, 1, [versions_id[server_version_keys[-1]]], {'applied':fields.datetime.now()})
         except BaseException, e:
             self._logger.exception("version init failure!")
 
