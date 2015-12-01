@@ -71,13 +71,18 @@ class version(osv.osv):
             versions_id = dict([(x['sum'], x['id']) for x in current_versions])
             current_versions.append( {'sum':base_version,'state':'installed'} )
             # Create non-existing versions in db
-            server_version_keys = server_version.keys()
-            import pdb; pdb.set_trace()
+            server_version_keys = [x['md5sum'] for x in server_version]
             for rev in set(server_version_keys) - set([x['sum'] for x in current_versions]):
-                versions_id[rev] = self.create(cr, 1, {'sum':rev,
-                    'state':'installed', 'applied':now, 'version':version,
-                    'name':server_version[rev]['name'],
-                    'date':server_version[rev]['date']})
+                for s_ver in server_version:
+                    if rev == s_ver['md5sum']:
+                        versions_id[rev] = self.create(cr, 1,
+                            {'sum':rev,
+                             'state':'installed',
+                             'applied':now,
+                             'version':version,
+                             'name':s_ver['name'],
+                             'date':s_ver['date']})
+                        break
             # Update existing ones
             self.write(cr, 1, [x['id'] for x in current_versions \
                                if x['sum'] in server_version_keys and not x['state'] == 'installed'], \
@@ -202,7 +207,8 @@ class entity(osv.osv):
             return (False, "Need restart")
         current_revision = revisions._get_last_revision(cr, uid, context=context)
         if current_revision: current_revision = current_revision.sum
-        if not (current_revision == server_version[-1] or (current_revision is False and server_version[-1] == base_version)):
+        if not (current_revision == server_version[-1]['md5sum'] or\
+                (current_revision is False and server_version[-1]['md5sum'] == base_version)):
             return (False, (_("Cannot continue while OpenERP Server version is different than database %s version! Try to login/logout again and restart OpenERP Server.") % cr.dbname))
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         try:
@@ -215,7 +221,6 @@ class entity(osv.osv):
             else:
                 raise
         if res[0]:
-            import pdb; pdb.set_trace()
             revisions._update(cr, uid, res[1].get('revisions', []), context=context)
             return ((res[1]['status'] != 'failed'), res[1]['message'])
         else:
