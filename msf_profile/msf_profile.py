@@ -178,7 +178,7 @@ class patch_scripts(osv.osv):
         rules_obj = self.pool.get('msf_button_access_rights.button_access_rule')
         data_obj = self.pool.get('ir.model.data')
         view_obj = self.pool.get('ir.ui.view')
-        rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False)])
+        rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False), ('active', 'in', ['t', 'f'])])
         view_to_gen = {}
         for rule in rules_obj.read(cr, uid, rule_ids, ['view_id']):
             view_to_gen[rule['view_id'][0]] = True
