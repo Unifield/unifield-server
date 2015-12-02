@@ -247,7 +247,7 @@ class Database(BaseController):
         try:
             res = rpc.session.execute_db('dump', password, dbname)
             filename = [dbname, time.strftime('%Y%m%d-%H%M%S')]
-            version = get_server_version()
+            version = get_server_version(dbname)
             if version:
                 filename.append(version)
             if res:

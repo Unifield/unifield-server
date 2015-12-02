@@ -370,8 +370,8 @@ class TinyForm(object):
         return self._convert(True, safe=safe)
 
 
-def get_server_version(remove_timestamp=True):
-    version = rpc.session.execute_db('server_version')
+def get_server_version(dbname, remove_timestamp=True):
+    version = rpc.session.execute_db('server_version', dbname)
     if version and remove_timestamp:
         ver_match = re.match('(.*)-\d{8}-\d{6}$', version)
         if ver_match:
