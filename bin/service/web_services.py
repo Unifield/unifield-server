@@ -355,11 +355,12 @@ class db(netsvc.ExportService):
         behaviour)
             Used by the client to verify the compatibility with its own version
         """
-        cr = pooler.get_db(dbname).cursor()
-        pool_obj = pooler.get_pool(dbname)
-        last_revision = pool_obj.get('sync_client.version')._get_last_revision(cr, 1)
-        if last_revision and last_revision.name:
-            return last_revision.name
+        db = sql_db.db_connect(dbname)
+        cr = db.cursor()
+        cr.execute("select name from sync_client_version where state='installed' order by applied desc")
+        res = cr.fetchone()
+        if res and res[0]:
+            return res[0]
         return release.version
 
     def exp_migrate_databases(self,databases):
