@@ -349,10 +349,17 @@ class db(netsvc.ExportService):
     def exp_list_lang(self):
         return tools.scan_languages()
 
-    def exp_server_version(self):
-        """ Return the version of the server
+    def exp_server_version(self, dbname):
+        """ Return the version of the server from the sql table
+        sync_client_version. If it's not found return release.version (old
+        behaviour)
             Used by the client to verify the compatibility with its own version
         """
+        cr = pooler.get_db(dbname).cursor()
+        pool_obj = pooler.get_pool(dbname)
+        last_revision = pool_obj.get('sync_client.version')._get_last_revision(cr, 1)
+        if last_revision and last_revision.name:
+            return last_revision.name
         return release.version
 
     def exp_migrate_databases(self,databases):

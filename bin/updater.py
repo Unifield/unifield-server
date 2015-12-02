@@ -33,7 +33,6 @@ restart_delay = 5
 
 md5hex_size = (md5().digest_size * 8 / 4)
 base_version = '8' * md5hex_size
-
 # match 3 groups : md5sum <space> date (yyyy-mm-dd hh:mm:ss) <space> version
 #example : 694d9c65bce826551df26cefcc6565e1 2015-11-27 16:15:00 UF2.0rc3
 re_version = re.compile(r'^\s*([a-fA-F0-9]{'+str(md5hex_size)+r'}\b)\s*(\d+-\d+-\d+\s*\d+:\d+:\d+)\s*(.*)')
@@ -182,7 +181,7 @@ def do_update():
         else:
             warn(lock_file, 'removed')
         ## Now, update
-        revisions = {}
+        revisions = []
         files = None
         try:
             ## Revisions that going to be installed
@@ -269,7 +268,7 @@ def do_update():
             add_versions([(x['md5sum'], x['date'],
                            x['name']) for x in revisions])
             warn("Update successful.")
-            warn("Revisions added: ", ", ".join(revisions_dict.keys()))
+            warn("Revisions added: ", ", ".join([x['md5sum'] for x in revisions]))
             ## No database update here. I preferred to set modules to update just after the preparation
             ## The reason is, when pool is populated, it will starts by upgrading modules first
 
@@ -366,7 +365,7 @@ def do_prepare(cr, revision_ids):
             finally:
                 f.close()
             # Store to list of updates
-            new_revisions.append( (rev.sum, ("[%s] %s - %s" % (rev.importance, rev.date, rev.name))) )
+            new_revisions.append((rev.sum, ("%s %s" % (rev.date, rev.name))))
             if rev.state == 'not-installed':
                 need_restart.append(rev.id)
     # Remove corrupted patches
