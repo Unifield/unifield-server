@@ -43,7 +43,6 @@ class version(osv.osv):
         'sum' : fields.char(string="Commit Hash", size=256, required=True, readonly=True),
         'date' : fields.datetime(string="Revision Date", readonly=True),
         'comment' : fields.text("Comment", readonly=True),
-        #'version_name' : fields.text("Version", readonly=True),
         'state' : fields.selection([('not-installed','Not Installed'),('need-restart','Need Restart'),('installed','Installed')], string="State", readonly=True),
         'applied' : fields.datetime("Applied", readonly=True),
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
@@ -66,8 +65,7 @@ class version(osv.osv):
     def init(self, cr):
         try:
             now = fields.datetime.now()
-            current_versions = self.read(cr, 1, self.search(cr, 1, []),
-                    ['id','sum','state', 'name'])
+            current_versions = self.read(cr, 1, self.search(cr, 1, []), ['id','sum','state'])
             versions_id = dict([(x['sum'], x['id']) for x in current_versions])
             current_versions.append( {'sum':base_version,'state':'installed'} )
             # Create non-existing versions in db

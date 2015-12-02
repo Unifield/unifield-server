@@ -43,8 +43,8 @@ class version(osv.osv):
             current_versions = self.read(cr, 1, self.search(cr, 1, []), ['id','sum','state'])
             versions_id = dict([(x['sum'], x['id']) for x in current_versions])
             current_versions.append( {'sum':base_version,'state':'confirmed'} )
-            server_version_keys = [x['md5sum'] for x in server_version]
             # Create non-existing versions in db
+            server_version_keys = [x['md5sum'] for x in server_version]
             for rev in set(server_version_keys) - set([x['sum'] for x in current_versions]):
                 versions_id[rev] = self.create(cr, 1, {'sum':rev, 'state':'confirmed', 'date':now})
             # Update existing ones
@@ -53,10 +53,8 @@ class version(osv.osv):
                               {'state':'confirmed','date':now})
             # Set last revision (assure last update has the last applied date)
             time.sleep(1)
-            # XXX do not write the date, the date from
-            # unifield-server/bin/unifield-version.txt is used instead
-            #if len(server_version_keys) > 1:
-            #    self.write(cr, 1, [versions_id[server_version_keys[-1]]], {'date':fields.datetime.now()})
+            if len(server_version_keys) > 1:
+                self.write(cr, 1, [versions_id[server_version_keys[-1]]], {'date':fields.datetime.now()})
         except BaseException, e:
             self._logger.exception("version init failure!")
 
