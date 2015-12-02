@@ -347,8 +347,12 @@ class analytic_distribution_wizard(osv.osv_memory):
             ctx = {'date': orig_date}
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
-            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
+
             date_to_use = orig_date
+            if ml.journal_id.type == 'hq':
+                # US-773: use wizard date when correcting hq entry (like period close case)
+                date_to_use = wizard.date
+            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
             if ml.corrected_line_id:
                 date_to_use = ml.date
             self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, {
