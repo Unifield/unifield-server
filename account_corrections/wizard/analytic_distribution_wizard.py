@@ -350,21 +350,25 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             date_to_use = orig_date
             if ml.journal_id.type == 'hq':
-                # US-773: use wizard date when correcting hq entry (like period close case)
-                date_to_use = wizard.date
+                # US-773: keep date when correcting hq entry
+                date_to_use = False
             # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
             if ml.corrected_line_id:
                 date_to_use = ml.date
-            self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, {
-                    'account_id': line.analytic_id.id,
-                    'cost_center_id': line.cost_center_id.id,
-                    'destination_id': line.destination_id.id,
-                    'amount_currency': amount_cur,
-                    'amount': amount,
+            vals = {
+                'account_id': line.analytic_id.id,
+                'cost_center_id': line.cost_center_id.id,
+                'destination_id': line.destination_id.id,
+                'amount_currency': amount_cur,
+                'amount': amount,
+            }
+            if date_to_use:
+                vals.update({
                     'date': date_to_use,
                     'source_date': orig_date,
                     'document_date': orig_document_date,
                 })
+            self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, vals)
             # UTP-1118: Fix problem of entry_sequence that is not the right one regarding the journal
 
             # UFTP-373: The block below is commented out, as there is no reason to replace the Seq in here
