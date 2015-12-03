@@ -255,13 +255,26 @@ class analytic_line(osv.osv):
                 fieldname = 'cost_center_id'
                 if account.category == 'DEST':
                     fieldname = 'destination_id'
-                # if period is not closed, so override line.
-                if period and period.state not in ['done', 'mission-closed']:
+
+                # update or reverse ?
+                update = period and period.state not in ['done', 'mission-closed']
+                if aline.journal_id.type == 'hq':
+                    # US-773/2: if HQ entry always like period closed fashion
+                    update = False
+
+                if update:
+                    # not mission close: override line
                     # Update account # Date: UTP-943 speak about original date for non closed periods
-                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': aline.date,
-                        'source_date': aline.source_date or aline.date}, context=context)
+                    vals = {
+                        fieldname: account_id,
+                        'date': aline.date,
+                        'source_date': aline.source_date or aline.date,
+                    }
+                    self.write(cr, uid, [aline.id], vals, context=context)
                 # else reverse line before recreating them with right values
                 else:
+                    # mission close or + or HQ entry: reverse
+
                     # First reverse line
                     rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
                     # UTP-943: Shoud have a correction journal on these lines
