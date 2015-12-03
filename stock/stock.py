@@ -2880,9 +2880,9 @@ class stock_inventory(osv.osv):
                          account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
             if self._name == 'initial.stock.inventory':
-                self.infolog(cr, uid, "The Initial Stock inventory id:%s has been canceled" % inv.id)
+                self.infolog(cr, uid, "The Initial Stock inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
             else:
-                self.infolog(cr, uid, "The Physical inventory id:%s has been canceled" % inv.id)
+                self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
         return True
 
 stock_inventory()
