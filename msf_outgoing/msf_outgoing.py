@@ -1873,6 +1873,9 @@ class stock_picking(osv.osv):
         default.update(pack_family_memory_ids=[])
         default.update(in_ref=False)
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
+        # US-779: Reset the ref to rw document
+        default.update(rw_sdref_counterpart=False)
+        
         if context.get('from_button'):
             default.update(purchase_id=False)
         if not context.get('wkf_copy'):
@@ -3131,6 +3134,10 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         wf_service = netsvc.LocalService("workflow")
         usb_entity = self._get_usb_entity_type(cr, uid)
+
+        # US-379: point 2) Generate RW messages manually and put into the queue when a partial OUT is done
+        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+            self._manual_create_rw_messages(cr, uid, context=context)
 
         res = {}
 
