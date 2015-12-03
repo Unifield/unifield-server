@@ -245,8 +245,10 @@ class real_average_consumption(osv.osv):
         if context is None:
             context = {}
 
-        for report_id in ids:
-            self.infolog(cr, uid, 'The consumption report id:%s has been canceled' % report_id)
+        for report in self.read(cr, uid, ids, ['name'], context=context):
+            self.infolog(cr, uid, 'The consumption report id:%s (%s) has been canceled' % (
+                report['id'], report['name'],
+            ))
 
         self.write(cr, uid, ids, {'state':'cancel'}, context=context)
         
