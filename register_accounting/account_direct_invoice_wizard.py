@@ -43,28 +43,6 @@ class account_direct_invoice_wizard(osv.osv_memory):
             res = 'in_invoice'
         return res
 
-    def _get_journal(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        type_inv = context.get('type', 'out_invoice')
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        company_id = context.get('company_id', user.company_id.id)
-        type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
-        refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
-        journal_obj = self.pool.get('account.journal')
-        res = journal_obj.search(cr, uid, [('type', '=', type2journal.get(type_inv, 'sale')),
-                                            ('company_id', '=', company_id),
-                                            ('refund_journal', '=', refund_journal.get(type_inv, False))],
-                                                limit=1)
-        return res and res[0] or False
-
-    def _get_currency(self, cr, uid, context=None):
-        user = pooler.get_pool(cr.dbname).get('res.users').browse(cr, uid, [uid], context=context)[0]
-        if user.company_id:
-            return user.company_id.currency_id.id
-        return pooler.get_pool(cr.dbname).get('res.currency').search(cr, uid, [('rate','=', 1.0)])[0]
-
-
     _columns = {
             'account_id': fields.many2one('account.account', 'Account',
                 required=True,
@@ -154,10 +132,6 @@ class account_direct_invoice_wizard(osv.osv_memory):
         'payment_term': False,
         'type': _get_type,
         'state': 'draft',
-        'journal_id': _get_journal,
-        'currency_id': _get_currency,
-        'company_id': lambda self,cr,uid,c: self.pool.get('res.company').\
-                _company_default_get(cr, uid, 'account.invoice', context=c),
         'check_total': 0.0,
         'user_id': lambda s, cr, u, c: u,
     }
