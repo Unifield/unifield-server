@@ -192,7 +192,7 @@ class backup_download(osv.osv):
     def _get_bck_path(self, cr, uid, context=None):
         res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'backup_config_default')
         path = self.pool.get('backup.config').read(cr, uid, res[1], ['name'], context=context)
-        if os.path.isdir(path['name']):
+        if path['name'] and os.path.isdir(path['name']):
             return path['name']
         return False
 
