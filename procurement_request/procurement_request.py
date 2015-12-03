@@ -445,8 +445,10 @@ class procurement_request(osv.osv):
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         self.pool.get('sale.order.line').write(cr, uid, line_ids, {'state': 'cancel'}, context=context)
 
-        for ir_id in ids:
-            self.infolog(cr, uid, "The IR id:%s has been canceled" % ir_id)
+        for ir in self.read(cr, uid, ids, ['name'], context=context):
+            self.infolog(cr, uid, "The IR id:%s (%s) has been canceled" % (
+                ir['id'], ir['name'],
+            ))
 
         return True
 
