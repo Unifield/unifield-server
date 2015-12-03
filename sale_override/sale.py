@@ -1143,8 +1143,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.write(cr, uid, ids, {'state': 'done',
                                   'active': False}, context=context)
 
-        for order_id in ids:
-            self.infolog(cr, uid, "The splitted FO id:%s has been closed" % order_id)
+        for order in self.read(cr, uid, ids, ['name'], context=context):
+            self.infolog(cr, uid, "The splitted FO id:%s (%s) has been closed" % (
+                order['id'], order['name'],
+            ))
 
         return True
 
@@ -1704,9 +1706,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                    'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
                 }, context=context)
                 if line.type == 'make_to_stock':
-                    msg = 'The line id:%s of FO/IR id:%s has been sourced \'from stock\' with the stock.move id:%s' % (
-                            line.id,
-                            line.order_id.id,
+                    msg = 'The line id:%s (line number: %s) of FO/IR id:%s (%s) has been sourced \'from stock\' with the stock.move id:%s' % (
+                            line.id, line.line_number,
+                            line.order_id.id, line.order_id.name,
                             move_id,
                     )
                     self.infolog(cr, uid, msg)

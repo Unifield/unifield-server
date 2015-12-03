@@ -1194,8 +1194,11 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                     'sourcing_trace': 'Sourcing in progress',
                 }, context=context)
 
-                for order_id in order_ids:
-                    self.infolog(cr, uid, "All lines of the FO/IR id:%s have been sourced" % order_id)
+                for order in self.read(cr, uid, order_ids, ['name'], context=context):
+                    self.infolog(cr, uid, "All lines of the FO/IR id:%s (%s) have been sourced" % (
+                        order['id'],
+                        order['name'],
+                    ))
                 thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_ids, state_to_use, context))
                 thread.start()
 

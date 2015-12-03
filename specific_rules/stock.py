@@ -145,7 +145,10 @@ class initial_stock_inventory(osv.osv):
 
             self.write(cr, uid, [inv.id], {'state':'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
-            self.infolog(cr, uid, 'The Initial stock inventory id:%s has been validated' % inv.id)
+            self.infolog(cr, uid, 'The Initial stock inventory id:%s (%s) has been validated' % (
+                inv.id,
+                inv.name,
+            ))
 
         return True
     
