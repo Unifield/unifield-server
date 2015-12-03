@@ -209,9 +209,12 @@ class entity(osv.osv):
         
         'msg_ids_tmp':fields.text('List of temporary ids of message to be pulled'),
         'version': fields.integer('version'),
+        'last_sequence': fields.integer('Last update sequence pulled',
+            readonly=True),
     }
     _defaults = {
         'version': lambda *a: 0,
+        'last_sequence': lambda *a: 0,
     }
     def unlink(self, cr, uid, ids, context=None):
         for rec in self.browse(cr, uid, ids, context=context):
@@ -798,7 +801,7 @@ class sync_manager(osv.osv):
         return (True, 0)
 
     @check_validated
-    def get_message(self, cr, uid, entity, max_packet_size, context=None):
+    def get_message(self, cr, uid, entity, max_packet_size, last_seq=None, context=None):
         """
             @param entity: string : uuid of the synchronizing entity
             @param max_packet_size: The number of message max per request.
@@ -810,13 +813,18 @@ class sync_manager(osv.osv):
                     'call' : string : name of the method to call when the receiver will execute the message
                     'source' : string : name of the entity that generated the message
                     'args' : string : Arguments of the call, the format is a a dictionnary that represent is object that generate the message serialiaze in json
-                                         see export_data_jso in ir_model_data.py 
+                                         see export_data_jso in ir_model_data.py
                 },..]
         """
-        
-        res = self.pool.get('sync.server.message').get_message_packet(cr, uid, entity, max_packet_size, context=context)
+        # doing the pull message means that the pull update is finished
+        # so last_sequence can be stored
+        if last_seq:
+            self.pool.get('sync.server.entity').write(cr, 1, [entity.id],
+                    {'last_sequence': last_seq}, context=context)
+        res = self.pool.get('sync.server.message').get_message_packet(cr, uid,
+                entity, max_packet_size, context=context)
         return (True, res, get_md5(res))
-        
+
     @check_validated
     def message_received(self, cr, uid, entity, message_ids, context=None):
         """

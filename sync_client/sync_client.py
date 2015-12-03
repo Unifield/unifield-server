@@ -768,14 +768,17 @@ class Entity(osv.osv):
         logger = context.get('logger')
         messages = self.pool.get(context.get('message_received_model', 'sync.client.message_received'))
 
+        entity = self.get_entity(cr, uid, context)
+        last_seq = entity.update_last
         messages_count = 0
         logger_index = None
 
         max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        instance_uuid = self.get_entity(cr, uid, context).identifier
+        instance_uuid = entity.identifier
         while True:
-            res = proxy.get_message(instance_uuid, self._hardware_id, max_packet_size)
+            res = proxy.get_message(instance_uuid, self._hardware_id,
+                    max_packet_size, last_seq)
             if not res[0]: raise Exception, res[1]
 
             packet = res[1]
