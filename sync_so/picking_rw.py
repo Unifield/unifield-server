@@ -955,7 +955,8 @@ class stock_picking(osv.osv):
                 if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
                     sdref, rw_sdref_counterpart = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
                     if sdref:
-                        pick_ids = self.search(cr, uid, [('rw_sdref_counterpart', '=', sdref)], context=context)
+                        # US-779: Search only open pick
+                        pick_ids = self.search(cr, uid, [('rw_sdref_counterpart', '=', sdref), ('state', 'in', ['confirmed', 'assigned'])], context=context)
                 else:
                     pick_ids = self.search(cr, uid, [('name', '=', pick_name)], context=context)
             
