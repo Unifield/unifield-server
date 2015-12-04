@@ -102,7 +102,7 @@ class BackupConfig(osv.osv):
         if context is None:
             context = {}
         bkp = self.browse(cr, uid, ids, context)
-        if bkp and bkp[0]:
+        if bkp and bkp[0] and bkp[0].name: #US-786 If no path define -> return
             bck = bkp[0]
             self._set_pg_psw_env_var()
             try:
@@ -133,7 +133,7 @@ class BackupConfig(osv.osv):
                 raise Exception, "Couldn't dump database"
             self._unset_pg_psw_env_var()
             return "Backup done"
-        raise Exception, "No backup defined"
+        raise osv.except_osv(_('Error! Cannot perform the backup'), "No backup path defined")
 
     def scheduled_backups(self, cr, uid, context=None):
         bkp_ids = self.search(cr, uid, [('scheduledbackup', '=', True)], context=context)

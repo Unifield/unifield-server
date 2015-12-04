@@ -164,6 +164,16 @@ class stock_picking_out_rw(osv.osv):
         
         if view_type in ['tree','form'] and 'out' in res['name']:
             return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type, so_po_common.CENTRAL_PLATFORM)
+        elif view_type in ['form'] and 'picking' in res['name']:
+            # US-702: Block the buttons in PICK
+            rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
+            if rw_type == so_po_common.REMOTE_WAREHOUSE:
+                root = etree.fromstring(res['arch'])
+                root.set('hide_new_button', 'True')
+                root.set('hide_delete_button', 'True')
+                root.set('hide_duplicate_button', 'True')
+                res['arch'] = etree.tostring(root)                  
+        
         return res
     
 stock_picking_out_rw()
