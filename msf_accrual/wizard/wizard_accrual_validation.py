@@ -50,14 +50,16 @@ class wizard_accrual_validation(osv.osv_memory):
                     reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)
                     if len(reversal_period_ids) == 0:
                         raise osv.except_osv(_('Warning !'), _("No period (M+1) was found in the system!"))
-                    
+
                     reversal_period_id = reversal_period_ids[0]
                     reversal_period = period_obj.browse(cr, uid, reversal_period_id, context=context)
-                    if accrual_line.period_id.state != 'draft':
+
+                    # US-770/1
+                    if accrual_line.period_id.state not in ('draft', 'field-closed'):
                         raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
-                    elif reversal_period.state != 'draft':
+                    elif reversal_period.state not in ('draft', 'field-closed'):
                         raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
-                    
+
                     # Create moves
                     move_vals = {
                         'ref': accrual_line.reference,
