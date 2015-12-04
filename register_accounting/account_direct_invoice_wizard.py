@@ -298,6 +298,12 @@ class account_direct_invoice_wizard(osv.osv_memory):
         vals.update({'date_invoice': vals['date_invoice']})
         vals.update({'register_posting_date': vals['register_posting_date']})
 
+        # update the invoice
+        vals_copy = vals.copy()
+        # invoice lines are processed just after
+        vals_copy.pop('invoice_line')
+        inv_obj.write(cr, uid, [inv_id], vals_copy, context)
+
         # get line id list
         invl_id_list = [x.id for x in wiz_obj.browse(cr, uid, ids,
                 context)[0].original_invoice_id.invoice_line]
