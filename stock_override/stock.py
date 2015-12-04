@@ -2542,9 +2542,23 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         '''
         Just call the cancel of the stock.picking
         '''
+        msg_type = {
+            'in': 'Incoming Shipment',
+            'internal': 'Internal Picking',
+            'out': {
+                'standard': 'Delivery Order',
+                'picking': 'Picking Ticket',
+            }
+        }
+
         wf_service = netsvc.LocalService("workflow")
         for wiz in self.browse(cr, uid, ids, context=context):
             wf_service.trg_validate(uid, 'stock.picking', wiz.picking_id.id, 'button_cancel', cr)
+            self.infolog(cr, uid, "The %s id:%s (%s) has been canceled%s." % (
+                wiz.picking_id.type == 'out' and msg_type.get('out', {}).get(wiz.picking_id.subtype, '') or msg_type.get(wiz.picking_id.type),
+                wiz.picking_id.id,
+                wiz.picking_id.has_to_be_resourced and ' and resourced' or '',
+            ))
 
         return {'type': 'ir.actions.act_window_close'}
 

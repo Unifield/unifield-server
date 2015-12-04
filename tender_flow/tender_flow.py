@@ -1682,6 +1682,9 @@ class purchase_order(osv.osv):
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+            self.infolog(cr, uid, "The RfQ id:%s (%s) has been sent." % (
+                rfq.id, rfq.name,
+            ))
             
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
 

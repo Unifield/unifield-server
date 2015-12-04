@@ -1274,6 +1274,10 @@ class stock_picking(osv.osv):
                 prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                     'close_in': _('Done'),
                 }, context=context)
+                bo_name = self.read(cr, uid, backorder_id, ['name'], context=context)['name']
+                self.infolog(cr, uid, "The Incoming Shipment id:%s (%s) has been processed. Backorder id:%s (%s) has been created." % (
+                    backorder_id, bo_name, picking.id, picking.name,
+                ))
             else:
                 prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                     'create_bo': _('N/A'),
@@ -1297,6 +1301,9 @@ class stock_picking(osv.osv):
                 prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                     'close_in': _('Done'),
                 }, context=context)
+                self.infolog(cr, uid, "The Incoming Shipment id:%s (%s) has been processed." % (
+                    picking.id, picking.name,
+                ))
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)

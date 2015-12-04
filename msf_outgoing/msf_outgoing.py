@@ -810,6 +810,9 @@ class shipment(osv.osv):
             if not log_flag:
                 draft_shipment_name = self.read(cr, uid, shipment.id, ['name'], context=context)['name']
                 self.log(cr, uid, shipment.id, _("Packs from the draft Shipment (%s) have been returned to stock.") % (draft_shipment_name,))
+                self.infolog(cr, uid, "Packs from the draft Shipment id:%s (%s) have been returned to stock." % (
+                    shipment.id, shipment.name,
+                ))
                 log_flag = True
 
             res = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
@@ -1086,6 +1089,9 @@ class shipment(osv.osv):
             # log corresponding action
             shipment_log_msg = _('Packs from the shipped Shipment (%s) have been returned to %s location.') % (shipment.name, _('Dispatch'))
             self.log(cr, uid, shipment.id, shipment_log_msg)
+            self.infolog(cr, uid, "Packs from the shipped Shipment id:%s (%s) have been returned to Dispatch location." % (
+                shipment.id, shipment.name,
+            ))
 
             draft_log_msg = _('The corresponding Draft Shipment (%s) has been updated.') % family.draft_packing_id.backorder_id.shipment_id.name
             self.log(cr, uid, draft_shipment_id, draft_log_msg)
@@ -1222,6 +1228,9 @@ class shipment(osv.osv):
 
             # log the ship action
             self.log(cr, uid, shipment.id, _('The Shipment %s has been shipped.') % (shipment.name,))
+            self.infolog(cr, uid, "The Shipment id:%s (%s) has been shipped." % (
+                shipment.id, shipment.name,
+            ))
 
         # TODO which behavior
         return True
@@ -1529,6 +1538,9 @@ class shipment(osv.osv):
 
             # log validate action
             self.log(cr, uid, shipment.id, _('The Shipment %s has been closed.') % (shipment.name,))
+            self.infolog(cr, uid, "The Shipment id:%s (%s) has been closed." % (
+                shipment.id, shipment.name,
+            ))
 
         self.complete_finished(cr, uid, ids, context=context)
         return True
@@ -3005,6 +3017,11 @@ class stock_picking(osv.osv):
                 context.update({'original_name': obj.name})
                 self._hook_create_rw_out_sync_messages(cr, uid, [new_pick_id or obj.id], context, True)
 
+            self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been converted to simple Out id:%s (%s)." % (
+                obj.id, obj.name,
+                new_pick_id or obj.id, new_name,
+            ))
+
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
@@ -3083,6 +3100,9 @@ class stock_picking(osv.osv):
             # we force availability
 
             self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).') % (out.name, new_name), context={'view_id': view_id, 'picking_type': 'picking'})
+            self.infolog(cr, uid, "The Delivery order id:%s (%s) has been converted to draft Picking Ticket id:%s (%s)." % (
+                out.id, out.name, out.id, new_name,
+            ))
 
             for move in out.move_lines:
                 move_to_update.append(move.id)
@@ -3278,7 +3298,15 @@ class stock_picking(osv.osv):
 
                 wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
                 delivered_pack_id = new_picking_id
+
+                new_pick_name = self.read(cr, uid, new_picking_id, ['name'], context=context)['name']
+                self.infolog(cr, uid, "The Outgoing Delivery id:%s (%s) has been processed. Backorder id:%s (%s) has been created." % (
+                    new_picking_id, new_pick_name, picking.id, picking.name,
+                ))
             else:
+                self.infolog(cr, uid, "The Outgoing Delivery id:%s (%s) has been processed." % (
+                    picking.id, picking.name,
+                ))
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking.id, context=context)
                 if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
@@ -3902,8 +3930,10 @@ class stock_picking(osv.osv):
                 _('No data to process '),
             )
 
+        pickings = {}
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             picking = wizard.picking_id
+            pickings.setdefault(picking.id, picking.name)
 
             if picking.state != 'assigned':
                 raise osv.except_osv(
@@ -4028,10 +4058,12 @@ class stock_picking(osv.osv):
         This code can be set back to the old one, because the shipment should always be available at this stage!!!!! DUY
         '''
         shipment_id = False
+        shipment_name = False
         if new_packing_id:
             obj = self.browse(cr, uid, new_packing_id, context)
             if obj and obj.shipment_id and obj.shipment_id.id:
                 shipment_id = obj.shipment_id.id
+                shipment_name = obj.shipment_id.name
 
                 if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
                     new_name = context.get('rw_shipment_name')
@@ -4045,6 +4077,11 @@ class stock_picking(osv.osv):
         # UF-2531: Run the creation of message at RW at some important points
         if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
             self._manual_create_rw_messages(cr, uid, context=context)
+
+        for pid, pname in pickings.iteritems():
+            self.infolog(cr, uid, "Products of Pre-Packing List id:%s (%s) have been packed in Shipment id:%s (%s)" % (
+                pid, pname, shipment_id, shipment_name,
+            ))
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
@@ -4172,6 +4209,9 @@ class stock_picking(osv.osv):
             context['view_id'] = ppl_view
             log_message = _('Products from Pre-Packing List (%s) have been returned to stock.') % (picking.name,)
             self.log(cr, uid, picking.id, log_message, context=context)
+            self.infolog(cr, uid, "Products from Pre-Packing List id:%s (%s) have been returned to stock." % (
+                picking.id, picking.name,
+            ))
 
             # Log message for draft picking ticket
             pick_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
@@ -4287,6 +4327,9 @@ class stock_picking(osv.osv):
                         res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
                         context.update({'view_id': res, 'picking_type': 'picking_ticket'})
                         self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (picking.backorder_id.name,), context=context)
+                        self.infolog(cr, uid, "The Validated Picking Ticket id:%s (%s) has been canceled. The corresponding Draft Picking Ticket id:%s (%s) has been updated." % (
+                            picking.id, picking.name, picking.backorder_id.id, picking.backorder_id.name,
+                        ))
 
             if picking.subtype == 'packing':
 

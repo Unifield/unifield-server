@@ -1105,6 +1105,9 @@ stock moves which are already processed : '''
 
             message = _("Purchase order '%s' is validated.") % (po.name,)
             self.log(cr, uid, po.id, message)
+            self.infolog(cr, uid, "Purchase order id:%s (%s) is validated." % (
+                po.id, po.name,
+            ))
             # hook for corresponding Fo update
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po)
 
