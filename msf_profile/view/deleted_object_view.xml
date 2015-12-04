@@ -6,7 +6,7 @@
             <field name="model">deleted.object</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Deleted Object" hide_new_button="1" hide_delete_button="1">
+                <tree string="Deleted Object" hide_new_button="1" hide_delete_button="1" noteditable="1">
                     <field name="model" />
                     <field name="deleted_obj_id" />
                     <field name="deleted_obj_sd_ref" />
