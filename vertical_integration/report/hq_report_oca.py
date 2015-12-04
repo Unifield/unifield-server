@@ -241,14 +241,19 @@ class hq_report_oca(report_sxw.report_sxw):
                               rate]
             first_result_lines.append(formatted_data)
             if is_cur_adj_entry or is_rev_entry:
-                # US-478/3: FXA/REV entry, raw data, always rate of 1
+                # US-788/1 and US-478/3: FXA/REV raw data override
                 # without impacting formatted_data for other files
-                first_result_lines[-1][-1] = 1.
+                # US-788/1: always display booking as func
+                # US-478/3 always rate of 1
+                first_result_lines[-1][13] = first_result_lines[-1][16]  # US-788/1
+                first_result_lines[-1][14] = first_result_lines[-1][17]  # US-788/1
+                first_result_lines[-1][15] = first_result_lines[-1][18]  # US-788/1
+                first_result_lines[-1][-1] = 1.  # US-478/3
 
             # For third report: add to corresponding sub
             if journal and journal.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
-                if not account.shrink_entries_for_hq or is_rev_entry:
+                if not account.shrink_entries_for_hq or is_rev_entry or is_cur_adj_entry:
                     # US-478/1: or is_rev_entry, no shrink for rev journal entries
                     expat_identification = "0"
                     expat_employee = "0"
@@ -343,7 +348,6 @@ class hq_report_oca(report_sxw.report_sxw):
                 and analytic_line.journal_id.type == 'revaluation' or False
 
             # For first report: as is
-            booking_amounts_indexes = [13, 14]
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
                               analytic_line.entry_sequence or "",
@@ -366,14 +370,14 @@ class hq_report_oca(report_sxw.report_sxw):
                               rate]
             first_result_lines.append(formatted_data)
             if is_analytic_cur_adj_entry or is_analytic_rev_entry:
-                # US-478/3: FXA/REV entry, raw data,
-                # - always rate of 1 for functional
-                # - always 0 booking amounts
+                # US-788/1 and US-478/3: FXA/REV raw data override
                 # without impacting formatted_data for other files
-                first_result_lines[-1][-1] = 1.
-                # FXA/REV entry
-                for i in booking_amounts_indexes:
-                    first_result_lines[-1][i] = ZERO_CELL_CONTENT
+                # US-788/1: always display booking as func
+                # US-478/3 always rate of 1
+                first_result_lines[-1][13] = first_result_lines[-1][16]  # US-788/1
+                first_result_lines[-1][14] = first_result_lines[-1][17]  # US-788/1
+                first_result_lines[-1][15] = first_result_lines[-1][18]  # US-788/1
+                first_result_lines[-1][-1] = 1.  # US-478/3
             if analytic_line.journal_id \
                 and analytic_line.journal_id.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
