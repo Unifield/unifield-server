@@ -2484,21 +2484,28 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
 
+        # copy the analytic_distribution not to modify the original one
+        analytic_distribution = self.pool.get('analytic.distribution')
+        new_ad_id = None
+        if invoice.analytic_distribution_id:
+            new_ad_id = analytic_distribution.copy(cr, uid,
+                    invoice.analytic_distribution_id.id, context=context)
+
+        create_date = time.strftime('%Y-%m-%d %H:%M:%S')
+
         # Prepare values for wizard
         vals = {
             'account_id': invoice.account_id.id,
             'address_invoice_id': invoice.address_invoice_id.id,
             'address_contact_id': invoice.address_contact_id.id,
             'amount_total': invoice.amount_total,
-            'analytic_distribution_id': invoice.analytic_distribution_id.id,
-            #'check_total': invoice.check_total,
+            'analytic_distribution_id': new_ad_id,
             'comment': invoice.comment,
-            'company_id':invoice.company_id.id,
+            'company_id': invoice.company_id.id,
+            'create_date': create_date,
             'currency_id': invoice.currency_id.id,
             'date_invoice': invoice.date_invoice,
             'document_date': invoice.document_date,
-            #'fake_currency_id': invoice.fake_currency_id.id,
-            #'invoice_wizard_line': [(6, 0, ivl_wizard_id_list)],
             'is_temp_object': True,
             'is_direct_invoice': invoice.is_direct_invoice,
             'journal_id': invoice.journal_id.id,
@@ -2525,11 +2532,17 @@ class account_bank_statement_line(osv.osv):
         wiz_invoice_line = self.pool.get('account.direct.invoice.wizard.line')
         ivl_wizard_id_list = []
         for ivl in invoice.invoice_line:
+            # copy the analytic_distribution not to modify the original one
+            new_line_ad_id = None
+            if ivl.analytic_distribution_id:
+                new_line_ad_id = analytic_distribution.copy(cr, uid,
+                        ivl.analytic_distribution_id.id, context=context)
             ivl_values = {
                     'account_id':ivl.account_id.id,
                     'analytic_distribution_state':ivl.analytic_distribution_state,
                     'analytic_distribution_state_recap':ivl.analytic_distribution_state_recap,
-                    'analytic_distribution_id': ivl.analytic_distribution_id.id,
+                    'analytic_distribution_id': new_line_ad_id,
+                    'create_date': create_date,
                     'have_analytic_distribution_from_header':ivl.have_analytic_distribution_from_header,
                     'inactive_product':ivl.inactive_product,
                     'invoice_wizard_id':wiz_id,

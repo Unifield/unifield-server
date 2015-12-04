@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data noupdate="1">
+        <record id="register_cron_autovacuum_account_direct_invoice_wizard" model="ir.cron">
+            <field name="function">vacuum</field>
+            <field name="user_id">1</field>
+            <field name="name">Automatic vacuum of account_direct_invoice_wizard.</field>
+            <field name="interval_type">hours</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="1" name="active"/>
+            <field eval="1" name="interval_number"/>
+            <field name="model">account.direct.invoice.wizard</field>
+        </record>
+        <record id="register_cron_autovacuum_account_direct_invoice_wizard_line" model="ir.cron">
+            <field name="function">vacuum</field>
+            <field name="user_id">1</field>
+            <field name="name">Automatic vacuum of account_direct_invoice_wizard_line.</field>
+            <field name="interval_type">hours</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="1" name="active"/>
+            <field eval="1" name="interval_number"/>
+            <field name="model">account.direct.invoice.wizard.line</field>
+        </record>
+  </data>
+</openerp>

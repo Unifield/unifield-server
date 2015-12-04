@@ -29,6 +29,8 @@ from tools.translate import _
 import decimal_precision as dp
 from register_tools import _get_date_in_period
 from register_tools import open_register_view
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
 class account_direct_invoice_wizard(osv.osv_memory):
@@ -67,6 +69,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
             'company_id': fields.many2one('res.company', 'Company',
                 required=True, change_default=True,
                 states={'draft':[('readonly',False)]}),
+            'create_date': fields.datetime('Created', readonly=True),
             'currency_id': fields.many2one('res.currency', string="Currency"),
             'date_invoice': fields.date('Posting Date', select=True),
             'document_date': fields.date('Document date'),
@@ -135,6 +138,24 @@ class account_direct_invoice_wizard(osv.osv_memory):
         'check_total': 0.0,
         'user_id': lambda s, cr, u, c: u,
     }
+
+    def vacuum(self, cr, uid):
+        one_hour = (datetime.now() + relativedelta(hours=-1)).strftime("%Y-%m-%d %H:%M:%S")
+        unlink_ids = self.search(cr, uid, [('create_date', '<', one_hour)])
+        if unlink_ids:
+            return self.unlink(cr, uid, unlink_ids)
+        return True
+
+    def unlink(self, cr, uid, ids, context=None):
+        """ delete the associated analytic_distribution
+        """
+        analytic_distribution = self.pool.get('analytic.distribution')
+        for obj in self.browse(cr, uid, ids, context):
+            # delete analytic_distribution linked to this wizard
+            if obj.analytic_distribution_id:
+                analytic_distribution.unlink(cr, uid,
+                        obj.analytic_distribution_id.id)
+        return super(account_direct_invoice_wizard, self).unlink(cr, uid, ids)
 
     def compute_wizard(self, cr, uid, ids, context=None):
         """
@@ -235,6 +256,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         invl_obj = self.pool.get('account.invoice.line')
         wiz_obj = self
         wiz_line_obj = self.pool.get('account.direct.invoice.wizard.line')
+        analytic_distribution = self.pool.get('analytic.distribution')
 
         # Get the original invoice
         inv_id = wiz_obj.browse(cr, uid, ids, context)[0].original_invoice_id.id
@@ -282,6 +304,11 @@ class account_direct_invoice_wizard(osv.osv_memory):
                     })
                 )
                 amount += line.price_subtotal
+
+        # set analytic_ditribution to None on the wizard line not to
+        # delete it when the wizard will be deleted
+        wiz_line_obj.write(cr, uid, inv['invoice_wizard_line'],
+                {'analytic_distribution_id': None})
         # Retrieve period
         register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id']], context=context)[0]
         period = register and register.period_id and register.period_id.id or False
@@ -298,6 +325,12 @@ class account_direct_invoice_wizard(osv.osv_memory):
         vals.update({'date_invoice': vals['date_invoice']})
         vals.update({'register_posting_date': vals['register_posting_date']})
 
+        # delete original analytic_distribution because a copie has been done
+        # and linked to the original invoice
+        if inv_obj.browse(cr, uid, inv_id).analytic_distribution_id:
+            analytic_distribution.unlink(cr, uid, inv_obj.browse(cr, uid,
+                inv_id).analytic_distribution_id.id)
+
         # update the invoice
         vals_copy = vals.copy()
         # invoice lines are processed just after
@@ -313,6 +346,11 @@ class account_direct_invoice_wizard(osv.osv_memory):
         for original_line_id, vals_dict in vals['invoice_line']:
             # get the original invoice line
             if original_line_id: # if there is a corresponding original invoice line
+                # delete original analytic_distribution because a copie has been done
+                # and will be linked to the original invoice_line
+                if invl_obj.browse(cr, uid, original_line_id).analytic_distribution_id:
+                    analytic_distribution.unlink(cr, uid, invl_obj.browse(cr, uid,
+                        original_line_id).analytic_distribution_id.id)
                 result = invl_obj.browse(cr, uid, original_line_id, context)
                 not_deleted_id_list.append(original_line_id)
                 if result:  # the line still exist, it will be updated
@@ -365,6 +403,10 @@ class account_direct_invoice_wizard(osv.osv_memory):
 
         # Delete the wizard lines:
         wiz_line_obj.unlink(cr, uid, inv['invoice_wizard_line'], context=context)
+
+        # set analytic_ditribution to None on the wizard not to
+        # delete it when the wizard will be deleted
+        wiz_obj.write(cr, uid, ids, {'analytic_distribution_id': None})
 
         # Delete the wizard
         self.unlink(cr, uid, ids, context=context)
@@ -639,6 +681,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
             string="Distribution",
             help="Informs you about analaytic distribution state among 'none',"
             " 'valid', 'invalid', from header or not, or no analytic distribution"),
+        'create_date': fields.datetime('Created', readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test',
             readonly=True, help='Never set this field to true !'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header,
@@ -702,6 +745,24 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         'inactive_error': lambda *a: '',
         'original_invoice_line_id': False,
     }
+
+    def vacuum(self, cr, uid):
+        one_hour = (datetime.now() + relativedelta(hours=-1)).strftime("%Y-%m-%d %H:%M:%S")
+        unlink_ids = self.search(cr, uid, [('create_date', '<', one_hour)])
+        if unlink_ids:
+            return self.unlink(cr, uid, unlink_ids)
+        return True
+
+    def unlink(self, cr, uid, ids, context=None):
+        """ delete the associated analytic_distribution
+        """
+        analytic_distribution = self.pool.get('analytic.distribution')
+        for obj in self.browse(cr, uid, ids, context):
+            # delete analytic_distribution linked to this wizard
+            if obj.analytic_distribution_id:
+                analytic_distribution.unlink(cr, uid,
+                        obj.analytic_distribution_id.id)
+        return super(account_direct_invoice_wizard_line, self).unlink(cr, uid, ids)
 
     def onchange_account_id(self, cr, uid, ids, fposition_id, account_id):
         # just call the original method from account.invoice.line

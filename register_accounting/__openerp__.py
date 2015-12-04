@@ -46,6 +46,9 @@
         "msf_homere_interface",
     ],
     "init_xml" : [],
+    'data': [
+        'data/cron.xml',
+    ],
     "update_xml" : [
         'security/ir.model.access.csv',
         'wizard/import_invoice_on_registers_view.xml',
