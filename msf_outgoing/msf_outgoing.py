@@ -33,6 +33,7 @@ import logging
 import tools
 import time
 from os import path
+from lxml import etree
 
 class stock_warehouse(osv.osv):
     """
@@ -1707,8 +1708,16 @@ class stock_picking(osv.osv):
             except ValueError:
                 pass
 
-        return super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-
+        res = super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        #US-688 Do not show the button new, duplicate in the tree and form view of picking
+        if view_type in ['tree','form'] and res['name'] in ['picking.ticket.form', 'picking.ticket.tree']:
+            root = etree.fromstring(res['arch'])
+            root.set('hide_new_button', 'True')
+            root.set('hide_delete_button', 'True')
+            root.set('hide_duplicate_button', 'True')
+            res['arch'] = etree.tostring(root)            
+        return res    
+ 
     def change_description_save(self, cr, uid, ids, context=None):
         return {'type': 'ir.actions.act_window_close'}
 
