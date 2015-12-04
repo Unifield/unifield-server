@@ -2559,7 +2559,7 @@ class account_bank_statement_line(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Temp Account Invoice'),
+                'name': _('Direct Invoice'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'account.direct.invoice.wizard',
                 'view_type': 'form',
