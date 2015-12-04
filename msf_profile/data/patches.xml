@@ -24,5 +24,9 @@
             <field name="method">us_332_patch</field>
         </record>
 
+        <record id="bar_action_patch" model="patch.scripts">
+            <field name="method">bar_action_patch</field>
+        </record>
+
     </data>
 </openerp>

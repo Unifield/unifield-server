@@ -163,9 +163,22 @@ class ir_ui_view(osv.osv):
         return button_object_list
             
     def _write_button_objects(self, cr, uid, buttons):
+        data_obj = self.pool.get('ir.model.data')
         rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
         for button in buttons:
-            existing_rule_search = rules_pool.search(cr, uid, [('name','=',button['name']), ('view_id','=',button['view_id'])])
+            xmlname = False
+            if button.get('type') == 'action':
+                model = self.pool.get('ir.actions.actions').read(cr, uid, int(button['name']), ['type'])['type']
+                xmlid = data_obj.search(cr, uid, [('res_id', '=', button['name']), ('module', '!=', 'sd'), ('model', '=', model)])
+                if xmlid:
+                    data = data_obj.read(cr, uid, xmlid[0], ['module', 'name'])
+                    xmlname = '%s.%s' % (data['module'], data['name'])
+                    button['xmlname'] = xmlname
+            existing_rule_search = rules_pool.search(cr, uid, [
+                ('name','=',button['name']),
+                ('view_id','=',button['view_id']),
+                ('xmlname', '=', xmlname)
+                ])
             if not existing_rule_search:
                 rules_pool.create(cr, uid, button)
 
