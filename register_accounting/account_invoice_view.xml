@@ -141,7 +141,7 @@
             <field name="inherit_id" eval="False" />
             <field name="priority">250</field>
             <field name="arch" type="xml">
-                <form string="Supplier Invoice" hide_save_button="1" hide_duplicate_button="1" hide_new_button="1">
+                <form string="Supplier Invoice" hide_save_button="1" hide_duplicate_button="1" hide_new_button="1" hide_edit_button="1" hide_delete_button="1" noteditable="1">
                     <group colspan="4" col="8">
                         <field name="is_direct_invoice" invisible="1" readonly="1"/>
                         <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True)]}" />
@@ -179,7 +179,7 @@
                             <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id':
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}"
                                 name="invoice_line" nolabel="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}">
-                                <tree editable="bottom" hide_new_button="True" noteditable="1" hide_delete_button="True" string="Invoice lines" >
+                                <tree editable="bottom" string="Invoice lines" >
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="name"/>
