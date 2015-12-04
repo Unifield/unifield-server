@@ -540,7 +540,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
                     is_inkind_donation=False, is_intermission=False,
                     is_debit_note=False, is_direct_invoice=False):
         # just call the original method from account.invoice
-        return self.pool.get('account.invoice').onchange_partner_id(cr, uid, ids,
+        return self.pool.get('account.invoice').onchange_partner_id(cr, uid, [],
                 ctype, partner_id, date_invoice, payment_term, partner_bank_id,
                 company_id, is_inkind_donation, is_intermission, is_debit_note,
                 True)
