@@ -72,7 +72,7 @@ class hq_report_ocba(report_sxw.report_sxw):
                     'ids': [],  # shrinked ids
                 }
 
-            # sum/append shrink amount/ids
+            # sum shrink entries balance (per above key)
             build_data['shrink'][key]['booking'] += \
                 r.debit_currency - r.credit_currency
             build_data['shrink'][key]['func'] += r.debit - r.credit
@@ -114,8 +114,10 @@ class hq_report_ocba(report_sxw.report_sxw):
         if entry_data['booking'] == 0. and entry_data['func'] == 0.:
             # skip null entry
             return
-        booking = entry_data['booking']
-        func = entry_data['func']
+        # as we work in balance (debit - credit), <0 balance means credit
+        is_debit = False if entry_data['booking'] < 0. else True
+        booking = abs(entry_data['booking'])
+        func = abs(entry_data['func'])
 
         # auto seq number for shrink entry
         period = build_data['period']
@@ -151,11 +153,11 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Partner DB ID': '',
             'Destination': '',
             'Cost Centre': '',
-            'Booking Debit': self._enc_amount(booking, debit=True),
-            'Booking Credit': self._enc_amount(booking, debit=False),
+            'Booking Debit': self._enc_amount(is_debit and booking or 0.),
+            'Booking Credit': self._enc_amount(not is_debit and booking or 0.),
             'Booking Currency': self._enc(ccy_name or ''),
-            'Functional Debit': self._enc_amount(func, debit=True),
-            'Functional Credit': self._enc_amount(func, debit=False),
+            'Functional Debit': self._enc_amount(is_debit and func or 0.),
+            'Functional Credit': self._enc_amount(not is_debit and func or 0.),
             'Functional Currency': self._enc(build_data['functional_ccy_name']),
             'Exchange rate': self._enc_amount(rate,
                 digits=self._EXCHANGE_RATE_DIGITS),
