@@ -772,7 +772,8 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
 
         invoice_wizard_id = self.browse(cr, uid, ids)[0].invoice_wizard_id
         for invl in self.browse(cr, uid, ids):
-            vals.update({'price_subtotal': invl.price_unit * invl.quantity})
+            if 'price_unit' in vals and 'quantity' in vals:
+                vals.update({'price_subtotal': vals['price_unit']*vals['quantity']})
             res = super(account_direct_invoice_wizard_line, self).write(cr, uid,
                     [invl.id], vals, context)
 

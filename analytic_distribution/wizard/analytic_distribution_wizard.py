@@ -553,6 +553,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[wiz.id] = True
             elif wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id and wiz.direct_invoice_line_id.invoice_id.analytic_distribution_id:
                 res[wiz.id] = True
+            elif wiz.account_direct_invoice_wizard_line_id and\
+                    wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id and\
+                    wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.analytic_distribution_id:
+                res[wiz.id] = True
             elif wiz.commitment_line_id and wiz.commitment_line_id.commit_id and wiz.commitment_line_id.commit_id.analytic_distribution_id:
                 res[wiz.id] = True
             elif wiz.cash_return_line_id and wiz.cash_return_line_id.wizard_id and wiz.cash_return_line_id.wizard_id.analytic_distribution_id:
@@ -1295,6 +1299,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.direct_invoice_line_id:
                 il = wiz.direct_invoice_line_id
                 distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
+            elif wiz.account_direct_invoice_wizard_line_id:
+                il = wiz.account_direct_invoice_wizard_line_id
+                distrib = il.invoice_wizard_id and \
+                    il.invoice_wizard_id.analytic_distribution_id or False
             elif wiz.cash_return_line_id:
                 crl = wiz.cash_return_line_id
                 distrib = crl.wizard_id.analytic_distribution_id or False
