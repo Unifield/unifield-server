@@ -1285,11 +1285,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Take distribution from invoice if we come from an invoice line
             if wiz.invoice_line_id:
                 il = wiz.invoice_line_id
-                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
+                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id or False
             # Same thing for purchase order line
             elif wiz.purchase_line_id:
                 pl = wiz.purchase_line_id
-                distrib = pl.order_id and pl.order_id.analytic_distribution_id and pl.order_id.analytic_distribution_id or False
+                distrib = pl.order_id and pl.order_id.analytic_distribution_id  or False
             elif wiz.commitment_line_id:
                 pl = wiz.commitment_line_id
                 distrib = pl.commit_id and pl.commit_id.analytic_distribution_id or False
@@ -1298,7 +1298,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 distrib = pl.model_id and pl.model_id.analytic_distribution_id or False
             elif wiz.direct_invoice_line_id:
                 il = wiz.direct_invoice_line_id
-                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
+                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id or False
             elif wiz.account_direct_invoice_wizard_line_id:
                 il = wiz.account_direct_invoice_wizard_line_id
                 distrib = il.invoice_wizard_id and \
