@@ -653,13 +653,6 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         'original_invoice_line_id': False,
     }
 
-    def vacuum(self, cr, uid):
-        one_hour = (datetime.now() + relativedelta(hours=-1)).strftime("%Y-%m-%d %H:%M:%S")
-        unlink_ids = self.search(cr, uid, [('create_date', '<', one_hour)])
-        if unlink_ids:
-            return self.unlink(cr, uid, unlink_ids)
-        return True
-
     def unlink(self, cr, uid, ids, context=None):
         """ delete the associated analytic_distribution
         """
