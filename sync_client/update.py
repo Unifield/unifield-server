@@ -70,7 +70,7 @@ class local_rule(osv.osv):
         for vals in (dict(data) for data in data_list):
             assert 'server_id' in vals, "The following rule doesn't seem to have the required field server_id: %s" % vals
 
-            # Check model exists or is null
+            # Check model exists and is not null
             if not vals.get('model'):
                 vals['active'] = False
             elif not self.pool.get('ir.model').search(cr, uid, [('model', '=', vals['model'])], limit=1, context=context):
