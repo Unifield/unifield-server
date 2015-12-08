@@ -45,8 +45,10 @@ import functools
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
 
+
 class SkipStep(StandardError):
     pass
+
 
 class BackgroundProcess(Thread):
 
@@ -91,6 +93,7 @@ class BackgroundProcess(Thread):
         finally:
             cr.close(True)
 
+
 def sync_subprocess(step='status', defaults_logger={}):
     def decorator(fn):
 
@@ -126,7 +129,6 @@ def sync_subprocess(step='status', defaults_logger={}):
             return res
         return wrapper
     return decorator
-
 
 def sync_process(step='status', need_connection=True, defaults_logger={}):
     is_step = not (step == 'status')
@@ -257,32 +259,28 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
 already_syncing_error = osv.except_osv(_('Already Syncing...'), _('OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.'))
 
-def get_hardware_id(): 
+def get_hardware_id():
         mac = []
-        if sys.platform == 'win32': 
-            for line in os.popen("ipconfig /all"): 
-                if line.lstrip().startswith('Physical Address'): 
-                    mac.append(line.split(':')[1].strip().replace('-',':')) 
-        else: 
-            for line in os.popen("/sbin/ifconfig"): 
-                if line.find('Ether') > -1: 
-                    mac.append(line.split()[4]) 
+        if sys.platform == 'win32':
+            for line in os.popen("ipconfig /all"):
+                if line.lstrip().startswith('Physical Address'):
+                    mac.append(line.split(':')[1].strip().replace('-',':'))
+        else:
+            for line in os.popen("/sbin/ifconfig"):
+                if line.find('Ether') > -1:
+                    mac.append(line.split()[4])
         mac.sort()
         hw_hash = hashlib.md5(''.join(mac)).hexdigest()
         logging.getLogger('sync.client').info('Hardware identifier: %s' % (hw_hash,))
         return hw_hash
 
+
 class Entity(osv.osv):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
-
     _logger = logging.getLogger('sync.client')
-    
     _hardware_id = get_hardware_id()
-    
-    
-    
 
     def _auto_init(self,cr,context=None):
         res = super(Entity, self)._auto_init(cr, context=context)
@@ -336,14 +334,13 @@ class Entity(osv.osv):
         'update_offset' : fields.integer('Update Offset', required=True, readonly=True),
         'message_last': fields.integer('Last message', required=True),
         'email' : fields.char('Contact Email', size=512, readonly=True),
-        
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True),
         'session_id' : fields.char('Push Session Id', size=128),
         'max_update' : fields.integer('Max Update Sequence', readonly=True),
         'message_to_send' : fields.function(_get_nb_message_send, method=True, string='Nb message to send', type='integer', readonly=True),
         'update_to_send' : fields.function(_get_nb_update_send, method=True, string='Nb update to send', type='integer', readonly=True),
 
-        # used to determine which sync rules to use 
+        # used to determine which sync rules to use
         # UF-2531: moved this from the RW module to the general sync module
         'usb_instance_type': fields.selection((('',''),('central_platform','Central Platform'),('remote_warehouse','Remote Warehouse')), string='USB Instance Type'),
     }
@@ -390,11 +387,11 @@ class Entity(osv.osv):
         finally:
             self.renew_lock.release()
 
-    """
-        Push Update
-    """
     @sync_process('data_push')
     def push_update(self, cr, uid, context=None):
+        """
+            Push Update
+        """
         context = context or {}
         logger = context.get('logger')
         entity = self.get_entity(cr, uid, context)
@@ -420,9 +417,6 @@ class Entity(osv.osv):
             cr.commit()
             if server_sequence:
                 self._logger.info(_("Push data :: New server's sequence number: %d") % server_sequence)
-
-
-
         return True
 
     @sync_subprocess('data_push_create')
@@ -518,11 +512,11 @@ class Entity(osv.osv):
         return res[1]
 
 
-    """
-        Pull update
-    """
     @sync_process('data_pull')
     def pull_update(self, cr, uid, recover=False, context=None):
+        """
+            Pull update
+        """
         context = context or {}
 
         logger = context.get('logger')
@@ -534,7 +528,7 @@ class Entity(osv.osv):
             self.set_last_sequence(cr, uid, context=context)
         sync_server_obj = self.pool.get("sync.client.sync_server_connection")
         max_packet_size = sync_server_obj._get_connection_manager(cr, uid, context=context).max_size
-        
+
         # UTP-1177: Retrieve the message ids and save into the entity at the Server side
         proxy = sync_server_obj.get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_message_ids(entity.identifier, self._hardware_id)
@@ -561,7 +555,6 @@ class Entity(osv.osv):
             return self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
             raise Exception, res[1]
-
         return True
 
     @sync_subprocess('data_pull_receive')
@@ -599,7 +592,6 @@ class Entity(osv.osv):
                                         'max_update' : 0,
                                         'update_last' : max_seq}, context=context)
         cr.commit()
-
         return updates_count
 
     @sync_subprocess('data_pull_execute')
@@ -655,15 +647,13 @@ class Entity(osv.osv):
                 notrun_count = updates.search(cr, uid, [('run','=',False)], count=True, context=context)
                 if notrun_count > 0: logger.append(_("Update(s) not run left: %d") % notrun_count)
                 logger.write()
-
         return update_count
 
-
-    """
-        Push message
-    """
     @sync_process('msg_push')
     def push_message(self, cr, uid, context=None):
+        """
+            Push message
+        """
         context = context or {}
         entity = self.get_entity(cr, uid, context)
         logger = context.get('logger')
@@ -700,7 +690,6 @@ class Entity(osv.osv):
         messages_count = 0
         for rule in rule_obj.browse(cr, uid, rule_obj.search(cr, uid, [('type', '!=', 'USB')], context=context), context=context):
             messages_count += messages.create_from_rule(cr, uid, rule, None, context=context)
-
         return messages_count
 
     @sync_subprocess('msg_push_send')
@@ -732,16 +721,14 @@ class Entity(osv.osv):
 
         if logger and messages_count:
             logger.replace(logger_index, _("Message(s) sent: %d") % messages_count)
-
         return messages_count
         #message_push => init
 
-
-    """
-        Pull message
-    """
     @sync_process('msg_pull')
     def pull_message(self, cr, uid, recover=False, context=None):
+        """
+            Pull message
+        """
         context = context or {}
         logger = context.get('logger')
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
@@ -793,7 +780,6 @@ class Entity(osv.osv):
                 if logger_index is None: logger_index = logger.append()
                 logger.replace(logger_index, _("Message(s) received: %d") % messages_count)
                 logger.write()
-
         return messages_count
 
     @sync_subprocess('msg_pull_execute')
@@ -827,16 +813,14 @@ class Entity(osv.osv):
                 notrun_count = messages.search(cr, uid, [('run', '=', False)], count=True, context=context)
                 if notrun_count > 0: logger.append(_("Message(s) not run left: %d") % notrun_count)
                 logger.write()
-                # UTP-1200: Update already the sync_id to the logger lines for FO/PO 
+                # UTP-1200: Update already the sync_id to the logger lines for FO/PO
                 logger.update_sale_purchase_logger()
-
         return messages_count
 
-
-    """
-        SYNC process : usefull for scheduling
-    """
     def sync_threaded(self, cr, uid, recover=False, context=None):
+        """
+            SYNC process : usefull for scheduling
+        """
         BackgroundProcess(cr, uid,
             ('sync_recover_withbackup' if recover else 'sync_withbackup'),
             context).start()
@@ -906,10 +890,7 @@ class Entity(osv.osv):
         if logger:
             logger.info['nb_msg_not_run'] = self.pool.get('sync.client.message_received').search(cr, uid, [('run', '=', False)], count=True)
             logger.info['nb_data_not_run'] = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False)], count=True)
-
-
         return True
-
 
     @sync_process()
     def sync_withbackup(self, cr, uid, context=None):
@@ -969,7 +950,6 @@ class Entity(osv.osv):
         if last_log:
             return "Last Sync: %s at %s, Not run upd: %s, Not run msg: %s" \
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
-
         return "Connected"
 
     def interrupt_sync(self, cr, uid, context=None):
