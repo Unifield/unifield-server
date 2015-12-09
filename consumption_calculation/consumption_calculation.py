@@ -131,11 +131,35 @@ class real_average_consumption(osv.osv):
                 res[obj.id] = True
         return res
 
+    def _get_act_name(self, cr, uid, ids, fields, arg, context=None):
+        """
+        Set the activity name when the activity_id is changed
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for rac in self.browse(cr, uid, ids, context=context):
+            res[rac.id] = {}
+            res[rac.id]['activity_name'] = rac.activity_id and rac.activity_id.name or ''
+            res[rac.id]['cons_location_name'] = rac.cons_location_id and rac.cons_location_id.name or ''
+
+        return res
+
     _columns = {
         'name': fields.char(size=64, string='Reference'),
         'creation_date': fields.datetime(string='Creation date', required=1),
         'cons_location_id': fields.many2one('stock.location', string='Consumer location', domain=[('usage', '=', 'internal')], required=True),
+        'cons_location_name': fields.function(_get_act_name, method=True, type='char', string='Activity Name', readonly=True, size=128, multi='loc_name', store={
+                'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['cons_location_name'], 10),
+            },),
         'activity_id': fields.many2one('stock.location', string='Activity', domain=[('usage', '=', 'customer')], required=1),
+        'activity_name': fields.function(_get_act_name, method=True, type='char', string='Activity Name', readonly=True, size=128, multi='loc_name', store={
+                'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['activity_id'], 10),
+            },),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
         'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
