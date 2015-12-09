@@ -25,7 +25,6 @@
             <field name="arch" type="xml">
                 <data >
                     <field name="instance_id" />
-                    <field name="instance_name" invisible="True" />
                     <field name="period_id" />
                     <field name="state" />
                 </data>
@@ -39,7 +38,7 @@
             <field name="priority" eval="5"/>
             <field name="arch" type="xml">
                 <search string="Register Lines">
-                    <field name="instance_name"/>
+                    <field name="instance_id"/>
                     <field name="period_id" />
                     <field name="state" />
                 </search>

@@ -30,32 +30,11 @@ from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
 class account_period_state(osv.osv):
     _name = "account.period.state"
 
-    def _get_instance_name(self, cr, uid, ids, name, args, context=None):
-        res = {}
-        if not ids:
-            return res
-        obj_ids = self.browse(cr, uid, ids, context=context)
-        for obj in obj_ids:
-            res[obj.id] = obj.instance_id and obj.instance_id.name or ""
-
-        return res
-
-    def _get_search_by_instance(self, cr, uid, obj, name, args,
-                                context=None):
-        inst_obj = self.pool.get('msf.instance')
-        args = [('name', args[0][1], args[0][2])]
-        inst_ids = inst_obj.search(cr, uid, args, context=context)
-        return [('instance_id', 'in', inst_ids)]
-
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State',
                                   readonly=True),
-        'instance_name': fields.function(_get_instance_name, type='char',
-                                         fnct_search=_get_search_by_instance,
-                                         method=True,
-                                         string="Proprietary Instance"),
     }
 
     def get_period(self, cr, uid, ids, context=None):
