@@ -267,6 +267,14 @@ sql_params)
         if context is None:
             context = {}
 
+        result_iterable = hasattr(ids, '__iter__')
+        if not result_iterable:
+            ids = [ids]
+            if previous_values is not None:
+                previous_values = [previous_values]
+        if not ids: return {}
+
+
         assert not self._name == 'ir.model.data', \
             "Can not call this method on object ir.model.data!"
         assert hasattr(self, '_all_columns'), \
@@ -288,13 +296,6 @@ sql_params)
             _previous_calls.append(me)
         else:
             return {}
-
-        result_iterable = hasattr(ids, '__iter__')
-        if not result_iterable:
-            ids = [ids]
-            if previous_values is not None:
-                previous_values = [previous_values]
-        if not ids: return {}
 
         data = self.pool.get('ir.model.data')
         if isinstance(synchronize, dict):
@@ -368,13 +369,11 @@ sql_params)
                     touch([data_id], list(
                         modified.union(eval(touched) if touched else [])
                     ))
+                # UF-2272 skip model's one2many(s)
+                skip_one2many = context.get('from_orm_write', False) and self._name in write_skip_o2m
                 # handle one2many (because orm don't call write() on them)
-                if synchronize:
+                if synchronize and not skip_one2many:
                     for field, column in filter_o2m(whole_fields):
-                        if context.get('from_orm_write', False) and \
-                            write_skip_o2m and self._name in write_skip_o2m:
-                            # UF-2272 skip model's one2many(s)
-                            continue
                         self.pool.get(column._obj).touch(
                             cr, uid, list(set(prev_rec[field] + next_rec[field])),
                             None, data_base_values,
@@ -386,6 +385,11 @@ sql_params)
             changes = context['changes'].setdefault(self._name, {})
         else:
             changes = {}
+
+        # do not track changes if the dict are the same
+        if previous_values == current_values:
+            return changes
+
         if previous_values is not None:
             for res_id in ids:
                 if res_id not in changes:
@@ -504,7 +508,13 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
     @orm_method_overload
     def write(self, original_write, cr, uid, ids, values, context=None):
-        if context is None: context = {}
+        if not ids:
+            return True
+        result_iterable = hasattr(ids, '__iter__')
+        if not result_iterable:
+            ids = [ids]
+        if context is None:
+            context = {}
 
         audit_rule_ids = self.check_audit(cr, uid, 'write')
         audit_obj = self.pool.get('audittrail.rule')
@@ -517,19 +527,12 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
 
-        if to_be_synchronized or hasattr(self, 'on_change') or audit_rule_ids:
-            # FIXME: add fields.function for track changes
-            previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
-
+        previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
         result = original_write(self, cr, uid, ids, values,context=context)
-        current_values = dict((x['id'], x) for x in self.read(
-            cr, uid, isinstance(ids, (int, long)) and [ids] or ids,
-            values.keys()+funct_field, context=context)
-        )
+        current_values = dict((x['id'], x) for x in previous_values)
 
         if audit_rule_ids:
             audit_obj.audit_log(cr, uid, audit_rule_ids, self, ids, 'write', previous_values, current_values, context=context)
-
         if to_be_synchronized or hasattr(self, 'on_change'):
             # UF-2272 flag we are in orm write (for touch() function)
             from_orm_write = context.get('from_orm_write', True)
@@ -798,7 +801,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 
             """
             def __export_row_json(self, cr, uid, row, fields, json_data, context=None):
-                    if not context:
+                    if context is None:
                         context = {}
 
                     def get_name(row):
