@@ -22,7 +22,9 @@
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="display_account"/>
                 <field name="reserve_account_id" required="1"/>
-                <field name="display_type"/>
+                <newline />
+                <field name="export_format"/>
+                <field name="display_type" attrs="{'readonly':[('export_format','=','xls')]}"/>
                 <newline/>
             </xpath>
             </data>

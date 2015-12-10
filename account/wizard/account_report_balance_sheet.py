@@ -40,6 +40,7 @@ class account_bs_report(osv.osv_memory):
         return res['value']['reserve_account_id']
 
     _columns = {
+        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
         'display_type': fields.boolean("Landscape Mode"),
         'reserve_account_id': fields.many2one('account.account', 'Reserve & Profit/Loss Account',
                                       required=True,
@@ -51,6 +52,7 @@ class account_bs_report(osv.osv_memory):
     }
 
     _defaults={
+        'export_format': 'pdf',
         'display_type': True,
         'journal_ids': [],
         'reserve_account_id': _get_def_reserve_account,
@@ -68,7 +70,8 @@ class account_bs_report(osv.osv_memory):
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
-        data['form'].update(self.read(cr, uid, ids, ['display_type','reserve_account_id'])[0])
+        update_fields = ['export_format', 'display_type' ,'reserve_account_id', ]
+        data['form'].update(self.read(cr, uid, ids, update_fields)[0])
         if not data['form']['reserve_account_id']:
             raise osv.except_osv(_('Warning'),_('Please define the Reserve and Profit/Loss account for current user company !'))
         data = self.pre_print_report(cr, uid, ids, data, context=context)
