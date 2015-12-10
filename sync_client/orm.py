@@ -537,9 +537,10 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             # UF-2272 flag we are in orm write (for touch() function)
             from_orm_write = context.get('from_orm_write', True)
             context['from_orm_write'] = from_orm_write
-            changes = self.touch(cr, uid, ids, previous_values,
-                to_be_synchronized, current_values=current_values, context=context)
             if hasattr(self, 'on_change'):
+                #XXX 2eme appel avec les meme valeur sur le meme objet
+                changes = self.touch(cr, uid, ids, previous_values,
+                    to_be_synchronized, current_values=current_values, context=context)
                 self.on_change(cr, uid, changes, context=context)
 
             # UFTP-367 Add a double check to make sure that the del statement works safely.
