@@ -87,7 +87,8 @@ class local_rule(osv.osv):
                 self.create(cr, uid, vals, context=context)
 
         # The rest is just disabled
-        self.write(cr, uid, list(remaining_ids), {'active':False}, context=context)
+        if remaining_ids:
+            self.write(cr, uid, list(remaining_ids), {'active':False}, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         return self.write(cr, uid, ids, {'active':False}, context=context)
@@ -629,25 +630,25 @@ class update_received(osv.osv):
                 update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
             deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
 
-            self.write(cr, uid, deleted_update_ids, {
-                'editable' : False,
-                'run' : True,
-                'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
-            }, context=context)
-
-            sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
-            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False), ('run', '=', False)], context=context)
-            if toSetRun_ids:
-                self.write(cr, uid, toSetRun_ids, {
+            if deleted_update_ids:
+                self.write(cr, uid, deleted_update_ids, {
                     'editable' : False,
                     'run' : True,
-                    'log' : 'Manually set to run by the system. Due to a delete',
+                    'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
                 }, context=context)
+                sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
+                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False), ('run', '=', False)], context=context)
+                if toSetRun_ids:
+                    self.write(cr, uid, toSetRun_ids, {
+                        'editable' : False,
+                        'run' : True,
+                        'log' : 'Manually set to run by the system. Due to a delete',
+                    }, context=context)
 
+                updates = filter(lambda update: update.id not in deleted_update_ids or
+                                                (not do_deletion and force_recreation),
+                                 updates)
 
-            updates = filter(lambda update: update.id not in deleted_update_ids or
-                                            (not do_deletion and force_recreation),
-                             updates)
             if not updates:
                 continue
             # ignore updates of instances that have lower priorities
@@ -680,22 +681,23 @@ class update_received(osv.osv):
                             "(update source: %s > local instance: %s)"
                             % (update.id, update.sdref,
                                update.source, local_entity.name))
-                self.write(cr, uid,
-                    [update.id for update in updates_to_ignore],
-                    {
-                        'editable' : False,
-                        'run' : True,
-                        'log' : \
-                            "This update has been ignored because it " \
-                            "interfere with a local modification while the " \
-                            "origin instance has a lower priority.\n\n" \
-                            "(update source: %s < local instance: %s)" \
-                            % (update.source, local_entity.name),
-                    },
-                    context=context)
-                updates = filter(
-                    lambda update: update not in updates_to_ignore,
-                    updates)
+                if updates_to_ignore:
+                    self.write(cr, uid,
+                        [update.id for update in updates_to_ignore],
+                        {
+                            'editable' : False,
+                            'run' : True,
+                            'log' : \
+                                "This update has been ignored because it " \
+                                "interfere with a local modification while the " \
+                                "origin instance has a lower priority.\n\n" \
+                                "(update source: %s < local instance: %s)" \
+                                % (update.source, local_entity.name),
+                        },
+                        context=context)
+                    updates = filter(
+                        lambda update: update not in updates_to_ignore,
+                        updates)
             # Proceed
             if not updates:
                 continue
