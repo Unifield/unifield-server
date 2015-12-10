@@ -120,7 +120,7 @@ class browse_null(object):
 class browse_record_list(list):
 
     def __init__(self, lst, context=None):
-        if not context:
+        if context is None:
             context = {}
         super(browse_record_list, self).__init__(lst)
         self.context = context
@@ -609,7 +609,7 @@ class orm_template(object):
         lines = []
         data = map(lambda x: '', range(len(fields)))
         done = []
-        for fpos in range(len(fields)):
+        for fpos in xrange(len(fields)):
             f = fields[fpos]
             if f:
                 r = row
@@ -771,7 +771,7 @@ class orm_template(object):
             order_line/product_uom_qty,
             order_line/product_uom/id    (=xml_id)
         """
-        if not context:
+        if context is None:
             context = {}
         def _replace_field(x):
             x = re.sub('([a-z0-9A-Z_])\\.id$', '\\1/.id', x)
@@ -822,37 +822,43 @@ class orm_template(object):
             data_res_id = False
             xml_id = False
             nbrmax = position+1
- 
             done = {}
-            for i in range(len(fields)):
+
+            for i in xrange(len(fields)):
+                value = line[i]
                 res = False
-                #if not line[i]:
+                #if not value:
                 #    continue
                 if i >= len(line):
                     raise Exception(_('Please check that all your lines have %d columns.') % (len(fields),))
 
                 field = fields[i]
                 if field[:len(prefix)] <> prefix:
-                    if line[i] and skip:
+                    if value and skip:
                         return False
                     continue
 
                 # ID of the record using a XML ID
                 if field[len(prefix)]=='id':
                     try:
-                        data_res_id = line[i] and _get_id(model_name, line[i], current_module, 'id')
+                        data_res_id = value and _get_id(model_name, value, current_module, 'id')
                     except ValueError, e:
                         pass
-                    xml_id = line[i]
+                    xml_id = value
                     continue
 
                 # ID of the record using a database ID
                 elif field[len(prefix)]=='.id':
-                    data_res_id = line[i] and _get_id(model_name, line[i], current_module, '.id')
+                    data_res_id = value and _get_id(model_name, value, current_module, '.id')
                     continue
 
                 # recursive call for getting children and returning [(0,0,{})] or [(1,ID,{})]
-                if fields_def[field[len(prefix)]]['type']=='one2many':
+                field_type = fields_def[field[len(prefix)]]['type']
+                if field_type not in ('one2many', 'many2one', 'many2many',
+                        'integer', 'boolean', 'float', 'selection',
+                        'reference'):
+                    res = value
+                elif field_type == 'one2many':
                     if field[len(prefix)] in done:
                         continue
                     done[field[len(prefix)]] = True
@@ -873,15 +879,15 @@ class orm_template(object):
                             break
                         res.append( (data_res_id2 and 1 or 0, data_res_id2 or 0, newrow) )
 
-                elif fields_def[field[len(prefix)]]['type']=='many2one':
+                elif field_type=='many2one':
                     relation = fields_def[field[len(prefix)]]['relation']
                     if len(field) == len(prefix)+1:
                         mode = False
                     else:
                         mode = field[len(prefix)+1]
-                    res = line[i] and _get_id(relation, line[i], current_module, mode)
+                    res = value and _get_id(relation, value, current_module, mode)
 
-                elif fields_def[field[len(prefix)]]['type']=='many2many':
+                elif field_type=='many2many':
                     relation = fields_def[field[len(prefix)]]['relation']
                     if len(field) == len(prefix)+1:
                         mode = False
@@ -890,42 +896,41 @@ class orm_template(object):
 
                     # TODO: improve this by using csv.csv_reader
                     res = []
-                    if line[i]:
-                        for db_id in line[i].split(config.get('csv_internal_sep')) or []:
+                    if value:
+                        for db_id in value.split(config.get('csv_internal_sep')) or []:
                             res.append( _get_id(relation, db_id, current_module, mode) )
                     res = [(6,0,res)]
 
-                elif fields_def[field[len(prefix)]]['type'] == 'integer':
-                    res = line[i] and int(line[i]) or 0
-                elif fields_def[field[len(prefix)]]['type'] == 'boolean':
-                    res = line[i] and line[i].lower() not in ('0', 'false', 'off') or False
-                elif fields_def[field[len(prefix)]]['type'] == 'float':
-                    res = line[i] and float(line[i].replace(',','.')) or 0.0
-                elif fields_def[field[len(prefix)]]['type'] == 'selection':
+                elif field_type == 'integer':
+                    res = value and int(value) or 0
+                elif field_type == 'boolean':
+                    res = value and value.lower() not in ('0', 'false', 'off') or False
+                elif field_type == 'float':
+                    res = value and float(value.replace(',','.')) or 0.0
+                elif field_type == 'selection':
                     for key, val in fields_def[field[len(prefix)]]['selection']:
-                        if line[i] in [tools.ustr(key), tools.ustr(val)]:
+                        if value in [tools.ustr(key), tools.ustr(val)]:
                             res = key
                             break
-                    if not line[i]:
+                    if not value:
                         res = False
-                    if line[i] and not res:
+                    if value and not res:
                         model_obj = self.pool.get(model_name)
                         if model_obj:
                             # get the selection from the field.selection definition
                             sel_list = getattr(getattr(model_obj._all_columns.get(field[len(prefix)], object), 'column', object), 'selection', False)
                             if isinstance(sel_list, list):
                                 for key, val in sel_list:
-                                    if line[i] == val:
+                                    if value == val:
                                         res = key
                                         break
-                    if line[i] and not res:
                         logger.notifyChannel("import", netsvc.LOG_WARNING,
                                 _("key '%s' not found in selection field '%s'") % \
-                                        (line[i], field[len(prefix)]))
-                        warning += [_("Key/value '%s' not found in selection field '%s'") % (line[i], field[len(prefix)])]
-                elif fields_def[field[len(prefix)]]['type'] == 'reference':
+                                        (value, field[len(prefix)]))
+                        warning += [_("Key/value '%s' not found in selection field '%s'") % (value, field[len(prefix)])]
+                elif field_type == 'reference':
                     # support importing of reference fields
-                    field_value = line[i] and eval(line[i])
+                    field_value = value and eval(value)
                     if isinstance(field_value, tuple):
                         (module, model, ref_xml_id) = (field_value[0], field_value[1], field_value[2])
                         ir_model_data_obj = self.pool.get('ir.model.data')
@@ -937,8 +942,6 @@ class orm_template(object):
                         res = model and ref_db_id and str(model) + "," + str(ref_db_id) or ''
                     else:
                         res = 0
-                else:
-                    res = line[i]
 
                 row[field[len(prefix)]] = res or False
 
@@ -1063,7 +1066,7 @@ class orm_template(object):
         # trigger view init hook
         self.view_init(cr, uid, fields_list, context)
 
-        if not context:
+        if context is None:
             context = {}
         defaults = {}
 
@@ -1253,7 +1256,7 @@ class orm_template(object):
         return False
 
     def __view_look_dom(self, cr, user, node, view_id, context=None):
-        if not context:
+        if context is None:
             context = {}
         result = False
         fields = {}
@@ -1533,7 +1536,7 @@ class orm_template(object):
         :raise Invalid ArchitectureError: if there is view type other than form, tree, calendar, search etc defined on the structure
 
         """
-        if not context:
+        if context is None:
             context = {}
 
         def encode(s):
@@ -1793,7 +1796,7 @@ class orm_template(object):
     _view_look_dom_arch = __view_look_dom_arch
 
     def search_count(self, cr, user, args, context=None):
-        if not context:
+        if context is None:
             context = {}
         res = self.search(cr, user, args, context=context, count=True)
         if isinstance(res, list):
@@ -1867,7 +1870,7 @@ class orm_template(object):
         :return: tuples with the text representation of requested objects for to-many relationships
 
         """
-        if not context:
+        if context is None:
             context = {}
         if not ids:
             return []
@@ -1978,12 +1981,13 @@ class orm_template(object):
             defaults = self.default_get(cr, uid, missing_defaults, context)
             for dv in defaults:
                 if ((dv in self._columns and self._columns[dv]._type == 'many2many') \
-                     or (dv in self._inherit_fields and self._inherit_fields[dv][2]._type == 'many2many')) \
+                        or (dv in self._inherit_fields and self._inherit_fields[dv][2]._type == 'many2many')) \
                         and defaults[dv] and isinstance(defaults[dv][0], (int, long)):
                     defaults[dv] = [(6, 0, defaults[dv])]
-                if (dv in self._columns and self._columns[dv]._type == 'one2many' \
-                    or (dv in self._inherit_fields and self._inherit_fields[dv][2]._type == 'one2many')) \
-                        and isinstance(defaults[dv], (list, tuple)) and defaults[dv] and isinstance(defaults[dv][0], dict):
+                elif (dv in self._columns and self._columns[dv]._type == 'one2many' \
+                        or (dv in self._inherit_fields and self._inherit_fields[dv][2]._type == 'one2many')) \
+                        and isinstance(defaults[dv], (list, tuple)) and\
+                        defaults[dv] and isinstance(defaults[dv][0], dict):
                     defaults[dv] = [(0, 0, x) for x in defaults[dv]]
             defaults.update(values)
             values = defaults
@@ -2091,7 +2095,7 @@ class orm_memory(orm_template):
         return True
 
     def read(self, cr, user, ids, fields_to_read=None, context=None, load='_classic_read'):
-        if not context:
+        if context is None:
             context = {}
         if not fields_to_read:
             fields_to_read = self._columns.keys()
@@ -2205,7 +2209,7 @@ class orm_memory(orm_template):
         return id_new
 
     def _where_calc(self, cr, user, args, active_test=True, context=None):
-        if not context:
+        if context is None:
             context = {}
         args = args[:]
         res = []
@@ -2305,7 +2309,7 @@ class orm_memory(orm_template):
         return data
 
     def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
-        if not context:
+        if context is None:
             context = {}
 
         # implicit filter on current user except for superuser
@@ -3225,7 +3229,7 @@ class orm(orm_template):
         return super(orm, self).fields_get(cr, user, fields, context, write_access)
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
-        if not context:
+        if context is None:
             context = {}
         self.pool.get('ir.model.access').check(cr, user, self._name, 'read', context=context)
         if not fields:
@@ -3247,7 +3251,7 @@ class orm(orm_template):
         return result
 
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
-        if not context:
+        if context is None:
             context = {}
         if not ids:
             return []
@@ -3413,7 +3417,7 @@ class orm(orm_template):
                     * write_date: date of the last change to the record
                     * xmlid: XML ID to use to refer to this record (if there is one), in format ``module.name``
         """
-        if not context:
+        if context is None:
             context = {}
         if not ids:
             return []
@@ -3636,7 +3640,7 @@ class orm(orm_template):
                 if not edit:
                     vals.pop(field)
 
-        if not context:
+        if context is None:
             context = {}
         if not ids:
             return True
@@ -3862,7 +3866,7 @@ class orm(orm_template):
         to specify them.
 
         """
-        if not context:
+        if context is None:
             context = {}
         self.pool.get('ir.model.access').check(cr, user, self._name, 'create', context=context)
 
@@ -4154,7 +4158,7 @@ class orm(orm_template):
         :return: the query expressing the given domain as provided in domain
         :rtype: osv.query.Query
         """
-        if not context:
+        if context is None:
             context = {}
         domain = domain[:]
         # if the object has a field named 'active', filter out all inactive
