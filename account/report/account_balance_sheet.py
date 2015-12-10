@@ -25,6 +25,7 @@ import pooler
 from report import report_sxw
 from account.report import account_profit_loss
 from common_report_header import common_report_header
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header):
@@ -57,6 +58,10 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             'get_end_date':self._get_end_date,
             'get_company':self._get_company,
             'get_target_move': self._get_target_move,
+            'get_display_info': self.get_display_info,
+            'get_filter_name': self.get_filter_name,
+            'get_filter_info': self.get_filter_info,
+            'get_prop_instances': self.get_prop_instances,
         })
         self.context = context
 
@@ -201,6 +206,14 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                               'balance1':False,
                           }
                         self.result_temp.append(temp)
+        # TODO remove print
+        print self.res_bl
+        print '--------------------------------------------------'
+        print self.result_temp
+        print '--------------------------------------------------'
+        print self.result.get('asset', [])
+        print '--------------------------------------------------'
+        print self.result.get('liability', [])
         return None
 
     def get_lines(self):
@@ -209,6 +222,22 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
     def get_lines_another(self, group):
         return self.result.get(group, [])
 
+    def get_display_info(data):
+        # TODO
+        return ''
+
+    def get_filter_name(data):
+        # TODO
+        return ''
+
+    def get_filter_info(data):
+        # TODO
+        return ''
+
+    def get_prop_instances(data):
+        # TODO
+        return ''
+
 report_sxw.report_sxw('report.account.balancesheet.horizontal', 'account.account',
     'addons/account/report/account_balance_sheet_horizontal.rml',parser=report_balancesheet_horizontal,
     header='internal landscape')
@@ -216,5 +245,21 @@ report_sxw.report_sxw('report.account.balancesheet.horizontal', 'account.account
 report_sxw.report_sxw('report.account.balancesheet', 'account.account',
     'addons/account/report/account_balance_sheet.rml',parser=report_balancesheet_horizontal,
     header='internal')
+
+
+class balance_sheet_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
+        header='external', store=False):
+        super(balance_sheet_xls, self).__init__(name, table, rml=rml,
+            parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        #ids = getIds(self, cr, uid, ids, context)
+        a = super(balance_sheet_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+balance_sheet_xls('report.account.balance.sheet_xls', 'account.account',
+    'addons/account/report/account_balance_sheet_xls.mako',
+    parser=report_balancesheet_horizontal, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

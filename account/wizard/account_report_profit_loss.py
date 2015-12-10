@@ -50,6 +50,17 @@ class account_pl_report(osv.osv_memory):
         data['form'].update(self.read(cr, uid, ids, update_fields)[0])
         instance = self.pool.get('ir.sequence')._get_instance(cr, uid)
         data['target_filename'] = _('Account Profit_and_Loss_%s_%s') % (instance, time.strftime('%Y%m%d'))
+
+        if data['form']['export_format'] \
+           and data['form']['export_format'] == 'xls':
+            # US-227: excel version
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.profit.loss_xls',
+                'datas': data,
+            }
+
+        # PDF versions
         if data['form']['display_type']:
             return {
                 'type': 'ir.actions.report.xml',

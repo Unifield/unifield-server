@@ -22,6 +22,7 @@ import time
 import pooler
 from report import report_sxw
 from common_report_header import common_report_header
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
@@ -53,6 +54,10 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             'get_end_date':self._get_end_date,
             'get_company':self._get_company,
             'get_target_move': self._get_target_move,
+            'get_display_info': self.get_display_info,
+            'get_filter_name': self.get_filter_name,
+            'get_filter_info': self.get_filter_info,
+            'get_prop_instances': self.get_prop_instances,
         })
         self.context = context
 
@@ -181,10 +186,42 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
     def get_lines_another(self, group):
         return self.result.get(group, [])
 
+    def get_display_info(data):
+        # TODO
+        return ''
+
+    def get_filter_name(data):
+        # TODO
+        return ''
+
+    def get_filter_info(data):
+        # TODO
+        return ''
+
+    def get_prop_instances(data):
+        # TODO
+        return ''
+
 report_sxw.report_sxw('report.pl.account.horizontal', 'account.account',
     'addons/account/report/account_profit_horizontal.rml',parser=report_pl_account_horizontal, header='internal landscape')
 
 report_sxw.report_sxw('report.pl.account', 'account.account',
     'addons/account/report/account_profit_loss.rml',parser=report_pl_account_horizontal, header='internal')
+
+
+class profit_loss_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
+        header='external', store=False):
+        super(profit_loss_xls, self).__init__(name, table, rml=rml,
+            parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        #ids = getIds(self, cr, uid, ids, context)
+        a = super(profit_loss_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+profit_loss_xls('report.account.profit_loss_xls', 'account.account',
+    'addons/account/report/account_profit_loss_xls.mako',
+    parser=report_pl_account_horizontal, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -77,6 +77,17 @@ class account_bs_report(osv.osv_memory):
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         instance = self.pool.get('ir.sequence')._get_instance(cr, uid)
         data['target_filename'] = _('Balance Sheet_%s_%s') % (instance, time.strftime('%Y%m%d'))
+
+        if data['form']['export_format'] \
+           and data['form']['export_format'] == 'xls':
+            # US-227: excel version
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.balance.sheet_xls',
+                'datas': data,
+            }
+
+        # PDF versions
         if data['form']['display_type']:
             return {
                 'type': 'ir.actions.report.xml',
