@@ -884,9 +884,9 @@ class Entity(osv.osv):
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'aftermanualsync', context=context)
         return {'type': 'ir.actions.act_window_close'}
 
-    #@sync_process()
-    #def sync(self, cr, uid, context=None):
-    def sync_profile(self, cr, uid, context=None):
+    #def sync_profile(self, cr, uid, context=None):
+    @sync_process()
+    def sync(self, cr, uid, context=None):
         if context is None:
             context = {}
         logger = context.get('logger')
@@ -916,13 +916,13 @@ class Entity(osv.osv):
             logger.info['nb_data_not_run'] = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False)], count=True)
         return True
 
-    @sync_process()
-    def sync(self, cr, uid, context=None):
-        start=datetime.now()
-        cProfile.runctx("self.sync_profile(cr, uid, context)",
-                globals(), locals(), "/tmp/my.profile")
-        stop = datetime.now() - start
-        self._logger.info("Synchronization duration was :%s" % str(stop))
+    #@sync_process()
+    #def sync(self, cr, uid, context=None):
+    #    start=datetime.now()
+    #    cProfile.runctx("self.sync_profile(cr, uid, context)",
+    #            globals(), locals(), "/tmp/my.profile")
+    #    stop = datetime.now() - start
+    #    self._logger.info("Synchronization duration was :%s" % str(stop))
 
     @sync_process()
     def sync_withbackup(self, cr, uid, context=None):
