@@ -3610,6 +3610,8 @@ class orm(orm_template):
             + For a reference field, use a string with the model name, a comma, and the target object id (example: ``'product.product, 5'``)
 
         """
+        if not ids:
+            return True
         readonly = None
         for field in vals.copy():
             fobj = None
@@ -3642,8 +3644,6 @@ class orm(orm_template):
 
         if context is None:
             context = {}
-        if not ids:
-            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
 
