@@ -390,10 +390,10 @@ class product_template(osv.osv):
 product_template()
 
 class product_product(osv.osv):
-    
+
     _inherit = "product.product"
     _description = "Product"
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         if a product is not of type product, it is set to single subtype
@@ -401,12 +401,11 @@ class product_product(osv.osv):
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
-            
-            
+
         #UF-2170: remove the standard price value from the list if the value comes from the sync
-        if 'standard_price' in vals and context and context.get('sync_update_execution'):
+        if 'standard_price' in vals and context.get('sync_update_execution', False):
             del vals['standard_price']
-        
+
 #        if 'type' in vals and vals['type'] == 'consu':
 # Remove these two lines to display the warning message of the constraint
 #        if vals.get('type') == 'consu':
@@ -422,7 +421,7 @@ class product_product(osv.osv):
                 return False
         return True
 
-    
+
     _columns = {
         'asset_ids': fields.one2many('product.asset', 'product_id', 'Assets')
     }

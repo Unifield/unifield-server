@@ -228,7 +228,7 @@ class product_attributes(osv.osv):
         '''
         Filter the search according to the args parameter
         '''
-        if not context:
+        if context is None:
             context = {}
 
         ids = []
@@ -318,7 +318,7 @@ class product_attributes(osv.osv):
         '''
         Search available products for the partner given in args
         '''
-        if not context:
+        if context is None:
             context = {}
 
         for arg in args:
@@ -492,7 +492,7 @@ class product_attributes(osv.osv):
         '''
         Add a filter if the 'available_for_restriction' attribute is passed on context
         '''
-        if not context:
+        if context is None:
             context = {}
 
         res = super(product_attributes, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
@@ -720,7 +720,7 @@ class product_attributes(osv.osv):
         De-activate product.
         Check if the product is not used in any document in Unifield
         '''
-        if not context:
+        if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
@@ -1103,7 +1103,7 @@ class product_deactivation_error_line(osv.osv_memory):
         '''
         Open the associated documents
         '''
-        if not context:
+        if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
@@ -1126,7 +1126,7 @@ class product_deactivation_error_line(osv.osv_memory):
         '''
         Return the good view according to the type of the object
         '''
-        if not context:
+        if context is None:
             context = {}
 
         view_id = False
