@@ -389,10 +389,19 @@ class stock_picking(osv.osv):
             #UFTP-332: Check if shipment/out is given
             if shipment_ref:
                 same_in = self.search(cr, uid, [('id', '=', in_id), ('shipment_ref', '=', shipment_ref)], context=context)
+                processed_in = None
+                if not same_in:
+                    # Check if the IN has not been manually processed (forced)
+                    processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
+                    if processed_in:
+                        in_name = self.browse(cr, uid, in_id, context=context)['name']
+                        message = "The INcoming " + in_name + "(" + po_name + ") has already been MANUALLY processed!"
+                if not same_in and not processed_in:
+                    message = "Sorry, this seems to be an extra ship. This feature is not available now!"
             else:
                 same_in = self.search(cr, uid, [('id', '=', in_id)], context=context)
-            if not same_in:
                 message = "Sorry, this seems to be an extra ship. This feature is not available now!"
+            if not same_in:
                 self._logger.info(message)
                 raise Exception(message)
 
