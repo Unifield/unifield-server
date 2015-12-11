@@ -395,7 +395,9 @@ class stock_picking(osv.osv):
                     processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
                     if processed_in:
                         in_name = self.browse(cr, uid, in_id, context=context)['name']
-                        message = "The INcoming " + in_name + "(" + po_name + ") has already been MANUALLY processed!"
+                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already cancelled/Closed" % (
+                            in_name, po_name,
+                        )
                 if not same_in and not processed_in:
                     message = "Sorry, this seems to be an extra ship. This feature is not available now!"
             else:
