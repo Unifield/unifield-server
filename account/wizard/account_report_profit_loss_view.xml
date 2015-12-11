@@ -21,7 +21,7 @@
             </xpath>
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="export_format"/>
-                <field name="display_type" attrs="{'readonly':[('export_format','=','xls')]}"/>
+                <field name="display_type" attrs="{'invisible':[('export_format','=','xls')]}"/>
             </xpath>
             </data>
             </field>

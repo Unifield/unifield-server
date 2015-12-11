@@ -24,7 +24,7 @@
                 <field name="reserve_account_id" required="1"/>
                 <newline />
                 <field name="export_format"/>
-                <field name="display_type" attrs="{'readonly':[('export_format','=','xls')]}"/>
+                <field name="display_type" attrs="{'invisible':[('export_format','=','xls')]}"/>
                 <newline/>
             </xpath>
             </data>
