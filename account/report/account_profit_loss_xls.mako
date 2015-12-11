@@ -180,6 +180,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Worksheet ss:Name="Sheet">
 <%
     col_count = 6
+    get_data(data)  # init data
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 % for x in range(col_count):
@@ -190,6 +191,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Display</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter_name(data) or '')|x}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Proprietary Instances</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
 </Row>

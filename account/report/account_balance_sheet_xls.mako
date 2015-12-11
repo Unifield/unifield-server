@@ -8,6 +8,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Title>Balance Sheet</Title>
 </DocumentProperties>
 <Styles>
+
 <Style ss:ID="ssCell">
 <Alignment ss:Vertical="Top" ss:WrapText="1"/>
 </Style>
@@ -30,47 +31,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
-<Style ss:ID="ssBorderColored1">
-<Alignment ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-##<Interior ss:Color="#3498db" ss:Pattern="Solid" />
-<Font ss:Bold="1" />
-</Style>
-<Style ss:ID="ssBorderColored2">
-<Alignment ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-##  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-##  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
-</Style>
-<Style ss:ID="ssBorderColored2Right">
-<Alignment ss:Vertical="Center" ss:Horizontal="Right"/>
-<Borders>
-##  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-##  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
-</Style>
-<Style ss:ID="ssBorderDate">
-<Alignment ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-<NumberFormat ss:Format="Short Date" />
-</Style>
 <Style ss:ID="ssNumber">
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -80,29 +40,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="#,##0.00"/>
-</Style>
-<Style ss:ID="ssNumberColored1">
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-<Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
-<NumberFormat ss:Format="#,##0.00"/>
-##<Interior ss:Color="#3498db" ss:Pattern="Solid" />
-<Font ss:Bold="1" />
-</Style>
-<Style ss:ID="ssNumberColored2">
-<Borders>
-##  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-##  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-<Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
-<NumberFormat ss:Format="#,##0.00"/>
-##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
 </Style>
 <Style ss:ID="ssHeader">
 <Alignment ss:Vertical="Top" ss:WrapText="1"/>
@@ -123,48 +60,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
-<Style ss:ID="ssAccountLineColored1">
-<Alignment ss:Bottom="Top" ss:WrapText="1"/>
-<Font ss:Size="8"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-##<Interior ss:Color="#3498db" ss:Pattern="Solid" />
-</Style>
-<Style ss:ID="ssAccountLineColored2">
-<Alignment ss:Bottom="Top" ss:WrapText="1"/>
-<Font ss:Size="8" />
-<Borders>
-##  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-##  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-##<Interior ss:Color="#cde1f0" ss:Pattern="Solid" />
-</Style>
-<Style ss:ID="ssAccountLineNoWrap">
-<Alignment ss:Bottom="Top"/>
-<Font ss:Size="8"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-</Style>
-<Style ss:ID="ssAccountLine2">
-<Alignment ss:Bottom="Top" ss:WrapText="1"/>
-<Font ss:Size="8"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-</Style>
 <Style ss:ID="ssAccountLineNumber">
 <Alignment ss:Horizontal="Right" ss:Vertical="Bottom" ss:WrapText="1"/>
 <Font ss:Size="8"/>
@@ -176,10 +71,34 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
+<Style ss:ID="ssAccountLineStrong">
+<Alignment ss:Bottom="Top" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Bold="1" />
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssAccountLineNumberStrong">
+<Alignment ss:Horizontal="Right" ss:Vertical="Bottom" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Bold="1" />
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
+
 </Styles>
+
 <Worksheet ss:Name="Sheet">
 <%
     col_count = 6
+    get_data(data)  # init data
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 % for x in range(col_count):
@@ -221,13 +140,43 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % endfor
 </Row>
 
-% for o in get_lines_another('asset'):
 <Row>
-<Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(o.code or '')|x}</Data>
-</Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Code</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Assets</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Balance</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Code</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Liabilities</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Balance</Data></Cell>
+</Row>
+
+## get_lines(): *1 keys: assets, other liabilities
+% for o in get_lines():
+<Row>
+## assets
+<%
+strong = o.get('level1', False) and o['level1'] < 4 and 'Strong' or ''
+%>
+<Cell ss:StyleID="ssAccountLine${strong}"><Data ss:Type="String">${(o.get('code1', False) or '')|x}</Data></Cell>
+<Cell ss:StyleID="ssAccountLine${strong}"><Data ss:Type="String">${(o.get('name1', False) or '')|x}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumber${strong}"><Data ss:Type="Number">${(o.get('balance1', False) or 0.0)}</Data></Cell>
+## liabilities
+<%
+strong = o.get('level', False) and o['level'] < 4 and 'Strong' or ''
+%>
+<Cell ss:StyleID="ssAccountLine${strong}"><Data ss:Type="String">${(o.get('code', False) or '')|x}</Data></Cell>
+<Cell ss:StyleID="ssAccountLine${strong}"><Data ss:Type="String">${(o.get('name', False) or '')|x}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumber${strong}"><Data ss:Type="Number">${(o.get('balance', False) or 0.0)}</Data></Cell>
 </Row>
 % endfor
+
+<Row>
+<Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String">Balance ${company.currency_id.symbol or ''|x}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${abs(sum_cr())}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String">Balance ${company.currency_id.symbol or ''|x}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${abs(sum_dr())}</Data></Cell>
+</Row>
 
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">

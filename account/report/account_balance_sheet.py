@@ -207,13 +207,13 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                           }
                         self.result_temp.append(temp)
         # TODO remove print
-        print self.res_bl
-        print '--------------------------------------------------'
-        print self.result_temp
-        print '--------------------------------------------------'
+        #print self.res_bl
+        #print '--------------------------------------------------'
+        #print self.result_temp
+        #print '--------------------------------------------------'
         print self.result.get('asset', [])
-        print '--------------------------------------------------'
-        print self.result.get('liability', [])
+        #print '--------------------------------------------------'
+        #print self.result.get('liability', [])
         return None
 
     def get_lines(self):
@@ -222,19 +222,19 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
     def get_lines_another(self, group):
         return self.result.get(group, [])
 
-    def get_display_info(data):
+    def get_display_info(self, data):
         # TODO
         return ''
 
-    def get_filter_name(data):
+    def get_filter_name(self, data):
         # TODO
         return ''
 
-    def get_filter_info(data):
+    def get_filter_info(self, data):
         # TODO
         return ''
 
-    def get_prop_instances(data):
+    def get_prop_instances(self, data):
         # TODO
         return ''
 

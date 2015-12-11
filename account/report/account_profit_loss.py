@@ -186,19 +186,19 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
     def get_lines_another(self, group):
         return self.result.get(group, [])
 
-    def get_display_info(data):
+    def get_display_info(self, data):
         # TODO
         return ''
 
-    def get_filter_name(data):
+    def get_filter_name(self, data):
         # TODO
         return ''
 
-    def get_filter_info(data):
+    def get_filter_info(self, data):
         # TODO
         return ''
 
-    def get_prop_instances(data):
+    def get_prop_instances(self, data):
         # TODO
         return ''
 
@@ -220,7 +220,7 @@ class profit_loss_xls(SpreadsheetReport):
         a = super(profit_loss_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
-profit_loss_xls('report.account.profit_loss_xls', 'account.account',
+profit_loss_xls('report.account.profit.loss_xls', 'account.account',
     'addons/account/report/account_profit_loss_xls.mako',
     parser=report_pl_account_horizontal, header='internal')
 
