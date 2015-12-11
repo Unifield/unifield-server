@@ -138,7 +138,41 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         for typ in types:
             accounts_temp = []
             for account in accounts:
+                """ before US-227/1
                 if (account.user_type.report_type) and (account.user_type.report_type == typ):
+                    account_dict = {
+                        'id': account.id,
+                        'code': account.code,
+                        'name': account.name,
+                        'level': account.level,
+                        'balance':account.balance,
+                    }"""
+                register_account = False
+                if typ == 'asset':
+                    # US-227/1, breakdown in asset:
+                    # - Internal Type Liquidity,
+                    # - Internal Type Receivable,
+                    # - Regular/Cash, Regular/Asset, Regular/Stock
+                    register_account = \
+                        account.type in ('liquidity', 'receivable', ) or \
+                        (account.type == 'other' \
+                            and account.user_type.code in (
+                                'cash',
+                                'asset',
+                                'stock',
+                                )) or False
+                elif  typ == 'liability':
+                    # US-227/1, breakdown in liability:
+                    # - Internal type Payable
+                    # - Regular/Debt, Regular/Equity
+                    register_account = \
+                        account.type == 'payable' or \
+                        (account.type == 'other' \
+                            and account.user_type.code in (
+                                'debt',
+                                'equity',
+                                )) or False
+                if register_account:
                     account_dict = {
                         'id': account.id,
                         'code': account.code,
