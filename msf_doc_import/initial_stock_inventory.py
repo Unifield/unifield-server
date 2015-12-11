@@ -189,8 +189,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch_name = batch
                         batch = False
                         to_correct_ok = True
-                        import_to_correct = True
-                        error_list.append(_('The batch %s was not found in the database.') % batch_name)
                     else:
                         batch = batch_ids[0]
                 except Exception:
