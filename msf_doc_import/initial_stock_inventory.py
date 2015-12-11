@@ -604,10 +604,11 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             # Batch
             batch = row.cells[4].data
             if batch:
-                batch = batch.strip()
-                batch_name = batch
-            except Exception:
-                pass
+                try:
+                    batch = batch.strip()
+                    batch_name = batch
+                except Exception:
+                    pass
 
             # Expiry date
             if row.cells[5].data:
