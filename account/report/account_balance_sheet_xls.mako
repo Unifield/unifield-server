@@ -101,9 +101,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     get_data(data)  # init data
 %>
 <Table x:FullColumns="1" x:FullRows="1">
-% for x in range(col_count):
-    <Column ss:AutoFitWidth="1" ss:Width="64" />
-% endfor
+<Column ss:AutoFitWidth="1" ss:Width="64" />
+<Column ss:AutoFitWidth="1" ss:Width="160" />
+<Column ss:AutoFitWidth="1" ss:Width="64" />
+<Column ss:AutoFitWidth="1" ss:Width="64" />
+<Column ss:AutoFitWidth="1" ss:Width="160" />
+<Column ss:AutoFitWidth="1" ss:Width="64" />
+
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Chart of Account</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>

@@ -206,14 +206,6 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                               'balance1':False,
                           }
                         self.result_temp.append(temp)
-        # TODO remove print
-        #print self.res_bl
-        #print '--------------------------------------------------'
-        #print self.result_temp
-        #print '--------------------------------------------------'
-        print self.result.get('asset', [])
-        #print '--------------------------------------------------'
-        #print self.result.get('liability', [])
         return None
 
     def get_lines(self):

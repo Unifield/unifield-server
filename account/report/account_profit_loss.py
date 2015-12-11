@@ -72,7 +72,6 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         common_report_header._set_context(self, data)
         return res
 
-
     def final_result(self):
         return self.res_pl
 
