@@ -39,10 +39,8 @@ from sync_common import sync_log, get_md5, check_md5
 
 from threading import Thread, RLock, Lock
 import pooler
-import cProfile
 
 import functools
-from datetime import datetime
 
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
@@ -484,13 +482,12 @@ class Entity(osv.osv):
             imported_package, deleted_package = send_package(*res)
             imported += imported_package
             deleted += deleted_package
-            #if logger:
-                #if logger_index is None: logger_index = logger.append()
-                #logger.replace(logger_index, _("Update(s) sent: %d import update(s) + %d delete update(s) on %d update(s)") % (imported, deleted, max_updates))
-                #logger.write()
+            if logger:
+                if logger_index is None: logger_index = logger.append()
+                logger.replace(logger_index, _("Update(s) sent: %d import update(s) + %d delete update(s) on %d update(s)") % (imported, deleted, max_updates))
+                logger.write()
             res = create_package()
 
-        if logger_index is None: logger_index = logger.append()
         if logger and (imported or deleted):
             logger.replace(logger_index, _("Update(s) sent: %d import update(s) and %d delete update(s) = %d total update(s)") \
                                          % (imported, deleted, (imported + deleted)))
@@ -568,8 +565,7 @@ class Entity(osv.osv):
 
         entity = self.get_entity(cr, uid, context)
         last_seq = entity.update_last
-        #max_seq = entity.max_update
-        max_seq = 100
+        max_seq = entity.max_update
         offset = entity.update_offset
         last = (last_seq >= max_seq)
         updates_count = 0
@@ -579,10 +575,10 @@ class Entity(osv.osv):
             res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
             if res and res[0]:
                 updates_count += updates.unfold_package(cr, uid, res[1], context=context)
-                #if logger and updates_count:
-                #    if logger_index is None: logger_index = logger.append()
-                #    logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
-                #    logger.write()
+                if logger and updates_count:
+                    if logger_index is None: logger_index = logger.append()
+                    logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
+                    logger.write()
                 last = res[2]
                 if res[1]:
                     check_md5(res[3], res[1], _('method get_update'))
@@ -591,11 +587,6 @@ class Entity(osv.osv):
             elif res and not res[0]:
                 raise Exception, res[1]
             cr.commit()
-
-        if logger and updates_count:
-            if logger_index is None: logger_index = logger.append()
-            logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
-            logger.write()
 
         self.write(cr, uid, entity.id, {'update_offset' : 0,
                                         'max_update' : 0,
@@ -617,8 +608,7 @@ class Entity(osv.osv):
 
         # Get a list of updates to execute
         # Warning: execution order matter
-        update_ids = updates.search(cr, uid, [('run', '=', False)],
-                order='sequence_number, rule_sequence, id asc', limit=100, context=context)
+        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, rule_sequence, id asc', context=context)
         update_count = len(update_ids)
         if not update_count: return 0
 
@@ -637,10 +627,10 @@ class Entity(osv.osv):
                 deleted += deleted_executed
                 # Do nothing with messages
                 done += to_do
-                #if logger:
-                #    logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
-                #                                 % (imported, deleted, update_count))
-                #    logger.write()
+                if logger:
+                    logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
+                                                 % (imported, deleted, update_count))
+                    logger.write()
                 # intermittent commit
                 if len(done) >= MAX_EXECUTED_UPDATES:
                     done[:] = []
@@ -724,10 +714,10 @@ class Entity(osv.osv):
             if not res[0]:
                 raise Exception, res[1]
             messages.packet_sent(cr, uid, packet, context=context)
-            #if logger and messages_count:
-            #    if logger_index is None: logger_index = logger.append()
-            #    logger.replace(logger_index, _("Message(s) sent: %d/%d") % (messages_count, messages_max))
-            #    logger.write()
+            if logger and messages_count:
+                if logger_index is None: logger_index = logger.append()
+                logger.replace(logger_index, _("Message(s) sent: %d/%d") % (messages_count, messages_max))
+                logger.write()
 
         if logger and messages_count:
             logger.replace(logger_index, _("Message(s) sent: %d") % messages_count)
@@ -811,9 +801,9 @@ class Entity(osv.osv):
                 to_do, message_ids = message_ids[:MAX_EXECUTED_MESSAGES], message_ids[MAX_EXECUTED_MESSAGES:]
                 messages.execute(cr, uid, to_do, context=context)
                 messages_executed += len(to_do)
-                #if logger is not None:
-                #    logger.replace(logger_index, _("Message(s) processed: %d/%d") % (messages_executed, messages_count))
-                #    logger.write()
+                if logger is not None:
+                    logger.replace(logger_index, _("Message(s) processed: %d/%d") % (messages_executed, messages_count))
+                    logger.write()
                 # intermittent commit
                 cr.commit()
         finally:
@@ -884,7 +874,6 @@ class Entity(osv.osv):
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'aftermanualsync', context=context)
         return {'type': 'ir.actions.act_window_close'}
 
-    #def sync_profile(self, cr, uid, context=None):
     @sync_process()
     def sync(self, cr, uid, context=None):
         if context is None:
@@ -915,14 +904,6 @@ class Entity(osv.osv):
             logger.info['nb_msg_not_run'] = self.pool.get('sync.client.message_received').search(cr, uid, [('run', '=', False)], count=True)
             logger.info['nb_data_not_run'] = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False)], count=True)
         return True
-
-    #@sync_process()
-    #def sync(self, cr, uid, context=None):
-    #    start=datetime.now()
-    #    cProfile.runctx("self.sync_profile(cr, uid, context)",
-    #            globals(), locals(), "/tmp/my.profile")
-    #    stop = datetime.now() - start
-    #    self._logger.info("Synchronization duration was :%s" % str(stop))
 
     @sync_process()
     def sync_withbackup(self, cr, uid, context=None):
