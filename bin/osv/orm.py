@@ -2864,7 +2864,7 @@ class orm(orm_template):
                                     else:
                                         default = self._defaults[k]
 
-                                    if (default is not None):
+                                    if default is not None:
                                         ss = self._columns[k]._symbol_set
                                         query = 'UPDATE "%s" SET "%s"=%s WHERE "%s" is NULL' % (self._table, k, ss[0], k)
                                         cr.execute(query, (ss[1](default),))
@@ -2934,7 +2934,7 @@ class orm(orm_template):
                                                 self._table, k)
                     elif len(res) > 1:
                         netsvc.Logger().notifyChannel('orm', netsvc.LOG_ERROR, "Programming error, column %s->%s has multiple instances !" % (self._table, k))
-                    if not res:
+                    elif not res:
                         if not isinstance(f, fields.function) or f.store:
                             # add the missing field
                             cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))
@@ -2962,7 +2962,7 @@ class orm(orm_template):
                                 todo_update_store.append((order, f, k))
 
                             # and add constraints if needed
-                            if isinstance(f, fields.many2one):
+                            elif isinstance(f, fields.many2one):
                                 if not self.pool.get(f._obj):
                                     raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
                                 ref = self.pool.get(f._obj)._table
@@ -2987,8 +2987,9 @@ class orm(orm_template):
                                         "ALTER TABLE %s ALTER COLUMN %s SET NOT NULL"
                                     self.__logger.warn(msg, k, self._table, self._table, k)
                             cr.commit()
+            todo_end_append = todo_end.append
             for order, f, k in todo_update_store:
-                todo_end.append((order, self._update_store, (f, k)))
+                todo_end_append((order, self._update_store, (f, k)))
 
         else:
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
@@ -3091,6 +3092,7 @@ class orm(orm_template):
                     if (x==self._name) and (y==store_field) and (e==fields2):
                         if f == order:
                             ok = False
+                            break
                 if ok:
                     self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
                     self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
@@ -3229,6 +3231,8 @@ class orm(orm_template):
         return super(orm, self).fields_get(cr, user, fields, context, write_access)
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+        if not ids:
+            return []
         if context is None:
             context = {}
         self.pool.get('ir.model.access').check(cr, user, self._name, 'read', context=context)
@@ -3251,10 +3255,10 @@ class orm(orm_template):
         return result
 
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
-        if context is None:
-            context = {}
         if not ids:
             return []
+        if context is None:
+            context = {}
         if fields_to_read == None:
             fields_to_read = self._columns.keys()
 
@@ -3300,16 +3304,19 @@ class orm(orm_template):
                 else:
                     cr.execute(query, (tuple(sub_ids),))
                 res.extend(cr.dictfetchall())
-            for f in fields_pre:
-                if f == self.CONCURRENCY_CHECK_FIELD:
-                    continue
-                if self._columns[f].translate:
-                    ids = [x['id'] for x in res]
-                    #TODO: optimize out of this loop
-                    res_trans = self.pool.get('ir.translation')._get_ids(cr, user, self._name+','+f, 'model', context.get('lang', False) or 'en_US', ids)
-                    for r in res:
-                        r[f] = res_trans.get(r['id'], False) or r[f]
+            res_ids = [x['id'] for x in res]
+            ir_trans_obj = self.pool.get('ir.translation')
 
+            # remove some fields
+            fields_to_translate = [f for f in fields_pre if\
+                    f != self.CONCURRENCY_CHECK_FIELD and \
+                    self._columns[f].translate]
+            for item in res:
+                for field in fields_to_translate:
+                    res_trans = ir_trans_obj._get_ids(cr,
+                            user, self._name+','+field, 'model',
+                            context.get('lang', False) or 'en_US', res_ids)
+                    item[field] = res_trans.get(item['id'], False) or item[field]
         else:
             res = [{'id':x} for x in ids]
 
@@ -3887,9 +3894,8 @@ class orm(orm_template):
                 (table, col, col_detail, original_parent) = self._inherit_fields[v]
                 tocreate[table][v] = vals[v]
                 del vals[v]
-            else:
-                if (v not in self._inherit_fields) and (v not in self._columns):
-                    del vals[v]
+            elif v not in self._columns:
+                del vals[v]
 
         # Try-except added to filter the creation of those records whose filds are readonly.
         # Example : any dashboard which has all the fields readonly.(due to Views(database views))
@@ -3942,11 +3948,6 @@ class orm(orm_template):
                     if readonly[0][0] >= 1:
                         edit = True
                         break
-                    elif readonly[0][0] == 0:
-                        edit = False
-                    else:
-                        edit = False
-
                 if not edit:
                     vals.pop(field)
         for field in vals:
