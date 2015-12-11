@@ -102,10 +102,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="128" />
+<Column ss:AutoFitWidth="1" ss:Width="160" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="128" />
+<Column ss:AutoFitWidth="1" ss:Width="160" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Chart of Account</Data></Cell>
