@@ -3321,10 +3321,10 @@ class orm(orm_template):
             res = [{'id':x} for x in ids]
 
         for table in self._inherits:
-            col = self._inherits[table]
             cols = [x for x in intersect(self._inherit_fields.keys(), fields_to_read) if x not in self._columns.keys()]
             if not cols:
                 continue
+            col = self._inherits[table]
             res2 = self.pool.get(table).read(cr, user, [x[col] for x in res], cols, context, load)
 
             res3 = {}
