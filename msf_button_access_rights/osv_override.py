@@ -56,7 +56,7 @@ def view_look_dom_arch(self, cr, uid, node, view_id, context=None):
             rules = rules_pool.browse(cr, 1, rules_search, context=context)
 
             # parse view and get all buttons with a name, a type that is not 'special', no position attribute, and may or may not have an invisible attribute (But not set to '1')
-            buttons = node.xpath("//button[ @name and @type != 'special' and not (@position) and @invisible != '1' or not (@invisible) ]")
+            buttons = node.xpath("//button[ @name and @type != 'special' and not (@position) and @invisible != '1' and @invisible != 'True' or not (@invisible) ]")
             for button in buttons:
 
                 button_name = button.attrib.get('name', '')
