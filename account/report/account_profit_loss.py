@@ -55,7 +55,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             'get_company':self._get_company,
             'get_target_move': self._get_target_move,
             'get_display_info': self.get_display_info,
-            'get_filter_name': self.get_filter_name,
+            'get_filter_name': self._get_filter,
             'get_filter_info': self.get_filter_info,
             'get_prop_instances': self.get_prop_instances,
         })
@@ -186,16 +186,46 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         return self.result.get(group, [])
 
     def get_display_info(self, data):
-        # TODO
-        return ''
+        info_data = []
+        yes_str = _('Yes')
+        no_str = _('No')
+        all_str = _('All')
 
-    def get_filter_name(self, data):
-        # TODO
-        return ''
+        display_account = all_str
+        if 'display_account' in data['form']:
+            if data['form']['display_account'] == 'bal_all':
+                display_account = _('All')
+            elif data['form']['display_account'] == 'bal_movement':
+                display_account = _('With movements')
+            else:
+                display_account = _('With balance is not equal to 0')
+        info_data.append((_('Accounts'), display_account, ))
+
+        res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
+        return ', \n'.join(res)
 
     def get_filter_info(self, data):
-        # TODO
-        return ''
+        """ get filter info
+        _get_filter, _get_start_date, _get_end_date,
+        get_start_period, get_end_period
+        are from common_report_header
+        """
+        if not data.get('form', False):
+            return ''
+        infos = []
+
+        # date/period
+        if data.get('form', False) and data['form'].get('filter', False):
+            line = ''
+            if data['form']['filter'] in ('filter_date', ):
+                line = _('Posting')
+                line += " %s " % (_('Date'), )
+                line += self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
+            elif data['form']['filter'] == 'filter_period':
+                line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
+            if line:
+                infos.append(line)
+        return infos and ", \n".join(infos) or ''
 
     def get_prop_instances(self, data):
         # TODO

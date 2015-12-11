@@ -152,38 +152,17 @@
       <tr>
       	<td><para style="terp_tblheader_General_Centre">Chart of Account </para></td>
         <td><para style="terp_tblheader_General_Centre">Fiscal Year</para></td>
-        <td><para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!='No Filter' and get_filter(data) ]]</para></td>
-		<td><para style="terp_tblheader_General_Centre">Display Account</para></td>
+        <td><para style="terp_tblheader_General_Centre">Filter By [[ get_filter_name(data) ]]</para></td>
+		<td><para style="terp_tblheader_General_Centre">Display</para></td>
         <td><para style="terp_tblheader_General_Centre">Target Moves</para></td>
       </tr>
-	<tr>
-	   <td><para style="terp_default_Centre_8">[[ get_account(data) or removeParentNode('para') ]]</para></td>
-       <td><para style="terp_default_Centre_8">[[ get_fiscalyear(data)  or '' ]]</para></td>
-        <td><para style="terp_default_Centre_8">[[ get_filter(data)=='No Filter' and get_filter(data) or removeParentNode('para') ]] </para>
-        	<blockTable colWidths="70.0,70.0" style="Table3">[[ get_filter(data)=='Date' or removeParentNode('blockTable') ]]
-				<tr>
-	               <td><para style="terp_tblheader_General_Centre">Start Date</para></td>
-	        		<td><para style="terp_tblheader_General_Centre">End Date</para></td>
-	        	</tr>
-	        	<tr>
-	        		<td><para style="terp_default_Centre_8">[[ formatLang(get_start_date(data),date=True) ]]</para></td>
-	        		<td><para style="terp_default_Centre_8">[[ formatLang(get_end_date(data),date=True) ]]</para></td>
-	        	</tr>
-        	</blockTable>
-        	<blockTable colWidths="70.0,70.0" style="Table3">[[ get_filter(data)=='Periods' or removeParentNode('blockTable') ]]
-				<tr>
-			        <td><para style="terp_tblheader_General_Centre">Start Period</para></td>
-			        <td><para style="terp_tblheader_General_Centre">End Period</para></td>
-	        	</tr>
-	        	<tr>
-			        <td><para style="terp_default_Centre_8">[[ get_start_period(data) or removeParentNode('para') ]]</para></td>
-			        <td><para style="terp_default_Centre_8">[[ get_end_period(data) or removeParentNode('para') ]]</para></td>
-	        	</tr>
-        	 </blockTable>
-        	</td>
-		<td><para style="terp_default_Centre_8">[[ (data['form']['display_account']=='bal_all' and 'All') or  (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0']]</para></td>
+	  <tr>
+	    <td><para style="terp_default_Centre_8">[[ get_account(data) or removeParentNode('para') ]]</para></td>
+        <td><para style="terp_default_Centre_8">[[ get_fiscalyear(data)  or '' ]]</para></td>
+        <td><para style="terp_default_Centre_8">[[ get_filter_info(data) ]]</para></td>
+		<td><para style="terp_default_Centre_8">[[ get_display_info(data) ]]</para></td>
 		<td><para style="terp_default_Centre_8">[[ get_target_move(data) ]]</para></td>
-	</tr>
+	  </tr>
 	</blockTable>
         <para style="Standard">
       <font color="white"> </font>
@@ -281,4 +260,3 @@
 
   </story>
 </document>
-
