@@ -424,15 +424,6 @@ class Entity(osv.osv):
         context = context or {}
         updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
 
-        def set_rules(identifier):
-            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-            res = proxy.get_model_to_sync(identifier, self._hardware_id)
-            if not res[0]:
-                raise Exception, res[1]
-            check_md5(res[2], res[1], _('method create_update'))
-
-            self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
-
         def prepare_update(session):
             updates_count = 0
             for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [('type', '!=', 'USB')], context=context):
@@ -442,7 +433,6 @@ class Entity(osv.osv):
 
         entity = self.get_entity(cr, uid, context)
         session = str(uuid.uuid1())
-        set_rules(entity.identifier)
         updates_count = prepare_update(session)
         if updates_count > 0:
             self.write(cr, uid, [entity.id], {'session_id' : session})
@@ -511,6 +501,14 @@ class Entity(osv.osv):
         #state update validate => init
         return res[1]
 
+    def set_rules(self, cr, uid, context=None):
+        entity = self.get_entity(cr, uid, context)
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        res = proxy.get_model_to_sync(entity.identifier, self._hardware_id)
+        if not res[0]:
+            raise Exception, res[1]
+        check_md5(res[2], res[1], _('method set_rules'))
+        self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
 
     @sync_process('data_pull')
     def pull_update(self, cr, uid, recover=False, context=None):
@@ -895,6 +893,7 @@ class Entity(osv.osv):
         # US_394: force synchronization lang to en_US
         context['lang'] = 'en_US'
         self._logger.info("Start synchronization")
+        self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
