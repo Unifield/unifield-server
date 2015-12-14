@@ -932,7 +932,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 'Please change the currency to choose a compatible currency.'),
                 )
 
-            if not order.procurement_request:
+            if not order.procurement_request and order.split_type_sale_order == 'original_sale_order':
                 line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
 
         self.write(cr, uid, ids, {
