@@ -3304,19 +3304,15 @@ class orm(orm_template):
                 else:
                     cr.execute(query, (tuple(sub_ids),))
                 res.extend(cr.dictfetchall())
-            res_ids = [x['id'] for x in res]
-            ir_trans_obj = self.pool.get('ir.translation')
-
-            # remove some fields
-            fields_to_translate = [f for f in fields_pre if\
-                    f != self.CONCURRENCY_CHECK_FIELD and \
-                    self._columns[f].translate]
-            for item in res:
-                for field in fields_to_translate:
-                    res_trans = ir_trans_obj._get_ids(cr,
-                            user, self._name+','+field, 'model',
-                            context.get('lang', False) or 'en_US', res_ids)
-                    item[field] = res_trans.get(item['id'], False) or item[field]
+            for f in fields_pre:
+                if f == self.CONCURRENCY_CHECK_FIELD:
+                    continue
+                if self._columns[f].translate:
+                    ids = [x['id'] for x in res]
+                    #TODO: optimize out of this loop
+                    res_trans = self.pool.get('ir.translation')._get_ids(cr, user, self._name+','+f, 'model', context.get('lang', False) or 'en_US', ids)
+                    for r in res:
+                        r[f] = res_trans.get(r['id'], False) or r[f]
         else:
             res = [{'id':x} for x in ids]
 
