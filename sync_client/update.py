@@ -786,7 +786,7 @@ class update_received(osv.osv):
                                              % fb)
                     except ValueError, e:
                         message += 'Missing record %s and %s, set to False\n' \
-                                   % (xmlid, e.message)
+                                   % (xmlid, e)
                     else:
                         message += 'Missing record %s replaced by %s\n' \
                                    % (xmlid, fb)
