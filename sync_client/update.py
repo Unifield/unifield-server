@@ -657,9 +657,8 @@ class update_received(osv.osv):
                         'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
                     }, context=context)
 
-                updates = filter(lambda update: update.id not in deleted_update_ids or
-                                                (not do_deletion and force_recreation),
-                                 updates)
+            updates = filter(lambda update: update.id not in deleted_update_ids or
+                    (not do_deletion and force_recreation), updates)
 
             if not updates:
                 continue
