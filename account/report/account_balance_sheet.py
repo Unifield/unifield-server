@@ -105,15 +105,18 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             'asset'
         ]
 
+        # set context
         ctx = self.context.copy()
         ctx['fiscalyear'] = data['form'].get('fiscalyear_id', False)
-
         if data['form']['filter'] == 'filter_period':
             ctx['periods'] = data['form'].get('periods', False)
         elif data['form']['filter'] == 'filter_date':
             ctx['date_from'] = data['form'].get('date_from', False)
             ctx['date_to'] =  data['form'].get('date_to', False)
         ctx['state'] = data['form'].get('target_move', 'all')
+        if 'instance_ids' in data['form']:
+            ctx['instance_ids'] = data['form']['instance_ids']
+
         cal_list = {}
         pl_dict = {}
         account_dict = {}
@@ -291,8 +294,15 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         return infos and ", \n".join(infos) or ''
 
     def get_prop_instances(self, data):
-        # TODO
-        return ''
+        instances = []
+        if data.get('form', False):
+            if data['form'].get('instance_ids', False):
+                self.cr.execute('select code from msf_instance where id IN %s',
+                    (tuple(data['form']['instance_ids']),))
+            else:
+                self.cr.execute('select code from msf_instance')
+            instances = [x for x, in self.cr.fetchall()]
+        return ', '.join(instances)
 
 report_sxw.report_sxw('report.account.balancesheet.horizontal', 'account.account',
     'addons/account/report/account_balance_sheet_horizontal.rml',parser=report_balancesheet_horizontal,

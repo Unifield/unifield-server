@@ -95,10 +95,10 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             'income'
         ]
 
+        # set context
         ctx = self.context.copy()
         ctx['fiscalyear'] = data['form'].get('fiscalyear_id', False)
         ctx['state'] = data['form']['target_move']
-
         if data['form']['filter'] == 'filter_period':
             if data['form'].get('period_from', False) and data['form'].get('period_to', False):
                 period_obj = self.pool.get('account.period')
@@ -106,6 +106,8 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         elif data['form']['filter'] == 'filter_date':
             ctx['date_from'] = data['form'].get('date_from', False)
             ctx['date_to'] = data['form'].get('date_to', False)
+        if 'instance_ids' in data['form']:
+            ctx['instance_ids'] = data['form']['instance_ids']
 
         cal_list = {}
         account_id = data['form'].get('chart_account_id', False)
@@ -228,8 +230,15 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         return infos and ", \n".join(infos) or ''
 
     def get_prop_instances(self, data):
-        # TODO
-        return ''
+        instances = []
+        if data.get('form', False):
+            if data['form'].get('instance_ids', False):
+                self.cr.execute('select code from msf_instance where id IN %s',
+                    (tuple(data['form']['instance_ids']),))
+            else:
+                self.cr.execute('select code from msf_instance')
+            instances = [x for x, in self.cr.fetchall()]
+        return ', '.join(instances)
 
 report_sxw.report_sxw('report.pl.account.horizontal', 'account.account',
     'addons/account/report/account_profit_horizontal.rml',parser=report_pl_account_horizontal, header='internal landscape')

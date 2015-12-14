@@ -636,8 +636,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.cr.execute('select code from msf_instance where id IN %s',
                     (tuple(data['form']['instance_ids']),))
             else:
-                self.cr.execute('select code from msf_instance',
-                    (tuple(data['form']['instance_ids']),))
+                self.cr.execute('select code from msf_instance')
             instances = [x for x, in self.cr.fetchall()]
         return ', '.join(instances)
 

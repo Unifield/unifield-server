@@ -33,6 +33,7 @@ class account_pl_report(osv.osv_memory):
     _columns = {
         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
         'display_type': fields.boolean("Landscape Mode"),
+        'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
     }
 
     _defaults = {
@@ -45,7 +46,11 @@ class account_pl_report(osv.osv_memory):
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
-        update_fields = ['export_format', 'display_type', ]
+        update_fields = [
+            'export_format',
+            'display_type',
+            'instance_ids',
+        ]
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form'].update(self.read(cr, uid, ids, update_fields)[0])
         instance = self.pool.get('ir.sequence')._get_instance(cr, uid)

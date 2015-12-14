@@ -49,6 +49,7 @@ class account_bs_report(osv.osv_memory):
                                            'which is calculated from Profilt & Loss Report',
                                       #domain = [('type','=','payable')]),
                                       domain = ['|',('type','=','payable'),'&',('type','=','other'),('user_type_code','=','equity')]),
+        'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
     }
 
     _defaults={
@@ -70,7 +71,12 @@ class account_bs_report(osv.osv_memory):
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
-        update_fields = ['export_format', 'display_type' ,'reserve_account_id', ]
+        update_fields = [
+            'export_format',
+            'display_type',
+            'reserve_account_id',
+            'instance_ids',
+        ]
         data['form'].update(self.read(cr, uid, ids, update_fields)[0])
         if not data['form']['reserve_account_id']:
             raise osv.except_osv(_('Warning'),_('Please define the Reserve and Profit/Loss account for current user company !'))
