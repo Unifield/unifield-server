@@ -590,8 +590,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
             if line:
                 infos.append(line)
-
-        return infos and ", \n".join(infos) or ''
+        return infos and ", \n".join(infos) or _('No Filter')
         
     def _get_line_debit(self, line, booking=False):
         return self.__get_line_amount(line, 'debit', booking=booking)
