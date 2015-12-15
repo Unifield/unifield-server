@@ -3727,11 +3727,11 @@ class orm(orm_template):
                 clear_cache = not sync_context
                 fields_to_translate = [f for f in direct if\
                         self._columns[f].translate]
-                field_translated_dict = self.pool.get(self._name).read(cr, user, ids, fields_to_translate)[0]
-                # remove the elements which are not in fields_to_translate
-                field_translated_dict = dict((key, value) for key, value in field_translated_dict.items() if key in fields_to_translate)
-                field_to_write_dict = {}
-                if field_translated_dict:
+                if fields_to_translate:
+                    field_translated_dict = self.pool.get(self._name).read(cr, user, ids, fields_to_translate)[0]
+                    # remove the elements which are not in fields_to_translate
+                    field_translated_dict = dict((key, value) for key, value in field_translated_dict.items() if key in fields_to_translate)
+                    field_to_write_dict = {}
                     for field_name, src_trans in field_translated_dict.items():
                         if not src_trans or not vals.get(field_name, None):
                             src_trans = vals.get(field_name, None)
