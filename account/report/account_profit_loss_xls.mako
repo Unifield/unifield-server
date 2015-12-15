@@ -102,10 +102,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="160" />
+<Column ss:AutoFitWidth="1" ss:Width="190" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="160" />
+<Column ss:AutoFitWidth="1" ss:Width="190" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Chart of Account</Data></Cell>
@@ -201,7 +201,7 @@ strong = o.get('level1', False) and o['level1'] < 4 and 'Strong' or ''
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
-    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14General Ledger"/>
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14Profit And Loss"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>
