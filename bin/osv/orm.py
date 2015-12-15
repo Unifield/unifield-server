@@ -1948,12 +1948,13 @@ class orm_template(object):
 
     def write_string(self, cr, uid, id, langs, vals, context=None):
         self.pool.get('ir.model.access').check(cr, uid, 'ir.translation', 'write', context=context)
+        ir_translation = self.pool.get('ir.translation')
         #FIXME: try to only call the translation in one SQL
         for lang in langs:
             for field in vals:
                 if field in self._columns:
                     src = self._columns[field].string
-                    self.pool.get('ir.translation')._set_ids(cr, uid, self._name+','+field, 'field', lang, [0], vals[field], src)
+                    ir_translation._set_ids(cr, uid, self._name+','+field, 'field', lang, [0], vals[field], src)
         for table in self._inherits:
             cols = intersect(self._inherit_fields.keys(), vals)
             if cols:
@@ -4026,7 +4027,7 @@ class orm(orm_template):
         wf_service.trg_create(user, self._name, id_new, cr)
         return id_new
 
-    def _store_get_values(self, cr, uid, ids, fields, context):
+    def _store_get_values(self, cr, uid, ids, fields, context=None):
         """Returns an ordered list of fields.functions to call due to
            an update operation on ``fields`` of records with ``ids``,
            obtained by calling the 'store' functions of these fields,
@@ -4034,6 +4035,8 @@ class orm(orm_template):
 
            :return: [(priority, model_name, [record_ids,], [function_fields,])]
         """
+        if context is None:
+            context = {}
         # FIXME: rewrite, cleanup, use real variable names
         # e.g.: http://pastie.org/1222060
         result = {}
