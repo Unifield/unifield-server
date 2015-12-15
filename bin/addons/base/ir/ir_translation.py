@@ -107,38 +107,34 @@ class ir_translation(osv.osv):
                 translations[res_id] = value
         return translations
 
-    def _set_ids(self, cr, uid, name, tt, lang, ids, value, src=None):
-        # clear the caches
-        tr = self._get_ids(cr, uid, name, tt, lang, ids)
-        for res_id in tr:
-            if tr[res_id]:
-                self._get_source.clear_cache(cr.dbname, uid, name, tt, lang, tr[res_id])
-        self._get_source.clear_cache(cr.dbname, uid, name, tt, lang)
-        self._get_ids.clear_cache(cr.dbname, uid, name, tt, lang, ids)
+    def _set_ids(self, cr, uid, name, tt, lang, ids, value, src=None,
+            clear=True):
+        translation_dict = self._get_ids(cr, uid, name, tt, lang, ids)
+        if clear:
+            # clear the caches
+            for res_id in translation_dict:
+                if translation_dict[res_id]:
+                    self._get_source.clear_cache(cr.dbname, uid, name, tt, lang, tr[res_id])
+            self._get_source.clear_cache(cr.dbname, uid, name, tt, lang)
+            self._get_ids.clear_cache(cr.dbname, uid, name, tt, lang, ids)
         context = {}
 
-        # BKLG-52 Change delete/create for Update
-        for id in ids:
-            args = [('lang', '=', lang), ('type', '=', tt),
-                    ('name', '=', name), ('res_id', '=', id)]
-            translation_ids = self.search(cr, uid, args, offset=0,
-                                          limit=None, order=None,
-                                          context=context, count=False)
-            if translation_ids:
+        if translation_dict:
+            for key, value in translation_dict.items():
                 if not value:
                     self.unlink(cr, uid, translation_ids, context=context)
                 else:
                     values = {'value': value, 'src': src}
                     self.write(cr, uid, translation_ids[0], values, context=context)
-            else:
-                self.create(cr, uid, {
-                    'lang': lang,
-                    'type': tt,
-                    'name': name,
-                    'res_id': id,
-                    'value': value,
-                    'src': src,
-                    })
+        elif value != src:
+            self.create(cr, uid, {
+                'lang': lang,
+                'type': tt,
+                'name': name,
+                'res_id': id,
+                'value': value,
+                'src': src,
+                })
         return len(ids)
 
     @tools.cache(skiparg=3)
