@@ -876,22 +876,9 @@ class Entity(osv.osv):
     def sync(self, cr, uid, context=None):
         if context is None:
             context = {}
-        logger = context.get('logger')
-
-        res_lang_obj = self.pool.get('res.lang')
-        lang_ids = res_lang_obj.search(cr, uid, [('active', '=', True),])
-        res = res_lang_obj.read(cr, uid, lang_ids, ['code',], context=context)
-        active_languages = [r['code'] for r in res]
-        # before to force synchronization lang to en_US, this language must be activated
-        # if not, object update will fail with a ValidateError because en_US is
-        # not in the selection.
-        if 'en_US' not in active_languages:
-            error = "'en_US' language should to be activated to do syncronizations"
-            self._logger.exception("Cannot perform the synchronization : %s" % error)
-            raise osv.except_osv(_("Error!"), _(error))
-
         # US_394: force synchronization lang to en_US
         context['lang'] = 'en_US'
+        logger = context.get('logger')
         self._logger.info("Start synchronization")
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
