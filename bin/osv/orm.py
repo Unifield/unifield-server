@@ -3741,18 +3741,19 @@ class orm(orm_template):
                     if field_to_write_dict:
                         self.write(cr, user, ids, field_to_write_dict)
 
-        # call the 'set' method of fields which are not classic_write
-        upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
+        if upd_todo:
+            # call the 'set' method of fields which are not classic_write
+            upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
 
-        # default element in context must be removed when call a one2many or many2many
-        rel_context = context.copy()
-        for c in context.items():
-            if c[0].startswith('default_'):
-                del rel_context[c[0]]
+            # default element in context must be removed when call a one2many or many2many
+            rel_context = context.copy()
+            for c in context.items():
+                if c[0].startswith('default_'):
+                    del rel_context[c[0]]
 
-        for field in upd_todo:
-            for id in ids:
-                result += self._columns[field].set(cr, self, id, field, vals[field], user, context=rel_context) or []
+            for field in upd_todo:
+                for id in ids:
+                    result += self._columns[field].set(cr, self, id, field, vals[field], user, context=rel_context) or []
 
         for table in self._inherits:
             col = self._inherits[table]
@@ -3816,13 +3817,11 @@ class orm(orm_template):
                     if pleft < position <= pright:
                         raise except_orm(_('UserError'), _('Recursivity Detected.'))
 
+                    cr.execute('update '+self._table+' set parent_left=parent_left+%s where parent_left>=%s', (distance, position))
+                    cr.execute('update '+self._table+' set parent_right=parent_right+%s where parent_right>=%s', (distance, position))
                     if pleft < position:
-                        cr.execute('update '+self._table+' set parent_left=parent_left+%s where parent_left>=%s', (distance, position))
-                        cr.execute('update '+self._table+' set parent_right=parent_right+%s where parent_right>=%s', (distance, position))
                         cr.execute('update '+self._table+' set parent_left=parent_left+%s, parent_right=parent_right+%s where parent_left>=%s and parent_left<%s', (position-pleft, position-pleft, pleft, pright))
                     else:
-                        cr.execute('update '+self._table+' set parent_left=parent_left+%s where parent_left>=%s', (distance, position))
-                        cr.execute('update '+self._table+' set parent_right=parent_right+%s where parent_right>=%s', (distance, position))
                         cr.execute('update '+self._table+' set parent_left=parent_left-%s, parent_right=parent_right-%s where parent_left>=%s and parent_left<%s', (pleft-position+distance, pleft-position+distance, pleft+distance, pright+distance))
 
 
@@ -3904,7 +3903,7 @@ class orm(orm_template):
             elif v not in self._columns:
                 del vals[v]
 
-        # Try-except added to filter the creation of those records whose filds are readonly.
+        # Try-except added to filter the creation of those records whose fields are readonly.
         # Example : any dashboard which has all the fields readonly.(due to Views(database views))
         try:
             cr.execute("SELECT nextval('"+self._sequence+"')")
@@ -4002,16 +4001,17 @@ class orm(orm_template):
                 cr.execute('update '+self._table+' set parent_right=parent_right+2 where parent_right>%s', (pleft,))
                 cr.execute('update '+self._table+' set parent_left=%s,parent_right=%s where id=%s', (pleft+1, pleft+2, id_new))
 
-        # default element in context must be remove when call a one2many or many2many
-        rel_context = context.copy()
-        for c in context.items():
-            if c[0].startswith('default_'):
-                del rel_context[c[0]]
-
         result = []
-        for field in upd_todo:
-            result += self._columns[field].set(cr, self, id_new, field, vals[field], user, rel_context) or []
-        self._validate(cr, user, [id_new], context)
+        if upd_todo:
+            # default element in context must be remove when call a one2many or many2many
+            rel_context = context.copy()
+            for c in context.items():
+                if c[0].startswith('default_'):
+                    del rel_context[c[0]]
+
+            for field in upd_todo:
+                result += self._columns[field].set(cr, self, id_new, field, vals[field], user, rel_context) or []
+            self._validate(cr, user, [id_new], context)
 
         if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
             self._call_store_function(cr, user, id_new, keys=vals.keys(), result=result, context=context)
