@@ -3686,11 +3686,11 @@ class orm(orm_template):
         updend_append = updend.append
         direct = []
         direct_append = direct.append
-        totranslate = context.get('lang', False) and (context['lang'] != 'en_US')
+        to_translate = context.get('lang', False) and (context['lang'] != 'en_US')
         for field in vals:
             if field in self._columns:
                 if self._columns[field]._classic_write and not (hasattr(self._columns[field], '_fnct_inv')):
-                    if (not totranslate) or not self._columns[field].translate:
+                    if (not to_translate) or not self._columns[field].translate:
                         upd0_append('"'+field+'"='+self._columns[field]._symbol_set[0])
                         upd1_append(self._columns[field]._symbol_set[1](vals[field]))
                     direct_append(field)
@@ -3706,7 +3706,7 @@ class orm(orm_template):
         if self._log_access:
             upd0_append('write_uid=%s')
             upd0_append('write_date=now()')
-            
+
             # if user is fakeUid object, use realId, otherwise use user
             upd1_append(hasattr(user, 'realUid') and user.realUid or user)
 
@@ -3719,16 +3719,27 @@ class orm(orm_template):
                     raise except_orm(_('AccessError'),
                                      _('One of the records you are trying to modify has already been deleted (Document type: %s).') % self._description)
 
-            if totranslate:
-                # TODO: optimize
-                for f in direct:
-                    if self._columns[f].translate:
-                        src_trans = self.pool.get(self._name).read(cr, user, ids, [f])[0][f]
-                        if not src_trans or not vals.get(f, None):
-                            src_trans = vals.get(f, None)
-                            # Inserting value to DB
-                            self.write(cr, user, ids, {f: vals[f]})
-                        self.pool.get('ir.translation')._set_ids(cr, user, self._name+','+f, 'model', context['lang'], ids, vals[f], src_trans)
+            if to_translate:
+                sync_context = context.get('sync_type', False)
+                # do not clear cache in case of synchronization. It will be
+                # done at the end of the sync in _get_reset_cache_at_sync().
+                clear_cache = not sync_context
+                fields_to_translate = [f for f in direct if\
+                        self._columns[f].translate]
+                field_translated_dict = self.pool.get(self._name).read(cr, user, ids, fields_to_translate)[0]
+                # remove the elements which are not in fields_to_translate
+                field_translated_dict = dict((key, value) for key, value in field_translated_dict.items() if key in fields_to_translate)
+                field_to_write_dict = {}
+                if field_translated_dict:
+                    for field_name, src_trans in field_translated_dict.items():
+                        if not src_trans or not vals.get(field_name, None):
+                            src_trans = vals.get(field_name, None)
+                            field_to_write_dict[field_name]=vals[field_name]
+                        self.pool.get('ir.translation')._set_ids(cr, user,
+                                self._name+','+f, 'model', context['lang'],
+                                ids, vals[f], clear=clear_cache, src=src_trans)
+                    if field_to_write_dict:
+                        self.write(cr, user, ids, field_to_write_dict)
 
         # call the 'set' method of fields which are not classic_write
         upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
