@@ -94,7 +94,7 @@ class ir_translation(osv.osv):
 
     @tools.cache(skiparg=3, multi='ids')
     def _get_ids(self, cr, uid, name, tt, lang, ids):
-        translations = {}
+        translations = dict.fromkeys(ids, False)
         if ids:
             cr.execute('select res_id,value ' \
                     'from ir_translation ' \
@@ -107,8 +107,7 @@ class ir_translation(osv.osv):
                 translations[res_id] = value
         return translations
 
-    def _set_ids(self, cr, uid, name, tt, lang, ids, value, src=None,
-            clear=True, context=None):
+    def _set_ids(self, cr, uid, name, tt, lang, ids, value, src=None, clear=True, context=None):
         if context is None:
             context = {}
         translation_dict = self._get_ids(cr, uid, name, tt, lang, ids)
@@ -116,23 +115,24 @@ class ir_translation(osv.osv):
             # clear the caches
             for res_id in translation_dict:
                 if translation_dict[res_id]:
-                    self._get_source.clear_cache(cr.dbname, uid, name, tt, lang, res_id)
+                    self._get_source.clear_cache(cr.dbname, uid, name, tt, lang, translation_dict[res_id])
             self._get_source.clear_cache(cr.dbname, uid, name, tt, lang)
             self._get_ids.clear_cache(cr.dbname, uid, name, tt, lang, ids)
 
-        if translation_dict:
-            ids_to_delete = []
-            ids_to_delete_append = ids_to_delete.append
-            for key, original_value in translation_dict.items():
+        # BKLG-52 Change delete/create for Update
+        for id in ids:
+            args = [('lang', '=', lang), ('type', '=', tt),
+                    ('name', '=', name), ('res_id', '=', id)]
+            translation_ids = self.search(cr, uid, args, offset=0,
+                                          limit=None, order=None,
+                                          context=context, count=False)
+            if translation_ids:
                 if not value:
-                    ids_to_delete_append(key)
+                    self.unlink(cr, uid, translation_ids, context=context)
                 else:
                     values = {'value': value, 'src': src}
-                    self.write(cr, uid, key, values, context=context)
-            if ids_to_delete:
-                self.unlink(cr, uid, ids_to_delete, context=context)
-        elif value != src:
-            for id in ids:
+                    self.write(cr, uid, translation_ids[0], values, context=context)
+            else:
                 self.create(cr, uid, {
                     'lang': lang,
                     'type': tt,

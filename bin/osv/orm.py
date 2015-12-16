@@ -1948,13 +1948,12 @@ class orm_template(object):
 
     def write_string(self, cr, uid, id, langs, vals, context=None):
         self.pool.get('ir.model.access').check(cr, uid, 'ir.translation', 'write', context=context)
-        ir_translation = self.pool.get('ir.translation')
         #FIXME: try to only call the translation in one SQL
         for lang in langs:
             for field in vals:
                 if field in self._columns:
                     src = self._columns[field].string
-                    ir_translation._set_ids(cr, uid, self._name+','+field, 'field', lang, [0], vals[field], src)
+                    self.pool.get('ir.translation')._set_ids(cr, uid, self._name+','+field, 'field', lang, [0], vals[field], src)
         for table in self._inherits:
             cols = intersect(self._inherit_fields.keys(), vals)
             if cols:
@@ -3707,7 +3706,7 @@ class orm(orm_template):
         if self._log_access:
             upd0_append('write_uid=%s')
             upd0_append('write_date=now()')
-
+            
             # if user is fakeUid object, use realId, otherwise use user
             upd1_append(hasattr(user, 'realUid') and user.realUid or user)
 
@@ -3719,7 +3718,6 @@ class orm(orm_template):
                 if cr.rowcount != len(sub_ids):
                     raise except_orm(_('AccessError'),
                                      _('One of the records you are trying to modify has already been deleted (Document type: %s).') % self._description)
-
             if to_translate:
                 sync_context = context.get('sync_type', False)
                 # do not clear cache in case of synchronization. It will be
@@ -3738,14 +3736,13 @@ class orm(orm_template):
                             field_to_write_dict[field_name]=vals[field_name]
                         self.pool.get('ir.translation')._set_ids(cr, user,
                                 self._name+','+field_name, 'model', context['lang'],
-                                ids, vals[field_name], clear=clear_cache, src=src_trans, context=context)
+                                ids, vals[field_name], src=src_trans, clear=clear_cache, context=context)
                     if field_to_write_dict:
                         self.write(cr, user, ids, field_to_write_dict)
 
-        if upd_todo:
-            # call the 'set' method of fields which are not classic_write
-            upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
 
+        if upd_todo:
+            upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
             # default element in context must be removed when call a one2many or many2many
             rel_context = context.copy()
             for c in context.items():
@@ -3754,6 +3751,7 @@ class orm(orm_template):
 
             for field in upd_todo:
                 for id in ids:
+                    # call the 'set' method of fields which are not classic_write
                     result += self._columns[field].set(cr, self, id, field, vals[field], user, context=rel_context) or []
 
         for table in self._inherits:
@@ -3976,7 +3974,6 @@ class orm(orm_template):
             upd2_append(hasattr(user, 'realUid') and user.realUid or user)
         cr.execute('insert into "'+self._table+'" (id'+upd0+") values ("+str(id_new)+upd1+')', tuple(upd2))
         self.check_access_rule(cr, user, [id_new], 'create', context=context)
-        upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
 
         if self._parent_store and not context.get('defer_parent_store_computation'):
             if self.pool._init:
@@ -4002,9 +3999,10 @@ class orm(orm_template):
                 cr.execute('update '+self._table+' set parent_right=parent_right+2 where parent_right>%s', (pleft,))
                 cr.execute('update '+self._table+' set parent_left=%s,parent_right=%s where id=%s', (pleft+1, pleft+2, id_new))
 
+        # default element in context must be remove when call a one2many or many2many
         result = []
         if upd_todo:
-            # default element in context must be remove when call a one2many or many2many
+            upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
             rel_context = context.copy()
             for c in context.items():
                 if c[0].startswith('default_'):
@@ -4012,7 +4010,7 @@ class orm(orm_template):
 
             for field in upd_todo:
                 result += self._columns[field].set(cr, self, id_new, field, vals[field], user, rel_context) or []
-            self._validate(cr, user, [id_new], context)
+        self._validate(cr, user, [id_new], context)
 
         if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
             self._call_store_function(cr, user, id_new, keys=vals.keys(), result=result, context=context)
