@@ -3737,8 +3737,8 @@ class orm(orm_template):
                             src_trans = vals.get(field_name, None)
                             field_to_write_dict[field_name]=vals[field_name]
                         self.pool.get('ir.translation')._set_ids(cr, user,
-                                self._name+','+f, 'model', context['lang'],
-                                ids, vals[f], clear=clear_cache, src=src_trans)
+                                self._name+','+field_name, 'model', context['lang'],
+                                ids, vals[field_name], clear=clear_cache, src=src_trans, context=context)
                     if field_to_write_dict:
                         self.write(cr, user, ids, field_to_write_dict)
 
