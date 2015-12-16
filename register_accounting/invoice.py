@@ -146,7 +146,7 @@ class account_invoice(osv.osv):
                     # Take only line that have a down_payment_amount not superior or equal to line amount
                     # down_payment_amount: amount already allocated on an invoice
                     # amount_currency: down payment amount
-                    if dp.down_payment_amount < dp.amount_currency:
+                    if abs(dp.down_payment_amount) < abs(dp.amount_currency):
                         if amount > (abs(dp.amount_currency) - abs(dp.down_payment_amount)):
                             diff = (abs(dp.amount_currency) - abs(dp.down_payment_amount))
                         else:
