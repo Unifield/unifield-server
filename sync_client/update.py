@@ -498,7 +498,7 @@ class update_received(osv.osv):
                     #2 if conflict => manage conflict according rules : report conflict and how it's solve
                     index_id = eval(update.fields).index('id')
                     sd_ref = eval(update.values)[index_id]
-                    logs[update.id] = sync_log(self, "Conflict detected!", 'warning', data=(update.id, sd_ref)) + "\n"
+                    logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
 
             if bad_fields:
                 import_fields = [import_fields[i] for i in range(len(import_fields)) if i not in bad_fields]
@@ -577,6 +577,7 @@ class update_received(osv.osv):
         def group_unlink_update_execution(obj, sdref_update_ids):
             obj_ids = obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), context=context)
             done_ids = []
+            done_update_ids = []
             for id, update_id in zip(
                         obj_ids.values(),
                         sdref_update_ids.values()
@@ -606,22 +607,23 @@ class update_received(osv.osv):
 #                    raise
                 else:
                     done_ids.append(update_id)
-                    self.write(cr, uid, [update_id], {
-                        'execution_date': datetime.now(),
-                        'editable' : False,
-                        'run' : True,
-                        'log' : '',
-                    }, context=context)
+                    done_update_ids.append(update_id)
 
-                sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
-                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False)], context=context)
-                if toSetRun_ids:
-                    self.write(cr, uid, toSetRun_ids, {
-                        'execution_date': datetime.now(),
-                        'editable' : False,
-                        'run' : True,
-                        'log' : 'Manually set to run by the system. Due to a delete',
-                    }, context=context)
+            self.write(cr, uid, done_update_ids, {
+                'execution_date': datetime.now(),
+                'editable' : False,
+                'run' : True,
+                'log' : '',
+            }, context=context)
+            sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
+            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False)], context=context)
+            if toSetRun_ids:
+                self.write(cr, uid, toSetRun_ids, {
+                    'execution_date': datetime.now(),
+                    'editable' : False,
+                    'run' : True,
+                    'log' : 'Manually set to run by the system. Due to a delete',
+                }, context=context)
 
             return
 
