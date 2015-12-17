@@ -140,7 +140,8 @@ class ir_translation(osv.osv):
                     'res_id': id,
                     'value': value,
                     'src': src,
-                    })
+                    },
+                    context=context)
         return len(ids)
 
     @tools.cache(skiparg=3)
