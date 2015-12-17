@@ -23,6 +23,7 @@ from osv import osv, fields
 import tools
 from tools.translate import _
 from tools.safe_eval import safe_eval as eval
+from datetime import datetime
 
 import re
 import logging
@@ -392,7 +393,6 @@ class update_received(osv.osv):
             else:
                 group_key = (update.sequence_number, 0,  update.rule_sequence)
             update_groups.setdefault(group_key, []).append(update)
-        self.write(cr, uid, update_ids, {'execution_date': fields.datetime.now()}, context=context)
 
         def secure_import_data(obj, fields, values):
             try:
@@ -441,14 +441,17 @@ class update_received(osv.osv):
                 # write only for ids not in log as another write is performed
                 # for those in logs. This avoid two writes on the same object
                 ids_not_in_logs = list(set(update_ids) - set(logs.keys()))
+                execution_date = datetime.now()
                 if ids_not_in_logs:
                     self.write(cr, uid, ids_not_in_logs, {
+                        'execution_date': execution_date,
                         'editable' : False,
                         'run' : True,
                         'log' : '',
                     }, context=context)
                 for update_id, log in logs.items():
                     self.write(cr, uid, [update_id], {
+                        'execution_date': execution_date,
                         'editable' : False,
                         'run' : True,
                         'log' : log,
@@ -508,6 +511,7 @@ class update_received(osv.osv):
                     import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, str(import_error), "\n".join([str(v) for v in values]))
                     # Rare Exception: import_data raised an Exception
                     self.write(cr, uid, update_ids, {
+                        'execution_date': datetime.now(),
                         'run' : False,
                         'log' : import_error.strip(),
                     }, context=context)
@@ -534,11 +538,14 @@ class update_received(osv.osv):
                         values.pop(value_index)
                         versions.pop(value_index)
                         self.write(cr, uid, [update_ids.pop(value_index)], {
+                            'execution_date': datetime.now(),
                             'run' : False,
                             'log' : import_message.strip(),
                         }, context=context)
                     else:
                         # Rare case where no line is given by import_data
+                        self.write(cr, uid, update_ids, {'execution_date':
+                            datetime.now()}, context=context)
                         message += "Cannot import data in model %s:\nReason: %s\n" % (obj._name, import_message)
                         raise Exception(message)
                     # Re-start import_data on rows that succeeds before
@@ -584,6 +591,7 @@ class update_received(osv.osv):
                     e = "Error during unlink on model %s!\nUpdate ids: %s\nReason: %s\nSD ref:\n%s\n" \
                         % (obj._name, update_ids, tools.ustr(error), update.sdref)
                     self.write(cr, uid, [update_id], {
+                        'execution_date': datetime.now(),
                         'run' : False,
                         'log' : tools.ustr(e)
                     }, context=context)
@@ -599,6 +607,7 @@ class update_received(osv.osv):
                 else:
                     done_ids.append(update_id)
                     self.write(cr, uid, [update_id], {
+                        'execution_date': datetime.now(),
                         'editable' : False,
                         'run' : True,
                         'log' : '',
@@ -608,6 +617,7 @@ class update_received(osv.osv):
                 toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False)], context=context)
                 if toSetRun_ids:
                     self.write(cr, uid, toSetRun_ids, {
+                        'execution_date': datetime.now(),
                         'editable' : False,
                         'run' : True,
                         'log' : 'Manually set to run by the system. Due to a delete',
@@ -643,12 +653,14 @@ class update_received(osv.osv):
                 toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False), ('run', '=', False)], context=context)
                 if toSetRun_ids:
                     self.write(cr, uid, toSetRun_ids, {
+                        'execution_date': datetime.now(),
                         'editable' : False,
                         'run' : True,
                         'log' : 'Manually set to run by the system. Due to a delete',
                     }, context=context)
                 else:
                     self.write(cr, uid, deleted_update_ids, {
+                        'execution_date': datetime.now(),
                         'editable' : False,
                         'run' : True,
                         'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
@@ -693,6 +705,7 @@ class update_received(osv.osv):
                     self.write(cr, uid,
                         [update.id for update in updates_to_ignore],
                         {
+                            'execution_date': datetime.now(),
                             'editable' : False,
                             'run' : True,
                             'log' : \
