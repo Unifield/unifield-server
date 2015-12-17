@@ -392,6 +392,7 @@ class update_received(osv.osv):
             else:
                 group_key = (update.sequence_number, 0,  update.rule_sequence)
             update_groups.setdefault(group_key, []).append(update)
+        self.write(cr, uid, update_ids, {'execution_date': fields.datetime.now()}, context=context)
 
         def secure_import_data(obj, fields, values):
             try:
@@ -437,19 +438,17 @@ class update_received(osv.osv):
             logs = {}
 
             def success(update_ids, versions):
-                execution_date = fields.datetime.now()
                 # write only for ids not in log as another write is performed
                 # for those in logs. This avoid two writes on the same object
                 ids_not_in_logs = list(set(update_ids) - set(logs.keys()))
-                self.write(cr, uid, ids_not_in_logs, {
-                    'execution_date': execution_date,
-                    'editable' : False,
-                    'run' : True,
-                    'log' : '',
-                }, context=context)
+                if ids_not_in_logs:
+                    self.write(cr, uid, ids_not_in_logs, {
+                        'editable' : False,
+                        'run' : True,
+                        'log' : '',
+                    }, context=context)
                 for update_id, log in logs.items():
                     self.write(cr, uid, [update_id], {
-                        'execution_date': execution_date,
                         'editable' : False,
                         'run' : True,
                         'log' : log,
@@ -461,7 +460,7 @@ class update_received(osv.osv):
                             cr, uid, sdref,
                             {
                                 'version': version,
-                                self._sync_field: execution_date,
+                                self._sync_field: fields.datetime.now(),
                                 'force_recreation' : False,
                                 'touched' : '[]',
                             },
@@ -535,12 +534,10 @@ class update_received(osv.osv):
                         values.pop(value_index)
                         versions.pop(value_index)
                         self.write(cr, uid, [update_ids.pop(value_index)], {
-                            'execution_date': fields.datetime.now(),
                             'run' : False,
                             'log' : import_message.strip(),
                         }, context=context)
                     else:
-                        self.write(cr, uid, update_ids, {'execution_date': fields.datetime.now()}, context=context)
                         # Rare case where no line is given by import_data
                         message += "Cannot import data in model %s:\nReason: %s\n" % (obj._name, import_message)
                         raise Exception(message)
