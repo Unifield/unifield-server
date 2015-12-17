@@ -132,7 +132,7 @@ class ir_translation(osv.osv):
                 else:
                     values = {'value': value, 'src': src}
                     self.write(cr, uid, translation_ids[0], values, context=context)
-            else:
+            elif value!=src:
                 self.create(cr, uid, {
                     'lang': lang,
                     'type': tt,
