@@ -198,7 +198,7 @@ class hq_report_ocg(report_sxw.report_sxw):
             if journal.analytic_journal_id and journal.analytic_journal_id.id not in ana_cur_journal_ids:
                 ana_cur_journal_ids.append(journal.analytic_journal_id.id)
         
-        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
+        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('move_id.period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind']),
                                                                                ('journal_id', 'not in', ana_cur_journal_ids)], context=context)
@@ -210,6 +210,10 @@ class hq_report_ocg(report_sxw.report_sxw):
             account = analytic_line.general_account_id
             currency = analytic_line.currency_id
             cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code or ""
+            
+            # US-817
+            aji_period_id = analytic_line.move_id and analytic_line.move_id.period_id or analytic_line.period_id
+            
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
@@ -218,7 +222,7 @@ class hq_report_ocg(report_sxw.report_sxw):
                               analytic_line.ref or "",
                               datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                              analytic_line.period_id and analytic_line.period_id.code or "",
+                              aji_period_id and aji_period_id.code or "",
                               self.translate_account(cr, uid, pool, account),
                               #account and account.code,
                               account and account.code + " " + account.name or "",
