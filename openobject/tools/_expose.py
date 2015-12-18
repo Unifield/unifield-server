@@ -221,7 +221,7 @@ def expose(format='html', template=None, content_type=None, allow_json=False, me
 
                     return render_template(_template, res).encode("utf-8")
 
-            if isinstance(res, types.GeneratorType):
+            if isinstance(res, types.GeneratorType) and hasattr(res, '__name__') and res.__name__ == 'file_generator':
                 return res
             if not isinstance(res, basestring):
                 return unicode(res).encode("utf-8")
