@@ -21,6 +21,7 @@
 import base64
 import re
 import time
+import os
 
 import cherrypy
 import formencode
@@ -245,15 +246,23 @@ class Database(BaseController):
     def do_backup(self, dbname, password, **kw):
         self.msg = {}
         try:
-            res = rpc.session.execute_db('dump', password, dbname)
             filename = [dbname, time.strftime('%Y%m%d-%H%M%S')]
             version = get_server_version()
             if version:
                 filename.append(version)
-            if res:
-                cherrypy.response.headers['Content-Type'] = "application/data"
-                cherrypy.response.headers['Content-Disposition'] = 'filename="%s.dump"' % '-'.join(filename)
-                return base64.decodestring(res)
+
+            if cherrypy.config['openerp.server.host'] in ['127.0.0.1', 'localhost']:
+                res = rpc.session.execute_db('dump_file', password, dbname)
+                try:
+                    return cherrypy.lib.static.serve_file(res, "application/x-download", 'attachment', '%s.dump"' % '-'.join(filename))
+                finally:
+                    os.remove(res)
+            else:
+                res = rpc.session.execute_db('dump', password, dbname)
+                if res:
+                    cherrypy.response.headers['Content-Type'] = "application/data"
+                    cherrypy.response.headers['Content-Disposition'] = 'filename="%s.dump"' % '-'.join(filename)
+                    return base64.decodestring(res)
         except openobject.errors.AccessDenied, e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}

@@ -29,7 +29,7 @@ from openobject import templating, paths, pooler
 from openobject import i18n
 import _utils as utils
 import resources
-
+import types
 
 __all__ = ['load_template', 'render_template', 'expose', 'register_template_vars']
 
@@ -221,6 +221,8 @@ def expose(format='html', template=None, content_type=None, allow_json=False, me
 
                     return render_template(_template, res).encode("utf-8")
 
+            if isinstance(res, types.GeneratorType):
+                return res
             if not isinstance(res, basestring):
                 return unicode(res).encode("utf-8")
 
