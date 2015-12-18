@@ -32,7 +32,9 @@ import openobject
 import openobject.errors
 
 from openerp import validators
-from openerp.utils import rpc, get_server_version
+from openerp.utils import rpc, get_server_version, is_server_local
+from tempfile import NamedTemporaryFile
+import shutil
 
 def get_lang_list():
     langs = [('en_US', 'English (US)')]
@@ -251,7 +253,7 @@ class Database(BaseController):
             if version:
                 filename.append(version)
 
-            if cherrypy.config['openerp.server.host'] in ['127.0.0.1', 'localhost']:
+            if is_server_local():
                 res = rpc.session.execute_db('dump_file', password, dbname)
                 try:
                     return cherrypy.lib.static.serve_file(res, "application/x-download", 'attachment', '%s.dump"' % '-'.join(filename))
@@ -302,8 +304,15 @@ class Database(BaseController):
                             'title': _('Error')}
                 return self.restore()
         try:
-            data = base64.encodestring(filename.file.read())
-            rpc.session.execute_db('restore', password, dbname, data)
+            if is_server_local():
+                newfile = f = NamedTemporaryFile(delete=False)
+                shutil.copyfileobj(filename.file, newfile)
+                filename = newfile.name
+                newfile.close()
+                rpc.session.execute_db('restore_file', password, dbname, filename)
+            else:
+                data = base64.encodestring(filename.file.read())
+                rpc.session.execute_db('restore', password, dbname, data)
         except openobject.errors.AccessDenied, e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
