@@ -3727,9 +3727,16 @@ class orm(orm_template):
                         self._columns[f].translate]
                 if fields_to_translate:
                     field_translated_dict = self.pool.get(self._name).read(cr, user, ids, fields_to_translate)[0]
+                    original_values = self.read(cr, user, ids, fields_to_translate, context=context)[0]
                     # remove the elements which are not in fields_to_translate
-                    field_translated_dict = dict((key, value) for key, value in field_translated_dict.items() if key in fields_to_translate)
+                    # and the element wich have the same value than the orginal
+                    # one
+                    field_translated_dict = dict((key, value) for key, value in\
+                            field_translated_dict.items() if key in\
+                            fields_to_translate and\
+                            field_translated_dict[key]!=original_values[key])
                     field_to_write_dict = {}
+
                     for field_name, src_trans in field_translated_dict.items():
                         if not src_trans or not vals.get(field_name, None):
                             src_trans = vals.get(field_name, None)
@@ -3750,9 +3757,9 @@ class orm(orm_template):
                     del rel_context[c[0]]
 
             for field in upd_todo:
-                for id in ids:
+                for current_id in ids:
                     # call the 'set' method of fields which are not classic_write
-                    result += self._columns[field].set(cr, self, id, field, vals[field], user, context=rel_context) or []
+                    result += self._columns[field].set(cr, self, current_id, field, vals[field], user, context=rel_context) or []
 
         for table in self._inherits:
             col = self._inherits[table]
@@ -3786,8 +3793,8 @@ class orm(orm_template):
                 else:
                     clause, params = '%s IS NULL' % (self._parent_name,), ()
 
-                for id in parents_changed:
-                    cr.execute('SELECT parent_left, parent_right FROM %s WHERE id=%%s' % (self._table,), (id,))
+                for current_id in parents_changed:
+                    cr.execute('SELECT parent_left, parent_right FROM %s WHERE id=%%s' % (self._table,), (current_id,))
                     pleft, pright = cr.fetchone()
                     distance = pright - pleft + 1
 
@@ -3801,7 +3808,7 @@ class orm(orm_template):
                     # Find Position of the element
                     position = None
                     for (parent_pright, parent_id) in parents:
-                        if parent_id == id:
+                        if parent_id == current_id:
                             break
                         position = parent_pright + 1
 
@@ -3828,8 +3835,8 @@ class orm(orm_template):
             self._call_store_function(cr, user, ids, keys=vals.keys(), result=result, context=context)
 
         wf_service = netsvc.LocalService("workflow")
-        for id in ids:
-            wf_service.trg_write(user, self._name, id, cr)
+        for current_id in ids:
+            wf_service.trg_write(user, self._name, current_id, cr)
         return True
 
     def _call_store_function(self, cr, uid, ids, keys=None, result=None, bypass=True, context=None):
@@ -4059,20 +4066,20 @@ class orm(orm_template):
             for id in filter(None, ids2):
                 result[fncts[fnct][0]].setdefault(id, [])
                 result[fncts[fnct][0]][id].append(fnct)
-        dict = {}
+        function_dict = {}
         for object in result:
             k2 = {}
             for id, fnct in result[object].items():
                 k2.setdefault(tuple(fnct), [])
                 k2[tuple(fnct)].append(id)
             for fnct, id in k2.items():
-                dict.setdefault(fncts[fnct[0]][4], [])
-                dict[fncts[fnct[0]][4]].append((fncts[fnct[0]][4], object, id, map(lambda x: fncts[x][1], fnct)))
+                function_dict.setdefault(fncts[fnct[0]][4], [])
+                function_dict[fncts[fnct[0]][4]].append((fncts[fnct[0]][4], object, id, map(lambda x: fncts[x][1], fnct)))
         result2 = []
-        tmp = dict.keys()
+        tmp = function_dict.keys()
         tmp.sort()
         for k in tmp:
-            result2 += dict[k]
+            result2 += function_dict[k]
         return result2
 
     def _store_set_values(self, cr, uid, ids, fields, context):
