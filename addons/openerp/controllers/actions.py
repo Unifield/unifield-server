@@ -189,7 +189,7 @@ def execute_report(name, **data):
         if datas.get('force_attach'):
             attachment = 'attachment;'
         if background_id:
-            bg_report = rpc.session.execute('object', 'execute', 'memory.background.report', 'write', [background_id], {'report_id': background_id, 'report_name': report_name})
+            bg_report = rpc.session.execute('object', 'execute', 'memory.background.report', 'write', [background_id], {'report_id': report_id, 'report_name': report_name})
 
 
         while not state:
