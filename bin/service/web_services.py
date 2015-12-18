@@ -61,7 +61,7 @@ class db(netsvc.ExportService):
             passwd = params[0]
             params = params[1:]
             security.check_super_bkpdb(passwd)
-        elif method == 'restore':
+        elif method in ('restore', 'restore_file'):
             passwd = params[0]
             params = params[1:]
             security.check_super_restoredb(passwd)
@@ -221,47 +221,51 @@ class db(netsvc.ExportService):
             raise Exception, "Couldn't dump database"
         return base64.encodestring(data)
 
+    def exp_restore_file(self, db_name, filename):
+        try:
+            logger = netsvc.Logger()
+
+            self._set_pg_psw_env_var()
+
+            if self.exp_db_exist(db_name):
+                logger.notifyChannel("web-services", netsvc.LOG_WARNING,
+                        'RESTORE DB: %s already exists' % (db_name,))
+                raise Exception, "Database already exists"
+
+            self._create_empty_database(db_name)
+
+            cmd = ['pg_restore', '--no-owner', '--no-acl']
+            if tools.config['db_user']:
+                cmd.append('--username=' + tools.config['db_user'])
+            if tools.config['db_host']:
+                cmd.append('--host=' + tools.config['db_host'])
+            if tools.config['db_port']:
+                cmd.append('--port=' + str(tools.config['db_port']))
+
+            cmd.append('--dbname=' + db_name)
+            cmd.append(filename)
+            res = tools.exec_pg_command(*cmd)
+            os.remove(filename)
+            if res:
+                raise Exception, "Couldn't restore database"
+
+            logger.notifyChannel("web-services", netsvc.LOG_INFO,
+                    'RESTORE DB: %s' % (db_name))
+            self._unset_pg_psw_env_var()
+
+            return True
+        except Exception, e:
+            logging.getLogger('web-services').error("Restore %s failed" % (db_name, ), exc_info=1)
+            raise
+
     def exp_restore(self, db_name, data):
         logger = netsvc.Logger()
-
-        self._set_pg_psw_env_var()
-
-        if self.exp_db_exist(db_name):
-            logger.notifyChannel("web-services", netsvc.LOG_WARNING,
-                    'RESTORE DB: %s already exists' % (db_name,))
-            raise Exception, "Database already exists"
-
-        self._create_empty_database(db_name)
-
-        cmd = ['pg_restore', '--no-owner', '--no-acl']
-        if tools.config['db_user']:
-            cmd.append('--username=' + tools.config['db_user'])
-        if tools.config['db_host']:
-            cmd.append('--host=' + tools.config['db_host'])
-        if tools.config['db_port']:
-            cmd.append('--port=' + str(tools.config['db_port']))
-        cmd.append('--dbname=' + db_name)
-        args2 = tuple(cmd)
-
-
         buf=base64.decodestring(data)
         tmpfile = NamedTemporaryFile('w+b', delete=False)
         tmpfile.write(buf)
         tmpfile.close()
 
-        args2=list(args2)
-        args2.append(tmpfile.name)
-        args2=tuple(args2)
-        res = tools.exec_pg_command(*args2)
-        os.remove(tmpfile.name)
-        if res:
-            raise Exception, "Couldn't restore database"
-        logger.notifyChannel("web-services", netsvc.LOG_INFO,
-                'RESTORE DB: %s' % (db_name))
-
-        self._unset_pg_psw_env_var()
-
-        return True
+        return self.exp_restore_file(db_name, tmpfile.name)
 
     def exp_rename(self, old_name, new_name):
         sql_db.close_db(old_name)
