@@ -57,7 +57,7 @@ class db(netsvc.ExportService):
             passwd = params[0]
             params = params[1:]
             security.check_super_dropdb(passwd)
-        elif method == 'dump':
+        elif method in ('dump', 'dump_file'):
             passwd = params[0]
             params = params[1:]
             security.check_super_bkpdb(passwd)
@@ -201,33 +201,24 @@ class db(netsvc.ExportService):
         if os.name == 'nt' and self._pg_psw_env_var_is_set:
             os.environ['PGPASSWORD'] = ''
 
+    def exp_dump_file(self, db_name):
+        # get a tempfilename
+        f = NamedTemporaryFile(delete=False)
+        f_name = f.name
+        f.close()
+        res = tools.pg_dump(db_name, f_name)
+        if res:
+            raise Exception, "Couldn't dump database"
+        return f_name
+
+
     def exp_dump(self, db_name):
         logger = netsvc.Logger()
-
-        self._set_pg_psw_env_var()
-
-        cmd = ['pg_dump', '--format=c', '--no-owner']
-        if tools.config['db_user']:
-            cmd.append('--username=' + tools.config['db_user'])
-        if tools.config['db_host']:
-            cmd.append('--host=' + tools.config['db_host'])
-        if tools.config['db_port']:
-            cmd.append('--port=' + str(tools.config['db_port']))
-        cmd.append(db_name)
-
-        stdin, stdout = tools.exec_pg_command_pipe(*tuple(cmd))
-        stdin.close()
-        data = stdout.read()
-        res = stdout.close()
+        data, res = tools.pg_dump(db_name)
         if res:
             logger.notifyChannel("web-services", netsvc.LOG_ERROR,
                     'DUMP DB: %s failed\n%s' % (db_name, data))
             raise Exception, "Couldn't dump database"
-        logger.notifyChannel("web-services", netsvc.LOG_INFO,
-                'DUMP DB: %s' % (db_name))
-
-        self._unset_pg_psw_env_var()
-
         return base64.encodestring(data)
 
     def exp_restore(self, db_name, data):

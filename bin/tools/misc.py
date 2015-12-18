@@ -141,6 +141,42 @@ def find_in_path(name):
     except IOError:
         return None
 
+def _set_env_pg(remove=False):
+    if os.name == 'nt':
+        if not remove and not os.environ.get('PGPASSWORD', ''):
+            os.environ['PGPASSWORD'] = config['db_password']
+        if remove and os.environ.get('PGPASSWORD'):
+            os.environ['PGPASSWORD'] = ''
+
+def pg_dump(db_name, outfile=False):
+    try:
+        _logger.info('Dump %s to %s' % (db_name, outfile or 'memory'))
+        _set_env_pg()
+        cmd = ['pg_dump', '--format=c', '--no-owner']
+        if outfile:
+            cmd += ['-f', outfile]
+        if config['db_user']:
+            cmd.append('--username=' + config['db_user'])
+        if config['db_host']:
+            cmd.append('--host=' + config['db_host'])
+        if config['db_port']:
+            cmd.append('--port=' + str(config['db_port']))
+        cmd.append(db_name)
+        if outfile:
+            res = exec_pg_command(*tuple(cmd))
+        else:
+            stdin, stdout = exec_pg_command_pipe(*tuple(cmd))
+            stdin.close()
+            data = stdout.read()
+            error = stdout.close()
+            res = (data, error)
+
+        _set_env_pg(remove=True)
+        return res
+    except Exception, e:
+        _logger.error('Dump', exc_info=1)
+        raise
+
 def find_pg_tool(name):
     path = None
     if config['pg_path'] and config['pg_path'] != 'None':
@@ -150,12 +186,13 @@ def find_pg_tool(name):
     except IOError:
         return None
 
+
 def exec_pg_command(name, *args):
     prog = find_pg_tool(name)
     if not prog:
         raise Exception('Couldn\'t find %s' % name)
     args2 = (prog,) + args
-    
+
     return subprocess.call(args2)
 
 def exec_pg_command_pipe(name, *args):
