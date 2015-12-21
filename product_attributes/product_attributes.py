@@ -1055,6 +1055,68 @@ class product_attributes(osv.osv):
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
     ]
 
+    def _get_sptc_vals(self, cr, user, product_id, transaction_name, vals=None,
+                       context=None):
+        """
+        Prepare the values for the standard.price.track.changes according
+        to values in `vals` and the given product in `product_id`.
+        :param cr: Cursor to the database
+        :param user: ID of the user that calls this method
+        :param product_id: ID of the product.product linked to the new
+                           standard.price.track.changes
+        :param vals: Default values of the product (or None)
+        :param context: Context of the call
+        :return: A dictionary with the values for the new
+                 standard.price.track.changes
+        """
+        if vals is None:
+            vals = {}
+
+        average_cost = vals.get('cost_method', None)
+        if not vals.get('cost_method'):
+            average_cost = self.read(cr, user, product_id, ['cost_method'],
+                                     context=context)['cost_method']
+
+        # If the product costing method is not 'Average Price', don't track
+        # price changes.
+        if average_cost != 'average':
+            return {}
+
+        sp = vals.get('standard_price', None)
+        if not vals.get('standard_price', None):
+            sp = self.read(cr, user, product_id, ['standard_price'],
+                           context=context)['standard_price']
+
+        return {
+            'product_id': product_id,
+            'old_standard_price': False,
+            'new_standard_price': sp,
+            'transaction_name': transaction_name,
+            'in_price_changed': False,
+        }
+
+    def create(self, cr, user, vals, context=None):
+        """
+        At product.product creation, create a standard.price.track.changes
+        record with the standard price as new value and None as old value.
+        :param cr: Cursor to the database
+        :param user: ID of the user that creates the record
+        :param vals: Values of the new product.product to create
+        :param context: Context of the call
+        :return: The ID of the new product.template record
+        """
+        sptc_obj = self.pool.get('standard.price.track.changes')
+
+        res = super(product_attributes, self).create(cr, user, vals,
+                                                      context=context)
+
+        sptc_vals = self._get_sptc_vals(cr, user, res, _('Product creation'),
+                                        vals, context=context)
+        if sptc_vals:
+            sptc_obj.create(cr, user, sptc_vals, context=context)
+
+        return res
+
 product_attributes()
 
 
