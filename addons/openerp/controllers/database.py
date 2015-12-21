@@ -255,7 +255,11 @@ class Database(BaseController):
 
             if is_server_local():
                 res = rpc.session.execute_db('dump_file', password, dbname)
-                return serve_file.serve_file(res, "application/x-download", 'attachment', '%s.dump"' % '-'.join(filename), delete=True)
+                try:
+                    return serve_file.serve_file(res, "application/x-download", 'attachment', '%s.dump"' % '-'.join(filename), delete=True)
+                finally:
+                    if os.path.exists(res):
+                        os.remove(res)
             else:
                 res = rpc.session.execute_db('dump', password, dbname)
                 if res:

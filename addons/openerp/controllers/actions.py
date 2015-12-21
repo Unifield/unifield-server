@@ -137,7 +137,12 @@ def _print_data(data):
         content = zlib.decompress(base64.decodestring(data['result']))
     else:
         if not data.get('result') and data.get('path'):
-            return serve_file.serve_file(data['path'], "application/x-download", 'attachment', delete=data.get('delete', False))
+            try:
+                return serve_file.serve_file(data['path'], "application/x-download", 'attachment', delete=data.get('delete', False))
+            finally:
+                if data.get('delete', False) and os.path.exists(data['path']):
+                    os.remove(data['path'])
+#            return cherrypy.lib.static.serve_file(data['path'], "application/x-download", 'attachment')
 
         content = base64.decodestring(data['result'])
 

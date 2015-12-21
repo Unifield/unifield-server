@@ -69,9 +69,14 @@ def serve_file(path, content_type=None, disposition=None, name=None, delete=Fals
     #   this way CP won't load the whole file in memory
     c_len = st.st_size
     if delete:
-        fd = os.open(path, os.O_RDONLY)
+        flag = os.O_RDWR | os.O_EXCL
+        if hasattr(os, 'O_BINARY'):
+            flag |= os.O_BINARY
+        if os.name == 'nt':
+            flag |= os.O_TEMPORARY
+        fd = os.open(path, flag)
         file = os.fdopen(fd, 'rb')
-        bodyfile = tempfile._TemporaryFileWrapper(file, path, delete=True)
+        bodyfile = file
     else:
         bodyfile = open(path, 'rb')
     
