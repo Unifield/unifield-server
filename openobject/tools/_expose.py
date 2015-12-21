@@ -30,6 +30,7 @@ from openobject import i18n
 import _utils as utils
 import resources
 import types
+import tempfile
 
 __all__ = ['load_template', 'render_template', 'expose', 'register_template_vars']
 
@@ -221,7 +222,7 @@ def expose(format='html', template=None, content_type=None, allow_json=False, me
 
                     return render_template(_template, res).encode("utf-8")
 
-            if isinstance(res, types.GeneratorType) and hasattr(res, '__name__') and res.__name__ == 'file_generator':
+            if isinstance(res, tempfile._TemporaryFileWrapper) or isinstance(res, types.GeneratorType) and hasattr(res, '__name__') and res.__name__ == 'file_generator':
                 return res
             if not isinstance(res, basestring):
                 return unicode(res).encode("utf-8")

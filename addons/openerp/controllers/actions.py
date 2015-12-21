@@ -27,7 +27,7 @@ import urlparse
 import zlib
 
 import cherrypy
-from openerp.utils import rpc, common, expr_eval, TinyDict, is_server_local
+from openerp.utils import rpc, common, expr_eval, TinyDict, is_server_local, serve_file
 
 from form import Form
 from openobject import tools
@@ -137,11 +137,7 @@ def _print_data(data):
         content = zlib.decompress(base64.decodestring(data['result']))
     else:
         if not data.get('result') and data.get('path'):
-            try:
-                return cherrypy.lib.static.serve_file(data['path'], "application/x-download", 'attachment')
-            finally:
-                if data.get('delete'):
-                    os.unlink(data['path'])
+            return serve_file.serve_file(data['path'], "application/x-download", 'attachment', delete=data.get('delete', False))
 
         content = base64.decodestring(data['result'])
 

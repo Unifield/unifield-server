@@ -32,7 +32,7 @@ import openobject
 import openobject.errors
 
 from openerp import validators
-from openerp.utils import rpc, get_server_version, is_server_local
+from openerp.utils import rpc, get_server_version, is_server_local, serve_file
 from tempfile import NamedTemporaryFile
 import shutil
 
@@ -255,10 +255,7 @@ class Database(BaseController):
 
             if is_server_local():
                 res = rpc.session.execute_db('dump_file', password, dbname)
-                try:
-                    return cherrypy.lib.static.serve_file(res, "application/x-download", 'attachment', '%s.dump"' % '-'.join(filename))
-                finally:
-                    os.remove(res)
+                return serve_file.serve_file(res, "application/x-download", 'attachment', '%s.dump"' % '-'.join(filename), delete=True)
             else:
                 res = rpc.session.execute_db('dump', password, dbname)
                 if res:
