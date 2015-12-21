@@ -27,7 +27,7 @@ import urlparse
 import zlib
 
 import cherrypy
-from openerp.utils import rpc, common, expr_eval, TinyDict
+from openerp.utils import rpc, common, expr_eval, TinyDict, is_server_local
 
 from form import Form
 from openobject import tools
@@ -36,6 +36,7 @@ from tree import Tree
 from wizard import Wizard
 import urllib
 import re
+import os
 
 def execute_window(view_ids, model, res_id=False, domain=None, view_type='form', context=None,
                    mode='form,tree', name=None, target=None, limit=None, search_view=None,
@@ -127,17 +128,23 @@ PRINT_FORMATS = {
 }
 
 def _print_data(data):
-
-    if 'result' not in data:
+    if 'result' not in data and 'path' not in data:
         raise common.message(_('Error no report'))
 
+    cherrypy.response.headers['Content-Type'] = PRINT_FORMATS[data['format']]
     if data.get('code','normal')=='zlib':
         import zlib
         content = zlib.decompress(base64.decodestring(data['result']))
     else:
+        if not data.get('result') and data.get('path'):
+            try:
+                return cherrypy.lib.static.serve_file(data['path'], "application/x-download", 'attachment')
+            finally:
+                if data.get('delete'):
+                    os.unlink(data['path'])
+
         content = base64.decodestring(data['result'])
 
-    cherrypy.response.headers['Content-Type'] = PRINT_FORMATS[data['format']]
     return content
 
 def execute_report(name, **data):
@@ -162,6 +169,8 @@ def execute_report(name, **data):
     try:
         ctx = dict(rpc.session.context)
         ctx.update(datas.get('context', {}))
+        if is_server_local:
+            ctx['report_fromfile'] = 1
         report_id = rpc.session.execute('report', 'report', name, ids, datas, ctx)
         state = False
         attempt = 0
