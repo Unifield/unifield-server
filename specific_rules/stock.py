@@ -136,10 +136,15 @@ class initial_stock_inventory(osv.osv):
         
         move_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
+        sptc_obj = self.pool.get('standard.price.track.changes')
         for inv in self.browse(cr, uid, ids, context=context):
             # Set the cost price on product form with the new value, and process the stock move
             for move in inv.move_ids:
                 new_std_price = move.price_unit
+                sptc_obj.track_change(cr, uid, move.product_id.id, _('Initial stock inventory'), vals={
+                    'standard_price': new_std_price,
+                    'old_price': move.product_id.standard_price,
+                }, context=context)
                 prod_obj.write(cr, uid, move.product_id.id, {'standard_price': new_std_price}, context=context)
                 move_obj.action_done(cr, uid, move.id, context=context)
 
@@ -477,11 +482,18 @@ class stock_cost_reevaluation(osv.osv):
         '''
         Change the price of the products in the lines
         '''
+        sptc_obj = self.pool.get('standard.price.track.changes')
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.reevaluation_line_ids:
+                sptc_obj.track_change(cr, uid, line.product_id.id,
+                                      _('Product cost reevaluation'), {
+                                          'standard_price': line.average_cost,
+                                          'old_price': line.product_id.standard_price,
+                                      }, context=context)
                 self.pool.get('product.product').write(cr, uid, line.product_id.id, {'standard_price': line.average_cost})
         
         return self.write(cr, uid, ids, {'state': 'done'}, context=context)

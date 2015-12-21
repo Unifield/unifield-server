@@ -117,6 +117,60 @@ class standard_price_track_changes(osv.osv):
             _('Copy of standard.price.track.changes is not allowed'),
         )
 
+    def track_change(self, cr, uid, product_id, transaction_name, vals=None,
+                     context=None):
+        """
+        Create a new standard.price.track.changes record linked to the given
+        `product_id`. Values are taken from `vals` or from the product
+        information if the value is not in `vals`.
+        :param cr: Cursor to the database
+        :param uid: ID of the user that creates the record
+        :param product_id: ID of the product.product which the cost price was
+                           changed
+        :param transaction_name: Label of the transaction that made the price
+                                 change
+        :param vals: Values of the transaction
+        :param context: Context of the call
+        :return: The ID of new standard.price.track.changes record
+        """
+        prod_obj = self.pool.get('product.product')
+
+        if vals is None:
+            vals = {}
+
+        prod_info = prod_obj.read(cr, uid, product_id, [
+            'cost_method',
+            'standard_price',
+        ], context=context)
+
+        # If the product costing method is not 'Average Price', don't track
+        # price changes.
+        if vals.get('cost_method', prod_info['cost_method']) != 'average':
+            return None
+
+        new_price = vals.get('standard_price', False)
+        old_price = vals.get('old_price', False)
+
+        # If it is the first standard.price.track.changes for this product
+        # the old price must be False and the new price is the current
+        # standard price of the product.
+        if not old_price:
+            new_sptc = self.search(cr, uid, [
+                ('product_id', '=', product_id),
+            ], limit=1, context=context)
+            if new_sptc:
+                old_price = prod_info['standard_price']
+            elif not new_price:
+                new_price = prod_info['standard_price']
+
+        return self.create(cr, uid, {
+            'product_id': product_id,
+            'old_standard_price': old_price,
+            'new_standard_price': new_price,
+            'transaction_name': transaction_name,
+            'in_price_changed': vals.get('manually_changed', False),
+        }, context=context)
+
 standard_price_track_changes()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
