@@ -752,7 +752,12 @@ class report_spool(netsvc.ExportService):
                 if not result:
                     tb = sys.exc_info()
                     self._reports[id]['exception'] = ExceptionWithTraceback('RML is not available at specified location or not enough data to print!', tb)
-                self._reports[id]['result'] = result
+                if isinstance(result, tools.misc.Path):
+                    self._reports[id]['path'] = result.path
+                    self._reports[id]['result'] = ''
+                    self._reports[id]['delete'] = result.delete
+                else:
+                    self._reports[id]['result'] = result
                 self._reports[id]['format'] = format
                 self._reports[id]['state'] = True
             except Exception, exception:
@@ -794,6 +799,9 @@ class report_spool(netsvc.ExportService):
             if res2:
                 res['result'] = base64.encodestring(res2)
             res['format'] = result['format']
+            if 'path' in result:
+                res['path'] = result['path']
+                res['delete'] = result.get('delete', False)
             del self._reports[report_id]
         return res
 

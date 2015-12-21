@@ -1540,6 +1540,11 @@ def attrgetter(*items):
             return tuple(resolve_attr(obj, attr) for attr in items)
     return g
 
+class Path():
+    def __init__(self, path, delete=True):
+        self.path = path
+        self.delete = delete
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
