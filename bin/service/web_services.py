@@ -241,7 +241,6 @@ class db(netsvc.ExportService):
                 cmd.append('--host=' + tools.config['db_host'])
             if tools.config['db_port']:
                 cmd.append('--port=' + str(tools.config['db_port']))
-
             cmd.append('--dbname=' + db_name)
             cmd.append(filename)
             res = tools.exec_pg_command(*cmd)
