@@ -696,8 +696,9 @@ class account_move(osv.osv):
                     ml_vals.update({'name': vals.get('manual_name', '')})
                 # Update document date AND date at the same time
                 if ml_vals:
-                    for ml in m.line_id:
-                        self.pool.get('account.move.line').write(cr, uid, ml.id, ml_vals, context, False, False)
+                    ml_id_list  = [ml.id for ml in m.line_id]
+                    self.pool.get('account.move.line').write(cr, uid,
+                            ml_id_list, ml_vals, context, False, False)
         res = super(account_move, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)
