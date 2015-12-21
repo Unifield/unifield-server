@@ -146,7 +146,7 @@ class update_to_send(osv.osv):
             export_fields = eval(rule.included_fields or '[]')
             if 'id' not in export_fields:
                 export_fields.append('id')
-            ids_need_to_push = self.need_to_push(cr, uid, [], 
+            ids_need_to_push = self.need_to_push(cr, uid, [],
                 [m.group(0) for m in map(re_fieldname.match, export_fields)],
                 empty_ids=True,
                 context=context)
@@ -441,17 +441,16 @@ class update_received(osv.osv):
                 # write only for ids not in log as another write is performed
                 # for those in logs. This avoid two writes on the same object
                 ids_not_in_logs = list(set(update_ids) - set(logs.keys()))
-                execution_date = datetime.now()
                 if ids_not_in_logs:
                     self.write(cr, uid, ids_not_in_logs, {
-                        'execution_date': execution_date,
+                        'execution_date': datetime.now(),
                         'editable' : False,
                         'run' : True,
                         'log' : '',
                     }, context=context)
                 for update_id, log in logs.items():
                     self.write(cr, uid, [update_id], {
-                        'execution_date': execution_date,
+                        'execution_date': datetime.now(),
                         'editable' : False,
                         'run' : True,
                         'log' : log,
@@ -544,8 +543,9 @@ class update_received(osv.osv):
                         }, context=context)
                     else:
                         # Rare case where no line is given by import_data
-                        self.write(cr, uid, update_ids, {'execution_date':
-                            datetime.now()}, context=context)
+                        self.write(cr, uid, update_ids, {
+                            'execution_date': datetime.now(),
+                            }, context=context)
                         message += "Cannot import data in model %s:\nReason: %s\n" % (obj._name, import_message)
                         raise Exception(message)
                     # Re-start import_data on rows that succeeds before
@@ -619,7 +619,6 @@ class update_received(osv.osv):
             toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False)], context=context)
             if toSetRun_ids:
                 self.write(cr, uid, toSetRun_ids, {
-                    'execution_date': datetime.now(),
                     'editable' : False,
                     'run' : True,
                     'log' : 'Manually set to run by the system. Due to a delete',
