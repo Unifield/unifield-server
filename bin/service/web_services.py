@@ -260,6 +260,7 @@ class db(netsvc.ExportService):
 
     def exp_restore(self, db_name, data):
         logger = netsvc.Logger()
+        logging.getLogger('web-services').info("Restore DB from memory")
         buf=base64.decodestring(data)
         tmpfile = NamedTemporaryFile('w+b', delete=False)
         tmpfile.write(buf)
