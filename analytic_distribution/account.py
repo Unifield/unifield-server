@@ -37,7 +37,7 @@ class account_destination_link(osv.osv):
         Get account_id code for tuple name
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -234,7 +234,7 @@ class account_account(osv.osv):
         Add default destination to the list of destination_ids
         """
         # Prepare some values
-        if not context:
+        if context is None:
             context = {}
         # Check default destination presence
         if not context.get('sync_update_execution') and 'default_destination_id' in vals and vals.get('default_destination_id'):
@@ -285,7 +285,7 @@ class account_move(osv.osv):
         Launch analytic distribution wizard on a Journal Entry
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -365,7 +365,7 @@ class account_move(osv.osv):
         """
         Check that analytic distribution is ok for all lines
         """
-        if not context:
+        if context is None:
             context = {}
         for m in self.browse(cr, uid, ids):
             for ml in m.line_id:
@@ -385,7 +385,7 @@ class account_move(osv.osv):
         """
         Check analytic distribution state for all lines that comes from a manual entry. If distribution is invalid, then line is also invalid! (draft state)
         """
-        if not context:
+        if context is None:
             context = {}
         res = super(account_move, self).validate(cr, uid, ids, context)
         for m in self.browse(cr, uid, ids):
@@ -393,6 +393,7 @@ class account_move(osv.osv):
                 for ml in m.line_id:
                     if ml.analytic_distribution_state == 'invalid' or (ml.analytic_distribution_state == 'none' and ml.account_id.is_analytic_addicted):
                         self.pool.get('account.move.line').write(cr, uid, [x.id for x in m.line_id], {'state': 'draft'}, context, check=False, update_check=False)
+                        break
         return res
 
 account_move()
