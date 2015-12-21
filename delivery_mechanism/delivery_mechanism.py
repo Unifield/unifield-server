@@ -687,6 +687,7 @@ class stock_picking(osv.osv):
         uom_obj = self.pool.get('product.uom')
         currency_obj = self.pool.get('res.currency')
         product_obj = self.pool.get('product.product')
+        sptc_obj = self.pool.get('standard.price.track.changes')
 
         if context is None:
             context = {}
@@ -733,6 +734,17 @@ class stock_picking(osv.osv):
 
             # Write the field according to price type field
             product_obj.write(cr, uid, [line.product_id.id], {'standard_price': new_std_price})
+            pchanged = False
+            # Is price changed ?
+            if line.cost and move.purchase_line_id:
+                p_price = move.purchase_line_id.price_unit
+                print p_price, line.cost
+                pchanged = abs(p_price - line.cost) > 10**-3
+            sptc_obj.track_change(cr, uid, move.product_id.id, _('Reception'), {
+                    'standard_price': new_std_price,
+                    'old_price': line.product_id.standard_price,
+                    'manually_changed': pchanged,
+                }, context=context)
 
             # Record the values that were chosen in the wizard, so they can be
             # used for inventory valuation of real-time valuation is enabled.
