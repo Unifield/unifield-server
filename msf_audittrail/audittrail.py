@@ -984,9 +984,10 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = []
             if values and values != '[]':
                 values = values[1:-1].split(',')
-                for v in values:
-                    relation_model_object = relation_model_pool.read(cr, uid, int(v), [relation_model_pool._rec_name])
-                    res.append(relation_model_object[relation_model_pool._rec_name])
+                values = (int(v) for v in values)
+                res = [x[relation_model_pool._rec_name] for x in \
+                        relation_model_pool.read(cr, uid, values,
+                    [relation_model_pool._rec_name])]
             return res
         elif field['ttype'] == 'date':
             res = False
