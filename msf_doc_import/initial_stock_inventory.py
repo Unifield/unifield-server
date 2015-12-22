@@ -119,6 +119,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             product_qty = 0.00
             product_uom = False
             comment = ''
+            to_correct_ok = False
 
             # Product code
             product_code = row.cells[0].data
