@@ -117,11 +117,13 @@ class account_cash_statement(osv.osv):
             context = {}
 
         if not context.get('sync_update_execution') and vals.get('balance_end_real', False):
+            new_vals = {'balance_start': vals['balance_end_real']}
+            to_write_id_list = []
             for id in ids:
                 args = [('prev_reg_id', '=', id)]
                 search_ids = self.search(cr, uid, args, context=context)
-                new_vals = {'balance_start': vals['balance_end_real']}
-                self.write(cr, uid, search_ids, new_vals, context=context)
+                to_write_id_list.extend(search_ids)
+            self.write(cr, uid, to_write_id_list, new_vals, context=context)
 
         return super(account_cash_statement, self).write(cr, uid, ids, vals, context=context)
 

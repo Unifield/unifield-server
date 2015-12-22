@@ -876,11 +876,16 @@ class purchase_order(osv.osv):
         '''
         Change the shipped boolean and the state of the PO
         '''
+        direct_order_id_list = []
+        other_id_list = []
         for order in self.browse(cr, uid, ids, context=context):
             if order.order_type == 'direct':
-                self.write(cr, uid, order.id, {'state': 'approved'}, context=context)
+                direct_order_id_list.append(order.id)
             else:
-                self.write(cr, uid, order.id, {'shipped':1,'state':'approved'}, context=context)
+                other_id_list.append(order.id)
+
+        self.write(cr, uid, direct_order_id_list, {'state': 'approved'}, context=context)
+        self.write(cr, uid, other_id_list, {'shipped':1,'state':'approved'}, context=context)
 
         return True
 
