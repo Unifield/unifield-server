@@ -139,6 +139,11 @@ def _print_data(data):
         if not data.get('result') and data.get('path'):
             try:
                 return serve_file.serve_file(data['path'], "application/x-download", 'attachment', delete=data.get('delete', False))
+            except Exception, e:
+                cherrypy.response.headers['Content-Type'] = 'text/html'
+                if 'Content-Disposition' in cherrypy.response.headers:
+                    del(cherrypy.response.headers['Content-Disposition'])
+                raise common.warning(e)
             finally:
                 if data.get('delete', False) and os.path.exists(data['path']):
                     os.remove(data['path'])
@@ -200,7 +205,6 @@ def execute_report(name, **data):
             attachment = 'attachment;'
         if background_id:
             bg_report = rpc.session.execute('object', 'execute', 'memory.background.report', 'write', [background_id], {'report_id': background_id, 'report_name': report_name})
-
 
         while not state:
             val = rpc.session.execute('report', 'report_get', report_id)
