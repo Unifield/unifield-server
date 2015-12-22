@@ -239,7 +239,10 @@ class analytic_account(osv.osv):
         if not context:
             context = {}
         for account in self.read(cr, uid, ids, ['category', 'name', 'code'], context=context):
-            bad_ids = self.search(cr, uid, [('category', '=', account.get('category', '')), ('|'), ('name', '=ilike', account.get('name', '')), ('code', '=ilike', account.get('code', ''))])
+            bad_ids = self.search(cr, uid, [('category', '=',
+                account.get('category', '')), ('|'), ('name', '=ilike',
+                    account.get('name', '')), ('code', '=ilike',
+                        account.get('code', ''))], limit=2)
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
@@ -250,7 +253,8 @@ class analytic_account(osv.osv):
         """
         if not context:
             context = {}
-        search_ids = self.search(cr, uid, [('for_fx_gain_loss', '=', True)])
+        search_ids = self.search(cr, uid, [('for_fx_gain_loss', '=', True)],
+                limit=2)
         if search_ids and len(search_ids) > 1:
             return False
         return True
@@ -434,7 +438,10 @@ class analytic_account(osv.osv):
 
         ######################################################
         # US-399: Now perform the check unicity manually!
-        bad_ids = self.search(cr, uid, [('category', '=', new_values.get('category', '')), ('|'), ('name', '=ilike', new_values.get('name', '')), ('code', '=ilike', new_values.get('code', ''))])
+        bad_ids = self.search(cr, uid, [('category', '=',
+            new_values.get('category', '')), ('|'), ('name', '=ilike',
+                new_values.get('name', '')), ('code', '=ilike',
+                    new_values.get('code', ''))], limit=2)
         if len(bad_ids) and len(bad_ids) > 1:
             raise osv.except_osv(_('Warning !'), _('You cannot have the same code or name between analytic accounts in the same category!'))
         ######################################################
