@@ -51,7 +51,7 @@
                 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
                 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
             </Borders>
-            <NumberFormat ss:Format="Short Date"/>
+            <NumberFormat ss:Format="General Date"/>
         </Style>
     </Styles>
     % for o in objects:
@@ -107,10 +107,10 @@
             % for sptc in getSPTC(o.id):
             <Row>
                 <Cell ss:StyleID="line_short_date">
-                    <Data ss:Type="DateTime">${sptc.change_date|x}</Data>
+                    <Data ss:Type="DateTime">${sptc.change_date.replace(' ', 'T')|n}.000</Data>
                 </Cell>
                 <Cell ss:StyleID="line">
-                    <Data ss:Type="Number">${sptc.user_id.name|x}</Data>
+                    <Data ss:Type="String">${sptc.user_id.name|x}</Data>
                 </Cell>
                 <Cell ss:StyleID="line">
                     <Data ss:Type="Number">${sptc.old_standard_price|x}</Data>

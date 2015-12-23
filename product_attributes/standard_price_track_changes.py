@@ -49,6 +49,7 @@ class standard_price_track_changes(osv.osv):
     _name = 'standard.price.track.changes'
     _description = 'Product Cost Price Track Changes'
     _rec_name = 'change_date'
+    _order = 'change_date, id'
 
     _columns = {
         'change_date': fields.datetime(
