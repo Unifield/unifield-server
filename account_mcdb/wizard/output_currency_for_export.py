@@ -122,9 +122,9 @@ class output_currency_for_export(osv.osv_memory):
         if wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
         else:
-            export_obj = self.pool.get(model)
-            args = context.get('search_domain')
-            datas = {'ids': export_obj.search(cr, uid, args, context=context)}
+            #export_obj = self.pool.get(model)
+            #args = context.get('search_domain')
+            #datas = {'ids': export_obj.search(cr, uid, args, context=context)}
             context['from_domain'] = True
         # Update context with wizard currency or default currency
         context.update({'output_currency_id': currency_id})
