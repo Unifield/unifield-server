@@ -206,7 +206,7 @@ class browse_record(object):
             if self._fields_process:
                 lang = self._context.get('lang', 'en_US') or 'en_US'
                 lang_obj_ids = self.pool.get('res.lang').search(self._cr,
-                        self._uid, [('code', '=', lang)], force_no_order=True,
+                        self._uid, [('code', '=', lang)],
                         limit=1)
                 if not lang_obj_ids:
                     raise Exception(_('Language with code "%s" is not defined in your system !\nDefine it through the Administration menu.') % (lang,))
@@ -582,12 +582,11 @@ class orm_template(object):
                 selection_field(col_obj._inherits)
             else:
                 return False
-            
+
         def _get_xml_id(self, cr, uid, r):
             model_data = self.pool.get('ir.model.data')
             data_ids = model_data.search(cr, uid, [('model', '=',
-                r._table_name), ('res_id', '=', r['id'])],
-                force_no_order=True, limit=1)
+                r._table_name), ('res_id', '=', r['id'])])
             if len(data_ids):
                 d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
                 if d['module']:
@@ -625,8 +624,7 @@ class orm_template(object):
                     elif f[i] == 'id':
                         model_data = self.pool.get('ir.model.data')
                         data_ids = model_data.search(cr, uid, [('model', '=',
-                            r._table_name), ('res_id', '=', r['id'])],
-                            force_no_order=True)
+                            r._table_name), ('res_id', '=', r['id'])])
                         data_ids = map(lambda ref_id: ref_id.id, filter(lambda ref: ref.module == 'sd', model_data.browse(cr, uid, data_ids))) or data_ids
                         if len(data_ids):
                             d = model_data.read(cr, uid, data_ids[0], ['name', 'module'])
@@ -664,11 +662,11 @@ class orm_template(object):
                             if [x for x in fields2 if x]:
                                 break
                         done.append(fields2)
-                        
+
                         if sync_context and cols and cols._type=='many2many' and len(fields[fpos])>(i+1) and (fields[fpos][i+1]=='id'):
                             data[fpos] = ','.join([_get_xml_id(self, cr, uid, x) for x in r])
                             break
-                        
+
                         for row2 in r:
                             lines2 = self.__export_row(cr, uid, row2, fields2,
                                     context)
@@ -1926,7 +1924,7 @@ class orm_template(object):
             args += [(self._rec_name, operator, name)]
         access_rights_uid = name_get_uid or user
         ids = self._search(cr, user, args, limit=limit, context=context,
-                access_rights_uid=access_rights_uid, force_no_order=True)
+                access_rights_uid=access_rights_uid)
         res = self.name_get(cr, access_rights_uid, ids, context)
         return res
 
