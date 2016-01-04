@@ -205,7 +205,9 @@ class browse_record(object):
             # TODO: improve this, very slow for reports
             if self._fields_process:
                 lang = self._context.get('lang', 'en_US') or 'en_US'
-                lang_obj_ids = self.pool.get('res.lang').search(self._cr, self._uid, [('code', '=', lang)])
+                lang_obj_ids = self.pool.get('res.lang').search(self._cr,
+                        self._uid, [('code', '=', lang)], force_no_order=True,
+                        limit=1)
                 if not lang_obj_ids:
                     raise Exception(_('Language with code "%s" is not defined in your system !\nDefine it through the Administration menu.') % (lang,))
                 lang_obj = self.pool.get('res.lang').browse(self._cr, self._uid, lang_obj_ids[0])
@@ -583,7 +585,9 @@ class orm_template(object):
             
         def _get_xml_id(self, cr, uid, r):
             model_data = self.pool.get('ir.model.data')
-            data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
+            data_ids = model_data.search(cr, uid, [('model', '=',
+                r._table_name), ('res_id', '=', r['id'])],
+                force_no_order=True, limit=1)
             if len(data_ids):
                 d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
                 if d['module']:
@@ -594,7 +598,8 @@ class orm_template(object):
                 postfix = 0
                 while True:
                     n = self._table+'_'+str(r['id']) + (postfix and ('_'+str(postfix)) or '' )
-                    if not model_data.search(cr, uid, [('name', '=', n)]):
+                    if not model_data.search(cr, uid, [('name', '=', n)],
+                            force_no_order=True, limit=1):
                         break
                     postfix += 1
                 model_data.create(cr, uid, {
@@ -619,7 +624,9 @@ class orm_template(object):
                         r = r['id']
                     elif f[i] == 'id':
                         model_data = self.pool.get('ir.model.data')
-                        data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
+                        data_ids = model_data.search(cr, uid, [('model', '=',
+                            r._table_name), ('res_id', '=', r['id'])],
+                            force_no_order=True)
                         data_ids = map(lambda ref_id: ref_id.id, filter(lambda ref: ref.module == 'sd', model_data.browse(cr, uid, data_ids))) or data_ids
                         if len(data_ids):
                             d = model_data.read(cr, uid, data_ids[0], ['name', 'module'])
@@ -785,7 +792,8 @@ class orm_template(object):
             if mode=='.id':
                 id = int(id)
                 obj_model = self.pool.get(model_name)
-                ids = obj_model.search(cr, uid, [('id', '=', int(id))])
+                ids = obj_model.search(cr, uid, [('id', '=', int(id))],
+                        force_no_order=True, limit=1)
                 if not len(ids):
                     raise Exception(_("Database ID doesn't exist: %s : %s") %(model_name, id))
             elif mode=='id':
@@ -1108,14 +1116,15 @@ class orm_template(object):
                 fld_def = (field in self._columns) and self._columns[field] or self._inherit_fields[field][2]
                 if fld_def._type in ('many2one', 'one2one'):
                     obj = self.pool.get(fld_def._obj)
-                    if not obj.search(cr, uid, [('id', '=', field_value or False)]):
+                    if not obj.search(cr, uid, [('id', '=', field_value or
+                        False)], force_no_order=True, limit=1):
                         continue
                 if fld_def._type in ('many2many'):
                     obj = self.pool.get(fld_def._obj)
                     field_value2 = []
                     for i in range(len(field_value)):
                         if not obj.search(cr, uid, [('id', '=',
-                            field_value[i])]):
+                            field_value[i])], force_no_order=True, limit=1):
                             continue
                         field_value2.append(field_value[i])
                     field_value = field_value2
@@ -1128,12 +1137,14 @@ class orm_template(object):
                             if field2 in obj._columns.keys() and obj._columns[field2]._type in ('many2one', 'one2one'):
                                 obj2 = self.pool.get(obj._columns[field2]._obj)
                                 if not obj2.search(cr, uid,
-                                        [('id', '=', field_value[i][field2])]):
+                                        [('id', '=', field_value[i][field2])],
+                                        force_no_order=True, limit=1):
                                     continue
                             elif field2 in obj._inherit_fields.keys() and obj._inherit_fields[field2][2]._type in ('many2one', 'one2one'):
                                 obj2 = self.pool.get(obj._inherit_fields[field2][2]._obj)
                                 if not obj2.search(cr, uid,
-                                        [('id', '=', field_value[i][field2])]):
+                                        [('id', '=', field_value[i][field2])],
+                                        force_no_order=True, limit=1):
                                     continue
                             # TODO add test for many2many and one2many
                             field_value2[i][field2] = field_value[i][field2]
@@ -1798,12 +1809,14 @@ class orm_template(object):
     def search_count(self, cr, user, args, context=None):
         if context is None:
             context = {}
-        res = self.search(cr, user, args, context=context, count=True)
+        res = self.search(cr, user, args, force_no_order=True,
+                context=context, count=True)
         if isinstance(res, list):
             return len(res)
         return res
 
-    def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, user, args, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False):
         """
         Search for records based on a search domain.
 
@@ -1845,9 +1858,11 @@ class orm_template(object):
             (name is 'ABC' AND (language is NOT english) AND (country is Belgium OR Germany))
 
         """
-        return self._search(cr, user, args, offset=offset, limit=limit, order=order, context=context, count=count)
+        return self._search(cr, user, args, offset=offset, limit=limit,
+                order=order, force_no_order=force_no_order, context=context, count=count)
 
-    def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
+    def _search(self, cr, user, args, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False, access_rights_uid=None):
         """
         Private implementation of search() method, allowing specifying the uid to use for the access right check.
         This is useful for example when filling in the selection list for a drop-down and avoiding access rights errors,
@@ -1910,7 +1925,8 @@ class orm_template(object):
         if name:
             args += [(self._rec_name, operator, name)]
         access_rights_uid = name_get_uid or user
-        ids = self._search(cr, user, args, limit=limit, context=context, access_rights_uid=access_rights_uid)
+        ids = self._search(cr, user, args, limit=limit, context=context,
+                access_rights_uid=access_rights_uid, force_no_order=True)
         res = self.name_get(cr, access_rights_uid, ids, context)
         return res
 
@@ -2094,7 +2110,7 @@ class orm_memory(orm_template):
 
         return True
 
-    def read(self, cr, user, ids, fields_to_read=None, context=None, load='_classic_read'):
+    def read(self, cr, user, ids, fields_to_read=None, force_no_order=False, context=None, load='_classic_read'):
         if context is None:
             context = {}
         if not fields_to_read:
@@ -2106,7 +2122,9 @@ class orm_memory(orm_template):
                 ids = [ids]
 
             # order ids by _parent_order or _order
-            order_by = self._parent_order or self._order
+            order_by = ''
+            if not force_no_order:
+                order_by = self._parent_order or self._order
             ids_set = set(ids)
             data = self._in_memory_sorted_items(cr, user, order_by, context=context, sort_raw_id=True)
             ids = [ id for id, values in data if id in ids_set ]
@@ -2308,9 +2326,13 @@ class orm_memory(orm_template):
             data.sort(cmp=in_memory_sort)
         return data
 
-    def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
+    def _search(self, cr, user, args, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False, access_rights_uid=None):
         if context is None:
             context = {}
+
+        if force_no_order:
+            order = ''
 
         # implicit filter on current user except for superuser
         if user != 1:
@@ -2574,11 +2596,13 @@ class orm(orm_template):
             pos2 = pos + 1
             for id in cr.fetchall():
                 pos2 = browse_rec(id[0], pos2)
-            cr.execute('update '+self._table+' set parent_left=%s, parent_right=%s where id=%s', (pos, pos2, root))
+            query = ''.join(('UPDATE ', self._table, ' set parent_left=%s, parent_right=%s where id=%s'))
+            cr.execute(query, (pos, pos2, root))
             return pos2 + 1
-        query = 'SELECT id FROM '+self._table+' WHERE '+self._parent_name+' IS NULL'
+        query = ''.join(('SELECT id FROM ', self._table, ' WHERE ',
+            self._parent_name, ' IS NULL'))
         if self._parent_order:
-            query += ' order by ' + self._parent_order
+            query = ''.join((query, ' ORDER BY ', self._parent_order))
         pos = 0
         cr.execute(query)
         for (root,) in cr.fetchall():
@@ -2590,7 +2614,7 @@ class orm(orm_template):
         logger.notifyChannel('data', netsvc.LOG_INFO, "storing computed values of fields.function '%s'" % (k,))
         ss = self._columns[k]._symbol_set
         update_query = 'UPDATE "%s" SET "%s"=%s WHERE id=%%s' % (self._table, k, ss[0])
-        cr.execute('select id from '+self._table)
+        cr.execute('SELECT id FROM '+self._table)
         ids_lst = map(lambda x: x[0], cr.fetchall())
         while ids_lst:
             iids = ids_lst[:40]
@@ -3292,8 +3316,8 @@ class orm(orm_template):
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
             query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields, ','.join(tables), self._table)
             if rule_clause:
-                query += " AND " + (' OR '.join(rule_clause))
-            query += " ORDER BY " + order_by
+                query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
+            query = ''.join((query, ' ORDER BY ', order_by))
             for sub_ids in cr.split_for_in_conditions(ids):
                 if rule_clause:
                     cr.execute(query, [tuple(sub_ids)] + rule_params)
@@ -3484,11 +3508,12 @@ class orm(orm_template):
         """
         where_clause, where_params, tables = self.pool.get('ir.rule').domain_get(cr, uid, self._name, operation, context=context)
         if where_clause:
-            where_clause = ' and ' + ' and '.join(where_clause)
+            where_clause = ''.join((' AND ', ' AND '.join(where_clause)))
             for sub_ids in cr.split_for_in_conditions(ids):
-                cr.execute('SELECT ' + self._table + '.id FROM ' + ','.join(tables) +
-                           ' WHERE ' + self._table + '.id IN %s' + where_clause,
-                           [sub_ids] + where_params)
+                query = ''.join(('SELECT ', self._table, '.id FROM ',
+                        ','.join(tables), ' WHERE ', self._table, '.id IN %s',
+                        where_clause))
+                cr.execute(query, [sub_ids] + where_params)
                 if cr.rowcount != len(sub_ids):
                     raise except_orm(_('AccessError'),
                                      _('Operation prohibited by access rules, or performed on an already deleted document (Operation: %s, Document type: %s).')
@@ -3523,7 +3548,7 @@ class orm(orm_template):
         domain = [('res_id', '=', False),
                   ('value_reference', 'in', ['%s,%s' % (self._name, i) for i in ids]),
                  ]
-        if properties.search(cr, uid, domain, context=context):
+        if properties.search(cr, uid, domain, force_no_order=True, limit=1, context=context):
             raise except_orm(_('Error'), _('Unable to delete this document because it is used as a default property'))
 
         wf_service = netsvc.LocalService("workflow")
@@ -3541,14 +3566,16 @@ class orm(orm_template):
             # Removing the ir_model_data reference if the record being deleted is a record created by xml/csv file,
             # as these are not connected with real database foreign keys, and would be dangling references.
             # Step 1. Calling unlink of ir_model_data only for the affected IDS.
-            referenced_ids = pool_model_data.search(cr, uid, [('res_id','in',list(sub_ids)),('model','=',self._name)], context=context)
+            referenced_ids = pool_model_data.search(cr, uid,
+                    [('res_id','in',list(sub_ids)),('model','=',self._name)],
+                    force_no_order=True, context=context)
             # Step 2. Marching towards the real deletion of referenced records
             pool_model_data.unlink(cr, uid, referenced_ids, context=context)
 
             # For the same reason, removing the record relevant to ir_values
             ir_value_ids = pool_ir_values.search(cr, uid,
                     ['|',('value','in',['%s,%s' % (self._name, sid) for sid in sub_ids]),'&',('res_id','in',list(sub_ids)),('model','=',self._name)],
-                    context=context)
+                    force_no_order=True, context=context)
             if ir_value_ids:
                 pool_ir_values.unlink(cr, uid, ir_value_ids, context=context)
 
@@ -3713,8 +3740,9 @@ class orm(orm_template):
         if len(upd0):
             self.check_access_rule(cr, user, ids, 'write', context=context)
             for sub_ids in cr.split_for_in_conditions(ids):
-                cr.execute('update ' + self._table + ' set ' + ','.join(upd0) + ' ' \
-                           'where id IN %s', upd1 + [sub_ids])
+                query = ''.join(('UPDATE ', self._table, ' SET ',
+                    ','.join(upd0), ' WHERE id IN %s'))
+                cr.execute(query, upd1 + [sub_ids])
                 if cr.rowcount != len(sub_ids):
                     raise except_orm(_('AccessError'),
                                      _('One of the records you are trying to modify has already been deleted (Document type: %s).') % self._description)
@@ -3765,8 +3793,9 @@ class orm(orm_template):
             col = self._inherits[table]
             nids = []
             for sub_ids in cr.split_for_in_conditions(ids):
-                cr.execute('select distinct "'+col+'" from "'+self._table+'" ' \
-                           'where id IN %s', (sub_ids,))
+                query = ''.join(('SELECT DISTINCT "', col, '" FROM "',
+                    self._table, '" WHERE id IN %s'))
+                cr.execute(query, (sub_ids,))
                 nids.extend([x[0] for x in cr.fetchall()])
 
             v = {}
@@ -3817,18 +3846,28 @@ class orm(orm_template):
                         if not parent_val:
                             position = 1
                         else:
-                            cr.execute('select parent_left from '+self._table+' where id=%s', (parent_val,))
+                            query = ''.join(('SELECT parent_left FROM ',
+                                self._table, ' WHERE id=%s'))
+                            cr.execute(query, (parent_val,))
                             position = cr.fetchone()[0] + 1
 
                     if pleft < position <= pright:
                         raise except_orm(_('UserError'), _('Recursivity Detected.'))
 
-                    cr.execute('update '+self._table+' set parent_left=parent_left+%s where parent_left>=%s', (distance, position))
-                    cr.execute('update '+self._table+' set parent_right=parent_right+%s where parent_right>=%s', (distance, position))
+                    query = ''.join(('UPDATE ', self._table,
+                        ' SET parent_left=parent_left+%s WHERE parent_left>=%s',))
+                    cr.execute(query, (distance, position))
+                    query = ''.join(('UPDATE ', self._table,
+                        ' SET parent_right=parent_right+%s WHERE parent_right>=%s',))
+                    cr.execute(query, (distance, position))
                     if pleft < position:
-                        cr.execute('update '+self._table+' set parent_left=parent_left+%s, parent_right=parent_right+%s where parent_left>=%s and parent_left<%s', (position-pleft, position-pleft, pleft, pright))
+                        query = ''.join(('UPDATE ', self._table,
+                            ' SET parent_left=parent_left+%s, parent_right=parent_right+%s WHERE parent_left>=%s AND parent_left<%s'))
+                        cr.execute(query, (position-pleft, position-pleft, pleft, pright))
                     else:
-                        cr.execute('update '+self._table+' set parent_left=parent_left-%s, parent_right=parent_right-%s where parent_left>=%s and parent_left<%s', (pleft-position+distance, pleft-position+distance, pleft+distance, pright+distance))
+                        query = ''.join(('UPDATE ', self._table,
+                            ' SET parent_left=parent_left-%s, parent_right=parent_right-%s WHERE parent_left>=%s AND parent_left<%s'))
+                        cr.execute(query, (pleft-position+distance, pleft-position+distance, pleft+distance, pright+distance))
 
 
         if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
@@ -3979,7 +4018,9 @@ class orm(orm_template):
             upd1 += ',%s,now()'
             # if user is fakeUid object, use realId, otherwise use user
             upd2_append(hasattr(user, 'realUid') and user.realUid or user)
-        cr.execute('insert into "'+self._table+'" (id'+upd0+") values ("+str(id_new)+upd1+')', tuple(upd2))
+
+        query = ''.join(('INSERT INTO "', self._table, '" (id', upd0,') values (', str(id_new), upd1, ')'))
+        cr.execute(query, tuple(upd2))
         self.check_access_rule(cr, user, [id_new], 'create', context=context)
 
         if self._parent_store and not context.get('defer_parent_store_computation'):
@@ -3988,7 +4029,10 @@ class orm(orm_template):
             else:
                 parent = vals.get(self._parent_name, False)
                 if parent:
-                    cr.execute('select parent_right from '+self._table+' where '+self._parent_name+'=%s order by '+(self._parent_order or self._order), (parent,))
+                    query = ''.join(('SELECT parent_right from ', self._table,
+                        ' WHERE ', self._parent_name, '=%s ORDER BY ',
+                        (self._parent_order or self._order)))
+                    cr.execute(query, (parent,))
                     pleft_old = None
                     result_p = cr.fetchall()
                     for (pleft,) in result_p:
@@ -4136,8 +4180,9 @@ class orm(orm_template):
                         upd1.append(self._columns[v]._symbol_set[1](value[v]))
                     upd1.append(id)
                     if upd0 and upd1:
-                        cr.execute('update "' + self._table + '" set ' + \
-                            ','.join(upd0) + ' where id = %s', upd1)
+                        query = ''.join(('UPDATE "', self._table, '" SET ',
+                            ','.join(upd0), ' WHERE id = %s'))
+                        cr.execute(query, upd1)
 
             else:
                 for f in val:
@@ -4326,7 +4371,8 @@ class orm(orm_template):
 
         return order_by_clause and (' ORDER BY %s ' % order_by_clause) or ''
 
-    def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
+    def _search(self, cr, user, args, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False, access_rights_uid=None):
         """
         Private implementation of search() method, allowing specifying the uid to use for the access right check.
         This is useful for example when filling in the selection list for a drop-down and avoiding access rights errors,
@@ -4342,18 +4388,24 @@ class orm(orm_template):
 
         query = self._where_calc(cr, user, args, context=context)
         self._apply_ir_rules(cr, user, query, 'read', context=context)
-        order_by = self._generate_order_by(order, query)
+        order_by = ''
+        if not force_no_order:
+            order_by = self._generate_order_by(order, query)
         from_clause, where_clause, where_clause_params = query.get_sql()
 
-        limit_str = limit and ' limit %d' % limit or ''
-        offset_str = offset and ' offset %d' % offset or ''
+        limit_str = limit and ' LIMIT %d' % limit or ''
+        offset_str = offset and ' OFFSET %d' % offset or ''
         where_str = where_clause and (" WHERE %s" % where_clause) or ''
 
         if count:
-            cr.execute('SELECT count("%s".id) FROM ' % self._table + from_clause + where_str + limit_str + offset_str, where_clause_params)
+            count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
+                from_clause, where_str, limit_str, offset_str))
+            cr.execute(count_query, where_clause_params)
             res = cr.fetchall()
             return res[0][0]
-        cr.execute('SELECT "%s".id FROM ' % self._table + from_clause + where_str + order_by + limit_str + offset_str, where_clause_params)
+        select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
+            from_clause, where_str, order_by,limit_str, offset_str))
+        cr.execute(select_query, where_clause_params)
         res = cr.fetchall()
         return [x[0] for x in res]
 
@@ -4502,7 +4554,7 @@ class orm(orm_template):
                     trans_ids = trans_obj.search(cr, uid, [
                             ('name', '=', trans_name),
                             ('res_id', '=', old_id)
-                    ])
+                    ], force_no_order=True)
                     translation_records.extend(trans_obj.read(cr, uid, trans_ids, context=context))
 
         for record in translation_records:

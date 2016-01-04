@@ -101,12 +101,14 @@ class ir_ui_menu(osv.osv):
                 self._cache[key] = True
         return result
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False):
         if context is None:
             context = {}
 
         ids = super(ir_ui_menu, self).search(cr, uid, args, offset=0,
-            limit=None, order=order, context=context, count=False)
+            limit=None, order=order, force_no_order=force_no_order,
+            context=context, count=False)
 
         if not ids:
             if count:

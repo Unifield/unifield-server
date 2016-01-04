@@ -92,7 +92,7 @@ class res_company(osv.osv):
     }
 
     def _search(self, cr, uid, args, offset=0, limit=None, order=None,
-            context=None, count=False, access_rights_uid=None):
+            force_no_order=False, context=None, count=False, access_rights_uid=None):
 
         if context is None:
             context = {}
@@ -106,7 +106,7 @@ class res_company(osv.osv):
             cmp_ids = list(set([user.company_id.id] + [cmp.id for cmp in user.company_ids]))
             return cmp_ids
         return super(res_company, self)._search(cr, uid, args, offset=offset, limit=limit, order=order,
-            context=context, count=count, access_rights_uid=access_rights_uid)
+            force_no_order=force_no_order, context=context, count=count, access_rights_uid=access_rights_uid)
 
     def _company_default_get(self, cr, uid, object=False, field=False, context=None):
         """
