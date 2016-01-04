@@ -36,7 +36,7 @@ class ir_module_module(osv.osv):
         if ids and \
             self.search(cr, uid, [('id', 'in', ids), ('name', '=',
                 'sync_client'), ('state', 'in', ['to install', 'to upgrade'])],
-                force_no_order=True, limit=1):
+                limit=1, count=True):
                 self.pool.get('ir.model.data').create_all_sdrefs(cr)
         return super(ir_module_module, self).check(cr, uid, ids, context=context)
 
@@ -288,7 +288,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
     def update_sd_ref(self, cr, uid, sdref, vals, context=None):
         """Update a SD ref information. Raise ValueError if sdref doesn't exists."""
         ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)],
-                force_no_order=True, context=context)
+                order='NO_ORDER', context=context)
         if not ids:
             raise ValueError("Cannot find sdref %s!" % sdref)
 

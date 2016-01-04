@@ -73,7 +73,7 @@ class message(osv.osv):
 
             #SP-135/UF-1617: Message unique key is from identifier PLUS destination: sending the same batch number and asset to different destinations
             ids = self.search(cr, uid, [('identifier', '=', data['id']),
-                ('destination', '=', data['dest'])], force_no_order=True, context=context)
+                ('destination', '=', data['dest'])], order='NO_ORDER', context=context)
             if ids:
                 sync_log(self, 'Message %s already in the server database' % data['id'])
                 #SP-135/UF-1617: Overwrite the message and set the sent to False
@@ -175,7 +175,7 @@ class message(osv.osv):
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm messages...'))
 
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids),
-            ('destination', '=', entity.id)], force_no_order=True, context=context)
+            ('destination', '=', entity.id)], order='NO_ORDER', context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
         self._logger.info("::::::::[%s] %s messages confirmed" % (entity.name, len(ids)))
@@ -196,7 +196,7 @@ class message(osv.osv):
             @return : True or raise an error
         """
         domain = [('sequence', '>', start_seq), ('destination', '=', entity.id), ('sent', '=', True)]
-        ids = self.search(cr, uid, domain, force_no_order=True, context=context)
+        ids = self.search(cr, uid, domain, order='NO_ORDER', context=context)
 
         if ids:
             self.write(cr, uid, ids, {'sent' : False}, context=context)

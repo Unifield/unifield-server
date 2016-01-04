@@ -71,7 +71,7 @@ class sale_order_rw(osv.osv):
         context['offline_synchronization'] = True
 
         existing_ids = self.search(cr, uid, [('name', '=', fo_name),('state',
-            '=', 'rw')], force_no_order=True, limit=1, context=context)
+            '=', 'rw')], limit=1, context=context, count=True)
         if existing_ids:
             message = "Sorry, the FO: " + fo_name  + " existed already in " + cr.dbname
             self._logger.info(message)
@@ -143,7 +143,7 @@ class purchase_order_rw(osv.osv):
         partner_ref = source + "." + sync_values.name
         existing_ids = self.search(cr, uid, [('name', '=', po_name),
             ('partner_ref', '=', partner_ref), ('state', '=', 'rw')],
-            force_no_order=True, limit=1, context=context)
+            limit=1, context=context, count=True)
         if existing_ids:
             message = "Sorry, the FO: " + po_name  + " with Supplier Ref " + partner_ref + " existed already in " + cr.dbname
             self._logger.info(message)

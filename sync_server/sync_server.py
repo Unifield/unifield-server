@@ -225,7 +225,7 @@ class entity(osv.osv):
     def _check_duplicate(self, cr, uid, name, uuid, context=None):
         duplicate_id = self.search(cr, uid, [('user_id', '!=', uid), '|',
             ('name', '=', name), ('identifier', '=', uuid)],
-            force_no_order=True, limit=1, context=context)
+            limit=1, context=context, count=True)
         return bool(duplicate_id)
         
     def _get_ancestor(self, cr, uid, id, context=None):
@@ -317,7 +317,7 @@ class entity(osv.osv):
                                     ('user_id', '=', uid), 
                                     ('state', '=', 'updated'), 
                                     ('update_token', '=', token)], 
-                                    force_no_order=True, context=context)
+                                    order='NO_ORDER', context=context)
         if not ids:
             return (False, 'Ack not valid')
         self.write(cr, 1, ids, {'state' : 'validated'}, context=context)
@@ -445,7 +445,7 @@ class entity(osv.osv):
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want to validate is not one of your children")
         ids_to_validate = self.search(cr, uid, [('identifier', 'in',
-            uuid_list)], force_no_order=True, context=context)
+            uuid_list)], context=context)
         self.write(cr, 1, ids_to_validate, {'state': 'validated'}, context=context)
         self._send_validation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now validated" % ", ".join(uuid_list))
@@ -458,7 +458,7 @@ class entity(osv.osv):
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want validate is not one of your children")
         ids_to_validate = self.search(cr, uid, [('identifier', 'in',
-            uuid_list)], force_no_order=True, context=context)
+            uuid_list)], context=context)
         self.write(cr, 1, ids_to_validate, {'state': 'invalidated'}, context=context)
         self._send_invalidation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now invalidated" % ", ".join(uuid_list))
@@ -570,21 +570,19 @@ class entity(osv.osv):
         return dict([
             (rec.name, rec.parent_left)
             for rec in self.browse(cr, uid,
-                self.search(cr, uid, [], force_no_order=True, context=context),
+                self.search(cr, uid, [], context=context),
                 context=context)
         ])
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         to_order = False
-        if not count and not force_no_order and order and ('last_dateactivity' in order or 'activity' in order):
+        if not count and order and order != 'NO_ORDER' and ('last_dateactivity' in order or 'activity' in order):
             to_order = True
             init_offset = offset
             init_limit = limit
             offset = 0
             limit = None
-        ids = super(entity, self).search(cr, uid, args, offset, limit, order,
-                force_no_order, context, count)
+        ids = super(entity, self).search(cr, uid, args, offset, limit, order, context, count)
         if ids and to_order:
             order = order.replace('last_dateactivity', 'datetime')
             limit_str = init_limit and ' limit %d' % init_limit or ''
@@ -789,7 +787,7 @@ class sync_manager(osv.osv):
         # to avoid having messages that are not belonging to the same "sequence" of the update  
         msg_ids_tmp = self.pool.get("sync.server.message").search(cr, uid,
                 [('destination', '=', entity.id), ('sent', '=', False)],
-                force_no_order=True, context=context)
+                order='NO_ORDER', context=context)
 
         len_ids = 0
         if msg_ids_tmp:

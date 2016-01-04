@@ -604,7 +604,7 @@ class account_analytic_line(osv.osv):
                         identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
                         exist_ids = msg_to_send_obj.search(cr, uid,
                                 [('identifier', '=', identifier), ('sent', '=',
-                                    False)], force_no_order=True)
+                                    False)], order='NO_ORDER')
                         if exist_ids:
                             msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
 
@@ -733,7 +733,7 @@ class product_product(osv.osv):
         model_data_obj = self.pool.get('ir.model.data')
         sdref_ids = model_data_obj.search(cr, uid,
                 [('model','=',self._name),('res_id','=',res_id),('module','=','sd')],
-                force_no_order=True)
+                order='NO_ORDER')
         if not sdref_ids: # xmlid not exist in ir model data -> create new
             identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
             name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))

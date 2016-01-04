@@ -387,8 +387,7 @@ class stock_picking(osv.osv):
 
         context['sync_message_execution'] = tmp_sme
 
-    def search(self, cr, uid, args, offset=None, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
         '''
         Change the order if we are on RW synchronisation
         '''
@@ -399,7 +398,7 @@ class stock_picking(osv.osv):
             order = 'id'
     
         return super(stock_picking, self).search(cr, uid, args, offset=offset,
-                limit=limit, order=order, force_no_order=force_no_order, context=context, count=count)
+                limit=limit, order=order, context=context, count=count)
 
     #UF-2531: The last param for the case no need to check for partner, such as the case of INT from scratch created at RW
     def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context, need_partner_check=True):
@@ -671,7 +670,7 @@ class stock_picking(osv.osv):
                 existing_pick = self.search(cr, uid, [('name', '=', pick_name),
                     ('origin', '=', origin), ('subtype', '=', 'picking'),
                     ('type', '=', 'out'), ('state', '=', 'draft')],
-                    force_no_order=True, limit=1, context=context)
+                    limit=1, context=context, count=True)
                 if existing_pick:
                     message = "Sorry, the document: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
@@ -708,7 +707,8 @@ class stock_picking(osv.osv):
         elif rw_type == self.CENTRAL_PLATFORM  and not origin and 'OUT' in pick_name and 'RW' in pick_name: #US-702: sync also the OUT from scratch, no link to IR/FO
                 existing_pick = self.search(cr, uid, [('name', '=', pick_name),
                     ('subtype', '=', 'picking'), ('type', '=', 'out'),
-                    ('state', '=', 'draft')], force_no_order=True, limit=1, context=context)
+                    ('state', '=', 'draft')], limit=1, context=context,
+                    count=True)
                 if existing_pick:
                     message = "Sorry, the OUT: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
@@ -1118,7 +1118,7 @@ class stock_picking(osv.osv):
                     ('origin', '=', origin),
                     ('subtype', '=', 'picking'),
                     ('state', 'in', ['assigned', 'draft']),
-                ], force_no_order=True, limit=1, context=context)
+                ], limit=1, context=context, count=True)
                 if same_ids:
                     message = "The Picking: " + pick_name + " is already replicated in " + cr.dbname
                     self._logger.info(message)
@@ -1207,7 +1207,7 @@ class stock_picking(osv.osv):
                     wizard_line_obj.create(cr, uid, vals, context=context)
 
         line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=',
-            proc_id), ('quantity', '=', 0.00)], force_no_order=True, context=context)
+            proc_id), ('quantity', '=', 0.00)], order='NO_ORDER', context=context)
         if line_to_del:
             wizard_line_obj.unlink(cr, uid, line_to_del, context=context)
 
@@ -1321,7 +1321,7 @@ class stock_picking(osv.osv):
                     for pick in pick_ids:
                         if not self.pool.get('ppl.processor').search(cr, uid,
                                 [('picking_id', '=', pick)],
-                                force_no_order=True, limit=1):
+                                limit=1, count=True):
                             pick_id = pick
                             break
                     if pick_id:

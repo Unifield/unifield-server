@@ -165,7 +165,7 @@ class stock_picking(osv.osv):
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
                 existing_pick = self.search(cr, uid, [('origin', '=', origin),
                     ('subtype', '=', 'picking'), ('type', '=', 'in'), ('state',
-                        '=', 'draft')], force_no_order=True, limit=1, context=context)
+                        '=', 'draft')], limit=1, context=context, count=True)
                 if existing_pick:
                     message = "Sorry, the IN: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
@@ -179,7 +179,7 @@ class stock_picking(osv.osv):
                     if sdref:
                         bo_of_other = self.search(cr, uid,
                                 [('rw_sdref_counterpart', '=', sdref)],
-                                force_no_order=True, context=context)
+                                order='NO_ORDER', context=context)
                         if bo_of_other:# The original IN of this backorder IN exists, update that original IN
                             self.write(cr, uid, bo_of_other, {'backorder_id': pick_id}, context=context)
 
@@ -296,7 +296,7 @@ class stock_picking(osv.osv):
         
         # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
         existing_pick = self.search(cr, uid, search_condition,
-                force_no_order=True, limit=1, context=context)
+                limit=1, context=context, count=True)
         if existing_pick:
             message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
             self._logger.info(message)
@@ -396,7 +396,7 @@ class stock_picking(osv.osv):
                     line_proc_ids = move_proc.search(cr, uid, [
                         ('wizard_id', '=', in_processor),
                         ('move_id', '=', move['id']),
-                    ], force_no_order=True, limit=1, context=context)
+                    ], limit=1, context=context, count=True)
                     if not line_proc_ids:
                         diff = move['product_qty'] - orig_qty
                         if diff >= 0 and (not best_diff or diff < best_diff):

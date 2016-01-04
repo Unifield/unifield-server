@@ -229,7 +229,7 @@ class update(osv.osv):
             assert 'owner' in update, "Packet field 'owner' absent"
             # Get the id of the owner or 0 if absent from sync.server.entity list
             owner = self.pool.get('sync.server.entity').search(cr, uid,
-                    [('name','=',update['owner'])], froce_no_order=True, limit=1)
+                    [('name','=',update['owner'])])
             owner = owner[0] if owner else False
 
             if safe_create({
