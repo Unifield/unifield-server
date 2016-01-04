@@ -284,7 +284,7 @@ class Entity(osv.osv):
 
     def _auto_init(self,cr,context=None):
         res = super(Entity, self)._auto_init(cr, context=context)
-        if not self.search(cr, 1, [], context=context):
+        if not self.search(cr, 1, [], force_no_order=True, limit=1, context=context):
             self.create(cr, 1, {'identifier' : self.generate_uuid()}, context=context)
         return res
 
@@ -978,7 +978,7 @@ class Connection(osv.osv):
 
     def _auto_init(self,cr,context=None):
         res = super(Connection, self)._auto_init(cr, context=context)
-        if not self.search(cr, 1, [], context=context):
+        if not self.search(cr, 1, [], force_no_order=True, limit=1, context=context):
             self.create(cr, 1, {}, context=context)
         return res
 

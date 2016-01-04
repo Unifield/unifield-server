@@ -74,7 +74,8 @@ class local_rule(osv.osv):
             # Check model exists and is not null
             if not vals.get('model'):
                 vals['active'] = False
-            elif not self.pool.get('ir.model').search(cr, uid, [('model', '=', vals['model'])], limit=1, context=context):
+            elif not self.pool.get('ir.model').search(cr, uid, [('model', '=',
+                vals['model'])], force_no_order=True, limit=1, context=context):
                 self._logger.debug("The following rule doesn't apply to your database and has been disabled. Reason: model %s does not exists!\n%s" % (vals['model'], vals))
                 continue #do not save the rule if there is no valid model
             elif 'active' not in vals:
@@ -323,7 +324,8 @@ class update_received(osv.osv):
         if not packet:
             return 0
         self._logger.debug("Unfold package %s" % packet['model'])
-        if not self.pool.get('ir.model').search(cr, uid, [('model', '=', packet['model'])], context=context):
+        if not self.pool.get('ir.model').search(cr, uid, [('model', '=',
+            packet['model'])], force_no_order=True, limit=1, context=context):
             sync_log(self, "Model %s does not exist" % packet['model'], data=packet)
         packet_type = packet.get('type', 'import')
         if packet_type == 'import':
@@ -616,7 +618,8 @@ class update_received(osv.osv):
                 'log' : '',
             }, context=context)
             sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
-            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False)], context=context)
+            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
+                ('is_deleted', '=', False)], force_no_order=True, context=context)
             if toSetRun_ids:
                 self.write(cr, uid, toSetRun_ids, {
                     'editable' : False,
@@ -651,7 +654,9 @@ class update_received(osv.osv):
 
             if deleted_update_ids:
                 sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
-                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False), ('run', '=', False)], context=context)
+                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
+                    ('is_deleted', '=', False), ('run', '=', False)],
+                    force_no_order=True, context=context)
                 if toSetRun_ids:
                     self.write(cr, uid, toSetRun_ids, {
                         'execution_date': datetime.now(),

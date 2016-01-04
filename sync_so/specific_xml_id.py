@@ -602,7 +602,9 @@ class account_analytic_line(osv.osv):
                     new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
                     if new_destination_name and xml_id:
                         identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
-                        exist_ids = msg_to_send_obj.search(cr, uid, [('identifier', '=', identifier), ('sent', '=', False)])
+                        exist_ids = msg_to_send_obj.search(cr, uid,
+                                [('identifier', '=', identifier), ('sent', '=',
+                                    False)], force_no_order=True)
                         if exist_ids:
                             msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
 
@@ -729,7 +731,9 @@ class product_product(osv.osv):
 
         # if the default_code is empty or XXX, rebuild the xmlid
         model_data_obj = self.pool.get('ir.model.data')
-        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','=',res_id),('module','=','sd')])
+        sdref_ids = model_data_obj.search(cr, uid,
+                [('model','=',self._name),('res_id','=',res_id),('module','=','sd')],
+                force_no_order=True)
         if not sdref_ids: # xmlid not exist in ir model data -> create new
             identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
             name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))

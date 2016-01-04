@@ -474,14 +474,15 @@ class Object(object):
 
         return records
 
-    def search(self, domain=None, offset=0, limit=None, order=None, context=None):
+    def search(self, domain=None, offset=0, limit=None, order=None,
+            force_no_order=False, context=None):
         if domain is None:
             domain = []
 
         if limit is None:
             limit = self.search_count(domain)
 
-        arguments = [domain, offset, limit, order is not None and order or False]
+        arguments = [domain, offset, limit, not force_no_order and order is not None and order or False]
 
         arguments = self.__add_context(arguments, context)
 

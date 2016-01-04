@@ -620,7 +620,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
                 # Add commat for prevent delete other object
                 tr_name = str(self._name) + ',%'
                 args = [('name', 'like', tr_name), ('res_id', '=', obj_id)]
-                tr_ids = tr_obj.search(cr, uid, args)
+                tr_ids = tr_obj.search(cr, uid, args, force_no_order=True)
                 tr_obj.unlink(cr, uid, tr_ids)
         return original_unlink(self, cr, uid, ids, context=context)
 

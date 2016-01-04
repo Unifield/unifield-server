@@ -663,7 +663,9 @@ class so_po_common(osv.osv_memory):
             return
 
         xml_id = identifiers[object_id]
-        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier',
+            '=', xml_id), ('destination_name', '=', partner_name)],
+            force_no_order=True, limit=1, context=context)
         if existing_message_id: # if similar message does not exist in the system, then do nothing
             return
 
@@ -686,7 +688,9 @@ class so_po_common(osv.osv_memory):
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
 
         xml_id = cr.dbname + "_recovery_" + partner_name + "_object_" + name
-        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier',
+            '=', xml_id), ('destination_name', '=', partner_name)],
+            force_no_order=True, limit=1, context=context)
         if existing_message_id: # if similar message does not exist in the system, then do nothing
             return
 

@@ -78,7 +78,8 @@ class local_message_rule(osv.osv):
             # Check model exists or is null
             if not vals.get('model'):
                 vals['active'] = False
-            elif not self.pool.get('ir.model').search(cr, uid, [('model', '=', vals['model'])], limit=1, context=context):
+            elif not self.pool.get('ir.model').search(cr, uid, [('model', '=',
+                vals['model'])], force_no_order=True, limit=1, context=context):
                 self._logger.error("The following rule doesn't apply to your database and has been disabled. Reason: model %s does not exists!\n%s" % (vals['model'], vals))
                 continue #do not save the rule if there is no valid model
             elif 'active' not in vals:
@@ -124,7 +125,8 @@ class local_message_rule(osv.osv):
                 return
 
             model_obj = self.pool.get(model_name)
-            if res_id not in model_obj.search(cr, uid, eval(rule.domain), context=context):
+            if res_id not in model_obj.search(cr, uid, eval(rule.domain),
+                    force_no_order=True, context=context):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
@@ -140,7 +142,8 @@ class local_message_rule(osv.osv):
                 return
             # Still create the message if an existing message was already in the system, as the return action could be repeat
             xml_id = identifiers[res_id]
-            if msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], context=context):
+            if msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)],
+                    force_no_order=True, context=context):
                 return
             data = {
                     'identifier' : xml_id,
@@ -246,7 +249,8 @@ class message_to_send(osv.osv):
 
         # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
         obj_ids = [obj_id for obj_id in obj_ids_temp if not \
-                self.search(cr, uid, [('identifier', '=', identifiers[obj_id])], context=context)]
+                self.search(cr, uid, [('identifier', '=',
+                    identifiers[obj_id])], force_no_order=True, context=context)]
 
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
@@ -319,7 +323,8 @@ class message_to_send(osv.osv):
 
     def packet_sent(self, cr, uid, packet, context=None):
         message_uuids = [data['id'] for data in packet]
-        ids = self.search(cr, uid, [('identifier', 'in', message_uuids)], context=context)
+        ids = self.search(cr, uid, [('identifier', 'in', message_uuids)],
+                force_no_order=True, context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
 
@@ -348,7 +353,8 @@ class message_received(osv.osv):
 
     def unfold_package(self, cr, uid, package, context=None):
         for data in package:
-            ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
+            ids = self.search(cr, uid, [('identifier', '=', data['id'])],
+                    force_no_order=True, context=context)
             if ids:
                 sync_log(self, 'Message %s already in the database' % data['id'])
                 # SP-135/UF-1617: Write the message if there is modification, and set the "run" to false to be executed next time

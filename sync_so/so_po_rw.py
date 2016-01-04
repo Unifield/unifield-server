@@ -70,7 +70,8 @@ class sale_order_rw(osv.osv):
         default.update(header_result)
         context['offline_synchronization'] = True
 
-        existing_ids = self.search(cr, uid, [('name', '=', fo_name),('state', '=', 'rw')], context=context)
+        existing_ids = self.search(cr, uid, [('name', '=', fo_name),('state',
+            '=', 'rw')], force_no_order=True, limit=1, context=context)
         if existing_ids:
             message = "Sorry, the FO: " + fo_name  + " existed already in " + cr.dbname
             self._logger.info(message)
@@ -140,7 +141,9 @@ class purchase_order_rw(osv.osv):
         
         # check whether this FO has already been sent before! if it's the case, then just update the existing PO, and not creating a new one
         partner_ref = source + "." + sync_values.name
-        existing_ids = self.search(cr, uid, [('name', '=', po_name), ('partner_ref', '=', partner_ref), ('state', '=', 'rw')], context=context)
+        existing_ids = self.search(cr, uid, [('name', '=', po_name),
+            ('partner_ref', '=', partner_ref), ('state', '=', 'rw')],
+            force_no_order=True, limit=1, context=context)
         if existing_ids:
             message = "Sorry, the FO: " + po_name  + " with Supplier Ref " + partner_ref + " existed already in " + cr.dbname
             self._logger.info(message)
