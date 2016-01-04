@@ -137,5 +137,6 @@ def serve_file(path, content_type=None, disposition=None, name=None, delete=Fals
     else:
         response.headers['Content-Length'] = c_len
         response.body = bodyfile
+    response.stream = True
     return response.body
 
