@@ -141,10 +141,15 @@ class initial_stock_inventory(osv.osv):
             # Set the cost price on product form with the new value, and process the stock move
             for move in inv.move_ids:
                 new_std_price = move.price_unit
-                sptc_obj.track_change(cr, uid, move.product_id.id, _('Initial stock inventory'), vals={
-                    'standard_price': new_std_price,
-                    'old_price': move.product_id.standard_price,
-                }, context=context)
+                sptc_obj.track_change(cr,
+                                      uid,
+                                      move.product_id.id,
+                                      _('Initial stock inventory %s') % inv.name,
+                                      vals={
+                                          'standard_price': new_std_price,
+                                          'old_price': move.product_id.standard_price,
+                                      },
+                                      context=context)
                 prod_obj.write(cr, uid, move.product_id.id, {'standard_price': new_std_price}, context=context)
                 move_obj.action_done(cr, uid, move.id, context=context)
 
@@ -489,8 +494,11 @@ class stock_cost_reevaluation(osv.osv):
         
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.reevaluation_line_ids:
-                sptc_obj.track_change(cr, uid, line.product_id.id,
-                                      _('Product cost reevaluation'), {
+                sptc_obj.track_change(cr,
+                                      uid,
+                                      line.product_id.id,
+                                      _('Product cost reevaluation %s') % obj.name,
+                                      vals={
                                           'standard_price': line.average_cost,
                                           'old_price': line.product_id.standard_price,
                                       }, context=context)

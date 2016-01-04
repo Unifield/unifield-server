@@ -740,7 +740,8 @@ class stock_picking(osv.osv):
                 p_price = move.purchase_line_id.price_unit
                 print p_price, line.cost
                 pchanged = abs(p_price - line.cost) > 10**-3
-            sptc_obj.track_change(cr, uid, move.product_id.id, _('Reception'), {
+            sptc_obj.track_change(cr, uid, move.product_id.id,
+                                  _('Reception %s') % move.picking_id.name, {
                     'standard_price': new_std_price,
                     'old_price': line.product_id.standard_price,
                     'manually_changed': pchanged,
