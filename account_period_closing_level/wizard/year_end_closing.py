@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 
 class wizard_account_end_year_closing(osv.osv_memory):
@@ -46,9 +47,9 @@ class wizard_account_end_year_closing(osv.osv_memory):
             if fy_id.state != 'draft':
                 raise osv.except_osv(_('Warning'), _('You can only close an opened FY'))
 
-    def create(self, cr, uid, vals, context=None):
+    def default_get(self, cr, uid, vals, context=None):
         self._check_before_process(cr, uid, False, context=context)
-        super(wizard_account_end_year_closing, self).create(cr, uid, vals, context=context)
+        super(wizard_account_end_year_closing, self).default_get(cr, uid, vals, context=context)
 
     def btn_close_fy(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
