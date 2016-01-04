@@ -690,8 +690,7 @@ class account_move_line(osv.osv):
     #
     # writeoff; entry generated for the difference between the lines
     #
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if context is None:
             context = {}
         if context and context.get('next_partner_only', False):
@@ -703,7 +702,7 @@ class account_move_line(osv.osv):
                 return []
             args.append(('partner_id', '=', partner[0]))
         return super(account_move_line, self).search(cr, uid, args, offset,
-                limit, order, force_no_order, context, count)
+                limit, order, context, count)
 
     def get_next_partner_only(self, cr, uid, offset=0, context=None):
         cr.execute(

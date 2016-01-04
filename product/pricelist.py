@@ -428,7 +428,7 @@ class product_pricelist(osv.osv):
                             where = [('name', '=', partner) ]
                         sinfo = supplierinfo_obj.search(cr, uid,
                                 [('product_id', '=', tmpl_id)] + where,
-                                force_no_order=True)
+                                order='NO_ORDER')
                         price = 0.0
                         if sinfo:
                             cr.execute('SELECT * ' \
