@@ -2,8 +2,8 @@
 <openerp>
     <data>
         <record id="wizard_view_account_year_end_closing" model="ir.ui.view">
-            <field name="name">wizard.account.end.year.closing</field>
-            <field name="model">wizard.account.end.year.closing</field>
+            <field name="name">wizard.account.year.end.closing</field>
+            <field name="model">wizard.account.year.end.closing</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Close the Fiscal Year">
@@ -24,7 +24,7 @@
 
         <record id="action_account_year_end_closing" model="ir.actions.act_window">
             <field name="name">Close the fiscal year</field>
-            <field name="res_model">wizard.account.end.year.closing</field>
+            <field name="res_model">wizard.account.year.end.closing</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="wizard_view_account_year_end_closing"/>

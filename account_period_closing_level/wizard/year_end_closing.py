@@ -23,8 +23,8 @@ from osv import fields, osv
 from tools.translate import _
 
 
-class wizard_account_end_year_closing(osv.osv_memory):
-    _name="wizard.account.end.year.closing"
+class wizard_account_year_end_closing(osv.osv_memory):
+    _name="wizard.account.year.end.closing"
 
     _columns = {
         'fy_id': fields.many2one('account.fiscalyear', "Fiscal Year", required=True, domain=[('state', '=', 'draft')]),
@@ -49,13 +49,13 @@ class wizard_account_end_year_closing(osv.osv_memory):
 
     def default_get(self, cr, uid, vals, context=None):
         self._check_before_process(cr, uid, False, context=context)
-        super(wizard_account_end_year_closing, self).default_get(cr, uid, vals, context=context)
+        super(wizard_account_year_end_closing, self).default_get(cr, uid, vals, context=context)
 
     def btn_close_fy(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         self._check_before_process(cr, uid, ids, context=context)
 
-wizard_account_end_year_closing()
+wizard_account_year_end_closing()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
