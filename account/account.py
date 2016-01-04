@@ -181,7 +181,7 @@ class account_account(osv.osv):
     logger = netsvc.Logger()
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            context=None, count=False):
+            force_no_order=False, context=None, count=False):
         if context is None:
             context = {}
         pos = 0
@@ -206,13 +206,13 @@ class account_account(osv.osv):
 
         if context and context.has_key('consolidate_children'): #add consolidated children of accounts
             ids = super(account_account, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+                order, force_no_order=force_no_order, context=context, count=count)
             for consolidate_child in self.browse(cr, uid, context['account_id'], context=context).child_consol_ids:
                 ids.append(consolidate_child.id)
             return ids
 
         return super(account_account, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+                order, force_no_order=force_no_order, context=context, count=count)
 
     def _get_children_and_consol(self, cr, uid, ids, context=None):
         #this function search for all the children and all consolidated children (recursively) of the given account ids
@@ -1808,7 +1808,8 @@ class account_tax(osv.osv):
             vals.update({'amount': 0.0})
         return super(account_tax, self).write(cr, uid, ids, vals, context=context)
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False):
         journal_pool = self.pool.get('account.journal')
 
         if context and context.has_key('type'):
@@ -1822,7 +1823,8 @@ class account_tax(osv.osv):
             if journal.type in ('sale', 'purchase'):
                 args += [('type_tax_use','in',[journal.type,'all'])]
 
-        return super(account_tax, self).search(cr, uid, args, offset, limit, order, context, count)
+        return super(account_tax, self).search(cr, uid, args, offset, limit,
+                order, force_no_order, context, count)
 
     def name_get(self, cr, uid, ids, context=None):
         if not ids:

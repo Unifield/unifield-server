@@ -76,7 +76,7 @@ class account_entries_report(osv.osv):
     _order = 'date desc'
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            context=None, count=False):
+            force_no_order=False, context=None, count=False):
         fiscalyear_obj = self.pool.get('account.fiscalyear')
         period_obj = self.pool.get('account.period')
         for arg in args:
@@ -91,8 +91,10 @@ class account_entries_report(osv.osv):
         for a in [['period_id','in','current_year'], ['period_id','in','current_period']]:
             if a in args:
                 args.remove(a)
-        return super(account_entries_report, self).search(cr, uid, args=args, offset=offset, limit=limit, order=order,
-            context=context, count=count)
+        return super(account_entries_report, self).search(cr, uid, args=args,
+                offset=offset, limit=limit, order=order,
+                force_no_order=force_no_order, context=context,
+                count=count)
 
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
         if context is None:

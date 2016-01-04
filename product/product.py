@@ -487,7 +487,9 @@ class product_product(osv.osv):
         for product in self.browse(cr, uid, ids, context=context):
             tmpl_id = product.product_tmpl_id.id
             # Check if the product is last product of this template
-            other_product_ids = self.search(cr, uid, [('product_tmpl_id', '=', tmpl_id), ('id', '!=', product.id)], context=context)
+            other_product_ids = self.search(cr, uid, [('product_tmpl_id', '=',
+                tmpl_id), ('id', '!=', product.id)], force_no_order=True,
+                limit=1, context=context)
             if not other_product_ids:
                  unlink_product_tmpl_ids.append(tmpl_id)
             unlink_ids.append(product.id)
@@ -772,7 +774,9 @@ class product_supplierinfo(osv.osv):
                 price = currency_pool.compute(cr, uid, pricelist_pool.browse(cr, uid, pricelist_id).currency_id.id, currency_id, price)
 
             # Compute price from supplier pricelist which are in Supplier Information
-            supplier_info_ids = self.search(cr, uid, [('name','=',supplier.id),('product_id','=',product_id)])
+            supplier_info_ids = self.search(cr, uid,
+                    [('name','=',supplier.id),('product_id','=',product_id)],
+                    force_no_order=True)
             if supplier_info_ids:
                 cr.execute('SELECT * ' \
                     'FROM pricelist_partnerinfo ' \

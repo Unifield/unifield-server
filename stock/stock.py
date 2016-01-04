@@ -1170,11 +1170,13 @@ class stock_picking(osv.osv):
         
         move_obj = self.pool.get('stock.move')
 
-        moves = move_obj.search(cr, uid, [('picking_id', 'in', ids)])
+        moves = move_obj.search(cr, uid, [('picking_id', 'in', ids)],
+                force_no_order=True)
         if not moves:
             return True
 
-        if move_obj.search(cr, uid, [('id', 'in', moves), ('state', 'not in', ['cancel', 'done'])]):
+        if move_obj.search(cr, uid, [('id', 'in', moves), ('state', 'not in',
+            ['cancel', 'done'])], force_no_order=True):
             return False
 
         if move_obj.search(cr, uid, [('id', 'in', moves), ('state', '=', 'done')], count=1) > 0:

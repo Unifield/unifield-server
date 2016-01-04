@@ -46,7 +46,8 @@ class account_analytic_line(osv.osv):
     }
     _order = 'date desc'
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False):
         if context is None:
             context = {}
         if context.get('from_date',False):
@@ -54,7 +55,7 @@ class account_analytic_line(osv.osv):
         if context.get('to_date',False):
             args.append(['date','<=', context['to_date']])
         return super(account_analytic_line, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+                order, force_no_order=force_no_order, context=context, count=count)
 
     def _check_company(self, cr, uid, ids, context=None):
         lines = self.browse(cr, uid, ids, context=context)
