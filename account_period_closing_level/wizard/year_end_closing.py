@@ -27,8 +27,10 @@ class wizard_account_year_end_closing(osv.osv_memory):
     _name="wizard.account.year.end.closing"
 
     _columns = {
-        'fy_id': fields.many2one('account.fiscalyear', "Fiscal Year", required=True, domain=[('state', '=', 'draft')]),
-        'has_move_regular_bs_to_0': fields.boolean("Move regular B/S account to 0"),
+        'fy_id': fields.many2one('account.fiscalyear', "Fiscal Year",
+            required=True, domain=[('state', '=', 'draft')]),
+        'has_move_regular_bs_to_0': fields.boolean(
+                "Move regular B/S account to 0"),
         'has_book_pl_results': fields.boolean("Book the P&L results"),
     }
 
@@ -38,18 +40,22 @@ class wizard_account_year_end_closing(osv.osv_memory):
     }
 
     def _check_before_process(self, cr, uid, ids, context=None):
-        level = self.pool.get('res.users').browse(cr, uid, [uid], context=context)[0].company_id.instance_id.level
+        level = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id.level
         if level not in ('section', 'coordo', ):
-            raise osv.except_osv(_('Warning'), _('You can only close FY at HQ or Coordo'))
+            raise osv.except_osv(_('Warning'),
+                _('You can only close FY at HQ or Coordo'))
 
         if ids:
             rec = self.browse(cr, uid, ids, context=context)[0]
             if fy_id.state != 'draft':
-                raise osv.except_osv(_('Warning'), _('You can only close an opened FY'))
+                raise osv.except_osv(_('Warning'),
+                    _('You can only close an opened FY'))
 
     def default_get(self, cr, uid, vals, context=None):
         self._check_before_process(cr, uid, False, context=context)
-        super(wizard_account_year_end_closing, self).default_get(cr, uid, vals, context=context)
+        super(wizard_account_year_end_closing, self).default_get(cr, uid, vals,
+            context=context)
 
     def btn_close_fy(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):

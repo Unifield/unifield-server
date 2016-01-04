@@ -19,13 +19,47 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from osv import osv
 from tools.translate import _
+import calendar
 
 
 class account_year_end_closing(osv.osv_memory):
     _name="account.year.end.closing"
     _auto=False
+
+    # valid special period numbers and their month
+    _period_month_map = { 0: 1, 16: 12, }
+
+
+    def create_periods(self, cr, uid, fy_id, periods_to_create=[0, 16, ],
+        context=None):
+        """
+        create closing special periods 0/16 for given FY
+        :param fy_id: fy id to create periods in
+        """
+        period_numbers = [ pn for pn in periods_to_create \
+            if pn in self._period_month_map.keys() ]
+        fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid, fy_id,
+            context=context)
+        fy_year = fy_rec.date_start[:4]
+        period_year_month = (fy_year, self._period_month_map[pn], )
+
+        for pn in period_numbers:
+            code = "Period %d" % (pn, )
+            vals = {
+                'name': code,
+                'code': code,
+                'number': pn,
+                'special': True,
+                'date_start': '%s-%02d-01' % period_year_month,
+                'date_stop': '%s-%02d-31' % period_year_month,
+                'fiscalyear_id': fy_id,
+                'state': 'created',
+            }
+
+            self.pool.get('account.period').create(cr, uid, vals,
+                context=context)
 
 account_year_end_closing()
 
