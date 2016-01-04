@@ -646,8 +646,7 @@ class res_partner(osv.osv):
 
         return {'value': r}
 
-    def search(self, cr, uid, args=None, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list
         '''
@@ -659,15 +658,14 @@ class res_partner(osv.osv):
 
         # Get all supplier
         tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit,
-                order, force_no_order=force_no_order, context=context, count=count)
+                order, context=context, count=count)
         if not context.get('product_id', False) or 'choose_supplier' not in context or count:
             return tmp_res
         else:
             # Get all supplier in product form
             args.append(('in_product', '=', True))
             res_in_prod = super(res_partner, self).search(cr, uid, args,
-                    offset, limit, order, force_no_order=force_no_order,
-                    context=context, count=count)
+                    offset, limit, order, context=context, count=count)
             new_res = []
 
             # Sort suppliers by sequence in product form

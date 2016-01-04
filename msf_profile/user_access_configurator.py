@@ -783,8 +783,7 @@ class res_groups(osv.osv):
         'is_an_admin_profile': False,
     }
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
         If 'show_invisible' is in context, return only not Visible groups
         '''
@@ -800,7 +799,7 @@ class res_groups(osv.osv):
             args = new_args
 
         return super(res_groups, self).search(cr, uid, args, offset, limit,
-                order, force_no_order=force_no_order, context=context, count=count)
+                order, context=context, count=count)
 
     def _update_inactive(self, cr, uid, ids, vals, context=None):
         '''

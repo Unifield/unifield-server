@@ -52,14 +52,13 @@ class product_supplierinfo(osv.osv):
         
         return super(product_supplierinfo, self).unlink(cr, uid, info_ids, context=context)
     
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if not context:
             context = {}
         
         new_res = [] 
         res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
-                order, force_no_order=force_no_order, context=context, count=count)
+                order, context=context, count=count)
         if count:
             return res
         
@@ -194,13 +193,12 @@ class pricelist_partnerinfo(osv.osv):
         
         return super(pricelist_partnerinfo, self).unlink(cr, uid, info_id, context=context)
     
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if not context:
             context = {}
             
         res = super(pricelist_partnerinfo, self).search(cr, uid, args, offset, limit,
-                order, force_no_order=force_no_order, context=context, count=count)
+                order, context=context, count=count)
         
         new_res = []
         

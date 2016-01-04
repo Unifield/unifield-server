@@ -242,7 +242,7 @@ class analytic_account(osv.osv):
             bad_ids = self.search(cr, uid, [('category', '=',
                 account.get('category', '')), ('|'), ('name', '=ilike',
                     account.get('name', '')), ('code', '=ilike',
-                        account.get('code', ''))], force_no_order=True, limit=2)
+                        account.get('code', ''))], order='NO_ORDER', limit=2)
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
@@ -254,7 +254,7 @@ class analytic_account(osv.osv):
         if not context:
             context = {}
         search_ids = self.search(cr, uid, [('for_fx_gain_loss', '=', True)],
-                force_no_order=True, limit=2)
+                order='NO_ORDER', limit=2)
         if search_ids and len(search_ids) > 1:
             return False
         return True
@@ -404,7 +404,7 @@ class analytic_account(osv.osv):
         trans_obj = self.pool.get('ir.translation')
         trans_ids = trans_obj.search(cr, uid, [('name', '=',
             'account.analytic.account,name'), ('res_id', '=', new_id),],
-            force_no_order=True)
+            order='NO_ORDER')
         trans_obj.unlink(cr, uid, trans_ids)
         return new_id
 
@@ -443,7 +443,7 @@ class analytic_account(osv.osv):
         bad_ids = self.search(cr, uid, [('category', '=',
             new_values.get('category', '')), ('|'), ('name', '=ilike',
                 new_values.get('name', '')), ('code', '=ilike',
-                    new_values.get('code', ''))], force_no_order=True, limit=2)
+                    new_values.get('code', ''))], order='NO_ORDER', limit=2)
         if len(bad_ids) and len(bad_ids) > 1:
             raise osv.except_osv(_('Warning !'), _('You cannot have the same code or name between analytic accounts in the same category!'))
         ######################################################
@@ -457,7 +457,7 @@ class analytic_account(osv.osv):
             trans_obj = self.pool.get('ir.translation')
             trans_ids = trans_obj.search(cr, uid, [('name', '=',
                 'account.analytic.account,name'), ('res_id', 'in', ids)],
-                force_no_order=True)
+                order='NO_ORDER')
             if trans_ids:
                 cr.execute('UPDATE ir_translation SET src = %s WHERE id IN %s', (vals.get('name'), tuple(trans_ids)))
         return res

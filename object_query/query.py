@@ -571,8 +571,7 @@ class ir_fields(osv.osv):
                                                       submenu=submenu)
         
    
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if context is None:
             context = {}
         if 'special_search_id' in context:
@@ -585,7 +584,7 @@ class ir_fields(osv.osv):
                 args.append(('id', 'not in', ids_to_remove))
         
         return super(ir_fields, self).search(cr, uid, args, offset, limit,
-                order, force_no_order, context, count)
+                order, context, count)
     
 ir_fields()
 

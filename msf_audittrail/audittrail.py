@@ -852,12 +852,10 @@ class audittrail_log_line(osv.osv):
 
         return res
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-               force_no_order=False, context={}, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False):
 
         search_ids = super(audittrail_log_line, self).search(cr, uid, args, offset=0,
                                                              limit=None, order=order,
-                                                             force_no_order=force_no_order,
                                                              context=context, count=count)
         # US-313: check if the context provides active_model in order to search for inherited models for other fields, if not just return 
         if 'active_model' not in context:
@@ -875,7 +873,6 @@ class audittrail_log_line(osv.osv):
                         ('res_id', '=', context['active_id'])]
             ids = super(audittrail_log_line, self).search(cr, uid, new_args, offset=0,
                                                           limit=None, order=order,
-                                                          force_no_order=force_no_order,
                                                           context=context, count=count)
             search_ids = search_ids + ids
 
@@ -883,7 +880,6 @@ class audittrail_log_line(osv.osv):
             args_final = [('id', 'in', search_ids)]
             search_ids = super(audittrail_log_line, self).search(cr, uid, args_final, offset=offset,
                                                                  limit=limit, order=order,
-                                                                 force_no_order=force_no_order,
                                                                  context=context, count=count)
         return search_ids
 

@@ -1203,14 +1203,13 @@ class stock_production_lot(osv.osv):
                     ['Type', 'Product']),
                 ]
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
         search function of production lot
         '''
         result = super(stock_production_lot, self).search(cr, uid, args=args,
                 offset=offset, limit=limit, order=order,
-                force_no_order=force_no_order, context=context, count=count)
+                context=context, count=count)
 
         return result
 

@@ -291,8 +291,7 @@ class hr_employee(osv.osv):
                 vals.update({'funding_pool_id': False})
         return {'value': vals}
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-               force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
 
         if not args:
             args = []
@@ -310,7 +309,6 @@ class hr_employee(osv.osv):
                 args += [('active', '=', True)]
         return super(hr_employee, self).search(cr, uid, args, offset=offset,
                                                limit=limit, order=order,
-                                               force_no_order=force_no_order,
                                                context=context, count=count)
 
     def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):

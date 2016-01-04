@@ -239,8 +239,7 @@ class stock_picking(osv.osv):
 
         return {'value': res}
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Take into account all stock_picking with reason_type_id is a children
         '''
@@ -257,7 +256,7 @@ class stock_picking(osv.osv):
 
         return super(stock_picking, self).search(cr, uid, new_args,
                 offset=offset, limit=limit, order=order,
-                force_no_order=force_no_order, context=context, count=False)
+                context=context, count=False)
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -347,8 +346,7 @@ class stock_move(osv.osv):
         return super(stock_move, self).copy(cr, uid, ids, default, context=context)
 
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Take into account all stock_picking with reason_type_id is a children
         '''
@@ -364,7 +362,7 @@ class stock_move(osv.osv):
             new_args.append(new_arg)
 
         return super(stock_move, self).search(cr, uid, new_args, offset=offset,
-                limit=limit, order=order, force_no_order=force_no_order, context=context, count=count)
+                limit=limit, order=order, context=context, count=count)
 
     def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
         res = {}

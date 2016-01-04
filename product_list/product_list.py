@@ -443,8 +443,7 @@ product and can't be deleted"""),
         ),
     ]
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
         Customize the search() method to include the search of products in a specific list
         """
@@ -473,7 +472,7 @@ product and can't be deleted"""),
                     return []
 
         return super(product_product, self).search(cr, uid, args, offset,
-                limit, order, force_no_order, context, count)
+                limit, order, context, count)
 
     def write(self, cr, uid, ids, value, context=None):
         single = False

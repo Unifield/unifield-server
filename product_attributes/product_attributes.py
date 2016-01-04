@@ -56,7 +56,7 @@ class product_status(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid,
-                [('state','in',ids)], force_no_order=True, limit=1)
+                [('state','in',ids)], limit=1, count=True)
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this status because it\'s used at least in one product'))
         return super(product_status, self).unlink(cr, uid, ids, context=context)
@@ -82,7 +82,7 @@ class product_international_status(osv.osv):
         # Raise an error if the status is used in a product
         ids_p = self.pool.get('product.product').search(cr, uid,
                 [('international_status','in',ids)],
-                force_no_order=True, limit=1)
+                limit=1, count=True)
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this product creator because it\'s used at least in one product'))
 
@@ -115,7 +115,7 @@ class product_heat_sensitive(osv.osv):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid,
                 [('heat_sensitive_item','in',ids)],
-                force_no_order=True, limit=1)
+                limit=1, count=True)
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this heat sensitive because it\'s used at least in one product'))
         return super(product_heat_sensitive, self).unlink(cr, uid, ids, context=context)
@@ -136,7 +136,7 @@ class product_cold_chain(osv.osv):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid,
                 [('cold_chain','in',ids)],
-                force_no_order=True, limit=1)
+                limit=1, count=True)
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this cold chain because it\'s used at least in one product'))
         return super(product_cold_chain, self).unlink(cr, uid, ids, context=context)

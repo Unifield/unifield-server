@@ -249,8 +249,7 @@ class account_analytic_line(osv.osv):
             vals['instance_id'] = journal.get('instance_id')[0]
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
         Filtering regarding context
         """
@@ -262,7 +261,7 @@ class account_analytic_line(osv.osv):
                 instance_ids = [instance_ids]
             args.append(('instance_id', 'in', instance_ids))
         return super(account_analytic_line, self).search(cr, uid, args, offset,
-                limit, order, force_no_order=force_no_order, context=context, count=count)
+                limit, order, context=context, count=count)
 
 account_analytic_line()
 
@@ -336,8 +335,7 @@ class account_move_line(osv.osv):
             vals['instance_id'] = journal.get('instance_id')[0]
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
         Filtering regarding context
         """
@@ -349,7 +347,7 @@ class account_move_line(osv.osv):
                 instance_ids = [instance_ids]
             args.append(('instance_id', 'in', instance_ids))
         return super(account_move_line, self).search(cr, uid, args, offset,
-                limit, order, force_no_order=force_no_order, context=context, count=count)
+                limit, order, context=context, count=count)
 
 account_move_line()
 

@@ -29,8 +29,7 @@ class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
     _inherit = 'account.analytic.line'
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            force_no_order=False, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         donor_line_obj = self.pool.get('financing.contract.donor.reporting.line')
         if context is None:
             context = {}
@@ -44,8 +43,7 @@ class account_analytic_line(osv.osv):
                     raise osv.except_osv(_('No Analytic Domain !'),_("This line does not have an analytic domain!"))
                     
         return super(account_analytic_line, self).search(cr, uid, args, offset,
-                limit, order, force_no_order=force_no_order, context=context,
-                count=count)
+                limit, order, context=context, count=count)
 
     def _get_fake(self, cr, uid, ids, *a, **b):
         if isinstance(ids, (int, long)):
