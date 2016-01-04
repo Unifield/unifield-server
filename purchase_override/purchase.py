@@ -201,7 +201,7 @@ class purchase_order(osv.osv):
                         stock_pickings = [stock_pickings]
                     for sp in stock_pickings:
                         inv_ids = inv_obj.search(cursor, user, [('picking_id',
-                            '=', sp)], limit=1)
+                            '=', sp)], force_no_order=True, limit=1)
                         if inv_ids:
                             sp_ids.remove(sp)
                     if sp_ids:
@@ -253,14 +253,14 @@ class purchase_order(osv.osv):
                     sol_ids = sol_obj.search(
                         cr, uid,
                         [('procurement_id', 'in', proc_ids)],
-                        limit=1, context=context)
+                        force_no_order=True, limit=1, context=context)
                     res[po_data['id']]['po_from_ir'] = bool(sol_ids)
                     # po_from_fo
                     sol_ids = sol_obj.search(
                         cr, uid,
                         [('procurement_id', 'in', proc_ids),
                          ('order_id.procurement_request', '=', False)],
-                        limit=1, context=context)
+                        force_no_order=True, limit=1, context=context)
                     res[po_data['id']]['po_from_fo'] = bool(sol_ids)
         return res
 
@@ -1254,7 +1254,7 @@ stock moves which are already processed : '''
                     ('sale_id', '=', l.link_so_id.id),
                     ('type', '=', 'out'),
                     ('state', 'in', ['draft', 'confirmed', 'assigned']),
-                ], limit=1, context=context)
+                ], force_no_order=True, limit=1, context=context)
                 if not out_ids:
                     picking_data = so_obj._get_picking_data(cr, uid, l.link_so_id)
                     out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
@@ -1490,7 +1490,7 @@ stock moves which are already processed : '''
                                     ('sale_id', '=', line.procurement_id.sale_id.id),
                                     ('type', '=', 'out'),
                                     ('state', 'in', ['draft', 'confirmed', 'assigned']),
-                                ], limit=1, context=context)
+                                ], force_no_order=True, limit=1, context=context)
                             if not out_ids:
                                 picking_data = so_obj._get_picking_data(cr, uid, so)
                                 out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
@@ -1718,10 +1718,10 @@ stock moves which are already processed : '''
                                                                  ('procurement_id.state', '!=', 'cancel'),
                                                                  ('order_id.procurement_request', '=', False),
                                                                  ('state', 'not in', ['confirmed', 'done'])],
-                                                                     limit=1, context=context)
+                                                                     force_no_order=True, limit=1, context=context)
 
             all_exp_sol_not_confirmed_ids = exp_sol_obj.search(cr, uid,
-                    [('order_id', 'in', all_so_ids)], limit=1, context=context)
+                    [('order_id', 'in', all_so_ids)], force_no_order=True, limit=1, context=context)
 
             # if any lines exist, we return False
             if all_sol_not_confirmed_ids or all_exp_sol_not_confirmed_ids:
@@ -1838,7 +1838,8 @@ stock moves which are already processed : '''
                     location_id = stock_location_id
                     # Search if this move has been processed
                     backmove_ids = self.pool.get('stock.move').search(cr, uid,
-                            [('backmove_id', '=', move.id)], limit=1)
+                            [('backmove_id', '=', move.id)],
+                            force_no_order=True, limit=1)
                     if move.state != 'done' and not backmove_ids and not move.backmove_id:
                         if move.product_id.type in ('service', 'service_recep'):
                             location_id = cross_id
@@ -1967,7 +1968,7 @@ stock moves which are already processed : '''
         inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [
                     ("type", "=", "inkind"),
                     ('is_current_instance', '=', True)
-                ], limit=1)
+                ])
 
         for order in self.browse(cr, uid, ids):
             if order.order_type == 'purchase_list':
@@ -2555,7 +2556,7 @@ class purchase_order_line(osv.osv):
         if product_id:
             domain = [('product_id', '=', product_id), ('order_id', '=', order_id), ('product_uom', '=', uom_id)]
             # Search if a merged line already exist for the same product, the same order and the same UoM
-            merged_ids = line_obj.search(cr, uid, domain, limit=1, context=context)
+            merged_ids = line_obj.search(cr, uid, domain, context=context)
         else:
             merged_ids = []
 
@@ -2771,7 +2772,7 @@ class purchase_order_line(osv.osv):
 
         other_lines = self.search(cr, uid, [('order_id', '=', order_id),
             ('product_id', '=', product_id), ('product_uom', '=',
-                product_uom)], limit=1, context=context)
+                product_uom)], force_no_order=True, limit=1, context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
 
         if vals.get('origin'):
@@ -2976,7 +2977,7 @@ class purchase_order_line(osv.osv):
         tmp_proc_context = context.get('procurement_request')
         context['procurement_request'] = True
         so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in',
-            ('sourced', 'progress', 'manual'))], limit=1, context=context)
+            ('sourced', 'progress', 'manual'))], context=context)
         context['procurement_request'] = tmp_proc_context
         if so_ids:
             return {'link_so_id': so_ids[0]}
@@ -3082,7 +3083,7 @@ class purchase_order_line(osv.osv):
                 for origin in so_obj.read(cr, uid, origin_ids, ['order_line'], context=context):
                     exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id',
                         '=', origin['id']), ('po_line_id', '!=', line.id)],
-                        limit=1, context=context)
+                        force_no_order=True, limit=1, context=context)
                     if not origin['order_line'] and not exp_sol_ids:
                         so_to_cancel_ids.extend(origin_ids)
 
@@ -3196,7 +3197,7 @@ class purchase_order_line(osv.osv):
 
             if not self.pool.get('sale.order.line.cancel').search(cr, uid, [
                 ('sync_order_line_db_id', '=', line.sync_order_line_db_id),
-            ], limit=1, context=context):
+            ], force_no_order=True, limit=1, context=context):
                 so_to_cancel = self.cancel_sol(cr, uid, [line.id], context=context)
 
             # we want to skip resequencing because unlink is performed on merged purchase order lines
@@ -3212,7 +3213,8 @@ class purchase_order_line(osv.osv):
             if not self.search(cr, uid, [
                 ('order_id.state', '!=', 'split'),
                 ('id', 'not in', ids),
-                ('procurement_id', '=', proc_id)], limit=1, context=context):
+                ('procurement_id', '=', proc_id)], force_no_order=True,
+                limit=1, context=context):
                 proc_obj.action_cancel(cr, uid, [proc_id])
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
@@ -3285,6 +3287,7 @@ class purchase_order_line(osv.osv):
                                                                                     ('valid_till',
                                                                                         '>=',
                                                                                         order.date_order)],
+                                                                                    force_no_order=True,
                                                                                     limit=2, context=context)
             if len(pricelist_ids) > 1:
                 return True
@@ -3337,7 +3340,7 @@ class purchase_order_line(osv.osv):
             else:
                 domain.append(('split_type_sale_order', '=', 'local_purchase_split_sale_order'))
             sale_id = self.pool.get('sale.order').search(cr, uid, domain,
-                    limit=1, context=context)
+                    force_no_order=True, limit=1, context=context)
             if not sale_id:
                 res['warning'] = {'title': _('Warning'),
                                   'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with %s supplier. No FO/IR line will be created for this PO line') % (origin, o_type)}
@@ -3532,9 +3535,9 @@ class purchase_order_line(osv.osv):
             domain_cur = [('currency_id', '=', currency_id)]
             domain_cur.extend(domain)
 
-            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', context=context)
             if not info_prices:
-                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', context=context)
 
             if info_prices:
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
@@ -3615,7 +3618,7 @@ class purchase_order_line(osv.osv):
         order = self.pool.get('purchase.order').browse(cr, uid, order_id, context=context)
         other_lines = self.search(cr, uid, [('id', '!=', fake_id), ('order_id',
             '=', order_id), ('product_id', '=', product_id), ('product_uom',
-                '=', product_uom)], limit=1, context=context)
+                '=', product_uom)], force_no_order=True, limit=1, context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
 
         if not change_price_ok or (other_lines and stages and order.state != 'confirmed' and not context.get('rfq_ok')):
@@ -3812,7 +3815,7 @@ class product_product(osv.osv):
             try:
                 med_nomen = self.pool.get('product.nomenclature').search(cr,
                         uid, [('level', '=', 0), ('name', '=', 'MED')],
-                        limit=1, context=context)[0]
+                        context=context)[0]
             except IndexError:
                 raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
 
@@ -3823,7 +3826,7 @@ class product_product(osv.osv):
             try:
                 log_nomen = self.pool.get('product.nomenclature').search(cr,
                         uid, [('level', '=', 0), ('name', '=', 'LOG')],
-                        limit=1, context=context)[0]
+                        context=context)[0]
             except IndexError:
                 raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
 
@@ -3870,7 +3873,7 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
 
             # Add a check to avoid error in server log
             if not pol_obj.search(cr, uid, [('id', '=', wiz.line_id.id)],
-                    limit=1, context=context):
+                    force_no_order=True, limit=1, context=context):
                 continue
 
             exp_sol_ids = pol_obj.get_exp_sol_ids_from_pol_ids(cr, uid, [wiz.line_id.id], context=context, po_line=wiz.line_id.id)
@@ -3994,7 +3997,8 @@ class purchase_order_cancel_wizard(osv.osv_memory):
             po_ids.remove(order_id)
 
         exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', 'in',
-            po_so_ids), ('po_id', '!=', order_id)], limit=1, context=context)
+            po_so_ids), ('po_id', '!=', order_id)], force_no_order=True,
+            limit=1, context=context)
 
         if not exp_sol_ids and not po_ids:
             return True

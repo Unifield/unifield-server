@@ -116,7 +116,8 @@ class analytic_account(osv.osv):
         'hide_closed_fp': fields.function(_get_active, fnct_search=_search_closed_by_a_fp, type="boolean", method=True, store=False, string="Linked to a soft/hard closed contract?"),
     }
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False):
         """
         FIXME: this method do others things that not have been documented. Please complete here what method do.
         """
@@ -141,7 +142,8 @@ class analytic_account(osv.osv):
                     fp_ids.append(adl.get('funding_pool_ids'))
                 fp_ids = flatten(fp_ids)
                 args[i] = ('id', 'in', fp_ids)
-        return super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return super(analytic_account, self).search(cr, uid, args, offset,
+                limit, order, force_no_order=force_no_order, context=context, count=count)
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -418,7 +418,8 @@ class account_account(osv.osv):
         self._check_date(vals, context=context)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False):
         """
         Filtering regarding context
         """
@@ -429,7 +430,8 @@ class account_account(osv.osv):
             args.append('|')
             args.append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
             args.append(('inactivation_date', '=', False))
-        return super(account_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return super(account_account, self).search(cr, uid, args, offset,
+                limit, order, force_no_order=force_no_order, context=context, count=count)
 
 account_account()
 

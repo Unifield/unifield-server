@@ -377,7 +377,8 @@ class procurement_request(osv.osv):
 
         return super(procurement_request, self).unlink(cr, uid, normal_ids, context=context)
 
-    def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args=None, offset=0, limit=None, order=None,
+            force_no_order=False, context=None, count=False):
         '''
         Adds automatically a domain to search only True sale orders if no procurement_request in context
         '''
@@ -393,7 +394,8 @@ class procurement_request(osv.osv):
         if not context.get('procurement_request', False) and test:
             args.append(('procurement_request', '=', False))
 
-        return super(procurement_request, self).search(cr, uid, args, offset, limit, order, context, count)
+        return super(procurement_request, self).search(cr, uid, args, offset,
+                limit, order, force_no_order, context, count)
 
     def _hook_copy_default(self, cr, uid, *args, **kwargs):
         id = kwargs['id']

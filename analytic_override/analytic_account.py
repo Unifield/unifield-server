@@ -242,7 +242,7 @@ class analytic_account(osv.osv):
             bad_ids = self.search(cr, uid, [('category', '=',
                 account.get('category', '')), ('|'), ('name', '=ilike',
                     account.get('name', '')), ('code', '=ilike',
-                        account.get('code', ''))], limit=2)
+                        account.get('code', ''))], force_no_order=True, limit=2)
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
@@ -254,7 +254,7 @@ class analytic_account(osv.osv):
         if not context:
             context = {}
         search_ids = self.search(cr, uid, [('for_fx_gain_loss', '=', True)],
-                limit=2)
+                force_no_order=True, limit=2)
         if search_ids and len(search_ids) > 1:
             return False
         return True
@@ -402,7 +402,9 @@ class analytic_account(osv.osv):
         # UFTP-83: Add name + context (very important) in order the translation to not display wrong element. This is because context is missing (wrong language)
         self.write(cr, uid, new_id, {'name': name,'code': '%s(copy)' % (account['code'] or '')}, context=context)
         trans_obj = self.pool.get('ir.translation')
-        trans_ids = trans_obj.search(cr, uid, [('name', '=', 'account.analytic.account,name'), ('res_id', '=', new_id)])
+        trans_ids = trans_obj.search(cr, uid, [('name', '=',
+            'account.analytic.account,name'), ('res_id', '=', new_id),],
+            force_no_order=True)
         trans_obj.unlink(cr, uid, trans_ids)
         return new_id
 
@@ -441,7 +443,7 @@ class analytic_account(osv.osv):
         bad_ids = self.search(cr, uid, [('category', '=',
             new_values.get('category', '')), ('|'), ('name', '=ilike',
                 new_values.get('name', '')), ('code', '=ilike',
-                    new_values.get('code', ''))], limit=2)
+                    new_values.get('code', ''))], force_no_order=True, limit=2)
         if len(bad_ids) and len(bad_ids) > 1:
             raise osv.except_osv(_('Warning !'), _('You cannot have the same code or name between analytic accounts in the same category!'))
         ######################################################
@@ -453,7 +455,9 @@ class analytic_account(osv.osv):
         # UFTP-83: Use name as SRC value for translations (to be done after WRITE())
         if vals.get('name', False):
             trans_obj = self.pool.get('ir.translation')
-            trans_ids = trans_obj.search(cr, uid, [('name', '=', 'account.analytic.account,name'), ('res_id', 'in', ids)])
+            trans_ids = trans_obj.search(cr, uid, [('name', '=',
+                'account.analytic.account,name'), ('res_id', 'in', ids)],
+                force_no_order=True)
             if trans_ids:
                 cr.execute('UPDATE ir_translation SET src = %s WHERE id IN %s', (vals.get('name'), tuple(trans_ids)))
         return res
