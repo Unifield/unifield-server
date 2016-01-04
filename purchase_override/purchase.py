@@ -1722,8 +1722,8 @@ stock moves which are already processed : '''
 
             # if any lines exist, we return False
             if exp_sol_obj.search(cr, uid,
-                    [('order_id', 'in', all_so_ids)], limit=1, context=context,
-                    count=True)
+                    [('order_id', 'in', all_so_ids)], order='NO_ORDER',
+                    limit=1, context=context):
                 return False
 
             if sol_obj.search(cr, uid,
@@ -1733,7 +1733,7 @@ stock moves which are already processed : '''
                      ('procurement_id.state', '!=', 'cancel'),
                      ('order_id.procurement_request', '=', False),
                      ('state', 'not in', ['confirmed', 'done'])],
-                    limit=1, context=context, count=True)
+                    limit=1, context=context, count=True):
                 return False
 
         return True
