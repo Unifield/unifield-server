@@ -1722,8 +1722,8 @@ stock moves which are already processed : '''
 
             # if any lines exist, we return False
             if exp_sol_obj.search(cr, uid,
-                    [('order_id', 'in', all_so_ids)], order='NO_ORDER',
-                    limit=1, context=context):
+                    [('order_id', 'in', all_so_ids)], limit=1, context=context,
+                    count=True):
                 return False
 
             if sol_obj.search(cr, uid,
@@ -4008,9 +4008,10 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         if order_id in po_ids:
             po_ids.remove(order_id)
 
-        exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', 'in',
-            po_so_ids), ('po_id', '!=', order_id)], limit=1, context=context,
-            count=True)
+        exp_sol_ids = exp_sol_obj.search(cr, uid,
+                                         [('order_id', 'in', po_so_ids),
+                                          ('po_id', '!=', order_id)],
+                                         limit=1, context=context, count=True)
 
         if not exp_sol_ids and not po_ids:
             return True

@@ -199,6 +199,9 @@ class pricelist_partnerinfo(osv.osv):
             
         res = super(pricelist_partnerinfo, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
+
+        if count:
+            return res
         
         new_res = []
         
