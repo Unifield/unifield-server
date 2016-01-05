@@ -457,10 +457,10 @@ product and can't be deleted"""),
                 prd_domain = set()
                 pl_ids = pl_obj.search(cr, uid, [
                     ('name', a[1], a[2])
-                ], context=context)
+                ], order='NO_ORDER', context=context)
                 pll_ids = pll_obj.search(cr, uid, [
                     ('list_id', 'in', pl_ids),
-                ], context=context)
+                ], order='NO_ORDER', context=context)
                 for line in pll_obj.browse(cr, uid, pll_ids, context=context):
                     prd_domain.add(line.name.id)
 

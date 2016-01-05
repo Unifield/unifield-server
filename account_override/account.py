@@ -425,10 +425,11 @@ class account_account(osv.osv):
         if not context:
             context = {}
         if context.get('filter_inactive_accounts'):
-            args.append(('activation_date', '<=', datetime.date.today().strftime('%Y-%m-%d')))
-            args.append('|')
-            args.append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
-            args.append(('inactivation_date', '=', False))
+            args_append = args.append
+            args_append(('activation_date', '<=', datetime.date.today().strftime('%Y-%m-%d')))
+            args_append('|')
+            args_append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
+            args_append(('inactivation_date', '=', False))
         return super(account_account, self).search(cr, uid, args, offset,
                 limit, order, context=context, count=count)
 
