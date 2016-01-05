@@ -272,7 +272,7 @@ class purchase_order(osv.osv):
         for po_r in self.read(cr, uid, ids, ['dest_partner_ids'], context=context):
             names = ''
             if po_r['dest_partner_ids']:
-                name_tuples = res.partner_obj.name_get(cr, uid, po_r['dest_partner_ids'], context=context)
+                name_tuples = res_partner_obj.name_get(cr, uid, po_r['dest_partner_ids'], context=context)
                 if name_tuples:
                     names_list = [nt[1] for nt in name_tuples]
                     names = "; ".join(names_list)
@@ -842,7 +842,7 @@ class purchase_order(osv.osv):
                 # Raise an error if no analytic distribution found
                 if not distrib:
                     # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
-                    if not po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') and not po.push_fo:
+                    if po.order_type not in ('loan', 'donation_st', 'donation_exp', 'in_kind') and not po.push_fo:
                         raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
                     # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
@@ -2611,9 +2611,9 @@ class purchase_order_line(osv.osv):
             line = self.browse(cr, uid, line_id, context=context)
 
             # Set default values if not pass in values
-            if not 'product_uom' in vals:
+            if 'product_uom' not in vals:
                 tmp_vals.update({'product_uom': line.product_uom.id})
-            if not 'product_qty' in vals:
+            if 'product_qty' not in vals:
                 tmp_vals.update({'product_qty': line.product_qty})
 
             # If the user changed the product or the UoM or both on the PO line
@@ -2896,10 +2896,10 @@ class purchase_order_line(osv.osv):
         if not default:
             default = {}
 
-        if not 'move_dest_id' in default:
+        if 'move_dest_id' not in default:
             default.update({'move_dest_id': False})
 
-        if not 'procurement_id' in default:
+        if 'procurement_id' not in default:
             default.update({'procurement_id': False})
 
         default.update({'sync_order_line_db_id': False})
@@ -3151,7 +3151,6 @@ class purchase_order_line(osv.osv):
                 ir_new_state = 'cancel'
                 lines_to_cancel_ids = []
                 all_lines_resourced = True
-                one_line_not_cancelled = False
 
                 # check if at least one line is cancelled
                 # or all lines cancel and resourced
@@ -3240,7 +3239,6 @@ class purchase_order_line(osv.osv):
         Update the merged line
         '''
         po_obj = self.pool.get('purchase.order')
-        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -3875,8 +3873,6 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
         po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
         sol_obj = self.pool.get('sale.order.line')
-        exp_sol_obj = self.pool.get('expected.sale.order.line')
-        so_obj = self.pool.get('sale.order')
 
         if context is None:
             context = {}
@@ -3936,8 +3932,6 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
         '''
         # Objects
         line_obj = self.pool.get('purchase.order.line')
-        order_wiz_obj = self.pool.get('purchase.order.cancel.wizard')
-        data_obj = self.pool.get('ir.model.data')
         po_obj = self.pool.get('purchase.order')
         so_obj = self.pool.get('sale.order')
 
@@ -4124,7 +4118,7 @@ class res_partner(osv.osv):
         address_obj = self.pool.get('res.partner.address')
         address_ids = address_obj.search(cr, uid, [('partner_id', '=', ids)])
         address_rec = address_obj.read(cr, uid, address_ids, ['type'])
-        res= {}
+        res = {}
         for addr in address_rec:
             res.setdefault(addr['type'], [])
             res[addr['type']].append(addr['id'])
