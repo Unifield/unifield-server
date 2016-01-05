@@ -4390,7 +4390,16 @@ class orm(orm_template):
         offset_str = offset and ' OFFSET %d' % offset or ''
         where_str = where_clause and (" WHERE %s" % where_clause) or ''
 
-        if count:
+        if not order_by and limit==1 and count:
+            # in this case, we only want to know the existence or not of any
+            # element. Return 1 on the first matching element, 0 if there is no
+            # matching
+            select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
+                from_clause, where_str, limit_str, offset_str))
+            cr.execute(select_query, where_clause_params)
+            res = cr.fetchall()
+            return len(res)
+        elif count:
             count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
                 from_clause, where_str, limit_str, offset_str))
             cr.execute(count_query, where_clause_params)
