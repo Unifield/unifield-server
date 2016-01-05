@@ -581,16 +581,17 @@ class Entity(osv.osv):
         while not last:
             res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
             if res and res[0]:
-                updates_count += updates.unfold_package(cr, uid, res[1], context=context)
-                if logger and updates_count:
-                    if logger_index is None: logger_index = logger.append()
-                    logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
-                    logger.write()
+                if res[1]: check_md5(res[3], res[1], _('method get_update'))
+                for package in (res[1] or []):
+                    updates_count += updates.unfold_package(cr, uid, package, context=context)
+                    if logger and updates_count:
+                        if logger_index is None: logger_index = logger.append()
+                        logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
+                        logger.write()
+                    if package:
+                        offset = package['offset']
+                        self.write(cr, uid, entity.id, {'update_offset' : offset}, context=context)
                 last = res[2]
-                if res[1]:
-                    check_md5(res[3], res[1], _('method get_update'))
-                    offset = res[1]['offset']
-                    self.write(cr, uid, entity.id, {'update_offset' : offset}, context=context)
             elif res and not res[0]:
                 raise Exception, res[1]
             cr.commit()
@@ -909,7 +910,6 @@ class Entity(osv.osv):
 
 
         return True
-
 
     @sync_process()
     def sync_withbackup(self, cr, uid, context=None):
