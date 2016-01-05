@@ -668,6 +668,15 @@ class product_attributes(osv.osv):
                 return False
         return True
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        Ignore the leading whitespaces on the product default_code
+        """
+        if 'default_code' in vals:
+            vals['default_code'] = vals['default_code'].strip()
+
+        return super(product_attributes, self).create(cr, uid, vals, context=context)
+
     def write(self, cr, uid, ids, vals, context=None):
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
@@ -679,7 +688,10 @@ class product_attributes(osv.osv):
             if vals['default_code'] == 'XXX':
                 vals.update({'duplicate_ok': True})
             else:
-                vals.update({'duplicate_ok': False})
+                vals.update({
+                    'duplicate_ok': False,
+                    'default_code': vals['default_code'].strip(),
+                })
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
