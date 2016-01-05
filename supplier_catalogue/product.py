@@ -606,7 +606,7 @@ class res_currency(osv.osv):
             partner_ids = partner_obj.search(cr, uid, [('partner_type', '=',
                 'section')], order='NO_ORDER', context=context)
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
-            res_reference = ['res.partner,%s' %/ x for x in partner_ids]
+            res_reference = ['res.partner,%s' % x for x in partner_ids]
             property_ids = []
             if value_reference and res_reference:
                 property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
