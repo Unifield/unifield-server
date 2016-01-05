@@ -513,7 +513,8 @@ class product_pricelist(osv.osv):
         '''
         ids = []
         if name:
-            currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', operator, name)], context=context)
+            currency_ids = self.pool.get('res.currency').search(cr, uid,
+                    [('name', operator, name)], order='NO_ORDER', context=context)
             ids = self.search(cr, uid, [('currency_id', 'in', currency_ids)] + (args or []))
             
         return self.name_get(cr, uid, ids)          
@@ -600,10 +601,12 @@ class res_currency(osv.osv):
 
         # Check if Inter-section partners used one of these currencies
         if 'is_section_currency' in values and not values['is_section_currency']:
-            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
-            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'section')], context=context)
+            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id',
+                'in', ids)], order='NO_ORDER', context=context)
+            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=',
+                'section')], order='NO_ORDER', context=context)
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
-            res_reference = ['res.partner,%s' % x for x in partner_ids]
+            res_reference = ['res.partner,%s' %/ x for x in partner_ids]
             property_ids = []
             if value_reference and res_reference:
                 property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
@@ -619,8 +622,10 @@ class res_currency(osv.osv):
 
         # Check if ESC partners used one of these currencies
         if 'is_esc_currency' in values and not values['is_esc_currency']:
-            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
-            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'esc')], context=context)
+            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id',
+                'in', ids)], order='NO_ORDER', context=context)
+            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=',
+                'esc')], order='NO_ORDER', context=context)
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
             res_reference = ['res.partner,%s' % x for x in partner_ids]
             property_ids = []

@@ -484,7 +484,7 @@ product and can't be deleted"""),
             xxx_ids = self.search(cr, uid, [
                 ('id', 'in', ids),
                 ('default_code', '=', 'XXX'),
-            ], context=context)
+            ], order='NO_ORDER', context=context)
             if xxx_ids:
                 self.write(cr, uid, xxx_ids, {
                     'xmlid_code': value['default_code'],

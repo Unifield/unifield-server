@@ -594,7 +594,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ('order_id.state', 'not in', ['draft', 'cancel']),
             ('order_id.import_in_progress', '=', False),
             ('product_uom_qty', '<=', 0.00),
-        ], count=True, context=context)
+        ], limit=1, count=True, context=context)
 
         if line_ids:
             return False
@@ -919,12 +919,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 non_mts_line = line_obj.search(cr, uid, [
                     ('order_id', '=', order.id),
                     ('type', '!=', 'make_to_stock'),
-                ], context=context)
+                ], order='NO_ORDER', context=context)
                 if non_mts_line:
                     line_obj.write(cr, uid, non_mts_line, {'type': 'make_to_stock'}, context=context)
 
             # 4/ Check if the currency of the order is compatible with the currency of the partner
-            pricelist_ids = pricelist_obj.search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
+            pricelist_ids = pricelist_obj.search(cr, uid, [('in_search', '=',
+                order.partner_id.partner_type)], order='NO_ORDER', context=context)
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(
                     _('Error'),
@@ -972,7 +973,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'split_order': _('In Progress (%s/%s)') % (line_done, line_total),
             }, context=context)
 
-            pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', so.partner_id.partner_type)], context=context)
+            pricelist_ids = self.pool.get('product.pricelist').search(cr, uid,
+                    [('in_search', '=', so.partner_id.partner_type)],
+                    order='NO_ORDER', context=context)
             if so.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
             # links to split Fo
@@ -1136,7 +1139,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # objects
         sol_obj = self.pool.get('sale.order.line')
         # get all corresponding sale order lines
-        sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+        sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)],
+                order='NO_ORDER', context=context)
         # set lines state to done
         if sol_ids:
             sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
@@ -1644,7 +1648,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             move_obj.action_cancel(cr, uid, [line.procurement_id.move_id.id], context=context)
 
                         if line.type == 'make_to_order':
-                            pol_update_ids = pol_obj.search(cr, uid, [('procurement_id', '=', line.procurement_id.id)], context=context)
+                            pol_update_ids = pol_obj.search(cr, uid,
+                                    [('procurement_id', '=', line.procurement_id.id)],
+                                    order='NO_ORDER', context=context)
                             pol_obj.write(cr, uid, pol_update_ids, {'move_dest_id': move_id}, context=context)
 
                 product_id = False
@@ -1767,7 +1773,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                          ('order_id', '=', order.id),
                          ('invoiced', '=', False),
                          ('state', 'not in', ['cancel', 'draft']),
-                    ], context=context)
+                    ], limit=1, count=True, context=context)
 
                 val.update({
                     'state': order.order_policy and manual_lines and 'manual' or 'progress',
@@ -1780,7 +1786,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                'prepare_picking': _('Done'),
             }, context=context)
             prog_obj = self.pool.get('sale.order.sourcing.progress')
-            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order.id)], context=context)
+            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order.id)],
+                    order='NO_ORDER', context=context)
             prog_obj.write(cr, uid, prog_ids, {
                 'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
             }, context=context)
@@ -2003,7 +2010,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             line_to_write = sol_obj.search(cr, uid, [
                 ('order_id', '=', order.id),
                 ('confirmed_delivery_date', '=', False),
-            ], context=context)
+            ], order='NO_ORDER', context=context)
 
             if line_to_write:
                 sol_obj.write(cr, uid, line_to_write, {
@@ -2013,7 +2020,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if (order.partner_id.partner_type == 'internal' and order.order_type == 'regular') or \
                order.order_type in ['donation_exp', 'donation_st', 'loan']:
                 o_write_vals['order_policy'] = 'manual'
-                lines = sol_obj.search(cr, uid, [('order_id', '=', order.id)], context=context)
+                lines = sol_obj.search(cr, uid, [('order_id', '=', order.id)],
+                        order='NO_ORDER', context=context)
 
 
             # flag to prevent the display of the sale order log message
@@ -2086,7 +2094,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'prepare_picking': _('Done'),
             }, context=context)
             prog_obj = self.pool.get('sale.order.sourcing.progress')
-            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order.id)], context=context)
+            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order.id)],
+                    order='NO_ORDER', context=context)
             prog_obj.write(cr, uid, prog_ids, {
                 'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
             }, context=context)
@@ -2130,7 +2139,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 '|',
                 ('procurement_id', '=', 'False'),
                 ('procurement_id.state', '!=', 'cancel'),
-            ], count=True, context=context)
+            ], limit=1, count=True, context=context)
 
             if line_error:
                 return False
@@ -2165,7 +2174,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 ('order_id', '=', fo.id),
                 ('id', 'not in', line_ids),
                 ('state', 'not in', ['cancel', 'done']),
-            ], context=context)
+            ], limit=1, count=True, context=context)
             if remain_lines:
                 res[fo.id] = False
                 continue
@@ -2178,7 +2187,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if context.get('tl_ids'):
                 exp_domain.append(('tender_id', 'not in', context.get('tl_ids')))
 
-            if exp_sol_obj.search(cr, uid, exp_domain, context=context):
+            if exp_sol_obj.search(cr, uid, exp_domain, limit=1, count=True, context=context):
                 res[fo.id] = False
                 continue
 
@@ -2731,7 +2740,7 @@ class sale_order_line(osv.osv):
                     ('id', 'in', ids),
                     ('order_id.state', '!=', 'cancel'),
                     ('product_uom_qty', '<=', 0.00),
-                ], count=True, context=context)
+                ], limit=1, count=True, context=context)
             elif 'product_uom_qty' in vals:
                 empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
             if empty_lines:

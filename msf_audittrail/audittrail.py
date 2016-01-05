@@ -362,7 +362,8 @@ class ir_module(osv.osv):
                                                     ('src', '=', src),
                                                     ('name', '=', 'ir.actions.act_window,name'),
                                                     ('value', '=', trans),
-                                                    ('res_id', '=', act)], context=context)
+                                                    ('res_id', '=', act)],
+                                                    limit=1, count=True, context=context)
                     if not exist:
                         tr_obj.create(cr, uid, {'lang': lang,
                                                 'src': src,
@@ -504,7 +505,9 @@ class audittrail_rule(osv.osv):
             # End Loop
 
         # Check if an export model already exist for audittrail.rule
-        export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=', 'Log Lines'), ('resource', '=', 'audittrail.log.line')])
+        export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=',
+            'Log Lines'), ('resource', '=', 'audittrail.log.line')], limit=1,
+            count=True)
         if not export_ids:
             export_id = self.pool.get('ir.exports').create(cr, uid, {'name': 'Log Lines',
                                                                      'resource': 'audittrail.log.line'})
@@ -589,7 +592,7 @@ class audittrail_rule(osv.osv):
                 domain = eval(rule.domain_filter)
             if domain:
                 new_dom = ['&', ('id', 'in', obj_ids)] + domain
-                res_ids = obj.search(cr, uid, new_dom)
+                res_ids = obj.search(cr, uid, new_dom, order='NO_ORDER')
                 if not res_ids:
                     continue
 
