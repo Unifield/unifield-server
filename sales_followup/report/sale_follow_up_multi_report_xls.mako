@@ -199,7 +199,8 @@
             <Cell ss:StyleID="ssCellBlue" ss:MergeAcross="2"><Data ss:Type="String">${r.partner_id and r.partner_id.name or '-'|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String">${_('Address:')|x}</Data></Cell>
+            <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Address:')|x}</Data></Cell>
+            <Cell ss:StyleID="ssCellBlue"><Data ss:Type="String">${r.company_id.partner_id.name or '-'|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date start:')|x}</Data></Cell>
             % if r.start_date not in (False, 'False'):
@@ -209,7 +210,8 @@
             % endif
         </Row>
         <Row>
-            <Cell ss:StyleID="ssCellBlue" ss:MergeAcross="2"><Data ss:Type="String">${r.company_id.partner_id.name or '-'|x}</Data></Cell>
+            <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="ssCellBlue"><Data ss:Type="String">${r.company_id.partner_id.address[0].street or ''|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date end:')|x}</Data></Cell>
             % if r.end_date not in (False, 'False'):
@@ -219,7 +221,8 @@
             % endif
         </Row>
         <Row>
-            <Cell ss:StyleID="ssCellBlue" ss:MergeAcross="2"><Data ss:Type="String">${r.company_id.partner_id.address[0].street or ''|x}</Data></Cell>
+            <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="ssCellBlue"><Data ss:Type="String">${r.company_id.partner_id.address[0].zip|x} ${r.company_id.partner_id.address[0].city|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date of the request:')|x}</Data></Cell>
             % if r.report_date not in (False, 'False'):
@@ -229,13 +232,8 @@
             % endif
         </Row>
         <Row>
-            <Cell ss:StyleID="ssCellBlue" ss:MergeAcross="2"><Data ss:Type="String">${r.company_id.partner_id.address[0].zip|x} ${r.company_id.partner_id.address[0].city|x}</Data></Cell>
-            <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
-        </Row>
-        <Row>
-            <Cell ss:StyleID="ssCellBlue" ss:MergeAcross="2"><Data ss:Type="String">${r.company_id.partner_id.address[0].country_id and r.company_id.partner_id.address[0].country_id.name or ''|x}</Data></Cell>
+            <Cell ss:StyleID="ssCellBlue"><Data ss:Type="String">${r.company_id.partner_id.address[0].country_id and r.company_id.partner_id.address[0].country_id.name or ''|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
