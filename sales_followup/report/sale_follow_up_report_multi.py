@@ -91,7 +91,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and move.location_dest_id.usage == 'customer'
-                s_out = move.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
+                s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
                 if m_type and (ppl or s_out):
                     data = {}
