@@ -168,6 +168,15 @@ class patch_scripts(osv.osv):
             if vals:
                 po_obj.write(cr, uid, [po['id']], vals)
 
+    def us_822_patch(self, cr, uid, *a, **b):
+        # update fiscal year state (new model behaviour-like period state)
+        fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [])
+        if fy_ids:
+            self.pool.get('account.fiscalyear.state').update_state(cr, uid,
+                fy_ids)
+
+        return True
+
     def disable_crondoall(self, cr, uid, *a, **b):
         cron_obj = self.pool.get('ir.cron')
         cron_ids = cron_obj.search(cr, uid, [('doall', '=', True), ('active', 'in', ['t', 'f'])])

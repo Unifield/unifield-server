@@ -24,6 +24,7 @@ from osv import fields, osv
 from tools.translate import _
 import datetime
 from dateutil.relativedelta import relativedelta
+from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
 
 class account_fiscalyear(osv.osv):
     _name = "account.fiscalyear"
@@ -63,6 +64,9 @@ class account_fiscalyear(osv.osv):
         # US-131
         'is_closable': fields.function(_get_is_closable, type='boolean',
             method=True, string='Closable ? (all periods HQ closed)'),
+        # US-822
+        'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',
+            readonly=True),
     }
 
     _defaults = {
