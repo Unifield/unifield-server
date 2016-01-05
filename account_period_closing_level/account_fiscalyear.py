@@ -117,6 +117,11 @@ class account_fiscalyear(osv.osv):
             context = {}
         # First default behaviour
         res = super(account_fiscalyear, self).create(cr, uid, vals, context=context)
+
+        # update fiscalyear state
+        self.pool.get('account.fiscalyear.state').update_state(cr, uid, [res],
+            context=context)
+
         # Prepare some values
         current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
         name = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.name
@@ -124,6 +129,17 @@ class account_fiscalyear(osv.osv):
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('instance_id', '=', current_instance_id)])
         for journal in self.pool.get('account.journal').browse(cr, uid, journal_ids, context=context):
             self.pool.get('account.journal').create_fiscalyear_sequence(cr, uid, res, name, "journal_%s"%(journal.id), vals['date_start'], journal.sequence_id and journal.sequence_id.id or False, context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context = {}
+        res = super(account_fiscalyear, self).write(cr, uid, ids, vals,
+            context=context)
+
+        # update fiscalyear state
+        self.pool.get('account.fiscalyear.state').update_state(cr, uid, ids,
+            context=context)
         return res
 
     def uf_close_fy(self, cr, uid, ids, context=None):
