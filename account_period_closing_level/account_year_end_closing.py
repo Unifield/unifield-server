@@ -24,9 +24,9 @@ from tools.translate import _
 import calendar
 
 
-class account_year_end_closing(osv.osv_memory):
-    _name="account.year.end.closing"
-    _auto=False
+class account_year_end_closing(osv.osv):
+    _name = "account.year.end.closing"
+    _auto = False
 
     # valid special period numbers and their month
     _period_month_map = { 0: 1, 16: 12, }
@@ -62,5 +62,24 @@ class account_year_end_closing(osv.osv_memory):
                 context=context)
 
 account_year_end_closing()
+
+
+class account_period(osv.osv):
+    _inherit = "account.period"
+
+    # period 0 not available for picking in journals/selector/reports
+    # except for following reports: general ledger, trial balance, balance sheet
+    # => always hide Period 0 except if 'show_period_0' found in context
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+        context=None, count=False):
+        if not args:
+            args = []
+        if context is None or 'show_period_0' not in context:
+            args.append(('number', '!=', 0))
+        res = super(account_period, self).search(cr, uid, args, offset=offset,
+            limit=limit, order=order, context=context, count=count)
+        return res
+
+account_period()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
