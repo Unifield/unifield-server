@@ -4380,12 +4380,11 @@ class orm(orm_template):
         query = self._where_calc(cr, user, args, context=context)
         self._apply_ir_rules(cr, user, query, 'read', context=context)
 
-        from_clause, where_clause, where_clause_params = query.get_sql()
-        limit_str = limit and ' LIMIT %d' % limit or ''
-        offset_str = offset and ' OFFSET %d' % offset or ''
-        where_str = where_clause and (" WHERE %s" % where_clause) or ''
-
         if order == 'NO_ORDER' or limit == 1 and count:
+            from_clause, where_clause, where_clause_params = query.get_sql()
+            limit_str = limit and ' LIMIT %d' % limit or ''
+            offset_str = offset and ' OFFSET %d' % offset or ''
+            where_str = where_clause and (" WHERE %s" % where_clause) or ''
             # in case of count and limit == 1, we only want to know the
             # existence or not of any element. Return 1 on the first matching
             # element, 0 if there is no matching
@@ -4396,8 +4395,12 @@ class orm(orm_template):
             if count:
                 return len(res) # here it should be 0 or 1
             return [x[0] for x in res]
-        else:
-            order_by = self._generate_order_by(order, query)
+
+        order_by = self._generate_order_by(order, query)
+        from_clause, where_clause, where_clause_params = query.get_sql()
+        limit_str = limit and ' LIMIT %d' % limit or ''
+        offset_str = offset and ' OFFSET %d' % offset or ''
+        where_str = where_clause and (" WHERE %s" % where_clause) or ''
 
         if count:
             count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
