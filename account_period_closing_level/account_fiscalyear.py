@@ -41,19 +41,23 @@ class account_fiscalyear(osv.osv):
         level = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id.instance_id.level
 
-        # check level, FY state, and FY's periods (special ones too) matching
+        # check matching of:
+        # - instance level
+        # - FY state
+        # - periods, with special ones too except those for year end closing
         for fy in self.browse(cr, uid, ids, context=context):
+            mission = level == 'coordo' and fy.state == 'draft' \
+                and all([ p.state in ('mission-closed', 'done') \
+                    for p in fy.period_ids if p.number not in (0, 16, )]) \
+                or False
+            hq = level == 'section' and fy.state == 'mission-closed' \
+                and all([ p.state == 'done' \
+                    for p in fy.period_ids if p.number not in (0, 16, )]) \
+                or False
+
             res[fy.id] = {
-                'is_mission_closable': level == 'coordo' \
-                    and fy.state == 'draft' \
-                    and all([
-                        p.state in ('mission-closed', 'done') \
-                        for p in fy.period_ids ]) \
-                    or False,
-                'is_hq_closable': level == 'section' \
-                    and fy.state == 'mission-closed' \
-                    and all([ p.state == 'done' for p in fy.period_ids ]) \
-                    or False,
+                'is_mission_closable': mission,
+                'is_hq_closable': hq,
                 'can_reopen_mission': level == 'coordo' \
                     and fy.state == 'mission-closed' or False,
             }

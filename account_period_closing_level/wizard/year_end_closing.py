@@ -53,8 +53,12 @@ class wizard_account_year_end_closing(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         rec = self.browse(cr, uid, ids[0], context=context)
-        self.pool.get('account.year.end.closing').check_before_closing_process(
+        ayec_obj = self.pool.get('account.year.end.closing')
+
+        ayec_obj.check_before_closing_process(
             cr, uid, fy_id=rec.fy_id, context=context)
+        ayec_obj.report_bs_balance_to_next_fy(cr, uid, rec.fy_id,
+            context=context)
         return {}
 
 wizard_account_year_end_closing()
