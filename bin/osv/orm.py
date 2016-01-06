@@ -2322,6 +2322,7 @@ class orm_memory(orm_template):
         if limit == 1 and count:
             order = ''
 
+        # in this case it is specified that no ordering is wanted
         if order == 'NO_ORDER':
             order = ''
 

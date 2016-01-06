@@ -55,7 +55,8 @@ class ir_attachment(osv.osv):
             ima.check(cr, uid, model, mode, context=context)
             self.pool.get(model).check_access_rule(cr, uid, mids, mode, context=context)
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+            context=None, count=False):
         ids = super(ir_attachment, self).search(cr, uid, args, offset=offset,
                                                 limit=limit, order=order,
                                                 context=context, count=False)

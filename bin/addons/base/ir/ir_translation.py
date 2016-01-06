@@ -96,9 +96,9 @@ class ir_translation(osv.osv):
     def _get_ids(self, cr, uid, name, tt, lang, ids):
         translations = dict.fromkeys(ids, False)
         if ids:
-            cr.execute('select res_id,value ' \
-                    'from ir_translation ' \
-                    'where lang=%s ' \
+            cr.execute('SELECT res_id,value ' \
+                    'FROM ir_translation ' \
+                    'WHERE lang=%s ' \
                         'and type=%s ' \
                         'and name=%s ' \
                         'and res_id IN %s',
@@ -111,9 +111,9 @@ class ir_translation(osv.osv):
     def _get_ids_dict(self, cr, uid, name, tt, lang, ids):
         translation_dict = dict.fromkeys(ids, None)
         if ids:
-            cr.execute('select id, res_id,value ' \
-                    'from ir_translation ' \
-                    'where lang=%s ' \
+            cr.execute('SELECT id, res_id,value ' \
+                    'FROM ir_translation ' \
+                    'WHERE lang=%s ' \
                         'and type=%s ' \
                         'and name=%s ' \
                         'and res_id IN %s',
