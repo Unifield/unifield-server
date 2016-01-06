@@ -54,8 +54,11 @@ class wizard_account_year_end_closing(osv.osv_memory):
 
     def default_get(self, cr, uid, vals, context=None):
         self._check_before_process(cr, uid, False, context=context)
-        super(wizard_account_year_end_closing, self).default_get(cr, uid, vals,
-            context=context)
+        res = super(wizard_account_year_end_closing, self).default_get(cr, uid,
+            vals, context=context)
+        if context:
+            res['fy_id'] = context.get('fy_id', False)
+        return res
 
     def btn_close_fy(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):

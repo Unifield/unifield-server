@@ -31,7 +31,6 @@ class account_fiscalyear(osv.osv):
     _inherit = "account.fiscalyear"
 
     def _get_is_closable(self, cr, uid, ids, field_names, args, context=None):
-        # US-131: closable if all periods HQ closed (special ones too)
         res = {}
         if not ids:
             return res
@@ -40,37 +39,38 @@ class account_fiscalyear(osv.osv):
 
         level = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id.instance_id.level
-        if level != 'section':
-            # not at HQ level: FY not closable
-            for id in ids:
-                res[id] = False
-            return res
 
-        # check:
-        # - FY is not already closed
-        # - all FY's periods are HQ closed (state 'done') (special ones too)
-        for br in self.browse(cr, uid, ids, context=context):
-            closable = False
-
-            if br.state != 'done':
-                closable = all([ True if p.state == 'done' else False \
-                    for p in br.period_ids ])
-
-            res[br.id] = closable
+        # check level, FY state, and FY's periods (special ones too) matching
+        for fy in self.browse(cr, uid, ids, context=context):
+            res[fy.id] = {
+                'is_mission_closable': level == 'coordo' \
+                    and fy.state == 'draft' \
+                    and all([
+                        p.state in ('mission-closed', 'done') \
+                        for p in fy.period_ids ]) \
+                    or False,
+                'is_hq_closable': level == 'section' \
+                    and fy.state == 'mission-closed' \
+                    and all([ p.state == 'done' for p in fy.period_ids ]) \
+                    or False,
+            }
 
         return res
 
     _columns = {
-        # US-131
-        'is_closable': fields.function(_get_is_closable, type='boolean',
-            method=True, string='Closable ? (all periods HQ closed)'),
-        # US-822
         'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',
             readonly=True),
+        'is_mission_closable': fields.function(_get_is_closable, type='boolean',
+            method=True, multi="closable",
+            string='Mission Closable ? (all periods Mission closed)'),
+        'is_hq_closable': fields.function(_get_is_closable, type='boolean',
+            method=True, multi="closable",
+            string='HQ Closable ? (all periods HQ closed)'),
     }
 
     _defaults = {
-        'is_closable': False,
+        'is_mission_closable': False,
+        'is_hq_closable': False,
     }
 
     def create_period(self,cr, uid, ids, context=None, interval=1):
@@ -142,25 +142,35 @@ class account_fiscalyear(osv.osv):
             context=context)
         return res
 
-    def uf_close_fy(self, cr, uid, ids, context=None):
-        """
-        US-131: Close FY(s) at HQ level: just set state to 'done'
-        (to prevent use of FY(s) in many2one fields)
-        """
+    def _close_fy(self, cr, uid, ids, context=None):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+        if context is None:
+            context = {}
+        fy_id = ids[0]  # active form's FY
 
-        for r in self.read(cr, uid, ids, ['is_closable', ], context=context):
-            if not r['is_closable']:
-                raise osv.except_osv(_("Warning"),
-                    _("Fiscal Year can not be closed. Aborted." \
-                        " (All periods must be HQ closed)"))
+        # open year end wizard
+        context['fy_id'] = fy_id
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+            'account_period_closing_level',
+            'wizard_view_account_year_end_closing')[1]
+        return {
+			'name': 'Close the fiscal year',
+			'type': 'ir.actions.act_window',
+			'res_model': 'wizard.account.year.end.closing',
+			'view_type': 'form',
+			'view_mode': 'form',
+            'view_id': [view_id],
+			'target': 'new',
+			'context': context,
+        }
 
-        self.write(cr, uid, ids, { 'state': 'done' }, context=context)
-        return res
+    def uf_mission_close_fy(self, cr, uid, ids, context=None):
+        return self._close_fy(cr, uid, ids, context=context)
+
+    def uf_hq_close_fy(self, cr, uid, ids, context=None):
+        return self._close_fy(cr, uid, ids, context=context)
 
 account_fiscalyear()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

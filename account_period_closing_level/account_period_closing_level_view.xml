@@ -14,11 +14,19 @@
                     <field name="end_journal_period_id" position="replace"/>
 
                     <xpath expr="//group[2]" position="after">
-                        <field name="is_closable" invisible="1" />
+                        <field name="is_mission_closable" invisible="1" />
                         <group
-                            attrs="{'invisible': [('is_closable', '=', False)]}">
-                            <button name="uf_close_fy" type="object"
-                                string="Close (HQ)" icon="gtk-go-forward"/>
+                            attrs="{'invisible': [('is_mission_closable', '=', False)]}">
+                            <button name="uf_mission_close_fy" type="object"
+                                string="Mission close the fiscal year"
+                                icon="gtk-go-forward"/>
+                        </group>
+                        <field name="is_hq_closable" invisible="1" />
+                        <group
+                            attrs="{'invisible': [('is_hq_closable', '=', False)]}">
+                            <button name="uf_hq_close_fy" type="object"
+                                string="HQ close the fiscal year"
+                                icon="gtk-go-forward"/>
                         </group>
                     </xpath>
                 </data>
