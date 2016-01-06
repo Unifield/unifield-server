@@ -310,7 +310,7 @@ class Database(BaseController):
                 return self.restore()
         try:
             if is_server_local():
-                newfile = f = NamedTemporaryFile(delete=False)
+                newfile = NamedTemporaryFile(delete=False)
                 shutil.copyfileobj(filename.file, newfile)
                 filename = newfile.name
                 newfile.close()
