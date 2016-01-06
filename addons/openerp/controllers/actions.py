@@ -175,7 +175,7 @@ def execute_report(name, **data):
     try:
         ctx = dict(rpc.session.context)
         ctx.update(datas.get('context', {}))
-        if is_server_local:
+        if is_server_local():
             ctx['report_fromfile'] = 1
         report_id = rpc.session.execute('report', 'report', name, ids, datas, ctx)
         state = False

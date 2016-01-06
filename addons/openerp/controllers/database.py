@@ -97,12 +97,16 @@ class FormBackup(DBForm):
     fields = [openobject.widgets.SelectField(name='dbname', options=get_db_list, label=_('Database:'), validator=validators.String(not_empty=True)),
               openobject.widgets.PasswordField(name='password', label=_('Backup password:'), validator=formencode.validators.NotEmpty())]
 
+class FileField(openobject.widgets.FileField):
+    def adjust_value(self, value, **params):
+        return False
+
 class FormRestore(DBForm):
     name = "restore"
     string = _('Restore database')
     action = '/openerp/database/do_restore'
     submit_text = _('Restore')
-    fields = [openobject.widgets.FileField(name="filename", label=_('File:')),
+    fields = [FileField(name="filename", label=_('File:')),
               openobject.widgets.PasswordField(name='password', label=_('Restore password:'), validator=formencode.validators.NotEmpty()),
               openobject.widgets.TextField(name='dbname', label=_('New database name:'), validator=formencode.validators.NotEmpty(), readonly=1, attrs={'readonly': ''})]
 
