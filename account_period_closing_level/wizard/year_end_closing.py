@@ -39,31 +39,23 @@ class wizard_account_year_end_closing(osv.osv_memory):
         'has_book_pl_results': False,
     }
 
-    def _check_before_process(self, cr, uid, ids, context=None):
-        level = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id.level
-        if level not in ('section', 'coordo', ):
-            raise osv.except_osv(_('Warning'),
-                _('You can only close FY at HQ or Coordo'))
-
-        if ids:
-            rec = self.browse(cr, uid, ids, context=context)[0]
-            if fy_id.state != 'draft':
-                raise osv.except_osv(_('Warning'),
-                    _('You can only close an opened FY'))
 
     def default_get(self, cr, uid, vals, context=None):
-        self._check_before_process(cr, uid, False, context=context)
+        fy_id = context and context.get('fy_id', False) or False
+        self.pool.get('account.year.end.closing').check_before_closing_process(
+            cr, uid, fy_id=fy_id, context=context)
         res = super(wizard_account_year_end_closing, self).default_get(cr, uid,
             vals, context=context)
-        if context:
-            res['fy_id'] = context.get('fy_id', False)
+        res['fy_id'] = fy_id
         return res
 
     def btn_close_fy(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self._check_before_process(cr, uid, ids, context=context)
+        rec = self.browse(cr, uid, ids[0], context=context)
+        self.pool.get('account.year.end.closing').check_before_closing_process(
+            cr, uid, fy_id=rec.fy_id, context=context)
+        return {}
 
 wizard_account_year_end_closing()
 

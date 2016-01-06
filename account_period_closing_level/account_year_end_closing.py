@@ -31,6 +31,22 @@ class account_year_end_closing(osv.osv):
     # valid special period numbers and their month
     _period_month_map = { 0: 1, 16: 12, }
 
+    _journal = 'End of Year'
+    _journal_ib = 'Initial Balances'
+
+
+    def check_before_closing_process(self, cr, uid, fy_id=False, context=None):
+        level = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id.level
+        if level not in ('section', 'coordo', ):
+            raise osv.except_osv(_('Warning'),
+                _('You can only close FY at HQ or Coordo'))
+
+        if fy_id:
+            rec = self.browse(cr, uid, fy_id, context=context)[0]
+            if rec.state != 'draft':
+                raise osv.except_osv(_('Warning'),
+                    _('You can only close an opened FY'))
 
     def create_periods(self, cr, uid, fy_id, periods_to_create=[0, 16, ],
         context=None):
@@ -60,6 +76,59 @@ class account_year_end_closing(osv.osv):
 
             self.pool.get('account.period').create(cr, uid, vals,
                 context=context)
+
+    def get_journal(self, cr, uid, instance_id=False, get_initial_balance=False,
+        context=None):
+        """
+        get coordo end year system journal
+        :param get_initial_balance: True to get 'initial balance' journal
+        :return: journal id
+        """
+        if instance_id:
+            instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+                context=context)[0].company_id.instance_id
+            if instance_rec.level != 'coordo':
+                return False
+            instance_id = instance_rec.id
+
+        domain = [
+            ('instance_id', '=', instance_id),
+            ('code', '=',
+                get_initial_balance and self._journal_ib or self._journal),
+        ]
+        ids = self.pool.get('account.journal').search(cr, uid, domain,
+            context=context)
+        return ids and ids[0] or False
+
+    def create_journals(self, cr, uid, context=None):
+        """
+        create GL coordo year end system journals if missing for the instance
+        """
+        instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id
+        if instance_rec.level != 'coordo':
+            return
+
+        journals = {
+            self._journal: self.get_journal(cr, uid,
+                instance_id=instance_rec.id, context=context),
+            self._journal_ib: self.get_journal(cr, uid,
+                instance_id=instance_rec.id, get_initial_balance=True,
+                context=context),  # init balance
+        }
+
+        for jc in journals:
+            if not journals[jc]:
+                # create missing journal
+                vals = {
+                    'instance_id': instance_rec.id,
+                    'code': jc,
+                    'name': jc,
+                    'type': 'system',  # excluded from selection picker
+                    'analytic_journal_id': False,
+                }
+                self.pool.get('account.journal').create(cr, uid, vals,
+                    context=context)
 
     def delete_year_end_entries(self, cr, uid, context=None):
         """
