@@ -19,6 +19,15 @@ class ConfigurationError(Exception):
 
 DISTRIBUTION_CONFIG = os.path.join('doc', 'openerp-web.cfg')
 FROZEN_DISTRIBUTION_CONFIG = os.path.join('conf', 'openerp-web.cfg')
+OVERRIDE_CONFIG = os.path.join('conf', 'openerp-web-oc.cfg')
+def get_config_override_file():
+    if hasattr(sys, 'frozen'):
+        configfile = os.path.join(openobject.paths.root(), OVERRIDE_CONFIG)
+        if os.path.exists(configfile):
+            return configfile
+
+    return False
+
 def get_config_file():
     if hasattr(sys, 'frozen'):
         configfile = os.path.join(openobject.paths.root(), FROZEN_DISTRIBUTION_CONFIG)
@@ -37,6 +46,8 @@ def start():
     parser = OptionParser(version="%s" % (openobject.release.version))
     parser.add_option("-c", "--config", metavar="FILE", dest="config",
                       help="configuration file", default=get_config_file())
+    parser.add_option("--config-override", metavar="FILE", dest="config_override",
+                      help="override configuration file", default=get_config_override_file())
     parser.add_option("-a", "--address", help="host address, overrides server.socket_host")
     parser.add_option("-p", "--port", help="port number, overrides server.socket_port")
     parser.add_option("--openerp-host", dest="openerp_host", help="overrides openerp.server.host")
@@ -50,13 +61,17 @@ def start():
     if not os.path.exists(options.config):
         raise ConfigurationError(_("Could not find configuration file: %s") %
                                  options.config)
-                                 
+
     app_config = as_dict(options.config)
-    
+    if options.config_override:
+        over_config = as_dict(options.config_override)
+        for section, value in over_config.iteritems():
+            app_config.setdefault(section, {}).update(value)
     openobject.configure(app_config)
+
     if options.static:
         openobject.enable_static_paths()
-    
+
     if options.address:
         cherrypy.config['server.socket_host'] = options.address
     if options.port:
