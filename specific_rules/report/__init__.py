@@ -19,5 +19,6 @@
 #
 ##############################################################################
 
-import report_stock_virtual
 import report_stock_inventory
+import report_stock_virtual
+
