@@ -4378,28 +4378,27 @@ class orm(orm_template):
         self.pool.get('ir.model.access').check(cr, access_rights_uid or user, self._name, 'read', context=context)
 
         query = self._where_calc(cr, user, args, context=context)
-        self._apply_ir_rules(cr, user, query, 'read', context=context)
-        if order == 'NO_ORDER' or limit == 1 and count:
-            order_by=''
-        else:
-            order_by = self._generate_order_by(order, query)
-
         from_clause, where_clause, where_clause_params = query.get_sql()
-
         limit_str = limit and ' LIMIT %d' % limit or ''
         offset_str = offset and ' OFFSET %d' % offset or ''
         where_str = where_clause and (" WHERE %s" % where_clause) or ''
 
-        if not order_by and limit==1 and count:
-            # in this case, we only want to know the existence or not of any
-            # element. Return 1 on the first matching element, 0 if there is no
-            # matching
+        self._apply_ir_rules(cr, user, query, 'read', context=context)
+        if order == 'NO_ORDER' or limit == 1 and count:
+            # in case of count and limit == 1, we only want to know the
+            # existence or not of any element. Return 1 on the first matching
+            # element, 0 if there is no matching
             select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
                 from_clause, where_str, limit_str, offset_str))
             cr.execute(select_query, where_clause_params)
             res = cr.fetchall()
-            return len(res)
-        elif count:
+            if count:
+                return len(res) # here it should be 0 or 1
+            return [x[0] for x in res]
+        else:
+            order_by = self._generate_order_by(order, query)
+
+        if count:
             count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
                 from_clause, where_str, limit_str, offset_str))
             cr.execute(count_query, where_clause_params)
