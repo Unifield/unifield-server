@@ -392,7 +392,7 @@ class update(osv.osv):
         """
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
         restrict_oc_version = entity.version == 1
-        if not restrict_oc_version and offset == 0:
+        if not restrict_oc_version and offset == (0, 0):
             self._logger.info("::::::::[%s] Set entity version = 1" % (entity.name,))
             self.pool.get('sync.server.entity').write(cr, 1, [entity.id], {'version': 1})
             restrict_oc_version = True
@@ -441,7 +441,7 @@ class update(osv.osv):
             else:
                 base_query += " AND sync_server_update.source != %s" % entity.id
 
-        base_query += " ORDER BY sequence ASC, id ASC OFFSET %s LIMIT %s"
+        base_query += " AND sync_server_update.id > %s ORDER BY sequence ASC, id ASC OFFSET %s LIMIT %s"
 
         ## Search first update which is "master", then find next updates to send
         ids = []
@@ -451,13 +451,13 @@ class update(osv.osv):
 
         timed_out = False
         start_time = time.time()
-        self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, offset, max_size))
+        self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
 
         while not ids or packet_size < max_size:
             if not restrict_oc_version and time.time() - start_time > 500:
                 timed_out = True
                 break
-            query = base_query % (offset, max_size)
+            query = base_query % (offset[0], offset[1], max_size)
             cr.execute(query)
             ids = map(lambda x:x[0], cr.fetchall())
             if not ids:
@@ -482,7 +482,7 @@ class update(osv.osv):
 
                 packet_size += 1
 
-            offset += len(ids)
+            offset = (offset[0], offset[1]+len(ids))
         if timed_out and not updates_to_send:
             # send a fake update to keep to connection open
             self._logger.info("::::::::[%s] Data pull :: Send faked packet offset = %s" % (entity.name, offset))
@@ -516,6 +516,7 @@ class update(osv.osv):
                 'sequence' : update_master.sequence,
                 'rule' : update_master.rule_id.sequence_number,
                 'offset' : offset,
+                'update_id': update_to_send[-1].id
             }
 
             ## Process & Push all updates in the packet
