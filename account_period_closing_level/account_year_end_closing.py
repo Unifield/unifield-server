@@ -61,6 +61,13 @@ class account_year_end_closing(osv.osv):
             self.pool.get('account.period').create(cr, uid, vals,
                 context=context)
 
+    def delete_year_end_entries(self, cr, uid, context=None):
+        """
+        Cancel the FY year end entries
+        - delete all entries of 'year end' 'system' journals
+        """
+        raise NotImplementedError()
+
 account_year_end_closing()
 
 

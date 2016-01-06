@@ -26,6 +26,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
 
+
 class account_fiscalyear(osv.osv):
     _name = "account.fiscalyear"
     _inherit = "account.fiscalyear"
@@ -53,9 +54,9 @@ class account_fiscalyear(osv.osv):
                     and fy.state == 'mission-closed' \
                     and all([ p.state == 'done' for p in fy.period_ids ]) \
                     or False,
+                'can_reopen_mission': level == 'coordo' \
+                    and fy.state == 'mission-closed' or False,
             }
-
-        return res
 
     _columns = {
         'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',
@@ -66,11 +67,15 @@ class account_fiscalyear(osv.osv):
         'is_hq_closable': fields.function(_get_is_closable, type='boolean',
             method=True, multi="closable",
             string='HQ Closable ? (all periods HQ closed)'),
+        'can_reopen_mission': fields.function(_get_is_closable, type='boolean',
+            method=True, multi="closable",
+            string='Mission reopen available ?'),
     }
 
     _defaults = {
         'is_mission_closable': False,
         'is_hq_closable': False,
+        'can_reopen_mission': False,
     }
 
     def create_period(self,cr, uid, ids, context=None, interval=1):
@@ -166,11 +171,16 @@ class account_fiscalyear(osv.osv):
 			'context': context,
         }
 
-    def uf_mission_close_fy(self, cr, uid, ids, context=None):
+    def btn_mission_close(self, cr, uid, ids, context=None):
         return self._close_fy(cr, uid, ids, context=context)
 
-    def uf_hq_close_fy(self, cr, uid, ids, context=None):
+    def btn_hq_close(self, cr, uid, ids, context=None):
         return self._close_fy(cr, uid, ids, context=context)
+
+    def btn_mission_reopen(self, cr, uid, ids, context=None):
+        self.pool.get('account.year.end.closing').delete_year_end_entries(cr,
+            uid, context=context)
+        return {}
 
 account_fiscalyear()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

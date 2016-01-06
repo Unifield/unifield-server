@@ -15,18 +15,26 @@
 
                     <xpath expr="//group[2]" position="after">
                         <field name="is_mission_closable" invisible="1" />
-                        <group
-                            attrs="{'invisible': [('is_mission_closable', '=', False)]}">
-                            <button name="uf_mission_close_fy" type="object"
+                        <group attrs="{'invisible': [('is_mission_closable', '=', False)]}">
+                            <button name="btn_mission_close" type="object"
                                 string="Mission close the fiscal year"
                                 icon="gtk-go-forward"/>
                         </group>
                         <field name="is_hq_closable" invisible="1" />
-                        <group
-                            attrs="{'invisible': [('is_hq_closable', '=', False)]}">
-                            <button name="uf_hq_close_fy" type="object"
+                        <group attrs="{'invisible': [('is_hq_closable', '=', False)]}">
+                            <button name="btn_hq_close" type="object"
                                 string="HQ close the fiscal year"
                                 icon="gtk-go-forward"/>
+                        </group>
+                        <newline />
+                        <field name="can_reopen_mission" invisible="1" />
+                        <group colspan="4" col="2"
+                            attrs="{'invisible': [('can_reopen_mission', '=', False)]}">
+                            <label string="" colspan="1"/>
+                            <button name="btn_mission_reopen"
+                                groups="sd.base_group_erp_manager"
+                                string="Reopen FY" type="object" icon="gtk-go-forward" colspan="1"
+                                confirm="Are you sure you want to reopen this FY ?"/>
                         </group>
                     </xpath>
                 </data>
