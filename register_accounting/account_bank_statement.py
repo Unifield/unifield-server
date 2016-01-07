@@ -2529,7 +2529,6 @@ class account_bank_statement_line(osv.osv):
 
         # recreate invoice line as temp objects
         wiz_invoice_line = self.pool.get('account.direct.invoice.wizard.line')
-        ivl_wizard_id_list = []
         for ivl in invoice.invoice_line:
             # copy the analytic_distribution not to modify the original one
             new_line_ad_id = None
@@ -2556,12 +2555,6 @@ class account_bank_statement_line(osv.osv):
                     'uos_id':ivl.uos_id.id,
                     }
             ivl_id = wiz_invoice_line.create(cr, uid, ivl_values, context=context)
-            ivl_wizard_id_list.append(ivl_id)
-
-        # update the wizard with the invoice_line ids
-        wiz_obj.write(cr, uid, [wiz_id], {'invoice_wizard_line': [(6, 0,
-            ivl_wizard_id_list)]}, context=context)
-
 
         # Update some context values
         context.update({
