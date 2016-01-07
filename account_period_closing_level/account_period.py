@@ -223,7 +223,7 @@ class account_period(osv.osv):
 ###################################################
 
                 # Write changes
-                if not isinstance(ids, (int, long)):
+                if isinstance(ids, (int, long)):
                     ids = [ids]
                 self.write(cr, uid, ids, {'state':'field-closed', 'field_process': False}, context=context)
                 return True
