@@ -869,7 +869,7 @@ class purchase_order(osv.osv):
                     pol_obj.write(cr, uid, [pol.id], {'analytic_distribution_id': id_ad})
                 else:
                     ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
-                    line_ids_to_write = [line for line in ad_lines if not
+                    line_ids_to_write = [line.id for line in ad_lines if not
                             line.partner_type]
                     ccdl_obj.write(cr, uid, line_ids_to_write, {
                         'partner_type': pol.order_id.partner_id.partner_type,
@@ -889,9 +889,10 @@ class purchase_order(osv.osv):
             else:
                 other_id_list.append(order.id)
 
-        self.write(cr, uid, direct_order_id_list, {'state': 'approved'}, context=context)
-        self.write(cr, uid, other_id_list, {'shipped':1,'state':'approved'}, context=context)
-
+        if direct_order_id_list:
+            self.write(cr, uid, direct_order_id_list, {'state': 'approved'}, context=context)
+        if other_id_list:
+            self.write(cr, uid, other_id_list, {'shipped':1,'state':'approved'}, context=context)
         return True
 
     def confirm_button(self, cr, uid, ids, context=None):
@@ -2486,12 +2487,17 @@ class purchase_order_merged_line(osv.osv):
         # If the unit price is changing, update the price unit of all normal PO lines
         # associated to this merged PO line
         if 'price_unit' in vals:
-            for merged_line in self.browse(cr, uid, ids, context=context):
-                self.pool.get('purchase.order.line').write(cr, uid,
-                        merged_line.order_line_ids,
-                        {'price_unit': vals['price_unit'],
-                         'old_price_unit': vals['price_unit']},
-                        context=new_context)
+            merged_line_list = self.browse(cr, uid, ids, context=context)
+            merged_line_order_line_ids = []
+            for merged_line in merged_line_list:
+                merged_line_order_line_ids.extend([x.id for x in
+                    merged_line.order_line_ids])
+            unique_order_line_ids = list(set(merged_line_order_line_ids))
+            self.pool.get('purchase.order.line').write(cr, uid,
+                    unique_order_line_ids,
+                    {'price_unit': vals['price_unit'],
+                     'old_price_unit': vals['price_unit']},
+                    context=new_context)
 
         res = super(purchase_order_merged_line, self).write(cr, uid, ids, vals, context=context)
 
