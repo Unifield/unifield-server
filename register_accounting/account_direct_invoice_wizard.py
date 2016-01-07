@@ -264,9 +264,8 @@ class account_direct_invoice_wizard(osv.osv_memory):
 
         # delete original analytic_distribution because a copie has been done
         # and linked to the original invoice
-        if inv_obj.browse(cr, uid, inv_id).analytic_distribution_id:
-            analytic_distribution.unlink(cr, uid, inv_obj.browse(cr, uid,
-                inv_id).analytic_distribution_id.id)
+        if invoice.analytic_distribution_id:
+            analytic_distribution.unlink(cr, uid, invoice.analytic_distribution_id.id)
 
         # update the invoice
         vals_copy = vals.copy()
@@ -285,18 +284,12 @@ class account_direct_invoice_wizard(osv.osv_memory):
             if original_line_id: # if there is a corresponding original invoice line
                 # delete original analytic_distribution because a copie has been done
                 # and will be linked to the original invoice_line
-                if invl_obj.browse(cr, uid, original_line_id).analytic_distribution_id:
-                    analytic_distribution.unlink(cr, uid, invl_obj.browse(cr, uid,
-                        original_line_id).analytic_distribution_id.id)
-                result = invl_obj.browse(cr, uid, original_line_id, context)
+                orig_line = invl_obj.browse(cr, uid, original_line_id, context)
+                if orig_line.analytic_distribution_id:
+                    analytic_distribution.unlink(cr, uid,
+                            orig_line.analytic_distribution_id.id)
                 not_deleted_id_list.append(original_line_id)
-                if result:  # the line still exist, it will be updated
-                    invl_obj.write(cr, uid, [original_line_id], vals_dict, context)
-                else:
-                    #line not found, this should not happen
-                    raise osv.except_osv(_('Error'), _("The corresponding "
-                            "invoice line %s haven't been found. This should "
-                            "not happen" % original_line_id))
+                invl_obj.write(cr, uid, [original_line_id], vals_dict, context)
             else:
                 # this is a new line, create is called
                 invl_obj.create(cr, uid, vals_dict, context)
