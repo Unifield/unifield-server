@@ -1117,7 +1117,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'active_ids': register_id,
                     })
                 return {
-                    'name': "Supplier Direct Invoice Wizard",
+                    'name': "Supplier Direct Invoice",
                     'type': 'ir.actions.act_window',
                     'res_model': 'account.direct.invoice.wizard',
                     'target': 'new',
@@ -1393,7 +1393,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'journal_type': 'purchase',
                 })
             return {
-                'name': "Supplier Direct Invoice Wizard",
+                'name': "Supplier Direct Invoice",
                 'type': 'ir.actions.act_window',
                 'res_model': 'account.direct.invoice.wizard',
                 'target': 'new',
