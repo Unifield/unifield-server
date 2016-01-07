@@ -30,8 +30,10 @@ class wizard_account_year_end_closing(osv.osv_memory):
         'fy_id': fields.many2one('account.fiscalyear', "Fiscal Year",
             required=True, domain=[('state', '=', 'draft')]),
         'has_move_regular_bs_to_0': fields.boolean(
-                "Move regular B/S account to 0"),
+            "Move regular B/S account to 0"),
         'has_book_pl_results': fields.boolean("Book the P&L results"),
+        'currency_table_id': fields.many2one('res.currency.table',
+            "Currency table", domain=[('state', '=', 'valid')]),
     }
 
     _defaults = {
@@ -59,8 +61,7 @@ class wizard_account_year_end_closing(osv.osv_memory):
             cr, uid, rec.fy_id, context=context)
         ayec_obj.setup_journals(cr, uid, context=context)
 
-        ayec_obj.report_bs_balance_to_next_fy(cr, uid, rec.fy_id,
-            context=context)
+        ayec_obj.report_bs_balance_to_next_fy(cr, uid, rec, context=context)
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
 wizard_account_year_end_closing()

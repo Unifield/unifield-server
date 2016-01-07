@@ -128,10 +128,12 @@ class account_year_end_closing(osv.osv):
         # TODO
         raise NotImplementedError()
 
-    def report_bs_balance_to_next_fy(self, cr, uid, fy_rec, context=None):
+    def report_bs_balance_to_next_fy(self, cr, uid, wiz_rec,
+        context=None):
         """
         action 3: report B/S balances to next FY period 0
         """
+
         def create_journal_entry(ccy_id=False, ccy_code=''):
             """
             create draft CCY/JE to log JI into
@@ -189,6 +191,8 @@ class account_year_end_closing(osv.osv):
         # - IB journal
         # - next FY period 0
         # - local context
+        fy_rec = wiz_rec.fy_id
+
         cpy_rec = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id
         instance_rec = cpy_rec.instance_id
@@ -210,9 +214,11 @@ class account_year_end_closing(osv.osv):
             raise osv.except_osv(_('Error'),
                 _("FY+1 'Period %d' not found") % (period_number, ))
 
-        # TODO: ccy table prevails if given by wizard (like year end reval)
         local_context = context.copy() if context else {}
-        local_context['date'] = '%d-01-01' % (fy_year, )
+        local_context['date'] = '%d-01-01' % (fy_year, )  # date for rates
+        if wiz_rec.currency_table_id:
+            # use ccy table
+            local_context['currency_table_id'] = wiz_rec.currency_table_id.id
 
         # compute balance in SQL
         # TODO: only account B/S report types (2 types)
