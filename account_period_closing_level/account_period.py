@@ -246,7 +246,7 @@ class account_period(osv.osv):
                 journal_state = 'done'
             else:
                 journal_state = 'draft'
-            cr.execute('UPDATE account_journal_period SET state=%s WHERE period_id IN %s',  (journal_state, ids))
+            cr.execute('UPDATE account_journal_period SET state=%s WHERE period_id IN %s',  (journal_state, tuple(ids)))
             # Change cr.execute for period state by a self.write() because of Document Track Changes on Periods ' states
             self.write(cr, uid, ids, {'state': state, 'field_process': False}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
         return True
