@@ -449,14 +449,9 @@ class update(osv.osv):
         updates_to_send, updates_master = [], []
         packet_size = 0
 
-        timed_out = False
-        start_time = time.time()
         self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
 
         while not ids or packet_size < max_size:
-            if not restrict_oc_version and time.time() - start_time > 500:
-                timed_out = True
-                break
             query = base_query % (offset[0], offset[1], max_size)
             cr.execute(query)
             ids = map(lambda x:x[0], cr.fetchall())
@@ -483,18 +478,6 @@ class update(osv.osv):
                 packet_size += 1
 
             offset = (offset[0], offset[1]+len(ids))
-        if timed_out and not updates_to_send:
-            # send a fake update to keep to connection open
-            self._logger.info("::::::::[%s] Data pull :: Send faked packet offset = %s" % (entity.name, offset))
-            return {
-                'model' : 'account.analytic.line',
-                'source_name' : 'fake',
-                'sequence' : 1,
-                'rule' : 1,
-                'offset' : offset,
-                'type': 'delete',
-                'unload': ['x-%d'%offset]
-            }
 
         if not updates_to_send:
             self._logger.info("::::::::[%s] No (more) update to send" % (entity.name,))
@@ -546,7 +529,7 @@ class update(osv.osv):
             data_packages.append(data)
 
         # Just shorten the log into one line
-        self._logger.info("::::::::[%s] Data pull :: %s updates" % (entity.name, sum(map(lambda x : len(x['load']), data_packages))))
+        self._logger.info("::::::::[%s] Data pull :: %s updates" % (entity.name, sum(map(lambda x : len(x.get('unload', [])) + len(x.get('load', [])), data_packages))))
         return data_packages
 
     
