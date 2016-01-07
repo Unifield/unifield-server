@@ -56,7 +56,9 @@ class wizard_account_year_end_closing(osv.osv_memory):
         ayec_obj = self.pool.get('account.year.end.closing')
 
         ayec_obj.check_before_closing_process(
-            cr, uid, fy_id=rec.fy_id, context=context)
+            cr, uid, fy_rec=rec.fy_id, context=context)
+        ayec_obj.setup_journals(cr, uid, context=context)
+
         ayec_obj.report_bs_balance_to_next_fy(cr, uid, rec.fy_id,
             context=context)
         return {}

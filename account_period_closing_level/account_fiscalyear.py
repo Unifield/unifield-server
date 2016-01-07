@@ -48,11 +48,11 @@ class account_fiscalyear(osv.osv):
         for fy in self.browse(cr, uid, ids, context=context):
             mission = level == 'coordo' and fy.state == 'draft' \
                 and all([ p.state in ('mission-closed', 'done') \
-                    for p in fy.period_ids if p.number not in (0, 16, )]) \
+                    for p in fy.period_ids if 0 < p.number < 16 ]) \
                 or False
             hq = level == 'section' and fy.state == 'mission-closed' \
                 and all([ p.state == 'done' \
-                    for p in fy.period_ids if p.number not in (0, 16, )]) \
+                    for p in fy.period_ids if 0 < p.number < 16]) \
                 or False
 
             res[fy.id] = {
@@ -61,6 +61,7 @@ class account_fiscalyear(osv.osv):
                 'can_reopen_mission': level == 'coordo' \
                     and fy.state == 'mission-closed' or False,
             }
+        return res
 
     _columns = {
         'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',

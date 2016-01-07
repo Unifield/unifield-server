@@ -76,6 +76,7 @@ class account_journal(osv.osv):
                 ('sale', 'Sale'),
                 ('sale_refund','Sale Refund'),
                 ('stock', 'Stock'),
+                ('system', 'System'),
         ]
 
     def _get_has_entries(self, cr, uid, ids, field_name, arg, context=None):

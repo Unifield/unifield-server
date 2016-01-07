@@ -31,37 +31,41 @@ class account_year_end_closing(osv.osv):
     # valid special period numbers and their month
     _period_month_map = { 0: 1, 16: 12, }
 
-    _journal = 'End of Year'
-    _journal_ib = 'Initial Balances'
+    _journals = {
+        'EOY': 'End of Year',
+        'IB': 'Initial Balances',
+    }
 
-
-    def check_before_closing_process(self, cr, uid, fy_id=False, context=None):
+    def check_before_closing_process(self, cr, uid, fy_id=False, fy_rec=False,
+            context=None):
         level = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id.instance_id.level
         if level not in ('section', 'coordo', ):
             raise osv.except_osv(_('Warning'),
                 _('You can only close FY at HQ or Coordo'))
 
-        if fy_id:
+        if not fy_id and not fy_rec:
+            return
+        if not fy_rec:
             fy_rec = self._browse_fy(cr, uid, fy_id, context=context)
-            if fy_rec.state != 'draft':
-                raise osv.except_osv(_('Warning'),
-                    _('You can only close an opened FY'))
+        if fy_rec.state != 'draft':
+            raise osv.except_osv(_('Warning'),
+                _('You can only close an opened FY'))
 
-            # check FY closable regarding level
-            field = False
-            if level == 'coordo':
-                field = 'is_mission_closable'
-            elif level == 'section':
-                field = 'is_hq_closable'
-            if not field or not getattr(fy_rec, field):
-                raise osv.except_osv(_('Warning'),
-                    _('FY can not be closed due to its periods state'))
+        # check FY closable regarding level
+        field = False
+        if level == 'coordo':
+            field = 'is_mission_closable'
+        elif level == 'section':
+            field = 'is_hq_closable'
+        if not field or not getattr(fy_rec, field):
+            raise osv.except_osv(_('Warning'),
+                _('FY can not be closed due to its periods state'))
 
-            # check next FY exists (we need FY+1 Period 0 for initial balances)
-            if not self._get_next_fy_id(self, cr, uid, fy_id, context=context):
-                raise osv.except_osv(_('Warning'),
-                    _('FY+1 is required to close FY'))
+        # check next FY exists (we need FY+1 Period 0 for initial balances)
+        if not self._get_next_fy_id(cr, uid, fy_rec, context=context):
+            raise osv.except_osv(_('Warning'),
+                _('FY+1 required to close FY'))
 
     def create_periods(self, cr, uid, fy_id, periods_to_create=[0, 16, ],
         context=None):
@@ -91,18 +95,60 @@ class account_year_end_closing(osv.osv):
             self.pool.get('account.period').create(cr, uid, vals,
                 context=context)
 
+    def setup_journals(self, cr, uid, context=None):
+        """
+        create GL coordo year end system journals if missing for the instance
+        """
+        instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id
+        if instance_rec.level != 'coordo':
+            return
+
+        for code in self._journals:
+            id = self._get_journal(cr, uid, code, context=context)
+            if not id:
+                # create missing journal
+                vals = {
+                    'instance_id': instance_rec.id,
+                    'code': code,
+                    'name': self._journals[code],
+                    'type': 'system',  # excluded from selection picker
+                    'analytic_journal_id': False,  # no AJI year end entries
+                }
+                self.pool.get('account.journal').create(cr, uid, vals,
+                    context=context)
+
     def delete_year_end_entries(self, cr, uid, context=None):
         """
-        Cancel the FY year end entries
+        Cancel the FY year end entries FOR THE INSTANCE
         - delete all entries of 'year end' 'system' journals
         """
+        instance_ID = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id.ID
+        # TODO
         raise NotImplementedError()
 
-    def report_bs_balance_to_next_fy(self, cr, uid, fy_id, context=None):
+    def report_bs_balance_to_next_fy(self, cr, uid, fy_rec, context=None):
         """
         action 3: report B/S balances to next FY period 0
         """
-        raise NotImplementedError()
+        instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id
+
+        cr.execute(
+            '''select c.name as currency_code, a.code as account_code,
+            sum(ml.debit - ml.credit) as bal from account_move_line ml
+            inner join account_account a on a.id = ml.account_id
+            inner join account_journal j on j.id = ml.journal_id
+            inner join res_currency c on c.id = ml.currency_id
+            where j.instance_id = %d
+            group by currency_code, account_code''' % (instance_rec.id, )
+        )
+        if not cr.rowcount:
+            return
+
+        for r in cr.fetchall():
+            print r
 
     def _search_record(self, cr, uid, model, domain, context=None):
         ids = self.pool.get(model).search(cr, uid, domain, context=context)
@@ -112,8 +158,7 @@ class account_year_end_closing(osv.osv):
         return self.pool.get('account.fiscalyear').browse(cr, uid, fy_id,
             context=context)
 
-    def _get_next_fy_id(self, cr, uid, fy_id, context=None):
-        fy_rec = self._browse_fy(cr, uid, fy_id, context=context)
+    def _get_next_fy_id(self, cr, uid, fy_rec, context=None):
         year = int(fy_rec.date_start[0:4])
         domain = [
             ('company_id', '=', fy_rec.company_id.id),
@@ -130,57 +175,23 @@ class account_year_end_closing(osv.osv):
         return self._search_record(cr, uid, 'account.period', domain,
             context=context)
 
-    def _get_journal(self, cr, uid, instance_id=False, get_initial_balance=False,
-        context=None):
+    def _get_journal(self, cr, uid, code, context=None):
         """
         get coordo end year system journal
         :param get_initial_balance: True to get 'initial balance' journal
         :return: journal id
         """
-        if instance_id:
-            instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+        instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
                 context=context)[0].company_id.instance_id
-            if instance_rec.level != 'coordo':
-                return False
-            instance_id = instance_rec.id
+        if instance_rec.level != 'coordo':
+            return False
 
         domain = [
-            ('instance_id', '=', instance_id),
-            ('code', '=',
-                get_initial_balance and self._journal_ib or self._journal),
+            ('instance_id', '=', instance_rec.id),
+            ('code', '=', code),
         ]
         return self._search_record(cr, uid, 'account.journal', domain,
             context=context)
-
-    def _create_journals(self, cr, uid, context=None):
-        """
-        create GL coordo year end system journals if missing for the instance
-        """
-        instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id
-        if instance_rec.level != 'coordo':
-            return
-
-        journals = {
-            self._journal: self._get_journal(cr, uid,
-                instance_id=instance_rec.id, context=context),
-            self._journal_ib: self._get_journal(cr, uid,
-                instance_id=instance_rec.id, get_initial_balance=True,
-                context=context),  # init balance
-        }
-
-        for jc in journals:
-            if not journals[jc]:
-                # create missing journal
-                vals = {
-                    'instance_id': instance_rec.id,
-                    'code': jc,
-                    'name': jc,
-                    'type': 'system',  # excluded from selection picker
-                    'analytic_journal_id': False,
-                }
-                self.pool.get('account.journal').create(cr, uid, vals,
-                    context=context)
 
 account_year_end_closing()
 

@@ -7,7 +7,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Close the Fiscal Year">
-                    <field name="fy_id"/>
+                    <field name="fy_id" domain="[('state', '=', 'draft')]" />
                     <separator string="" colspan="4"/>
                     <field name="has_move_regular_bs_to_0" />
                     <newline />
