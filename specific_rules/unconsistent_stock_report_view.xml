@@ -35,7 +35,8 @@
 
         <menuitem
             id="menu_unconsistent_stock_report"
-            parent="stock.menu_stock_inventory_control"
+            parent="object_query.menu_preferences"
+            sequence="50"
             action="action_unconsistent_stock_report" />
 
     </data>
