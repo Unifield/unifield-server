@@ -242,10 +242,6 @@ class account_direct_invoice_wizard(osv.osv_memory):
                 )
                 amount += line.price_subtotal
 
-        # set analytic_ditribution to None on the wizard line not to
-        # delete it when the wizard will be deleted
-        wiz_line_obj.write(cr, uid, inv['invoice_wizard_line'],
-                {'analytic_distribution_id': None})
         # Retrieve period
         register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id']], context=context)[0]
         period = register and register.period_id and register.period_id.id or False
@@ -331,6 +327,10 @@ class account_direct_invoice_wizard(osv.osv_memory):
         }
         absl_obj.write(cr, uid, [reg_line_id], values)
 
+        # set analytic_ditribution to None on the wizard line not to
+        # delete it when the wizard will be deleted
+        wiz_line_obj.write(cr, uid, inv['invoice_wizard_line'],
+                {'analytic_distribution_id': None})
         # Delete the wizard lines:
         wiz_line_obj.unlink(cr, uid, inv['invoice_wizard_line'], context=context)
 
