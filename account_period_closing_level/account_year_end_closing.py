@@ -36,18 +36,18 @@ class account_year_end_closing(osv.osv):
         'IB': 'Initial Balances',
     }
 
-    def check_before_closing_process(self, cr, uid, fy_id=False, fy_rec=False,
-            context=None):
+    def check_before_closing_process(self, cr, uid, fy_rec_or_id=False,
+        context=None):
         level = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id.instance_id.level
         if level not in ('section', 'coordo', ):
             raise osv.except_osv(_('Warning'),
                 _('You can only close FY at HQ or Coordo'))
 
-        if not fy_id and not fy_rec:
-            return
-        if not fy_rec:
-            fy_rec = self._browse_fy(cr, uid, fy_id, context=context)
+        if isinstance(fy_rec_or_id, (int, long, )):
+            fy_rec = self._browse_fy(cr, uid, fy_rec_or_id, context=context)
+        else:
+            fy_rec = fy_rec_or_id
         if fy_rec.state != 'draft':
             raise osv.except_osv(_('Warning'),
                 _('You can only close an opened FY'))
@@ -77,9 +77,9 @@ class account_year_end_closing(osv.osv):
             if pn in self._period_month_map.keys() ]
         fy_rec = fy_rec = self._browse_fy(cr, uid, fy_id, context=context)
         fy_year = fy_rec.date_start[:4]
-        period_year_month = (fy_year, self._period_month_map[pn], )
 
         for pn in period_numbers:
+            period_year_month = (fy_year, self._period_month_map[pn], )
             code = "Period %d" % (pn, )
             vals = {
                 'name': code,
@@ -89,7 +89,7 @@ class account_year_end_closing(osv.osv):
                 'date_start': '%s-%02d-01' % period_year_month,
                 'date_stop': '%s-%02d-31' % period_year_month,
                 'fiscalyear_id': fy_id,
-                'state': 'created',
+                'state': 'draft',  # opened by default
             }
 
             self.pool.get('account.period').create(cr, uid, vals,
@@ -132,23 +132,127 @@ class account_year_end_closing(osv.osv):
         """
         action 3: report B/S balances to next FY period 0
         """
-        instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id
+        def create_journal_entry(ccy_id=False, ccy_code=''):
+            """
+            create draft CCY/JE to log JI into
+            """
+            name = "IB-%d-%s-%s" % (fy_year, instance_rec.code, ccy_code, )
 
-        cr.execute(
-            '''select c.name as currency_code, a.code as account_code,
-            sum(ml.debit - ml.credit) as bal from account_move_line ml
+            vals = {
+                'block_manual_currency_id': True,
+                'company_id': cpy_rec.id,
+                'currency_id': ccy_id,
+                'date': posting_date,
+                'document_date': posting_date,
+                'instance_id': instance_rec.id,
+                'journal_id': journal_id,
+                'name': name,
+                'period_id': period_id,
+            }
+            return self.pool.get('account.move').create(cr, uid, vals,
+                context=local_context)
+
+        def create_journal_item(ccy_id=False, ccy_code='', account_id=False,
+            account_code='', balance=0., je_id=False):
+            """
+            create state valid JI in its CCY/JE
+            """
+            name = "IB-%d-%s-%s-%s" % (fy_year, account_code, instance_rec.code,
+                ccy_code, )
+
+            vals = {
+                'account_id': account_id,
+                'company_id': cpy_rec.id,
+                'currency_id': ccy_id,
+                'date': posting_date,
+                'document_date': posting_date,
+                'instance_id': instance_rec.id,
+                'journal_id': journal_id,
+                'name': name,
+                'period_id': period_id,
+                'source_date': posting_date,
+
+                'debit_currency': balance if balance > 0. else 0.,
+                'credit_currency': abs(balance) if balance < 0. else 0.,
+
+                'state':'valid',
+                'move_id': je_id,
+            }
+            return self.pool.get('account.move.line').create(cr, uid, vals,
+                    context=local_context)
+
+        # init
+        # - company and instance
+        # - current FY year
+        # - next FY id
+        # - posting date
+        # - IB journal
+        # - next FY period 0
+        # - local context
+        cpy_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id
+        instance_rec = cpy_rec.instance_id
+
+        fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
+        next_fy_id = self._get_next_fy_id(cr, uid, fy_rec, context=context)
+        posting_date = "%d-01-01" % (fy_year + 1, )
+
+        journal_code = 'IB'
+        journal_id = self._get_journal(cr, uid, 'IB', context=context)
+        if not journal_id:
+            raise osv.except_osv(_('Error'),
+                _('%s journal not found') % (journal_code, ))
+
+        period_number = 0
+        period_id = self._get_period_id(cr, uid, next_fy_id, period_number,
+            context=context)
+        if not period_id:
+            raise osv.except_osv(_('Error'),
+                _("FY+1 'Period %d' not found") % (period_number, ))
+
+        # TODO: ccy table prevails if given by wizard (like year end reval)
+        local_context = context.copy() if context else {}
+        local_context['date'] = '%d-01-01' % (fy_year, )
+
+        # compute balance in SQL
+        # TODO: only account B/S report types (2 types)
+        # => and pay attention US-227: all B/S accounts not retrieved
+        sql = '''select ml.currency_id as currency_id,
+            max(c.name) as currency_code,
+            ml.account_id as account_id, max(a.code) as account_code,
+            sum(ml.debit - ml.credit) as balance
+            from account_move_line ml
             inner join account_account a on a.id = ml.account_id
             inner join account_journal j on j.id = ml.journal_id
             inner join res_currency c on c.id = ml.currency_id
             where j.instance_id = %d
-            group by currency_code, account_code''' % (instance_rec.id, )
-        )
+            and ml.date >= '%s' and ml.date <= '%s'
+            group by ml.currency_id, ml.account_id''' % (
+                instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
+        cr.execute(sql)
         if not cr.rowcount:
             return
 
-        for r in cr.fetchall():
-            print r
+        je_by_ccy = {}  # JE/CCY, key: ccy id, value: JE id
+        for ccy_id, ccy_code, account_id, account_code, bal in cr.fetchall():
+            print ccy_id, ccy_code, account_id, account_code, bal
+
+            # CCY JE
+            je_id = je_by_ccy.get(ccy_id, False)
+            if not je_id:
+                # 1st processing of a ccy: create its JE
+                je_id = create_journal_entry(ccy_id=ccy_id, ccy_code=ccy_code)
+                je_by_ccy[ccy_id] = je_id
+
+            # per ccy/account initial balance item, tied to its CCY JE
+            create_journal_item(ccy_id=ccy_id, ccy_code=ccy_code,
+                account_id=account_id, account_code=account_code,
+                balance=bal, je_id=je_id)
+
+        # post processing: 'raw write' JEs post (after JIs created)
+        # as they are unbalanced by nature and not accepted by system
+        return self.pool.get('account.move').write(cr, uid, je_by_ccy.values(),
+            { 'state':'posted', }, context=local_context)
 
     def _search_record(self, cr, uid, model, domain, context=None):
         ids = self.pool.get(model).search(cr, uid, domain, context=context)
@@ -158,11 +262,15 @@ class account_year_end_closing(osv.osv):
         return self.pool.get('account.fiscalyear').browse(cr, uid, fy_id,
             context=context)
 
+    def _get_fy_year(self, cr, uid, fy_rec, context=None):
+        return int(fy_rec.date_start[0:4])
+
     def _get_next_fy_id(self, cr, uid, fy_rec, context=None):
-        year = int(fy_rec.date_start[0:4])
+        date = "%d-01-01" % (
+            self._get_fy_year(cr, uid, fy_rec, context=context) + 1, )
         domain = [
             ('company_id', '=', fy_rec.company_id.id),
-            ('date_start', '=', "%d-01-01" % (year+1, )),
+            ('date_start', '=', date),
         ]
         return self._search_record(cr, uid, 'account.fiscalyear', domain,
             context=context)

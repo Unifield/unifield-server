@@ -43,7 +43,7 @@ class wizard_account_year_end_closing(osv.osv_memory):
     def default_get(self, cr, uid, vals, context=None):
         fy_id = context and context.get('fy_id', False) or False
         self.pool.get('account.year.end.closing').check_before_closing_process(
-            cr, uid, fy_id=fy_id, context=context)
+            cr, uid, fy_id, context=context)
         res = super(wizard_account_year_end_closing, self).default_get(cr, uid,
             vals, context=context)
         res['fy_id'] = fy_id
@@ -56,12 +56,12 @@ class wizard_account_year_end_closing(osv.osv_memory):
         ayec_obj = self.pool.get('account.year.end.closing')
 
         ayec_obj.check_before_closing_process(
-            cr, uid, fy_rec=rec.fy_id, context=context)
+            cr, uid, rec.fy_id, context=context)
         ayec_obj.setup_journals(cr, uid, context=context)
 
         ayec_obj.report_bs_balance_to_next_fy(cr, uid, rec.fy_id,
             context=context)
-        return {}
+        return {'type': 'ir.actions.act_window_close', 'context': context}
 
 wizard_account_year_end_closing()
 
