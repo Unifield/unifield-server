@@ -2515,7 +2515,7 @@ class account_bank_statement_line(osv.osv):
             'original_invoice_id': invoice.id,
             'partner_id': invoice.partner_id.id,
             'partner_bank_id':invoice.partner_bank_id.id,
-            'payment_term': invoice.payment_term or False,
+            'payment_term': invoice.payment_term.id or False,
             'reference': invoice.reference,
             'register_posting_date': invoice.register_posting_date,
             'register_line_id': invoice.register_line_ids[0].id,
