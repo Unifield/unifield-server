@@ -2,38 +2,25 @@
 <openerp>
     <data>
 
-        <record id="unconsistent_stock_report_tree_view" model="ir.ui.view">
-            <field name="name">unconsistent.stock.report.tree.view</field>
-            <field name="model">unconsistent.stock.report</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="Stock reports">
-                    <field name="name" />
-                </tree>
-            </field>
-        </record>
+        <!--<record id="unconsistent_stock_report_tree_view" model="ir.ui.view">-->
+            <!--<field name="name">unconsistent.stock.report.tree.view</field>-->
+            <!--<field name="model">unconsistent.stock.report</field>-->
+            <!--<field name="type">tree</field>-->
+            <!--<field name="arch" type="xml">-->
+                <!--<tree string="Stock reports">-->
+                    <!--<field name="name" />-->
+                <!--</tree>-->
+            <!--</field>-->
+        <!--</record>-->
 
         <record id="unconsistent_stock_report_form_view" model="ir.ui.view">
             <field name="name">unconsistent.stock.report.form.view</field>
             <field name="model">unconsistent.stock.report</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Stock report">
-                    <field name="name" />
-                    <button name="generate_report" icon="gtk-execute" type="object" colspan="4" />
-                    <field name="line_ids" mode="tree">
-                        <tree string="Lines">
-                            <field name="product_code" />
-                            <field name="product_name" />
-                            <field name="product_bn" />
-                            <field name="product_ed" />
-                            <field name="prodlot_id" />
-                            <field name="expiry_date" />
-                            <field name="quantity" />
-                            <field name="location_name" />
-                            <field name="document_number" />
-                        </tree>
-                    </field>
+                <form string="Unconsistent stock report generation">
+                    <field name="name" invisible="1" />
+                    <button name="generate_report" string="Get report" icon="gtk-execute" type="object" colspan="4" />
                 </form>
             </field>
         </record>

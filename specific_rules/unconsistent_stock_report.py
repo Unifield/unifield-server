@@ -39,6 +39,10 @@ class unconsistent_stock_report(osv.osv):
         ),
     }
 
+    _defaults = {
+        'name': lambda *a: time.strftime('%Y-%m-%d'),
+    }
+
     def _get_unconsistent_prodlots(self, cr, uid, bm='f', perishable='f', context=None):
         """
         Returns a list of ID of stock.production.lot that aren't consistent
@@ -54,7 +58,7 @@ class unconsistent_stock_report(osv.osv):
         elif perishable == 't':
             extra_where = 'AND spl.type != \'internal\''
         else:
-            extra_where = ''
+            extra_where = 'AND srp.prodlot_id IS NOT NULL'
 
         request = '''
             SELECT
@@ -221,7 +225,8 @@ class unconsistent_stock_report(osv.osv):
                 sil.prod_lot_id AS prodlot_id,
                 sil.expiry_date AS expiry_date,
                 SUM(sil.product_qty) AS quantity,
-                '%s ' || si.name AS document_number
+                '%s ' || si.name AS document_number,
+                sil.location_id AS location_id
             FROM
                 %s_line sil
               LEFT JOIN
@@ -242,16 +247,22 @@ class unconsistent_stock_report(osv.osv):
                 si.state NOT IN ('done', 'cancel')
                 AND
                 (
-                    (pp.perishable AND (sil.expiry_date IS NULL OR spl.type != 'internal'))
+                    (pp.perishable AND NOT pp.batch_management AND (sil.expiry_date IS NULL OR spl.type != 'internal'))
                     OR
                     (pp.batch_management AND (sil.prod_lot_id IS NULL OR spl.type = 'internal'))
                     OR
-                    sil.prod_lot_id IS NOT NULL
-                    OR
-                    sil.expiry_date IS NOT NULL
+                    (
+                        NOT (pp.batch_management OR pp.perishable)
+                        AND
+                        (
+                            sil.prod_lot_id IS NOT NULL
+                            OR
+                            sil.expiry_date IS NOT NULL
+                        )
+                    )
                 )
             GROUP BY
-                sil.product_id, sil.prod_lot_id, sil.expiry_date, document_number
+                sil.product_id, sil.prod_lot_id, sil.expiry_date, sil.location_id, document_number
         ''' % (name, model, model)
         cr.execute(request)
 
@@ -275,7 +286,8 @@ class unconsistent_stock_report(osv.osv):
                 racl.prodlot_id AS prodlot_id,
                 racl.expiry_date AS expiry_date,
                 SUM(racl.product_qty) AS quantity,
-                'Cons. report ' || rac.name AS document_number
+                'Cons. report ' || rac.name AS document_number,
+                rac.cons_location_id AS location_id
             FROM
                 real_average_consumption_line racl
               LEFT JOIN
@@ -296,16 +308,22 @@ class unconsistent_stock_report(osv.osv):
                 rac.state NOT IN ('done', 'cancel')
                 AND
                 (
-                    (pp.perishable AND (racl.expiry_date IS NULL OR spl.type != 'internal'))
+                    (pp.perishable AND not pp.batch_management AND (racl.expiry_date IS NULL OR spl.type != 'internal'))
                     OR
                     (pp.batch_management AND (racl.prodlot_id IS NULL OR spl.type = 'internal'))
                     OR
-                    racl.prodlot_id IS NOT NULL
-                    OR
-                    racl.expiry_date IS NOT NULL
+                    (
+                        NOT (pp.batch_management OR pp.perishable)
+                        AND
+                        (
+                            racl.prodlot_id IS NOT NULL
+                            OR
+                            racl.expiry_date IS NOT NULL
+                        )
+                    )
                 )
             GROUP BY
-                racl.product_id, racl.prodlot_id, racl.expiry_date, document_number
+                racl.product_id, racl.prodlot_id, racl.expiry_date, rac.cons_location_id, document_number
         '''
         cr.execute(request)
 
@@ -329,7 +347,8 @@ class unconsistent_stock_report(osv.osv):
                 sm.prodlot_id AS prodlot_id,
                 sm.expired_date AS expiry_date,
                 SUM(sm.product_qty) AS quantity,
-                'Kitting Order ' || ko.name AS document_number
+                'Kitting Order ' || ko.name AS document_number,
+                sm.location_id AS location_id
             FROM
                 stock_move sm
               LEFT JOIN
@@ -350,16 +369,22 @@ class unconsistent_stock_report(osv.osv):
                 ko.state NOT IN ('done', 'cancel')
                 AND
                 (
-                    (pp.perishable AND (sm.expired_date IS NULL OR spl.type != 'internal'))
+                    (pp.perishable AND NOT pp.batch_management AND (sm.expired_date IS NULL OR spl.type != 'internal'))
                     OR
                     (pp.batch_management AND (sm.prodlot_id IS NULL OR spl.type = 'internal'))
                     OR
-                    sm.prodlot_id IS NOT NULL
-                    OR
-                    sm.expired_date IS NOT NULL
+                    (
+                        NOT (pp.batch_management OR pp.perishable)
+                        AND
+                        (
+                            sm.prodlot_id IS NOT NULL
+                            OR
+                            sm.expired_date IS NOT NULL
+                        )
+                    )
                 )
             GROUP BY
-                sm.product_id, sm.prodlot_id, sm.expired_date, document_number
+                sm.product_id, sm.prodlot_id, sm.expired_date, sm.location_id, document_number
         '''
         cr.execute(request)
 
@@ -432,10 +457,8 @@ class unconsistent_stock_report(osv.osv):
         # Remove last report
         #self.unlink(cr, uid, self.search(cr, uid, [], context=context), context=context)
 
-        report_id = self.create(cr, uid, {'name': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
-
         def create_usrl(vals):
-            vals['report_id'] = report_id
+            vals['report_id'] = ids[0]
             usrl_obj.create(cr, uid, vals, context=context)
 
         # UN-CONSISTENT PRODLOTS
@@ -498,7 +521,7 @@ class unconsistent_stock_report(osv.osv):
         context['background_id'] = background_id
         context['background_time'] = 30
 
-        data = {'ids': [report_id], 'context': context}
+        data = {'ids': ids, 'context': context}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'unconsistent.stock.report_xls',
