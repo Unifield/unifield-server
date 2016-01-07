@@ -2537,14 +2537,9 @@ class account_bank_statement_line(osv.osv):
                         ivl.analytic_distribution_id.id, context=context)
             ivl_values = {
                     'account_id':ivl.account_id.id,
-                    'analytic_distribution_state':ivl.analytic_distribution_state,
-                    'analytic_distribution_state_recap':ivl.analytic_distribution_state_recap,
                     'analytic_distribution_id': new_line_ad_id,
                     'create_date': create_date,
-                    'have_analytic_distribution_from_header':ivl.have_analytic_distribution_from_header,
-                    'inactive_product':ivl.inactive_product,
                     'invoice_wizard_id':wiz_id,
-                    'is_allocatable':ivl.is_allocatable,
                     'name':ivl.name,
                     'original_invoice_line_id':ivl.id,
                     'price_unit':ivl.price_unit,
