@@ -155,7 +155,11 @@ class unconsistent_stock_report(osv.osv):
                 sm.prodlot_id AS prodlot_id,
                 sm.expired_date AS expiry_date,
                 sm.location_id AS location_id,
-                sp.name AS document_number
+                CASE
+                    WHEN sp.subtype = 'packing' AND sp.backorder_id IS NOT NULL
+                    THEN ship.name
+                    ELSE sp.name
+                END AS document_number
             FROM
                 stock_move sm
               LEFT JOIN
@@ -167,16 +171,23 @@ class unconsistent_stock_report(osv.osv):
               LEFT JOIN
                 stock_picking sp
               ON sp.id = sm.picking_id
+              LEFT JOIN
+                shipment ship
+              ON ship.id = sp.shipment_id
             WHERE
                 sm.kit_creation_id_stock_move IS NULL
               AND
-                sp.state NOT IN ('cancel', 'done')
+                sm.state NOT IN ('cancel', 'done')
               AND
                 sm.picking_id IS NOT NULL
               AND
                 sp.type != 'in'
               AND
-                sp.state NOT IN ('cancel', 'done')
+                (
+                    (sp.subtype = 'packing' AND sp.state = 'assigned')
+                  OR
+                    (sp.subtype != 'packing' AND sp.state NOT IN ('cancel', 'done'))
+                )
               AND
                 pp.batch_management = %%s
               AND
@@ -199,13 +210,18 @@ class unconsistent_stock_report(osv.osv):
         :param context: Context of the call
         :return: A dictionnary with values to create unconsistent_stock_report_line
         """
+        if model == 'stock_inventory':
+            name = 'Phy. Inv.'
+        else:
+            name = 'Ini. Stock'
+
         request = '''
             SELECT
                 sil.product_id AS product_id,
                 sil.prod_lot_id AS prodlot_id,
                 sil.expiry_date AS expiry_date,
                 SUM(sil.product_qty) AS quantity,
-                si.name AS document_number
+                '%s ' || si.name AS document_number
             FROM
                 %s_line sil
               LEFT JOIN
@@ -236,7 +252,7 @@ class unconsistent_stock_report(osv.osv):
                 )
             GROUP BY
                 sil.product_id, sil.prod_lot_id, sil.expiry_date, document_number
-        ''' % (model, model)
+        ''' % (name, model, model)
         cr.execute(request)
 
         for r in cr.dictfetchall():
@@ -259,7 +275,7 @@ class unconsistent_stock_report(osv.osv):
                 racl.prodlot_id AS prodlot_id,
                 racl.expiry_date AS expiry_date,
                 SUM(racl.product_qty) AS quantity,
-                rac.name AS document_number
+                'Cons. report ' || rac.name AS document_number
             FROM
                 real_average_consumption_line racl
               LEFT JOIN
@@ -313,7 +329,7 @@ class unconsistent_stock_report(osv.osv):
                 sm.prodlot_id AS prodlot_id,
                 sm.expired_date AS expiry_date,
                 SUM(sm.product_qty) AS quantity,
-                ko.name AS document_number
+                'Kitting Order ' || ko.name AS document_number
             FROM
                 stock_move sm
               LEFT JOIN
@@ -367,7 +383,7 @@ class unconsistent_stock_report(osv.osv):
                 cpl.lot_id_claim_product_line AS prodlot_id,
                 cpl.expiry_date_claim_product_line AS expiry_date,
                 SUM(cpl.qty_claim_product_line) AS quantity,
-                rc.name AS document_number
+                'Claim ' || rc.name AS document_number
             FROM
                 claim_product_line cpl
               LEFT JOIN
@@ -412,6 +428,9 @@ class unconsistent_stock_report(osv.osv):
 
         if context is None:
             context = {}
+
+        # Remove last report
+        #self.unlink(cr, uid, self.search(cr, uid, [], context=context), context=context)
 
         report_id = self.create(cr, uid, {'name': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
@@ -469,12 +488,21 @@ class unconsistent_stock_report(osv.osv):
         for ucsm in self._get_unconsistent_ucsm(cr, uid, context=context):
             create_usrl(ucsm)
 
+        '''
+        Retrieve the data and print the report in Excel format.
+        '''
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': 'Unconsistent stock report',
+            'report_name': 'unconsistent.stock.report_xls',
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 30
+
+        data = {'ids': [report_id], 'context': context}
         return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'unconsistent.stock.report',
-            'view_mode': 'form,tree',
-            'view_type': 'form',
-            'res_id': report_id,
+            'type': 'ir.actions.report.xml',
+            'report_name': 'unconsistent.stock.report_xls',
+            'datas': data,
             'context': context,
         }
 
@@ -483,6 +511,7 @@ unconsistent_stock_report()
 
 class unconsistent_stock_report_line(osv.osv):
     _name = 'unconsistent.stock.report.line'
+    _order = 'report_id, product_code, prodlot_id, location_name, document_number desc'
 
     _columns = {
         'report_id': fields.many2one(
@@ -537,6 +566,15 @@ class unconsistent_stock_report_line(osv.osv):
             readonly=True,
             ondelete='cascade',
         ),
+        'prodlot_name': fields.related(
+            'prodlot_id',
+            'name',
+            string='BN',
+            type='char',
+            size=64,
+            readonly=True,
+            store=True,
+        ),
         'expiry_date': fields.related(
             'prodlot_id',
             'life_date',
@@ -563,6 +601,7 @@ class unconsistent_stock_report_line(osv.osv):
             size=128,
             string='Location',
             readonly=True,
+            store=True,
         ),
         'document_number': fields.char(
             size=128,

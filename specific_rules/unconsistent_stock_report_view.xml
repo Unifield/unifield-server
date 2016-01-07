@@ -42,7 +42,8 @@
             <field name="name">Unconsistent stock report</field>
             <field name="res_model">unconsistent.stock.report</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
         </record>
 
         <menuitem

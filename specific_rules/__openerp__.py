@@ -42,7 +42,7 @@
                    'stock_view.xml',
                    'wizard/stock_partial_move_view.xml',
                    'report/report_stock_inventory_view.xml',
-                   'report_unconsistent_stock_view.xml',
+                   'unconsistent_stock_report_view.xml',
                    'stock_sequence.xml',
                    ],
     'installable': True,
