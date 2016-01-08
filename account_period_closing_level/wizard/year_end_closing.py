@@ -62,6 +62,7 @@ class wizard_account_year_end_closing(osv.osv_memory):
         ayec_obj.setup_journals(cr, uid, context=context)
 
         ayec_obj.report_bs_balance_to_next_fy(cr, uid, rec, context=context)
+        ayec_obj.update_fy_state(cr, uid, rec.fy_id.id, context=context)
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
 wizard_account_year_end_closing()

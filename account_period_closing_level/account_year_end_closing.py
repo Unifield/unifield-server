@@ -118,15 +118,32 @@ class account_year_end_closing(osv.osv):
                 self.pool.get('account.journal').create(cr, uid, vals,
                     context=context)
 
-    def delete_year_end_entries(self, cr, uid, context=None):
+    def delete_year_end_entries(self, cr, uid, fy_id, context=None):
         """
         Cancel the FY year end entries FOR THE INSTANCE
-        - delete all entries of 'year end' 'system' journals
+        - delete all entries of 'year end' 'initial balance' journals
+            for the coordo in FY Period 16 and FY+1 Period O
+        - do that in sql to bypass the forbid delete of posted entries
         """
-        instance_ID = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id.ID
-        # TODO
-        raise NotImplementedError()
+        fy_rec = self._browse_fy(cr, uid, fy_id, context=context)
+        journal_ids = self._get_journals(cr, uid, context=context)
+        period_ids = self._get_periods_ids(cr, uid, fy_rec, context=context)
+
+        # get/delete JIs/JEs entries...
+        domain = [
+            ('journal_id', 'in', journal_ids),
+            ('period_id', 'in', period_ids),
+        ]
+        to_del_objs = [ self.pool.get(m) \
+            for m in ('account.move.line', 'account.move', ) ]  # in del order
+        for o in to_del_objs:
+            ids = o.search(cr, uid, domain, context=context)
+            if ids:
+                sql = "delete from %s where id in (%s)" % (
+                    o._name.replace('.', '_'),
+                    ','.join([str(id) for id in ids])
+                )
+                cr.execute(sql)
 
     def report_bs_balance_to_next_fy(self, cr, uid, wiz_rec,
         context=None):
@@ -260,6 +277,24 @@ class account_year_end_closing(osv.osv):
         return self.pool.get('account.move').write(cr, uid, je_by_ccy.values(),
             { 'state':'posted', }, context=local_context)
 
+    def update_fy_state(self, cr, uid, fy_id, reopen=False, context=None):
+        instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id
+        state = False
+        if reopen:
+            # only reopen at coordo level
+            if instance_rec.level == 'coordo':
+                state = 'draft'
+        else:
+            if instance_rec.level == 'coordo':
+                state = 'mission-closed'
+            elif instance_rec.level == 'section':
+                state = 'done'
+
+        if state:
+            self.pool.get('account.fiscalyear').write(cr, uid, [fy_id],
+                { 'state': state, }, context=context)
+
     def _search_record(self, cr, uid, model, domain, context=None):
         ids = self.pool.get(model).search(cr, uid, domain, context=context)
         return ids and ids[0] or False
@@ -289,6 +324,22 @@ class account_year_end_closing(osv.osv):
         return self._search_record(cr, uid, 'account.period', domain,
             context=context)
 
+    def _get_periods_map(self, cr, uid, fy_rec, context=None):
+        """
+        get FY period 16, FY+1 period 0 ids map
+        :return : { 16: id, 0: id)
+        """
+        next_fy_id = self._get_next_fy_id(cr, uid, fy_rec, context=context)
+        return {
+            16: self._get_period_id(cr, uid, fy_rec.id, 16, context=context),
+            0: next_fy_id and self._get_period_id(cr, uid, next_fy_id, 0,
+                context=context) or False,
+        }
+
+    def _get_periods_ids(self, cr, uid, fy_rec, context=None):
+        period_map = self._get_periods_map(cr, uid, fy_rec, context=context)
+        return [ period_map[pn] for pn in period_map if period_map[pn] ]
+
     def _get_journal(self, cr, uid, code, context=None):
         """
         get coordo end year system journal
@@ -296,7 +347,7 @@ class account_year_end_closing(osv.osv):
         :return: journal id
         """
         instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
-                context=context)[0].company_id.instance_id
+            context=context)[0].company_id.instance_id
         if instance_rec.level != 'coordo':
             return False
 
@@ -305,6 +356,24 @@ class account_year_end_closing(osv.osv):
             ('code', '=', code),
         ]
         return self._search_record(cr, uid, 'account.journal', domain,
+            context=context)
+
+    def _get_journals(self, cr, uid, context=None):
+        """
+        get coordo end year system journal
+        :param get_initial_balance: True to get 'initial balance' journal
+        :return: journal id
+        """
+        instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id
+        if instance_rec.level != 'coordo':
+            return False
+
+        domain = [
+            ('instance_id', '=', instance_rec.id),
+            ('code', 'in', self._journals.keys()),
+        ]
+        return self.pool.get('account.journal').search(cr, uid, domain,
             context=context)
 
 account_year_end_closing()

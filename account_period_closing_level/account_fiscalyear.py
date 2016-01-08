@@ -183,8 +183,15 @@ class account_fiscalyear(osv.osv):
         return self._close_fy(cr, uid, ids, context=context)
 
     def btn_mission_reopen(self, cr, uid, ids, context=None):
-        self.pool.get('account.year.end.closing').delete_year_end_entries(cr,
-            uid, context=context)
+        if not ids:
+            return
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+        fy_id = ids[0]
+        ayec_obj = self.pool.get('account.year.end.closing')
+
+        ayec_obj.delete_year_end_entries(cr, uid, fy_id, context=context)
+        ayec_obj.update_fy_state(cr, uid, fy_id, reopen=True, context=context)
         return {}
 
 account_fiscalyear()
