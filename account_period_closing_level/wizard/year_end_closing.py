@@ -28,7 +28,8 @@ class wizard_account_year_end_closing(osv.osv_memory):
 
     _columns = {
         'fy_id': fields.many2one('account.fiscalyear', "Fiscal Year",
-            required=True, domain=[('state', '=', 'draft')]),
+            required=True,
+            domain=[('state', 'in', ('draft', 'mission-closed'))]),
         'has_move_regular_bs_to_0': fields.boolean(
             "Move regular B/S account to 0"),
         'has_book_pl_results': fields.boolean("Book the P&L results"),
@@ -45,24 +46,20 @@ class wizard_account_year_end_closing(osv.osv_memory):
     def default_get(self, cr, uid, vals, context=None):
         fy_id = context and context.get('fy_id', False) or False
         self.pool.get('account.year.end.closing').check_before_closing_process(
-            cr, uid, fy_id, context=context)
+            cr, uid, False, context=context)
         res = super(wizard_account_year_end_closing, self).default_get(cr, uid,
             vals, context=context)
         res['fy_id'] = fy_id
         return res
 
     def btn_close_fy(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, (int, long, )):
             ids = [ids]
         rec = self.browse(cr, uid, ids[0], context=context)
-        ayec_obj = self.pool.get('account.year.end.closing')
-
-        ayec_obj.check_before_closing_process(
-            cr, uid, rec.fy_id, context=context)
-        ayec_obj.setup_journals(cr, uid, context=context)
-
-        ayec_obj.report_bs_balance_to_next_fy(cr, uid, rec, context=context)
-        ayec_obj.update_fy_state(cr, uid, rec.fy_id.id, context=context)
+        currency_table_id = rec.currency_table_id \
+            and rec.currency_table_id.id or False
+        self.pool.get('account.year.end.closing').process_closing(cr, uid,
+            rec.fy_id, currency_table_id=currency_table_id, context=context)
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
 wizard_account_year_end_closing()

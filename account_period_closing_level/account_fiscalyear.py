@@ -142,14 +142,46 @@ class account_fiscalyear(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
-        if not context:
+        if not ids:
+            return False
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+        if context is None:
             context = {}
+        from_sync = context.get('sync_update_execution', False)
+
+        # from sync get previous state (from form only record only)
+        state = vals.get('state', False)
+        prev_state = from_sync and len(ids) == 1 and \
+            self.read(cr, uid, [ids[0]], ['state', ],
+                context=context)[0]['state'] or False
+
         res = super(account_fiscalyear, self).write(cr, uid, ids, vals,
             context=context)
 
         # update fiscalyear state
         self.pool.get('account.fiscalyear.state').update_state(cr, uid, ids,
             context=context)
+
+        # US-822 year end closing sync coordo pull from HQ use case
+        # (from form only record only)
+        # year end closure processed HQ side and coordo year end not processed
+        # should be triggered coordo side when pulled
+        # TODO: options prevails HQ side, example:
+        # - coordo closing without dev1/dev2 (sync in fy the flags)
+        # - hq closing with dev1 (or 2 or both)
+        # - sync down
+        # - coordo should replay dev1/dev2: then dev3 should be updated with
+        #   new period 16 results (or all if more simple)
+        if from_sync and state == 'done' \
+            and prev_state and prev_state != 'done':
+            # TODO if already mission-closed dev1/dev2 prevails
+
+            # TODO: propagate ccy table by sync (does this model sync ?)
+            self.pool.get('account.year.end.closing').process_closing(cr, uid,
+                self.browse(cr, uid, ids[0], context=context),
+                currency_table_id=False, context=context)
+
         return res
 
     def _close_fy(self, cr, uid, ids, context=None):

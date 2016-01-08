@@ -36,36 +36,46 @@ class account_year_end_closing(osv.osv):
         'IB': 'Initial Balances',
     }
 
-    def check_before_closing_process(self, cr, uid, fy_rec_or_id=False,
+    def process_closing(self, cr, uid, fy_rec, currency_table_id=False,
         context=None):
+        import pdb; pdb.set_trace()  # TODO remove
+        level = self.check_before_closing_process(cr, uid, fy_rec,
+            context=context)
+        if level == 'coordo':
+            # generate closing entries at coordo level
+            self.setup_journals(cr, uid, context=context)
+            self.report_bs_balance_to_next_fy(cr, uid, fy_rec,
+                currency_table_id=currency_table_id, context=context)
+        self.update_fy_state(cr, uid, fy_rec.id, context=context)
+
+    def check_before_closing_process(self, cr, uid, fy_rec, context=None):
+        """
+        :return: instance level
+        :rtype: str
+        """
         level = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id.instance_id.level
         if level not in ('section', 'coordo', ):
             raise osv.except_osv(_('Warning'),
                 _('You can only close FY at HQ or Coordo'))
 
-        if isinstance(fy_rec_or_id, (int, long, )):
-            fy_rec = self._browse_fy(cr, uid, fy_rec_or_id, context=context)
-        else:
-            fy_rec = fy_rec_or_id
-        if fy_rec.state != 'draft':
-            raise osv.except_osv(_('Warning'),
-                _('You can only close an opened FY'))
-
         # check FY closable regarding level
-        field = False
-        if level == 'coordo':
-            field = 'is_mission_closable'
-        elif level == 'section':
-            field = 'is_hq_closable'
-        if not field or not getattr(fy_rec, field):
-            raise osv.except_osv(_('Warning'),
-                _('FY can not be closed due to its periods state'))
+        if fy_rec:
+            field = False
+            if level == 'coordo':
+                field = 'is_mission_closable'
+            elif level == 'section':
+                field = 'is_hq_closable'
+            if not field or not getattr(fy_rec, field):
+                raise osv.except_osv(_('Warning'),
+                    _('FY can not be closed due to its state or' \
+                        ' its periods state'))
 
-        # check next FY exists (we need FY+1 Period 0 for initial balances)
-        if not self._get_next_fy_id(cr, uid, fy_rec, context=context):
-            raise osv.except_osv(_('Warning'),
-                _('FY+1 required to close FY'))
+            # check next FY exists (we need FY+1 Period 0 for initial balances)
+            if not self._get_next_fy_id(cr, uid, fy_rec, context=context):
+                raise osv.except_osv(_('Warning'),
+                    _('FY+1 required to close FY'))
+        return level
 
     def create_periods(self, cr, uid, fy_id, periods_to_create=[0, 16, ],
         context=None):
@@ -145,8 +155,8 @@ class account_year_end_closing(osv.osv):
                 )
                 cr.execute(sql)
 
-    def report_bs_balance_to_next_fy(self, cr, uid, wiz_rec,
-        context=None):
+    def report_bs_balance_to_next_fy(self, cr, uid, fy_rec,
+            currency_table_id=False, context=None):
         """
         action 3: report B/S balances to next FY period 0
         """
@@ -208,8 +218,6 @@ class account_year_end_closing(osv.osv):
         # - IB journal
         # - next FY period 0
         # - local context
-        fy_rec = wiz_rec.fy_id
-
         cpy_rec = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id
         instance_rec = cpy_rec.instance_id
@@ -233,9 +241,9 @@ class account_year_end_closing(osv.osv):
 
         local_context = context.copy() if context else {}
         local_context['date'] = '%d-01-01' % (fy_year, )  # date for rates
-        if wiz_rec.currency_table_id:
+        if currency_table_id:
             # use ccy table
-            local_context['currency_table_id'] = wiz_rec.currency_table_id.id
+            local_context['currency_table_id'] = currency_table_id
 
         # compute balance in SQL
         # TODO: only account B/S report types (2 types)
@@ -281,19 +289,23 @@ class account_year_end_closing(osv.osv):
         instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id.instance_id
         state = False
+        fy_obj = self.pool.get('account.fiscalyear')
+
         if reopen:
             # only reopen at coordo level
             if instance_rec.level == 'coordo':
                 state = 'draft'
         else:
             if instance_rec.level == 'coordo':
-                state = 'mission-closed'
+                current_state = fy_obj.read(cr, uid, [fy_id], ['state', ],
+                    context=context)[0]['state']
+                if current_state != 'done':
+                    state = 'mission-closed'
             elif instance_rec.level == 'section':
                 state = 'done'
 
         if state:
-            self.pool.get('account.fiscalyear').write(cr, uid, [fy_id],
-                { 'state': state, }, context=context)
+            fy_obj.write(cr, uid, [fy_id], { 'state': state, }, context=context)
 
     def _search_record(self, cr, uid, model, domain, context=None):
         ids = self.pool.get(model).search(cr, uid, domain, context=context)
