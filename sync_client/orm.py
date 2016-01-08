@@ -309,9 +309,8 @@ sql_params)
 
         def touch(data_ids, touched_fields):
             if synchronize:
-                touched_fields.sort()
                 data.write(cr, uid, data_ids,
-                    dict(data_base_values, touched=str(touched_fields)),
+                    dict(data_base_values, touched=str(sorted(touched_fields))),
                     context=context)
 
         def filter_o2m(field_list):
@@ -463,7 +462,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         except DuplicateKey, e:
             # Should never happen if called on other object than ir.model.data
             raise Exception("Duplicate definition of 'sd' xml_id: %d@ir.model.data" % e.key)
-        if field != real_field and result_iterable:
+        if field != real_field:
             read_result = self.pool.get('ir.model.data').read(cr, uid, result.values(), [real_field], context=context)
             read_result = dict((x['id'], x) for x in read_result)
             result = dict((sdref, read_result[id][real_field]) for sdref, id in result.items())

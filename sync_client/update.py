@@ -579,7 +579,6 @@ class update_received(osv.osv):
         def group_unlink_update_execution(obj, sdref_update_ids):
             obj_ids = obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), context=context)
             done_ids = []
-            done_update_ids = []
             for id, update_id in zip(
                         obj_ids.values(),
                         sdref_update_ids.values()
@@ -609,9 +608,8 @@ class update_received(osv.osv):
 #                    raise
                 else:
                     done_ids.append(update_id)
-                    done_update_ids.append(update_id)
 
-            self.write(cr, uid, done_update_ids, {
+            self.write(cr, uid, done_ids, {
                 'execution_date': datetime.now(),
                 'editable' : False,
                 'run' : True,
