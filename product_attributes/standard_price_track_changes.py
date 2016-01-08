@@ -99,7 +99,7 @@ class standard_price_track_changes(osv.osv):
 
     _defaults = {
         'change_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
-        'user_id': lambda obj, cr, uid, c={}: uid,
+        'user_id': lambda obj, cr, uid, c={}: hasattr(uid, 'realUid') and uid.realUid or uid,
         'in_price_changed': False,
     }
 
@@ -151,6 +151,9 @@ class standard_price_track_changes(osv.osv):
 
         new_price = vals.get('standard_price', False)
         old_price = vals.get('old_price', False)
+
+        if abs(new_price - old_price) <= 10**-3:
+            return None
 
         # If it is the first standard.price.track.changes for this product
         # the old price must be False and the new price is the current

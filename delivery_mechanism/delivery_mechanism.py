@@ -687,7 +687,6 @@ class stock_picking(osv.osv):
         uom_obj = self.pool.get('product.uom')
         currency_obj = self.pool.get('res.currency')
         product_obj = self.pool.get('product.product')
-        sptc_obj = self.pool.get('standard.price.track.changes')
 
         if context is None:
             context = {}
@@ -738,14 +737,12 @@ class stock_picking(osv.osv):
             # Is price changed ?
             if line.cost and move.purchase_line_id:
                 p_price = move.purchase_line_id.price_unit
-                print p_price, line.cost
                 pchanged = abs(p_price - line.cost) > 10**-3
-            sptc_obj.track_change(cr, uid, move.product_id.id,
-                                  _('Reception %s') % move.picking_id.name, {
+            sptc_values = {
                     'standard_price': new_std_price,
                     'old_price': line.product_id.standard_price,
                     'manually_changed': pchanged,
-                }, context=context)
+            }
 
             # Record the values that were chosen in the wizard, so they can be
             # used for inventory valuation of real-time valuation is enabled.
@@ -754,7 +751,7 @@ class stock_picking(osv.osv):
                 'price_currency_id': line.currency.id,
             }
 
-        return average_values
+        return average_values, sptc_values
 
     def _get_values_from_line(self, cr, uid, move, line, db_data, context=None):
         """
@@ -938,6 +935,7 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         sequence_obj = self.pool.get('ir.sequence')
         cur_obj = self.pool.get('res.currency')
+        sptc_obj = self.pool.get('standard.price.track.changes')
         wf_service = netsvc.LocalService("workflow")
         usb_entity = self._get_usb_entity_type(cr, uid)
 
@@ -996,6 +994,7 @@ class stock_picking(osv.osv):
                 mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                 out_moves = mirror_data['moves']
                 average_values = {}
+                move_sptc_values = []
 
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
@@ -1009,8 +1008,9 @@ class stock_picking(osv.osv):
                         compute_average = picking.type == 'in' and line.product_id.cost_method == 'average'
 
                     if compute_average:
-                        average_values = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
+                        average_values, sptc_values = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
                         values.update(average_values)
+                        move_sptc_values.append(sptc_values)
 
                     # The quantity
                     if line.uom_id.id != move.product_uom.id:
@@ -1168,7 +1168,12 @@ class stock_picking(osv.osv):
                 # If there is remaining quantity for the move, put the ID of the move
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
-                    backordered_moves.append((move, diff_qty, average_values, data_back))
+                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values))
+                else:
+                    for sptc_values in move_sptc_values:
+                        sptc_obj.track_change(cr, uid, move.product_id.id,
+                                              _('Reception %s') % move.picking_id.name,
+                                              sptc_values, context=context)
 
                 # UTP-967
                 if move.state != 'cancel' and move.purchase_line_id and move.purchase_line_id.procurement_id:
@@ -1215,8 +1220,10 @@ class stock_picking(osv.osv):
                     if backorder_ids:
                         backorder_id = backorder_ids[0]
 
+                backorder_name = picking.name
                 if not backorder_id:
                     backorder_id = self.copy(cr, uid, picking.id, initial_vals_copy, context=context)
+                    backorder_name = self.read(cr, uid, backorder_id, ['name'], context=context)['name']
 
                     back_order_post_copy_vals = {}
                     if usb_entity == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
@@ -1233,7 +1240,11 @@ class stock_picking(osv.osv):
                     if back_order_post_copy_vals:
                         self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
 
-                for bo_move, bo_qty, av_values, data_back in backordered_moves:
+                for bo_move, bo_qty, av_values, data_back, move_sptc_values in backordered_moves:
+                    for sptc_values in move_sptc_values:
+                        sptc_obj.track_change(cr, uid, move.product_id.id,
+                                              _('Reception %s') % backorder_name,
+                                              sptc_values, context=context)
                     if bo_move.product_qty != bo_qty:
                         # Create the corresponding move in the backorder - reset batch - reset asset_id
                         bo_values = {
