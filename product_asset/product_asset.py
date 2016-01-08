@@ -400,6 +400,8 @@ class product_product(osv.osv):
         '''
         if a product is not of type product, it is set to single subtype
         '''
+        if context is None:
+            context={}
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
