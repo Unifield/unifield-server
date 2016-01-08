@@ -2587,7 +2587,7 @@ class orm(orm_template):
             pos2 = pos + 1
             for id in cr.fetchall():
                 pos2 = browse_rec(id[0], pos2)
-            query = ''.join(('UPDATE ', self._table, ' set parent_left=%s, parent_right=%s where id=%s'))
+            query = ''.join(('UPDATE ', self._table, ' SET parent_left=%s, parent_right=%s WHERE id=%s'))
             cr.execute(query, (pos, pos2, root))
             return pos2 + 1
         query = ''.join(('SELECT id FROM ', self._table, ' WHERE ',
@@ -2949,7 +2949,7 @@ class orm(orm_template):
                                                 self._table, k)
                     elif len(res) > 1:
                         netsvc.Logger().notifyChannel('orm', netsvc.LOG_ERROR, "Programming error, column %s->%s has multiple instances !" % (self._table, k))
-                    elif not res:
+                    else:
                         if not isinstance(f, fields.function) or f.store:
                             # add the missing field
                             cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))
@@ -3574,7 +3574,7 @@ class orm(orm_template):
         for order, object, store_ids, fields in result_store:
             if object != self._name:
                 obj = self.pool.get(object)
-                cr.execute('select id from '+obj._table+' where id IN %s', (tuple(store_ids),))
+                cr.execute('SELECT id from '+obj._table+' WHERE id IN %s', (tuple(store_ids),))
                 rids = map(lambda x: x[0], cr.fetchall())
                 if rids:
                     obj._store_set_values(cr, uid, rids, fields, context)
