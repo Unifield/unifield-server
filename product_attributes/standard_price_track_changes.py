@@ -152,7 +152,7 @@ class standard_price_track_changes(osv.osv):
         new_price = vals.get('standard_price', False)
         old_price = vals.get('old_price', False)
 
-        if abs(new_price - old_price) <= 10**-3:
+        if new_price and old_price and abs(new_price - old_price) <= 10**-3:
             return None
 
         # If it is the first standard.price.track.changes for this product
