@@ -31,6 +31,7 @@ from tools.translate import _
 
 from report import report_sxw
 
+ZERO_CELL_CONTENT = "0.0"
 
 class hq_report_oca(report_sxw.report_sxw):
 
@@ -185,13 +186,20 @@ class hq_report_oca(report_sxw.report_sxw):
             account = move_line.account_id
             currency = move_line.currency_id
             func_currency = move_line.functional_currency_id
-            rate = "0.00"
+            rate = ZERO_CELL_CONTENT
+
+            is_cur_adj_entry = move_line.journal_id \
+                and move_line.journal_id.type == 'cur_adj' or False
+            is_rev_entry = move_line.journal_id \
+                and move_line.journal_id.type == 'revaluation' or False
+
             if currency and func_currency:
                 # US-274/9: accrual account (always refer to previous period)
                 # base on doc date instead posting in this case
                 # - 1st period accruals: doc date and posting same period
                 # - next accruals: doc date previous period (accrual of)
-                move_line_date = move_line.account_id.accrual_account \
+                move_line_date = move_line.journal_id \
+                    and move_line.journal_id.type == 'accrual' \
                     and move_line.document_date or move_line.date
 
                 cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line_date))
@@ -210,7 +218,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 'extra',
             )
 
-            # For first report: as if
+            # For first report: as it
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
                               move_line.move_id and move_line.move_id.name or "",
@@ -232,11 +240,21 @@ class hq_report_oca(report_sxw.report_sxw):
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
+            if is_cur_adj_entry or is_rev_entry:
+                # US-788/1 and US-478/3: FXA/REV raw data override
+                # without impacting formatted_data for other files
+                # US-788/1: always display booking as func
+                # US-478/3 always rate of 1
+                first_result_lines[-1][13] = first_result_lines[-1][16]  # US-788/1
+                first_result_lines[-1][14] = first_result_lines[-1][17]  # US-788/1
+                first_result_lines[-1][15] = first_result_lines[-1][18]  # US-788/1
+                first_result_lines[-1][-1] = 1.  # US-478/3
 
             # For third report: add to corresponding sub
             if journal and journal.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
-                if not account.shrink_entries_for_hq:
+                if not account.shrink_entries_for_hq or is_rev_entry or is_cur_adj_entry:
+                    # US-478/1: or is_rev_entry, no shrink for rev journal entries
                     expat_identification = "0"
                     expat_employee = "0"
                     # Expat employees are the only third party in this report
@@ -245,11 +263,9 @@ class hq_report_oca(report_sxw.report_sxw):
                             expat_identification = move_line.employee_id.identification_id
                         expat_employee = move_line.partner_txt
 
-                    # US-274/1: for FXA entries output fonctional amount in balance
+                    # US-274/1: for FXA/REV entries output fonctional amount in balance
                     # report
-                    is_cur_adj_entry = move_line.journal_id \
-                        and move_line.journal_id.type in ('revaluation', 'cur_adj') or False
-                    if is_cur_adj_entry:
+                    if is_cur_adj_entry or is_rev_entry:
                         output_debit = move_line.debit
                         output_credit = move_line.credit
                         output_rate = 1
@@ -307,14 +323,34 @@ class hq_report_oca(report_sxw.report_sxw):
             currency = analytic_line.currency_id
             func_currency = analytic_line.move_id.functional_currency_id
             rate = ""
+
+            # US-478 - US-274/9 accrual account always refer to previous period
+            # base on doc date instead posting in this case
+            # - 1st period accruals: doc date and posting same period
+            # - next accruals: doc date previous period (accrual of)
+            ldate = analytic_line.date
+            if analytic_line.move_id:
+                if analytic_line.move_id.journal_id.type == 'accrual':
+                    ldate = analytic_line.document_date or analytic_line.date
+            elif analytic_line.journal_id \
+                and analytic_line.journal_id.code == 'ACC':
+                # sync border case no JI for the AJI
+                ldate = analytic_line.document_date or analytic_line.date
+
             if func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, analytic_line.date))
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, ldate))
                 if cr.rowcount:
                     rate = round(1 / cr.fetchall()[0][0], 8)
+
+            is_analytic_cur_adj_entry = analytic_line.journal_id \
+                and analytic_line.journal_id.type == 'cur_adj' or False
+            is_analytic_rev_entry = analytic_line.journal_id \
+                and analytic_line.journal_id.type == 'revaluation' or False
+
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
-                              analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
+                              analytic_line.entry_sequence or "",
                               analytic_line.name or "",
                               analytic_line.ref or "",
                               datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
@@ -325,15 +361,23 @@ class hq_report_oca(report_sxw.report_sxw):
                               analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",
                               analytic_line.account_id and analytic_line.account_id.code or "",
                               analytic_line.partner_txt or "",
-                              analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
-                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00",
+                              analytic_line.amount_currency > 0 and ZERO_CELL_CONTENT or round(-analytic_line.amount_currency, 2),
+                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
                               currency and currency.name or "",
-                              analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
-                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00",
+                              analytic_line.amount > 0 and ZERO_CELL_CONTENT or round(-analytic_line.amount, 2),
+                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or ZERO_CELL_CONTENT,
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
-
+            if is_analytic_cur_adj_entry or is_analytic_rev_entry:
+                # US-788/1 and US-478/3: FXA/REV raw data override
+                # without impacting formatted_data for other files
+                # US-788/1: always display booking as func
+                # US-478/3 always rate of 1
+                first_result_lines[-1][13] = first_result_lines[-1][16]  # US-788/1
+                first_result_lines[-1][14] = first_result_lines[-1][17]  # US-788/1
+                first_result_lines[-1][15] = first_result_lines[-1][18]  # US-788/1
+                first_result_lines[-1][-1] = 1.  # US-478/3
             if analytic_line.journal_id \
                 and analytic_line.journal_id.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
@@ -346,7 +390,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                         "1",
                                         account and account.code + " " + account.name or "0",
                                         currency and currency.name or "0",
-                                        analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or "0.00",
+                                        analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
                                         "0",
                                         rate,
                                         analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",

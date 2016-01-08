@@ -27,7 +27,7 @@ from tools.translate import _
 import tools
 import os
 import logging
-
+from threading import Lock
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
@@ -50,6 +50,48 @@ class patch_scripts(osv.osv):
             model_obj = self.pool.get(ps['model'])
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
+
+    def us_332_patch(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            # create MSFID for product.nomenclature
+            nomen_obj = self.pool.get('product.nomenclature')
+            nomen_ids = nomen_obj.search(cr, uid, [('msfid', '=', False)], order='level asc, id')
+
+            for nomen_id in nomen_ids:
+                nomen = nomen_obj.browse(cr, uid, nomen_id, context={})
+                msfid = ""
+                if not nomen.msfid:
+                    nomen_parent = nomen.parent_id
+                    if nomen_parent and nomen_parent.msfid:
+                        msfid = nomen_parent.msfid + "-"
+                    name_first_word = nomen.name.split(' ')[0]
+                    msfid += name_first_word
+                    # Search same msfid
+                    ids = nomen_obj.search(cr, uid, [('msfid', '=', msfid)])
+                    if ids:
+                        msfid += str(nomen.id)
+                    nomen_obj.write(cr, uid, nomen.id, {'msfid': msfid})
+
+            # create MSFID for product.category
+            categ_obj = self.pool.get('product.category')
+            categ_ids = categ_obj.search(cr, uid, [('msfid', '=', False), ('family_id', '!=', False)], order='id')
+
+            for categ in categ_obj.browse(cr, uid, categ_ids, context={}):
+                msfid = ""
+                if not categ.msfid and categ.family_id and categ.family_id.name:
+                    msfid = categ.family_id.name[0:4]
+                    ids = categ_obj.search(cr, uid, [('msfid', '=', msfid)])
+                    if ids:
+                        msfid += str(categ.id)
+                    categ_obj.write(cr, uid, categ.id, {'msfid': msfid})
 
     def update_parent_budget_us_489(self, cr, uid, *a, **b):
         logger = logging.getLogger('update')
@@ -125,6 +167,32 @@ class patch_scripts(osv.osv):
 
             if vals:
                 po_obj.write(cr, uid, [po['id']], vals)
+
+    def disable_crondoall(self, cr, uid, *a, **b):
+        cron_obj = self.pool.get('ir.cron')
+        cron_ids = cron_obj.search(cr, uid, [('doall', '=', True), ('active', 'in', ['t', 'f'])])
+        if cron_ids:
+            cron_obj.write(cr, uid, cron_ids, {'doall': False})
+
+    def bar_action_patch(self, cr, uid, *a, **b):
+        rules_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        data_obj = self.pool.get('ir.model.data')
+        view_obj = self.pool.get('ir.ui.view')
+        rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False), ('active', 'in', ['t', 'f'])])
+        view_to_gen = {}
+        for rule in rules_obj.read(cr, uid, rule_ids, ['view_id']):
+            view_to_gen[rule['view_id'][0]] = True
+            rules_obj.unlink(cr, uid, rule['id'])
+            d_ids = data_obj.search(cr, uid, [
+                ('module', '=', 'sd'),
+                ('model', '=', 'msf_button_access_rights.button_access_rule'),
+                ('res_id', '=', rule['id'])
+                ])
+            if d_ids:
+                data_obj.unlink(cr, uid, d_ids)
+        for view in view_to_gen:
+            view_obj.generate_button_access_rules(cr, uid, view)
+
 
 patch_scripts()
 
@@ -408,3 +476,44 @@ class email_configuration(osv.osv):
         (_update_email_config, 'Always true: update email configuration', [])
     ]
 email_configuration()
+
+class ir_cron_linux(osv.osv_memory):
+    _name = 'ir.cron.linux'
+    _description = 'Start memory cleaning cron job from linux crontab'
+    _columns = {
+    }
+
+    def __init__(self, *a, **b):
+        self._logger = logging.getLogger('ir.cron.linux')
+        self._jobs = {
+            'memory_clean': ('osv_memory.autovacuum', 'power_on', ()),
+            'save_puller': ('sync.server.update', '_save_puller', ())
+        }
+        self.running = {}
+        for job in self._jobs:
+            self.running[job] = Lock()
+
+        super(ir_cron_linux, self).__init__(*a, **b)
+
+    def execute_job(self, cr, uid, job, context=None):
+        if job not in self._jobs:
+            raise osv.except_osv(_('Warning !'), _('Job does not exists'))
+        if uid != 1:
+            raise osv.except_osv(_('Warning !'), _('Permission denied'))
+        if not self.running[job].acquire(False):
+            self._logger.info("Linux cron: job %s already running" % (job, ))
+            return False
+        try:
+            self._logger.info("Linux cron: starting job %s" % (job, ))
+            obj = self.pool.get(self._jobs[job][0])
+            fct = getattr(obj, self._jobs[job][1])
+            args = self._jobs[job][2]
+            fct(cr, uid, *args)
+            self._logger.info("Linux cron: job %s done" % (job, ))
+        except Exception, e:
+            self._logger.warning('Linux cron: job %s failed' % (job, ), exc_info=1)
+        finally:
+            self.running[job].release()
+        return True
+
+ir_cron_linux()

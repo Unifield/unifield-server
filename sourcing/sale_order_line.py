@@ -118,7 +118,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         self._check_browse_param(order, method='_get_sale_order_state')
 
-        if order and order.state == 'done' and order.split_type_sale_order == 'original_sale_order':
+        if order and not order.procurement_request and order.state == 'done' and order.split_type_sale_order == 'original_sale_order':
             return 'split_so'
         elif order:
             return order.state
@@ -713,6 +713,33 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def update_supplier_on_line(self, cr, uid, line_ids, context=None):
+        """
+        Update the selected supplier on lines for line in make_to_order.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs the method
+        :param line_ids: List of ID of sale.order.line to update
+        :param context: Context of the call
+
+        :return True
+        :rtype bool
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+
+        for line in self.browse(cr, uid, line_ids, context=context):
+            if line.type == 'make_to_order' and line.product_id \
+               and line.product_id.seller_id:
+                self.write(cr, uid, [line.id], {
+                    'supplier': line.product_id.seller_id.id,
+                }, context=context)
+
+        return True
+
     def _check_loan_conditions(self, cr, uid, line, context=None):
         """
         Check if the value of lines are compatible with the value
@@ -1094,6 +1121,23 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 _('You cannot confirm the sourcing of a line to an internal customer with an internal supplier.'),
             )
 
+        self.check_confirm_order(cr, uid, ids, context=context)
+
+        return True
+
+    def check_confirm_order(self, cr, uid, ids, context=None):
+        """
+        Run the confirmation of the FO/IR if all lines are confirmed
+        """
+        # Objects
+        order_obj = self.pool.get('sale.order')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         order_to_check = {}
         for line in self.read(cr, uid, ids, ['order_id', 'estimated_delivery_date', 'price_unit', 'product_uom_qty'], context=context):
             order_data = order_obj.read(cr, uid, line['order_id'][0], ['procurement_request', 'order_type'], context=context)
@@ -1150,6 +1194,8 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                     'sourcing_trace': 'Sourcing in progress',
                 }, context=context)
 
+                for order_id in order_ids:
+                    self.infolog(cr, uid, "All lines of the FO/IR id:%s have been sourced" % order_id)
                 thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_ids, state_to_use, context))
                 thread.start()
 
@@ -1217,7 +1263,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         if new_cursor:
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return True
 

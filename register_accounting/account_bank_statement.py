@@ -30,6 +30,7 @@ from register_tools import _set_third_parties
 from register_tools import create_cashbox_lines
 from register_tools import open_register_view
 import time
+import datetime
 import decimal_precision as dp
 
 
@@ -175,6 +176,7 @@ class account_bank_statement(osv.osv):
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]},
             help="Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank statement is equal to that amount."),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
+        'closing_balance_frozen_date': fields.date("Closing balance frozen date"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, readonly=True),
@@ -270,6 +272,10 @@ class account_bank_statement(osv.osv):
 #            company_currency_id = st.journal_id.company_id.currency_id.id
             if not self.check_status_condition(cr, uid, st.state, journal_type=j_type):
                 continue
+
+            # US-665 Do not permit closing Bank/Cheque Register if previous register is not closed! (confirm state)
+            if st.prev_reg_id and st.prev_reg_id.state != 'confirm':
+                raise osv.except_osv(_('Error'), _('Please close previous register before closing this one!'))
 
             # modification of balance_check for cheque registers
             if st.journal_id.type in ['bank', 'cash']:
@@ -425,7 +431,12 @@ class account_bank_statement(osv.osv):
         for reg in self.browse(cr, uid, ids, context=context):
             # Validate register only if this one is open
             if reg.state == 'open':
-                res_id = self.write(cr, uid, [reg.id], {'closing_balance_frozen': True}, context=context)
+                now_orm = self.pool.get('date.tools').date2orm(
+                    datetime.datetime.now().date())
+                res_id = self.write(cr, uid, [reg.id], {
+                        'closing_balance_frozen': True,
+                        'closing_balance_frozen_date': now_orm,
+                    }, context=context)
                 res.append(res_id)
             # Create next starting balance for cash registers
             if reg.journal_id.type == 'cash':
@@ -983,6 +994,12 @@ class account_bank_statement_line(osv.osv):
             if absl.invoice_id and (absl.direct_invoice or absl.cash_return_move_line_id):
                 # BKLG-60: reg line from advance return: display invoice(s) AJIs too
                 res.add(absl.invoice_id.move_id.id)
+            elif not absl.invoice_id and absl.direct_invoice:
+                # US-512: 
+                # above case UTP-1039 was ok for temp posted direct invoice
+                # hard posted direct invoice regline case (and sync P1->C1)
+                if absl.direct_invoice_move_id:
+                    res.add(absl.direct_invoice_move_id.id)
         return list(res)
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
@@ -1954,7 +1971,8 @@ class account_bank_statement_line(osv.osv):
             saveddate = False
             if values.get('date'):
                 saveddate = values['date']
-            self._update_move_from_st_line(cr, uid, ids, values, context=context)
+            if not context.get('sync_update_execution'):
+                self._update_move_from_st_line(cr, uid, ids, values, context=context)
             if saveddate:
                 values['date'] = saveddate
 
@@ -2056,6 +2074,14 @@ class account_bank_statement_line(osv.osv):
                 if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
                     raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
             previous_state = ''.join(absl.state)
+            if absl.state == 'draft':
+                # US-673: temp posted line generates 2 creation updates
+                # if the line is temp posted between the 2 rules, the 1st upd to create the line is not sent
+                # update ir_model_data create_date to now(), so the 2 updates will be generated together at the next sync
+                cr.execute("""update ir_model_data set create_date=NOW() where
+                    model=%s and res_id=%s and module='sd'
+                    """, (self._name, absl.id))
+
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
             elif absl.state == "temp" and postype == "temp" and absl.direct_invoice == False:
@@ -2674,11 +2700,12 @@ class ir_values(osv.osv):
             new_act = []
             for v in values:
                 if v[1] == 'Bank Reconciliation' and context['journal_type'] == 'bank' \
-                or v[1] == 'Cash Inventory' and context['journal_type'] == 'cash' \
+                or v[1] == 'Cash Reconciliation' and context['journal_type'] == 'cash' \
                 or v[1] == 'Open Advances' and context['journal_type'] == 'cash' \
                 or v[1] == 'Cheque Inventory' and context['journal_type'] == 'cheque' \
                 or v[1] == 'Pending Cheque' and context['journal_type'] == 'cheque' \
                 or v[1] == 'Liquidity Position' and context['journal_type'] != 'cheque' \
+                or v[1] == 'action_report_liquidity_position' and context['journal_type'] != 'cheque' \
                 or v[1] == 'Full Report' and context['journal_type'] in ['bank', 'cash', 'cheque']:
                     new_act.append(v)
             values = new_act

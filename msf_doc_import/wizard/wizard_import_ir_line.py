@@ -285,7 +285,7 @@ Importation completed in %s!
             sale_obj.write(cr, uid, fo_id, {'state': 'draft'}, context)
             if not context.get('yml_test', False):
                 cr.commit()
-                cr.close()
+                cr.close(True)
 
     def import_file(self, cr, uid, ids, context=None):
         """

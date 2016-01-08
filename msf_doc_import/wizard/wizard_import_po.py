@@ -818,7 +818,7 @@ The columns should be in this values:
         # we reset the PO to its original state ('confirmed')
         po_obj.write(cr, uid, po_id, {'state': 'confirmed', 'import_in_progress': False}, context)
         cr.commit()
-        cr.close()
+        cr.close(True)
 
     def import_file(self, cr, uid, ids, context=None):
         """

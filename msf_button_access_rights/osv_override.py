@@ -56,7 +56,7 @@ def view_look_dom_arch(self, cr, uid, node, view_id, context=None):
             rules = rules_pool.browse(cr, 1, rules_search, context=context)
 
             # parse view and get all buttons with a name, a type that is not 'special', no position attribute, and may or may not have an invisible attribute (But not set to '1')
-            buttons = node.xpath("//button[ @name and @type != 'special' and not (@position) and @invisible != '1' or not (@invisible) ]")
+            buttons = node.xpath("//button[ @name and @type != 'special' and not (@position) and @invisible != '1' and @invisible != 'True' or not (@invisible) ]")
             for button in buttons:
 
                 button_name = button.attrib.get('name', '')
@@ -247,8 +247,6 @@ osv.object_proxy.exec_workflow_cr = exec_workflow_cr
 super_create = orm.orm_memory.create
 
 def create(self, cr, user, vals, context=None):
-    if user == 1 and context is None:
-        logging.getLogger('orm_memory').warning("".join(["Traceback:\n"] + traceback.format_stack()[:-1] + ["Possible mistake on the caller method. Please check if the context argument has been given.\n"]).strip())
     return super_create(self, cr, (context or {}).get('real_user', user), vals, context=context)
 
 orm.orm_memory.create = create

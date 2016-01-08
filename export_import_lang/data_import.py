@@ -173,7 +173,7 @@ class msf_language_import(osv.osv_memory):
 
             self.write(cr, uid, [ids[0]], {'data': ''})
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         except Exception, e:
             cr.rollback()
@@ -188,7 +188,7 @@ class msf_language_import(osv.osv_memory):
                 ''') % (e,)
             })
             cr.commit()
-            cr.close()
+            cr.close(True)
             raise
 
         return {}

@@ -239,13 +239,26 @@ class analytic_line(osv.osv):
             return False
         if not date:
             date = strftime('%Y-%m-%d')
+
         # Prepare some value
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context)[0]
         context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
-        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+        move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
+
+        aaj_obj = self.pool.get('account.analytic.journal')
+        correction_journal_ids = aaj_obj.search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
         correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
+
+        # sequence info from GL journal
+        aj_obj = self.pool.get('account.journal')
+        gl_correction_journal_ids = aj_obj.search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+        gl_correction_journal_id = gl_correction_journal_ids and gl_correction_journal_ids[0] or False
+        if not gl_correction_journal_id:
+            raise osv.except_osv(_('Error'), _('No GL journal found for corrections!'))
+        gl_correction_journal_rec = aj_obj.browse(cr, uid, gl_correction_journal_id, context=context)
+
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
             if account.category in ['OC', 'DEST']:
@@ -255,13 +268,31 @@ class analytic_line(osv.osv):
                 fieldname = 'cost_center_id'
                 if account.category == 'DEST':
                     fieldname = 'destination_id'
-                # if period is not closed, so override line.
-                if period and period.state not in ['done', 'mission-closed']:
+
+                # update or reverse ?
+                update = period and period.state not in ['done', 'mission-closed']
+                if aline.journal_id.type == 'hq':
+                    # US-773/2: if HQ entry always like period closed fashion
+                    update = False
+
+                if update:
+                    # not mission close: override line
                     # Update account # Date: UTP-943 speak about original date for non closed periods
-                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': aline.date,
-                        'source_date': aline.source_date or aline.date}, context=context)
+                    vals = {
+                        fieldname: account_id,
+                        'date': aline.date,
+                        'source_date': aline.source_date or aline.date,
+                    }
+                    self.write(cr, uid, [aline.id], vals, context=context)
                 # else reverse line before recreating them with right values
                 else:
+                    # mission close or + or HQ entry: reverse
+
+                    # compute entry sequence
+                    seq_num_ctx = period and {'fiscalyear_id': period.fiscalyear_id.id} or None
+                    seqnum = self.pool.get('ir.sequence').get_id(cr, uid, gl_correction_journal_rec.sequence_id.id, context=seq_num_ctx)
+                    entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_journal_rec.code, seqnum)
+
                     # First reverse line
                     rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
                     # UTP-943: Shoud have a correction journal on these lines
@@ -279,6 +310,13 @@ class analytic_line(osv.osv):
                     self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
+
+                    if isinstance(rev_ids, (int, long, )):
+                        rev_ids = [rev_ids]
+                    if isinstance(cor_ids, (int, long, )):
+                        cor_ids = [cor_ids]
+                    for rev_cor_id in rev_ids + cor_ids:
+                        cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, rev_cor_id))
             else:
                 # Update account
                 self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)

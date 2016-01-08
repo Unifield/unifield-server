@@ -264,12 +264,27 @@ class product_attributes(osv.osv):
     def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        for product in self.browse(cr, uid, ids, context=context):
-            res[product.id] = {'no_external': product.state.no_external or product.international_status.no_external or False,
-                               'no_esc': product.state.no_esc or product.international_status.no_esc or False,
-                               'no_internal': product.state.no_internal or product.international_status.no_internal or False,
-                               'no_consumption': product.state.no_consumption or product.international_status.no_consumption or False,
-                               'no_storage': product.state.no_storage or product.international_status.no_storage or False}
+        product_state = self.pool.get('product.status')
+        intl_state = self.pool.get('product.international.status')
+        for product in self.read(cr, uid, ids, ['state', 'international_status'], context=context):
+            res[product['id']] = {
+                'no_external': False,
+                'no_esc': False,
+                'no_internal': False,
+                'no_consumption': False,
+                'no_storage': False
+            }
+            fields = ['no_external', 'no_esc', 'no_internal', 'no_consumption', 'no_storage']
+            state = None
+            intl = None
+            if product['state']:
+                state = product_state.read(cr, uid, product['state'][0], fields, context=context)
+            if product['international_status']:
+                intl = intl_state.read(cr, uid, product['international_status'][0], fields, context=context)
+
+            if state or intl:
+                for f in fields:
+                    res[product['id']][f] = (state and state[f]) or (intl and intl[f]) or False
 
         return res
 
@@ -424,8 +439,8 @@ class product_attributes(osv.osv):
         'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, method=True, type='boolean',
                                                  store=False, string='Available for the partner', readonly=True),
         'form_value': fields.text(string='Form', translate=True),
-        'fit_value': fields.text(string='Form', translate=True),
-        'function_value': fields.text(string='Form', translate=True),
+        'fit_value': fields.text(string='Fit', translate=True),
+        'function_value': fields.text(string='Function', translate=True),
         'standard_ok': fields.boolean(string='Standard'),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
@@ -792,7 +807,7 @@ class product_attributes(osv.osv):
             # Check if the product is in an invoice
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
                                                             ('invoice_id', '!=', False),
-                                                            ('invoice_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                            ('invoice_id.state', 'not in', ['open', 'paid', 'proforma', 'proforma2', 'cancel'])], context=context)
 
             # Check if the product has stock in internal locations
             has_stock = product.qty_available

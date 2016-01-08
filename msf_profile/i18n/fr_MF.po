@@ -9395,7 +9395,7 @@ msgstr "Centralisation Crédit"
 
 #. module: msf_partner
 #: field:product.supplierinfo,get_from_date:0
-msgid "Valid form date"
+msgid "Valid from date"
 msgstr "Valide à partir de (date)"
 
 #. module: base

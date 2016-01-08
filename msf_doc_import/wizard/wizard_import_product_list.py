@@ -226,7 +226,7 @@ Importation completed in %s!
         self.write(cr, uid, ids, wizard_vals, context=context)
         if not context.get('yml_test', False):
             cr.commit()
-            cr.close()
+            cr.close(True)
 
 
     def import_file(self, cr, uid, ids, context=None):

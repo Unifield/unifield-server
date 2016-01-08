@@ -48,7 +48,7 @@ class account_period_state(osv.osv):
         return [('instance_id', 'in', inst_ids)]
 
     _columns = {
-        'period_id': fields.many2one('account.period', 'Period'),
+        'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State',
                                   readonly=True),

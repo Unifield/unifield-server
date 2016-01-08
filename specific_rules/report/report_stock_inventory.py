@@ -196,7 +196,7 @@ location will be shown.""",
         self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
 
         new_cr.commit()
-        new_cr.close()
+        new_cr.close(True)
 
         return True
 
@@ -269,8 +269,8 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             self.uid,
             self.datas['lines'],
         ):
-            if not line.product_id.id in res:
-                res[line.product_id.id] = {
+            if not line.product_id.default_code in res:
+                res[line.product_id.default_code] = {
                     'product_code': line.product_id.default_code,
                     'product_name': line.product_id.name,
                     'uom': line.product_id.uom_id.name,
@@ -279,8 +279,8 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                     'lines': {},
                 }
 
-            res[line.product_id.id]['sum_qty'] += line.product_qty
-            res[line.product_id.id]['sum_value'] += line.value
+            res[line.product_id.default_code]['sum_qty'] += line.product_qty
+            res[line.product_id.default_code]['sum_value'] += line.value
             batch_id = 'no_batch'
             batch_name = ''
             expiry_date = False
@@ -290,18 +290,22 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                 batch_name = line.prodlot_id.name
                 expiry_date = line.prodlot_id.life_date
 
-            if batch_id not in res[line.product_id.id]['lines']:
-                res[line.product_id.id]['lines'][batch_id] = {
+            if batch_id not in res[line.product_id.default_code]['lines']:
+                res[line.product_id.default_code]['lines'][batch_id] = {
                     'batch': batch_name,
                     'expiry_date': expiry_date,
                     'qty': 0.00,
                     'value': 0.00,
                 }
 
-            res[line.product_id.id]['lines'][batch_id]['qty'] += line.product_qty
-            res[line.product_id.id]['lines'][batch_id]['value'] += line.value
+            res[line.product_id.default_code]['lines'][batch_id]['qty'] += line.product_qty
+            res[line.product_id.default_code]['lines'][batch_id]['value'] += line.value
 
-        return res
+        fres = []
+        for k in sorted(res.keys()):
+            fres.append(res[k])
+
+        return fres
 
 
 class report_stock_inventory_xls(SpreadsheetReport):

@@ -137,3 +137,16 @@ class stock_picking(osv.osv):
 
 stock_picking()
 
+
+class stock_move(osv.osv):
+    _inherit = 'stock.move'
+
+    def write(self, cr, uid, ids, vals, context=None):
+        vals.update({
+            'to_correct_ok': False,
+            'text_error': False,
+        })
+        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
+
+
+stock_move()

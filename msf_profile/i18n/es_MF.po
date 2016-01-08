@@ -28625,7 +28625,7 @@ msgstr "África / Ndjamena"
 
 #. module: msf_partner
 #: field:product.supplierinfo,get_from_date:0
-msgid "Valid form date"
+msgid "Valid from date"
 msgstr "Fecha 'válido desde'"
 
 #. module: decimal_precision

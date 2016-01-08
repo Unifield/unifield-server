@@ -44,7 +44,8 @@ class wizard_down_payment(osv.osv_memory):
 
     def check_register_line_and_po(self, cr, uid, absl_id, po_id, context=None):
         """
-        Verify that register line amount is not superior to (PO total_amount - all used down payments - open/paid invoices).
+        Verify that register line amount is not superior to
+        (PO total_amount - all used down payments - open/paid invoices).
         Check partner on register line AND PO (should be equal)
         """
         # Some verifications
@@ -66,22 +67,32 @@ class wizard_down_payment(osv.osv_memory):
         if po.get('partner_id', [False])[0] != absl.partner_id.id:
             raise osv.except_osv(_('Error'), _('Third party from Down payment and Purchase Order are different!'))
         total = po.get('amount_total', 0.0)
-        for dp in po_obj.read(cr, uid, po.get('down_payment_ids', []), ['amount_currency', 'down_payment_amount']):
-            move_ids = [x.id or None for x in absl.move_ids]
-            operator = 'in'
-            if len(move_ids) == 1:
-                operator = '='
-            move_line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), 
-                ('move_id', operator, move_ids)])
-            if dp.get('id') not in move_line_ids:
-                total -= (dp.get('amount_currency', 0.0) - dp.get('down_payment_amount', 0.0))
+
+        absl_obj = self.pool.get('account.bank.statement.line')
+        args = [('down_payment_id', '=', po_id)]
+        lines_ids = absl_obj.search(cr, uid, args, context=context)
+        lines_amount = 0
+
+        for line in absl_obj.read(cr, uid, lines_ids, ['id', 'amount'],
+                                  context=context):
+            if absl_id != line['id']:
+                lines_amount += line['amount']
+
         # Cut away open and paid invoice linked to this PO
         invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('purchase_ids', 'in', [po_id]), ('state', 'in', ['paid', 'open'])])
-        for inv in self.pool.get('account.invoice').read(cr, uid, invoice_ids, ['amount_total']):
-            total -= inv.get('amount_total', 0.0)
-        if (-1 * absl.amount) > total:
-            raise osv.except_osv(_('Warning'), 
-                _('Maximum amount should be: %s. Register line amount is higher than (PO - unexpended DPs - open/paid INV).') % (total))
+        for inv in self.pool.get('account.invoice').read(cr, uid, invoice_ids, ['amount_total', 'down_payment_ids']):
+            lines_amount -= inv.get('amount_total', 0.0)
+            dp_ids = inv.get('down_payment_ids', None)
+            for dp in self.pool.get('account.move.line').read(cr, uid, dp_ids, ['down_payment_amount']):
+                lines_amount += dp.get('down_payment_amount', 0.0)
+
+        total_amount = lines_amount + absl.amount
+        if (total + total_amount) < -0.001:
+            raise osv.except_osv(_('Warning'),
+                                 _('Maximum amount should be: %s. Register' +
+                                   ' line amount is higher than (PO - ' +
+                                   'unexpended DPs - open/paid INV).')
+                                 % (total + lines_amount))
         return True
 
     def button_validate(self, cr, uid, ids, context=None):

@@ -170,6 +170,9 @@ class hr_payroll_import(osv.osv_memory):
         # If account is analytic-a-holic, fetch employee ID
         if account.is_analytic_addicted:
             if second_description and second_description[0] and not is_payroll_rounding:
+                # Create description
+                name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], date_format)))
+
                 if not is_counterpart:
                     # fetch employee ID
                     employee_identification_id = ustr(second_description[0]).split(' ')[-1]
@@ -180,8 +183,8 @@ class hr_payroll_import(osv.osv_memory):
                     if len(employee_ids) > 1:
                         raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
                     employee_id = employee_ids[0]
-                # Create description
-                name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], date_format)))
+                    # US_374: Add Employee number to description
+                    name += " - " + employee_identification_id
                 # Create reference
                 date_format_separator = '/'
                 if '-' in date_format:

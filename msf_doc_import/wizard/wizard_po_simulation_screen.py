@@ -574,7 +574,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
                     cr.commit()
-                    cr.close()
+                    cr.close(True)
                     return res
 
                 '''
@@ -594,7 +594,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
                     cr.commit()
-                    cr.close()
+                    cr.close(True)
                     return res
 
 
@@ -965,7 +965,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
     #            return res
 
             cr.commit()
-            cr.close()
+            cr.close(True)
 
             # Clear the cache
             PRODUCT_CODE_ID = {}
@@ -975,7 +975,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
         except Exception, e:
             self.write(cr, uid, ids, {'message': e}, context=context)
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return True
 
@@ -1052,12 +1052,12 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 res = True
 
             cr.commit()
-            cr.close()
+            cr.close(True)
         except Exception, e:
             self.write(cr, uid, ids, {'message': e}, context=context)
             res = True
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return res
 

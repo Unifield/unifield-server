@@ -123,6 +123,7 @@
         'view/group_view.xml',
         'view/email_configuration_view.xml',
         "data/patches.xml",
+        'view/deleted_object_view.xml',
     ],
     "demo_xml": [
     ],

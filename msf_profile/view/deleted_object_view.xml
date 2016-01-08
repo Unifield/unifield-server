@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="deleted_object_tree_view">
+            <field name="name">delete.object.tree.view</field>
+            <field name="model">deleted.object</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Deleted Object" hide_new_button="1" hide_delete_button="1" noteditable="1">
+                    <field name="model" />
+                    <field name="deleted_obj_id" />
+                    <field name="deleted_obj_sd_ref" />
+                    <field name="deletion_date" />
+                    <field name="user_id" />
+                </tree>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="deleted_object_form_view">
+            <field name="name">delete.object.form.view</field>
+            <field name="model">deleted.object</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Deleted Object" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1" hide_edit_button="1">
+                    <field name="model" />
+                    <field name="deleted_obj_id" />
+                    <field name="deleted_obj_sd_ref" />
+                    <field name="deletion_date" />
+                    <field name="user_id" />
+                </form>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="deleted_object_search_view">
+            <field name="name">deleted.search</field>
+            <field name="model">deleted.object</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="model"/>
+                    <field name="deleted_obj_id"/>
+                    <field name="deleted_obj_sd_ref" />
+                    <field name="deletion_date"/>
+                    <field name="user_id"/>
+                </search>
+            </field>
+        </record>
+        <record model="ir.actions.act_window" id="deleted_object_list_action">
+            <field name="name">Deleted Object</field>
+            <field name="res_model">deleted.object</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="menu_deleted_object"
+                  name="Deleted Object"
+                  action="deleted_object_list_action"
+                  parent="base.menu_audit" />
+    </data>
+</openerp>

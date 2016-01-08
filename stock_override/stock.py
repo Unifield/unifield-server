@@ -581,15 +581,24 @@ You cannot choose this supplier because some destination locations are not avail
 
     @check_cp_rw
     def force_assign(self, cr, uid, ids, context=None):
-        return super(stock_picking, self).force_assign(cr, uid, ids)
+        res = super(stock_picking, self).force_assign(cr, uid, ids)
+        for pick_id in ids:
+            self.infolog(cr, uid, 'Force availability ran on stock.picking id:%s' % pick_id)
+        return res
 
     @check_cp_rw
     def action_assign(self, cr, uid, ids, context=None):
-        return super(stock_picking, self).action_assign(cr, uid, ids, context=context)
+        res = super(stock_picking, self).action_assign(cr, uid, ids, context=context)
+        for pick_id in ids:
+            self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s' % pick_id)
+        return res
 
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, *args, **kwargs):
-        return super(stock_picking, self).cancel_assign(cr, uid, ids)
+        res = super(stock_picking, self).cancel_assign(cr, uid, ids)
+        for pick_id in ids:
+            self.infolog(cr, uid, 'Cancel availability ran on stock.picking id:%s' % pick_id)
+        return res
 
  
     @check_rw_warning
@@ -1054,6 +1063,16 @@ You cannot choose this supplier because some destination locations are not avail
         Update the Unit price according to the UoM received and the UoM ordered
         '''
         res = super(stock_picking, self)._get_price_unit_invoice(cr, uid, move_line, type)
+        if type == 'in_refund':
+            if move_line.picking_id and move_line.picking_id.purchase_id:
+                po_line_obj = self.pool.get('purchase.order.line')
+                po_line_id = po_line_obj.search(cr, uid, [('order_id', '=', move_line.picking_id.purchase_id.id),
+                    ('product_id', '=', move_line.product_id.id),
+                    ('state', '!=', 'cancel')
+                    ], limit=1)
+                if po_line_id:
+                    return po_line_obj.read(cr, uid, po_line_id[0], ['price_unit'])['price_unit']
+
         if move_line.purchase_line_id:
             po_uom_id = move_line.purchase_line_id.product_uom.id
             move_uom_id = move_line.product_uom.id
@@ -1361,6 +1380,10 @@ class stock_move(osv.osv):
                     """
                     if move.purchase_line_id:
                         vals['cancel_only'] = True
+
+                if move.sale_line_id and move.sale_line_id.type == 'make_to_order':
+                    vals['cancel_only'] = True
+
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -1401,6 +1424,8 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_id.id == product_tbd and move.from_wkf_line:
                 ids.pop(ids.index(move.id))
+            else:
+                self.infolog(cr, uid, 'Force availability run on stock move #%s (id:%s) of picking id:%s' % (move.line_number, move.id, move.picking_id.id))
 
         return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
@@ -1682,6 +1707,7 @@ class stock_move(osv.osv):
         prodlot_obj = self.pool.get('stock.production.lot')
         for move in self.browse(cr, uid, ids, context):
             compare_date = context.get('rw_date', False)
+            move_unlinked = False
             if compare_date:
                 compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
             else:
@@ -1730,6 +1756,7 @@ class stock_move(osv.osv):
                                             # We update the linked documents
                                             self.update_linked_documents(cr, uid, [move.id], exist_move.id, context=context)
                                             self.unlink(cr, uid, [move.id], context)
+                                            move_unlinked = True
                                         else:
                                             self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'],
                                                                           'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
@@ -1750,7 +1777,7 @@ class stock_move(osv.osv):
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
-                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
+                        if not move_unlinked and move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
                             if not self.search(cr, uid, [('move_dest_id', '=', move.id)], context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
@@ -1846,6 +1873,12 @@ class stock_move(osv.osv):
                 self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
         return True
 
+    def check_assign(self, cr, uid, ids, context=None):
+        res = super(stock_move, self).check_assign(cr, uid, ids, context=context)
+        for move_id in ids:
+            self.infolog(cr, uid, 'Check availability ran on stock.move id:%s' % move_id)
+        return res
+
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, context=None):
         res = super(stock_move, self).cancel_assign(cr, uid, ids, context=context)
@@ -1857,6 +1890,11 @@ class stock_move(osv.osv):
 
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
+
+            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s' % (
+                move_data['line_number'],
+                move_data['id'],
+                move_data['picking_id'][0]))
 
             for f in fields_to_read:
                 if f in ('product_qty', 'product_uos_qty'):
@@ -2425,8 +2463,15 @@ class stock_move_cancel_wizard(osv.osv_memory):
         wf_service = netsvc.LocalService("workflow")
 
         for wiz in self.browse(cr, uid, ids, context=context):
+            move_id = wiz.move_id.id
+            picking_id = wiz.move_id.picking_id.id
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
             move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)], context=context)
+            if move_ids and  wiz.move_id.has_to_be_resourced:
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled and resourced" % (move_id, picking_id))
+            else:
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled" % (move_id, picking_id))
+
             if move_ids and wiz.move_id.picking_id:
                 lines = wiz.move_id.picking_id.move_lines
                 if all(l.state == 'cancel' for l in lines):
@@ -2453,12 +2498,28 @@ stock_move_cancel_wizard()
 class stock_picking_cancel_wizard(osv.osv_memory):
     _name = 'stock.picking.cancel.wizard'
 
+    def _get_allow_cr(self, cr, uid, context=None):
+        """
+        Define if the C&R are allowed on the wizard
+        """
+        if context is None:
+            context = {}
+
+        picking_id = context.get('active_id')
+        for move in self.pool.get('stock.picking').browse(cr, uid, picking_id, context=context).move_lines:
+            if move.sale_line_id and move.sale_line_id.type == 'make_to_order':
+                return False
+
+        return True
+
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
+        'allow_cr': fields.boolean(string='Allow Cancel and resource'),
     }
 
     _defaults = {
         'picking_id': lambda self, cr, uid, c: c.get('active_id'),
+        'allow_cr': _get_allow_cr,
     }
 
     def just_cancel(self, cr, uid, ids, context=None):

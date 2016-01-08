@@ -11,5 +11,17 @@
                 rml="msf_audittrail/report/log_line.rml"
                 string="Log lines" />
 
+        <report
+            id="msf_audittrail.report_log_line_xls"
+            string="Log lines (Excel Export)"
+            model="audittrail.log.line"
+            name="msf.log.line_xls"
+            file="msf_audittrail/report/log_line_xls.mako"
+            target_filename="${eval(_get_report_name)}"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            />
+
     </data>
 </openerp>

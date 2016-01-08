@@ -63,13 +63,15 @@ class stock_incoming_processor(osv.osv):
         'direct_incoming': fields.boolean(
             string='Direct to Requesting Location',
         ),
-        'draft': fields.boolean('Draft')
+        'draft': fields.boolean('Draft'),
+        'already_processed': fields.boolean('Already processed'),
     }
 
     _defaults = {
         'dest_type': 'default',
         'direct_incoming': True,
         'draft': lambda *a: False,
+        'already_processed': lambda *a: False,
     }
 
 
@@ -176,6 +178,17 @@ class stock_incoming_processor(osv.osv):
             picking_id = proc.picking_id.id
             total_qty = 0.00
 
+            if proc.already_processed:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot process two times the same IN. Please '\
+'return to IN form view and re-try.'),
+                )
+
+            self.write(cr, uid, [proc.id], {
+                'already_processed': True,
+            }, context=context)
+
             for line in proc.move_ids:
                 # If one line as an error, return to wizard
                 if line.integrity_status != 'empty':
@@ -281,7 +294,7 @@ class stock_incoming_processor(osv.osv):
             # display warning
             result['warning'] = {
                 'title': _('Error'),
-                'message': _('You want to receive the IN on an other location than Cross Docking but "Cross docking" was checked.')
+                'message': _('You want to receive the IN into a location which is NOT Cross Docking but "Cross docking" was originally checked. As you are re-routing these products to a different destination, please ensure you cancel any transport document(OUT/PICK etc) if it is no longer needed for the original requesting location.')
             }
         elif picking.purchase_id and dest_type == 'to_cross_docking' and not picking.purchase_id.cross_docking_ok:
             # display warning

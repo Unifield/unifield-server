@@ -237,7 +237,7 @@ Nb register lines: %s
         })
         request_obj.request_send(cr, uid, [req_id])
         cr.commit()
-        cr.close()
+        cr.close(True)
 
     def import_csv(self, cr, uid, ids, context=None):
         if context is None:

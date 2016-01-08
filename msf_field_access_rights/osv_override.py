@@ -26,6 +26,8 @@ from lxml import etree
 import logging
 import copy
 from datetime import datetime
+import netsvc
+
 
 def _get_instance_level(self, cr, uid):
     """
@@ -102,12 +104,17 @@ def create(self, cr, uid, vals, context=None):
                     
                 rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
                 
-                defaults = self.pool.get(model_name)._defaults
 
                 # do we have rules that apply to this user and model?
                 if rules_search:
                     field_changed = False
+                    access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
+                    line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_create', '=', True)])
+                    if not line_ids:
+                        return create_result
+                    rules_search = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
                     rules = rules_pool.browse(cr, 1, rules_search)
+                    defaults = self.pool.get(model_name)._defaults
 
                     # for each rule, check the record against the rule domain.
                     for rule in rules:
@@ -140,6 +147,18 @@ def create(self, cr, uid, vals, context=None):
         return res
 
 orm.orm.create = create
+
+
+def infolog(self, cr, uid, message):
+    logger = netsvc.Logger()
+    logger.notifyChannel(
+       'INFOLOG: Model: %s :: User: %s :: ' % (self._name, uid),
+        netsvc.LOG_INFO,
+        message,
+    )
+
+orm.orm.infolog = infolog
+orm.orm_memory.infolog = infolog
 
 
 def _values_equate(field_type, current_value, new_value):
@@ -205,18 +224,19 @@ def _values_equate(field_type, current_value, new_value):
 
 
 def _get_family(obj, family):
+    family_append = family.append
     if hasattr(obj, '_inherits'):
         if obj._inherits:
             for key in obj._inherits:
                 if key not in family:
-                    family.append(key)
+                    family_append(key)
                 if key != obj._name:
                     _get_family(obj.pool.get(key), family)
             
     if hasattr(obj, '_inherit'):
         if obj._inherit:
             if obj._inherit not in family:
-                family.append(obj._inherit)
+                family_append(obj._inherit)
             if obj._inherit != obj._name:
                 _get_family(obj.pool.get(obj._inherit), family)
 
@@ -307,7 +327,12 @@ def write(self, cr, uid, ids, vals, context=None):
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
         if context.get('sync_update_execution'):
-
+            access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
+            line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_write', '=', True)])
+            if not line_ids:
+                return super_write(self, cr, uid, ids, vals, context=context)
+            rule_ids = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
+            rules = rules_pool.browse(cr, 1, rule_ids)
             # iterate over current records 
             for record in current_records:
                 new_values = copy.deepcopy(vals)

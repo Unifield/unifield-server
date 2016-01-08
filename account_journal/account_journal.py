@@ -206,6 +206,9 @@ class account_journal(osv.osv):
             'padding': 4,
             'number_increment': 1
         }
+        # check if code exists
+        if not self.pool.get('ir.sequence.type').search(cr, uid, [('code', '=' , code)], limit=1, context=context):
+            self.pool.get('ir.sequence.type').create(cr, uid, {'name': code, 'code': code}, context=context)
         sequence_id = self.pool.get('ir.sequence').create(cr, uid, seq)
         if not main_sequence:
             main_sequence = sequence_id
