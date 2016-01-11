@@ -138,13 +138,13 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"> </para>
+                    <para style="TextInformation">[[ objects[0].partner_order_id.name and objects[0].partner_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"> </para>
+                    <para style="TextInformation">[[ objects[0].partner_shipping_id.name and objects[0].partner_id.name or '' ]]</para>
                 </td>
                 <!-- <td>
                     <para style="TextInformation"> </para>
