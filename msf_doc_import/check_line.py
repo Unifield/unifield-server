@@ -479,6 +479,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
     date_format = kwargs['date_format']
     error_list = kwargs['to_write']['error_list']
     warning_list = kwargs['to_write']['warning_list']
+    picking_type = kwargs.get('picking_type', 'internal')
     batch_name = None
     expiry_date = None
     batch_number = None
@@ -504,8 +505,14 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
                     error_list.append(_('The expiry date doesn\'t match with the expiry date of the batch. Batch not selected'))
                 else:
                     error_list.append(_('The expiry date doesn\'t match with the expiry date of the batch. Expiry date not selected'))
+            elif picking_type == 'in':
+                bn_ids = [bn_obj.create(cr, uid, {
+                    'product_id': product_id,
+                    'name': batch_name,
+                    'life_date': expiry_date.strftime('%Y-%m-%d'),
+                })]
             else:
-                error_list.append(_('Batch not found.'))
+                error_list.append(_('Batch not found'))
     elif not bn_ids and product_id and expiry_date:
         if bn_mgmt:
             error_list.append(_('The Batch number is not set.'))
