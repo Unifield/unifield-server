@@ -20,8 +20,44 @@
 ##############################################################################
 
 from osv import osv
+from osv import fields
 from tools.translate import _
-import calendar
+
+
+class account_account(osv.osv):
+    """
+    account CoA config override
+    """
+    _inherit = 'account.account'
+
+    _columns = {
+        'include_in_yearly_move': fields.boolean("Include in Yearly move to 0"),
+    }
+
+    _defaults = {
+        'include_in_yearly_move': False,
+    }
+
+account_account()
+
+
+class account_period(osv.osv):
+    _inherit = "account.period"
+
+    # period 0 not available for picking in journals/selector/reports
+    # except for following reports: general ledger, trial balance, balance sheet
+    # => always hide Period 0 except if 'show_period_0' found in context
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+        context=None, count=False):
+        if not args:
+            args = []
+        if context is None or 'show_period_0' not in context:
+            args.append(('number', '!=', 0))
+        res = super(account_period, self).search(cr, uid, args, offset=offset,
+            limit=limit, order=order, context=context, count=count)
+        return res
+
+account_period()
 
 
 class account_year_end_closing(osv.osv):
@@ -56,8 +92,9 @@ class account_year_end_closing(osv.osv):
         :return: instance level
         :rtype: str
         """
-        level = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id.level
+        instance_id = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id.instance_id
+        level = instance_id.level
         if level not in ('section', 'coordo', ):
             raise osv.except_osv(_('Warning'),
                 _('You can only close FY at HQ or Coordo'))
@@ -78,6 +115,41 @@ class account_year_end_closing(osv.osv):
             if not self._get_next_fy_id(cr, uid, fy_rec, context=context):
                 raise osv.except_osv(_('Warning'),
                     _('FY+1 required to close FY'))
+
+            # HQ level: check that all coordos have their FY mission closed
+            mi_obj = self.pool.get('msf.instance')
+            ci_ids = mi_obj.search(cr, uid, [
+                    ('parent_id', '=', instance_id.id),
+                    ('level', '=', 'coordo'),
+                ], context=context)
+            if ci_ids:
+                afs_obj = self.pool.get("account.fiscalyear.state")
+                # check that we have same count of mission-closed fy
+                # in fy report than in true coordos
+                # => so all have sync up their fy state report
+                check_ci_ids = afs_obj.search(cr, uid, [
+                        ('fy_id', '=', fy_rec.id),
+                        ('instance_id', 'in', ci_ids),
+                        ('state', '=', 'mission-closed'),
+                    ], context=context)
+                if len(check_ci_ids) != len(ci_ids):
+                    # enumerate left open coordos for user info warn message
+                    check_ci_ids = afs_obj.search(cr, uid, [
+                            ('fy_id', '=', fy_rec.id),
+                            ('instance_id', 'in', ci_ids),
+                            ('state', '=', 'draft'),
+                        ], context=context)
+                    if check_ci_ids:
+                        codes = [ rec.code for rec \
+                            in mi_obj.browse(cr, uid, ci_ids, context=context)]
+                    else:
+                        # fy state report not all sync up: generic warn message
+                        codes = [ _('All'), ]
+                    raise osv.except_osv(_('Warning'),
+                        _('%s Coordo(s): proceed year end closing first') % (
+                            ', '.join(codes), ))
+
+            raise osv.except_osv(_('Warning'), 'FAKE')
         return level
 
     def create_periods(self, cr, uid, fy_id, periods_to_create=[0, 16, ],
@@ -392,24 +464,5 @@ class account_year_end_closing(osv.osv):
             context=context)
 
 account_year_end_closing()
-
-
-class account_period(osv.osv):
-    _inherit = "account.period"
-
-    # period 0 not available for picking in journals/selector/reports
-    # except for following reports: general ledger, trial balance, balance sheet
-    # => always hide Period 0 except if 'show_period_0' found in context
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-        context=None, count=False):
-        if not args:
-            args = []
-        if context is None or 'show_period_0' not in context:
-            args.append(('number', '!=', 0))
-        res = super(account_period, self).search(cr, uid, args, offset=offset,
-            limit=limit, order=order, context=context, count=count)
-        return res
-
-account_period()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

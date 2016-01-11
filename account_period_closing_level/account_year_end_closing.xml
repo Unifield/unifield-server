@@ -2,6 +2,21 @@
 <openerp>
     <data>
 
+        <record id="view_account_form_inherit" model="ir.ui.view">
+            <field name="name">account.account.form</field>
+            <field name="model">account.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="End Year Closing"  attrs="{'invisible': [('instance_level', '=', 'project')]}">
+                        <field name="include_in_yearly_move"
+                            attrs="{'readonly': ['|', ('instance_level', '!=', 'section'), ('type', 'not in', ['other', ])]}"/>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
         <record id="account.action_account_fiscalyear_form" model="ir.actions.act_window">
             <field name="name">Fiscal Years</field>
             <field name="res_model">account.fiscalyear</field>
