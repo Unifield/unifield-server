@@ -620,7 +620,7 @@ class ir_translation(osv.osv):
         return res
 
     # US_394: Remove duplicate lines for ir.translation
-    def create(self, cr, uid, vals, context=None):
+    def create(self, cr, uid, vals, clear=True, context=None):
         domain = []
         # Search xml_id
         if not vals.get('xml_id', False):
@@ -653,7 +653,7 @@ class ir_translation(osv.osv):
                     ids = existing_ids
                 res = self.write(cr, uid, ids, vals, context=context)
                 return ids[0]
-        res = super(ir_translation, self).create(cr, uid, vals, context=context)
+        res = super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
         return res
 
     # US_394: add xml_id for each lines
