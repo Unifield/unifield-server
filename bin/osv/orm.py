@@ -3746,24 +3746,25 @@ class orm(orm_template):
                 fields_to_translate = [f for f in direct if\
                         self._columns[f].translate]
                 if fields_to_translate:
-                    field_translated_dict = self.pool.get(self._name).read(cr, user, ids, fields_to_translate)[0]
+                    field_translated_dict = dict([(key, vals[key]) for key in
+                        fields_to_translate])
                     original_values = self.read(cr, user, ids, fields_to_translate, context=context)[0]
-                    # remove the elements which are not in fields_to_translate
-                    # and the element wich have the same value than the orginal
-                    # one
+
+                    # remove elements which have the same value than the
+                    # orginal one
                     field_translated_dict = dict((key, value) for key, value in\
-                            field_translated_dict.items() if key in\
-                            fields_to_translate and\
-                            field_translated_dict[key]!=original_values[key])
+                            field_translated_dict.items() if field_translated_dict[key]!=original_values[key])
                     field_to_write_dict = {}
 
-                    for field_name, src_trans in field_translated_dict.items():
+                    # a revoir, le src_trans n'est pas bon
+                    for field_name, new_value in field_translated_dict.items():
+                        src_trans = original_values.get(field_name, None)
                         if not src_trans or not vals.get(field_name, None):
                             src_trans = vals.get(field_name, None)
                             field_to_write_dict[field_name]=vals[field_name]
                         self.pool.get('ir.translation')._set_ids(cr, user,
                                 self._name+','+field_name, 'model', context['lang'],
-                                ids, vals[field_name], src=src_trans, clear=clear_cache, context=context)
+                                ids, new_value, src=src_trans, clear=clear_cache, context=context)
                     if field_to_write_dict:
                         self.write(cr, user, ids, field_to_write_dict)
 

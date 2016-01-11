@@ -153,7 +153,7 @@ class ir_translation(osv.osv):
                     'lang': lang,
                     'type': tt,
                     'name': name,
-                    'res_id': id,
+                    'res_id': obj_id,
                     'value': value,
                     'src': src,
                     },
