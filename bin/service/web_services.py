@@ -41,6 +41,8 @@ import logging
 from cStringIO import StringIO
 from tempfile import NamedTemporaryFile
 import datetime
+from updater import get_server_version
+
 
 class db(netsvc.ExportService):
     def __init__(self, name="db"):
@@ -351,17 +353,22 @@ class db(netsvc.ExportService):
 
     def exp_server_version(self, dbname):
         """ Return the version of the server from the sql table
-        sync_client_version. If it's not found return release.version (old
-        behaviour)
+        sync_client_version. If it's not found return the version found from
+        the unified-version.txt (old base)
             Used by the client to verify the compatibility with its own version
         """
         db = sql_db.db_connect(dbname)
         cr = db.cursor()
-        cr.execute("select name from sync_client_version where state='installed' order by applied desc")
+        cr.execute("SELECT name, sum FROM sync_client_version WHERE state='installed' ORDER BY applied DESC")
         res = cr.fetchone()
         if res and res[0]:
             return res[0]
-        return release.version
+        elif res[1]:
+            version_list = get_server_version()
+            for version in version_list:
+                if res[1] == version['md5sum'] and version['name']:
+                    return version['name']
+        return 'UNKNOW_VERSION'
 
     def exp_migrate_databases(self,databases):
 
