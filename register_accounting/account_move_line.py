@@ -76,8 +76,8 @@ class account_move_line(osv.osv):
             ('reconcile_id','=',False),
             ('state', '=', 'valid'),
             ('move_state', '=', 'posted'), # UFTP-204: Exclude the Direct Invoice from the list
-            ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr', 'extra', 'correction', 'intermission']),  # UTP-1088 add extra(OD)/correction/intermission types
-            ('account_id.type_for_register', 'not in', ['down_payment']),
+            ('journal_id.type', 'not in', ['migration']),  # US-70 Open the pending payment to receivable and payable entries from all journals except for the migration journal
+            ('account_id.type_for_register', 'not in', ['down_payment', 'advance', ]),
             # UTP-1088 exclude correction/reversal lines as can be in journal of type correction
             ('corrected_line_id', '=', False),  # is a correction line if has a corrected line
             ('reversal_line_id', '=', False),  # is a reversal line if a reversed line
@@ -207,6 +207,7 @@ class account_move_line(osv.osv):
                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                         }),
         'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
+        'partner_identification': fields.related('employee_id', 'identification_id', type='char', string='Id No', size=32),
         'down_payment_id': fields.many2one('purchase.order', string="Purchase Order for Down Payment", readonly=True, ondelete='cascade'),
         'down_payment_amount': fields.float(string='Down Payment used amount', readonly=True),
         'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),

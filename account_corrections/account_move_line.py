@@ -61,7 +61,7 @@ class account_move_line(osv.osv):
                 account_ids.append(j.get('default_credit_account_id')[0])
 
         # Skip to next element if the line is set to False
-        for ml in self.browse(cr, uid, ids, context=context):
+        for ml in self.browse(cr, 1, ids, context=context):
             res[ml.id] = True
             # False if account type is transfer
             if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
@@ -625,9 +625,17 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Case where this move line have a link to some statement lines
             if ml.statement_id and ml.move_id.statement_line_ids:
                 for st_line in ml.move_id.statement_line_ids:
-                    absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
-                    # we informs new move line that it have correct a statement line
-                    self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
+                    # US-303: only update the statement line that links to this move line
+                    if st_line.cash_return_move_line_id:
+                        if st_line.cash_return_move_line_id.id == ml.id:
+                            absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
+                            # we informs new move line that it have correct a statement line
+                            self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
+                            break
+                    else:
+                        #US-303: If not the case, then we inform the new move line that it has corrected a statement line
+                        absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
+                        self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
             # if not, this move line should have a direct link to a register line
             elif ml.statement_id and ml.corrected_st_line_id:
                 absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
@@ -768,7 +776,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             }
             if distrib_id:
                 cor_vals['analytic_distribution_id'] = distrib_id
-            else:
+            elif ml.analytic_distribution_id:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
             # UF-2231: Remove the update to the statement line
@@ -920,7 +928,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if company and company.instance_id and company.instance_id.level in ['section', 'coordo']:
             # UF-1746: Set also all other move lines as corrected upstream to disallow projet user to correct any move line of this move.
             move_ids = [x and x.get('move_id', False) and x.get('move_id')[0] for x in self.read(cr, uid, ids, ['move_id'], context=context)]
-            ml_ids = self.search(cr, uid, [('move_id', 'in', move_ids)])
+            ml_ids = self.search(cr, uid, [('move_id', 'in', move_ids), ('corrected_upstream', '!=', True)])
             self.write(cr, uid, ml_ids, {'corrected_upstream': True}, check=False, update_check=False, context=context)
         return True
 

@@ -29,15 +29,16 @@ class account_period(osv.osv):
     _name = "account.period"
     _inherit = "account.period"
 
-    # To avoid issues with existing OpenERP code (account move line for example),
+    # To avoid issues with existing OpenERP code (account move line for example)
     # the state are:
     #  - 'created' for Draft
     #  - 'draft' for Open
     #  - 'done' for HQ-Closed
-        # 1 = state created as 'Draft' ('created') at HQ (update to state handled in create)
-        # 2 = state moves from 'Open' ('draft') -> any close at HQ (sync down)
-        # 3 =
-        # 3 = state reopened at HQ -> reopen at all levels
+    # 1 = state created as 'Draft' ('created') at HQ (update to state handled
+    #   in create)
+    # 2 = state moves from 'Open' ('draft') -> any close at HQ (sync down)
+    # 3 =
+    # 3 = state reopened at HQ -> reopen at all levels
 
     def check_unposted_entries(self, cr, uid, period_id, context=None):
         """
@@ -287,7 +288,10 @@ class account_period(osv.osv):
             logging.getLogger('init').info('Loading default draft - created - state for account.period')
             vals['state'] = 'created'
 
-        return super(account_period, self).create(cr, uid, vals, context=context)
+        res = super(account_period, self).create(cr, uid, vals, context=context)
+        self.pool.get('account.period.state').update_state(cr, uid, res,
+                                                           context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         if not context:
@@ -300,7 +304,10 @@ class account_period(osv.osv):
             else:
                 vals['state_sync_flag'] = 'none'
 
-        return super(account_period, self).write(cr, uid, ids, vals, context=context)
+        res = super(account_period, self).write(cr, uid, ids, vals, context=context)
+        self.pool.get('account.period.state').update_state(cr, uid, ids,
+                                                           context=context)
+        return res
 
     _defaults = {
         'state': lambda *a: 'created',
@@ -327,6 +334,9 @@ class account_period(osv.osv):
             context = {}
         context['state'] = 'draft'
         return self.action_set_state(cr, uid, ids, context)
+
+    def action_close_field_reopen(self, cr, uid, ids, context=None):
+        return self.action_close_field(cr, uid, ids, context=context)
 
     def action_close_field(self, cr, uid, ids, context=None):
         if context is None:

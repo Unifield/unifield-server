@@ -328,7 +328,7 @@
                                 colspan="4"
                                 nolabel="1"
                                 widget="one2many_list"
-                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'date_expected': min_date, 'reason_type_id': reason_type_id}"
+                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'date_expected': min_date, 'reason_type_id': reason_type_id, 'from_wkf': from_wkf}"
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
                                 >
@@ -372,7 +372,7 @@
                                             context="{'from_int': 1, 'from_button': True}"/>
                                 </tree>
 
-                                <form string="Stock Moves">
+                                <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
                                         <field name="name" invisible="1" colspan="4"/>
@@ -579,14 +579,14 @@
                     <notebook colspan="4">
                         <page string="General Information">
                             <field name="from_wkf" invisible="1"/>
-                            <field name="subtype" invisible="1" />
+                            <field name="subtype" invisible="1" readonly="1" />
                             <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
-                                default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}"
+                                default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 on_change="onchange_move()"
                                 >
                                 <tree
-                                    colors="grey:scrapped==True; red: inactive_product == True"
+                                    colors="grey:scrapped==True; red: inactive_product == True or to_correct_ok == True"
                                     string="Stock Moves"
                                     hide_new_button="context.get('from_wkf')"
                                     hide_delete_button="context.get('from_wkf')"
@@ -613,13 +613,14 @@
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
+                                    <field name="to_correct_ok" invisible="1" />
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <field name="price_changed" invisible="1" />
                                     <button name="get_price_changed" type="object" string="Price changed" icon="terp-dolar_ok!" attrs="{'invisible': ['|', ('price_changed', '=', False), ('fake_state', '!=', 'done')]}" />
                                     <field name="from_wkf" invisible="1" />
                                     <button name="call_cancel_wizard" type="object" string="Cancel" attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}" icon="gtk-del"  context="{'from_button': True}" />
                                 </tree>
-                                <form string="Stock Moves">
+                                <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
                                         <field name="from_wkf_line" invisible="1" />
@@ -865,12 +866,12 @@
                     <notebook colspan="4">
                         <page string="Products">
                             <field name="from_wkf" invisible="1"/>
-                            <field name="subtype" invisible="True"/>
+                            <field name="subtype" invisible="True" readonly="1" />
                             <field name="move_lines"
                                 colspan="4"
                                 nolabel="1"
                                 widget="one2many_list"
-                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'date_expected': min_date, 'reason_type_id': reason_type_id, 'partner_id': partner_id2}"
+                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'date_expected': min_date, 'reason_type_id': reason_type_id, 'partner_id': partner_id2, 'from_wkf': from_wkf}"
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date, 'partner_id': partner_id2}"
                                 on_change="onchange_move()"
                                 >
@@ -909,7 +910,7 @@
                                     <button name="%(stock.action_partial_move_server)d" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
                                     <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  context="{'from_button': True}" />
                                 </tree>
-                                <form string="Stock Moves">
+                                <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
                                         <field name="name" invisible="1" colspan="4"/>
@@ -1057,7 +1058,7 @@
                                 <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
                                 <field name="prod_lot_id"
                                     on_change="change_lot(location_id,product_id,prod_lot_id,product_uom,parent.date)"
-                                    context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory, 'search_default_real': True}"
+                                    context="{'location_id':location_id, 'product_id': product_id, 'search_default_real': True}"
                                     domain="[('check_type','=', True), ('product_id', '=?', product_id)]"
                                     attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
                                 <field name="expiry_date"
@@ -1075,6 +1076,8 @@
                                 <field name="dg_check" />
                                 <field name="np_check" />
                                 <field name="comment" />
+                                <button name="btn_dl" type="object" string="Line is duplicated" icon="gtk-dialog-warning" attrs="{'invisible': [('duplicate_line', '=', False)]}" />
+                                <field name="duplicate_line" invisible="True" />  
                                 <field name="has_problem" invisible="True" />
                                 <button name="%(stock.action_view_stock_inventory_line_split)d"
                                     string="Split inventory lines"
@@ -1153,7 +1156,8 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Cancel Picking">
-                    <group colspan="4" col="1">                                 
+                    <field name="allow_cr" invisible="1" />
+                    <group colspan="4" col="1" attrs="{'invisible': [('allow_cr', '=', False)]}"> 
                         <html>
                             <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</h4>
                         </html>
@@ -1161,7 +1165,7 @@
                     <newline />
                     <separator string="Actions" />
                     <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
-                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" attrs="{'invisible': [('allow_cr', '=', False)]}" />
                 </form>
             </field>
         </record>
@@ -1172,7 +1176,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Cancel move">
-                    <group colspan="4" col="1">
+                    <group colspan="4" col="1" attrs="{'invisible': [('cancel_only', '=', True)]}">
                         <html>
                             <h4 style="text-align: center; margin: 10px">Would you re-source the need sourced by this stock move ?</h4>
                         </html>

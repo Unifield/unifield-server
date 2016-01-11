@@ -23,106 +23,148 @@ from report import report_sxw
 import pooler
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
-class report_liquidity_position2(report_sxw.rml_parse):
+
+class report_liquidity_position3(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
-        super(report_liquidity_position2, self).__init__(cr, uid, name, context=context)
-        self.res = 0
-        self.cal = 0
+        super(report_liquidity_position3, self).__init__(cr, uid, name,
+                                                         context=context)
+        self.period_id = context.get('period_id', None)
         self.registers = {}
-        self.funcCur = ''
-        self.iter = []
+        self.func_currency = {}
+        self.func_currency_id = 0
+        self.total_func_calculated_balance = 0
+        self.total_func_register_balance = 0
+
         self.localcontext.update({
-            'getRegister':self.getRegister,
-            'getConvert':self.getConvert,
-            'getRes':self.getRes,
-            'getCal':self.getCal,
-            'getRegister2':self.getRegister2,
-            'getFuncCur':self.getFuncCur,
-            'getCurTot':self.getCurTot,
-            'getFormula':self.getFormula,
+            'getRegistersByType': self.getRegistersByType,
+            'getPeriodName': self.getPeriodName,
+            'getFuncCurrency': self.getFuncCurrency,
+            'getFuncCurrencyId': self.getFuncCurrencyId,
+            'getTotalCalc': self.getTotalCalc,
+            'getTotalReg': self.getTotalReg,
+            'getReg': self.getRegisters,
+            'getConvert': self.getConvert,
         })
         return
 
-    def getFormula(self):
-        formul = ''
-        iters = self.iter[1:]
-        temp = self.iter[1:]
-        tour = 1
-        for _ in temp:
-            tour += 1
-            nb = 0
-            for x in iters:
-                nb += x + 2
-            rang = nb + 2
-            formul += '+R[-'+str(rang)+']C'
-            iters = self.iter[tour:]
-        return formul
+    def getTotalReg(self):
+        return self.total_func_register_balance
 
-    def getFuncCur(self,bro_ac):
-        self.funcCur = bro_ac.journal_id and bro_ac.journal_id.company_id and bro_ac.journal_id.company_id.currency_id.name or ''
-        return bro_ac.journal_id and bro_ac.journal_id.company_id and bro_ac.journal_id.company_id.currency_id.name or ''
+    def getTotalCalc(self):
+        return self.total_func_calculated_balance
 
-    def getCurTot(self):
-        return self.funcCur
-
-    def getRes(self):
-        temp = self.res
-        self.res = 0
-        return temp
-
-    def getCal(self):
-        temp = self.cal
-        self.cal = 0
-        return temp
-
-    def getRegister2(self):
+    def getRegisters(self):
         return self.registers
 
-    def getRegister(self):
-        ids = []
-        pool = pooler.get_pool(self.cr.dbname)
+    def getFuncCurrency(self):
+        return self.func_currency
 
-        sql_register_ids = """
-            SELECT abs.id 
-            FROM account_bank_statement abs
-            LEFT JOIN account_journal aj ON abs.journal_id = aj.id
-            WHERE aj.type != 'cheque' 
-            AND abs.state != 'draft'
-            AND abs.period_number = (SELECT max(abs2.period_number) 
-                                       FROM account_bank_statement abs2
-                                       LEFT JOIN account_journal aj2 ON abs2.journal_id = aj2.id
-                                       WHERE aj2.type != 'cheque' AND abs2.state != 'draft'
-                                       AND abs2.instance_id = abs.instance_id
-                                       AND abs2.journal_id = abs.journal_id)
-        """
+    def getFuncCurrencyId(self):
+        return self.func_currency_id
 
-        self.cr.execute(sql_register_ids)
-        register_ids = [x[0] for x in self.cr.fetchall()]
+    def getPeriodName(self):
+        return self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context={'lang': self.localcontext.get('lang')}).name
 
-        registers = {}
-
-        for register in pool.get('account.bank.statement').browse(self.cr, self.uid, register_ids):
-            ids.append(register)
-            if registers.has_key(register.instance_id.id):
-                registers[register.instance_id.id] += [register]
-            else:
-                registers[register.instance_id.id] = [register]
-
-        self.registers = registers
-        for x in registers:
-            self.iter.append(len(registers[x]))
-
-        return registers
-
-    def getConvert(self,cur,func_cur,amount,option):
-        conv = self.pool.get('res.currency').compute(self.cr, self.uid, cur.id, func_cur.id, amount or 0.0, round=True,)
-
-        if option == 'cal':
-            self.cal += 1
-        elif option == 'reg':
-            self.res += 1
-
+    def getConvert(self, cur_id, func_cur_id, amount):
+        cur_ovj = self.pool.get('res.currency')
+        conv = cur_ovj.compute(self.cr, self.uid, cur_id,
+                               func_cur_id, amount or 0.0, round=True)
         return float(conv)
 
-SpreadsheetReport('report.liquidity.position.2','account.bank.statement','addons/register_accounting/report/liquidity_position_xls.mako', parser=report_liquidity_position2)
+    def getRegistersByType(self):
+        reg_types = {}
+        total_func_calculated_balance = 0
+        total_func_register_balance = 0
+
+        pool = pooler.get_pool(self.cr.dbname)
+        reg_obj = pool.get('account.bank.statement')
+        args = [('period_id', '=', self.period_id)]
+        reg_ids = reg_obj.search(self.cr, self.uid, args)
+        regs = reg_obj.browse(self.cr, self.uid, reg_ids, context={'lang': self.localcontext.get('lang')})
+
+        self.func_currency = regs[0].journal_id.company_id.currency_id.name
+        self.func_currency_id = regs[0].journal_id.company_id.currency_id.id
+        for reg in regs:
+
+            journal = reg.journal_id
+            currency = journal.currency
+
+            # For Now, check are ignored
+            if journal.type == 'cheque':
+                continue
+
+            # ##############
+            # INITIALISATION
+            # ##############
+
+            # Create register type
+            if journal.type not in reg_types:
+                reg_types[journal.type] = {
+                    'registers': [],
+                    'currency_amounts': {},
+                    'func_amount_calculated': 0,
+                    'func_amount_balanced': 0
+                }
+            # Create currency values
+            if currency.name not in reg_types[journal.type]['currency_amounts']:
+                reg_types[journal.type]['currency_amounts'][currency.name] = {
+                    'amount_calculated': 0,
+                    'amount_balanced': 0,
+                    'id': currency.id
+                }
+
+            # ###########
+            # Calculation
+            # ###########
+
+            # Calcul amounts
+            reg_bal = 0
+            calc_bal = reg.msf_calculated_balance
+            func_calc_bal = self.getConvert(currency.id,
+                                            journal.company_id.currency_id.id,
+                                            calc_bal)
+            if reg.journal_id.type == 'bank':
+                reg_bal = reg.balance_end_real
+
+            elif reg.journal_id.type == 'cash':
+                reg_bal = reg.balance_end_cash
+
+            func_reg_bal = self.getConvert(currency.id,
+                                           journal.company_id.currency_id.id,
+                                           reg_bal)
+
+            # Add register to list
+            reg_types[journal.type]['registers'].append({
+                'instance': reg.instance_id.name,
+                'journal_code': journal.code,
+                'journal_name': journal.name,
+                'state': reg.state,
+                'calculated_balance': calc_bal,
+                'register_balance': reg_bal,
+                'opening_balance': reg.balance_start,
+                'currency': journal.currency.name,
+                'func_calculated_balance': func_calc_bal,
+                'func_register_balance': func_reg_bal
+                })
+
+            # Add register types amounts
+            reg_types[journal.type]['func_amount_calculated'] += func_calc_bal
+            reg_types[journal.type]['func_amount_balanced'] += func_reg_bal
+
+            # Add currency amounts
+            reg_types[reg.journal_id.type]['currency_amounts'][currency.name]['amount_calculated'] += calc_bal
+            reg_types[reg.journal_id.type]['currency_amounts'][currency.name]['amount_balanced'] += reg_bal
+
+            # Add totals functionnal amounts
+            total_func_calculated_balance += func_calc_bal
+            total_func_register_balance += func_reg_bal
+            self.registers = reg_types
+
+        self.total_func_calculated_balance = total_func_calculated_balance
+        self.total_func_register_balance = total_func_register_balance
+        return reg_types
+
+
+SpreadsheetReport('report.liquidity.position.2', 'account.bank.statement', 'addons/register_accounting/report/liquidity_position_xls.mako', parser=report_liquidity_position3)
+report_sxw.report_sxw('report.liquidity.position.pdf', 'account.bank.statement', 'addons/register_accounting/report/liquidity_position_pdf.rml', header=False, parser=report_liquidity_position3)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -67,10 +67,11 @@ class packing_list(report_sxw.rml_parse):
                 'total_weight': 0.00,
                 'nb_parcel': 0,
             })
-            res[pf.ppl_id.name]['pf'].append(pf)
-            res[pf.ppl_id.name]['total_volume'] += pf.total_volume
-            res[pf.ppl_id.name]['total_weight'] += pf.total_weight
-            res[pf.ppl_id.name]['nb_parcel'] += pf.num_of_packs
+            if not pf.not_shipped:
+                res[pf.ppl_id.name]['pf'].append(pf)
+                res[pf.ppl_id.name]['total_volume'] += pf.total_volume
+                res[pf.ppl_id.name]['total_weight'] += pf.total_weight
+                res[pf.ppl_id.name]['nb_parcel'] += pf.num_of_packs
 
         sort_keys = sorted(res.keys())
 
@@ -120,7 +121,10 @@ class packing_list(report_sxw.rml_parse):
             elif field == 'street2':
                 return addr.street2
             elif field == 'city':
-                return '%s %s' % (addr.zip, addr.city)
+                zip = ""
+                if addr.zip is not False:
+                    zip = addr.zip
+                return '%s %s' % (zip, addr.city)
             elif field == 'country':
                 return addr.country_id and addr.country_id.name or ''
             elif field == 'phone':

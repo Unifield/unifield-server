@@ -38,16 +38,30 @@ _SUB_LEVELS = 6
 #----------------------------------------------------------
 class product_nomenclature(osv.osv):
 
+    def export_data(self, cr, uid, ids, fields_to_export, context=None):
+        '''
+        UF-1952 : Don't display complete name of each level when exporting
+        the product nomenclatures
+        '''
+        if not context:
+            context = {}
+
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            context.update({'nolevel': True})
+        return super(product_nomenclature, self).export_data(cr, uid, ids, fields_to_export, context=context)
+
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
         if context is None:
             context = {}
-        # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
-        lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
-        if not context.get('yml_test', False):
-            if lang_dict.get('context_lang'):
-                context['lang'] = lang_dict.get('context_lang')
+            
+        if not context.get('lang') or context.get('lang') == 'en_US':
+            # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
+            lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
+            if not context.get('yml_test', False):
+                if lang_dict.get('context_lang'):
+                    context['lang'] = lang_dict.get('context_lang')
 
         fields = ['name', 'parent_id']
         if context.get('withnum') == 1:
@@ -148,7 +162,7 @@ class product_nomenclature(osv.osv):
         check level value and type value
         '''
         if ('level' in vals) and ('type' in vals):
-            level = vals['level']
+            level = int(vals['level'])
             type = vals['type']
             # level test
             if level > _LEVELS:
@@ -163,18 +177,16 @@ class product_nomenclature(osv.osv):
         parent
         '''
         self._nomenclatureCheck(vals)
-
         # save the data to db
-        return super(product_nomenclature, self).write(cr, user, ids, vals, context)
+        return super(product_nomenclature, self).write(cr, user, ids, vals, context=context)
 
     def create(self, cr, user, vals, context=None):
         '''
         override create method to check the validity of selected parent
         '''
         self._nomenclatureCheck(vals)
-
-        # save the data to db
-        return super(product_nomenclature, self).create(cr, user, vals, context)
+        return super(product_nomenclature, self).create(cr, user, vals,
+                                                       context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         """
@@ -197,8 +209,7 @@ class product_nomenclature(osv.osv):
                     nomen_name = self.read(cr, uid, nomen_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
-                        _('''The nomenclature '%s' is an Unifield internal
-nomenclature, so you can't remove it''' % nomen_name),
+                        _('''The nomenclature '%s' is an Unifield internal nomenclature, so you can't remove it''') % nomen_name,
                     )
             except ValueError:
                 pass
@@ -296,20 +307,17 @@ nomenclature, so you can't remove it''' % nomen_name),
         With the UF-1853, we display the nomenclature levels in 4 different columns.
         """
         ret = {}
-        context = b.get('context')
+        context = len(a) > 1 and a[1] or b.get('context')
         if context is None:
             context = {}
         for nomen in self.browse(cr, uid, ids, context):
-            complete_name = nomen.complete_name
-            levels = complete_name.split('|')
-            if len(levels) == 1:
-                ret[nomen.id] = {'nomen_manda_0_s': levels[0]}
-            elif len(levels) == 2:
-                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1]}
-            elif len(levels) == 3:
-                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1], 'nomen_manda_2_s': levels[2]}
-            elif len(levels) == 4:
-                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1], 'nomen_manda_2_s': levels[2], 'nomen_manda_3_s': levels[3]}
+            ret[nomen.id] = {'nomen_manda_0_s': False, 'nomen_manda_1_s': False, 'nomen_manda_2_s': False, 'nomen_manda_3_s': False}
+            level = nomen.level or 0
+            record = nomen
+            while level >= 0:
+                ret[nomen.id]['nomen_manda_%s_s' % level] = record and (record.id, record.name) or False
+                record = record.parent_id
+                level -= 1
         return ret
 
     def _get_childs(self, cr, uid, narg, ids):
@@ -444,7 +452,7 @@ nomenclature, so you can't remove it''' % nomen_name),
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'name': fields.char('Name', size=64, required=True, select=True, translate=1),
-        'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name', fnct_search=_search_complete_name),
+        'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Full name', fnct_search=_search_complete_name),
         'custom_name': fields.function(_get_custom_name, method=True, type="char", string='Name', fnct_search=_search_custom_name),
         # technic fields - tree management
         'parent_id': fields.many2one('product.nomenclature', 'Parent Nomenclature', select=True),
@@ -468,18 +476,21 @@ nomenclature, so you can't remove it''' % nomen_name),
         'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
 
         'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'), ('optional', 'Optional')], string='Nomenclature type', fnct_search=_search_nomen_type_s),
-
+        'msfid': fields.char('MSFID', size=128, select=True),
     }
 
     _defaults = {
-                 'level' : _getDefaultLevel,  # no access to actual new values, use onChange function instead
-                 'type' : lambda *a : 'mandatory',
-                 'sub_level': lambda *a : '0',
-                 'sequence': _getDefaultSequence,
-                 'active': True,
+        'level': _getDefaultLevel,  # no access to actual new values, use onChange function instead
+        'type': lambda *a: 'mandatory',
+        'sub_level': lambda *a: '0',
+        'sequence': _getDefaultSequence,
+        'active': True,
     }
 
     _order = "sequence, id"
+
+    _sql_constraints = [('check_msfid_unique', 'unique (msfid)', 'MSFID must be unique !')]
+
     def _check_recursion(self, cr, uid, ids, context=None):
         level = 100
         while len(ids):
@@ -744,6 +755,19 @@ class product_product(osv.osv):
     def get_sub_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
 
+    def copy(self, cr, uid, old_id, new_vals=None, context=None):
+        res = super(product_product, self).copy(cr, uid, old_id, new_vals, context=context)
+        if new_vals is None:
+            new_vals = {}
+        if new_vals.get('default_code', None) == 'XXX':
+            # Delete the translations linked to this new product
+            tr_obj = self.pool.get('ir.translation')
+            tr_ids = tr_obj.search(cr, uid, [('xml_id', '=', 'product_XXX')], context=context)
+            if tr_ids:
+                tr_obj.unlink(cr, uid, tr_ids, context=context)
+
+        return res
+
     def create(self, cr, uid, vals, context=None):
         '''
         override to complete nomenclature_description
@@ -789,12 +813,15 @@ class product_product(osv.osv):
         to_overwrite = False
         # The first 2 cases: dup of default_code/xmlid_code not allow
         if context.get('from_import_menu') or context.get('sync_update_execution', False):
+            xmlid_code = vals.get('xmlid_code', default_code)
             if not default_code or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
-            exist_dc_xc = self.search(cr, uid, ['|', ('default_code', '=', default_code),
-                                                     ('xmlid_code', '=', default_code)], context=context)
-            if exist_dc_xc:  # if any of the code exists, report error!,
-                raise Exception, "Problem creating product: Duplicate xmlid_code/default_code found"
+            exist_dc = self.search(cr, uid, [('default_code', '=', default_code)], limit=1, context=context)
+            exist_xc = self.search(cr, uid, [('xmlid_code', 'in', [default_code, xmlid_code])], limit=1, context=context)
+            if exist_dc:  # if any of the code exists, report error!,
+                raise Exception, "Problem creating product: Duplicate default_code found"
+            if exist_xc:  # if any of the code exists, report error!,
+                raise Exception, "Problem creating product: Duplicate xmlid_code found"
         elif default_code:  # cases 3, 4
             vals['xmlid_code'] = default_code
         else:
@@ -969,7 +996,6 @@ class product_product(osv.osv):
         if level not in levels:
             raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s') % (level, levels))
 
-
         for x in levels[level + 1:]:
             result['value'].update({'nomen_manda_%s' % x:False})
 
@@ -1093,6 +1119,7 @@ class product_product(osv.osv):
 
 product_product()
 
+
 class product_category(osv.osv):
     _name = 'product.category'
     _inherit = 'product.category'
@@ -1116,25 +1143,19 @@ class product_category(osv.osv):
             file = tools.file_open(pathname)
             tools.convert_xml_import(cr, 'product_nomenclature', file, {}, mode='init', noupdate=False)
 
-    def create(self, cr, uid, vals, context=None):
-        '''
-        Set default values for datas.xml and tests.yml
-        '''
-        if context is None:
-            context = {}
-
-        return super(product_category, self).create(cr, uid, vals, context)
-
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'family_id': fields.many2one('product.nomenclature', string='Family',
                                      domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '=', False)]",
                                      ),
+        'msfid': fields.char('MSFID', size=128, select=True),
     }
 
     _defaults = {
                  'active': True,
     }
+
+    _sql_constraints = [('check_msfid_unique', 'unique (msfid)', 'MSFID must be unique !')]
 
     def unlink(self, cr, uid, ids, context=None):
         """
@@ -1154,8 +1175,7 @@ class product_category(osv.osv):
                     categ_name = self.read(cr, uid, categ_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
-                        _('''The category '%s' is an Unifield internal
-category, so you can't remove it''' % categ_name),
+                        _('''The category '%s' is an Unifield internal category, so you can't remove it''') % categ_name,
                     )
             except ValueError:
                 pass
@@ -1205,11 +1225,10 @@ class product_uom_categ(osv.osv):
                 cat_id = data_obj.get_object_reference(
                     cr, uid, 'msf_doc_import', data_id)[1]
                 if cat_id in ids:
-                    uom_name = self.read(cr, uid, cat_id, ['name'])['name'] 
+                    uom_name = self.read(cr, uid, cat_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
-                        _('''The UoM category '%s' is an Unifield internal
-Uom category, so you can't remove it''' % uom_name),
+                        _('''The UoM category '%s' is an Unifield internal Uom category, so you can't remove it''') % uom_name,
                     )
             except ValueError:
                 pass

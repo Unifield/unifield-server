@@ -138,15 +138,15 @@ class real_average_consumption(osv.osv):
         'activity_id': fields.many2one('stock.location', string='Activity', domain=[('usage', '=', 'customer')], required=1),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'line_ids': fields.one2many('real.average.consumption.line', 'rac_id', string='Lines'),
         'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True),
         'created_ok': fields.boolean(string='Out moves created'),
         'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
         'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
     }
@@ -245,6 +245,9 @@ class real_average_consumption(osv.osv):
         if context is None:
             context = {}
 
+        for report_id in ids:
+            self.infolog(cr, uid, 'The consumption report id:%s has been canceled' % report_id)
+
         self.write(cr, uid, ids, {'state':'cancel'}, context=context)
         
         return {'type': 'ir.actions.act_window',
@@ -328,7 +331,9 @@ class real_average_consumption(osv.osv):
             # Confirm all moves
             move_obj.action_done(cr, uid, move_ids, context=context)
             #move_obj.write(cr, uid, move_ids, {'date': rac.period_to}, context=context)
-            
+
+        for report_id in ids:
+            self.infolog(cr, uid, 'The consumption report id:%s has been processed' % report_id)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
@@ -391,46 +396,27 @@ class real_average_consumption(osv.osv):
             context = {}
 
         self.write(cr, uid, ids, {'created_ok': True})
-        used_product_ids = []
         for report in self.browse(cr, uid, ids, context=context):
-            if not report.line_ids:
-                break
-
-            product_ids = set()
-            for line in report.line_ids:
-                product_ids.add(line.product_id.id)
-            product_ids = list(product_ids)
-
             cr.execute('''select distinct sm.product_id, sm.prodlot_id, sm.expired_date,
                             pp.batch_management, pp.perishable, pp.product_tmpl_id,
                             pt.uom_id
                         from stock_move sm, product_product pp, product_template pt
-                        where sm.location_id = %s and pp.id = sm.product_id and pt.id = pp.product_tmpl_id
-                        and pp.id in %s;''', (report.cons_location_id.id, tuple(product_ids)))
-            dict1 = cr.dictfetchall()
-            cr.execute('''select distinct sm.product_id, sm.prodlot_id, sm.expired_date,
-                                pp.batch_management, pp.perishable, pp.product_tmpl_id,
-                                pt.uom_id
-                            from stock_move sm, product_product pp, product_template pt
-                            where sm.location_dest_id = %s and pp.id = sm.product_id and pt.id = pp.product_tmpl_id
-                            and pp.id in %s;''', (report.cons_location_id.id, tuple(product_ids)))
-            dict2 = cr.dictfetchall()
-            products_by_location = dict1 + dict2
+                        where (sm.location_id = %s or sm.location_dest_id = %s) and pp.id = sm.product_id and pt.id = pp.product_tmpl_id and sm.state = 'done'
+                        ''', (report.cons_location_id.id, report.cons_location_id.id ))
+            products_by_location = cr.dictfetchall()
 
             context['location_id'] = report.cons_location_id.id
-            to_create = []
             for product in products_by_location:
                 rm_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, [
                     ('product_id', '=', product['product_id']),
+                    ('prodlot_id', '=', product['prodlot_id']),
+                    ('uom_id', '=', product['uom_id']),
                     ('rac_id', '=', report.id),
                 ], context=context)
-                self.pool.get('real.average.consumption.line').unlink(cr, uid, rm_line_ids, context=context)
-                used_product_ids.append(product['product_id'])
                 batch_mandatory = product['batch_management']
                 date_mandatory = product['perishable']
                 values = {'product_id': product['product_id'],
                           'uom_id': product['uom_id'],
-                          'consumed_qty': 0.00,
                           'batch_mandatory': batch_mandatory,
                           'date_mandatory': date_mandatory,
                           'expiry_date': product['expired_date'],
@@ -441,24 +427,26 @@ class real_average_consumption(osv.osv):
                                                                         product['uom_id'], product['prodlot_id'], context=context)['value']
 
                 values.update(v)
-                if batch_mandatory:
+                if batch_mandatory and not product['prodlot_id']:
                     values.update({'remark': 'You must assign a batch number'})
-                if date_mandatory:
+                elif date_mandatory and not product['expired_date']:
                     values.update({'remark': 'You must assign an expiry date'})
+                else:
+                    values.update({'remark': ''})
                 if product['prodlot_id']:
                     product_qty = self.pool.get('stock.production.lot')._get_stock(cr, uid, product['prodlot_id'], [], None, context=context)
                     values.update({'product_qty':product_qty[product['prodlot_id']]})
-                values.update({'consumed_qty': values.get('product_qty', 0.00)})
-                to_create.append(values)
-            else:
-                for tc in to_create:
-                    self.pool.get('real.average.consumption.line').create(cr, uid, tc, context=context)
+                if rm_line_ids:
+                    self.pool.get('real.average.consumption.line').write(cr, uid, rm_line_ids, values, context=context)
+                elif values.get('product_qty', 0.00) > 0.00:
+                    values.update({'consumed_qty': values.get('product_qty', 0.00)})
+                    self.pool.get('real.average.consumption.line').create(cr, uid, values, context=context)
 
         self.write(cr, uid, ids, {'created_ok': False})
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
-                'view_mode': 'form',
+                'view_mode': 'form,tree',
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
@@ -469,7 +457,7 @@ class real_average_consumption(osv.osv):
         '''
         if context is None:
             context = {}
-        self.write(cr, uid, ids, {'created_ok': True})    
+        self.write(cr, uid, ids, {'created_ok': True})
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
@@ -1005,6 +993,9 @@ class real_consumption_change_location(osv.osv_memory):
 
         wiz = self.browse(cr, uid, ids[0], context=context)
 
+        self.infolog(cr, uid, 'Consumer location has been changed on consumption report id:%s from id:%s to id:%s' % (
+            wiz.report_id.id, wiz.report_id.cons_location_id.id, wiz.location_id.id))
+
         self.pool.get('real.average.consumption').write(cr, uid, [wiz.report_id.id], {'cons_location_id': wiz.location_id.id}, context=context)
         self.pool.get('real.average.consumption').button_update_stock(cr, uid, [wiz.report_id.id], context=context)
 
@@ -1050,14 +1041,14 @@ class monthly_review_consumption(osv.osv):
         'company_id': fields.many2one('res.company', string='Company', readonly=True),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
         'line_ids': fields.one2many('monthly.review.consumption.line', 'mrc_id', string='Lines'),
         'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
     }
     

@@ -63,12 +63,17 @@ class stock_incoming_processor(osv.osv):
         'direct_incoming': fields.boolean(
             string='Direct to Requesting Location',
         ),
+        'draft': fields.boolean('Draft'),
+        'already_processed': fields.boolean('Already processed'),
     }
 
     _defaults = {
         'dest_type': 'default',
         'direct_incoming': True,
+        'draft': lambda *a: False,
+        'already_processed': lambda *a: False,
     }
+
 
     # Models methods
     def create(self, cr, uid, vals, context=None):
@@ -152,6 +157,7 @@ class stock_incoming_processor(osv.osv):
         in_proc_obj = self.pool.get('stock.move.in.processor')
         picking_obj = self.pool.get('stock.picking')
         data_obj = self.pool.get('ir.model.data')
+        wizard_obj = self.pool.get('stock.incoming.processor')
 
         if context is None:
             context = {}
@@ -162,12 +168,26 @@ class stock_incoming_processor(osv.osv):
                 _('No wizard found !'),
             )
 
+        # Delete drafts
+        wizard_obj.write(cr, uid, ids, {'draft': False}, context=context)
+
         to_unlink = []
 
         picking_id = None
         for proc in self.browse(cr, uid, ids, context=context):
             picking_id = proc.picking_id.id
             total_qty = 0.00
+
+            if proc.already_processed:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot process two times the same IN. Please '\
+'return to IN form view and re-try.'),
+                )
+
+            self.write(cr, uid, [proc.id], {
+                'already_processed': True,
+            }, context=context)
 
             for line in proc.move_ids:
                 # If one line as an error, return to wizard
@@ -274,7 +294,7 @@ class stock_incoming_processor(osv.osv):
             # display warning
             result['warning'] = {
                 'title': _('Error'),
-                'message': _('You want to receive the IN on an other location than Cross Docking but "Cross docking" was checked.')
+                'message': _('You want to receive the IN into a location which is NOT Cross Docking but "Cross docking" was originally checked. As you are re-routing these products to a different destination, please ensure you cancel any transport document(OUT/PICK etc) if it is no longer needed for the original requesting location.')
             }
         elif picking.purchase_id and dest_type == 'to_cross_docking' and not picking.purchase_id.cross_docking_ok:
             # display warning
@@ -294,6 +314,41 @@ class stock_incoming_processor(osv.osv):
             }
 
         return result
+
+    def do_reset(self, cr, uid, ids, context=None):
+        incoming_obj = self.pool.get('stock.incoming.processor')
+        stock_p_obj = self.pool.get('stock.picking')
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+        incoming_ids = incoming_obj.browse(cr, uid, ids, context=context)
+        res_id = []
+        for incoming in incoming_ids:
+            res_id = incoming['picking_id']['id']
+        incoming_obj.write(cr, uid, ids, {'draft': False}, context=context)
+        return stock_p_obj.action_process(cr, uid, res_id, context=context)
+
+    def do_save_draft(self, cr, uid, ids, context=None):
+        incoming_obj = self.pool.get('stock.incoming.processor')
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+             _('Processing Error'),
+             _('No data to process !'),
+            )
+        incoming_obj.write(cr, uid, ids, {'draft': True}, context=context)
+        return {}
 
     def force_process(self, cr, uid, ids, context=None):
         '''
@@ -710,4 +765,3 @@ class stock_move_in_processor(osv.osv):
 stock_move_in_processor()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

@@ -110,6 +110,19 @@
             </field>
         </record>
 
+        <record id="register_view_account_move_line_filter" model="ir.ui.view">
+            <field name="name">Journal Items</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_line_filter"/>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='journal_id']" position="before">
+                            <field name="instance_id"/>
+                </xpath>
+            </field>
+        </record>
+
     <!-- Account move line search view -->
         <record id="mcdb_view_account_move_line_filter" model="ir.ui.view">
             <field name="name">Journal Items</field>
@@ -131,6 +144,7 @@
                                 string="Unreconciled"
                                 domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
                                 name="unreconciled"/>
+                            <filter icon="terp-personal" string="Employee" domain="[('employee_id', '!=', False)]" context="{'identification': 1}" />
                             <field name="document_date"/>
                             <field name="date" select='1'/>
                             <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
@@ -194,7 +208,7 @@
             <field name="res_model">account.move.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="context">{'search_default_posted': 1}</field>
+            <field name="context">{'search_default_posted': 1, 'from_web_menu': True}</field>
             <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
             <field name="help">This view can be used by accountants in order to quickly record entries in OpenERP. If you want to record a supplier invoice, start by recording the line of the expense account. OpenERP will propose to you automatically the Tax related to this account and the counterpart "Account Payable".</field>
         </record>
@@ -239,9 +253,9 @@
                 <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1" hide_delete_button="1" >
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
-                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard"
                         attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
-                    <button name="button_open_corrections" type="object" string="Open corrections history" 
+                    <button name="button_open_corrections" type="object" string="Open corrections history"
                         attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
                     <field name="instance_id" readonly="1"/>
                     <field name="journal_id"/>

@@ -750,6 +750,7 @@ supplier_catalogue()
 
 class supplier_catalogue_line(osv.osv):
     _name = 'supplier.catalogue.line'
+    _rec_name = 'line_number'
     _description = 'Supplier catalogue line'
     _table = 'supplier_catalogue_line'
     # Inherits of product.product to an easier search of lines
@@ -761,6 +762,8 @@ class supplier_catalogue_line(osv.osv):
         '''
         Create a pricelist line on product supplier information tab
         '''
+        if context is None:
+            context = {}
         supinfo_obj = self.pool.get('product.supplierinfo')
         cat_obj = self.pool.get('supplier.catalogue')
         price_obj = self.pool.get('pricelist.partnerinfo')
@@ -913,7 +916,7 @@ class supplier_catalogue_line(osv.osv):
 
         for l in line_id:
             line = self.browse(cr, uid, l, context=context)
-            c = context.copy()
+            c = context is not None and context.copy() or {}
             c.update({'product_change': True})
             # Remove the pricelist line in product tab
             if line.partner_info_id:
@@ -930,7 +933,8 @@ class supplier_catalogue_line(osv.osv):
         '''
         Check if the min_qty field is set
         '''
-        context = context is None and {} or context
+        if context is None:
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]

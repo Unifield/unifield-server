@@ -574,7 +574,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
                     cr.commit()
-                    cr.close()
+                    cr.close(True)
                     return res
 
                 '''
@@ -594,7 +594,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
                     cr.commit()
-                    cr.close()
+                    cr.close(True)
                     return res
 
 
@@ -965,7 +965,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
     #            return res
 
             cr.commit()
-            cr.close()
+            cr.close(True)
 
             # Clear the cache
             PRODUCT_CODE_ID = {}
@@ -975,7 +975,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
         except Exception, e:
             self.write(cr, uid, ids, {'message': e}, context=context)
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return True
 
@@ -1052,12 +1052,12 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 res = True
 
             cr.commit()
-            cr.close()
+            cr.close(True)
         except Exception, e:
             self.write(cr, uid, ids, {'message': e}, context=context)
             res = True
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return res
 
@@ -1326,6 +1326,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
                 write_vals['imp_price'] = 0.00
+
+            # Check unit price * quantity
+            err_msg = _('The price subtotal must be greater than or equal to 0.01')
+            if line.simu_id and line.simu_id.order_id and line.simu_id.order_id.order_type == 'regular' and write_vals['imp_price'] and write_vals['imp_qty']:
+                if write_vals['imp_price'] * write_vals['imp_qty'] < 0.01:
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
 
             # Currency
             currency_value = values[7]

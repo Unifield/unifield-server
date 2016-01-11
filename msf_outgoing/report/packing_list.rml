@@ -29,6 +29,11 @@
             <blockValign value="TOP" />
         </blockTableStyle>
 
+        <blockTableStyle id="NoPackTable">
+            <blockAlignment value="CENTER" />
+            <blockValign value="TOP" />
+        </blockTableStyle>
+
         <blockTableStyle id="ParcelHeaderGrey">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
@@ -53,6 +58,8 @@
 
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
         <paraStyle name="HeaderInfosValue" fontName="Helvetica" fontSize="8.0" textColor="blue" />
+
+        <paraStyle name="NoPack" fontName="Helvetica" fontSize="12.0" textColor="red" alignment="center" />
 
         <paraStyle name="ParcelInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
         <paraStyle name="ParcelInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" alignment="right" />
@@ -102,7 +109,7 @@
                 </para>
 
                 <!-- Shipment header values -->
-                <blockTable colWidths="80.0,150.0,140.0,150.0,140.0,150.0" style="HeaderInfos">
+                <blockTable colWidths="80.0,170.0,140.0,145.0,140.0,145.0" style="HeaderInfos">
                     <tr>
                         <td>
                             <para style="HeaderInfosTitle">Your Ref.:</para>
@@ -125,13 +132,11 @@
                         <td>
                             <para style="HeaderInfosTitle"><br /></para>
                             <para style="HeaderInfosTitle">Shipper:</para>
-                            <para style="HeaderInfosValue">[[ getCompany('name') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('addr_name') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('street') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('street2') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('city') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('country') ]]</para>
-                            <para style="HeaderInfosValue">[[ getCompany('phone') ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_name or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_contact or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_address or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_phone or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_other or '' ]]</para>
                         </td>
                         <td>
                             <para style="HeaderInfosTitle"><br /></para>
@@ -160,6 +165,15 @@
                     </tr>
                 </blockTable>
 
+                <blockTable colWidths="810.0" style="NoPackTable">
+                    [[ len(p['pf']) != 0 and removeParentNode('blockTable') ]]
+                    <tr>
+                        <td>
+                            <para style="NoPack"><font color="red">NO PACK FAMILIES IN THIS PPL</font></para>
+                        </td>
+                    </tr>
+                </blockTable>
+
                 <!-- Parcels values -->
                 <section>
                     [[ repeatIn(getParcel(p['pf']), 'pf') ]]
@@ -168,7 +182,7 @@
                         <font color="white"> </font>
                     </para>
 
-                    <blockTable colWidths="110.0,150.0,150.0,170.0,230.0" style="ParcelHeaderGrey" keepWithNext="1">
+                    <blockTable colWidths="100.0,150.0,150.0,170.0,170.0,70.0" style="ParcelHeaderGrey" keepWithNext="1">
                         <tr>
                             <td>
                                 <para style="ParcelInfos">Parcel No: [[ pf.from_pack ]] to [[ pf.to_pack ]]</para>
@@ -183,11 +197,14 @@
                                 <para style="ParcelInfos">Total volume [[ formatLang(pf.total_volume or 0.00) ]] dm³</para>
                             </td>
                             <td>
-                                <para style="ParcelInfosRight">Containing:</para>
+                                <para style="ParcelInfosRight">Containing</para>
+                            </td>
+                            <td>
+                                <para style="ParcelInfos">Description</para>
                             </td>
                         </tr>
                     </blockTable>
-                    <blockTable colWidths="30.0,80.0,210.0,210.0,85.0,70.0,65.0,20.0,20.0,20.0" style="ParcelLineHeader" keepWithNext="1">
+                    <blockTable colWidths="20.0,80.0,190.0,190.0,75.0,60.0,60.0,20.0,20.0,20.0,70.0" style="ParcelLineHeader" keepWithNext="1">
                         <tr>
                             <td>
                                 <para style="ParcelLineTitle">Item</para>
@@ -218,6 +235,9 @@
                             </td>
                             <td>
                                 <para style="ParcelLineTitle">NP</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">[[ pf.description_ppl or ' ' ]]</para>
                             </td>
                         </tr>
                         <tr>
@@ -251,6 +271,9 @@
                             </td>
                             <td>
                                 <para style="ParcelLineValue">[[ m.np_check and 'X' or ' ' ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue"></para>
                             </td>
                         </tr>
                     </blockTable>

@@ -475,7 +475,7 @@
                     <field name="prod_lot_id" position="replace">
                         <field name="prod_lot_id"
                             on_change="change_lot(prod_lot_id)"
-                            context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory}"
+                            context="{'location_id':location_id, 'product_id': product_id}"
                             domain="[('check_type','=', True), ('product_id', '=', product_id)]"
                             attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
                            <field name="expiry_date"
@@ -491,6 +491,8 @@
                         <field name="ssl_check" invisible="True" />
                         <field name="dg_check" />
                         <field name="np_check" />
+                        <button name="btn_dl" type="object" string="Line is duplicated" icon="gtk-dialog-warning" attrs="{'invisible': [('duplicate_line', '=', False)]}" />
+                        <field name="duplicate_line" invisible="True" />
                     <field name="has_problem" invisible="True" />
                     </field>
                 </data>

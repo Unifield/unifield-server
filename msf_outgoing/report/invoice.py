@@ -70,7 +70,8 @@ class invoice(report_sxw.rml_parse):
         """
         pf_done = {}
 
-        for pl in shipment.pack_family_memory_ids:
+        pfm_ids = sorted(shipment.pack_family_memory_ids, key=lambda a: a.from_pack)
+        for pl in pfm_ids:
             pf = PackFamily(pl.ppl_id, pl.shipment_id, [])
 
             if pf.ident not in pf_done:
@@ -119,7 +120,10 @@ class invoice(report_sxw.rml_parse):
             elif field == 'street2':
                 res = addr.street2
             elif field == 'city':
-                res = '%s %s' % (addr.zip, addr.city)
+                zip = ""
+                if addr.zip is not False:
+                    zip = addr.zip
+                res = '%s %s' % (zip, addr.city)
             elif field == 'country':
                 res = addr.country_id and addr.country_id.name or ''
             elif field == 'phone':
@@ -136,9 +140,10 @@ class invoice(report_sxw.rml_parse):
         res = []
         index = 1
         for m in pl.move_lines:
-            res.append((index, m))
-            index += 1
-        return res
+            if not m.not_shipped:
+                res.append((index, m))
+                index += 1
+        return sorted(res, key=lambda x: x[1].sale_line_id and x[1].sale_line_id.line_number or x[1].line_number)
 
     def _get_total(self, pf):
         """
@@ -147,7 +152,7 @@ class invoice(report_sxw.rml_parse):
         """
         res = 0.
         for move in pf.move_lines:
-            if move.total_amount:
+            if not move.not_shipped and move.total_amount:
                 res += move.total_amount
         return res
 

@@ -484,17 +484,17 @@ class msf_doc_import_accounting(osv.osv_memory):
             # Close cursor
             if not from_yml:
                 cr.commit()
-                cr.close()
+                cr.close(True)
         except osv.except_osv as osv_error:
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
             if not from_yml:
-                cr.close()
+                cr.close(True)
         except Exception as e:
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e.args and e.args[0] or '',), 'state': 'done', 'progression': 100.0})
             if not from_yml:
-                cr.close()
+                cr.close(True)
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -524,6 +524,7 @@ msf_doc_import_accounting()
 
 class msf_doc_import_accounting_lines(osv.osv):
     _name = 'msf.doc.import.accounting.lines'
+    _rec_name = 'document_date'
 
     _columns = {
         'description': fields.text("Description", required=False, readonly=True),

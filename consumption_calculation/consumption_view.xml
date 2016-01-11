@@ -11,20 +11,20 @@
                     <group colspan="4" col="6">
                         <field name="id" invisible="1" />
                         <separator colspan="6" string="General information" />
-                       <field name="name" readonly="1" colspan="3" />
-                        <field name="creation_date" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="2"/>
-                        <field name="cons_location_id" attrs="{'readonly': ['|', ('id', '!=', 0), ('created_ok', '=', True)]}" context="{'no3buttons': True}" colspan="2"/>
-                        <button name="change_cons_location_id" string="Change location" icon="gtk-preferences" type="object" attrs="{'readonly': ['|', ('id', '=', 0), ('created_ok', '=', True)]}" />
+                        <field name="name" readonly="1" colspan="3" />
+                        <field name="creation_date" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="2"/>
+                        <field name="cons_location_id" attrs="{'readonly': ['|', '|', ('state', '=', 'cancel'), ('id', '!=', 0), ('created_ok', '=', True)]}" context="{'no3buttons': True}" colspan="2"/>
+                        <button name="change_cons_location_id" string="Change location" icon="gtk-preferences" type="object" attrs="{'readonly': ['|', '|', ('state', '=', 'cancel'), ('id', '=', 0), ('created_ok', '=', True)]}" />
                         <group colspan="3" col="2">
                             <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
-                            <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
+                            <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"/>
                         </group>
-                        <field name="activity_id" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
+                        <field name="activity_id" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
                         <button name="export_rac" colspan="3" string="Export lines" icon="terp-mail-forward" type="object" />
                         <separator colspan="6" string="Period of consumption" />
-                        <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
-                        <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
-                        <group colspan="6" col="6" name="import" string="Import lines">
+                        <field name="period_from" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
+                        <field name="period_to" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
+                        <group colspan="6" col="6" name="import" string="Import lines" attrs="{'invisible': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}">
                             <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="3" />
                             <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="3" type="object" />
                         </group>
@@ -32,11 +32,11 @@
                     <separator colspan="4" string="Products" />
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object" 
                     confirm="Are you sure that you want to remove all lines?" invisible="1"/>
-                    <button colspan="4" icon="gtk-go-down" string="Copy all" type="object" name="copy_all" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                    <button colspan="4" icon="gtk-go-down" string="Copy all" type="object" name="copy_all" attrs="{'invisible': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" />
                     <field name="hide_column_error_ok" invisible="1" />
-                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}"
+                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
-                    <tree string="Products" editable="top" colors="red: consumed_qty>0 and (inactive_product or to_correct_ok or consumed_qty > product_qty or (batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date));blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok and not inactive_product">
+                        <tree string="Products" editable="top" colors="red: consumed_qty>0 and (inactive_product or to_correct_ok or consumed_qty > product_qty or (batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date));blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok and not inactive_product">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
                                 context="{'location': parent.cons_location_id, 'compute_child': False, 'available_for_restriction': 'consumption', 'search_default_not_restricted': 1}" />
                             <!-- domain="[('list_ids', '=', parent.sublist_id)]" /> -->
@@ -71,12 +71,12 @@
                     <field name="created_ok" invisible="1" />
                     <group colspan="4" col="6">
                         <button name="button_update_stock" string="Update Indicative Stock" icon="gtk-refresh" colspan="2" type="object" attrs="{'invisible': [('state','!=','draft')]}" />
-            <button name="cancel_button" string="Cancel" icon="gtk-cancel" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button name="cancel_button" string="Cancel" icon="gtk-cancel" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                         <button name="process_moves" string="Save &amp; Process" icon="gtk-execute" type="object" colspan="2" attrs="{'invisible': [('state','!=','draft')]}" />
-            <button name="draft_button" string="Draft" icon="gtk-apply" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'cancel')]}" />
+                        <button name="draft_button" string="Draft" icon="gtk-apply" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'cancel')]}" />
                     </group>
                     <group colspan="4" >
-            <field name="state" />
+                        <field name="state" />
                     </group>
                 </form>
             </field>

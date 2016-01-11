@@ -397,6 +397,13 @@ class stock_location_configuration_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        #US-702: This action can only be done in RW instances
+        picking_obj = self.pool.get('stock.picking')
+        usb_entity = picking_obj._get_usb_entity_type(cr, uid)
+        if usb_entity == picking_obj.REMOTE_WAREHOUSE:
+            raise osv.except_osv(_('Info!'), _('This action can only be performed at the main instance (CP) and sync to RW!'))
+
         data_obj = self.pool.get('ir.model.data')
         location_obj = self.pool.get('stock.location')
         parent_location_id = False
@@ -408,7 +415,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
         chained_picking_type = 'internal'
         chained_location_id = False
         location = False
-        
+
         for wizard in self.browse(cr, uid, ids, context=context):
             # Check if errors on location name
             errors = self.name_on_change(cr, uid, ids, wizard.location_name, wizard.location_type, wizard.location_usage, context=context)
@@ -612,6 +619,13 @@ Please click on the 'Children locations' button to see all children locations.''
         return {}
         
     def deactivate_location(self, cr, uid, ids, context=None):
+
+        #US-702: This action can only be done in RW instances
+        picking_obj = self.pool.get('stock.picking')
+        usb_entity = picking_obj._get_usb_entity_type(cr, uid)
+        if usb_entity == picking_obj.REMOTE_WAREHOUSE:
+            raise osv.except_osv(_('Info!'), _('This action can only be performed at the main instance (CP) and sync to RW!'))
+
         '''
         Deactivate the selected location
         '''

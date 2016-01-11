@@ -43,12 +43,23 @@ class purchase_order(osv.osv):
         """
         Search PO available for down payments regarding these criteria:
         - the PO should not be 100% invoiced (invoice_rate field)
-        - the PO should be confirmed ('approved' state), but could be in done state and not completly invoiced
+        - the PO state should be:
+           confirm waiting ('confirm_wait' state),
+           confirmed ('approved' state),
+           but could be in done state and not completly invoiced
         - the currency should be the same as given currency in args
         - the partner should be the same as given partner in args
-        - DO NOT display PO that ar inkind donation, donation expiry, loan, donation_st
 
         To be 100% invoiced, a PO should have some linked invoiced that are validated ('open' state or 'paid' state) and that sum of amount is greater or equal to PO total amount. So to find PO that are not 100% invoiced, you should find those from which all invoice are not created or which amount is inferior to PO total amount.
+        
+        BKLG-51: new filters
+        1) On PO state: only allow "confirmed" or "confirmed (waiting)" POs to be selected in the wizard
+        (keeping 'done' for not completly invoiced)
+        2) On PO type: only allow regular, purchase list and direct purchase order PO types
+        3) Make sure that RFQs or tenders can not be linked to down payments
+        1) state 'confirm_waiting' + 'approved' + 'done' (done tolerated if partially invoiced)
+        2) order_type 'regular', 'purchase_list', 'direct'
+        3) rfq_ok != True
         """
         # Create default result
         res = [('id', 'in', [])]
@@ -65,11 +76,12 @@ class purchase_order(osv.osv):
             LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id)
             LEFT JOIN account_invoice as inv ON (pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel'))
             LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s)
-            WHERE po.state in ('approved', 'done')
+            WHERE po.state in ('confirmed_wait', 'approved', 'done')
             AND po.pricelist_id = prod.id
             AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc'))
-            AND po.order_type not in ('loan', 'in_kind', 'donation_exp', 'donation_st')
+            AND po.order_type in ('regular', 'purchase_list', 'direct')
             AND po.partner_id = %s
+            AND po.rfq_ok != TRUE
             GROUP BY po.id, po.amount_total
             HAVING COALESCE(po.amount_total - sum(inv.amount_total), 10) != 0"""
             cr.execute(sql, (c_id, p_id))

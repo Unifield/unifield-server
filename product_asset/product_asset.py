@@ -250,6 +250,7 @@ product_asset()
     
 class product_asset_event(osv.osv):
     _name = "product.asset.event"
+    _rec_name = 'asset_id'
     _description = "Event for asset follow up"
     
     stateSelection = [('blank', ' '),
@@ -416,8 +417,8 @@ class product_product(osv.osv):
     def _constaints_product_consu(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.type == 'consu' and obj.procure_method != 'make_to_order':
+        for obj in self.read(cr, uid, ids, ['type', 'procure_method'], context=context):
+            if obj['type'] == 'consu' and obj['procure_method'] != 'make_to_order':
                 return False
         return True
 

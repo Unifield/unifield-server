@@ -155,11 +155,11 @@ Time used to compute the quantity of products to order according to the monthly 
                                            'stock.frequence': (_get_frequence_change, None, 20)}),
         'product_line_ids': fields.function(_get_product_ids, fnct_search=_src_product_ids, 
                                     type='many2many', relation='product.product', method=True, string='Products'),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
     }
     
     _defaults = {
@@ -398,6 +398,7 @@ stock_warehouse_order_cycle()
 
 class stock_warehouse_order_cycle_line(osv.osv):
     _name = 'stock.warehouse.order.cycle.line'
+    _rec_name = 'product_id'
     _description = 'Products to replenish'
 
     def _get_data(self, cr, uid, ids, field_name, args, context=None):

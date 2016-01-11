@@ -213,7 +213,7 @@ CONSUMPTION_TYPE = [
 class product_likely_expire_report(osv.osv):
     _name = 'product.likely.expire.report'
     _description = 'Products list likely to expire'
-    _rec_name = 'id'
+    _rec_name = 'location_id'
     _order = 'requestor_date desc, id'
 
     def _get_status(self, cr, uid, ids, field_name, args, context=None):
@@ -540,7 +540,7 @@ class product_likely_expire_report(osv.osv):
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
         new_cr.commit()
-        new_cr.close()
+        new_cr.close(True)
 
         return {
             'type': 'ir.actions.act_window',
@@ -791,7 +791,7 @@ product_likely_expire_report_line()
 
 class product_likely_expire_report_item(osv.osv):
     _name = 'product.likely.expire.report.item'
-    _rec_name = 'id'
+    _rec_name = 'line_id'
 
     _columns = {
             'line_id': fields.many2one('product.likely.expire.report.line', string='Line', ondelete='cascade'),
@@ -808,7 +808,7 @@ product_likely_expire_report_item()
 class product_likely_expire_report_item_line(osv.osv):
     _name = 'product.likely.expire.report.item.line'
     _order = 'expired_date, location_id'
-    _rec_name = 'id'
+    _rec_name = 'item_id'
 
     _columns = {
             'item_id': fields.many2one('product.likely.expire.report.item', strig='Item', ondelete='cascade'),

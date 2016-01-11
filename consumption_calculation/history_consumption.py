@@ -51,12 +51,12 @@ class product_history_consumption(osv.osv):
         'consumption_type': fields.selection([('rac', 'Real Average Consumption'), ('amc', 'Average Monthly Consumption')],
                                              string='Consumption type'),
         'location_id': fields.many2one('stock.location', string='Location', domain="[('usage', '=', 'internal')]"),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
+        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level', ondelete='set null'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', ondelete='set null'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
         'requestor_id': fields.many2one('res.users', string='Requestor'),
         'requestor_date': fields.datetime(string='Date of the demand'),
         'fake_status': fields.function(_get_status, method=True, type='selection', selection=HIST_STATUS, readonly=True, string='Status'),
@@ -266,7 +266,7 @@ class product_history_consumption(osv.osv):
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
         new_cr.commit()
-        new_cr.close()
+        new_cr.close(True)
 
         return
 

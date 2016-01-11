@@ -126,7 +126,6 @@ class report_project_expenses2(report_sxw.rml_parse):
             return []
         if self.objects[0].format_id.reporting_type == 'project' and self.name == 'financing.allocated.expenses.2':
             return []
-        pool = pooler.get_pool(self.cr.dbname)
         contract_obj = self.pool.get('financing.contract.contract')
         format_line_obj = self.pool.get('financing.contract.format.line')
         contract_domain = contract_obj.get_contract_domain(self.cr, self.uid, contract, reporting_type=self.reporting_type)
@@ -155,14 +154,17 @@ class report_project_expenses2(report_sxw.rml_parse):
 
         # UFTP-16: First search in the triplet in format line, then in the second block below, search in quadruplet
         for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
-            ids_adl = self.pool.get('financing.contract.account.quadruplet').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('account_destination_id','=',analytic_line.destination_id.id) ])
+            # US-460: Include also the funding pool in the criteria when searching for the quadruplet of the contract line 
+            criteria_for_adl = [('account_id', '=', analytic_line.general_account_id.id), ('account_destination_id', '=', analytic_line.destination_id.id), ('funding_pool_id', '=', analytic_line.account_id.id)]
+            ids_adl = self.pool.get('financing.contract.account.quadruplet').search(self.cr, self.uid, criteria_for_adl)
+
             ids_fcfl = format_line_obj.search(self.cr, self.uid, [('account_quadruplet_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])
             for fcfl in format_line_obj.browse(self.cr, self.uid, ids_fcfl):
                 ana_tuple = (analytic_line, fcfl.code, fcfl.name)
                 if lines.has_key(fcfl.code):
                     if not ana_tuple in lines[fcfl.code]:
                         lines[fcfl.code] += [ana_tuple]
-                else:    
+                else:
                     lines[fcfl.code] = [ana_tuple]
 
         self.lines = lines

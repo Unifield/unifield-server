@@ -45,6 +45,7 @@ class button_access_rule(osv.osv):
         'name': fields.char('Name', size=256, required=True),
         'label': fields.char('Label', size=256),
         'type': fields.selection((('workflow','Workflow'), ('object','Object'), ('action', 'Action')), 'Button Type'),
+        'xmlname': fields.char('Button action name', size=1024),
         'model_id': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True, ondelete='cascade'),
         'view_id': fields.many2one('ir.ui.view', 'View', help='The view to which this rule applies', required=True, ondelete='cascade'),
         'group_ids': fields.many2many('res.groups', 'button_access_rule_groups_rel', 'button_access_rule_id', 'group_id', 'Groups', help='A list of groups who have access to this button. If you leave this empty, everybody will have access.'),
@@ -60,6 +61,32 @@ class button_access_rule(osv.osv):
     _sql_constraints = [
         ('name_view_unique', 'unique (name, view_id)', "The combination of Button Name and View ID must be unique - i.e. you cannot have two rules for the same button in the same view"),
     ]
+
+    def _update_name_for_action(self, cr, uid, xmlname):
+        module, xml = xmlname.split('.', 1)
+        data_obj = self.pool.get('ir.model.data')
+        data_ids = data_obj.search(cr, uid, [('module', '=', module), ('name', '=', xml)])
+        if data_ids:
+            return data_obj.read(cr, uid, data_ids[0], ['res_id'])['res_id']
+        return False
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('type') == 'action' and vals.get('xmlname'):
+            new_name = self._update_name_for_action(cr, uid, vals['xmlname'])
+            if new_name:
+                vals['name'] = new_name
+        return super(button_access_rule, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('xmlname'):
+            new_name = self._update_name_for_action(cr, uid, vals['xmlname'])
+            if new_name:
+                vals['name'] = new_name
+        return super(button_access_rule, self).write(cr, uid, ids, vals, context)
 
     def _get_family_ids(self, cr, view_id):
         """

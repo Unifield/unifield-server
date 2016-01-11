@@ -146,7 +146,7 @@ class stock_mission_report(osv.osv):
         except Exception:
             cr.rollback()
         finally:
-            cr.close()
+            cr.close(True)
 
     def update(self, cr, uid, ids=[], context=None):
         '''

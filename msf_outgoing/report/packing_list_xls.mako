@@ -145,6 +145,10 @@
    <Alignment ss:Horizontal="Left" ss:Vertical="Top"/>
    <Borders/>
   </Style>
+  <Style ss:ID="NoPack">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Arial-Bold" x:Family="Swiss" ss:Size="13" ss:Color="#FF0000"/>
+  </Style>
   <Style ss:ID="s104">
    <Alignment ss:Vertical="Center"/>
    <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="13" ss:Color="#000000"/>
@@ -319,7 +323,7 @@
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299368"><Data ss:Type="String">Our Ref.:</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.name or '-')|x}</Data></Cell>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('name'))|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].shipper_name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_id.name or '')|x}</Data></Cell>
@@ -334,9 +338,9 @@
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
     % endif
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('addr_name'))|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].shipper_contact or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_address or '')|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_contact or '')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
@@ -349,9 +353,9 @@
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
     % endif
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('street'))|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].shipper_address or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_phone or '')|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_contact or '')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.street or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
@@ -364,9 +368,9 @@
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
     % endif
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('street2'))|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].shipper_phone or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_other or '')|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_phone or '')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.street2 or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
@@ -375,9 +379,9 @@
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299448"><Data ss:Type="String">Transport mode:</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(getSel(objects[0], 'transport_type'))|x}</Data></Cell>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('city'))|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_other or '')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.zip or '')|x} ${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.city or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
@@ -386,7 +390,7 @@
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299468"/>
     <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('country'))|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].shipper_other or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.country_id and p['ppl'].sale_id.partner_shipping_id.country_id.name or '')|x}</Data></Cell>
@@ -397,7 +401,7 @@
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="s124"/>
     <Cell ss:StyleID="s125"/>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getCompany('phone'))|x}</Data></Cell>
+    <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.phone or p['ppl'].sale_id.partner_shipping_id.mobile or '')|x}</Data></Cell>
@@ -405,6 +409,11 @@
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s118"/>
 </Row>
+   % if not p['pf']:
+   <Row>
+       <Cell ss:StyleID="NoPack" ss:MergeAcross="11"><Data ss:Type="String">NO PACK FAMILIES IN THIS PPL</Data></Cell>
+   </Row>
+   % endif
    % for pf in getParcel(p['pf']):
    <Row>
     <Cell ss:StyleID="s135" ss:MergeAcross="1"><Data ss:Type="String">Parcel No: ${(pf.from_pack)|x} to ${(pf.to_pack)|x}</Data></Cell>

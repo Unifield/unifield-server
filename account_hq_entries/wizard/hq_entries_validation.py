@@ -34,7 +34,21 @@ class hq_entries_validation(osv.osv_memory):
         'txt': fields.char("Text", size=128, readonly="1"),
         'line_ids': fields.many2many('hq.entries', 'hq_entries_validation_rel', 'wizard_id', 'line_id', "Selected lines", help="Lines previously selected by the user", readonly=True),
         'process_ids': fields.many2many('hq.entries', 'hq_entries_validation_process_rel', 'wizard_id', 'line_id', "Valid lines", help="Lines that would be processed", readonly=True),
+        'running': fields.boolean('Is running'),
     }
+
+    _defaults = {
+        'running': False,
+    }
+    def create(self, cr, uid, vals, context=None):
+        # BKLG-77: check transation before showing wizard
+        line_ids = context and context.get('active_ids', []) or []
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+        self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
+            line_ids, self._name, context=context)
+        return super(hq_entries_validation, self).create(cr, uid, vals,
+            context=context)
 
     # UTP-1101: Extract the method to create AD for being called also for the REV move
     def create_distribution_id(self, cr, uid, currency_id, line, account):
@@ -299,6 +313,9 @@ class hq_entries_validation(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.running:
+                return {}
+            self.write(cr, uid, [wiz.id], {'running': True})
             active_ids = [x.id for x in wiz.process_ids]
             if isinstance(active_ids, (int, long)):
                 active_ids = [active_ids]
@@ -322,8 +339,10 @@ class hq_entries_validation(osv.osv_memory):
             for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
                 #UF-1956: interupt validation if currency is inactive
                 if line.currency_id.active is False:
+                    self.write(cr, uid, [wiz.id], {'running': False})
                     raise osv.except_osv(_('Warning'), _('Currency %s is not active!') % (line.currency_id and line.currency_id.name or '',))
                 if line.analytic_state != 'valid':
+                    self.write(cr, uid, [wiz.id], {'running': False})
                     raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
                 # UTP-760: Do other modifications for split lines
                 if line.is_original or line.is_split:
@@ -382,6 +401,7 @@ class hq_entries_validation(osv.osv_memory):
                 res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines, posting_date=line.date)
                 # Give them analytic correction journal (UF-1385 in comments)
                 if not acor_journal_id:
+                    self.write(cr, uid, [wiz.id], {'running': False})
                     raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
                 ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
                 # create new lines
@@ -404,10 +424,22 @@ class hq_entries_validation(osv.osv_memory):
                 if isinstance(cor_ids, (int, long)):
                     cor_ids = [cor_ids]
                 cor_ids += res_reverse
+
+                gl_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+                if not gl_journal_ids:
+                    self.write(cr, uid, [wiz.id], {'running': False})
+                    raise osv.except_osv(_('Error'), _('No correction journal found!'))
+                gl_journal_obj = self.pool.get('account.journal').browse(cr, uid, gl_journal_ids[0], context=context)
+                journal_sequence_id = gl_journal_obj.sequence_id.id
+                journal_code = gl_journal_obj.code
+                seq_obj = self.pool.get('ir.sequence')
+                seqnum = False
                 for ana_line in ana_line_obj.browse(cr, uid, cor_ids, context=context):
+                    if not seqnum:
+                        seqnum = seq_obj.get_id(cr, uid, journal_sequence_id,
+                            context={'fiscalyear_id': ana_line.period_id.fiscalyear_id.id})
                     prefix = ana_line.instance_id.move_prefix
-                    seqnum = ana_line.entry_sequence.split('-')[2]
-                    entry_seq = "%s-%s-%s" % (prefix, ana_line.journal_id.code, seqnum)
+                    entry_seq = "%s-%s-%s" % (prefix, journal_code, seqnum)
                     cr.execute('UPDATE account_analytic_line SET entry_sequence = %s WHERE id = %s', (entry_seq, ana_line.id))
                 # update old ana lines
                 ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
@@ -431,7 +463,7 @@ class hq_entries_validation(osv.osv_memory):
                                 'destination_id': line.destination_id.id,
                             })]
                     })
-                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
+                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
             # Do split lines process
             original_move_ids = self.process_split(cr, uid, split_change, context=context)
 

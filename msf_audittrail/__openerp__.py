@@ -44,6 +44,7 @@
         'data/audittrail_data_picking.yml',
         'data/audittrail_data_sale.yml',
         'data/audittrail_data_purchase.yml',
+        'data/audittrail_data_products.yml',
         'audittrail_report.xml',
         'audittrail_invoice_data.yml',
     ],

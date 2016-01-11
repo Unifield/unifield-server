@@ -50,14 +50,16 @@ class wizard_accrual_validation(osv.osv_memory):
                     reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)
                     if len(reversal_period_ids) == 0:
                         raise osv.except_osv(_('Warning !'), _("No period (M+1) was found in the system!"))
-                    
+
                     reversal_period_id = reversal_period_ids[0]
                     reversal_period = period_obj.browse(cr, uid, reversal_period_id, context=context)
-                    if accrual_line.period_id.state != 'draft':
+
+                    # US-770/1
+                    if accrual_line.period_id.state not in ('draft', 'field-closed'):
                         raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
-                    elif reversal_period.state != 'draft':
+                    elif reversal_period.state not in ('draft', 'field-closed'):
                         raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
-                    
+
                     # Create moves
                     move_vals = {
                         'ref': accrual_line.reference,
@@ -77,6 +79,7 @@ class wizard_accrual_validation(osv.osv_memory):
                     reversal_description = "REV - " + accrual_line.description
                     
                     # Create move lines
+                    booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
                     accrual_move_line_vals = {
                         'accrual': True,
                         'move_id': move_id,
@@ -89,9 +92,13 @@ class wizard_accrual_validation(osv.osv_memory):
                         'account_id': accrual_line.accrual_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        'credit_currency': accrual_line.accrual_amount,
+                        booking_field: abs(accrual_line.accrual_amount),
                         'currency_id': accrual_line.currency_id.id,
                     }
+                    # negative amount for expense would result in an opposite
+                    # behavior, expense in credit and a accrual in debit for the
+                    # initial entry
+                    booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                     expense_move_line_vals = {
                         'accrual': True,
                         'move_id': move_id,
@@ -104,17 +111,18 @@ class wizard_accrual_validation(osv.osv_memory):
                         'account_id': accrual_line.expense_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        'debit_currency': accrual_line.accrual_amount,
+                        booking_field: abs(accrual_line.accrual_amount),
                         'currency_id': accrual_line.currency_id.id,
                         'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                     }
                     
                     # and their reversal (source_date to keep the old change rate)
+                    booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                     reversal_accrual_move_line_vals = {
                         'accrual': True,
                         'move_id': reversal_move_id,
                         'date': reversal_move_date,
-                        'document_date': accrual_line.document_date,
+                        'document_date': reversal_move_date,
                         'source_date': move_date,
                         'journal_id': accrual_line.journal_id.id,
                         'period_id': reversal_period_id,
@@ -123,14 +131,15 @@ class wizard_accrual_validation(osv.osv_memory):
                         'account_id': accrual_line.accrual_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        'debit_currency': accrual_line.accrual_amount,
+                        booking_field: abs(accrual_line.accrual_amount),
                         'currency_id': accrual_line.currency_id.id,
                     }
+                    booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
                     reversal_expense_move_line_vals = {
                         'accrual': True,
                         'move_id': reversal_move_id,
                         'date': reversal_move_date,
-                        'document_date': accrual_line.document_date,
+                        'document_date': reversal_move_date,
                         'source_date': move_date,
                         'journal_id': accrual_line.journal_id.id,
                         'period_id': reversal_period_id,
@@ -139,7 +148,7 @@ class wizard_accrual_validation(osv.osv_memory):
                         'account_id': accrual_line.expense_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        'credit_currency': accrual_line.accrual_amount,
+                        booking_field: abs(accrual_line.accrual_amount),
                         'currency_id': accrual_line.currency_id.id,
                         'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                     }

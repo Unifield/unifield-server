@@ -504,7 +504,7 @@
 
 <Row>
   <Cell ss:StyleID="s35">
-    <Data ss:Type="DateTime">${ line[0] and line[0].date |n}T00:00:00.000</Data>
+    <Data ss:Type="DateTime">${ line[0] and line[0].document_date |n}T00:00:00.000</Data>
   </Cell>
   <Cell ss:StyleID="s36">
     <Data ss:Type="String">${( line[0] and line[0].journal_id and line[0].journal_id.name or '')|x}</Data>

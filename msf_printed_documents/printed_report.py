@@ -162,7 +162,10 @@ class ir_actions_report_xml(osv.osv):
 
         for report in self.browse(cr, uid, ids, context=context):
             parsed_name = self.parse_filename(cr, uid, report, active_model, active_id, context=d_context)
-            res[report.id] = parsed_name or report.name
+            if parsed_name:
+                res[report.id] = parsed_name.replace(',', '-')
+            else:
+                res[report.id] = report.name
 
         return res
 

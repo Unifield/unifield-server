@@ -27,6 +27,9 @@ from tools.translate import _
 from collections import defaultdict
 from time import strftime
 from lxml import etree
+from datetime import datetime
+import threading
+import pooler
 
 class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
@@ -58,10 +61,12 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'nb_process': fields.function(_get_total, string="Allocatable items", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'nb_other': fields.function(_get_total, string="Excluded lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'display_fp': fields.boolean('Display FP'),
+        'process_in_progress': fields.boolean('Process in progress'),
     }
 
-    _default = {
+    _defaults = {
         'display_fp': lambda *a: False,
+        'process_in_progress': lambda *a: False,
     }
 
     def default_get(self, cr, uid, fields=None, context=None):
@@ -79,6 +84,38 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         res['display_fp'] = context.get('display_fp', False)
         return res
 
+    def process_thread(self, cr, uid, ids, context=None):
+        cr = pooler.get_db(cr.dbname).cursor()
+        # Browse all given wizard
+        try:
+            for wiz in self.browse(cr, uid, ids, context=context):
+                values = {'process_in_progress': True}
+                super(mass_reallocation_verification_wizard, self).write(cr, uid, [wiz.id], values, context=context)
+                # If no supporteds_ids, raise an error
+                if not wiz.process_ids:
+                    raise osv.except_osv(_('Error'), _('No lines to be processed.'))
+                # Prepare some values
+                account_id = wiz.account_id and wiz.account_id.id
+                # Sort by distribution
+                lines = defaultdict(list)
+                for line in wiz.process_ids:
+                    lines[line.distribution_id.id].append(line)
+                # Process each distribution
+                for distrib_id in lines:
+                    # UF-2205: fix problem with lines that does not have any distribution line or distribution id (INTL engagement lines)
+                    if not distrib_id:
+                        continue
+                    for line in lines[distrib_id]:
+                        # Update distribution
+                        self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
+                        # Then update analytic line
+                        self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, wiz.date, context=context)
+            cr.commit()
+        finally:
+            values = {'process_in_progress': False}
+            super(mass_reallocation_verification_wizard, self).write(cr, uid, ids, values, context=context)
+            cr.close(True)
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Launch mass reallocation on "process_ids".
@@ -88,27 +125,17 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Browse all given wizard
-        for wiz in self.browse(cr, uid, ids, context=context):
-            # If no supporteds_ids, raise an error
-            if not wiz.process_ids:
-                raise osv.except_osv(_('Error'), _('No lines to be processed.'))
-            # Prepare some values
-            account_id = wiz.account_id and wiz.account_id.id
-            # Sort by distribution
-            lines = defaultdict(list)
-            for line in wiz.process_ids:
-                lines[line.distribution_id.id].append(line)
-            # Process each distribution
-            for distrib_id in lines:
-                # UF-2205: fix problem with lines that does not have any distribution line or distribution id (INTL engagement lines)
-                if not distrib_id:
-                    continue
-                for line in lines[distrib_id]:
-                    # Update distribution
-                    self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
-                    # Then update analytic line
-                    self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, wiz.date, context=context)
+
+        # US_366: Check if a wizard is already in progress
+        wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
+        wiz_in_progress = wiz_mass_obj.search(cr, 1, [('process_in_progress', '=', True)], context=context)
+        if wiz_in_progress:
+            raise osv.except_osv(_('Error'), _('A wizard is already \
+                                               in progress'))
+        process = threading.Thread(None,
+                                   wiz_mass_obj.process_thread, None,
+                                   (cr, uid, ids), {'context': context})
+        process.start()
         return {'type': 'ir.actions.act_window_close'}
 
 mass_reallocation_verification_wizard()
@@ -116,6 +143,13 @@ mass_reallocation_verification_wizard()
 class mass_reallocation_wizard(osv.osv_memory):
     _name = 'mass.reallocation.wizard'
     _description = 'Mass Reallocation Wizard'
+
+    def _is_process_in_progress(self, cr, uid, fields, context=None):
+        wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
+        wiz_in_progress = wiz_mass_obj.search(cr, 1, [('process_in_progress', '=', True)], context=context)
+        if wiz_in_progress:
+            return True
+        return False
 
     _columns = {
         'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
@@ -126,12 +160,14 @@ class mass_reallocation_wizard(osv.osv_memory):
         'display_fp': fields.boolean('Display FP'),
         'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_other_rel', 'wizard_id', 'analytic_line_id',
             string="Non eligible analytic journal items", required=False, readonly=True),
+        'is_process_in_progress': fields.boolean(string="Is process is in progress"),
     }
 
-    _default = {
+    _defaults = {
         'state': lambda *a: 'normal',
         'display_fp': lambda *a: False,
         'date': lambda *a: strftime('%Y-%m-%d'),
+        'is_process_in_progress': _is_process_in_progress,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -139,9 +175,18 @@ class mass_reallocation_wizard(osv.osv_memory):
         Change domain for mass reallocation wizard to filter free1/free2 if we are in this case.
         Otherwise only accept OC/Dest/FP.
         """
+        ids = False
         view = super(mass_reallocation_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        if view_type == 'form' and context and context.get('active_ids', False):
+
+        if view_type == 'form' and context and context.get('search_domain', False):
+            aal_obj = self.pool.get('account.analytic.line')
+            args = context.get('search_domain')
+            ids = aal_obj.search(cr, uid, args, context=context)
+            context['active_ids'] = ids
+        elif view_type == 'form' and context and context.get('active_ids', False):
             ids = context.get('active_ids')
+
+        if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
             first_line = self.pool.get('account.analytic.line').browse(cr, uid, ids)[0]
@@ -167,6 +212,13 @@ class mass_reallocation_wizard(osv.osv_memory):
             context = {}
         # Default behaviour
         res = super(mass_reallocation_wizard, self).default_get(cr, uid, fields, context=context)
+
+        if context.get('search_domain', False):
+            aal_obj = self.pool.get('account.analytic.line')
+            args = context.get('search_domain')
+            ids = aal_obj.search(cr, uid, args, context=context)
+            context['active_ids'] = ids
+
         # Populate line_ids field
         if context.get('analytic_account_from'):
             res['state'] = 'blocked'
@@ -186,12 +238,13 @@ class mass_reallocation_wizard(osv.osv_memory):
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company and company.instance_id and company.instance_id.level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
+                    ('move_id', '=', False),
                     ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]
@@ -231,12 +284,18 @@ class mass_reallocation_wizard(osv.osv_memory):
                 dd = l.document_date
             if l.date > pd:
                 pd = l.date
+
         if dd > pd:
             raise osv.except_osv(_('Error'), _('Maximum document date is superior to maximum of posting date. Check selected analytic lines dates first.'))
-        if date < dd:
-            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s') % (dd,))
+
+        # US-192 posting date regarding max doc date
+        msg = _('Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s') % (dd,)
+        self.pool.get('finance.tools').check_document_date(cr, uid,
+            dd, date, custom_msg=msg, context=context)
+
         if date < pd:
-            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Document Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s') % (pd,))
+            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Posting Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s') % (pd,))
+
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -248,6 +307,14 @@ class mass_reallocation_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        # US_366: Check if a wizard is already in progress
+        wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
+        wiz_in_progress = wiz_mass_obj.search(cr, 1, [('process_in_progress', '=', True)], context=context)
+        if wiz_in_progress:
+            raise osv.except_osv(_('Error'), _('A wizard is already \
+                                               in progress'))
+
         # Prepare some values
         error_ids = []
         non_supported_ids = []
@@ -283,12 +350,13 @@ class mass_reallocation_wizard(osv.osv_memory):
             ]
             if level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
+                    ('move_id', '=', False),
                     ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]

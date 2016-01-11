@@ -154,7 +154,7 @@
         <Cell ss:StyleID="poheader"><Data ss:Type="String">Total Value</Data></Cell>
     </Row>
     
-    % for prd in getLines().itervalues():
+    % for prd in getLines():
       % if prd['sum_qty']:
       <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>

@@ -28,6 +28,7 @@ class report_reception(report_sxw.rml_parse):
         self.item = 0
         self.localcontext.update({
             'time': time,
+            'getState': self.getState,
             'enumerate': enumerate,
             'get_lines': self.get_lines,
             'getDateCreation': self.getDateCreation,
@@ -53,6 +54,9 @@ class report_reception(report_sxw.rml_parse):
             'getActualReceiptDate': self.getActualReceiptDate,
             'getQtyBO': self.getQtyBO,
         })
+
+    def getState(self, o):
+        return o.state
 
     def getOriginRef(self,o):
         return o and o.purchase_id and o.purchase_id.origin or False
@@ -114,15 +118,19 @@ class report_reception(report_sxw.rml_parse):
 
         return "{0:.2f}".format(qtyBO)
 
-    def getQtyIS(self,line,o):
+    def getQtyIS(self, line, o):
         # Amount received in this IN only
         # REF-96: Don't count the shipped available IN
-        if o.state in ('assigned', 'shipped'):
+
+        if line.state in ('cancel') or o.state in ('cancel'):
+            return '0' # US_275 Return 0 for cancel lines
+        elif o.state in ('assigned', 'shipped'):
             val = 0
         else:
             val = line.product_qty
+
         if val == 0:
-            return ' ' # Set blank instead of 0.0
+            return ' ' # display blank instead 0
         return "{0:.2f}".format(val)
 
 

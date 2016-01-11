@@ -31,6 +31,7 @@ from tools.translate import _
 
 from report import report_sxw
 
+ZERO_CELL_CONTENT = "0.0"
 
 class hq_report_oca(report_sxw.report_sxw):
 
@@ -52,11 +53,12 @@ class hq_report_oca(report_sxw.report_sxw):
         return "0"
 
     def create_counterpart(self, cr, uid, line):
+        """ third report: up balances """
         pool = pooler.get_pool(cr.dbname)
         # method to create counterpart line
         return line[:2] + \
                ["20750",
-                line[3],  # expat employee identification or "0"
+                "0",  # before US-274/7 was expat EMP identification line[3]
                 "0",
                 line[5],  # expat employee name or "0"
                 line[6],
@@ -67,6 +69,7 @@ class hq_report_oca(report_sxw.report_sxw):
     def create_subtotal(self, cr, uid, line_key,
         line_debit, line_functional_debit, line_functional_debit_no_ccy_adj,
         counterpart_date, country_code, sequence_number):
+        """ third report: up balances """
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
         if len(line_key) > 2 and line_debit != 0.0 and line_functional_debit != 0.0:
@@ -86,8 +89,8 @@ class hq_report_oca(report_sxw.report_sxw):
                      line_debit > 0 and round(line_debit, 2) or "",
                      line_debit < 0 and round(-line_debit, 2) or "",
                      sequence_number,
-                     "",
                      "Subtotal - " + line_key[0] + " - " + line_key[1] + " - " + line_key[2],
+                     "",
                      "0",
                      counterpart_date,
                      "0"]
@@ -102,8 +105,8 @@ class hq_report_oca(report_sxw.report_sxw):
                       line_debit < 0 and round(-line_debit, 2) or "",
                       line_debit > 0 and round(line_debit, 2) or "",
                       sequence_number,
-                      "",
                       "Automatic counterpart for " + line_key[0] + " - " + line_key[1] + " - " + line_key[2],
+                      "",
                       "0",
                       counterpart_date,
                       "0"]]
@@ -143,8 +146,8 @@ class hq_report_oca(report_sxw.report_sxw):
         account_lines_functional_debit = {}
         # US-118: func debit with no FXA currency adjustement entries
         account_lines_functional_debit_no_ccy_adj = {}
-        journal_cur_adj_ids = pool.get('account.journal').search(cr, uid,
-            [('type', '=', 'cur_adj')], context=context)
+        journal_exclude_subtotal_ids = pool.get('account.journal').search(cr,
+            uid, [('type', 'in', ('cur_adj', 'revaluation'))], context=context)
         # General variables
         period = pool.get('account.period').browse(cr, uid, data['form']['period_id'])
         period_name = period and period.code or "0"
@@ -176,7 +179,6 @@ class hq_report_oca(report_sxw.report_sxw):
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
                                                                        ('account_id.is_analytic_addicted', '=', False),
-                                                                       ('analytic_distribution_id', '=', False),
                                                                        ('journal_id.type', 'not in', ['hq', 'migration']),
                                                                        ('exported', 'in', to_export)], context=context)
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
@@ -184,17 +186,39 @@ class hq_report_oca(report_sxw.report_sxw):
             account = move_line.account_id
             currency = move_line.currency_id
             func_currency = move_line.functional_currency_id
-            rate = "0.00"
+            rate = ZERO_CELL_CONTENT
+
+            is_cur_adj_entry = move_line.journal_id \
+                and move_line.journal_id.type == 'cur_adj' or False
+            is_rev_entry = move_line.journal_id \
+                and move_line.journal_id.type == 'revaluation' or False
+
             if currency and func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line.date))
+                # US-274/9: accrual account (always refer to previous period)
+                # base on doc date instead posting in this case
+                # - 1st period accruals: doc date and posting same period
+                # - next accruals: doc date previous period (accrual of)
+                move_line_date = move_line.journal_id \
+                    and move_line.journal_id.type == 'accrual' \
+                    and move_line.document_date or move_line.date
+
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line_date))
                 if cr.rowcount:
                     func_rate = cr.fetchall()[0][0]
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, move_line.date))
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, move_line_date))
                 if cr.rowcount:
                     curr_rate = cr.fetchall()[0][0]
                 if func_rate != 0.00:
-                    rate = round(1 / (curr_rate / func_rate), 5)
-            # For first report: as if
+                    rate = round(1 / (curr_rate / func_rate), 8)
+
+            # US-274/2: remove 'Inkind', 'OD-Extra Accounting' entries from both
+            # in Upbalances and Upexpenses files
+            exclude_jn_type_for_balance_and_expense_report = (
+                'inkind',
+                'extra',
+            )
+
+            # For first report: as it
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
                               move_line.move_id and move_line.move_id.name or "",
@@ -216,49 +240,76 @@ class hq_report_oca(report_sxw.report_sxw):
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
+            if is_cur_adj_entry or is_rev_entry:
+                # US-788/1 and US-478/3: FXA/REV raw data override
+                # without impacting formatted_data for other files
+                # US-788/1: always display booking as func
+                # US-478/3 always rate of 1
+                first_result_lines[-1][13] = first_result_lines[-1][16]  # US-788/1
+                first_result_lines[-1][14] = first_result_lines[-1][17]  # US-788/1
+                first_result_lines[-1][15] = first_result_lines[-1][18]  # US-788/1
+                first_result_lines[-1][-1] = 1.  # US-478/3
 
             # For third report: add to corresponding sub
-            if not account.shrink_entries_for_hq:
-                expat_identification = "0"
-                expat_employee = "0"
-                # Expat employees are the only third party in this report
-                if move_line.partner_txt and move_line.employee_id and move_line.employee_id.employee_type == 'ex':
-                    expat_identification = move_line.employee_id.identification_id
-                    expat_employee = move_line.partner_txt
-                other_formatted_data = ["01",
-                                        country_code,
-                                        account and account.code or "0",
-                                        expat_identification,
-                                        "0",
-                                        move_line.date and datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                        currency and currency.name or "0",
-                                        rate,
-                                        move_line.debit_currency != 0.0 and round(move_line.debit_currency, 2) or "",
-                                        move_line.credit_currency != 0.0 and round(move_line.credit_currency, 2) or "",
-                                        move_line.move_id and move_line.move_id.name or "0",
-                                        "",
-                                        move_line.name or "0",
-                                        expat_employee,
-                                        move_line.document_date and datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                        move_line.ref or "0"]
-                account_lines.append(other_formatted_data)
-            else:
-                if (account.code, currency.name, period_name) not in account_lines_debit:
-                    account_lines_debit[(account.code, currency.name, period_name)] = 0.0
-                    account_lines_functional_debit[(account.code, currency.name, period_name)] = 0.0
-                    account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] = 0.0
-                    
-                account_lines_debit[(account.code, currency.name, period_name)] += (move_line.debit_currency - move_line.credit_currency)
-                funct_balance = (move_line.debit - move_line.credit)
-                account_lines_functional_debit[(account.code, currency.name, period_name)] += funct_balance
-        
-                # US-118: func debit with no FXA currency adjustement entries
-                # compute subtotal line inverted rate with no FXA entry:
-                # no booking amount but funct one then cause a wrong balance
-                # for ccy inverted rate computation
-                if not journal_cur_adj_ids or \
-                    move_line.journal_id.id not in journal_cur_adj_ids:
-                    account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] += funct_balance
+            if journal and journal.type not in (
+                    exclude_jn_type_for_balance_and_expense_report):  # US-274/2
+                if not account.shrink_entries_for_hq or is_rev_entry or is_cur_adj_entry:
+                    # US-478/1: or is_rev_entry, no shrink for rev journal entries
+                    expat_identification = "0"
+                    expat_employee = "0"
+                    # Expat employees are the only third party in this report
+                    if move_line.partner_txt and move_line.employee_id and move_line.employee_id.employee_type == 'ex':
+                        if account.code == '15640':  # US-274/7
+                            expat_identification = move_line.employee_id.identification_id
+                        expat_employee = move_line.partner_txt
+
+                    # US-274/1: for FXA/REV entries output fonctional amount in balance
+                    # report
+                    if is_cur_adj_entry or is_rev_entry:
+                        output_debit = move_line.debit
+                        output_credit = move_line.credit
+                        output_rate = 1
+                        output_curr = func_currency and func_currency.name or "0"
+                    else:
+                        output_debit = move_line.debit_currency
+                        output_credit = move_line.credit_currency
+                        output_rate = rate
+                        output_curr = currency and currency.name or "0"
+
+                    other_formatted_data = ["01",
+                                            country_code,
+                                            account and account.code or "0",
+                                            expat_identification,
+                                            "0",
+                                            move_line.date and datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
+                                            output_curr,
+                                            output_rate,
+                                            output_debit != 0.0 and round(output_debit, 2) or "",
+                                            output_credit != 0.0 and round(output_credit, 2) or "",
+                                            move_line.move_id and move_line.move_id.name or "0",
+                                            move_line.name or "0",
+                                            move_line.ref or "",
+                                            expat_employee,
+                                            move_line.document_date and datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
+                                            move_line.ref or "0"]
+                    account_lines.append(other_formatted_data)
+                else:
+                    if (account.code, currency.name, period_name) not in account_lines_debit:
+                        account_lines_debit[(account.code, currency.name, period_name)] = 0.0
+                        account_lines_functional_debit[(account.code, currency.name, period_name)] = 0.0
+                        account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] = 0.0
+
+                    account_lines_debit[(account.code, currency.name, period_name)] += (move_line.debit_currency - move_line.credit_currency)
+                    funct_balance = (move_line.debit - move_line.credit)
+                    account_lines_functional_debit[(account.code, currency.name, period_name)] += funct_balance
+
+                    # US-118: func debit with no FXA currency adjustement entries
+                    # compute subtotal line inverted rate with no FXA entry:
+                    # no booking amount but funct one then cause a wrong balance
+                    # for ccy inverted rate computation
+                    if not journal_exclude_subtotal_ids or \
+                        move_line.journal_id.id not in journal_exclude_subtotal_ids:
+                        account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] += funct_balance
 
         # UFTP-375: Do not include FREE1 and FREE2 analytic lines
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
@@ -272,14 +323,34 @@ class hq_report_oca(report_sxw.report_sxw):
             currency = analytic_line.currency_id
             func_currency = analytic_line.move_id.functional_currency_id
             rate = ""
+
+            # US-478 - US-274/9 accrual account always refer to previous period
+            # base on doc date instead posting in this case
+            # - 1st period accruals: doc date and posting same period
+            # - next accruals: doc date previous period (accrual of)
+            ldate = analytic_line.date
+            if analytic_line.move_id:
+                if analytic_line.move_id.journal_id.type == 'accrual':
+                    ldate = analytic_line.document_date or analytic_line.date
+            elif analytic_line.journal_id \
+                and analytic_line.journal_id.code == 'ACC':
+                # sync border case no JI for the AJI
+                ldate = analytic_line.document_date or analytic_line.date
+
             if func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, analytic_line.date))
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, ldate))
                 if cr.rowcount:
-                    rate = round(1 / cr.fetchall()[0][0], 5)
+                    rate = round(1 / cr.fetchall()[0][0], 8)
+
+            is_analytic_cur_adj_entry = analytic_line.journal_id \
+                and analytic_line.journal_id.type == 'cur_adj' or False
+            is_analytic_rev_entry = analytic_line.journal_id \
+                and analytic_line.journal_id.type == 'revaluation' or False
+
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
-                              analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
+                              analytic_line.entry_sequence or "",
                               analytic_line.name or "",
                               analytic_line.ref or "",
                               datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
@@ -290,34 +361,45 @@ class hq_report_oca(report_sxw.report_sxw):
                               analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",
                               analytic_line.account_id and analytic_line.account_id.code or "",
                               analytic_line.partner_txt or "",
-                              analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
-                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00",
+                              analytic_line.amount_currency > 0 and ZERO_CELL_CONTENT or round(-analytic_line.amount_currency, 2),
+                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
                               currency and currency.name or "",
-                              analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
-                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00",
+                              analytic_line.amount > 0 and ZERO_CELL_CONTENT or round(-analytic_line.amount, 2),
+                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or ZERO_CELL_CONTENT,
                               func_currency and func_currency.name or "",
                               rate]
             first_result_lines.append(formatted_data)
-
-            # Add to second report (expenses only)
-            other_formatted_data = [integration_ref ,
-                                    analytic_line.document_date and datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                    "0",
-                                    "0",
-                                    analytic_line.cost_center_id and analytic_line.cost_center_id.code or "0",
-                                    "1",
-                                    account and account.code + " " + account.name or "0",
-                                    currency and currency.name or "0",
-                                    analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or "0.00",
-                                    "0",
-                                    rate,
-                                    analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                    analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "0",
-                                    "0",
-                                    analytic_line.name or "0",
-                                    analytic_line.ref or "0",
-                                    analytic_line.destination_id and analytic_line.destination_id.code or "0"]
-            second_result_lines.append(other_formatted_data)
+            if is_analytic_cur_adj_entry or is_analytic_rev_entry:
+                # US-788/1 and US-478/3: FXA/REV raw data override
+                # without impacting formatted_data for other files
+                # US-788/1: always display booking as func
+                # US-478/3 always rate of 1
+                first_result_lines[-1][13] = first_result_lines[-1][16]  # US-788/1
+                first_result_lines[-1][14] = first_result_lines[-1][17]  # US-788/1
+                first_result_lines[-1][15] = first_result_lines[-1][18]  # US-788/1
+                first_result_lines[-1][-1] = 1.  # US-478/3
+            if analytic_line.journal_id \
+                and analytic_line.journal_id.type not in (
+                    exclude_jn_type_for_balance_and_expense_report):  # US-274/2
+                # Add to second report (expenses only)
+                other_formatted_data = [integration_ref ,
+                                        analytic_line.document_date and datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
+                                        "0",
+                                        "0",
+                                        analytic_line.cost_center_id and analytic_line.cost_center_id.code or "0",
+                                        "1",
+                                        account and account.code + " " + account.name or "0",
+                                        currency and currency.name or "0",
+                                        analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
+                                        "0",
+                                        rate,
+                                        analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
+                                        analytic_line.entry_sequence or "0",
+                                        "0",
+                                        analytic_line.name or "0",
+                                        analytic_line.ref or "0",
+                                        analytic_line.destination_id and analytic_line.destination_id.code or "0"]
+                second_result_lines.append(other_formatted_data)
 
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         if not move_line_ids and not analytic_line_ids:
@@ -331,24 +413,25 @@ class hq_report_oca(report_sxw.report_sxw):
             third_report.append(line)
             third_report.append(self.create_counterpart(cr, uid, line))
 
-        sequence_index = 1
-        for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
-            # create the sequence number for those lines
-            sequence_number = move_prefix + "-" + \
-                              period.date_start[5:7] + "-" + \
-                              period.date_start[:4] + "-" + \
-                              key[0] + "-" + \
-                              key[1]
+        if journal and journal.type not in (
+                exclude_jn_type_for_balance_and_expense_report):  # US-274/2
+            for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
+                # create the sequence number for those lines
+                sequence_number = move_prefix + "-" + \
+                                  period.date_start[5:7] + "-" + \
+                                  period.date_start[:4] + "-" + \
+                                  key[0] + "-" + \
+                                  key[1]
 
-            subtotal_lines = self.create_subtotal(cr, uid, key,
-                                                  account_lines_debit[key],
-                                                  account_lines_functional_debit[key],
-                                                  account_lines_functional_debit_no_ccy_adj[key],
-                                                  counterpart_date,
-                                                  country_code,
-                                                  sequence_number)
-            if subtotal_lines:
-                third_report += subtotal_lines
+                subtotal_lines = self.create_subtotal(cr, uid, key,
+                                                      account_lines_debit[key],
+                                                      account_lines_functional_debit[key],
+                                                      account_lines_functional_debit_no_ccy_adj[key],
+                                                      counterpart_date,
+                                                      country_code,
+                                                      sequence_number)
+                if subtotal_lines:
+                    third_report += subtotal_lines
 
         # Write result to the final content
         zip_buffer = StringIO.StringIO()

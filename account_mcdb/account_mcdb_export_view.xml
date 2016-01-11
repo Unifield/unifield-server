@@ -26,7 +26,7 @@
             target="new"
             view_id="output_currency_for_export_form_view"
             context="{'from': 'account.analytic.line', 'search_domain': search_domain}"/>
-  
+
         <!-- Register line -->
         <act_window id="action_register_line_output_currency_for_export"
             name="Export search result"

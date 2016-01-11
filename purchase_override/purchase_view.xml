@@ -47,7 +47,7 @@
 
                     <xpath expr="/form//field[@name='name']" position="before">
                         <field name="requested_date_in_past" invisible="1" />
-                        <group colspan="4">
+                        <group colspan="6">
                             <html>
                                 <p id="view_order_requested_in_past"
                                     style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">

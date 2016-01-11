@@ -327,6 +327,12 @@ class analytic_account(osv.osv):
             cr.execute("select analytic_account_id from project_project")
             project_ids = [x[0] for x in cr.fetchall()]
             return self.name_get(cr, uid, project_ids, context=context)
+
+        if not context and operator == '=':
+            # US-116: we are in the import
+            account = self.search(cr, uid, [('code', '=', name)]+args, limit=limit, context=context)
+            if account:
+                return self.name_get(cr, uid, account, context=context)
         account = self.search(cr, uid, ['|', ('code', 'ilike', '%%%s%%' % name), ('name', 'ilike', '%%%s%%' % name)]+args, limit=limit, context=context)
         return self.name_get(cr, uid, account, context=context)
 
@@ -408,14 +414,35 @@ class analytic_account(osv.osv):
         """
         Some verifications before analytic account write
         """
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         self._check_date(vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
+
+        ###### US-113: I have moved the block that sql updates on the name causing the problem of sync (touched not update). The block is now moved to after the write
+
+        # US-399: First read the value from the database, and check if vals contains any of these values, use them for unicity check 
+        new_values = self.read(cr, uid, ids, ['category', 'name', 'code'], context=context)[0]
+        if vals.get('name', False):
+            new_values['name'] = vals.get('name') 
+        if vals.get('category', False):
+            new_values['category'] = vals.get('category') 
+        if vals.get('code', False):
+            new_values['code'] = vals.get('code') 
+
+        ######################################################
+        # US-399: Now perform the check unicity manually!
+        bad_ids = self.search(cr, uid, [('category', '=', new_values.get('category', '')), ('|'), ('name', '=ilike', new_values.get('name', '')), ('code', '=ilike', new_values.get('code', ''))])
+        if len(bad_ids) and len(bad_ids) > 1:
+            raise osv.except_osv(_('Warning !'), _('You cannot have the same code or name between analytic accounts in the same category!'))
+        ######################################################
+
+        res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
         # UFTP-83: Error after duplication, the _constraints is not called with right params. So the _check_unicity gets wrong.
         if vals.get('name', False):
             cr.execute('UPDATE account_analytic_account SET name = %s WHERE id IN %s', (vals.get('name'), tuple(ids)))
-        res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
         # UFTP-83: Use name as SRC value for translations (to be done after WRITE())
         if vals.get('name', False):
             trans_obj = self.pool.get('ir.translation')

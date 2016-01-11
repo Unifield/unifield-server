@@ -103,7 +103,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
 
         # Create part of filename (search 3 first code digits)
         instance = pool.get('msf.instance').browse(cr, uid, instance_id)
-        instance_name = instance.code[0:3]
+        instance_name = instance.code or ''
         processrequests = [
             {
                 'headers': ['DB ID', 'Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency', 'Reconcile reference'],
