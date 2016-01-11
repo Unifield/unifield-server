@@ -7,13 +7,16 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Close the Fiscal Year">
+                    <field name="instance_level" invisible="1" />
                     <field name="fy_id" />
-                    <separator string="" colspan="4"/>
-                    <field name="has_move_regular_bs_to_0" />
-                    <newline />
-                    <field name="has_book_pl_results" />
-                    <separator string="" colspan="4"/>
-                    <field name="currency_table_id" />
+                    <group colspan="4" col="4"
+                        attrs="{'invisible': [('instance_level', '=', 'section')]}">
+                        <field name="has_move_regular_bs_to_0" />
+                        <newline />
+                        <field name="has_book_pl_results" />
+                        <newline />
+                        <field name="currency_table_id" />
+                    </group>
                     <separator string="" colspan="4"/>
                     <group colspan="4" col="4">
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>

@@ -37,8 +37,11 @@ class account_year_end_closing(osv.osv):
     }
 
     def process_closing(self, cr, uid, fy_rec, currency_table_id=False,
-        context=None):
-        import pdb; pdb.set_trace()  # TODO remove
+        from_sync=False, context=None):
+        """
+        :param from_sync: True if we are at coordo and pulling an HQ year end
+            closing trigger
+        """
         level = self.check_before_closing_process(cr, uid, fy_rec,
             context=context)
         if level == 'coordo':
