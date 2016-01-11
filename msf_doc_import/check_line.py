@@ -505,7 +505,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
                     error_list.append(_('The expiry date doesn\'t match with the expiry date of the batch. Batch not selected'))
                 else:
                     error_list.append(_('The expiry date doesn\'t match with the expiry date of the batch. Expiry date not selected'))
-            elif picking_type == 'in':
+            elif bn_mgmt and picking_type == 'in':
                 bn_ids = [bn_obj.create(cr, uid, {
                     'product_id': product_id,
                     'name': batch_name,
