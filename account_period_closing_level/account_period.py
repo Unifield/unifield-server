@@ -278,6 +278,20 @@ class account_period(osv.osv):
                 and rec.number in (0, 16, ) or False
         return res
 
+    def _get_search_is_system(self, cr, uid, obj, name, args, context=None):
+        res = []
+        if not len(args):
+            return res
+        if len(args) != 1:
+            msg = _("Domain %s not suported") % (str(args), )
+            raise osv.except_osv(_('Error'), msg)
+        if args[0][1] != '=':
+            msg = _("Operator '%s' not suported") % (args[0][1], )
+            raise osv.except_osv(_('Error'), msg)
+        operator = 'in' if args[0][2] else 'not in'
+
+        return [('number', operator, (0, 16, ))]
+
     _columns = {
         'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
@@ -288,7 +302,7 @@ class account_period(osv.osv):
         'field_process': fields.boolean('Is this period in Field close processing?', readonly=True),
         'state_sync_flag': fields.char('Sync Flag', required=True, size=64, help='Flag for controlling sync actions on the period state.'),
         'payroll_ok': fields.function(_get_payroll_ok, method=True, type='boolean', store=False, string="Permit to know if payrolls are active", readonly=True),
-        'is_system': fields.function(_get_is_system, method=True, type='boolean', string="System period ?", readonly=True),
+        'is_system': fields.function(_get_is_system, fnct_search=_get_search_is_system, method=True, type='boolean', string="System period ?", readonly=True),
     }
 
     _order = 'date_start, number'

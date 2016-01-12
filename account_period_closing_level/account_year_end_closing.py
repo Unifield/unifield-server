@@ -51,8 +51,17 @@ class account_period(osv.osv):
         context=None, count=False):
         if not args:
             args = []
-        if context is None or 'show_period_0' not in context:
-            args.append(('number', '!=', 0))
+        add_0_filter = True
+        for a in args:
+            if len(a) == 3:
+                if a[0] in ('is_system', ):
+                    # existing global system filter exists: let it
+                    add_0_filter = False
+                    break
+
+        if add_0_filter:
+            if context is None or 'show_period_0' not in context:
+                args.append(('number', '!=', 0))
         res = super(account_period, self).search(cr, uid, args, offset=offset,
             limit=limit, order=order, context=context, count=count)
         return res
@@ -380,7 +389,17 @@ class account_year_end_closing(osv.osv):
                 state = 'done'
 
         if state:
-            fy_obj.write(cr, uid, [fy_id], { 'state': state, }, context=context)
+            vals = { 'state': state, }
+            # period 0 (FY+1)/16 state
+            period_ids = self._get_periods_ids(cr, uid,
+                self._browse_fy(cr, uid, fy_id, context=context),
+                context=context)
+            if period_ids:
+                self.pool.get('account.period').write(cr, uid, period_ids, vals,
+                    context=context)
+
+            # fy state
+            fy_obj.write(cr, uid, [fy_id], vals, context=context)
 
     def _search_record(self, cr, uid, model, domain, context=None):
         ids = self.pool.get(model).search(cr, uid, domain, context=context)
