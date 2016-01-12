@@ -266,6 +266,18 @@ class account_period(osv.osv):
             res[period_id] = payroll
         return res
 
+    def _get_is_system(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+
+        for rec in self.browse(cr, uid, ids, context=context):
+            res[rec.id] = isinstance(rec.number, int) \
+                and rec.number in (0, 16, ) or False
+        return res
+
     _columns = {
         'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
@@ -276,6 +288,7 @@ class account_period(osv.osv):
         'field_process': fields.boolean('Is this period in Field close processing?', readonly=True),
         'state_sync_flag': fields.char('Sync Flag', required=True, size=64, help='Flag for controlling sync actions on the period state.'),
         'payroll_ok': fields.function(_get_payroll_ok, method=True, type='boolean', store=False, string="Permit to know if payrolls are active", readonly=True),
+        'is_system': fields.function(_get_is_system, method=True, type='boolean', string="System period ?", readonly=True),
     }
 
     _order = 'date_start, number'
@@ -308,6 +321,18 @@ class account_period(osv.osv):
         self.pool.get('account.period.state').update_state(cr, uid, ids,
                                                            context=context)
         return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+
+        is_system = [ rec.is_system \
+            for rec in self.browse(cr, uid, ids, context=context) ]
+        if any(is_system):
+            raise osv.except_osv(_('Warning'), _('System period not deletable'))
+        return super(account_period, self).unlink(cr, uid, ids, context=context)
 
     _defaults = {
         'state': lambda *a: 'created',
