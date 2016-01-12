@@ -151,7 +151,7 @@ Section OpenERP_Web_Client SectionOpenERP_Web_Client
     File "win32\stop.bat"
 
     SetOutPath "$INSTDIR\conf"
-    File "/oname=openerp-web-win.cfg" ".\doc\openerp-web.cfg"
+    File "/oname=openerp-web.cfg" ".\doc\openerp-web-win.cfg"
     File "/oname=openerp-web-oc.cfg" ".\doc\openerp-web-oc.cfg"
 
     !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
