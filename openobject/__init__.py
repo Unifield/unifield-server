@@ -130,6 +130,7 @@ def configure(app_config):
         log.error_log.addHandler(error_handler)
 
         # Make a new RotatingFileHandler for the access log.
-        access_handler = handlers.TimedRotatingFileHandler(access_file, **rotate)
-        access_handler.setLevel(access_level)
-        log.access_log.addHandler(access_handler)
+        if access_file:
+            access_handler = handlers.TimedRotatingFileHandler(access_file, **rotate)
+            access_handler.setLevel(access_level)
+            log.access_log.addHandler(access_handler)

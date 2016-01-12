@@ -79,6 +79,11 @@ def start():
             cherrypy.config['server.socket_port'] = int(options.port)
         except:
             pass
+    port = cherrypy.config.get('server.socket_port')
+    if not isinstance(port, (int, long)) or port < 1 or port > 65535:
+        cherrypy.log('Wrong parameter socket_port: %s' % (port,), "ERROR")
+        raise ConfigurationError(_("Wrong parameter socket_port: %s") %
+                                 port)
     if options.openerp_host:
         cherrypy.config['openerp.server.host'] = options.openerp_host
     if options.openerp_port:
