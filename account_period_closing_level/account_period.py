@@ -354,6 +354,7 @@ class account_period(osv.osv):
         'special': lambda *a: False,
         'field_process': lambda *a: False,
         'state_sync_flag': lambda *a: 'none',
+        'is_system': False,
     }
 
     def action_reopen_field(self, cr, uid, ids, context=None):
