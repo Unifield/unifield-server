@@ -529,24 +529,28 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if to_be_synchronized or hasattr(self, 'on_change') or audit_rule_ids:
             # FIXME: add fields.function for track changes
             previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
-        result = original_write(self, cr, uid, ids, values,context=context)
-        current_values = dict((x['id'], x) for x in self.read(
-            cr, uid, ids, values.keys()+funct_field, context=context))
+            current_values = dict([(int(x), values) for x in ids])
 
-        if audit_rule_ids:
-            audit_obj.audit_log(cr, uid, audit_rule_ids, self, ids, 'write', previous_values, current_values, context=context)
-        if to_be_synchronized or hasattr(self, 'on_change'):
-            # UF-2272 flag we are in orm write (for touch() function)
-            from_orm_write = context.get('from_orm_write', True)
-            context['from_orm_write'] = from_orm_write
-            changes = self.touch(cr, uid, ids, previous_values,
-                to_be_synchronized, current_values=current_values, context=context)
-            if hasattr(self, 'on_change'):
-                self.on_change(cr, uid, changes, context=context)
+            if audit_rule_ids:
+                audit_obj.audit_log(cr, uid, audit_rule_ids, self, ids, 'write', previous_values, current_values, context=context)
+            else:
+                # do not do anything if there is no change between previous and
+                # current values
+                values['id'] = previous_values[0]['id'] # id is not in values, set
+                                                        # it for comparison purpose
+                if values != previous_values[0]:
+                    # UF-2272 flag we are in orm write (for touch() function)
+                    from_orm_write = context.get('from_orm_write', True)
+                    context['from_orm_write'] = from_orm_write
+                    changes = self.touch(cr, uid, ids, previous_values,
+                        to_be_synchronized, current_values=current_values, context=context)
+                    if hasattr(self, 'on_change'):
+                        self.on_change(cr, uid, changes, context=context)
 
-            # UFTP-367 Add a double check to make sure that the del statement works safely.
-            if from_orm_write and 'from_orm_write' in context:
-                del context['from_orm_write']
+                    # UFTP-367 Add a double check to make sure that the del statement works safely.
+                    if from_orm_write and 'from_orm_write' in context:
+                        del context['from_orm_write']
+        result = original_write(self, cr, uid, ids, values, context=context)
         return result
 
     # BECAREFUL: This method is ONLY for deleting account.analytic.line by sync. NOT GENERIC!
