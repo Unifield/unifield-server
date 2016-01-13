@@ -329,8 +329,8 @@ class account_year_end_closing(osv.osv):
             # use ccy table
             local_context['currency_table_id'] = currency_table_id
 
-        # compute balance in SQL
-        # TODO: only account B/S report types (2 types)
+        # compute balance in SQL for B/S report types
+        # except Regular/Equity (type 'other'/user_type code 'equity'
         # => and pay attention US-227: all B/S accounts not retrieved
         sql = '''select ml.currency_id as currency_id,
             max(c.name) as currency_code,
@@ -338,9 +338,10 @@ class account_year_end_closing(osv.osv):
             sum(ml.debit - ml.credit) as balance
             from account_move_line ml
             inner join account_account a on a.id = ml.account_id
+            inner join account_account_type t on t.id = a.user_type
             inner join account_journal j on j.id = ml.journal_id
             inner join res_currency c on c.id = ml.currency_id
-            where j.instance_id = %d
+            where j.instance_id = %d and t.report_type in ('asset', 'liability')
             and ml.date >= '%s' and ml.date <= '%s'
             group by ml.currency_id, ml.account_id''' % (
                 instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
