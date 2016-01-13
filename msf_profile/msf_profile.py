@@ -169,6 +169,27 @@ class patch_scripts(osv.osv):
                 po_obj.write(cr, uid, [po['id']], vals)
 
     def us_822_patch(self, cr, uid, *a, **b):
+        fy_obj = self.pool.get('account.fiscalyear')
+        level = self.pool.get('res.users').browse(cr, uid,
+            [uid])[0].company_id.instance_id.level
+
+        # create FY15 /FY16 'system' periods (number 0 and 16)
+        if level == 'section':
+            fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [
+                ('date_start', 'in', ('2015-01-01', '2016-01-01', ))
+            ])
+            if fy_ids:
+                for fy_rec in fy_obj.browse(cr, uid, fy_ids):
+                    year = int(fy_rec['date_start'][0:4])
+                    periods_to_create = [16, ]
+                    if year != 2015:
+                        # for FY15 period 0 not needed as no initial balance for
+                        # the first FY of UF start
+                        periods_to_create.insert(0, 0)
+
+                    self.pool.get('account.year.end.closing').create_periods(cr,
+                        uid, fy_rec.id, periods_to_create=periods_to_create)
+
         # update fiscal year state (new model behaviour-like period state)
         fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [])
         if fy_ids:

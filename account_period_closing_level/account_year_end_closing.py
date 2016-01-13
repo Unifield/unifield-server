@@ -169,7 +169,7 @@ class account_year_end_closing(osv.osv):
         """
         period_numbers = [ pn for pn in periods_to_create \
             if pn in self._period_month_map.keys() ]
-        fy_rec = fy_rec = self._browse_fy(cr, uid, fy_id, context=context)
+        fy_rec = self._browse_fy(cr, uid, fy_id, context=context)
         fy_year = fy_rec.date_start[:4]
 
         for pn in period_numbers:
