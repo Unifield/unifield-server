@@ -4379,7 +4379,7 @@ class orm(orm_template):
 
         query = self._where_calc(cr, user, args, context=context)
         self._apply_ir_rules(cr, user, query, 'read', context=context)
-        if order == 'NO_ORDER' or limit == 1 and count:
+        if order == 'NO_ORDER':
             order_by=''
         else:
             order_by = self._generate_order_by(order, query)
@@ -4391,11 +4391,21 @@ class orm(orm_template):
         where_str = where_clause and (" WHERE %s" % where_clause) or ''
 
         if count:
-            count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
-                from_clause, where_str, limit_str, offset_str))
-            cr.execute(count_query, where_clause_params)
-            res = cr.fetchall()
-            return res[0][0]
+            if limit==1:
+                # count=True and limit=1 is the special case where we just
+                # want't to know if something exist
+                limit_str = ' LIMIT 1'
+                select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
+                    from_clause, where_str, limit_str))
+                cr.execute(select_query, where_clause_params)
+                res = cr.fetchone()
+                return len(res)
+            else:
+                count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
+                    from_clause, where_str, limit_str, offset_str))
+                cr.execute(count_query, where_clause_params)
+                res = cr.fetchall()
+                return res[0][0]
         select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
             from_clause, where_str, order_by,limit_str, offset_str))
         cr.execute(select_query, where_clause_params)
