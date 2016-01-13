@@ -50,6 +50,7 @@
                     </group>
                     <field name="perishable" invisible="1" />
                     <field name="prodlot_id" attrs="{'invisible': [('perishable', '=', False)]}" readonly="1" />
+                    <field name="expiry_date" readonly="1" attrs="{'invisible': [('perishable', '=', False)]}" />
                     <separator colspan="4" string="Period" />
                     <field name="from_date" readonly="1" />
                     <field name="to_date" readonly="1" />
