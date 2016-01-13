@@ -28,5 +28,10 @@
             <field name="method">bar_action_patch</field>
         </record>
 
+        <record id="us_485_patch" model="patch.scripts">
+            <field name="model">product.list</field>
+            <field name="method">set_creator</field>
+        </record>
+
     </data>
 </openerp>

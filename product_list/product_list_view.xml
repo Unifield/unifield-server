@@ -64,8 +64,9 @@
                     <field name="ref" />
                     <field name="name" />
                     <field name="creation_date" />
-                    <field name="description" />
+                    <field name="creator" />
                     <field name="last_update_date" />
+                    <field name="description" colspan="4" />
                     <group colspan="2" col="5">
                         <label string="" />
                         <field name="standard_list_ok" />

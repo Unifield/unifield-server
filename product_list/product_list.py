@@ -89,6 +89,15 @@ class product_list(osv.osv):
             string='Type',
             required=True,
         ),
+        'creator': fields.selection(
+            selection=[
+                ('hq', 'HQ'),
+                ('coordo', 'Coordination'),
+                ('project', 'Project'),
+            ],
+            string='Creator',
+            required=True,
+        ),
         'description': fields.char(
             size=256,
             string='Description',
@@ -145,6 +154,7 @@ class product_list(osv.osv):
 
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'creator': lambda *a: 'project',
     }
 
     _sql_constraints = [
@@ -220,6 +230,18 @@ class product_list(osv.osv):
             'target': 'new',
             'context': context,
         }
+
+    def set_creator(self, cr, uid, *a, **b):
+        """
+        Called by the patch script - Set the creator of the existing product lists to Project
+        @param cr: Cursor to the database
+        @param uid: ID of the res.users that calls this method
+        @param a: No-named arguments
+        @param b: Named arguments
+        @return: True
+        """
+        list_ids = self.search(cr, uid, [('creator', '=', False)])
+        self.write(cr, uid, list_ids, {'creator': 'project'})
 
 product_list()
 
