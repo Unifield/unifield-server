@@ -487,10 +487,8 @@ class product_product(osv.osv):
         for product in self.browse(cr, uid, ids, context=context):
             tmpl_id = product.product_tmpl_id.id
             # Check if the product is last product of this template
-            other_product_ids = self.search(cr, uid, [('product_tmpl_id', '=',
-                tmpl_id), ('id', '!=', product.id)], limit=1, context=context,
-                count=True)
-            if not other_product_ids:
+            if not self.any_exists(cr, uid, [('product_tmpl_id', '=',
+                tmpl_id), ('id', '!=', product.id)], context=context):
                  unlink_product_tmpl_ids.append(tmpl_id)
             unlink_ids.append(product.id)
         self.pool.get('product.template').unlink(cr, uid, unlink_product_tmpl_ids, context=context)

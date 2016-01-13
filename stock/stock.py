@@ -1166,24 +1166,21 @@ class stock_picking(osv.osv):
         """ Test whether the move lines are done or not.
         @return: True or False
         """
-        ok = False
-
         move_obj = self.pool.get('stock.move')
-
         moves = move_obj.search(cr, uid, [('picking_id', 'in', ids)],
                 order='NO_ORDER')
         if not moves:
             return True
 
-        if move_obj.search(cr, uid, [('id', 'in', moves), ('state', 'not in',
-            ['cancel', 'done'])], limit=1, count=True):
+        if move_obj.any_exists(cr, uid, [('id', 'in', moves), ('state', 'not in',
+            ['cancel', 'done'])]):
             return False
 
-        if move_obj.search(cr, uid, [('id', 'in', moves), ('state', '=',
-            'done')], limit=1, count=True) > 0:
-            ok = True
+        if move_obj.any_exists(cr, uid, [('id', 'in', moves), ('state', '=',
+            'done')]):
+            return True
 
-        return ok
+        return False
 
     def test_cancel(self, cr, uid, ids, context=None):
         """ Test whether the move lines are canceled or not.
