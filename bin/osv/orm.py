@@ -4399,7 +4399,7 @@ class orm(orm_template):
                     from_clause, where_str, limit_str))
                 cr.execute(select_query, where_clause_params)
                 res = cr.fetchone()
-                return len(res)
+                return res
             else:
                 count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
                     from_clause, where_str, limit_str, offset_str))
