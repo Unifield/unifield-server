@@ -594,8 +594,7 @@ class orm_template(object):
                 postfix = 0
                 while True:
                     n = self._table+'_'+str(r['id']) + (postfix and ('_'+str(postfix)) or '' )
-                    if not model_data.search(cr, uid, [('name', '=', n)],
-                            limit=1, count=True):
+                    if not model_data.any_exists(cr, uid, [('name', '=', n)]):
                         break
                     postfix += 1
                 model_data.create(cr, uid, {
@@ -786,8 +785,7 @@ class orm_template(object):
             if mode=='.id':
                 id = int(id)
                 obj_model = self.pool.get(model_name)
-                ids = obj_model.search(cr, uid, [('id', '=', int(id))],
-                        limit=1, count=True)
+                ids = obj_model.any_exists(cr, uid, [('id', '=', int(id))])
                 if not len(ids):
                     raise Exception(_("Database ID doesn't exist: %s : %s") %(model_name, id))
             elif mode=='id':
@@ -1110,15 +1108,15 @@ class orm_template(object):
                 fld_def = (field in self._columns) and self._columns[field] or self._inherit_fields[field][2]
                 if fld_def._type in ('many2one', 'one2one'):
                     obj = self.pool.get(fld_def._obj)
-                    if not obj.search(cr, uid, [('id', '=', field_value or
-                        False)], limit=1, count=True):
+                    if not obj.any_exists(cr, uid, [('id', '=', field_value or
+                        False)]):
                         continue
                 if fld_def._type in ('many2many'):
                     obj = self.pool.get(fld_def._obj)
                     field_value2 = []
                     for i in range(len(field_value)):
-                        if not obj.search(cr, uid, [('id', '=',
-                            field_value[i])], limit=1, count=True):
+                        if not obj.any_exists(cr, uid, [('id', '=',
+                            field_value[i])]):
                             continue
                         field_value2.append(field_value[i])
                     field_value = field_value2
@@ -1130,15 +1128,13 @@ class orm_template(object):
                         for field2 in field_value[i]:
                             if field2 in obj._columns.keys() and obj._columns[field2]._type in ('many2one', 'one2one'):
                                 obj2 = self.pool.get(obj._columns[field2]._obj)
-                                if not obj2.search(cr, uid,
-                                        [('id', '=', field_value[i][field2])],
-                                        limit=1, count=True):
+                                if not obj2.any_exists(cr, uid,
+                                        [('id', '=', field_value[i][field2])]):
                                     continue
                             elif field2 in obj._inherit_fields.keys() and obj._inherit_fields[field2][2]._type in ('many2one', 'one2one'):
                                 obj2 = self.pool.get(obj._inherit_fields[field2][2]._obj)
-                                if not obj2.search(cr, uid,
-                                        [('id', '=', field_value[i][field2])],
-                                        limit=1, count=True):
+                                if not obj2.any_exists(cr, uid,
+                                        [('id', '=', field_value[i][field2])]):
                                     continue
                             # TODO add test for many2many and one2many
                             field_value2[i][field2] = field_value[i][field2]
@@ -1807,6 +1803,37 @@ class orm_template(object):
         if isinstance(res, list):
             return len(res)
         return res
+
+    def any_exists(self, cr, user, args, context=None, access_rights_uid=None):
+        """
+        Search for records base on a search domain
+
+        :param cr: database cursor
+        :param user: current user id
+        :param args: list of tuples specifying the search domain [('field_name', 'operator', value), ...]. Pass an empty list to match all records.
+        :param context: optional context arguments, like lang, time zone
+        :type context: dictionary
+        :return: True if there is at least one element matching the search
+        domain. False if no element match.
+        :rtype: boolean
+        """
+        if context is None:
+            context = {}
+        self.pool.get('ir.model.access').check(cr, access_rights_uid or user, self._name, 'read', context=context)
+
+        query = self._where_calc(cr, user, args, context=context)
+        self._apply_ir_rules(cr, user, query, 'read', context=context)
+
+        from_clause, where_clause, where_clause_params = query.get_sql()
+
+        limit_str = ' LIMIT 1'
+        where_str = where_clause and (" WHERE %s" % where_clause) or ''
+
+        select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
+            from_clause, where_str, limit_str))
+        cr.execute(select_query, where_clause_params)
+        res = cr.fetchone()
+        return res and True or False
 
     def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -3539,8 +3566,7 @@ class orm(orm_template):
         domain = [('res_id', '=', False),
                   ('value_reference', 'in', ['%s,%s' % (self._name, i) for i in ids]),
                  ]
-        if properties.search(cr, uid, domain, limit=1, context=context,
-                count=True):
+        if properties.any_exists(cr, uid, domain, context=context):
             raise except_orm(_('Error'), _('Unable to delete this document because it is used as a default property'))
 
         wf_service = netsvc.LocalService("workflow")
@@ -3749,11 +3775,12 @@ class orm(orm_template):
                     field_translated_dict = dict([(key, vals[key]) for key in
                         fields_to_translate])
                     original_values = self.read(cr, user, ids, fields_to_translate, context=context)[0]
-
                     # remove elements which have the same value than the
                     # orginal one
-                    field_translated_dict = dict((key, value) for key, value in\
-                            field_translated_dict.items() if field_translated_dict[key]!=original_values[key])
+                    common_keys = list(set(field_translated_dict.keys()) & set(original_values.keys()))
+                    for key in common_keys:
+                        if field_translated_dict[key] == original_values[key]:
+                            field_translated_dict.pop(key)
                     field_to_write_dict = {}
 
                     for field_name, new_value in field_translated_dict.items():
@@ -4379,7 +4406,7 @@ class orm(orm_template):
 
         query = self._where_calc(cr, user, args, context=context)
         self._apply_ir_rules(cr, user, query, 'read', context=context)
-        if order == 'NO_ORDER' or limit == 1 and count:
+        if order == 'NO_ORDER':
             order_by=''
         else:
             order_by = self._generate_order_by(order, query)
