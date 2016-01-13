@@ -314,6 +314,14 @@ class account_journal(osv.osv):
         """
         if context is None:
             context = {}
+
+        if not context.get('sync_update_execution', False):
+            if vals.get('type', '') == 'system':
+                # not from sync, user not allowed to update 'system' journal
+                # (note: noteditable not usable on journal form)
+                raise osv.except_osv(_('Warning'),
+                    _('System journal not updatable'))
+
         res = super(account_journal, self).write(cr, uid, ids, vals, context=context)
         for j in self.browse(cr, uid, ids):
             if j.type == 'cur_adj' and j.default_debit_account_id.user_type_code != 'expense':
@@ -329,6 +337,20 @@ class account_journal(osv.osv):
                     if s_ids:
                         abs_obj.write(cr, uid, s_ids, {'name': vals['name']}, context=context)
         return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+
+        is_system = [ rec.type == 'system' \
+            for rec in self.browse(cr, uid, ids, context=context) ]
+        if any(is_system):
+            raise osv.except_osv(_('Warning'),
+                _('System journal not deletable'))
+        return super(account_journal, self).unlink(cr, uid, ids,
+            context=context)
 
     def button_delete_journal(self, cr, uid, ids, context=None):
         """
