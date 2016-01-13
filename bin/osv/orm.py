@@ -3756,7 +3756,6 @@ class orm(orm_template):
                             field_translated_dict.items() if field_translated_dict[key]!=original_values[key])
                     field_to_write_dict = {}
 
-                    # a revoir, le src_trans n'est pas bon
                     for field_name, new_value in field_translated_dict.items():
                         src_trans = original_values.get(field_name, None)
                         if not src_trans or not vals.get(field_name, None):
