@@ -128,7 +128,7 @@ class ir_translation(osv.osv):
         translation_dict = self._get_ids_dict(cr, uid, name, tt, lang, ids)
         if clear:
             # clear the caches
-            for res_id in ids:
+            for res_id in translation_dict:
                 if translation_dict[res_id]:
                     self._get_source.clear_cache(cr.dbname, uid, name, tt,
                             lang, translation_dict[res_id]['value'])
