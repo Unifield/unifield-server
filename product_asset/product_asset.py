@@ -127,9 +127,10 @@ class product_asset(osv.osv):
         if 'xmlid_name' not in vals or not vals['xmlid_name']:
             vals['xmlid_name'] = vals['name'] 
             
-        if self.any_exists(cr, uid, [('xmlid_name', '=', vals['xmlid_name']),
+        exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']),
             ('partner_name', '=', vals['partner_name']), ('product_id', '=',
-                vals['product_id'])], context=context):
+                vals['product_id'])], limit=1, context=context, count=True)
+        if exist:
             # but if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
             vals['xmlid_name'] = vals['xmlid_name'] + "_1"
         

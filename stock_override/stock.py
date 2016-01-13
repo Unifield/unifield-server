@@ -528,11 +528,11 @@ class stock_picking(osv.osv):
             out_loc_ids = self.pool.get('stock.location').search(cr, uid, [
                 ('outgoing_dest', '=', context['partner_id']),
             ], order='NO_ORDER', context=context)
-            move_exists = self.pool.get('stock.move').any_exists(cr, uid, [
+            move_ids = self.pool.get('stock.move').search(cr, uid, [
                 ('picking_id', 'in', ids),
-                ('location_dest_id', 'not in', out_loc_ids),],
-                context=context)
-            if move_exists:
+                ('location_dest_id', 'not in', out_loc_ids),
+            ], limit=1, count=True, context=context)
+            if move_ids:
                 return {
                     'value': {'partner_id2': False, 'partner_id': False,},
                     'warning': {
@@ -1780,8 +1780,8 @@ class stock_move(osv.osv):
                     if not context.get('yml_test', False):
                         if not move_unlinked and move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
-                            if not self.any_exists(cr, uid, [('move_dest_id', '=',
-                                move.id)], context=context):
+                            if not self.search(cr, uid, [('move_dest_id', '=',
+                                move.id)], limit=1, count=True, context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
             elif move.state == 'confirmed':
                 # we remove the prodlot_id in case that the move is not available
@@ -1794,12 +1794,12 @@ class stock_move(osv.osv):
         '''
         ids = isinstance(ids, (int, long)) and [ids] or ids
 
-        product_exists = self.any_exists(cr, uid, [
+        no_product = self.search(cr, uid, [
             ('id', 'in', ids),
             ('product_qty', '<=', 0.00),
-        ], context=context)
+        ], limit=1, count=True, context=context)
 
-        if product_exists:
+        if no_product:
             raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
 
         res = super(stock_move, self).action_confirm(cr, uid, ids, context=context)
@@ -2479,14 +2479,14 @@ class stock_move_cancel_wizard(osv.osv_memory):
             move_id = wiz.move_id.id
             picking_id = wiz.move_id.picking_id.id
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
-            move_exists = move_obj.any_exists(cr, uid, [('id', '=', wiz.move_id.id)],
-                    context=context)
-            if move_exists and  wiz.move_id.has_to_be_resourced:
+            move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)],
+                    limit=1, count=True, context=context)
+            if move_ids and  wiz.move_id.has_to_be_resourced:
                 self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled and resourced" % (move_id, picking_id))
             else:
                 self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled" % (move_id, picking_id))
 
-            if move_exists and wiz.move_id.picking_id:
+            if move_ids and wiz.move_id.picking_id:
                 lines = wiz.move_id.picking_id.move_lines
                 if all(l.state == 'cancel' for l in lines):
                     wf_service.trg_validate(uid, 'stock.picking', wiz.move_id.picking_id.id, 'button_cancel', cr)

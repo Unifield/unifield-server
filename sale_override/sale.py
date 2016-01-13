@@ -589,12 +589,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Objects
         line_obj = self.pool.get('sale.order.line')
 
-        if line_obj.any_exists(cr, uid, [
+        line_ids = line_obj.search(cr, uid, [
             ('order_id', 'in', ids),
             ('order_id.state', 'not in', ['draft', 'cancel']),
             ('order_id.import_in_progress', '=', False),
             ('product_uom_qty', '<=', 0.00),
-            ], context=context):
+        ], limit=1, count=True, context=context)
+
+        if line_ids:
             return False
 
         return True
@@ -1765,16 +1767,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 picking_obj.action_assign(cr, uid, [pick_id], context)
 
             if order.state == 'shipping_except':
-                manual_lines_exists = False
+                manual_lines = False
                 if (order.order_policy == 'manual'):
-                    manual_lines_exists = sol_obj.search(cr, uid, [
+                    manual_lines = sol_obj.search(cr, uid, [
                          ('order_id', '=', order.id),
                          ('invoiced', '=', False),
                          ('state', 'not in', ['cancel', 'draft']),
-                    ], context=context)
+                    ], limit=1, count=True, context=context)
 
                 val.update({
-                    'state': order.order_policy and manual_lines_exists and 'manual' or 'progress',
+                    'state': order.order_policy and manual_lines and 'manual' or 'progress',
                     'shipped': False,
                 })
 
@@ -2129,8 +2131,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if order['from_yml_test']:
                 continue
 
-            # look for line error
-            if line_obj.any_exists(cr, uid, [
+            line_error = line_obj.search(cr, uid, [
                 ('order_id', '=', order['id']),
                 ('product_id', '!=', False),
                 ('type', '=', 'make_to_order',),
@@ -2138,7 +2139,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 '|',
                 ('procurement_id', '=', 'False'),
                 ('procurement_id.state', '!=', 'cancel'),
-                ], context=context):
+            ], limit=1, count=True, context=context)
+
+            if line_error:
                 return False
 
         return True
@@ -2167,11 +2170,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 res[fo.id] = False
                 continue
 
-            if line_obj.any_exists(cr, uid, [
+            remain_lines = line_obj.search(cr, uid, [
                 ('order_id', '=', fo.id),
                 ('id', 'not in', line_ids),
-                ('state', 'not in', ['cancel', 'done']),],
-                context=context):
+                ('state', 'not in', ['cancel', 'done']),
+            ], limit=1, count=True, context=context)
+            if remain_lines:
                 res[fo.id] = False
                 continue
 
@@ -2183,7 +2187,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if context.get('tl_ids'):
                 exp_domain.append(('tender_id', 'not in', context.get('tl_ids')))
 
-            if exp_sol_obj.any_exists(cr, uid, exp_domain, context=context):
+            if exp_sol_obj.search(cr, uid, exp_domain, limit=1, count=True, context=context):
                 res[fo.id] = False
                 continue
 
@@ -2732,11 +2736,11 @@ class sale_order_line(osv.osv):
         if cond1 and cond2:
             empty_lines = False
             if ids and not 'product_uom_qty' in vals:
-                empty_lines = self.any_exists(cr, uid, [
+                empty_lines = self.search(cr, uid, [
                     ('id', 'in', ids),
                     ('order_id.state', '!=', 'cancel'),
                     ('product_uom_qty', '<=', 0.00),
-                ], context=context)
+                ], limit=1, count=True, context=context)
             elif 'product_uom_qty' in vals:
                 empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
             if empty_lines:

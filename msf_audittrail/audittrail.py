@@ -357,13 +357,14 @@ class ir_module(osv.osv):
                 # Search all actions to rename
                 act_ids = act_obj.search(cr, uid, [('name', '=', src)], context=context)
                 for act in act_ids:
-                    if not tr_obj.any_exists(cr, uid, [('lang', '=', lang),
+                    exist = tr_obj.search(cr, uid, [('lang', '=', lang),
                                                     ('type', '=', 'model'),
                                                     ('src', '=', src),
                                                     ('name', '=', 'ir.actions.act_window,name'),
                                                     ('value', '=', trans),
                                                     ('res_id', '=', act)],
-                                                    context=context):
+                                                    limit=1, count=True, context=context)
+                    if not exist:
                         tr_obj.create(cr, uid, {'lang': lang,
                                                 'src': src,
                                                 'name': 'ir.actions.act_window,name',
@@ -504,9 +505,10 @@ class audittrail_rule(osv.osv):
             # End Loop
 
         # Check if an export model already exist for audittrail.rule
-        export_ids_exists = self.pool.get('ir.exports').any_exists(cr, uid, [('name', '=',
-            'Log Lines'), ('resource', '=', 'audittrail.log.line')])
-        if not export_ids_exists:
+        export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=',
+            'Log Lines'), ('resource', '=', 'audittrail.log.line')], limit=1,
+            count=True)
+        if not export_ids:
             export_id = self.pool.get('ir.exports').create(cr, uid, {'name': 'Log Lines',
                                                                      'resource': 'audittrail.log.line'})
             fields = ['log', 'timestamp', 'sub_obj_name', 'method', 'field_description', 'old_value', 'new_value', 'user_id']

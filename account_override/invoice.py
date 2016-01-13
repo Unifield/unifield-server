@@ -553,7 +553,9 @@ class account_invoice(osv.osv):
                     if 'account_tax_id' in tax_line[2]:
                         args = [('price_include', '=', '1'),
                                 ('id', '=', tax_line[2]['account_tax_id'])]
-                        if tax_obj.any_exists(cr, uid, args, context=context):
+                        tax_ids = tax_obj.search(cr, uid, args, limit=1,
+                                count=True, context=context)
+                        if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
 
