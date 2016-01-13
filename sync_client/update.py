@@ -443,16 +443,17 @@ class update_received(osv.osv):
                 # write only for ids not in log as another write is performed
                 # for those in logs. This avoid two writes on the same object
                 ids_not_in_logs = list(set(update_ids) - set(logs.keys()))
+                execution_date = datetime.now()
                 if ids_not_in_logs:
                     self.write(cr, uid, ids_not_in_logs, {
-                        'execution_date': datetime.now(),
+                        'execution_date': execution_date,
                         'editable' : False,
                         'run' : True,
                         'log' : '',
                     }, context=context)
                 for update_id, log in logs.items():
                     self.write(cr, uid, [update_id], {
-                        'execution_date': datetime.now(),
+                        'execution_date': execution_date,
                         'editable' : False,
                         'run' : True,
                         'log' : log,
