@@ -667,10 +667,11 @@ class stock_picking(osv.osv):
                     header_result['state'] = 'assigned' # for CONSO OUT, do not take "done state" -> can't execute workflow later
                 
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
-                if self.any_exists(cr, uid, [('name', '=', pick_name),
+                existing_pick = self.search(cr, uid, [('name', '=', pick_name),
                     ('origin', '=', origin), ('subtype', '=', 'picking'),
                     ('type', '=', 'out'), ('state', '=', 'draft')],
-                    context=context):
+                    limit=1, context=context, count=True)
+                if existing_pick:
                     message = "Sorry, the document: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
@@ -704,9 +705,11 @@ class stock_picking(osv.osv):
                 self._logger.info(message)
                 raise Exception, message
         elif rw_type == self.CENTRAL_PLATFORM  and not origin and 'OUT' in pick_name and 'RW' in pick_name: #US-702: sync also the OUT from scratch, no link to IR/FO
-                if self.any_exists(cr, uid, [('name', '=', pick_name),
+                existing_pick = self.search(cr, uid, [('name', '=', pick_name),
                     ('subtype', '=', 'picking'), ('type', '=', 'out'),
-                    ('state', '=', 'draft')], context=context):
+                    ('state', '=', 'draft')], limit=1, context=context,
+                    count=True)
+                if existing_pick:
                     message = "Sorry, the OUT: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
@@ -1110,12 +1113,13 @@ class stock_picking(osv.osv):
             if origin:
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                if self.any_exists(cr, uid,
-                        [('name', '=', pick_name),
-                        ('origin', '=', origin),
-                        ('subtype', '=', 'picking'),
-                        ('state', 'in', ['assigned', 'draft']),
-                        ], context=context):
+                same_ids = self.search(cr, uid, [
+                    ('name', '=', pick_name),
+                    ('origin', '=', origin),
+                    ('subtype', '=', 'picking'),
+                    ('state', 'in', ['assigned', 'draft']),
+                ], limit=1, context=context, count=True)
+                if same_ids:
                     message = "The Picking: " + pick_name + " is already replicated in " + cr.dbname
                     self._logger.info(message)
                     return message
@@ -1315,8 +1319,9 @@ class stock_picking(osv.osv):
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
                     pick_id = False
                     for pick in pick_ids:
-                        if not self.pool.get('ppl.processor').any_exists(cr, uid,
-                                [('picking_id', '=', pick)]):
+                        if not self.pool.get('ppl.processor').search(cr, uid,
+                                [('picking_id', '=', pick)],
+                                limit=1, count=True):
                             pick_id = pick
                             break
                     if pick_id:

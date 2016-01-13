@@ -350,10 +350,11 @@ class sale_order_sync(osv.osv):
                 return
 
             xml_id = identifiers[object_id]
-            if msg_to_send_obj.any_exists(cr, uid, [
+            existing_message_id = msg_to_send_obj.search(cr, uid, [
                 ('identifier', '=', xml_id),
                 ('destination_name', '=', partner_name),
-                ], context=context):
+            ], limit=1, context=context, count=True)
+            if existing_message_id:
                 return
 
             # if not then create a new one --- FOR THE GIVEN FO AND DESTINATION
