@@ -124,7 +124,7 @@
         </record>
 
         <record id="action_weekly_forecast_report" model="ir.actions.act_window">
-            <field name="name">Weekly forecast reports</field>
+            <field name="name">Periodical forecast reports</field>
             <field name="res_model">weekly.forecast.report</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
