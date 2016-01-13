@@ -189,15 +189,13 @@ class purchase_order_sync(osv.osv):
             if po.state == 'confirmed' \
                 and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never to synchronised, no warning msg in PO form
                 po_identifier = self.get_sd_ref(cr, uid, po.id, context=context)
-                sync_msg_ids = sync_msg_obj.search(
+                sync_msg_exists = sync_msg_obj.any_exists(
                     cr, uid,
                     [('sent', '=', True),
                      ('remote_call', '=', 'sale.order.create_so'),
-                     ('identifier', 'like', po_identifier),
-                     ],
-                    limit=1,
-                    context=context, count=True)
-                res[po.id] = bool(sync_msg_ids)
+                     ('identifier', 'like', po_identifier),],
+                    context=context)
+                res[po.id] = sync_msg_exists
         return res
 
     _columns = {
@@ -231,12 +229,11 @@ class purchase_order_sync(osv.osv):
         for spl_brw in self.pool.get('purchase.order.line.to.split').browse(cr, uid, split_po_line_ids, context=context):
             pol_id = False
             if not spl_brw.line_id:
-                already_pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
-                        [('sync_order_line_db_id', '=',
-                            spl_brw.new_sync_order_line_db_id)],
-                        limit=1, context=context, count=True)
+                already_pol_exists = self.pool.get('purchase.order.line').any_exists(cr, uid,
+                        [('sync_order_line_db_id', '=', spl_brw.new_sync_order_line_db_id)],
+                        context=context)
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', spl_brw.sync_order_line_db_id)], context=context)
-                if not pol_ids or already_pol_ids:
+                if not pol_ids or already_pol_exists:
                     continue
                 else:
                     pol_id = pol_ids[0]

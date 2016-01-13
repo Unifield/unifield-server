@@ -284,7 +284,7 @@ class Entity(osv.osv):
 
     def _auto_init(self,cr,context=None):
         res = super(Entity, self)._auto_init(cr, context=context)
-        if not self.search(cr, 1, [], limit=1, context=context, count=True):
+        if not self.any_exists(cr, 1, [], context=context):
             self.create(cr, 1, {'identifier' : self.generate_uuid()}, context=context)
         return res
 
@@ -324,7 +324,7 @@ class Entity(osv.osv):
         return res
 
     def _entity_unique(self,cr,uid,ids,context=None):
-        return self.search(cr, uid,[(1, '=', 1)],context=context,count=True) == 1
+        return self.search(cr, uid,[(1, '=', 1)], context=context, count=True) == 1
 
     _columns = {
         'name':fields.char('Instance Name', size=64, readonly=True),
@@ -978,7 +978,7 @@ class Connection(osv.osv):
 
     def _auto_init(self,cr,context=None):
         res = super(Connection, self)._auto_init(cr, context=context)
-        if not self.search(cr, 1, [], limit=1, context=context, count=True):
+        if not self.any_exists(cr, 1, [], context=context):
             self.create(cr, 1, {}, context=context)
         return res
 

@@ -389,9 +389,9 @@ class sync_rule(osv.osv):
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
                 model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
-                if not self.pool.get('ir.model.fields').search(cr, uid,
+                if not self.pool.get('ir.model.fields').any_exists(cr, uid,
                     [('model_id','in', model_ids),('name','=',base_field)],
-                    limit=1, context=context, count=True): raise KeyError
+                    context=context): raise KeyError
         except TypeError:
             message += "failed (Fields list should be a list of string)!\n"
             error = True
@@ -690,9 +690,9 @@ class message_rule(osv.osv):
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
                 model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
-                if not self.pool.get('ir.model.fields').search(cr, uid,
+                if not self.pool.get('ir.model.fields').any_exists(cr, uid,
                     [('model_id','in', model_ids),('name','=',base_field)],
-                    limit=1, context=context, count=True):
+                    context=context):
                     field_error = field
                     raise KeyError
         except TypeError:
@@ -719,10 +719,10 @@ class message_rule(osv.osv):
             # Check destination_name
             message.append(_("* Destination Name... "))
             try:
-                field_ids = self.pool.get('ir.model.fields').search(cr, uid,
+                if not self.pool.get('ir.model.fields').any_exists(cr, uid,
                         [('model','=',rec.model_id),('name','=',rec.destination_name)],
-                        limit=1, context=context, count=True)
-                if not field_ids: raise StandardError
+                        context=context):
+                    raise StandardError
             except Exception, e:
                 sync_log(self, e, 'error')
                 message.append("failed! Field %s doesn't exist\n" % rec.destination_name)

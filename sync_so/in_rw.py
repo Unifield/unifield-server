@@ -81,8 +81,9 @@ class stock_picking(osv.osv):
         pick_name = pick_dict['name']
         move_obj = self.pool.get('stock.move')
         
-        existing_pick = self.search(cr, uid, [('name', '=', pick_name)], context=context)
-        if not existing_pick: # If not exist, just create the new IN
+        if not self.any_exists(cr, uid, [('name', '=', pick_name)],
+                context=context):
+            # If not exist, just create the new IN
             message = "The IN " + pick_name + " will be created in " + cr.dbname
             self._logger.info(message)
             return self.usb_replicate_in(cr, uid, source, in_info, context)
@@ -163,10 +164,9 @@ class stock_picking(osv.osv):
                 header_result['already_replicated'] = True
                 
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
-                existing_pick = self.search(cr, uid, [('origin', '=', origin),
+                if self.any_exists(cr, uid, [('origin', '=', origin),
                     ('subtype', '=', 'picking'), ('type', '=', 'in'), ('state',
-                        '=', 'draft')], limit=1, context=context, count=True)
-                if existing_pick:
+                        '=', 'draft')], context=context):
                     message = "Sorry, the IN: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
@@ -295,9 +295,7 @@ class stock_picking(osv.osv):
         state = pick_dict['state']
         
         # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
-        existing_pick = self.search(cr, uid, search_condition,
-                limit=1, context=context, count=True)
-        if existing_pick:
+        if self.any_exists(cr, uid, search_condition, context=context):
             message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
             self._logger.info(message)
             return message
@@ -393,11 +391,10 @@ class stock_picking(osv.osv):
                 # Search the best matching move
                 best_diff = False
                 for move in move_obj.read(cr, uid, move_ids, ['product_qty'], context=context):
-                    line_proc_ids = move_proc.search(cr, uid, [
+                    if not move_proc.any_exists(cr, uid, [
                         ('wizard_id', '=', in_processor),
                         ('move_id', '=', move['id']),
-                    ], limit=1, context=context, count=True)
-                    if not line_proc_ids:
+                        ], context=context):
                         diff = move['product_qty'] - orig_qty
                         if diff >= 0 and (not best_diff or diff < best_diff):
                             best_diff = diff
