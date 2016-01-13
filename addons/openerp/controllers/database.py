@@ -109,6 +109,7 @@ class FormRestore(DBForm):
     fields = [FileField(name="filename", label=_('File:')),
               openobject.widgets.PasswordField(name='password', label=_('Restore password:'), validator=formencode.validators.NotEmpty()),
               openobject.widgets.TextField(name='dbname', label=_('New database name:'), validator=formencode.validators.NotEmpty(), readonly=1, attrs={'readonly': ''})]
+    hidden_fields = [openobject.widgets.HiddenField(name='fpath', label=_('Path:'))]
 
 class FormPassword(DBForm):
     name = "password"
@@ -310,10 +311,13 @@ class Database(BaseController):
                 return self.restore()
         try:
             if is_server_local():
-                newfile = NamedTemporaryFile(delete=False)
-                shutil.copyfileobj(filename.file, newfile)
-                filename = newfile.name
-                newfile.close()
+                if not filename.filename and kw.get('fpath'):
+                    filename = kw.get('fpath')
+                else:
+                    newfile = NamedTemporaryFile(delete=False)
+                    shutil.copyfileobj(filename.file, newfile)
+                    filename = newfile.name
+                    newfile.close()
                 rpc.session.execute_db('restore_file', password, dbname, filename)
             else:
                 data = base64.encodestring(filename.file.read())
@@ -321,9 +325,15 @@ class Database(BaseController):
         except openobject.errors.AccessDenied, e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
+            if hasattr(cherrypy.request, 'input_values') and filename:
+                cherrypy.request.input_values['fpath'] = filename
             return self.restore()
-        except Exception:
-            self.msg = {'message': _("Could not restore database")}
+        except Exception, e:
+            msg = _("Could not restore database")
+            if isinstance(e, openobject.errors.TinyException):
+                if 'Database already exists' in e.message:
+                    msg = _("Could not restore: database already exists")
+            self.msg = {'message': msg}
             return self.restore()
         raise redirect('/openerp/login', db=dbname)
 
