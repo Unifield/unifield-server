@@ -188,7 +188,7 @@ class unconsistent_stock_report(osv.osv):
                 sp.type != 'in'
               AND
                 (
-                    (sp.subtype = 'packing' AND sp.state = 'assigned')
+                    (sp.subtype = 'packing' AND sp.state IN ('draft', 'assigned'))
                   OR
                     (sp.subtype != 'packing' AND sp.state NOT IN ('cancel', 'done'))
                 )
