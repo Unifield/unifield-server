@@ -104,8 +104,8 @@
         <Row ss:AutoFitHeight="1">
             <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_code or ''|x}</Data></Cell>
             <Cell ss:StyleID="line_left"><Data ss:Type="String">${l.product_id.name or ''|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_bn and '1' or '-'|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_ed and '1' or '-'|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_bn and 'TRUE' or '-'|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_ed and 'TRUE' or '-'|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${l.prodlot_name or '-'|x}</Data></Cell>
             % if l.expiry_date not in (False, 'False'):
             <Cell ss:StyleID="line_date"><Data ss:Type="DateTime">${l.expiry_date|n}T00:00:00.000</Data></Cell>
