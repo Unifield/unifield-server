@@ -208,3 +208,12 @@ report_sxw.report_sxw(
     parser=picking_ticket,
     header=False,
 )
+
+report_sxw.report_sxw(
+    'report.empty.picking.ticket',
+    'stock.picking',
+    'addons/msf_outgoing/report/empty_picking_ticket.rml',
+    parser=picking_ticket,
+    header=False,
+)
+
