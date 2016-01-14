@@ -1925,6 +1925,31 @@ class account_bank_statement_line(osv.osv):
         # Then update analytic distribution
         res = []
         must_return = False
+
+        # US-836: _update_move_from_st_line is called on temp posted reg line
+        # it deletes / creates AJI
+        # call _update_move_from_st_line only if values have changed
+        to_update_ids = []
+        if state == 'temp' and not context.get('sync_update_execution'):
+            to_remove= ['from_import_cheque_id', 'down_payment_id', 'imported_invoice_line_ids', 'move_ids']
+            keys_to_read = [x  for x in values.keys() if x not in to_remove]
+            if keys_to_read:
+                for x in self.read(cr, uid, isinstance(ids, (int, long)) and [ids] or ids, keys_to_read, context=context):
+                    for k in keys_to_read:
+                        if isinstance(x[k], tuple) and x[k]:
+                            if x[k][0] != values[k]:
+                                to_update_ids.append(x['id'])
+                                break
+                        elif k == 'partner_type':
+                            if not values[k] and x[k].get('selection', '').endswith(','):
+                                continue
+                            if x[k].get('selection') != values[k]:
+                                to_update_ids.append(x['id'])
+                                break
+                        elif x[k] != values[k]:
+                                to_update_ids.append(x['id'])
+                                break
+
         # US-351: fixed the wrong condition
         if 'employee_id' in values or 'partner_type' in values:
             must_return = True
@@ -1971,8 +1996,8 @@ class account_bank_statement_line(osv.osv):
             saveddate = False
             if values.get('date'):
                 saveddate = values['date']
-            if not context.get('sync_update_execution'):
-                self._update_move_from_st_line(cr, uid, ids, values, context=context)
+            if not context.get('sync_update_execution') and to_update_ids:
+                self._update_move_from_st_line(cr, uid, to_update_ids, values, context=context)
             if saveddate:
                 values['date'] = saveddate
 
