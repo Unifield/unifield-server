@@ -564,7 +564,8 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid, context)
         last_seq = entity.update_last
         max_seq = entity.max_update
-        offset = entity.update_offset
+        offset = (0, entity.update_offset)
+        offset_recovery = entity.update_offset
         last = (last_seq >= max_seq)
         updates_count = 0
         logger_index = None
@@ -572,16 +573,20 @@ class Entity(osv.osv):
         while not last:
             res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
             if res and res[0]:
-                updates_count += updates.unfold_package(cr, uid, res[1], context=context)
-                if logger and updates_count:
-                    if logger_index is None: logger_index = logger.append()
-                    logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
-                    logger.write()
+                if res[1]: check_md5(res[3], res[1], _('method get_update'))
+                for package in (res[1] or []):
+                    package_size = updates.unfold_package(cr, uid, package, context=context)
+                    updates_count += package_size
+
+                    if logger and updates_count:
+                        if logger_index is None: logger_index = logger.append()
+                        logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
+                        logger.write()
+                    if package:
+                        offset_recovery += package_size
+                        offset = (package['update_id'], 0)
+                        self.write(cr, uid, entity.id, {'update_offset' : offset_recovery}, context=context)
                 last = res[2]
-                if res[1]:
-                    check_md5(res[3], res[1], _('method get_update'))
-                    offset = res[1]['offset']
-                    self.write(cr, uid, entity.id, {'update_offset' : offset}, context=context)
             elif res and not res[0]:
                 raise Exception, res[1]
             cr.commit()

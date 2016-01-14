@@ -315,6 +315,57 @@ class update(osv.osv):
             return 0
         seq = self.browse(cr, uid, ids, context=context)[0].sequence
         return seq
+    
+    def get_update_to_send(self,cr, uid, entity, update_ids, recover=False, context=None):
+        """
+            Called by get_package during the client instance pull process.
+            Return a list of browse_record with only the updates that really need to be send to the client.
+            It filter according to the rules:
+             - rule's directionality is 'up' and update source is a child of entity
+             - rule's directionality is 'down' and update source is an ancestor of entity
+             - rule's directionality is 'bidirectional' (synchronize every where)
+             - rule's directionality is 'bi-private': only the ancestors of update's owner field value
+               are allowed to get the update.
+            Then, it checks the groups.
+
+            @param cr : cr
+            @param uid : uid
+            @param entity : browse_record(sync.server.entity) : client instance entity
+            @param update_ids : list of update ids
+            @param recover : flag : if set to True, update of the same source than the entity who try to pull
+                are sent to the entity. Default is False.
+            @param context : context
+
+            @return : list of browse record of the updates to send
+        """
+        update_to_send = []
+        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
+        children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
+        for update in self.browse(cr, uid, update_ids, context=context):
+            if update.rule_id.direction == 'bi-private':
+                if update.is_deleted:
+                    privates = [entity.id]
+                elif not update.owner:
+                    privates = []
+                else:
+                    privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
+                               [update.owner.id]
+            else:
+                privates = []
+            if not update.rule_id:
+                update_to_send.append(update)
+            elif (update.rule_id.direction == 'up' and update.source.id in children) or \
+               (update.rule_id.direction == 'down' and update.source.id in ancestor) or \
+               (update.rule_id.direction == 'bidirectional') or \
+               (entity.id in privates) or \
+               (recover and entity.id == update.source.id):
+                
+                source_rules_ids = self.pool.get('sync_server.sync_rule')._get_groups_per_rule(cr, uid, update.source, context)
+                s_group = source_rules_ids.get(update.rule_id.id, [])
+                if any(group.id in s_group for group in entity.group_ids):
+                    update_to_send.append(update)
+
+        return update_to_send
 
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         """
@@ -342,7 +393,7 @@ class update(osv.osv):
         """
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
         restrict_oc_version = entity.version == 1
-        if not restrict_oc_version and offset == 0:
+        if not restrict_oc_version and offset == (0, 0):
             self._logger.info("::::::::[%s] Set entity version = 1" % (entity.name,))
             self.pool.get('sync.server.entity').write(cr, 1, [entity.id], {'version': 1})
             restrict_oc_version = True
@@ -365,10 +416,24 @@ class update(osv.osv):
             cr.execute("select id from sync_server_sync_rule where id in (" + ','.join(map(str, rules)) + ") and master_data='t'");
             rules = [x[0] for x in cr.fetchall()]
 
-
-        base_query = " ".join(("""SELECT "sync_server_update".id FROM "sync_server_update" WHERE""",
+        base_query = " ".join(("""SELECT "sync_server_update".id FROM "sync_server_update" INNER JOIN sync_server_sync_rule ON sync_server_sync_rule.id = rule_id WHERE""",
                                "sync_server_update.rule_id IN (" + ','.join(map(str, rules)) + ")",
                                "AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""" % (last_seq, max_seq)))
+
+        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
+        children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
+
+        # We filter out the updates that have nothing to do with the entity that is synchronizing
+        filters = []
+        if children:
+            filters.append("direction = 'up' AND source IN (" + (','.join(map(str,children))) + ")")
+        if ancestor:
+            filters.append("direction = 'down' AND source IN (" + (','.join(map(str,ancestor))) + ")")
+        filters.append("direction = 'bidirectional'")
+        if recover:
+            filters.append("source = " + entitiy.id)
+        filters.append("direction = 'bi-private' AND (is_deleted = 't' OR owner IN (" + (','.join(map(str, children + [entity.id]))) + "))")
+        base_query += ' AND ((' + ') OR ('.join(filters) + '))'
 
         ## Recover add own client updates to the list
         if not recover:
@@ -377,131 +442,98 @@ class update(osv.osv):
             else:
                 base_query += " AND sync_server_update.source != %s" % entity.id
 
-        base_query += " ORDER BY sequence ASC, id ASC OFFSET %s LIMIT %s"
+        base_query += " AND sync_server_update.id > %s ORDER BY sequence ASC, id ASC OFFSET %s LIMIT %s"
 
         ## Search first update which is "master", then find next updates to send
         ids = []
-        update_to_send = []
-        update_master = None
-        timed_out = False
-        start_time = time.time()
-        self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, offset, max_size))
 
-        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
-        children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
-        cache_rule = {}
-        while not ids or not update_to_send:
-            if time.time() - start_time > 500:
-                timed_out = True
-                break
-            query = base_query % (offset, max_size)
+        updates_to_send, updates_master = [], []
+        packet_size = 0
+
+        self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
+
+        while not ids or packet_size < max_size:
+            query = base_query % (offset[0], offset[1], max_size)
             cr.execute(query)
             ids = map(lambda x:x[0], cr.fetchall())
-            if not ids and update_master is None:
+            if not ids:
                 break
+            for update in self.get_update_to_send(cr, uid, entity, ids, recover, context):
+                # There is no more room left in the packet. We have to quit. The next
+                #  updates will be retrieved later.
+                if packet_size >= max_size:
+                    ids = ids[:ids.index(update.id)]
+                    break
 
-            for update_to_compute in self.browse(cr, uid, ids, context=context):
-                update = False
-                if update_to_compute.rule_id.direction == 'bi-private':
-                    if update_to_compute.is_deleted:
-                        privates = [entity.id]
-                    elif not update_to_compute.owner:
-                        privates = []
-                    else:
-                        privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update_to_compute.owner.id, context=context) + \
-                                   [update_to_compute.owner.id]
+                key = (update.model, update.rule_id.id, update.source.id, update.is_deleted)
+
+                if not updates_master or updates_master[-1].model != update.model or \
+                    updates_master[-1].rule_id.id != update.rule_id.id or \
+                    updates_master[-1].source.id != update.source.id or \
+                    updates_master[-1].sequence != update.sequence or \
+                    updates_master[-1].is_deleted != update.is_deleted:
+                    updates_master.append(update)
+                    updates_to_send.append([update])
                 else:
-                    privates = []
+                    updates_to_send[-1].append(update)
 
-                if not update_to_compute.rule_id:
-                    update = update_to_compute
-                elif (update_to_compute.rule_id.direction == 'up' and update_to_compute.source.id in children) or \
-                   (update_to_compute.rule_id.direction == 'down' and update_to_compute.source.id in ancestor) or \
-                   (update_to_compute.rule_id.direction == 'bidirectional') or \
-                   (entity.id in privates) or \
-                   (recover and entity.id == update_to_compute.source.id):
+                packet_size += 1
 
-                    if update_to_compute.source not in cache_rule:
-                        cache_rule[update_to_compute.source] = self.pool.get('sync_server.sync_rule')._get_groups_per_rule(cr, uid, update_to_compute.source, context)
-                    s_group = cache_rule[update_to_compute.source].get(update_to_compute.rule_id.id, [])
-                    if any(group.id in s_group for group in entity.group_ids):
-                        update = update_to_compute
+            offset = (offset[0], offset[1]+len(ids))
 
-                if update:
-                    if update_master is None:
-                        update_master = update
-                        update_to_send.append(update_master)
-                    elif update.model == update_master.model and \
-                       update.rule_id.id == update_master.rule_id.id and \
-                       update.source.id == update_master.source.id and \
-                       update.is_deleted == update_master.is_deleted and \
-                       len(update_to_send) < max_size:
-                        update_to_send.append(update)
-                    else:
-                        ids = ids[:ids.index(update.id)]
-                        break
-            offset += len(ids)
-        if timed_out and not update_to_send:
-            # send a fake update to keep to connection open
-            self._logger.info("::::::::[%s] Data pull :: Send faked packet offset = %s" % (entity.name, offset))
-            return {
-                'model' : 'account.analytic.line',
-                'source_name' : 'fake',
-                'sequence' : 1,
-                'rule' : 1,
-                'offset' : offset,
-                'type': 'delete',
-                'unload': ['x-%d'%offset]
-            }
-
-        if not update_to_send:
+        if not updates_to_send:
             self._logger.info("::::::::[%s] No (more) update to send" % (entity.name,))
             return None
 
         # Point of no return
-#        self._cache_pullers.add(entity, update_to_send)
-        for update in iter(update_to_send):
-            self.pool.get('sync.server.puller_logs').create(cr, 1, {
-                'update_id': update.id,
-                'entity_id': entity.id,
-            }, context=context)
+        #for update_to_send in updates_to_send:
+            #self._cache_pullers.add(entity, update_to_send)
 
-        ## Package template
-        data = {
-            'model' : update_master.model,
-            'source_name' : update_master.source.name,
-            'sequence' : update_master.sequence,
-            'rule' : update_master.rule_id.sequence_number,
-            'offset' : offset,
-        }
+        data_packages = []
 
-        ## Process & Push all updates in the packet
-        if update_master.is_deleted:
-            data['unload'] = [update.sdref for update in update_to_send]
-            data['type'] = 'delete'
-        else:
-            complete_fields, forced_values = self.get_additional_forced_field(update_master) 
-            data.update({
-                'fields' : tools.ustr(complete_fields),
-                'fallback_values' : update_master.rule_id.fallback_values,
-                'load' : [],
-                'type' : 'import',
-            })
-            for update in update_to_send:
-                values = dict(zip(complete_fields[:len(update.values)], eval(update.values)) + \
-                              forced_values.items())
-                data['load'].append({
-                    'sdref' : update.sdref,
-                    'version' : update.version,
-                    'values' : tools.ustr([values[k] for k in complete_fields]),
-                    'owner_name' : update.owner.name if update.owner else '',
-                    'force_recreation' : update.force_recreation,
-                    'handle_priority' : update.handle_priority,
+        # We want to return all the updates we have found so far
+        for update_master, update_to_send in zip(updates_master, updates_to_send):
+
+            ## Package template
+            data = {
+                'model' : update_master.model,
+                'source_name' : update_master.source.name,
+                'sequence' : update_master.sequence,
+                'rule' : update_master.rule_id.sequence_number,
+                'offset' : offset,
+                'update_id': update_to_send[-1].id
+            }
+
+            ## Process & Push all updates in the packet
+            if update_master.is_deleted:
+                data['unload'] = [update.sdref for update in update_to_send]
+                data['type'] = 'delete'
+            else:
+                complete_fields, forced_values = self.get_additional_forced_field(update_master) 
+                data.update({
+                    'fields' : tools.ustr(complete_fields),
+                    'fallback_values' : update_master.rule_id.fallback_values,
+                    'load' : [],
+                    'type' : 'import',
                 })
+                for update in update_to_send:
+                    values = dict(zip(complete_fields[:len(update.values)], eval(update.values)) + \
+                                  forced_values.items())
+                    data['load'].append({
+                        'sdref' : update.sdref,
+                        'version' : update.version,
+                        'values' : tools.ustr([values[k] for k in complete_fields]),
+                        'owner_name' : update.owner.name if update.owner else '',
+                        'force_recreation' : update.force_recreation,
+                        'handle_priority' : update.handle_priority,
+                    })
+
+            data_packages.append(data)
 
         # Just shorten the log into one line
-        self._logger.info("::::::::[%s] Data pull :: %s updates" % (entity.name, len(update_to_send)))
-        return data
+        self._logger.info("::::::::[%s] Data pull :: %s updates" % (entity.name, sum(map(lambda x : len(x.get('unload', [])) + len(x.get('load', [])), data_packages))))
+        return data_packages
+
     
     def get_additional_forced_field(self, update): 
         fields = eval(update.fields)
