@@ -33,13 +33,17 @@ class res_company(osv.osv):
     _columns = {
         # US-822 PL/BS matrix of dev2/dev3 accounts"
         'ye_pl_credit_pl_account': fields.many2one('account.account',
-            "P&L credit (>0 balance) PL account"),
+            "P&L credit (>0 balance) PL account",
+            domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
         'ye_pl_credit_bs_account': fields.many2one('account.account',
-            "P&L credit (>0 balance) BS result account"),
+            "P&L credit (>0 balance) BS result account",
+            domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
         'ye_pl_debit_pl_account': fields.many2one('account.account',
-            "P&L debit (<0 balance) PL account"),
+            "P&L debit (<0 balance) PL account",
+            domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
         'ye_pl_debit_bs_account': fields.many2one('account.account',
-            "P&L debit (<0 balance) BS result account"),
+            "P&L debit (<0 balance) BS result account",
+            domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
     }
 
 res_company()
@@ -115,7 +119,8 @@ class account_year_end_closing(osv.osv):
             self.setup_journals(cr, uid, context=context)
             self.report_bs_balance_to_next_fy(cr, uid, fy_rec,
                 currency_table_id=currency_table_id, context=context)
-        self.update_fy_state(cr, uid, fy_rec.id, context=context)
+        # TODO uncomment
+        # self.update_fy_state(cr, uid, fy_rec.id, context=context)
 
     def check_before_closing_process(self, cr, uid, fy_rec, context=None):
         """
@@ -128,6 +133,7 @@ class account_year_end_closing(osv.osv):
         if level not in ('section', 'coordo', ):
             raise osv.except_osv(_('Warning'),
                 _('You can only close FY at HQ or Coordo'))
+        return level  # TODO remove
 
         # check FY closable regarding level
         if fy_rec:
@@ -316,6 +322,7 @@ class account_year_end_closing(osv.osv):
 
         # init
         # - company and instance
+        # - check company config regular equity account (pl matrix: bs accounts)
         # - current FY year
         # - next FY id
         # - posting date
@@ -324,6 +331,11 @@ class account_year_end_closing(osv.osv):
         # - local context
         cpy_rec = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id
+        if not cpy_rec.ye_pl_credit_bs_account \
+            or not cpy_rec.ye_pl_debit_bs_account:
+            raise osv.except_osv(_('Error'),
+                _("Regular Equity result accounts credit/debit not set" \
+                    " in company settings 'Year End Closing'"))
         instance_rec = cpy_rec.instance_id
 
         fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
@@ -377,6 +389,7 @@ class account_year_end_closing(osv.osv):
         if not cr.rowcount:
             return
 
+        """
         je_by_ccy = {}  # JE/CCY, key: ccy id, value: JE id
         for ccy_id, ccy_code, account_id, account_code, bal in cr.fetchall():
             print ccy_id, ccy_code, account_id, account_code, bal
@@ -391,7 +404,7 @@ class account_year_end_closing(osv.osv):
             # per ccy/account initial balance item, tied to its CCY JE
             create_journal_item(ccy_id=ccy_id, ccy_code=ccy_code,
                 account_id=account_id, account_code=account_code,
-                balance=bal, je_id=je_id)
+                balance=bal, je_id=je_id)"""
 
         # TODO: Regular/Equity compute
         # Period 0, 1-15/ 16 + balance of P/L (income/expense)
