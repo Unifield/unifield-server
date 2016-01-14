@@ -1630,7 +1630,7 @@ class account_bank_statement_line(osv.osv):
                         # UTP-1097 ref field is cleared (a value to empty/False)
                         # ref of JIs/AJIs is not properly cleared in this case
                         aml_ids = acc_move_line_obj.search(cr, uid,
-                            [('move_id', '=', register_line.move_id.id), ],
+                            [('move_id', '=', register_line.move_id.id), ('ref', '!=', '') ],
                             context = context)
                         if aml_ids:
                             # note: move line will update its AJIs ref
