@@ -20,7 +20,7 @@
             <field name="arch" type="xml">
                 <form string="Unconsistent stock report generation">
                     <field name="name" invisible="1" />
-                    <button name="generate_report" string="Get report" icon="gtk-execute" type="object" colspan="4" />
+                    <button name="generate_report" string="Generate report" icon="gtk-execute" type="object" colspan="4" />
                 </form>
             </field>
         </record>
