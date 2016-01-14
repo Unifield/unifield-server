@@ -232,12 +232,10 @@ class account_year_end_closing(osv.osv):
             for m in ('account.move.line', 'account.move', ) ]  # in del order
         for o in to_del_objs:
             ids = o.search(cr, uid, domain, context=context)
+            """
             if ids:
-                sql = "delete from %s where id in (%s)" % (
-                    o._name.replace('.', '_'),
-                    ','.join([str(id) for id in ids])
-                )
-                cr.execute(sql)
+                # TODO SYNC AWARE unlink or reverse
+            """
 
     def report_bs_balance_to_next_fy(self, cr, uid, fy_rec,
             currency_table_id=False, context=None):
@@ -270,6 +268,7 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
+            balance = round(balance, 2)
             name = "IB-%d-%s-%s-%s" % (fy_year, account_code, instance_rec.code,
                 ccy_code, )
 
@@ -329,8 +328,13 @@ class account_year_end_closing(osv.osv):
             # use ccy table
             local_context['currency_table_id'] = currency_table_id
 
-        # compute balance in SQL for B/S report types
+        # compute balance in SQL for B/S report types account with the
+        # include_in_yearly_move (to zero) checkbox ticked (CoA)
         # except Regular/Equity (type 'other'/user_type code 'equity'
+        # => target by date not periods to include:
+        #   - period 0 (FY-1 dev3)
+        #   - period 16
+        #   - special periods
         # => and pay attention US-227: all B/S accounts not retrieved
         sql = '''select ml.currency_id as currency_id,
             max(c.name) as currency_code,
@@ -341,7 +345,10 @@ class account_year_end_closing(osv.osv):
             inner join account_account_type t on t.id = a.user_type
             inner join account_journal j on j.id = ml.journal_id
             inner join res_currency c on c.id = ml.currency_id
-            where j.instance_id = %d and t.report_type in ('asset', 'liability')
+            where
+            j.instance_id = %d and a.include_in_yearly_move = 't'
+            and t.report_type in ('asset', 'liability')
+            and not (a.type = 'other' and t.code = 'equity')
             and ml.date >= '%s' and ml.date <= '%s'
             group by ml.currency_id, ml.account_id''' % (
                 instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
@@ -364,6 +371,9 @@ class account_year_end_closing(osv.osv):
             create_journal_item(ccy_id=ccy_id, ccy_code=ccy_code,
                 account_id=account_id, account_code=account_code,
                 balance=bal, je_id=je_id)
+
+        # TODO: Regular/Equity compute
+        # Period 0, 1-15/ 16 + balance of P/L (income/expense)
 
         # post processing: 'raw write' JEs post (after JIs created)
         # as they are unbalanced by nature and not accepted by system

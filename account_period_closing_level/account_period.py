@@ -266,6 +266,9 @@ class account_period(osv.osv):
             res[period_id] = payroll
         return res
 
+    def _get_is_system_from_number(self, number):
+        return isinstance(number, int) and number in (0, 16, ) or False
+
     def _get_is_system(self, cr, uid, ids, field_name=None, arg=None, context=None):
         res = {}
         if not ids:
@@ -274,8 +277,7 @@ class account_period(osv.osv):
             ids = [ids]
 
         for rec in self.browse(cr, uid, ids, context=context):
-            res[rec.id] = isinstance(rec.number, int) \
-                and rec.number in (0, 16, ) or False
+            res[rec.id] = self._get_is_system_from_number(rec.number)
         return res
 
     def _get_search_is_system(self, cr, uid, obj, name, args, context=None):
@@ -298,7 +300,7 @@ class account_period(osv.osv):
             help="These periods can overlap.", readonly=True),
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True,
             help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
-        'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15. If 16: have not been defined yet."),
+        'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15."),
         'field_process': fields.boolean('Is this period in Field close processing?', readonly=True),
         'state_sync_flag': fields.char('Sync Flag', required=True, size=64, help='Flag for controlling sync actions on the period state.'),
         'payroll_ok': fields.function(_get_payroll_ok, method=True, type='boolean', store=False, string="Permit to know if payrolls are active", readonly=True),
@@ -312,8 +314,11 @@ class account_period(osv.osv):
             context = {}
 
         if context.get('sync_update_execution') and 'state' not in vals:
-            logging.getLogger('init').info('Loading default draft - created - state for account.period')
-            vals['state'] = 'created'
+            if not self._get_is_system_from_number(vals.get('number', False)):
+                logging.getLogger('init').info('Loading default draft - created - state for account.period')
+                vals['state'] = 'created'
+            else:
+                vals['state'] = 'draft'  # passtrough for system periods: 'Open'
 
         res = super(account_period, self).create(cr, uid, vals, context=context)
         self.pool.get('account.period.state').update_state(cr, uid, res,
@@ -350,7 +355,7 @@ class account_period(osv.osv):
 
     _defaults = {
         'state': lambda *a: 'created',
-        'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
+        'number': lambda *a: 17, # Because of 16 period in MSF, no period would use 16 number.
         'special': lambda *a: False,
         'field_process': lambda *a: False,
         'state_sync_flag': lambda *a: 'none',
