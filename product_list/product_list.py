@@ -94,6 +94,7 @@ class product_list(osv.osv):
                 ('hq', 'HQ'),
                 ('coordo', 'Coordination'),
                 ('project', 'Project'),
+                ('temp', 'Temporary'),
             ],
             string='Creator',
             required=True,
@@ -154,7 +155,7 @@ class product_list(osv.osv):
 
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
-        'creator': lambda *a: 'project',
+#        'creator': lambda *a: ,
     }
 
     _sql_constraints = [
@@ -241,7 +242,7 @@ class product_list(osv.osv):
         @return: True
         """
         list_ids = self.search(cr, uid, [('creator', '=', False)])
-        self.write(cr, uid, list_ids, {'creator': 'project'})
+        self.write(cr, uid, list_ids, {'creator': 'temp'})
 
 product_list()
 
