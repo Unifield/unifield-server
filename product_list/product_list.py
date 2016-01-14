@@ -155,7 +155,7 @@ class product_list(osv.osv):
 
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
-#        'creator': lambda *a: ,
+        'creator': lambda *a: 'temp',
     }
 
     _sql_constraints = [
