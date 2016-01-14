@@ -24,6 +24,27 @@ from osv import fields
 from tools.translate import _
 
 
+class res_company(osv.osv):
+    """
+    account CoA config override
+    """
+    _inherit = 'res.company'
+
+    _columns = {
+        # US-822 PL/BS matrix of dev2/dev3 accounts"
+        'ye_pl_credit_pl_account': fields.many2one('account.account',
+            "P&L credit (>0 balance) PL account"),
+        'ye_pl_credit_bs_account': fields.many2one('account.account',
+            "P&L credit (>0 balance) BS result account"),
+        'ye_pl_debit_pl_account': fields.many2one('account.account',
+            "P&L debit (<0 balance) PL account"),
+        'ye_pl_debit_bs_account': fields.many2one('account.account',
+            "P&L debit (<0 balance) BS result account"),
+    }
+
+res_company()
+
+
 class account_account(osv.osv):
     """
     account CoA config override

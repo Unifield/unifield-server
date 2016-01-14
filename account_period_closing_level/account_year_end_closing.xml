@@ -2,6 +2,24 @@
 <openerp>
     <data>
 
+        <record id="view_company_inherit_ye_form" model="ir.ui.view">
+            <field name="name">view.company.inherit.ye.form</field>
+            <field name="inherit_id" ref="account_override.view_company_inherit_3_form"/>
+            <field name="model">res.company</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <data>
+                    <page position="inside" string="Configuration">
+                        <separator colspan="4" string="Year End Closing"/>
+                        <field name="ye_pl_credit_pl_account" />
+                        <field name="ye_pl_credit_bs_account" />
+                        <field name="ye_pl_debit_pl_account" />
+                        <field name="ye_pl_debit_bs_account" />
+                    </page>
+                </data>
+            </field>
+        </record>
+
         <record id="view_account_form_inherit" model="ir.ui.view">
             <field name="name">account.account.form</field>
             <field name="model">account.account</field>
