@@ -408,6 +408,12 @@ class po_follow_up_mixin(object):
 
         return res
 
+    def yieldPoLines(self, po_line_ids):
+        for pol_id in po_line_ids:
+            yield self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id)
+
+        raise StopIteration
+
     def getPOLines(self, po_id):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         # TODO the multiplier is the value populated for no change in stock_move.price_unit
@@ -418,17 +424,16 @@ class po_follow_up_mixin(object):
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)], order='line_number')
-        po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
+#        po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
         report_lines = []
         order = po_obj.browse(self.cr, self.uid, po_id)
-        for line in po_lines:
-            in_lines = self.getAllLineIN(line.id)
+        for line in self.yieldPoLines(po_line_ids):
             analytic_lines = self.getAnalyticLines(line)
             same_product_same_uom = []
             same_product = []
             other_product = []
 
-            for inl in in_lines:
+            for inl in self.getAllLineIN(line.id):
                 if inl.get('product_id') and inl.get('product_id') == line.product_id.id:
                     if inl.get('product_uom') and inl.get('product_uom') == line.product_uom.id:
                         same_product_same_uom.append(inl)
@@ -539,7 +544,10 @@ class po_follow_up_mixin(object):
                 }
                 report_lines.append(report_line)
 
-        return report_lines
+            for rl in report_lines:
+                yield rl
+
+        raise StopIteration
 
     def getAnalyticLines(self,po_line):
         ccdl_obj = self.pool.get('cost.center.distribution.line')
@@ -570,7 +578,10 @@ class po_follow_up_mixin(object):
                 sm.picking_id = sp.id
             ORDER BY
                 sp.name, sm.id asc''', tuple([po_line_id]))
-        return self.cr.dictfetchall()
+        for res in self.cr.dictfetchall():
+            yield res
+
+        raise StopIteration
 
     def getReportHeaderLine1(self):
         return self.datas.get('report_header')[0]
