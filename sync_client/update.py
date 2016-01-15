@@ -75,7 +75,7 @@ class local_rule(osv.osv):
             if not vals.get('model'):
                 vals['active'] = False
             elif not self.pool.get('ir.model').search(cr, uid, [('model', '=',
-                vals['model'])], limit=1, context=context, count=True):
+                vals['model'])], limit=1, order='NO_ORDER', context=context):
                 self._logger.debug("The following rule doesn't apply to your database and has been disabled. Reason: model %s does not exists!\n%s" % (vals['model'], vals))
                 continue #do not save the rule if there is no valid model
             elif 'active' not in vals:
@@ -325,7 +325,7 @@ class update_received(osv.osv):
             return 0
         self._logger.debug("Unfold package %s" % packet['model'])
         if not self.pool.get('ir.model').search(cr, uid, [('model', '=',
-            packet['model'])], limit=1, context=context, count=True):
+            packet['model'])], limit=1, order='NO_ORDER', context=context):
             sync_log(self, "Model %s does not exist" % packet['model'], data=packet)
         packet_type = packet.get('type', 'import')
         if packet_type == 'import':

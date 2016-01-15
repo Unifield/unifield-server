@@ -79,7 +79,7 @@ class local_message_rule(osv.osv):
             if not vals.get('model'):
                 vals['active'] = False
             elif not self.pool.get('ir.model').search(cr, uid, [('model', '=',
-                vals['model'])], limit=1, count=True, context=context):
+                vals['model'])], limit=1, order='NO_ORDER', context=context):
                 self._logger.error("The following rule doesn't apply to your database and has been disabled. Reason: model %s does not exists!\n%s" % (vals['model'], vals))
                 continue #do not save the rule if there is no valid model
             elif 'active' not in vals:
@@ -143,7 +143,7 @@ class local_message_rule(osv.osv):
             # Still create the message if an existing message was already in the system, as the return action could be repeat
             xml_id = identifiers[res_id]
             if msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)],
-                    limit=1, context=context, count=True):
+                    limit=1, order='NO_ORDER', context=context):
                 return
             data = {
                     'identifier' : xml_id,

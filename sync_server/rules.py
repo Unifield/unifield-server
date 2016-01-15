@@ -391,7 +391,7 @@ class sync_rule(osv.osv):
                 model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
                 if not self.pool.get('ir.model.fields').search(cr, uid,
                     [('model_id','in', model_ids),('name','=',base_field)],
-                    limit=1, context=context, count=True): raise KeyError
+                    limit=1, order='NO_ORDER', context=context): raise KeyError
         except TypeError:
             message += "failed (Fields list should be a list of string)!\n"
             error = True
@@ -692,7 +692,7 @@ class message_rule(osv.osv):
                 model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
                 if not self.pool.get('ir.model.fields').search(cr, uid,
                     [('model_id','in', model_ids),('name','=',base_field)],
-                    limit=1, context=context, count=True):
+                    limit=1, order='NO_ORDER', context=context):
                     field_error = field
                     raise KeyError
         except TypeError:
@@ -721,7 +721,7 @@ class message_rule(osv.osv):
             try:
                 field_ids = self.pool.get('ir.model.fields').search(cr, uid,
                         [('model','=',rec.model_id),('name','=',rec.destination_name)],
-                        limit=1, context=context, count=True)
+                        limit=1, order='NO_ORDER', context=context)
                 if not field_ids: raise StandardError
             except Exception, e:
                 sync_log(self, e, 'error')

@@ -36,7 +36,7 @@ class ir_module_module(osv.osv):
         if ids and \
             self.search(cr, uid, [('id', 'in', ids), ('name', '=',
                 'sync_client'), ('state', 'in', ['to install', 'to upgrade'])],
-                limit=1, count=True):
+                limit=1, order='NO_ORDER'):
                 self.pool.get('ir.model.data').create_all_sdrefs(cr)
         return super(ir_module_module, self).check(cr, uid, ids, context=context)
 

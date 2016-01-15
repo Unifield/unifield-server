@@ -165,7 +165,7 @@ class stock_picking(osv.osv):
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
                 existing_pick = self.search(cr, uid, [('origin', '=', origin),
                     ('subtype', '=', 'picking'), ('type', '=', 'in'), ('state',
-                        '=', 'draft')], limit=1, context=context, count=True)
+                        '=', 'draft')], limit=1, order='NO_ORDER', context=context)
                 if existing_pick:
                     message = "Sorry, the IN: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
@@ -296,7 +296,7 @@ class stock_picking(osv.osv):
         
         # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
         existing_pick = self.search(cr, uid, search_condition,
-                limit=1, context=context, count=True)
+                limit=1, order='NO_ORDER', context=context)
         if existing_pick:
             message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
             self._logger.info(message)
@@ -396,7 +396,7 @@ class stock_picking(osv.osv):
                     line_proc_ids = move_proc.search(cr, uid, [
                         ('wizard_id', '=', in_processor),
                         ('move_id', '=', move['id']),
-                    ], limit=1, context=context, count=True)
+                    ], limit=1, order='NO_ORDER', context=context)
                     if not line_proc_ids:
                         diff = move['product_qty'] - orig_qty
                         if diff >= 0 and (not best_diff or diff < best_diff):

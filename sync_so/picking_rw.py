@@ -670,7 +670,7 @@ class stock_picking(osv.osv):
                 existing_pick = self.search(cr, uid, [('name', '=', pick_name),
                     ('origin', '=', origin), ('subtype', '=', 'picking'),
                     ('type', '=', 'out'), ('state', '=', 'draft')],
-                    limit=1, context=context, count=True)
+                    limit=1, order='NO_ORDER', context=context)
                 if existing_pick:
                     message = "Sorry, the document: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
@@ -707,8 +707,7 @@ class stock_picking(osv.osv):
         elif rw_type == self.CENTRAL_PLATFORM  and not origin and 'OUT' in pick_name and 'RW' in pick_name: #US-702: sync also the OUT from scratch, no link to IR/FO
                 existing_pick = self.search(cr, uid, [('name', '=', pick_name),
                     ('subtype', '=', 'picking'), ('type', '=', 'out'),
-                    ('state', '=', 'draft')], limit=1, context=context,
-                    count=True)
+                    ('state', '=', 'draft')], limit=1, order='NO_ORDER', context=context)
                 if existing_pick:
                     message = "Sorry, the OUT: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
@@ -1118,7 +1117,7 @@ class stock_picking(osv.osv):
                     ('origin', '=', origin),
                     ('subtype', '=', 'picking'),
                     ('state', 'in', ['assigned', 'draft']),
-                ], limit=1, context=context, count=True)
+                ], limit=1, order='NO_ORDER', context=context)
                 if same_ids:
                     message = "The Picking: " + pick_name + " is already replicated in " + cr.dbname
                     self._logger.info(message)
@@ -1321,7 +1320,7 @@ class stock_picking(osv.osv):
                     for pick in pick_ids:
                         if not self.pool.get('ppl.processor').search(cr, uid,
                                 [('picking_id', '=', pick)],
-                                limit=1, count=True):
+                                limit=1, order='NO_ORDER'):
                             pick_id = pick
                             break
                     if pick_id:

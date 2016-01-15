@@ -195,8 +195,7 @@ class purchase_order_sync(osv.osv):
                      ('remote_call', '=', 'sale.order.create_so'),
                      ('identifier', 'like', po_identifier),
                      ],
-                    limit=1,
-                    context=context, count=True)
+                    limit=1, order='NO_ORDER', context=context)
                 res[po.id] = bool(sync_msg_ids)
         return res
 
@@ -234,7 +233,7 @@ class purchase_order_sync(osv.osv):
                 already_pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
                         [('sync_order_line_db_id', '=',
                             spl_brw.new_sync_order_line_db_id)],
-                        limit=1, context=context, count=True)
+                        limit=1, order='NO_ORDER', context=context)
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', spl_brw.sync_order_line_db_id)], context=context)
                 if not pol_ids or already_pol_ids:
                     continue

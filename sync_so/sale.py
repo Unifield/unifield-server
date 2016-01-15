@@ -353,7 +353,7 @@ class sale_order_sync(osv.osv):
             existing_message_id = msg_to_send_obj.search(cr, uid, [
                 ('identifier', '=', xml_id),
                 ('destination_name', '=', partner_name),
-            ], limit=1, context=context, count=True)
+            ], limit=1, order='NO_ORDER', context=context)
             if existing_message_id:
                 return
 

@@ -225,7 +225,7 @@ class entity(osv.osv):
     def _check_duplicate(self, cr, uid, name, uuid, context=None):
         duplicate_id = self.search(cr, uid, [('user_id', '!=', uid), '|',
             ('name', '=', name), ('identifier', '=', uuid)],
-            limit=1, context=context, count=True)
+            limit=1, order='NO_ORDER', context=context)
         return bool(duplicate_id)
         
     def _get_ancestor(self, cr, uid, id, context=None):
