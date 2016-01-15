@@ -53,7 +53,6 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
     def _get_orders(self, report):
         orders = []
-
         for order_id in report.order_ids:
             if self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)]):
                 orders.append(order_id)
@@ -72,17 +71,25 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         self.cr.execute('''SELECT COUNT(DISTINCT(product_id)) FROM sale_order_line WHERE order_id = %(order_id)s''', {'order_id': order.id})
         return self.cr.fetchone()
 
+    def _get_order_line(self, order_id):
+        order_line_ids = self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)])
+        for order_line_id in order_line_ids:
+            yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id)
+
+        raise StopIteration
+
     def _get_lines(self, order, grouped=False):
         '''
         Get all lines with OUT/PICK for an order
         '''
-        res = []
         keys = []
-        for line in order.order_line:
+        for line in self._get_order_line(order.id):
             if not grouped:
                 keys = []
             lines = []
             first_line = True
+            fl_index = 0
+            m_index = 0
             bo_qty = line.product_uom_qty
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
@@ -150,6 +157,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     else:
                         keys.append(key)
                         lines.append(data)
+                        if data.get('first_line'):
+                            fl_index= m_index
+                        m_index += 1
 
             # No move found
             if first_line:
@@ -168,9 +178,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 lines.append(data)
 
             # Put the backorderd qty on the first line
-            for l in lines:
-                if l.get('first_line'):
-                    l['backordered_qty'] = bo_qty
+            if not lines:
+                continue
+            lines[fl_index]['backordered_qty'] = bo_qty
 
             for line in lines:
                 yield line
