@@ -251,7 +251,7 @@ class picking_ticket(report_sxw.rml_parse):
         :return Call the super() method
         """
         for obj in objects:
-            if obj.subtype != 'picking':
+            if obj.subtype not in ('picking', 'ppl'):
                 raise osv.except_osv(_('Warning !'), _('Picking Ticket is only available for Picking Ticket Objects!'))
 
         return super(picking_ticket, self).set_context(objects, data, ids, report_type=report_type)
