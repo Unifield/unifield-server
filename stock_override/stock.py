@@ -531,7 +531,7 @@ class stock_picking(osv.osv):
             move_ids = self.pool.get('stock.move').search(cr, uid, [
                 ('picking_id', 'in', ids),
                 ('location_dest_id', 'not in', out_loc_ids),
-            ], limit=1, count=True, context=context)
+            ], limit=1, order='NO_ORDER', context=context)
             if move_ids:
                 return {
                     'value': {'partner_id2': False, 'partner_id': False,},
@@ -1781,7 +1781,7 @@ class stock_move(osv.osv):
                         if not move_unlinked and move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
                             if not self.search(cr, uid, [('move_dest_id', '=',
-                                move.id)], limit=1, count=True, context=context):
+                                move.id)], limit=1, order='NO_ORDER', context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
             elif move.state == 'confirmed':
                 # we remove the prodlot_id in case that the move is not available
@@ -1797,7 +1797,7 @@ class stock_move(osv.osv):
         no_product = self.search(cr, uid, [
             ('id', 'in', ids),
             ('product_qty', '<=', 0.00),
-        ], limit=1, count=True, context=context)
+        ], limit=1, order='NO_ORDER', context=context)
 
         if no_product:
             raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
@@ -2480,7 +2480,7 @@ class stock_move_cancel_wizard(osv.osv_memory):
             picking_id = wiz.move_id.picking_id.id
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
             move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)],
-                    limit=1, count=True, context=context)
+                    limit=1, order='NO_ORDER', context=context)
             if move_ids and  wiz.move_id.has_to_be_resourced:
                 self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled and resourced" % (move_id, picking_id))
             else:

@@ -594,7 +594,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ('order_id.state', 'not in', ['draft', 'cancel']),
             ('order_id.import_in_progress', '=', False),
             ('product_uom_qty', '<=', 0.00),
-        ], limit=1, count=True, context=context)
+        ], limit=1, order='NO_ORDER', context=context)
 
         if line_ids:
             return False
@@ -1773,7 +1773,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                          ('order_id', '=', order.id),
                          ('invoiced', '=', False),
                          ('state', 'not in', ['cancel', 'draft']),
-                    ], limit=1, count=True, context=context)
+                    ], limit=1, order='NO_ORDER', context=context)
 
                 val.update({
                     'state': order.order_policy and manual_lines and 'manual' or 'progress',
@@ -2139,7 +2139,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 '|',
                 ('procurement_id', '=', 'False'),
                 ('procurement_id.state', '!=', 'cancel'),
-            ], limit=1, count=True, context=context)
+            ], limit=1, order='NO_ORDER', context=context)
 
             if line_error:
                 return False
@@ -2174,7 +2174,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 ('order_id', '=', fo.id),
                 ('id', 'not in', line_ids),
                 ('state', 'not in', ['cancel', 'done']),
-            ], limit=1, count=True, context=context)
+            ], limit=1, order='NO_ORDER', context=context)
             if remain_lines:
                 res[fo.id] = False
                 continue
@@ -2187,7 +2187,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if context.get('tl_ids'):
                 exp_domain.append(('tender_id', 'not in', context.get('tl_ids')))
 
-            if exp_sol_obj.search(cr, uid, exp_domain, limit=1, count=True, context=context):
+            if exp_sol_obj.search(cr, uid, exp_domain, limit=1,
+                    order='NO_ORDER', context=context):
                 res[fo.id] = False
                 continue
 
@@ -2740,7 +2741,7 @@ class sale_order_line(osv.osv):
                     ('id', 'in', ids),
                     ('order_id.state', '!=', 'cancel'),
                     ('product_uom_qty', '<=', 0.00),
-                ], limit=1, count=True, context=context)
+                ], limit=1, order='NO_ORDER', context=context)
             elif 'product_uom_qty' in vals:
                 empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
             if empty_lines:

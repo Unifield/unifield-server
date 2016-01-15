@@ -1187,7 +1187,7 @@ class from_supplier_choose_catalogue(osv.osv_memory):
 
         if not self.pool.get('supplier.catalogue').search(cr, uid,
                 [('partner_id', '=', partner_id)],
-                limit=1, context=context, count=True):
+                limit=1, context=context, order='NO_ORDER'):
             raise osv.except_osv(_('Error'), _('No catalogue found !'))
 
         res = super(from_supplier_choose_catalogue, self).default_get(cr, uid, fields, context=context)

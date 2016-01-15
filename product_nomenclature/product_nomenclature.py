@@ -818,9 +818,9 @@ class product_product(osv.osv):
             if not default_code or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
             exist_dc = self.search(cr, uid, [('default_code', '=',
-                default_code)], limit=1, context=context, count=True)
+                default_code)], limit=1, order='NO_ORDER', context=context)
             exist_xc = self.search(cr, uid, [('xmlid_code', 'in', [default_code, xmlid_code])],
-                    limit=1, context=context, count=True)
+                    limit=1, order='NO_ORDER', context=context)
             if exist_dc:  # if any of the code exists, report error!,
                 raise Exception, "Problem creating product: Duplicate default_code found"
             if exist_xc:  # if any of the code exists, report error!,
