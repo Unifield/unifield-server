@@ -54,27 +54,23 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
     def _get_orders(self, report):
         orders = []
 
-        for order in report.order_ids:
-            if len(order.order_line):
-                orders.append(order)
+        for order_id in report.order_ids:
+            if self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)]):
+                orders.append(order_id)
 
         self._nb_orders = len(orders)
 
-        return orders
+        for order in orders:
+            yield self.pool.get('sale.order').browse(self.cr, self.uid, order)
+
+        raise StopIteration
 
     def _get_products(self, order, count=False):
         '''
         Returns the list of products in the order
         '''
-        prod_obj = self.pool.get('product.product')
-
-        self.cr.execute('''SELECT distinct(product_id) FROM sale_order_line WHERE order_id = %(order_id)s''', {'order_id': order.id})
-        product_ids = [x[0] for x in self.cr.fetchall() if x[0] is not None]
-
-        if count:
-            return len(product_ids)
-
-        return prod_obj.browse(self.cr, self.uid, product_ids)
+        self.cr.execute('''SELECT COUNT(DISTINCT(product_id)) FROM sale_order_line WHERE order_id = %(order_id)s''', {'order_id': order.id})
+        return self.cr.fetchone()
 
     def _get_lines(self, order, grouped=False):
         '''
@@ -176,7 +172,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 if l.get('first_line'):
                     l['backordered_qty'] = bo_qty
 
-            res.extend(lines)
+            for line in lines:
+                yield line
 
         self._order_iterator += 1
 
@@ -184,7 +181,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             percent = float(self._order_iterator) / float(self._nb_orders)
             self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
 
-        return res
+        raise StopIteration
 
     def _parse_date_xls(self, dt_str, is_datetime=True):
         if not dt_str or dt_str == 'False':
