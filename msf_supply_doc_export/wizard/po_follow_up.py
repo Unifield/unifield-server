@@ -159,6 +159,7 @@ class background_report(osv.osv_memory):
             'report_name': fields.char('Report Name', size=256),
             'report_id': fields.integer('Report id'),
             'percent': fields.float('Percent'),
+            'finished': fields.boolean('Finished'),
         }
         def update_percent(self, cr, uid, ids, percent, context=None):
             self.write(cr, uid, ids, {'percent': percent})
