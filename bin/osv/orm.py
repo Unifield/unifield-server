@@ -595,7 +595,7 @@ class orm_template(object):
                 while True:
                     n = self._table+'_'+str(r['id']) + (postfix and ('_'+str(postfix)) or '' )
                     if not model_data.search(cr, uid, [('name', '=', n)],
-                            limit=1, count=True):
+                            limit=1, order='NO_ORDER'):
                         break
                     postfix += 1
                 model_data.create(cr, uid, {
@@ -787,8 +787,8 @@ class orm_template(object):
                 id = int(id)
                 obj_model = self.pool.get(model_name)
                 ids = obj_model.search(cr, uid, [('id', '=', int(id))],
-                        limit=1, count=True)
-                if not len(ids):
+                        limit=1, order='NO_ORDER')
+                if not ids:
                     raise Exception(_("Database ID doesn't exist: %s : %s") %(model_name, id))
             elif mode=='id':
                 if '.' in id:
@@ -1111,14 +1111,14 @@ class orm_template(object):
                 if fld_def._type in ('many2one', 'one2one'):
                     obj = self.pool.get(fld_def._obj)
                     if not obj.search(cr, uid, [('id', '=', field_value or
-                        False)], limit=1, count=True):
+                        False)], limit=1, order='NO_ORDER'):
                         continue
                 if fld_def._type in ('many2many'):
                     obj = self.pool.get(fld_def._obj)
                     field_value2 = []
                     for i in range(len(field_value)):
                         if not obj.search(cr, uid, [('id', '=',
-                            field_value[i])], limit=1, count=True):
+                            field_value[i])], limit=1, order='NO_ORDER'):
                             continue
                         field_value2.append(field_value[i])
                     field_value = field_value2
@@ -1132,13 +1132,13 @@ class orm_template(object):
                                 obj2 = self.pool.get(obj._columns[field2]._obj)
                                 if not obj2.search(cr, uid,
                                         [('id', '=', field_value[i][field2])],
-                                        limit=1, count=True):
+                                        limit=1, order='NO_ORDER'):
                                     continue
                             elif field2 in obj._inherit_fields.keys() and obj._inherit_fields[field2][2]._type in ('many2one', 'one2one'):
                                 obj2 = self.pool.get(obj._inherit_fields[field2][2]._obj)
                                 if not obj2.search(cr, uid,
                                         [('id', '=', field_value[i][field2])],
-                                        limit=1, count=True):
+                                        limit=1, order='NO_ORDER'):
                                     continue
                             # TODO add test for many2many and one2many
                             field_value2[i][field2] = field_value[i][field2]
@@ -2317,10 +2317,6 @@ class orm_memory(orm_template):
     def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
         if context is None:
             context = {}
-
-        # this case is used to know if something exists
-        if limit == 1 and count:
-            order = ''
 
         if order == 'NO_ORDER':
             order = ''
@@ -3539,8 +3535,8 @@ class orm(orm_template):
         domain = [('res_id', '=', False),
                   ('value_reference', 'in', ['%s,%s' % (self._name, i) for i in ids]),
                  ]
-        if properties.search(cr, uid, domain, limit=1, context=context,
-                count=True):
+        if properties.search(cr, uid, domain, limit=1, order='NO_ORDER',
+                context=context):
             raise except_orm(_('Error'), _('Unable to delete this document because it is used as a default property'))
 
         wf_service = netsvc.LocalService("workflow")
@@ -4391,21 +4387,11 @@ class orm(orm_template):
         where_str = where_clause and (" WHERE %s" % where_clause) or ''
 
         if count:
-            if limit==1:
-                # count=True and limit=1 is the special case where we just
-                # want't to know if something exist
-                limit_str = ' LIMIT 1'
-                select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
-                    from_clause, where_str, limit_str))
-                cr.execute(select_query, where_clause_params)
-                res = cr.fetchone()
-                return res
-            else:
-                count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
-                    from_clause, where_str, limit_str, offset_str))
-                cr.execute(count_query, where_clause_params)
-                res = cr.fetchall()
-                return res[0][0]
+            count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
+                from_clause, where_str, limit_str, offset_str))
+            cr.execute(count_query, where_clause_params)
+            res = cr.fetchall()
+            return res[0][0]
         select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
             from_clause, where_str, order_by,limit_str, offset_str))
         cr.execute(select_query, where_clause_params)
