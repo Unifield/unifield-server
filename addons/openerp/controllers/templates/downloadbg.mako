@@ -3,7 +3,10 @@
 <%def name="header()">
     <title>Report Generation</title>
     <script type="text/javascript">
-        if ('${finish}' == '') {
+        if ('${total}' === 'True') {
+            setTimeout(function () {window.location.reload();}, 100);
+        }
+        else if ('${finish}' == '') {
             setTimeout(function () {window.location.reload();}, 3000);
         }
     </script>

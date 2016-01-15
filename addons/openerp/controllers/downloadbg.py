@@ -34,15 +34,22 @@ class DownLoadBg(SecuredController):
     def index(self, res_id):
     
         download = rpc.RPCProxy('memory.background.report')
-        data_bg = download.read(int(res_id), ['report_id', 'percent', 'report_name'], rpc.session.context)
-        report = rpc.session.execute('report', 'report_get', data_bg['report_id'])
-        finish = report['state'] or ""
-        if finish:
-            report_type = report['format']
-            cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
-            cherrypy.response.headers['Content-Disposition'] = 'filename="' + data_bg['report_name'] + '.' + report_type + '"'
-            return actions._print_data(report)
+        data_bg = download.read(int(res_id), ['report_id', 'percent', 'report_name', 'finished'], rpc.session.context)
+        finish = ""
+        finished = "False"
+        if data_bg['percent'] >= 1.00:
+            if not data_bg['finished']:
+                download.write([int(res_id)], {'finished': True}, rpc.session.context)
+                finished = data_bg['finished'] and "True" or "False"
+            else:
+                report = rpc.session.execute('report', 'report_get', data_bg['report_id'])
+                finish = report['state'] or ""
+                if finish:
+                    report_type = report['format']
+                    cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
+                    cherrypy.response.headers['Content-Disposition'] = 'filename="' + data_bg['report_name'] + '.' + report_type + '"'
+                    return actions._print_data(report)
 
-        return dict(finish=finish, percent=data_bg['percent'])
+        return dict(finish=finish, percent=data_bg['percent'], total=finished)
 
 
