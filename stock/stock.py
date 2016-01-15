@@ -1176,11 +1176,11 @@ class stock_picking(osv.osv):
             return True
 
         if move_obj.search(cr, uid, [('id', 'in', moves), ('state', 'not in',
-            ['cancel', 'done'])], limit=1, count=True):
+            ['cancel', 'done'])], limit=1, order='NO_ORDER'):
             return False
 
         if move_obj.search(cr, uid, [('id', 'in', moves), ('state', '=',
-            'done')], limit=1, count=True) > 0:
+            'done')], limit=1, order='NO_ORDER') > 0:
             ok = True
 
         return ok

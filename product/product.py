@@ -488,8 +488,8 @@ class product_product(osv.osv):
             tmpl_id = product.product_tmpl_id.id
             # Check if the product is last product of this template
             other_product_ids = self.search(cr, uid, [('product_tmpl_id', '=',
-                tmpl_id), ('id', '!=', product.id)], limit=1, context=context,
-                count=True)
+                tmpl_id), ('id', '!=', product.id)], limit=1, order='NO_ORDER',
+                context=context)
             if not other_product_ids:
                  unlink_product_tmpl_ids.append(tmpl_id)
             unlink_ids.append(product.id)
