@@ -10,11 +10,14 @@
             <field name="arch" type="xml">
                 <data>
                     <page position="inside" string="Configuration">
-                        <separator colspan="4" string="Year End Closing"/>
-                        <field name="ye_pl_credit_pl_account" />
-                        <field name="ye_pl_credit_bs_account" />
-                        <field name="ye_pl_debit_pl_account" />
-                        <field name="ye_pl_debit_bs_account" />
+                        <separator colspan="4" string="B/S Move to 0 accounts"/>
+                        <field name="ye_pl_cp_for_bs_debit_bal_account" />
+                        <field name="ye_pl_cp_for_bs_credit_bal_account" />
+                        <separator colspan="4" string="P&amp;L result accounts"/>
+                        <field name="ye_pl_pos_credit_account" />
+                        <field name="ye_pl_ne_credit_account" />
+                        <field name="ye_pl_pos_debit_account" />
+                        <field name="ye_pl_ne_debit_account" />
                     </page>
                 </data>
             </field>

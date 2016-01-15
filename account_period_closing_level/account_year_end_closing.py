@@ -31,18 +31,24 @@ class res_company(osv.osv):
     _inherit = 'res.company'
 
     _columns = {
+        # US-822 counterpart for BS account
+        'ye_pl_cp_for_bs_debit_bal_account': fields.many2one('account.account',
+            'Counterpart for B/S debit balance'),
+        'ye_pl_cp_for_bs_credit_bal_account': fields.many2one('account.account',
+            'Counterpart for B/S credit balance'),
+
         # US-822 PL/BS matrix of dev2/dev3 accounts"
-        'ye_pl_credit_pl_account': fields.many2one('account.account',
-            "P&L credit (>0 balance) PL account",
+        'ye_pl_pos_credit_account': fields.many2one('account.account',
+            'Credit Account for P&L>0 (Income account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
-        'ye_pl_credit_bs_account': fields.many2one('account.account',
-            "P&L credit (>0 balance) BS result account",
+        'ye_pl_pos_debit_account': fields.many2one('account.account',
+            'Debit Account for P&L>0 (B/S account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
-        'ye_pl_debit_pl_account': fields.many2one('account.account',
-            "P&L debit (<0 balance) PL account",
+        'ye_pl_ne_credit_account': fields.many2one('account.account',
+            'Credit Account P&L<0 (B/S account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
-        'ye_pl_debit_bs_account': fields.many2one('account.account',
-            "P&L debit (<0 balance) BS result account",
+        'ye_pl_ne_debit_account': fields.many2one('account.account',
+            'Debit Account P&L<0 (Expense account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
     }
 
@@ -377,10 +383,10 @@ class account_year_end_closing(osv.osv):
             pl_balance = float(cr.fetchone()[0])
             if pl_balance > 0:
                 # debit regular/equity result
-                re_account_rec = cpy_rec.ye_pl_debit_bs_account
+                re_account_rec = cpy_rec.ye_pl_pos_debit_account
             else:
                 # credit regular/equity result
-                re_account_rec = cpy_rec.ye_pl_credit_bs_account
+                re_account_rec = cpy_rec.ye_pl_ne_credit_account
 
         # compute B/S balance in BOOKING breakdown in BOOKING/account
         # date inclusion to have periods 0/1-15/16
