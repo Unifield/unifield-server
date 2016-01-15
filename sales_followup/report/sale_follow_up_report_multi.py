@@ -69,7 +69,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         Returns the list of products in the order
         '''
         self.cr.execute('''SELECT COUNT(DISTINCT(product_id)) FROM sale_order_line WHERE order_id = %(order_id)s''', {'order_id': order.id})
-        return self.cr.fetchone()
+        return self.cr.fetchone()[0]
 
     def _get_order_line(self, order_id):
         order_line_ids = self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)])
