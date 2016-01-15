@@ -114,13 +114,13 @@ class account_year_end_closing(osv.osv):
         """
         level = self.check_before_closing_process(cr, uid, fy_rec,
             context=context)
+        level = 'coordo'
         if level == 'coordo':
             # generate closing entries at coordo level
             self.setup_journals(cr, uid, context=context)
             self.report_bs_balance_to_next_fy(cr, uid, fy_rec,
                 currency_table_id=currency_table_id, context=context)
-        # TODO uncomment
-        # self.update_fy_state(cr, uid, fy_rec.id, context=context)
+        self.update_fy_state(cr, uid, fy_rec.id, context=context)
 
     def check_before_closing_process(self, cr, uid, fy_rec, context=None):
         """
@@ -133,7 +133,6 @@ class account_year_end_closing(osv.osv):
         if level not in ('section', 'coordo', ):
             raise osv.except_osv(_('Warning'),
                 _('You can only close FY at HQ or Coordo'))
-        return level  # TODO remove
 
         # check FY closable regarding level
         if fy_rec:
@@ -295,7 +294,6 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
-            balance = round(balance, 2)
             name = "IB-%d-%s-%s-%s" % (fy_year, account_code, instance_rec.code,
                 ccy_code, )
 
@@ -355,44 +353,73 @@ class account_year_end_closing(osv.osv):
             raise osv.except_osv(_('Error'),
                 _("FY+1 'Period %d' not found") % (period_number, ))
 
+        # date for rates: end of closed FY or currency table if provided
         local_context = context.copy() if context else {}
-        local_context['date'] = '%d-01-01' % (fy_year, )  # date for rates
+        local_context['date'] = '%d-12-31' % (fy_year, )
         if currency_table_id:
             # use ccy table
             local_context['currency_table_id'] = currency_table_id
 
-        # compute balance in SQL for B/S report types account with the
-        # include_in_yearly_move (to zero) checkbox ticked (CoA)
-        # except Regular/Equity (type 'other'/user_type code 'equity'
-        # => target by date not periods to include:
-        #   - period 0 (FY-1 dev3)
-        #   - period 16
-        #   - special periods
-        # => and pay attention US-227: all B/S accounts not retrieved
+        # P/L accounts BAL TOTAL in functional ccy
+        # date inclusion to have period 0/1-15/16
+        re_account_id = False
+        sql = '''select sum(ml.debit - ml.credit) as bal
+            from account_move_line ml
+            inner join account_move m on m.id = ml.move_id
+            inner join account_account a on a.id = ml.account_id
+            inner join account_account_type t on t.id = a.user_type
+            where ml.instance_id = %d and m.state = 'posted'
+            and t.report_type in ('income', 'expense')
+            and ml.date >= '%s' and ml.date <= '%s'
+        ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
+        cr.execute(sql)
+        if cr.rowcount:
+            pl_balance = float(cr.fetchone()[0])
+            if pl_balance > 0:
+                # debit regular/equity result
+                re_account_rec = cpy_rec.ye_pl_debit_bs_account
+            else:
+                # credit regular/equity result
+                re_account_rec = cpy_rec.ye_pl_credit_bs_account
+
+        # compute B/S balance in BOOKING breakdown in BOOKING/account
+        # date inclusion to have periods 0/1-15/16
         sql = '''select ml.currency_id as currency_id,
             max(c.name) as currency_code,
             ml.account_id as account_id, max(a.code) as account_code,
-            sum(ml.debit - ml.credit) as balance
+            sum(ml.debit_currency - ml.credit_currency) as balance
             from account_move_line ml
+            inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join account_account_type t on t.id = a.user_type
-            inner join account_journal j on j.id = ml.journal_id
             inner join res_currency c on c.id = ml.currency_id
-            where
-            j.instance_id = %d and a.include_in_yearly_move = 't'
+            where ml.instance_id = %d and m.state = 'posted'
             and t.report_type in ('asset', 'liability')
-            and not (a.type = 'other' and t.code = 'equity')
             and ml.date >= '%s' and ml.date <= '%s'
-            group by ml.currency_id, ml.account_id''' % (
-                instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
+            group by ml.currency_id, ml.account_id
+        ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
         cr.execute(sql)
         if not cr.rowcount:
             return
 
-        """
+        re_account_found_in_bs = False
         je_by_ccy = {}  # JE/CCY, key: ccy id, value: JE id
         for ccy_id, ccy_code, account_id, account_code, bal in cr.fetchall():
-            print ccy_id, ccy_code, account_id, account_code, bal
+            bal = float(bal)
+
+            if ccy_id == cpy_rec.currency_id.id:
+                # entry in functional ccy
+                if account_id == re_account_rec.id:
+                    # For Regular/Equity account add balance of all P/L balances
+                    # note: booking == functional for entry and P/S in functional
+                    bal += pl_balance
+                    re_account_found_in_bs = True
+            else:
+                if not re_account_found_in_bs and account_id in (
+                    cpy_rec.ye_pl_debit_bs_account.id,
+                    cpy_rec.ye_pl_credit_bs_account.id, ):
+                    # not functional entry in regular/equity: skip
+                    continue
 
             # CCY JE
             je_id = je_by_ccy.get(ccy_id, False)
@@ -404,15 +431,22 @@ class account_year_end_closing(osv.osv):
             # per ccy/account initial balance item, tied to its CCY JE
             create_journal_item(ccy_id=ccy_id, ccy_code=ccy_code,
                 account_id=account_id, account_code=account_code,
-                balance=bal, je_id=je_id)"""
+                balance=bal, je_id=je_id)
 
-        # TODO: Regular/Equity compute
-        # Period 0, 1-15/ 16 + balance of P/L (income/expense)
+        if not re_account_found_in_bs:
+            # No B/S result for result account, add entry with P/L balance
+            je_id = je_by_ccy.get(cpy_rec.currency_id.id, False)
+            if not je_id:
+                je_id = create_journal_entry(ccy_id=ccy_id, ccy_code=ccy_code)
+            create_journal_item(ccy_id=cpy_rec.currency_id.id,
+                ccy_code=cpy_rec.currency_id.name,
+                account_id=re_account_rec.id, account_code=re_account_rec.code,
+                balance=pl_balance, je_id=je_id)
 
         # post processing: 'raw write' JEs post (after JIs created)
         # as they are unbalanced by nature and not accepted by system
-        return self.pool.get('account.move').write(cr, uid, je_by_ccy.values(),
-            { 'state':'posted', }, context=local_context)
+        sql = '''update account_move set state='posted' where id in %s'''
+        cr.execute(sql, (tuple(je_by_ccy.values()), ))
 
     def update_fy_state(self, cr, uid, fy_id, reopen=False, context=None):
         instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
