@@ -224,14 +224,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.cr.execute(sql % (account.id, self.query, ))
         sum_currency = self.cr.fetchone()[0] or 0.0
 
-        # TODO
-        """if self.init_balance:
-            sql = 'SELECT sum(l.amount_currency) AS tot_currency \
-                FROM account_move_line l \
-                WHERE l.account_id = %s AND %s ' + reconcile_pattern
-            self.cr.execute(sql % (account.id, self.init_query, ))
-            sum_currency += self.cr.fetchone()[0] or 0.0"""
-
         return sum_currency
 
     def _get_journals_str(self, data):
@@ -270,16 +262,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     'account_code': account and account.code or '',
                     'ccy_name': ccy.name or ccy.code or '',
                     'debit': self._sum_debit_account(account, ccy=ccy,
-                        booking=True),
+                        booking=True, is_sub_total=True),
                     'credit': self._sum_credit_account(account, ccy=ccy,
-                        booking=True),
+                        booking=True, is_sub_total=True),
                     'bal': self._sum_balance_account(account, ccy=ccy,
-                        booking=True),
+                        booking=True, is_sub_total=True),
                 }
                 # append the line if amount (and compute functional bal)
                 if line['debit'] or line['credit'] or line['bal']:
                     line['bal_func'] = self._sum_balance_account(account,
-                        ccy=ccy, booking=False),
+                        ccy=ccy, booking=False, is_sub_total=True),
                     res.append(line)
         return res
 
@@ -467,8 +459,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             raise osv.except_osv(_('Error'), _('Mode not supported'))
 
-        query = self.init_query if initial_balance else self.query
-
         if ccy:
             ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
         else:
@@ -481,18 +471,35 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             JOIN account_move am ON (am.id = l.move_id) \
             WHERE (l.account_id = %s) \
             AND (am.state IN %s) \
-            AND ' + query + ' ' + ccy_pattern + reconcile_pattern
+            AND ' + self.query + ' ' + ccy_pattern + reconcile_pattern
         sql = sql.replace('{field}', field).replace(
             '{booking}', '_currency' if booking else '')
 
         self.cr.execute(sql, (account.id, tuple(move_state), ))
-        return self.cr.fetchone()[0] or 0.0
+        res = self.cr.fetchone()[0] or 0.0
 
-    def _sum_debit_account(self, account, ccy=False, booking=False):
+        if initial_balance:
+            # US-822 deduce inital balance at ccy subtotal line level
+            sql = 'SELECT {field} \
+            FROM account_move_line l \
+            JOIN account_move am ON (am.id = l.move_id) \
+            LEFT JOIN account_period per ON (per.id = l.period_id) \
+            WHERE (l.account_id = %s) and per.number = 0 \
+            AND ' + self.init_query + ' ' + ccy_pattern
+            sql = sql.replace('{field}', field).replace(
+            '{booking}', '_currency' if booking else '')
+            self.cr.execute(sql, (account.id, ))
+            res -= self.cr.fetchone()[0] or 0.0
+
+        return res
+
+    def _sum_debit_account(self, account, ccy=False, booking=False,
+        is_sub_total=False):
         """
-        ccy: filter ccy entries
-        booking: not applicable for view accounts (used for account total lines
+        :param ccy: filter ccy entries
+        :param booking: not applicable for view accounts (used for account total lines
         by ccy)
+        :param is_sub_total: is a sub total line ? (per ccy)
         """
         is_view, amount = self.__sum_amount_account_check_view(account,
             'debit', ccy=ccy)
@@ -505,18 +512,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         amount = self.__sum_amount_account(account, move_state, 'debit',
             ccy=ccy, booking=booking, initial_balance=False)
-        # TODO
-        """if not ccy and self.init_balance:
-            # add initial balance (except for booking ccy breakdown subtotals)
-            amount += self.__sum_amount_account(account, move_state, 'debit',
-                ccy=ccy, booking=booking, initial_balance=True)"""
         return self._currency_conv(amount)
 
-    def _sum_credit_account(self, account, ccy=False, booking=False):
+    def _sum_credit_account(self, account, ccy=False, booking=False,
+        is_sub_total=False):
         """
-        ccy: filter ccy entries
-        booking: not applicable for view accounts (used for account total lines
+        :param ccy: filter ccy entries
+        :param booking: not applicable for view accounts (used for account total lines
         by ccy)
+        :param is_sub_total: is a sub total line ? (per ccy)
         """
         is_view, amount = self.__sum_amount_account_check_view(account,
             'credit', ccy=ccy)
@@ -529,18 +533,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         amount = self.__sum_amount_account(account, move_state, 'credit',
             ccy=ccy, booking=booking, initial_balance=False)
-        # TODO
-        """if not ccy and self.init_balance:
-            # add initial balance (except for booking ccy breakdown subtotals)
-            amount += self.__sum_amount_account(account, move_state, 'credit',
-                ccy=ccy, booking=booking, initial_balance=True)"""
         return self._currency_conv(amount)
 
-    def _sum_balance_account(self, account, ccy=False, booking=False):
+    def _sum_balance_account(self, account, ccy=False, booking=False,
+        is_sub_total=False):
         """
-        ccy: filter ccy entries
-        booking: not applicable for view accounts (used for account total lines
+        :param ccy: filter ccy entries
+        :param booking: not applicable for view accounts (used for account total lines
         by ccy)
+        :param is_sub_total: is a sub total line ? (per ccy)
         """
         is_view, amount = self.__sum_amount_account_check_view(account,
             'balance', ccy=ccy)
@@ -556,12 +557,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if self.target_move == 'posted':
             move_state = ['posted','']
 
+        initial_balance = self.init_balance and is_sub_total and ccy or False
         amount = self.__sum_amount_account(account, move_state, 'balance',
-            ccy=ccy, booking=booking, initial_balance=False)
-        # TODO
-        """if self.init_balance:  # add initial balance
-            amount += self.__sum_amount_account(account, move_state, 'balance',
-                ccy=ccy, booking=booking, initial_balance=True)"""
+            ccy=ccy, booking=booking, initial_balance=initial_balance)
         return self._currency_conv(amount)
 
     def _get_account(self, data):

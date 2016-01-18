@@ -331,9 +331,9 @@ ccy_sub_total_style_right_suffix = 'Right'
 
 % for c in get_currencies(o):
 <%
-debit = sum_debit_account(o, ccy=c, booking=True)
-credit = sum_credit_account(o, ccy=c, booking=True)
-bal = sum_balance_account(o, ccy=c, booking=True)
+debit = sum_debit_account(o, ccy=c, booking=True, is_sub_total=True)
+credit = sum_credit_account(o, ccy=c, booking=True, is_sub_total=True)
+bal = sum_balance_account(o, ccy=c, booking=True, is_sub_total=True)
 show_line = debit or credit or bal
 %>
 % if show_line:
@@ -354,7 +354,7 @@ show_line = debit or credit or bal
     <Data ss:Type="Number">${bal}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=False)}</Data>
+    <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=False, is_sub_total=True)}</Data>
 </Cell>
 </Row>
 % endif
