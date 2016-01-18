@@ -1031,6 +1031,7 @@
             <field name="symbol">€</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="currency_name">EURO</field>
             <!-- Company ID will be set later -->
             <field name="company_id" eval="None"/>
         </record>
@@ -1075,553 +1076,1455 @@
 
         <!-- The Following currency rates are considered as on 1st Jan,2010 against EUR. -->
         <!-- Currencies -->
-        <record id="EUR" model="res.currency">
+        <record id="EUR" model="res.currency" forcecreate="0">
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="USD" model="res.currency">
+        <record id="USD" model="res.currency" forcecreate="0">
             <field name="name">USD</field>
             <field name="symbol">$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="company_id" ref="main_company"/>
+            <field name="currency_name">UNITED STATES DOLLAR</field>
+            <field name="active" eval="False"/>
         </record>
-        <record id="rateUSD" model="res.currency.rate">
+        <record id="rateUSD" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.2834</field>
             <field name="currency_id" ref="USD"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="VEB" model="res.currency">
-            <field name="name">VEB</field>
-            <field name="symbol">Bs</field>
-            <field name="rounding">2.95</field>
-            <field name="accuracy">4</field>
-            <field name="company_id" ref="main_company"/>
-        </record>
-        <record id="rateVEB" model="res.currency.rate">
-            <field name="rate">2768.45</field>
-            <field name="currency_id" ref="VEB"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
-        </record>
-
-        <record id="CAD" model="res.currency">
+        <record id="CAD" model="res.currency" forcecreate="0">
             <field name="name">CAD</field>
             <field name="symbol">$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="company_id" ref="main_company"/>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CANADIAN DOLLAR</field>
         </record>
-        <record id="rateCAD" model="res.currency.rate">
+        <record id="rateCAD" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.3388</field>
             <field name="currency_id" ref="CAD"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-
-        <record id="CHF" model="res.currency">
+        <record id="CHF" model="res.currency" forcecreate="0">
             <field name="name">CHF</field>
             <field name="symbol">CHF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="True"/>
+            <field name="currency_name">SWISS FRANC</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateCHF" model="res.currency.rate">
+        <record id="rateCHF" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.3086</field>
             <field name="currency_id" ref="CHF"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="BRL" model="res.currency">
+        <record id="BRL" model="res.currency" forcecreate="0">
             <field name="name">BRL</field>
             <field name="symbol">R$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BRAZILIAN REAL</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateBRL" model="res.currency.rate">
+        <record id="rateBRL" model="res.currency.rate" forcecreate="0">
             <field name="rate">2.2344</field>
             <field name="currency_id" ref="BRL"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="CNY" model="res.currency">
+        <record id="CNY" model="res.currency" forcecreate="0">
             <field name="name">CNY</field>
             <field name="symbol">¥</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
             <field name="company_id" ref="main_company"/>
+            <field name="currency_name">CHINESE YUAN</field>
         </record>
-        <record id="rateCNY" model="res.currency.rate">
+        <record id="rateCNY" model="res.currency.rate" forcecreate="0">
             <field name="rate">8.7556</field>
             <field name="currency_id" ref="CNY"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
 
-        <record id="COP" model="res.currency">
+        <record id="COP" model="res.currency" forcecreate="0">
             <field name="name">COP</field>
             <field name="symbol">$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">COLOMBIAN PESO</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateCOP" model="res.currency.rate">
+        <record id="rateCOP" model="res.currency.rate" forcecreate="0">
             <field name="rate">2933.8378</field>
             <field name="currency_id" ref="COP"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="CZK" model="res.currency">
+        <record id="CZK" model="res.currency" forcecreate="0">
             <field name="name">CZK</field>
             <field name="symbol">Kč</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
             <field name="company_id" ref="main_company"/>
+            <field name="currency_name">CZECH KORUNA</field>
         </record>
-        <record id="rateCZK" model="res.currency.rate">
+        <record id="rateCZK" model="res.currency.rate" forcecreate="0">
             <field name="rate">26.5634</field>
             <field name="currency_id" ref="CZK"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="DKK" model="res.currency">
+        <record id="DKK" model="res.currency" forcecreate="0">
             <field name="name">DKK</field>
             <field name="symbol">kr</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
             <field name="company_id" ref="main_company"/>
+            <field name="currency_name">DANISH KRONE</field>
         </record>
-        <record id="rateDKK" model="res.currency.rate">
+        <record id="rateDKK" model="res.currency.rate" forcecreate="0">
             <field name="rate">7.4445</field>
             <field name="currency_id" ref="DKK"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
 
-        <record id="HUF" model="res.currency">
+        <record id="HUF" model="res.currency" forcecreate="0">
             <field name="name">HUF</field>
             <field name="symbol">Ft</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
             <field name="company_id" ref="main_company"/>
+            <field name="currency_name">HUNGARIAN FORINT</field>
         </record>
-        <record id="rateHUF" model="res.currency.rate">
+        <record id="rateHUF" model="res.currency.rate" forcecreate="0">
             <field name="rate">271.5621</field>
             <field name="currency_id" ref="HUF"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="IDR" model="res.currency">
+        <record id="IDR" model="res.currency" forcecreate="0">
             <field name="name">IDR</field>
             <field name="symbol">Rp</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
             <field name="company_id" ref="main_company"/>
+            <field name="currency_name">INDONESIAN RUPIAH</field>
         </record>
-        <record id="rateIDR1" model="res.currency.rate">
+        <record id="rateIDR1" model="res.currency.rate" forcecreate="0">
             <field name="rate">14352.00</field>
             <field name="currency_id" ref="IDR"/>
             <field eval="time.strftime('2009-01-01')" name="name"/>
         </record>
-        <record id="rateIDR" model="res.currency.rate">
+        <record id="rateIDR" model="res.currency.rate" forcecreate="0">
             <field name="rate">11796.39</field>
             <field name="currency_id" ref="IDR"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="LVL" model="res.currency">
+        <record id="LVL" model="res.currency" forcecreate="0">
             <field name="name">LVL</field>
             <field name="symbol">Ls</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">LATVIAN LATS</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateLVL" model="res.currency.rate">
+        <record id="rateLVL" model="res.currency.rate" forcecreate="0">
             <field name="rate">0.7086</field>
             <field name="currency_id" ref="LVL"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
 
-        <record id="NOK" model="res.currency">
+        <record id="NOK" model="res.currency" forcecreate="0">
             <field name="name">NOK</field>
             <field name="symbol">kr</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">NORWEGIAN KRONE</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateNOK" model="res.currency.rate">
+        <record id="rateNOK" model="res.currency.rate" forcecreate="0">
             <field name="rate">7.8668</field>
             <field name="currency_id" ref="NOK"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="XPF" model="res.currency">
+        <record id="XPF" model="res.currency" forcecreate="0">
             <field name="name">XPF</field>
             <field name="symbol">XPF</field>
             <field name="rounding">1.00</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CFP FRANC</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateXPF" model="res.currency.rate">
+        <record id="rateXPF" model="res.currency.rate" forcecreate="0">
             <field name="rate">119.331742</field>
             <field name="currency_id" ref="XPF"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="PAB" model="res.currency">
+        <record id="PAB" model="res.currency" forcecreate="0">
             <field name="name">PAB</field>
             <field name="symbol">B/.</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">PANAMANIAN BALBOA</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="ratePAB" model="res.currency.rate">
+        <record id="ratePAB" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.2676</field>
             <field name="currency_id" ref="PAB"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="PLN" model="res.currency">
+        <record id="PLN" model="res.currency" forcecreate="0">
             <field name="name">PLN</field>
             <field name="symbol">zł</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">POLISH ZLOTY</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="ratePLN" model="res.currency.rate">
+        <record id="ratePLN" model="res.currency.rate" forcecreate="0">
             <field name="rate">4.1005</field>
             <field name="currency_id" ref="PLN"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="SEK" model="res.currency">
+        <record id="SEK" model="res.currency" forcecreate="0">
             <field name="name">SEK</field>
             <field name="symbol">kr</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="currency_name">SWEDISH KRONA</field>
+            <field name="active" eval="False"/>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateSEK" model="res.currency.rate">
+        <record id="rateSEK" model="res.currency.rate" forcecreate="0">
             <field name="rate">10.3004</field>
             <field name="currency_id" ref="SEK"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="GBP" model="res.currency">
+        <record id="GBP" model="res.currency" forcecreate="0">
             <field name="name">GBP</field>
             <field name="symbol">£</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">POUND STERLING</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateGBP" model="res.currency.rate">
+        <record id="rateGBP" model="res.currency.rate" forcecreate="0">
             <field name="rate">0.8333</field>
             <field name="currency_id" ref="GBP"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="ARS" model="res.currency">
+        <record id="ARS" model="res.currency" forcecreate="0">
             <field name="name">ARS</field>
             <field name="symbol">$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ARGENTINE PESO</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateARS" model="res.currency.rate">
+        <record id="rateARS" model="res.currency.rate" forcecreate="0">
             <field name="rate">5.0881</field>
             <field name="currency_id" ref="ARS"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="INR" model="res.currency">
+        <record id="INR" model="res.currency" forcecreate="0">
             <field name="name">INR</field>
             <field name="symbol">Rs</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">INDIAN RUPEE</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateINR" model="res.currency.rate">
+        <record id="rateINR" model="res.currency.rate" forcecreate="0">
             <field name="rate">59.9739</field>
             <field name="currency_id" ref="INR"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="AUD" model="res.currency">
+        <record id="AUD" model="res.currency" forcecreate="0">
             <field name="name">AUD</field>
             <field name="symbol">$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">AUSTRALIAN DOLLAR</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateAUD" model="res.currency.rate">
+        <record id="rateAUD" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.4070</field>
             <field name="currency_id" ref="AUD"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="UAH" model="res.currency">
+        <record id="UAH" model="res.currency" forcecreate="0">
             <field name="name">UAH</field>
             <field name="symbol">₴</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">UKRAINIAN HRYVNIA</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateUAH" model="res.currency.rate">
+        <record id="rateUAH" model="res.currency.rate" forcecreate="0">
             <field name="rate">10.1969</field>
             <field name="currency_id" ref="UAH"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="VND" model="res.currency">
+        <record id="VND" model="res.currency" forcecreate="0">
             <field name="name">VND</field>
             <field name="symbol">₫</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">VIETNAMESE DONG</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateVND" model="res.currency.rate">
+        <record id="rateVND" model="res.currency.rate" forcecreate="0">
             <field name="rate">26330.01</field>
             <field name="currency_id" ref="VND"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="HKD" model="res.currency">
+        <record id="HKD" model="res.currency" forcecreate="0">
             <field name="name">HKD</field>
             <field name="symbol">$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">HONG KONG DOLLAR</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateHKD" model="res.currency.rate">
+        <record id="rateHKD" model="res.currency.rate" forcecreate="0">
             <field name="rate">11.1608</field>
             <field name="currency_id" ref="HKD"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="JPY" model="res.currency">
+        <record id="JPY" model="res.currency" forcecreate="0">
             <field name="name">JPY</field>
             <field name="symbol">¥</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">JAPANESE YEN</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateJPY" model="res.currency.rate">
+        <record id="rateJPY" model="res.currency.rate" forcecreate="0">
             <field name="rate">133.62</field>
             <field name="currency_id" ref="JPY"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="BGN" model="res.currency">
+        <record id="BGN" model="res.currency" forcecreate="0">
             <field name="name">BGN</field>
             <field name="symbol">лв</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BULGARIAN LEV</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateBGN" model="res.currency.rate">
+        <record id="rateBGN" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.9558</field>
             <field name="currency_id" ref="BGN"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="LTL" model="res.currency">
+        <record id="LTL" model="res.currency" forcecreate="0">
             <field name="name">LTL</field>
             <field name="symbol">Lt</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">LITHUANIAN LITAS</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateLTL" model="res.currency.rate">
+        <record id="rateLTL" model="res.currency.rate" forcecreate="0">
             <field name="rate">3.4528</field>
             <field name="currency_id" ref="LTL"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="RON" model="res.currency">
+        <record id="RON" model="res.currency" forcecreate="0">
             <field name="name">RON</field>
             <field name="symbol">lei</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ROMANIAN NEW LEU</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateRON" model="res.currency.rate">
+        <record id="rateRON" model="res.currency.rate" forcecreate="0">
             <field name="rate">4.2253</field>
             <field name="currency_id" ref="RON"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="HRK" model="res.currency">
+        <record id="HRK" model="res.currency" forcecreate="0">
             <field name="name">HRK</field>
             <field name="symbol">kn</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CROATIAN KUNA</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateHRK" model="res.currency.rate">
+        <record id="rateHRK" model="res.currency.rate" forcecreate="0">
             <field name="rate">7.2936</field>
             <field name="currency_id" ref="HRK"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="RUB" model="res.currency">
+        <record id="RUB" model="res.currency" forcecreate="0">
             <field name="name">RUB</field>
             <field name="symbol">руб</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">RUSSIAN ROUBLE</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateRUB" model="res.currency.rate">
+        <record id="rateRUB" model="res.currency.rate" forcecreate="0">
             <field name="rate">43.16</field>
             <field name="currency_id" ref="RUB"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="TRY" model="res.currency">
+        <record id="TRY" model="res.currency" forcecreate="0">
             <field name="name">TRY</field>
             <field name="symbol">TL</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">TURKISH LIRA</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateTRY" model="res.currency.rate">
+        <record id="rateTRY" model="res.currency.rate" forcecreate="0">
             <field name="rate">2.1411</field>
             <field name="currency_id" ref="TRY"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="KRW" model="res.currency">
+        <record id="KRW" model="res.currency" forcecreate="0">
             <field name="name">KRW</field>
             <field name="symbol">₩</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SOUTH KOREAN WON</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateKRW" model="res.currency.rate">
+        <record id="rateKRW" model="res.currency.rate" forcecreate="0">
             <field name="rate">1662.37</field>
             <field name="currency_id" ref="KRW"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="MXN" model="res.currency">
+        <record id="MXN" model="res.currency" forcecreate="0">
             <field name="name">MXN</field>
             <field name="symbol">$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MEXICAN PESO</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateMXN" model="res.currency.rate">
+        <record id="rateMXN" model="res.currency.rate" forcecreate="0">
             <field name="rate">18.6664</field>
             <field name="currency_id" ref="MXN"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="MYR" model="res.currency">
+        <record id="MYR" model="res.currency" forcecreate="0">
             <field name="name">MYR</field>
             <field name="symbol">RM</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MALAYSIAN RINGGIT</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateMYR" model="res.currency.rate">
+        <record id="rateMYR" model="res.currency.rate" forcecreate="0">
             <field name="rate">4.8887</field>
             <field name="currency_id" ref="MYR"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="NZD" model="res.currency">
+        <record id="NZD" model="res.currency" forcecreate="0">
             <field name="name">NZD</field>
             <field name="symbol">$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">NEW ZEALAND DOLLAR</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateNZD" model="res.currency.rate">
+        <record id="rateNZD" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.9764</field>
             <field name="currency_id" ref="NZD"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="PHP" model="res.currency">
+        <record id="PHP" model="res.currency" forcecreate="0">
             <field name="name">PHP</field>
             <field name="symbol">Php</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">PHILIPPINE PESO</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="ratePHP" model="res.currency.rate">
+        <record id="ratePHP" model="res.currency.rate" forcecreate="0">
             <field name="rate">66.1</field>
             <field name="currency_id" ref="PHP"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="SGD" model="res.currency">
+        <record id="SGD" model="res.currency" forcecreate="0">
             <field name="name">SGD</field>
             <field name="symbol">$</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SINGAPORE DOLLAR</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateSGD" model="res.currency.rate">
+        <record id="rateSGD" model="res.currency.rate" forcecreate="0">
             <field name="rate">2.0126</field>
             <field name="currency_id" ref="SGD"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="THB" model="res.currency">
+        <record id="THB" model="res.currency" forcecreate="0">
             <field name="name">THB</field>
             <field name="symbol">฿</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">THAI BAHT</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateTHB" model="res.currency.rate">
+        <record id="rateTHB" model="res.currency.rate" forcecreate="0">
             <field name="rate">47.779</field>
             <field name="currency_id" ref="THB"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="ZAR" model="res.currency">
+        <record id="ZAR" model="res.currency" forcecreate="0">
             <field name="name">ZAR</field>
             <field name="symbol">R</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SOUTH AFRICAN RAND</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateZAR" model="res.currency.rate">
+        <record id="rateZAR" model="res.currency.rate" forcecreate="0">
             <field name="rate">10.5618</field>
             <field name="currency_id" ref="ZAR"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
         </record>
 
-        <record id="res_bank_1" model="res.bank">
+        <record id="res_bank_1" model="res.bank" forcecreate="0">
             <field name="name">Reserve</field>
             <field name="code">RSV</field>
         </record>
 
-        <record id="CRC" model="res.currency">
+        <record id="CRC" model="res.currency" forcecreate="0">
            <field name="name">CRC</field>
            <field name="rounding">0.01</field>
            <field name="accuracy">4</field>
            <field name="symbol">¢</field>
+           <field name="active" eval="False"/>
+           <field name="currency_name">COSTA RICAN COLON</field>
         </record>
-        <record id="rateCRC" model="res.currency.rate">
+        <record id="rateCRC" model="res.currency.rate" forcecreate="0">
            <field name="rate">691.3153</field>
            <field name="currency_id" ref="CRC"/>
            <field eval="time.strftime('%Y-01-01')" name="name"/>
        </record>
 
-        <record id="MUR" model="res.currency">
+        <record id="MUR" model="res.currency" forcecreate="0">
             <field name="name">MUR</field>
             <field name="symbol">Rs</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MAURITIAN RUPEE</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="rateMUR" model="res.currency.rate">
+        <record id="rateMUR" model="res.currency.rate" forcecreate="0">
             <field name="rate">40.28</field>
             <field name="currency_id" ref="MUR"/>
             <field eval="time.strftime('%Y-01-01')" name="name"/>
+        </record>
+
+
+        <record id="base.AED" model="res.currency" forcecreate="0">
+            <field name="name">AED</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">UNITED ARAB EMIRATES DIRHAM</field>
+        </record>
+        <record id="base.AFN" model="res.currency" forcecreate="0">
+            <field name="name">AFN</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">AFGHAN AFGHANI</field>
+        </record>
+        <record id="base.ALL" model="res.currency" forcecreate="0">
+            <field name="name">ALL</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ALBANIAN LEK</field>
+        </record>
+        <record id="base.AMD" model="res.currency" forcecreate="0">
+            <field name="name">AMD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ARMENIAN DRAM</field>
+        </record>
+        <record id="base.ANG" model="res.currency" forcecreate="0">
+            <field name="name">ANG</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">NETHERLANDS ANTILLEAN GUILDER</field>
+        </record>
+        <record id="base.AOA" model="res.currency" forcecreate="0">
+            <field name="name">AOA</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ANGOLAN KWANZA</field>
+        </record>
+        <record id="base.AWG" model="res.currency" forcecreate="0">
+            <field name="name">AWG</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ARUBAN FLORIN</field>
+        </record>
+        <record id="base.AZN" model="res.currency" forcecreate="0">
+            <field name="name">AZN</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">AZERBAIJANI MANAT</field>
+        </record>
+        <record id="base.BAM" model="res.currency" forcecreate="0">
+            <field name="name">BAM</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BOSNIA AND HERZEGOVINA CONVERTIBLE MARK</field>
+        </record>
+        <record id="base.BBD" model="res.currency" forcecreate="0">
+            <field name="name">BBD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BARBADOS DOLLAR</field>
+        </record>
+        <record id="base.BDT" model="res.currency" forcecreate="0">
+            <field name="name">BDT</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BANGLADESHI TAKA</field>
+        </record>
+        <record id="base.BHD" model="res.currency" forcecreate="0">
+            <field name="name">BHD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BAHRAINI DINAR</field>
+        </record>
+        <record id="base.BIF" model="res.currency" forcecreate="0">
+            <field name="name">BIF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BURUNDIAN FRANC</field>
+        </record>
+        <record id="base.BMD" model="res.currency" forcecreate="0">
+            <field name="name">BMD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BERMUDIAN DOLLAR</field>
+        </record>
+        <record id="base.BND" model="res.currency" forcecreate="0">
+            <field name="name">BND</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BRUNEI DOLLAR</field>
+        </record>
+        <record id="base.BOB" model="res.currency" forcecreate="0">
+            <field name="name">BOB</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BOLIVIANO</field>
+        </record>
+        <record id="base.BSD" model="res.currency" forcecreate="0">
+            <field name="name">BSD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BAHAMIAN DOLLAR</field>
+        </record>
+        <record id="base.BTN" model="res.currency" forcecreate="0">
+            <field name="name">BTN</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BHUTANESE NGULTRUM</field>
+        </record>
+        <record id="base.BWP" model="res.currency" forcecreate="0">
+            <field name="name">BWP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BOTSWANA PULA</field>
+        </record>
+        <record id="base.BYR" model="res.currency" forcecreate="0">
+            <field name="name">BYR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BELARUSIAN RUBLE</field>
+        </record>
+        <record id="base.BZD" model="res.currency" forcecreate="0">
+            <field name="name">BZD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">BELIZE DOLLAR</field>
+        </record>
+        <record id="base.CDF" model="res.currency" forcecreate="0">
+            <field name="name">CDF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CONGOLESE FRANC</field>
+        </record>
+        <record id="base.CLP" model="res.currency" forcecreate="0">
+            <field name="name">CLP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CHILEAN PESO</field>
+        </record>
+        <record id="base.CUC" model="res.currency" forcecreate="0">
+            <field name="name">CUC</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CUBAN CONVERTIBLE PESO</field>
+        </record>
+        <record id="base.CUP" model="res.currency" forcecreate="0">
+            <field name="name">CUP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CUBAN PESO</field>
+        </record>
+        <record id="base.CVE" model="res.currency" forcecreate="0">
+            <field name="name">CVE</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CAPE VERDE ESCUDO</field>
+        </record>
+        <record id="base.DJF" model="res.currency" forcecreate="0">
+            <field name="name">DJF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">DJIBOUTIAN FRANC</field>
+        </record>
+        <record id="base.DOP" model="res.currency" forcecreate="0">
+            <field name="name">DOP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">DOMINICAN PESO</field>
+        </record>
+        <record id="base.DZD" model="res.currency" forcecreate="0">
+            <field name="name">DZD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ALGERIAN DINAR</field>
+        </record>
+        <record id="base.EGP" model="res.currency" forcecreate="0">
+            <field name="name">EGP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">EGYPTIAN POUND</field>
+        </record>
+        <record id="base.ERN" model="res.currency" forcecreate="0">
+            <field name="name">ERN</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ERITREAN NAKFA</field>
+        </record>
+        <record id="base.ETB" model="res.currency" forcecreate="0">
+            <field name="name">ETB</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ETHIOPIAN BIRR</field>
+        </record>
+        <record id="base.EUR" model="res.currency" forcecreate="0">
+            <field name="name">EUR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="True"/>
+            <field name="currency_name">EURO</field>
+        </record>
+        <record id="base.FJD" model="res.currency" forcecreate="0">
+            <field name="name">FJD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">FIJI DOLLAR</field>
+        </record>
+        <record id="base.FKP" model="res.currency" forcecreate="0">
+            <field name="name">FKP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">FALKLAND ISLANDS POUND</field>
+        </record>
+        <record id="base.GEL" model="res.currency" forcecreate="0">
+            <field name="name">GEL</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">GEORGIAN LARI</field>
+        </record>
+        <record id="base.GHS" model="res.currency" forcecreate="0">
+            <field name="name">GHS</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">GHANAIAN CEDI</field>
+        </record>
+        <record id="base.GIP" model="res.currency" forcecreate="0">
+            <field name="name">GIP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">GIBRALTAR POUND</field>
+        </record>
+        <record id="base.GMD" model="res.currency" forcecreate="0">
+            <field name="name">GMD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">GAMBIAN DALASI</field>
+        </record>
+        <record id="base.GNF" model="res.currency" forcecreate="0">
+            <field name="name">GNF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">GUINEAN FRANC</field>
+        </record>
+        <record id="base.GTQ" model="res.currency" forcecreate="0">
+            <field name="name">GTQ</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">GUATEMALAN QUETZAL</field>
+        </record>
+        <record id="base.GYD" model="res.currency" forcecreate="0">
+            <field name="name">GYD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">GUYANESE DOLLAR</field>
+        </record>
+        <record id="base.HNL" model="res.currency" forcecreate="0">
+            <field name="name">HNL</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">HONDURAN LEMPIRA</field>
+        </record>
+        <record id="base.HTG" model="res.currency" forcecreate="0">
+            <field name="name">HTG</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">HAITIAN GOURDE</field>
+        </record>
+        <record id="base.ILS" model="res.currency" forcecreate="0">
+            <field name="name">ILS</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ISRAELI NEW SHEQEL</field>
+        </record>
+        <record id="base.IQD" model="res.currency" forcecreate="0">
+            <field name="name">IQD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">IRAQI DINAR</field>
+        </record>
+        <record id="base.IRR" model="res.currency" forcecreate="0">
+            <field name="name">IRR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">IRANIAN RIAL</field>
+        </record>
+        <record id="base.ISK" model="res.currency" forcecreate="0">
+            <field name="name">ISK</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ICELANDIC KRÓNA</field>
+        </record>
+        <record id="base.JMD" model="res.currency" forcecreate="0">
+            <field name="name">JMD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">JAMAICAN DOLLAR</field>
+        </record>
+        <record id="base.JOD" model="res.currency" forcecreate="0">
+            <field name="name">JOD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">JORDANIAN DINAR</field>
+        </record>
+        <record id="base.KES" model="res.currency" forcecreate="0">
+            <field name="name">KES</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">KENYAN SHILLING</field>
+        </record>
+        <record id="base.KGS" model="res.currency" forcecreate="0">
+            <field name="name">KGS</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">KYRGYZSTANI SOM</field>
+        </record>
+        <record id="base.KHR" model="res.currency" forcecreate="0">
+            <field name="name">KHR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CAMBODIAN RIEL</field>
+        </record>
+        <record id="base.KMF" model="res.currency" forcecreate="0">
+            <field name="name">KMF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">COMORO FRANC</field>
+        </record>
+        <record id="base.KPW" model="res.currency" forcecreate="0">
+            <field name="name">KPW</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">NORTH KOREAN WON</field>
+        </record>
+        <record id="base.KWD" model="res.currency" forcecreate="0">
+            <field name="name">KWD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">KUWAITI DINAR</field>
+        </record>
+        <record id="base.KYD" model="res.currency" forcecreate="0">
+            <field name="name">KYD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CAYMAN ISLANDS DOLLAR</field>
+        </record>
+        <record id="base.KZT" model="res.currency" forcecreate="0">
+            <field name="name">KZT</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">KAZAKHSTANI TENGE</field>
+        </record>
+        <record id="base.LAK" model="res.currency" forcecreate="0">
+            <field name="name">LAK</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">LAO KIP</field>
+        </record>
+        <record id="base.LBP" model="res.currency" forcecreate="0">
+            <field name="name">LBP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">LEBANESE POUND</field>
+        </record>
+        <record id="base.LKR" model="res.currency" forcecreate="0">
+            <field name="name">LKR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SRI LANKA RUPEE</field>
+        </record>
+        <record id="base.LRD" model="res.currency" forcecreate="0">
+            <field name="name">LRD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">LIBERIAN DOLLAR</field>
+        </record>
+        <record id="base.LSL" model="res.currency" forcecreate="0">
+            <field name="name">LSL</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">LESOTHO LOTI</field>
+        </record>
+        <record id="base.LYD" model="res.currency" forcecreate="0">
+            <field name="name">LYD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">LIBYAN DINAR</field>
+        </record>
+        <record id="base.MAD" model="res.currency" forcecreate="0">
+            <field name="name">MAD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MOROCCAN DIRHAM</field>
+        </record>
+        <record id="base.MDL" model="res.currency" forcecreate="0">
+            <field name="name">MDL</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MOLDOVAN LEU</field>
+        </record>
+        <record id="base.MGA" model="res.currency" forcecreate="0">
+            <field name="name">MGA</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MALAGASY ARIARY</field>
+        </record>
+        <record id="base.MKD" model="res.currency" forcecreate="0">
+            <field name="name">MKD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MACEDONIAN DENAR</field>
+        </record>
+        <record id="base.MMF" model="res.currency" forcecreate="0">
+            <field name="name">MMF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MYANMA KYAT2</field>
+        </record>
+        <record id="base.MMK" model="res.currency" forcecreate="0">
+            <field name="name">MMK</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MYANMA KYAT</field>
+        </record>
+        <record id="base.MNT" model="res.currency" forcecreate="0">
+            <field name="name">MNT</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MONGOLIAN TUGRIK</field>
+        </record>
+        <record id="base.MOP" model="res.currency" forcecreate="0">
+            <field name="name">MOP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MACANESE PATACA</field>
+        </record>
+        <record id="base.MRO" model="res.currency" forcecreate="0">
+            <field name="name">MRO</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MAURITANIAN OUGUIYA</field>
+        </record>
+        <record id="base.MVR" model="res.currency" forcecreate="0">
+            <field name="name">MVR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MALDIVIAN RUFIYAA</field>
+        </record>
+        <record id="base.MWK" model="res.currency" forcecreate="0">
+            <field name="name">MWK</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MALAWIAN KWACHA</field>
+        </record>
+        <record id="base.MZN" model="res.currency" forcecreate="0">
+            <field name="name">MZN</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">MOZAMBICAN METICAL</field>
+        </record>
+        <record id="base.NAD" model="res.currency" forcecreate="0">
+            <field name="name">NAD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">NAMIBIAN DOLLAR</field>
+        </record>
+        <record id="base.NGN" model="res.currency" forcecreate="0">
+            <field name="name">NGN</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">NIGERIAN NAIRA</field>
+        </record>
+        <record id="base.NIO" model="res.currency" forcecreate="0">
+            <field name="name">NIO</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CORDOBA ORO</field>
+        </record>
+        <record id="base.NPR" model="res.currency" forcecreate="0">
+            <field name="name">NPR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">NEPALESE RUPEE</field>
+        </record>
+        <record id="base.OMR" model="res.currency" forcecreate="0">
+            <field name="name">OMR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">OMANI RIAL</field>
+        </record>
+        <record id="base.PEN" model="res.currency" forcecreate="0">
+            <field name="name">PEN</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">PERUVIAN NUEVO SOL</field>
+        </record>
+        <record id="base.PGK" model="res.currency" forcecreate="0">
+            <field name="name">PGK</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">PAPUA NEW GUINEAN KINA</field>
+        </record>
+        <record id="base.PKR" model="res.currency" forcecreate="0">
+            <field name="name">PKR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">PAKISTANI RUPEE</field>
+        </record>
+        <record id="base.PYG" model="res.currency" forcecreate="0">
+            <field name="name">PYG</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">PARAGUAYAN GUARANÍ</field>
+        </record>
+        <record id="base.QAR" model="res.currency" forcecreate="0">
+            <field name="name">QAR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">QATARI RIAL</field>
+        </record>
+        <record id="base.RSD" model="res.currency" forcecreate="0">
+            <field name="name">RSD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SERBIAN DINAR</field>
+        </record>
+        <record id="base.RWF" model="res.currency" forcecreate="0">
+            <field name="name">RWF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">RWANDAN FRANC</field>
+        </record>
+        <record id="base.SAR" model="res.currency" forcecreate="0">
+            <field name="name">SAR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SAUDI RIYAL</field>
+        </record>
+        <record id="base.SBD" model="res.currency" forcecreate="0">
+            <field name="name">SBD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SOLOMON ISLANDS DOLLAR</field>
+        </record>
+        <record id="base.SCR" model="res.currency" forcecreate="0">
+            <field name="name">SCR</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SEYCHELLES RUPEE</field>
+        </record>
+        <record id="base.SDG" model="res.currency" forcecreate="0">
+            <field name="name">SDG</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SUDANESE POUND</field>
+        </record>
+        <record id="base.SHP" model="res.currency" forcecreate="0">
+            <field name="name">SHP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SAINT HELENA POUND</field>
+        </record>
+        <record id="base.SLL" model="res.currency" forcecreate="0">
+            <field name="name">SLL</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SIERRA LEONEAN LEONE</field>
+        </record>
+        <record id="base.SOS" model="res.currency" forcecreate="0">
+            <field name="name">SOS</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SOMALI SHILLING</field>
+        </record>
+        <record id="base.SRD" model="res.currency" forcecreate="0">
+            <field name="name">SRD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SURINAMESE DOLLAR</field>
+        </record>
+        <record id="base.SSP" model="res.currency" forcecreate="0">
+            <field name="name">SSP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SOUTH SUDANESE POUND</field>
+        </record>
+        <record id="base.STD" model="res.currency" forcecreate="0">
+            <field name="name">STD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SÃO TOMÉ AND PRÍNCIPE DOBRA</field>
+        </record>
+        <record id="base.SYP" model="res.currency" forcecreate="0">
+            <field name="name">SYP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SYRIAN POUND</field>
+        </record>
+        <record id="base.SZL" model="res.currency" forcecreate="0">
+            <field name="name">SZL</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">LILANGENI</field>
+        </record>
+        <record id="base.TJS" model="res.currency" forcecreate="0">
+            <field name="name">TJS</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">TAJIKISTANI SOMONI</field>
+        </record>
+        <record id="base.TMT" model="res.currency" forcecreate="0">
+            <field name="name">TMT</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">TURKMENISTANI MANAT</field>
+        </record>
+        <record id="base.TND" model="res.currency" forcecreate="0">
+            <field name="name">TND</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">TUNISIAN DINAR</field>
+        </record>
+        <record id="base.TOP" model="res.currency" forcecreate="0">
+            <field name="name">TOP</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">TONGAN PA'ANGA</field>
+        </record>
+        <record id="base.TTD" model="res.currency" forcecreate="0">
+            <field name="name">TTD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">TRINIDAD AND TOBAGO DOLLAR</field>
+        </record>
+        <record id="base.TWD" model="res.currency" forcecreate="0">
+            <field name="name">TWD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">NEW TAIWAN DOLLAR</field>
+        </record>
+        <record id="base.TZS" model="res.currency" forcecreate="0">
+            <field name="name">TZS</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">TANZANIAN SHILLING</field>
+        </record>
+        <record id="base.UGX" model="res.currency" forcecreate="0">
+            <field name="name">UGX</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">UGANDAN SHILLING</field>
+        </record>
+        <record id="base.UYU" model="res.currency" forcecreate="0">
+            <field name="name">UYU</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">URUGUAYAN PESO</field>
+        </record>
+        <record id="base.UZS" model="res.currency" forcecreate="0">
+            <field name="name">UZS</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">UZBEKISTAN SOM</field>
+        </record>
+        <record id="base.VEF" model="res.currency" forcecreate="0">
+            <field name="name">VEF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">VENEZUELAN BOLÍVAR FUERTE</field>
+        </record>
+        <record id="base.VUV" model="res.currency" forcecreate="0">
+            <field name="name">VUV</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">VANUATU VATU</field>
+        </record>
+        <record id="base.WST" model="res.currency" forcecreate="0">
+            <field name="name">WST</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">SAMOAN TALA</field>
+        </record>
+        <record id="base.XAF" model="res.currency" forcecreate="0">
+            <field name="name">XAF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CFA FRANC BEAC</field>
+        </record>
+        <record id="base.XCD" model="res.currency" forcecreate="0">
+            <field name="name">XCD</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">EAST CARIBBEAN DOLLAR</field>
+        </record>
+        <record id="base.XOF" model="res.currency" forcecreate="0">
+            <field name="name">XOF</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">CFA FRANC BCEAO</field>
+        </record>
+        <record id="base.YER" model="res.currency" forcecreate="0">
+            <field name="name">YER</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">YEMENI RIAL</field>
+        </record>
+        <record id="base.ZMK" model="res.currency" forcecreate="0">
+            <!-- US-315: Rename ZMK code to ZMW -->
+            <field name="name">ZMW</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ZAMBIAN KWACHA</field>
+        </record>
+        <record id="base.ZWL" model="res.currency" forcecreate="0">
+            <field name="name">ZWL</field>
+            <field name="rounding">0.01</field>
+            <field name="accuracy">4</field>
+            <field name="active" eval="False"/>
+            <field name="currency_name">ZIMBABWE DOLLAR</field>
         </record>
     </data>
 </openerp>

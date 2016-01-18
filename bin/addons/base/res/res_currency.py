@@ -59,7 +59,7 @@ class res_currency(osv.osv):
         'company_id':fields.many2one('res.company', 'Company'),
         'date': fields.date('Date'),
         'base': fields.boolean('Base')
-
+        'currency_name': fields.char('Currency Name', size=64, required=True, translate=1),
     }
     _defaults = {
         'active': lambda *a: 1,
