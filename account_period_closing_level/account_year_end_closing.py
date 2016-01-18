@@ -266,10 +266,8 @@ class account_year_end_closing(osv.osv):
             for m in ('account.move.line', 'account.move', ) ]  # in del order
         for o in to_del_objs:
             ids = o.search(cr, uid, domain, context=context)
-            """
             if ids:
-                # TODO SYNC AWARE unlink or reverse
-            """
+                o.unlink(cr, uid, ids, context=context)
 
     def report_bs_balance_to_next_fy(self, cr, uid, fy_rec,
             currency_table_id=False, context=None):
@@ -376,7 +374,7 @@ class account_year_end_closing(osv.osv):
             inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join account_account_type t on t.id = a.user_type
-            where ml.instance_id = %d and m.state = 'posted'
+            where ml.instance_id = %d
             and t.report_type in ('income', 'expense')
             and ml.date >= '%s' and ml.date <= '%s'
         ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
@@ -401,7 +399,7 @@ class account_year_end_closing(osv.osv):
             inner join account_account a on a.id = ml.account_id
             inner join account_account_type t on t.id = a.user_type
             inner join res_currency c on c.id = ml.currency_id
-            where ml.instance_id = %d and m.state = 'posted'
+            where ml.instance_id = %d
             and t.report_type in ('asset', 'liability')
             and ml.date >= '%s' and ml.date <= '%s'
             group by ml.currency_id, ml.account_id
