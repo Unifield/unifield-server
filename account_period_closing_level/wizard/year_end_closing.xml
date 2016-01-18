@@ -15,7 +15,6 @@
                         <newline />
                         <field name="has_book_pl_results" />
                         <newline />
-                        <field name="currency_table_id" />
                     </group>
                     <separator string="" colspan="4"/>
                     <group colspan="4" col="4">

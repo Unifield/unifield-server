@@ -47,8 +47,6 @@ class wizard_account_year_end_closing(osv.osv_memory):
         'has_move_regular_bs_to_0': fields.boolean(
             "Move regular B/S account to 0"),
         'has_book_pl_results': fields.boolean("Book the P&L results"),
-        'currency_table_id': fields.many2one('res.currency.table',
-            "Currency table", domain=[('state', '=', 'valid')]),
         'instance_level': fields.function(_get_instance_level, type='char',
             method=True, string='Instance level'),
     }
@@ -74,10 +72,8 @@ class wizard_account_year_end_closing(osv.osv_memory):
         if isinstance(ids, (int, long, )):
             ids = [ids]
         rec = self.browse(cr, uid, ids[0], context=context)
-        currency_table_id = rec.currency_table_id \
-            and rec.currency_table_id.id or False
         self.pool.get('account.year.end.closing').process_closing(cr, uid,
-            rec.fy_id, currency_table_id=currency_table_id, context=context)
+            rec.fy_id, context=context)
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
 wizard_account_year_end_closing()
