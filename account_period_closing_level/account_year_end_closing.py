@@ -80,19 +80,21 @@ class account_period(osv.osv):
     # => always hide Period 0 except if 'show_period_0' found in context
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
         context=None, count=False):
-        if not args:
-            args = []
-        add_0_filter = True
-        for a in args:
-            if len(a) == 3:
-                if a[0] in ('is_system', ):
-                    # existing global system filter exists: let it
-                    add_0_filter = False
-                    break
 
-        if add_0_filter:
-            if context is None or 'show_period_0' not in context:
-                args.append(('number', '!=', 0))
+        if not context or not context.get('sync_update_execution', False):
+            if not args:
+                args = []
+            add_0_filter = True
+            for a in args:
+                if len(a) == 3:
+                    if a[0] in ('is_system', ):
+                        # existing global system filter exists: let it
+                        add_0_filter = False
+                        break
+
+            if add_0_filter:
+                if context is None or 'show_period_0' not in context:
+                    args.append(('number', '!=', 0))
         res = super(account_period, self).search(cr, uid, args, offset=offset,
             limit=limit, order=order, context=context, count=count)
         return res
