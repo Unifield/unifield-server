@@ -807,6 +807,7 @@ class FinanceTestCorCases(FinanceTest):
                 (70., 'OPS', 'HT101', 'PF'),
                 (30., 'OPS', 'HT120', 'PF'),
             ]
+            self.period_reopen(db, 'f', 2)
             self.simulation_correction_wizard(db, ji_id,
                     cor_date=self.get_orm_fy_date(2, 7),  # 7 Feb of this year
                     new_account_code=False,
@@ -2052,6 +2053,9 @@ class FinanceTestCorCases(FinanceTest):
         python -m unittest tests.test_finance_cor_cases.FinanceTestCorCases.test_cor_25
         """
         push_db = self.c1
+        self.period_reopen(self.p1, 'f', 2)
+        self.period_reopen(self.p12, 'f', 2)
+        self.period_reopen(self.c1, 'f', 2)
         model_aal = 'account.analytic.line'
 
         invoice_lines_accounts = [ '63100', '63110', '63120', ]
