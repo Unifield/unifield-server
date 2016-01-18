@@ -341,6 +341,8 @@ class update(osv.osv):
         ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
         children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
         for update in self.browse(cr, uid, update_ids, context=context):
+            if not update.rule_id:
+                continue
             if update.rule_id.direction == 'bi-private':
                 if update.is_deleted:
                     privates = [entity.id]
@@ -351,9 +353,7 @@ class update(osv.osv):
                                [update.owner.id]
             else:
                 privates = []
-            if not update.rule_id:
-                update_to_send.append(update)
-            elif (update.rule_id.direction == 'up' and update.source.id in children) or \
+            if (update.rule_id.direction == 'up' and update.source.id in children) or \
                (update.rule_id.direction == 'down' and update.source.id in ancestor) or \
                (update.rule_id.direction == 'bidirectional') or \
                (entity.id in privates) or \
