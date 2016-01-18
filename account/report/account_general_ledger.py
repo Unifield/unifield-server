@@ -231,7 +231,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             return _('All Journals')
         return ', '.join(self._get_journal(data))
 
-    def get_currencies(self, account=False):
+    def get_currencies(self, account=False, include_with_ib=False):
         res = []
 
         sql = """
@@ -242,7 +242,22 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if account:
             sql += " and l.account_id=%d" % (account.id, )
         self.cr.execute(sql)
-        rows = self.cr.fetchall()
+        rows = self.cr.fetchall() or []
+
+        if include_with_ib and self.init_balance:
+            sql = """
+                SELECT DISTINCT(l.currency_id)
+                FROM account_move_line AS l
+            WHERE %s
+            """ % (self.init_query)
+            if account:
+                sql += " and l.account_id=%d" % (account.id, )
+            self.cr.execute(sql)
+            ib_rows = self.cr.fetchall() or []
+            if ib_rows:
+                rows += ib_rows
+                rows = list(set(rows))
+
         if rows:
             rc_obj = self.pool.get('res.currency')
             ordered_ids = rc_obj.search(self.cr, self.uid, [
@@ -253,7 +268,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return res
 
     def get_currencies_account_subtotals(self, account):
-        ccy_brs = self.get_currencies(account=account)
+        ccy_brs = self.get_currencies(account=account, include_with_ib=True)
         res = []
 
         if ccy_brs:
@@ -479,7 +494,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         res = self.cr.fetchone()[0] or 0.0
 
         if initial_balance:
-            # US-822 deduce inital balance at ccy subtotal line level
+            # US-822 include inital balance at ccy subtotal line level
             sql = 'SELECT {field} \
             FROM account_move_line l \
             JOIN account_move am ON (am.id = l.move_id) \
@@ -489,7 +504,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             sql = sql.replace('{field}', field).replace(
             '{booking}', '_currency' if booking else '')
             self.cr.execute(sql, (account.id, ))
-            res -= self.cr.fetchone()[0] or 0.0
+            res += self.cr.fetchone()[0] or 0.0
 
         return res
 

@@ -329,7 +329,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Row>
 % endfor
 
-% for c in get_currencies(o):
+% for c in get_currencies(o, include_with_ib=True):
 <%
 debit = sum_debit_account(o, ccy=c, booking=True, is_sub_total=True)
 credit = sum_credit_account(o, ccy=c, booking=True, is_sub_total=True)
