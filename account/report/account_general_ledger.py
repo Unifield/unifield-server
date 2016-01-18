@@ -46,7 +46,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         used_context = data['form'].get('used_context',{})
         self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=used_context)
         ctx2 = data['form'].get('used_context',{}).copy()
-        ctx2.update({'initial_bal': True})
+        #ctx2.update({'initial_bal': True})
+        ctx2.update({'period0': 1, 'show_period_0': 1, 'state_agnostic': 1, })
+        if 'chart_account_id' in ctx2:
+            del ctx2['chart_account_id']  # US-822: IB period 0 journals entries
+        if 'journal_ids' in ctx2:
+            del ctx2['journal_ids']  # US-822: IB period 0 journals entries
         self.init_query = obj_move._query_get(self.cr, self.uid, obj='l', context=ctx2)
         self.init_balance = data['form']['initial_balance']
         self.display_account = data['form']['display_account']
@@ -190,6 +195,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_show_move_lines': self.get_show_move_lines,
             'get_ccy_label': self.get_ccy_label,
             'get_title': self._get_title,
+            'get_initial_balance': self._get_initial_balance,
         })
         
         # company currency
@@ -218,12 +224,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.cr.execute(sql % (account.id, self.query, ))
         sum_currency = self.cr.fetchone()[0] or 0.0
 
-        if self.init_balance:
+        # TODO
+        """if self.init_balance:
             sql = 'SELECT sum(l.amount_currency) AS tot_currency \
                 FROM account_move_line l \
                 WHERE l.account_id = %s AND %s ' + reconcile_pattern
             self.cr.execute(sql % (account.id, self.init_query, ))
-            sum_currency += self.cr.fetchone()[0] or 0.0
+            sum_currency += self.cr.fetchone()[0] or 0.0"""
 
         return sum_currency
 
@@ -389,35 +396,35 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     " AND reconcile_id is null and ac.reconcile ='t'" or '')
         self.cr.execute(sql, (account.id,))
         res_lines = self.cr.dictfetchall()
+
         res_init = []
-        if res_lines and self.init_balance:
-            #FIXME: replace the label of lname with a string translatable
+        if self.init_balance:
+            # US-822: move lines for period 0 IB journal
+            sql_sort = 'l.move_id'
             sql = """
-                SELECT 0 AS lid, '' AS ldate, '' AS lcode,
-                COALESCE(SUM(l.amount_currency),0.0) AS amount_currency,
-                '' AS lref,
-                'Initial Balance' AS lname, COALESCE(SUM(l.debit),0.0) AS debit,
-                COALESCE(SUM(l.credit),0.0) AS credit,COALESCE(SUM(l.debit_currency),0.0) AS debit_currency,
-                COALESCE(SUM(l.credit_currency),0.0) AS credit_currency, '' AS lperiod_id, '' AS lpartner_id,
-                '' AS move_name, '' AS mmove_id, '' AS period_code,
-                '' AS currency_code,
-                NULL AS currency_id,
-                '' AS invoice_id, '' AS invoice_type, '' AS invoice_number,
+                SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,
+                l.amount_currency,l.ref AS lref, l.name AS lname,
+                COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit,
+                COALESCE(l.debit_currency,0) as debit_currency,
+                COALESCE(l.credit_currency,0) as credit_currency,
+                l.period_id AS lperiod_id, '' AS lpartner_id,
+                m.name AS move_name, m.id AS mmove_id,
+                per.code as period_code, c.symbol AS currency_code,
+                '' AS invoice_id, '' invoice_type,
+                '' AS invoice_number,
                 '' AS partner_name, c.name as currency_name
                 FROM account_move_line l
-                LEFT JOIN account_move m on (l.move_id=m.id)
+                JOIN account_move m on (l.move_id=m.id)
                 LEFT JOIN res_currency c on (l.currency_id=c.id)
                 LEFT JOIN res_partner p on (l.partner_id=p.id)
-                LEFT JOIN account_invoice i on (m.id =i.move_id)
+                LEFT JOIN account_period per on (per.id=l.period_id)
                 LEFT JOIN account_account ac on (ac.id=l.account_id)
-                JOIN account_journal j on (l.journal_id=j.id)
-                WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}}
-            """ %(self.init_query, tuple(move_state))
-            sql = sql.replace('{{reconcile}}',
-                self.unreconciled_filter and \
-                    " AND reconcile_id is null and ac.reconcile ='t'" or '')
-            self.cr.execute(sql, (account.id,))
+                    JOIN account_journal j on (l.journal_id=j.id)
+                WHERE %s AND l.account_id = %%s and per.number = 0 ORDER by %s
+            """ % (self.init_query, sql_sort, )
+            self.cr.execute(sql, (account.id, ))
             res_init = self.cr.dictfetchall()
+
         res = res_init + res_lines
         account_sum = 0.0
         for l in res:
@@ -498,10 +505,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         amount = self.__sum_amount_account(account, move_state, 'debit',
             ccy=ccy, booking=booking, initial_balance=False)
-        if not ccy and self.init_balance:
+        # TODO
+        """if not ccy and self.init_balance:
             # add initial balance (except for booking ccy breakdown subtotals)
             amount += self.__sum_amount_account(account, move_state, 'debit',
-                ccy=ccy, booking=booking, initial_balance=True)
+                ccy=ccy, booking=booking, initial_balance=True)"""
         return self._currency_conv(amount)
 
     def _sum_credit_account(self, account, ccy=False, booking=False):
@@ -521,10 +529,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         amount = self.__sum_amount_account(account, move_state, 'credit',
             ccy=ccy, booking=booking, initial_balance=False)
-        if not ccy and self.init_balance:
+        # TODO
+        """if not ccy and self.init_balance:
             # add initial balance (except for booking ccy breakdown subtotals)
             amount += self.__sum_amount_account(account, move_state, 'credit',
-                ccy=ccy, booking=booking, initial_balance=True)
+                ccy=ccy, booking=booking, initial_balance=True)"""
         return self._currency_conv(amount)
 
     def _sum_balance_account(self, account, ccy=False, booking=False):
@@ -549,9 +558,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         amount = self.__sum_amount_account(account, move_state, 'balance',
             ccy=ccy, booking=booking, initial_balance=False)
-        if self.init_balance:  # add initial balance
+        # TODO
+        """if self.init_balance:  # add initial balance
             amount += self.__sum_amount_account(account, move_state, 'balance',
-                ccy=ccy, booking=booking, initial_balance=True)
+                ccy=ccy, booking=booking, initial_balance=True)"""
         return self._currency_conv(amount)
 
     def _get_account(self, data):
@@ -689,6 +699,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if hasattr(self, 'title'):
             return self.title or ''
         return ''
+
+    def _get_initial_balance(self):
+        return self.init_balance
                                             
 #report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')

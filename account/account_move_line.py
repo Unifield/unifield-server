@@ -115,6 +115,9 @@ class account_move_line(osv.osv):
             if periods_ids:
                 query += ' AND %s.period_id not in (%s)' % (obj, ','.join(map(str, periods_ids)), )
 
+        if context.get('state_agnostic', False):
+            query = query.replace(obj+".state <> 'draft' AND ", '')
+
         query += company_clause
         return query
 
