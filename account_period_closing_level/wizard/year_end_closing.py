@@ -73,7 +73,10 @@ class wizard_account_year_end_closing(osv.osv_memory):
             ids = [ids]
         rec = self.browse(cr, uid, ids[0], context=context)
         self.pool.get('account.year.end.closing').process_closing(cr, uid,
-            rec.fy_id, context=context)
+            rec.fy_id,
+            has_move_regular_bs_to_0=rec.has_move_regular_bs_to_0,
+            has_book_pl_results=rec.has_book_pl_results,
+            context=context)
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
 wizard_account_year_end_closing()

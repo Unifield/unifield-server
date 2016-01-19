@@ -123,15 +123,23 @@ class account_year_end_closing(osv.osv):
         'IB': 'Initial Balances',
     }
 
-    def process_closing(self, cr, uid, fy_rec, context=None):
-        level = self.check_before_closing_process(cr, uid, fy_rec,
-            context=context)
+    def process_closing(self, cr, uid, fy_rec,
+        has_move_regular_bs_to_0=False, has_book_pl_results=False,
+        context=None):
+        """level = self.check_before_closing_process(cr, uid, fy_rec,
+            context=context)"""  # TODO uncomment
         level = 'coordo'
         if level == 'coordo':
             # generate closing entries at coordo level
             self.setup_journals(cr, uid, context=context)
-            self.report_bs_balance_to_next_fy(cr, uid, fy_rec, context=context)
-        self.update_fy_state(cr, uid, fy_rec.id, context=context)
+            if has_move_regular_bs_to_0:
+                self.move_bs_accounts_to_0(cr, uid, fy_rec, context=context)
+            if has_book_pl_results:
+                self.book_pl_results(cr, uid, fy_rec, context=context)
+            # TODO uncomment report_bs_balance_to_next_fy
+            # self.report_bs_balance_to_next_fy(cr, uid, fy_rec, context=context)
+        # TODO uncomment self.update_fy_state
+        #self.update_fy_state(cr, uid, fy_rec.id, context=context)
 
     def check_before_closing_process(self, cr, uid, fy_rec, context=None):
         """
@@ -273,6 +281,45 @@ class account_year_end_closing(osv.osv):
             ids = o.search(cr, uid, domain, context=context)
             if ids:
                 o.unlink(cr, uid, ids, context=context)
+
+    def move_bs_accounts_to_0(self, cr, uid, fy_rec, context=None):
+        """
+        action 1
+        """
+        cpy_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id
+        if not cpy_rec.ye_pl_cp_for_bs_debit_bal_account \
+            or not cpy_rec.ye_pl_cp_for_bs_debit_bal_account:
+            raise osv.except_osv(_('Error'),
+                _("B/S counterparts accounts credit/debit not set" \
+                    " in company settings 'B/S Move to 0 accounts'"))
+        instance_rec = cpy_rec.instance_id
+
+        fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
+        posting_date = "%d-12-31" % (fy_year, )
+
+        journal_code = 'EOY'
+        journal_id = self._get_journal(cr, uid, 'IB', context=context)
+        if not journal_id:
+            raise osv.except_osv(_('Error'),
+                _('%s journal not found') % (journal_code, ))
+
+        period_number = 16
+        period_id = self._get_period_id(cr, uid, fy_rec.id, period_number,
+            context=context)
+        if not period_id:
+            raise osv.except_osv(_('Error'),
+                _("FY 'Period %d' not found") % (period_number, ))
+
+        # local context for transac
+        # (write sum of booking and functional fx rate agnostic)
+        local_context = context.copy() if context else {}
+
+    def book_pl_results(self, cr, uid, fy_rec, context=None):
+        """
+        action 2
+        """
+        pass
 
     def report_bs_balance_to_next_fy(self, cr, uid, fy_rec, context=None):
         """
