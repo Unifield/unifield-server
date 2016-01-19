@@ -305,9 +305,21 @@ class stock_picking(osv.osv):
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
                         if not move_ids:
-                            message = "Line number " + str(ln) + " is not found in the original IN or PO"
-                            self._logger.info(message)
-                            raise Exception(message)
+                            closed_in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'cancel'], context)
+                            search_move = [('picking_id', '=', closed_in_id), ('line_number', '=', data.get('line_number'))]
+                            move_ids = move_obj.search(cr, uid, search_move, context=context)
+                            if not move_ids:
+                                message = "Line number " + str(ln) + " is not found in the original IN or PO"
+                                self._logger.info(message)
+                                raise Exception(message)
+                            else:
+                                in_data = self.read(cr, uid, closed_in_id[0], ['state', 'name'], context=context)
+                                if in_data['state'] == 'done':
+                                    message = "The IN " + in_data['name'] + " containing the line number " + str(ln) + " is already done"
+                                else:
+                                    message = "The IN " + in_data['name'] + " containing the line number " + str(ln) + " is canceled"
+                                self._logger.info(message)
+                                raise Exception(message)
 
                     move_id = False # REF-99: declare the variable before using it, otherwise if it go to else, then line 268 "if not move_id" -> problem!
                     if move_ids and len(move_ids) == 1:  # if there is only one move, take it for process
