@@ -426,7 +426,7 @@ class account_year_end_closing(osv.osv):
             """
             create draft CCY/JE to log JI into
             """
-            name = "EOY-%d-%s-%s" % (fy_year, instance_rec.code,
+            name = "EOY-%d-%s-%s-PL-RESULT" % (fy_year, instance_rec.code,
                 cpy_rec.currency_id.name, )
 
             vals = {
