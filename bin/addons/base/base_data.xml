@@ -1038,7 +1038,7 @@
         <record id="rateEUR" model="res.currency.rate">
             <field name="rate">1.0</field>
             <field name="currency_id" ref="EUR"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <!-- Basic Company  -->
@@ -1091,7 +1091,7 @@
         <record id="rateUSD" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.2834</field>
             <field name="currency_id" ref="USD"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="CAD" model="res.currency" forcecreate="0">
@@ -1106,7 +1106,7 @@
         <record id="rateCAD" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.3388</field>
             <field name="currency_id" ref="CAD"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="CHF" model="res.currency" forcecreate="0">
@@ -1121,7 +1121,7 @@
         <record id="rateCHF" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.3086</field>
             <field name="currency_id" ref="CHF"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="BRL" model="res.currency" forcecreate="0">
@@ -1136,7 +1136,7 @@
         <record id="rateBRL" model="res.currency.rate" forcecreate="0">
             <field name="rate">2.2344</field>
             <field name="currency_id" ref="BRL"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="CNY" model="res.currency" forcecreate="0">
@@ -1151,7 +1151,7 @@
         <record id="rateCNY" model="res.currency.rate" forcecreate="0">
             <field name="rate">8.7556</field>
             <field name="currency_id" ref="CNY"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
 
@@ -1167,7 +1167,7 @@
         <record id="rateCOP" model="res.currency.rate" forcecreate="0">
             <field name="rate">2933.8378</field>
             <field name="currency_id" ref="COP"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="CZK" model="res.currency" forcecreate="0">
@@ -1182,7 +1182,7 @@
         <record id="rateCZK" model="res.currency.rate" forcecreate="0">
             <field name="rate">26.5634</field>
             <field name="currency_id" ref="CZK"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="DKK" model="res.currency" forcecreate="0">
@@ -1197,7 +1197,7 @@
         <record id="rateDKK" model="res.currency.rate" forcecreate="0">
             <field name="rate">7.4445</field>
             <field name="currency_id" ref="DKK"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
 
@@ -1213,7 +1213,7 @@
         <record id="rateHUF" model="res.currency.rate" forcecreate="0">
             <field name="rate">271.5621</field>
             <field name="currency_id" ref="HUF"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="IDR" model="res.currency" forcecreate="0">
@@ -1228,12 +1228,12 @@
         <record id="rateIDR1" model="res.currency.rate" forcecreate="0">
             <field name="rate">14352.00</field>
             <field name="currency_id" ref="IDR"/>
-            <field eval="time.strftime('2009-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
         <record id="rateIDR" model="res.currency.rate" forcecreate="0">
             <field name="rate">11796.39</field>
             <field name="currency_id" ref="IDR"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="LVL" model="res.currency" forcecreate="0">
@@ -1248,7 +1248,7 @@
         <record id="rateLVL" model="res.currency.rate" forcecreate="0">
             <field name="rate">0.7086</field>
             <field name="currency_id" ref="LVL"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
 
@@ -1264,7 +1264,7 @@
         <record id="rateNOK" model="res.currency.rate" forcecreate="0">
             <field name="rate">7.8668</field>
             <field name="currency_id" ref="NOK"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="XPF" model="res.currency" forcecreate="0">
@@ -1279,7 +1279,7 @@
         <record id="rateXPF" model="res.currency.rate" forcecreate="0">
             <field name="rate">119.331742</field>
             <field name="currency_id" ref="XPF"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="PAB" model="res.currency" forcecreate="0">
@@ -1294,7 +1294,7 @@
         <record id="ratePAB" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.2676</field>
             <field name="currency_id" ref="PAB"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="PLN" model="res.currency" forcecreate="0">
@@ -1309,7 +1309,7 @@
         <record id="ratePLN" model="res.currency.rate" forcecreate="0">
             <field name="rate">4.1005</field>
             <field name="currency_id" ref="PLN"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="SEK" model="res.currency" forcecreate="0">
@@ -1324,7 +1324,7 @@
         <record id="rateSEK" model="res.currency.rate" forcecreate="0">
             <field name="rate">10.3004</field>
             <field name="currency_id" ref="SEK"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="GBP" model="res.currency" forcecreate="0">
@@ -1339,7 +1339,7 @@
         <record id="rateGBP" model="res.currency.rate" forcecreate="0">
             <field name="rate">0.8333</field>
             <field name="currency_id" ref="GBP"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="ARS" model="res.currency" forcecreate="0">
@@ -1354,7 +1354,7 @@
         <record id="rateARS" model="res.currency.rate" forcecreate="0">
             <field name="rate">5.0881</field>
             <field name="currency_id" ref="ARS"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="INR" model="res.currency" forcecreate="0">
@@ -1369,7 +1369,7 @@
         <record id="rateINR" model="res.currency.rate" forcecreate="0">
             <field name="rate">59.9739</field>
             <field name="currency_id" ref="INR"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="AUD" model="res.currency" forcecreate="0">
@@ -1384,7 +1384,7 @@
         <record id="rateAUD" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.4070</field>
             <field name="currency_id" ref="AUD"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="UAH" model="res.currency" forcecreate="0">
@@ -1399,7 +1399,7 @@
         <record id="rateUAH" model="res.currency.rate" forcecreate="0">
             <field name="rate">10.1969</field>
             <field name="currency_id" ref="UAH"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="VND" model="res.currency" forcecreate="0">
@@ -1414,7 +1414,7 @@
         <record id="rateVND" model="res.currency.rate" forcecreate="0">
             <field name="rate">26330.01</field>
             <field name="currency_id" ref="VND"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="HKD" model="res.currency" forcecreate="0">
@@ -1429,7 +1429,7 @@
         <record id="rateHKD" model="res.currency.rate" forcecreate="0">
             <field name="rate">11.1608</field>
             <field name="currency_id" ref="HKD"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="JPY" model="res.currency" forcecreate="0">
@@ -1444,7 +1444,7 @@
         <record id="rateJPY" model="res.currency.rate" forcecreate="0">
             <field name="rate">133.62</field>
             <field name="currency_id" ref="JPY"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="BGN" model="res.currency" forcecreate="0">
@@ -1459,7 +1459,7 @@
         <record id="rateBGN" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.9558</field>
             <field name="currency_id" ref="BGN"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="LTL" model="res.currency" forcecreate="0">
@@ -1474,7 +1474,7 @@
         <record id="rateLTL" model="res.currency.rate" forcecreate="0">
             <field name="rate">3.4528</field>
             <field name="currency_id" ref="LTL"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="RON" model="res.currency" forcecreate="0">
@@ -1489,7 +1489,7 @@
         <record id="rateRON" model="res.currency.rate" forcecreate="0">
             <field name="rate">4.2253</field>
             <field name="currency_id" ref="RON"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="HRK" model="res.currency" forcecreate="0">
@@ -1504,7 +1504,7 @@
         <record id="rateHRK" model="res.currency.rate" forcecreate="0">
             <field name="rate">7.2936</field>
             <field name="currency_id" ref="HRK"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="RUB" model="res.currency" forcecreate="0">
@@ -1519,7 +1519,7 @@
         <record id="rateRUB" model="res.currency.rate" forcecreate="0">
             <field name="rate">43.16</field>
             <field name="currency_id" ref="RUB"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="TRY" model="res.currency" forcecreate="0">
@@ -1534,7 +1534,7 @@
         <record id="rateTRY" model="res.currency.rate" forcecreate="0">
             <field name="rate">2.1411</field>
             <field name="currency_id" ref="TRY"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="KRW" model="res.currency" forcecreate="0">
@@ -1549,7 +1549,7 @@
         <record id="rateKRW" model="res.currency.rate" forcecreate="0">
             <field name="rate">1662.37</field>
             <field name="currency_id" ref="KRW"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="MXN" model="res.currency" forcecreate="0">
@@ -1564,7 +1564,7 @@
         <record id="rateMXN" model="res.currency.rate" forcecreate="0">
             <field name="rate">18.6664</field>
             <field name="currency_id" ref="MXN"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="MYR" model="res.currency" forcecreate="0">
@@ -1579,7 +1579,7 @@
         <record id="rateMYR" model="res.currency.rate" forcecreate="0">
             <field name="rate">4.8887</field>
             <field name="currency_id" ref="MYR"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="NZD" model="res.currency" forcecreate="0">
@@ -1594,7 +1594,7 @@
         <record id="rateNZD" model="res.currency.rate" forcecreate="0">
             <field name="rate">1.9764</field>
             <field name="currency_id" ref="NZD"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="PHP" model="res.currency" forcecreate="0">
@@ -1609,7 +1609,7 @@
         <record id="ratePHP" model="res.currency.rate" forcecreate="0">
             <field name="rate">66.1</field>
             <field name="currency_id" ref="PHP"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="SGD" model="res.currency" forcecreate="0">
@@ -1624,7 +1624,7 @@
         <record id="rateSGD" model="res.currency.rate" forcecreate="0">
             <field name="rate">2.0126</field>
             <field name="currency_id" ref="SGD"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="THB" model="res.currency" forcecreate="0">
@@ -1639,7 +1639,7 @@
         <record id="rateTHB" model="res.currency.rate" forcecreate="0">
             <field name="rate">47.779</field>
             <field name="currency_id" ref="THB"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="ZAR" model="res.currency" forcecreate="0">
@@ -1654,7 +1654,7 @@
         <record id="rateZAR" model="res.currency.rate" forcecreate="0">
             <field name="rate">10.5618</field>
             <field name="currency_id" ref="ZAR"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
         <record id="res_bank_1" model="res.bank" forcecreate="0">
@@ -1673,7 +1673,7 @@
         <record id="rateCRC" model="res.currency.rate" forcecreate="0">
            <field name="rate">691.3153</field>
            <field name="currency_id" ref="CRC"/>
-           <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
        </record>
 
         <record id="MUR" model="res.currency" forcecreate="0">
@@ -1688,7 +1688,7 @@
         <record id="rateMUR" model="res.currency.rate" forcecreate="0">
             <field name="rate">40.28</field>
             <field name="currency_id" ref="MUR"/>
-            <field eval="time.strftime('%Y-01-01')" name="name"/>
+            <field name="name">2014-01-01</field>
         </record>
 
 
