@@ -271,7 +271,7 @@
                 % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">0 (+${abs(line.get('backordered_qty', 0.00))|x})</Data></Cell>
                 % endif
-                % if line.get('transport_type', False) not in (False, 'False', ''):
+                % if o.transport_type and o.transport_type not in (False, 'False', ''):
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
