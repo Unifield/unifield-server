@@ -2324,6 +2324,7 @@ class sale_order_line(osv.osv):
         for line in self.read(cr, uid, ids, ['order_id'], context=context):
             ltc_ids = self.search(cr, uid, [
                 ('order_id', '=', line['order_id'][0]),
+                ('order_id.state', '=', 'validated'),
                 ('id', '!=', line['id']),
             ], limit=1, context=context)
             if ltc_ids and ltc_ids[0] not in lines_to_check:
