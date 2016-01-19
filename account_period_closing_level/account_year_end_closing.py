@@ -39,8 +39,7 @@ class res_company(osv.osv):
 
         # US-822 PL/BS matrix of dev2/dev3 accounts"
         'ye_pl_pos_credit_account': fields.many2one('account.account',
-            'Credit Account for P&L>0 (Income account)',
-            domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
+            'Credit Account for P&L>0 (Income account)'),
         'ye_pl_pos_debit_account': fields.many2one('account.account',
             'Debit Account for P&L>0 (B/S account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
@@ -48,8 +47,7 @@ class res_company(osv.osv):
             'Credit Account P&L<0 (B/S account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
         'ye_pl_ne_debit_account': fields.many2one('account.account',
-            'Debit Account P&L<0 (Expense account)',
-            domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
+            'Debit Account P&L<0 (Expense account)'),
     }
 
 res_company()
@@ -424,7 +422,117 @@ class account_year_end_closing(osv.osv):
         """
         action 2
         """
-        pass
+        def create_journal_entry():
+            """
+            create draft CCY/JE to log JI into
+            """
+            name = "EOY-%d-%s-%s" % (fy_year, instance_rec.code,
+                cpy_rec.currency_id.name, )
+
+            vals = {
+                'block_manual_currency_id': True,
+                'company_id': cpy_rec.id,
+                'currency_id': cpy_rec.currency_id.id,
+                'date': posting_date,
+                'document_date': posting_date,
+                'instance_id': instance_rec.id,
+                'journal_id': journal_id,
+                'name': name,
+                'period_id': period_id,
+            }
+            return self.pool.get('account.move').create(cr, uid, vals,
+                context=local_context)
+
+        def create_journal_item(account_rec, balance, je_id=False):
+            """
+            create state valid JI in its CCY/JE
+            """
+            name = "EOY-%d-%s-%s-%s" % (fy_year, account_rec.code,
+                instance_rec.name, cpy_rec.currency_id.name, )
+
+            vals = {
+                'account_id': account_rec.id,
+                'company_id': cpy_rec.id,
+                'currency_id': cpy_rec.currency_id.id,
+                'date': posting_date,
+                'document_date': posting_date,
+                'instance_id': instance_rec.id,
+                'journal_id': journal_id,
+                'name': name,
+                'period_id': period_id,
+
+                'move_id': je_id,
+            }
+            id = self.pool.get('account.move.line').create(cr, uid, vals,
+                    context=local_context)
+
+            # aggregated functional amount (sum) fx rate agnostic: raw write
+            vals = {
+                'debit_currency': balance if balance > 0. else 0.,
+                'credit_currency': abs(balance) if balance < 0. else 0.,
+                'debit': balance if balance > 0. else 0.,
+                'credit': abs(balance) if balance < 0. else 0.,
+                'state':'valid',
+            }
+            osv.osv.write(self.pool.get('account.move.line'), cr, uid, [id],
+                vals, context=context)
+
+        cpy_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id
+        if not cpy_rec.ye_pl_pos_credit_account \
+            or not cpy_rec.ye_pl_pos_debit_account \
+            or not cpy_rec.ye_pl_ne_credit_account \
+            or not cpy_rec.ye_pl_ne_debit_account:
+            raise osv.except_osv(_('Error'),
+                _("Accounts not set in company settings 'P&L result accounts'"))
+        instance_rec = cpy_rec.instance_id
+
+        fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
+        posting_date = "%d-12-31" % (fy_year, )
+
+        journal_code = 'EOY'
+        journal_id = self._get_journal(cr, uid, 'IB', context=context)
+        if not journal_id:
+            raise osv.except_osv(_('Error'),
+                _('%s journal not found') % (journal_code, ))
+
+        period_number = 16
+        period_id = self._get_period_id(cr, uid, fy_rec.id, period_number,
+            context=context)
+        if not period_id:
+            raise osv.except_osv(_('Error'),
+                _("FY 'Period %d' not found") % (period_number, ))
+
+        # local context for transac
+        # (write sum of booking and functional fx rate agnostic)
+        local_context = context.copy() if context else {}
+
+        # P/L accounts BAL TOTAL in functional ccy
+        # date inclusion to have period 0/1-15/16
+        sql = '''select sum(ml.debit - ml.credit) as bal
+            from account_move_line ml
+            inner join account_move m on m.id = ml.move_id
+            inner join account_account a on a.id = ml.account_id
+            inner join account_account_type t on t.id = a.user_type
+            where ml.instance_id = %d
+            and t.report_type in ('income', 'expense')
+            and ml.date >= '%s' and ml.date <= '%s'
+        ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
+        cr.execute(sql)
+        if not cr.rowcount:
+            return
+
+        balance = float(cr.fetchone()[0])
+        if balance > 0:  # debit balance
+            account = cpy_rec.ye_pl_pos_credit_account  # Credit Account for P&L>0 (Income account)
+            cp_account = cpy_rec.ye_pl_pos_debit_account  # Debit Account for P&L>0 (B/S account)
+        else:
+            account = cpy_rec.ye_pl_ne_debit_account  # Debit Account P&L<0 (Expense account)
+            cp_account = cpy_rec.ye_pl_ne_credit_account  # Credit Account P&L<0 (B/S account)
+
+        je_id = create_journal_entry()
+        create_journal_item(account, balance, je_id=je_id)
+        create_journal_item(cp_account, balance*-1, je_id=je_id)  # counterpart
 
     def report_bs_balance_to_next_fy(self, cr, uid, fy_rec, context=None):
         """
