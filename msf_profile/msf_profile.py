@@ -52,17 +52,14 @@ class patch_scripts(osv.osv):
             self.write(cr, uid, [ps['id']], {'run': True})
 
     def us_841_patch(self, cr, uid, *a, **b):
-        # the rule 129 moved to 130 now and the pb has been fixed by US-649.
-        # We need to set all not run updates associated to this rule to run
-        update_received_obj = self.pool.get('sync.client.update_received')
-        update_to_modify_id_list = update_received_obj.search(cr, uid,
-                [('run', '=', False),
-                 ('rule_sequence', '=', '129')],)
-        vals = {'run': True,
-                'log': 'This update have been set to run=True manually with '
-                        'us_841_patch because by now the problem should be '
-                        'fixed.'}
-        update_received_obj.write(cr, uid, update_to_modify_id_list, vals)
+        # fix incorrect period state on upper level by re-sending state
+        p_ids = self.pool.get('account.period').search(cr, uid, [])
+        if p_ids:
+            cr.execute("""update ir_model_data
+                set last_modification=NOW(),
+                touched='[''state'']'
+                where model='account.period.state' and res_id in %s
+                """, (tuple(p_ids), ))
 
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
