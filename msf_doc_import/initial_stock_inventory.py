@@ -573,6 +573,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             location_id = False
             batch = False
             expiry = False
+            bad_expiry = None
             product_qty = 0.00
             product_uom = False
             comment = ''
@@ -665,6 +666,8 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     expiry = row.cells[5].data
                 else:
                     error_list.append(_('The date format was not good so we took the date from the parent.'))
+                    bad_expiry = True
+                    comment += _('Incorrectly formatted expiry date.')
                     to_correct_ok = True
                     import_to_correct = True
             else:
@@ -713,6 +716,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 'location_id': location_id,
                 'prodlot_name': batch,
                 'expiry_date': expiry and expiry.strftime('%Y-%m-%d') or False,
+                'bad_expiry': bad_expiry,
                 'product_qty': product_qty,
                 'product_uom': product_uom,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
@@ -810,16 +814,25 @@ class initial_stock_inventory_line(osv.osv):
             vals.update({'prodlot_name':batch})
         expiry = vals.get('expiry_date')
         batch_name = vals.get('batch_name')
+        bad_expiry = vals.get('bad_expiry')
+
+        if 'bad_expiry' in vals:
+            del vals['bad_expiry']
 
         if not location_id:
             comment += _('Location is missing.\n')
 
         if hidden_batch_management_mandatory and not batch:
-            if batch_name:
+            if batch_name and not bad_expiry:
                 comment += _('Batch not found.\n')
+            elif batch_name and bad_expiry:
+                comment += _('Incorrectly formatted expiry date. Batch not created.\n')
             else:
                 comment += _('Batch is missing.\n')
         if hidden_perishable_mandatory and not expiry:
+            if bad_expiry:
+                comment += _('Incorrectly formatted expiry date.\n')
+            else:
             comment += _('Expiry date is missing.\n')
 
         if not comment:
