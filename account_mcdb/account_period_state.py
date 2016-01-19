@@ -37,6 +37,16 @@ class account_period_state(osv.osv):
                                   readonly=True),
     }
 
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and not vals.get('period_id'):
+            # US-841: period is required but we got
+            # an update related to non existant period: ignore it
+            return False
+
+        return super(account_period_state, self).create(cr, uid, vals, context=context)
+
     def get_period(self, cr, uid, ids, context=None):
         mod_obj = self.pool.get('ir.model.data')
         view_id = mod_obj.get_object_reference(cr, uid, 'account_mcdb',
