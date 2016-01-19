@@ -271,15 +271,15 @@
                 % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">0 (+${abs(line.get('backordered_qty', 0.00))|x})</Data></Cell>
                 % endif
-                % if line.get('transport', False) not in (False, 'False'):
+                % if line.get('transport', False) not in (False, 'False', ''):
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or 'N/A'|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('eta', False) not in (False, 'False') and saleUstr(formatLang(line.get('eta'), date=True)) or 'N/A'|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or 'N/A'|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('eta', False) not in (False, 'False') and saleUstr(formatLang(line.get('eta'), date=True)) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>
             </Row>
             % endfor
 
