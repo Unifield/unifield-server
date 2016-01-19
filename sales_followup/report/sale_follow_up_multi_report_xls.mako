@@ -277,21 +277,9 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment')|x}</Data></Cell>
-                % if line.get('cdd', False) not in (False, 'False'):
-                <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line.get('cdd')|n}T00:00:00.000</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left_date"><Data ss:Type="String">N/A</Data></Cell>
-                % endif
-                % if line.get('eta', False) not in (False, 'False'):
-                <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line.get('eta')|n}T00:00:00.000</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left_date"><Data ss:Type="String">N/A</Data></Cell>
-                % endif
-                % if line.get('rts', False) not in (False, 'False'):
-                <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line.get('rts')|n}T00:00:00.000</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left_date"><Data ss:Type="String">N/A</Data></Cell>
-                % endif
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or 'N/A'|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('eta', False) not in (False, 'False') and saleUstr(formatLang(line.get('eta'), date=True)) or 'N/A'|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or 'N/A'|x}</Data></Cell>
             </Row>
             % endfor
 
