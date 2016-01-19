@@ -75,26 +75,35 @@ account_account()
 class account_period(osv.osv):
     _inherit = "account.period"
 
+    _columns = {
+        'active': fields.boolean('Active'),
+    }
+
+    _defaults = {
+        'active': lambda *a: True,
+    }
+
     # period 0 not available for picking in journals/selector/reports
     # except for following reports: general ledger, trial balance, balance sheet
     # => always hide Period 0 except if 'show_period_0' found in context
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
         context=None, count=False):
+        if context is None:
+            context = {}
 
-        if not context or not context.get('sync_update_execution', False):
+        if context.get('show_period_0', False):
             if not args:
                 args = []
-            add_0_filter = True
+            active_filter = False
             for a in args:
                 if len(a) == 3:
-                    if a[0] in ('is_system', ):
+                    if a[0] == 'active':
                         # existing global system filter exists: let it
-                        add_0_filter = False
+                        active_filter = True
                         break
+            if not active_filter:
+                args.append(('active', 'in', ['t', 'f']))
 
-            if add_0_filter:
-                if context is None or 'show_period_0' not in context:
-                    args.append(('number', '!=', 0))
         res = super(account_period, self).search(cr, uid, args, offset=offset,
             limit=limit, order=order, context=context, count=count)
         return res
@@ -213,6 +222,8 @@ class account_year_end_closing(osv.osv):
                 'fiscalyear_id': fy_id,
                 'state': 'draft',  # opened by default
             }
+            if pn == number:
+                vals['active'] = False
 
             self.pool.get('account.period').create(cr, uid, vals,
                 context=context)
