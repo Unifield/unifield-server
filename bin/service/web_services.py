@@ -359,6 +359,14 @@ class db(netsvc.ExportService):
         """
         db = sql_db.db_connect(dbname)
         cr = db.cursor()
+
+        # check sync_client_version table existance
+        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='sync_client_version'")
+        if not cr.fetchone():
+            # the table sync_client_version doesn't exists, fallback on the
+            # version from release.py file
+            return release.version or 'UNKNOW_VERSION'
+
         cr.execute("SELECT name, sum FROM sync_client_version WHERE state='installed' ORDER BY applied DESC")
         res = cr.fetchone()
         if res and res[0]:
