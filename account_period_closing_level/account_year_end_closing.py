@@ -126,9 +126,8 @@ class account_year_end_closing(osv.osv):
     def process_closing(self, cr, uid, fy_rec,
         has_move_regular_bs_to_0=False, has_book_pl_results=False,
         context=None):
-        """level = self.check_before_closing_process(cr, uid, fy_rec,
-            context=context)"""  # TODO uncomment
-        level = 'coordo'
+        level = self.check_before_closing_process(cr, uid, fy_rec,
+            context=context)
         if level == 'coordo':
             # generate closing entries at coordo level
             self.setup_journals(cr, uid, context=context)
@@ -136,10 +135,8 @@ class account_year_end_closing(osv.osv):
                 self.move_bs_accounts_to_0(cr, uid, fy_rec, context=context)
             if has_book_pl_results:
                 self.book_pl_results(cr, uid, fy_rec, context=context)
-            # TODO uncomment report_bs_balance_to_next_fy
-            # self.report_bs_balance_to_next_fy(cr, uid, fy_rec, context=context)
-        # TODO uncomment self.update_fy_state
-        #self.update_fy_state(cr, uid, fy_rec.id, context=context)
+            self.report_bs_balance_to_next_fy(cr, uid, fy_rec, context=context)
+        self.update_fy_state(cr, uid, fy_rec.id, context=context)
 
     def check_before_closing_process(self, cr, uid, fy_rec, context=None):
         """
@@ -286,10 +283,69 @@ class account_year_end_closing(osv.osv):
         """
         action 1
         """
+        def create_journal_entry(ccy_id=False, ccy_code=''):
+            """
+            create draft CCY/JE to log JI into
+            """
+            name = "EOY-%d-%s-%s" % (fy_year, instance_rec.code, ccy_code, )
+
+            vals = {
+                'block_manual_currency_id': True,
+                'company_id': cpy_rec.id,
+                'currency_id': ccy_id,
+                'date': posting_date,
+                'document_date': posting_date,
+                'instance_id': instance_rec.id,
+                'journal_id': journal_id,
+                'name': name,
+                'period_id': period_id,
+            }
+            return self.pool.get('account.move').create(cr, uid, vals,
+                context=local_context)
+
+        def create_journal_item(ccy_id=False, ccy_code='', account_id=False,
+            account_code='', balance_currency=0., balance=0., je_id=False):
+            """
+            create state valid JI in its CCY/JE
+            """
+            name = "EOY-%d-%s-%s-%s" % (fy_year, account_code,
+                instance_rec.code, ccy_code, )
+
+            vals = {
+                'account_id': account_id,
+                'company_id': cpy_rec.id,
+                'currency_id': ccy_id,
+                'date': posting_date,
+                'document_date': posting_date,
+                'instance_id': instance_rec.id,
+                'journal_id': journal_id,
+                'name': name,
+                'period_id': period_id,
+                'source_date': posting_date,
+
+                'debit_currency': \
+                    balance_currency if balance_currency > 0. else 0.,
+                'credit_currency': \
+                    abs(balance_currency) if balance_currency < 0. else 0.,
+
+                'move_id': je_id,
+            }
+            id = self.pool.get('account.move.line').create(cr, uid, vals,
+                    context=local_context)
+
+            # aggregated functional amount (sum) fx rate agnostic: raw write
+            vals = {
+                'debit': balance if balance > 0. else 0.,
+                'credit': abs(balance) if balance < 0. else 0.,
+                'state':'valid',
+            }
+            osv.osv.write(self.pool.get('account.move.line'), cr, uid, [id],
+                vals, context=context)
+
         cpy_rec = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id
         if not cpy_rec.ye_pl_cp_for_bs_debit_bal_account \
-            or not cpy_rec.ye_pl_cp_for_bs_debit_bal_account:
+            or not cpy_rec.ye_pl_cp_for_bs_credit_bal_account:
             raise osv.except_osv(_('Error'),
                 _("B/S counterparts accounts credit/debit not set" \
                     " in company settings 'B/S Move to 0 accounts'"))
@@ -314,6 +370,55 @@ class account_year_end_closing(osv.osv):
         # local context for transac
         # (write sum of booking and functional fx rate agnostic)
         local_context = context.copy() if context else {}
+
+        # compute balance for ticked accounts, exclude period 16 itself
+        sql = '''select ml.currency_id as currency_id,
+            max(c.name) as currency_code,
+            ml.account_id as account_id, max(a.code) as account_code,
+            sum(ml.debit_currency - ml.credit_currency) as balance_currency,
+            sum(ml.debit - ml.credit) as balance
+            from account_move_line ml
+            inner join account_move m on m.id = ml.move_id
+            inner join account_account a on a.id = ml.account_id
+            inner join res_currency c on c.id = ml.currency_id
+            where ml.instance_id = %d and a.include_in_yearly_move = 't'
+            and ml.date >= '%s' and ml.date <= '%s' and m.period_id != %d
+            group by ml.currency_id, ml.account_id
+        ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, period_id)
+        cr.execute(sql)
+        if not cr.rowcount:
+            return
+
+        je_by_ccy = {}  # JE/CCY, key: ccy id, value: JE id
+        for ccy_id, ccy_code, account_id, account_code, \
+            balance_currency, balance in cr.fetchall():
+            balance_currency = float(balance_currency)
+            balance = float(balance)
+
+            # get counterpart account
+            if balance_currency > 0:  # debit balance
+                cp_account = cpy_rec.ye_pl_cp_for_bs_debit_bal_account
+            else:
+                cp_account = cpy_rec.ye_pl_cp_for_bs_credit_bal_account
+
+             # CCY JE
+            je_id = je_by_ccy.get(ccy_id, False)
+            if not je_id:
+                # 1st processing of a ccy: create its JE
+                je_id = create_journal_entry(ccy_id=ccy_id, ccy_code=ccy_code)
+                je_by_ccy[ccy_id] = je_id
+
+            # 2 entries tied to their CCY JE
+            # per ccy/account item move to 0: inversed balance
+            create_journal_item(ccy_id=ccy_id, ccy_code=ccy_code,
+                account_id=account_id, account_code=account_code,
+                balance_currency=balance_currency*-1, balance=balance*-1,
+                je_id=je_id)
+            # and counterpart (balance)
+            create_journal_item(ccy_id=ccy_id, ccy_code=ccy_code,
+                account_id=cp_account.id, account_code=cp_account.code,
+                balance_currency=balance_currency, balance=balance,
+                je_id=je_id)
 
     def book_pl_results(self, cr, uid, fy_rec, context=None):
         """
@@ -371,7 +476,6 @@ class account_year_end_closing(osv.osv):
                 'credit_currency': \
                     abs(balance_currency) if balance_currency < 0. else 0.,
 
-                'state':'valid',
                 'move_id': je_id,
             }
             id = self.pool.get('account.move.line').create(cr, uid, vals,
@@ -381,6 +485,7 @@ class account_year_end_closing(osv.osv):
             vals = {
                 'debit': balance if balance > 0. else 0.,
                 'credit': abs(balance) if balance < 0. else 0.,
+                'state':'valid',
             }
             osv.osv.write(self.pool.get('account.move.line'), cr, uid, [id],
                 vals, context=context)
