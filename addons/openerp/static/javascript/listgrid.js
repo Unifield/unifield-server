@@ -956,7 +956,14 @@ MochiKit.Base.update(ListView.prototype, {
 
                 else {
                     var __listview = openobject.dom.get(self.name).__listview;
+                    var editable_field = MochiKit.DOM.getElement(self.name + '/_terp_editable');
+                    previous_not_editable = editable_field && editable_field.value == '0'
+                    //console.log('previous_not_editable ' + previous_not_editable + ' '+self.name);
                     $list.parent().replaceWith(obj.view);
+                    if (previous_not_editable) {
+                        //console.log('Set readonly');
+                        new One2Many(self.name).setReadonly(true);
+                    }
                 }
 
                 var selfname = self.name
