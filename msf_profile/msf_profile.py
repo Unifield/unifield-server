@@ -51,6 +51,16 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_841_patch(self, cr, uid, *a, **b):
+        # fix incorrect period state on upper level by re-sending state
+        p_ids = self.pool.get('account.period').search(cr, uid, [])
+        if p_ids:
+            cr.execute("""update ir_model_data
+                set last_modification=NOW(),
+                touched='[''state'']'
+                where model='account.period.state' and res_id in %s
+                """, (tuple(p_ids), ))
+
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
         user_obj = self.pool.get('res.users')
