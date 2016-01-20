@@ -547,6 +547,7 @@
             <field name="name">account.bank.statement.form</field>
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
+            <field eval="10" name="priority"/>
             <field name="arch" type="xml">
                 <form string="Bank Statement">
                     <group col="7" colspan="4">
@@ -2003,7 +2004,7 @@
 
         <act_window
            id="act_account_journal_2_account_bank_statement"
-           name="Bank statements"
+           name="Register Statements"
            context="{'search_default_journal_id':active_id,}"
            res_model="account.bank.statement"
            src_model="account.journal"/>
