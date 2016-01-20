@@ -69,7 +69,7 @@ class account_fiscalyear(osv.osv):
                     and all([ p.state in ('mission-closed', 'done') \
                         for p in fy.period_ids if 0 < p.number < 16 ]) \
                     or False
-                hq = level == 'section' and fy.state == 'mission-closed' \
+                hq = level == 'section' and fy.state in ('draft', 'mission-closed') \
                     and all([ p.state == 'done' \
                         for p in fy.period_ids if 0 < p.number < 16 ]) \
                     or False
