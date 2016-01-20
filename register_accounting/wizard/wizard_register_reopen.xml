@@ -21,7 +21,7 @@
 
           <!-- Actions -->
           <act_window id="action_wizard_reopen_register"
-            name="Reopen Register"
+            name="Re-open closed register"
             res_model="register.reopen"
             src_model="account.bank.statement"
             key2="client_action_multi"
