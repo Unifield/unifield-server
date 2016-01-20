@@ -354,7 +354,7 @@ class account_year_end_closing(osv.osv):
         posting_date = "%d-12-31" % (fy_year, )
 
         journal_code = 'EOY'
-        journal_id = self._get_journal(cr, uid, 'IB', context=context)
+        journal_id = self._get_journal(cr, uid, journal_code, context=context)
         if not journal_id:
             raise osv.except_osv(_('Error'),
                 _('%s journal not found') % (journal_code, ))
@@ -492,7 +492,7 @@ class account_year_end_closing(osv.osv):
         posting_date = "%d-12-31" % (fy_year, )
 
         journal_code = 'EOY'
-        journal_id = self._get_journal(cr, uid, 'IB', context=context)
+        journal_id = self._get_journal(cr, uid, journal_code, context=context)
         if not journal_id:
             raise osv.except_osv(_('Error'),
                 _('%s journal not found') % (journal_code, ))
@@ -622,7 +622,7 @@ class account_year_end_closing(osv.osv):
         posting_date = "%d-01-01" % (fy_year + 1, )
 
         journal_code = 'IB'
-        journal_id = self._get_journal(cr, uid, 'IB', context=context)
+        journal_id = self._get_journal(cr, uid, journal_code, context=context)
         if not journal_id:
             raise osv.except_osv(_('Error'),
                 _('%s journal not found') % (journal_code, ))
