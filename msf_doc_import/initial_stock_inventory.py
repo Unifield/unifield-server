@@ -101,6 +101,7 @@ class stock_inventory(osv.osv):
         # ignore the first row
         reader.next()
         line_num = 1
+        product_error = []
         for row in reader:
             line_num += 1
             # Check length of the row
@@ -150,7 +151,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 to_correct_ok = True
                 import_to_correct = True
                 error_list.append(_('The Product was not found in the list of the products.'))
-                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
+                product_error.append(line_num)
+                continue
 
             # Location
             loc_id = row.cells[2].data
@@ -308,6 +310,12 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             }
 
             vals['inventory_line_id'].append((0, 0, to_write))
+
+        if product_error:
+            raise osv.except_osv(
+                _('Error'),
+                _('Product not found in the database for these lines: %s') % ' / '.join(x for x in product_error),
+            )
 
         # write order line on Inventory
         context['import_in_progress'] = True
@@ -550,6 +558,7 @@ class initial_stock_inventory(osv.osv):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         product_cache = {}
+        product_error = []
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
 
@@ -607,7 +616,8 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 to_correct_ok = True
                 import_to_correct = True
                 error_list.append(_('The Product was not found in the list of the products.'))
-                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
+                product_error.append(line_num)
+                continue
 
             # Average cost
             cost = row.cells[2].data
@@ -700,6 +710,12 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     else:
                         comment += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry:
+
+        if product_error:
+            raise osv.except_osv(
+                _('Error'),
+                _('Product not found in the database for these lines: %s') % ' / '.join(x for x in product_error),
+            )
                     comment += _('Expiry date is missing.\n')
             else:
                 product_uom = self.pool.get('product.uom').search(cr, uid, [], context=context)[0]
@@ -726,6 +742,12 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             }
 
             vals['inventory_line_id'].append((0, 0, to_write))
+
+        if product_error:
+            raise osv.except_osv(
+                _('Error'),
+                _('Product not found in the database for these lines: %s') % ' / '.join(x for x in product_error),
+            )
 
         # write order line on Inventory
         vals.update({'file_to_import': False})
