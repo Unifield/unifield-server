@@ -121,6 +121,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             product_uom = False
             comment = ''
             bad_expiry = None
+            bad_batch_name = None
             to_correct_ok = False
             error_list = []
 
@@ -187,15 +188,21 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     batch = str(batch)
                 try:
                     batch = batch.strip()
-                    batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
-                    if not batch_ids:
-                        batch_name = batch
+                    if ',' in batch:
+                        bad_batch_name = True
+                        error_list.append(_('Incorrect batch number format'))
+                        batch_name = False
                         batch = False
-                        to_correct_ok = True
-                        import_to_correct = True
-                        error_list.append(_('The batch %s was not found in the database.') % batch_name)
                     else:
-                        batch = batch_ids[0]
+                        batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
+                        if not batch_ids:
+                            batch_name = batch
+                            batch = False
+                            to_correct_ok = True
+                            import_to_correct = True
+                            error_list.append(_('The batch %s was not found in the database.') % batch_name)
+                        else:
+                            batch = batch_ids[0]
                 except Exception:
                     batch = False
                     error_list.append(_('The Batch has to be a string.'))
@@ -301,6 +308,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 'prod_lot_id': batch,
                 'expiry_date': expiry,
                 'bad_expiry': bad_expiry,
+                'bad_batch_name': bad_batch_name,
                 'product_qty': product_qty,
                 'product_uom': product_uom,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
@@ -409,15 +417,21 @@ class stock_inventory_line(osv.osv):
         expiry = vals.get('expiry_date')
         batch_name = vals.get('batch_name')
         bad_expiry = vals.get('bad_expiry')
+        bad_batch_name = vals.get('bad_batch_name')
 
         if 'bad_expiry' in vals:
             del vals['bad_expiry']
+
+        if 'bad_batch_name' in vals:
+            del vals['bad_batch_name']
 
         if not location_id:
             comment += _('Location is missing.\n')
 
         if hidden_batch_management_mandatory and not batch:
-            if batch_name and not bad_expiry:
+            if bad_batch_name:
+                comment += _('Incorrect batch number format.\n')
+            elif batch_name and not bad_expiry:
                 comment += _('Batch not found.\n')
             elif batch_name and bad_expiry:
                 comment += _('Incorrectly formatted expiry date. Batch not created.\n')
@@ -586,6 +600,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             batch = False
             expiry = False
             bad_expiry = None
+            bad_batch_name = None
             product_qty = 0.00
             product_uom = False
             comment = ''
@@ -670,6 +685,10 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 try:
                     batch = batch.strip()
                     batch_name = batch
+                    if ',' in batch_name:
+                        batch_name = False
+                        bad_batch_name = True
+                        error_list.append(_('Incorrect batch number format.'))
                 except Exception:
                     error_list.append(_('The Batch has to be a string.'))
 
@@ -730,6 +749,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 'prodlot_name': batch,
                 'expiry_date': expiry and expiry.strftime('%Y-%m-%d') or False,
                 'bad_expiry': bad_expiry,
+                'bad_batch_name': bad_batch_name,
                 'product_qty': product_qty,
                 'product_uom': product_uom,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
@@ -837,15 +857,21 @@ class initial_stock_inventory_line(osv.osv):
         expiry = vals.get('expiry_date')
         batch_name = vals.get('batch_name')
         bad_expiry = vals.get('bad_expiry')
+        bad_batch_name = vals.get('bad_batch_name')
 
         if 'bad_expiry' in vals:
             del vals['bad_expiry']
+
+        if 'bad_batch_name' in vals:
+            del vals['bad_batch_name']
 
         if not location_id:
             comment += _('Location is missing.\n')
 
         if hidden_batch_management_mandatory and not batch:
-            if batch_name and not bad_expiry:
+            if bad_batch_name:
+                comment += _('Incorrect batch number format.\n')
+            elif batch_name and not bad_expiry:
                 comment += _('Batch not found.\n')
             elif batch_name and bad_expiry:
                 comment += _('Incorrectly formatted expiry date. Batch not created.\n')
