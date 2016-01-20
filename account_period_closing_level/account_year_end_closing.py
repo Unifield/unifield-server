@@ -166,39 +166,40 @@ class account_year_end_closing(osv.osv):
                     _('FY+1 required to close FY'))
 
             # HQ level: check that all coordos have their FY mission closed
-            mi_obj = self.pool.get('msf.instance')
-            ci_ids = mi_obj.search(cr, uid, [
-                    ('parent_id', '=', instance_id.id),
-                    ('level', '=', 'coordo'),
-                ], context=context)
-            if ci_ids:
-                afs_obj = self.pool.get("account.fiscalyear.state")
-                # check that we have same count of mission-closed fy
-                # in fy report than in true coordos
-                # => so all have sync up their fy state report
-                check_ci_ids = afs_obj.search(cr, uid, [
-                        ('fy_id', '=', fy_rec.id),
-                        ('instance_id', 'in', ci_ids),
-                        ('state', '=', 'mission-closed'),
+            if level == 'section':
+                mi_obj = self.pool.get('msf.instance')
+                ci_ids = mi_obj.search(cr, uid, [
+                        ('parent_id', '=', instance_id.id),
+                        ('level', '=', 'coordo'),
                     ], context=context)
-                if len(check_ci_ids) != len(ci_ids):
-                    # enumerate left open coordos for user info warn message
+                if ci_ids:
+                    afs_obj = self.pool.get("account.fiscalyear.state")
+                    # check that we have same count of mission-closed fy
+                    # in fy report than in true coordos
+                    # => so all have sync up their fy state report
                     check_ci_ids = afs_obj.search(cr, uid, [
                             ('fy_id', '=', fy_rec.id),
                             ('instance_id', 'in', ci_ids),
-                            ('state', '=', 'draft'),
+                            ('state', '=', 'mission-closed'),
                         ], context=context)
-                    if check_ci_ids:
-                        codes = [ rec.code for rec \
-                            in mi_obj.browse(cr, uid, ci_ids, context=context)]
-                    else:
-                        # fy state report not all sync up: generic warn message
-                        codes = [ _('All'), ]
-                    raise osv.except_osv(_('Warning'),
-                        _('%s Coordo(s): proceed year end closing first') % (
-                            ', '.join(codes), ))
+                    if len(check_ci_ids) != len(ci_ids):
+                        # enumerate left open coordos for user info warn message
+                        check_ci_ids = afs_obj.search(cr, uid, [
+                                ('fy_id', '=', fy_rec.id),
+                                ('instance_id', 'in', ci_ids),
+                                ('state', '=', 'draft'),
+                            ], context=context)
+                        if check_ci_ids:
+                            codes = [ rec.code for rec \
+                                in mi_obj.browse(cr, uid, ci_ids, context=context)]
+                        else:
+                            # fy state report not all sync up: generic warn message
+                            codes = [ _('All'), ]
+                        msg = _('%s Coordo(s): proceed year end closing' \
+                            ' first') % (
+                            ', '.join(codes), )
+                        raise osv.except_osv(_('Warning'), msg)
 
-            raise osv.except_osv(_('Warning'), 'FAKE')
         return level
 
     def create_periods(self, cr, uid, fy_id, periods_to_create=[0, 16, ],

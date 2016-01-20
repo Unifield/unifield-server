@@ -59,7 +59,9 @@ class wizard_account_year_end_closing(osv.osv_memory):
     def default_get(self, cr, uid, vals, context=None):
         ayec_obj = self.pool.get('account.year.end.closing')
         fy_id = context and context.get('fy_id', False) or False
-        level = ayec_obj.check_before_closing_process(cr, uid, fy_id,
+        fy_rec = fy_id and self.pool.get('account.fiscalyear').browse(cr, uid,
+            fy_id, context=context) or False
+        level = ayec_obj.check_before_closing_process(cr, uid, fy_rec,
             context=context)
 
         res = super(wizard_account_year_end_closing, self).default_get(cr, uid,
