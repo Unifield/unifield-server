@@ -710,13 +710,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     else:
                         comment += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry:
-
-        if product_error:
-            raise osv.except_osv(
-                _('Error'),
-                _('Product not found in the database for these lines: %s') % ' / '.join(x for x in product_error),
-            )
-                    comment += _('Expiry date is missing.\n')
             else:
                 product_uom = self.pool.get('product.uom').search(cr, uid, [], context=context)[0]
                 hidden_batch_management_mandatory = False
