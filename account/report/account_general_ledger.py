@@ -119,7 +119,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.init_query = instance_ids_in
             else:
                 self.init_query += ' AND ' + instance_ids_in
-        
+
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
         common_report_header._set_context(self, data)
 
@@ -130,12 +130,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'debit': 0., 'credit': 0., 'balance': 0.,
         }
         if deduce_accounts_index:
+            # compute to deduce amount without any journals filtering
+            # (by default ikd entries filtered and typically in 8/9 accounts)
+            deduce_accounts_ctx = used_context.copy()
+            if 'journal_ids' in deduce_accounts_ctx:
+                del deduce_accounts_ctx['journal_ids']
+
             a_ids = a_obj.search(self.cr, self.uid,
                 [('code', 'in', [ c for c in deduce_accounts_index ])],
-                context=used_context)
+                context=deduce_accounts_ctx)
             if a_ids:
                 for account in a_obj.browse(self.cr, self.uid, a_ids,
-                    context=used_context):
+                    context=deduce_accounts_ctx):
                     self._deduce_accounts_data['debit'] += account.debit
                     self._deduce_accounts_data['credit'] += account.credit
                     self._deduce_accounts_data['balance'] += \
