@@ -687,6 +687,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     batch_name = batch
                     if ',' in batch_name:
                         batch_name = False
+                        batch = False
                         bad_batch_name = True
                         error_list.append(_('Incorrect batch number format.'))
                 except Exception:
