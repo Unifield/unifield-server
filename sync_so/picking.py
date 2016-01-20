@@ -258,6 +258,7 @@ class stock_picking(osv.osv):
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
         in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
         if in_id:
+            in_name = self.read(cr, uid, in_id, ['name'], context=context)['name']
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
             self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context)
             partial_datas = {}
@@ -313,9 +314,9 @@ class stock_picking(osv.osv):
                                 self._logger.info(message)
                                 raise Exception(message)
                             else:
-                                in_data = self.read(cr, uid, closed_in_id, ['name'], context=context)
+#                                in_data = self.read(cr, uid, closed_in_id, ['name'], context=context)
                                 message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially canceled/Closed" % (
-                                    in_data['name'], po_name,
+                                    in_name, po_name,
                                 )
                                 self._logger.info(message)
                                 raise Exception(message)
