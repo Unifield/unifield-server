@@ -130,10 +130,11 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         else:
                             key = (packing, False, move.product_uom.name, line.line_number)
                         data.update({
-                            'packing': packing,
+                            'packing': '',
                             'delivered_qty': move.product_qty,
                             'delivered_uom': move.product_uom.name,
                             'rts': move.picking_id.min_date[0:10],
+                            'shipment': packing,
                         })
 
                     bo_qty -= self.pool.get('product.uom')._compute_qty(
