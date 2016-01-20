@@ -673,7 +673,12 @@ class product_attributes(osv.osv):
         Ignore the leading whitespaces on the product default_code
         """
         if 'default_code' in vals:
-            vals['default_code'] = vals['default_code'].replace(' ', '')
+            vals['default_code'] = vals['default_code'].strip()
+            if ' ' in vals['default_code']:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Whitespaces is not allowed in product code'),
+                )
 
         return super(product_attributes, self).create(cr, uid, vals, context=context)
 
@@ -690,8 +695,13 @@ class product_attributes(osv.osv):
             else:
                 vals.update({
                     'duplicate_ok': False,
-                    'default_code': vals['default_code'].replace(' ', ''),
+                    'default_code': vals['default_code'].strip(),
                 })
+            if ' ' in vals['default_code']:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Whitespaces is not allowed in product code'),
+                )
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
