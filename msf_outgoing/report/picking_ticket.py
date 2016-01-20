@@ -124,7 +124,7 @@ class picking_ticket(report_sxw.rml_parse):
         """
         return [self.pool.get('shipment').default_get(self.cr, self.uid, [])]
 
-    def get_lines(self, picking, type='normal'):
+    def get_lines(self, picking):
         """
         Returns the move lines. For move lines with a batch number/expiry date
         create a first line with the whole quantity of product in stock, then
@@ -136,7 +136,7 @@ class picking_ticket(report_sxw.rml_parse):
 
         for m in picking.move_lines:
             dict_res.setdefault(m.line_number, [])
-            if m.prodlot_id and not dict_res[m.line_number] and type != 'empty':
+            if m.prodlot_id and not dict_res[m.line_number]:
                 # First create a line without batch
                 dict_res[m.line_number].append(BatchMoveLines(m))
             bm = BatchMoveLines(m)

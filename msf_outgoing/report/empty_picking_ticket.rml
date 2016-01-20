@@ -108,7 +108,7 @@
         <blockTable colWidths="300.0,170.0,170.0,165.0" style="HeaderInfos">
             <tr>
                 <td>
-                    <para style="HeaderInfosTitle">Requester Ref:      [[ pt.sale_id and pt.sale_id.client_order_ref or '' ]]Titi</para>
+                    <para style="HeaderInfosTitle">Requester Ref:      [[ pt.sale_id and pt.sale_id.client_order_ref or '' ]]</para>
                     <para style="HeaderInfosTitle">Our Ref:                [[ pt.sale_id and pt.sale_id.name or '' ]]</para>
                     <para style="HeaderInfosTitle">FO Date:               [[ pt.sale_id and formatLang(pt.sale_id.date_order, date=True) or '' ]]</para>
                     <para style="HeaderInfosTitle">Packing Date:       [[ pt.sale_id and formatLang(pt.sale_id.delivery_requested_date, date=True) or '' ]]</para>
@@ -348,7 +348,7 @@
 
             <!-- Lines -->
             <blockTable colWidths="30.0,60.0,220.0,55.0,75.0,65.0,20.0,20.0,20.0,55.0,45.0,45.0,50.0,50.0" rowHeights="15.0" style="LinesValues">
-                [[ repeatIn(getLines(pt, type='empty'), 'm', 'blockTable') ]]
+                [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 <tr>
                     <td>
                         <para style="LineValue">[[ m.line_number ]]</para>
