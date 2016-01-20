@@ -314,7 +314,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
         if product_error:
             raise osv.except_osv(
                 _('Error'),
-                _('Product not found in the database for these lines: %s') % ' / '.join(x for x in product_error),
+                _('Product not found in the database for these lines: %s') % ' / '.join(str(x) for x in product_error),
             )
 
         # write order line on Inventory
@@ -740,7 +740,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
         if product_error:
             raise osv.except_osv(
                 _('Error'),
-                _('Product not found in the database for these lines: %s') % ' / '.join(x for x in product_error),
+                _('Product not found in the database for these lines: %s') % ' / '.join(str(x) for x in product_error),
             )
 
         # write order line on Inventory
