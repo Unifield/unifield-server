@@ -677,7 +677,7 @@ class product_attributes(osv.osv):
             if ' ' in vals['default_code']:
                 raise osv.except_osv(
                     _('Error'),
-                    _('Whitespaces is not allowed in product code'),
+                    _('White spaces are not allowed in product code'),
                 )
 
         return super(product_attributes, self).create(cr, uid, vals, context=context)
@@ -700,7 +700,7 @@ class product_attributes(osv.osv):
             if ' ' in vals['default_code']:
                 raise osv.except_osv(
                     _('Error'),
-                    _('Whitespaces is not allowed in product code'),
+                    _('White spaces are not allowed in product code'),
                 )
 
         product_uom_categ = []
