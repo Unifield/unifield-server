@@ -314,8 +314,7 @@ class stock_picking(osv.osv):
                                 self._logger.info(message)
                                 raise Exception(message)
                             else:
-#                                in_data = self.read(cr, uid, closed_in_id, ['name'], context=context)
-                                message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially canceled/Closed" % (
+                                message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
                                     in_name, po_name,
                                 )
                                 self._logger.info(message)
