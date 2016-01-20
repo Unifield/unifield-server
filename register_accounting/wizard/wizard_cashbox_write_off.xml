@@ -26,7 +26,7 @@
 
           <!-- Actions -->
           <act_window id="action_write_off"
-            name="Re-Open cash box"
+            name="Re-open partially closed register"
             res_model="cashbox.write.off"
             src_model="account.bank.statement"
             key2="client_action_multi"
