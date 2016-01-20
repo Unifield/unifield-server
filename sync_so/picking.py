@@ -313,11 +313,10 @@ class stock_picking(osv.osv):
                                 self._logger.info(message)
                                 raise Exception(message)
                             else:
-                                in_data = self.read(cr, uid, closed_in_id, ['state', 'name'], context=context)
-                                if in_data['state'] == 'done':
-                                    message = "The IN " + in_data['name'] + " containing the line number " + str(ln) + " is already done"
-                                else:
-                                    message = "The IN " + in_data['name'] + " containing the line number " + str(ln) + " is canceled"
+                                in_data = self.read(cr, uid, closed_in_id, ['name'], context=context)
+                                message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially canceled/Closed" % (
+                                    in_data['name'], po_name,
+                                )
                                 self._logger.info(message)
                                 raise Exception(message)
 
@@ -407,7 +406,7 @@ class stock_picking(osv.osv):
                     processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
                     if processed_in:
                         in_name = self.browse(cr, uid, in_id, context=context)['name']
-                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already cancelled/Closed" % (
+                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
                             in_name, po_name,
                         )
                 if not same_in and not processed_in:
