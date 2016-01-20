@@ -40,20 +40,39 @@ class account_fiscalyear(osv.osv):
 
         level = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id.instance_id.level
+        ayec_obj = self.pool.get('account.year.end.closing')
 
         # check matching of:
         # - instance level
         # - FY state
         # - periods, with special ones too except those for year end closing
         for fy in self.browse(cr, uid, ids, context=context):
-            mission = level == 'coordo' and fy.state == 'draft' \
-                and all([ p.state in ('mission-closed', 'done') \
-                    for p in fy.period_ids if 0 < p.number < 16 ]) \
-                or False
-            hq = level == 'section' and fy.state == 'mission-closed' \
-                and all([ p.state == 'done' \
-                    for p in fy.period_ids if 0 < p.number < 16 ]) \
-                or False
+            # check previous FY closed
+            # check next FY exists (we need FY+1 Period 0 for initial balances)
+            mission = False
+            hq = False
+
+            prev_fy_id = ayec_obj._get_next_fy_id(cr, uid, fy,
+                get_previous=True, context=context)
+            if prev_fy_id:
+                prev_fy = self.browse(cr, uid, prev_fy_id, context=context)
+                prev_fy_ok = False
+                if level == 'coordo':
+                    prev_fy_ok = prev_fy.state in ('mission-closed', 'done', )
+                elif level == 'section':
+                    prev_fy_ok = prev_fy.state in ('done', )
+            else:
+                prev_fy_ok = True
+
+            if prev_fy_ok:
+                mission = level == 'coordo' and fy.state == 'draft' \
+                    and all([ p.state in ('mission-closed', 'done') \
+                        for p in fy.period_ids if 0 < p.number < 16 ]) \
+                    or False
+                hq = level == 'section' and fy.state == 'mission-closed' \
+                    and all([ p.state == 'done' \
+                        for p in fy.period_ids if 0 < p.number < 16 ]) \
+                    or False
 
             res[fy.id] = {
                 'is_mission_closable': mission,

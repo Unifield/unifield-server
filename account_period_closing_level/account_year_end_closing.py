@@ -128,12 +128,13 @@ class account_year_end_closing(osv.osv):
             context=context)
         if level == 'coordo':
             # generate closing entries at coordo level
-            self.setup_journals(cr, uid, context=context)
-            if has_move_regular_bs_to_0:
-                self.move_bs_accounts_to_0(cr, uid, fy_rec, context=context)
-            if has_book_pl_results:
-                self.book_pl_results(cr, uid, fy_rec, context=context)
-            self.report_bs_balance_to_next_fy(cr, uid, fy_rec, context=context)
+            if fy_rec.date_start != '2014-01-01':  # no entries for FY14
+                self.setup_journals(cr, uid, context=context)
+                if has_move_regular_bs_to_0:
+                    self.move_bs_accounts_to_0(cr, uid, fy_rec, context=context)
+                if has_book_pl_results:
+                    self.book_pl_results(cr, uid, fy_rec, context=context)
+                self.report_bs_balance_to_next_fy(cr, uid, fy_rec, context=context)
         self.update_fy_state(cr, uid, fy_rec.id, context=context)
 
     def check_before_closing_process(self, cr, uid, fy_rec, context=None):
@@ -158,7 +159,7 @@ class account_year_end_closing(osv.osv):
             if not field or not getattr(fy_rec, field):
                 raise osv.except_osv(_('Warning'),
                     _('FY can not be closed due to its state or' \
-                        ' its periods state'))
+                        ' its periods state; or previous FY not closed'))
 
             # check next FY exists (we need FY+1 Period 0 for initial balances)
             if not self._get_next_fy_id(cr, uid, fy_rec, context=context):
@@ -762,11 +763,13 @@ class account_year_end_closing(osv.osv):
     def _get_fy_year(self, cr, uid, fy_rec, context=None):
         return int(fy_rec.date_start[0:4])
 
-    def _get_next_fy_id(self, cr, uid, fy_rec, context=None):
+    def _get_next_fy_id(self, cr, uid, fy_rec, get_previous=False,
+        context=None):
+        offset = -1 if get_previous else 1
         date = "%d-01-01" % (
-            self._get_fy_year(cr, uid, fy_rec, context=context) + 1, )
+            self._get_fy_year(cr, uid, fy_rec, context=context) + offset, )
         domain = [
-            ('company_id', '=', fy_rec.company_id.id),
+            #('company_id', '=', fy_rec.company_id.id),
             ('date_start', '=', date),
         ]
         return self._search_record(cr, uid, 'account.fiscalyear', domain,
