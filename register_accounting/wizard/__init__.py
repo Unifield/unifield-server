@@ -23,6 +23,7 @@
 
 import cashbox_closing
 import cashbox_write_off
+import register_reopen
 import temp_posting
 import hard_posting
 import wizard_cash_return
