@@ -833,7 +833,7 @@ class initial_stock_inventory_line(osv.osv):
             if bad_expiry:
                 comment += _('Incorrectly formatted expiry date.\n')
             else:
-            comment += _('Expiry date is missing.\n')
+                comment += _('Expiry date is missing.\n')
 
         if not comment:
             vals.update({'comment': comment, 'to_correct_ok': False})
