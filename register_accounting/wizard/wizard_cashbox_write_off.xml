@@ -8,7 +8,7 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Write-off - Wizard">
-                    <separator string="Your decision about the action to do on this CashBox"/>
+                    <separator string="Decision about the action to do on this CashBox"/>
                     <field name='choice'/>
                     <newline />
                     <!-- Delete since UTP-209 -->
