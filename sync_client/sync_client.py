@@ -584,15 +584,14 @@ class Entity(osv.osv):
             if res and res[0]:
                 if res[1]: check_md5(res[3], res[1], _('method get_update'))
                 for package in (res[1] or []):
-                    package_size = updates.unfold_package(cr, uid, package, context=context)
-                    updates_count += package_size
+                    updates_count += updates.unfold_package(cr, uid, package, context=context)
 
                     if logger and updates_count:
                         if logger_index is None: logger_index = logger.append()
                         logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
                         logger.write()
                     if package:
-                        offset_recovery += package_size
+                        offset_recovery += package['offset'][1]
                         offset = (package['update_id'], 0)
                         self.write(cr, uid, entity.id, {'update_offset' : offset_recovery}, context=context)
                 last = res[2]
