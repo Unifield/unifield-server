@@ -516,13 +516,14 @@
             </field>
         </record>
 
-    <!-- Bank Statement Tree -->
+    <!-- Bank Statement Tree  US-807: force the priority to 10 to avoid showing the view in addons -->
         <record id="account.view_bank_statement_tree" model="ir.ui.view">
             <field name="name">account.bank.statement.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
-            <field name="priority" eval="16"/>
+            <field name="priority" eval="10"/>
             <field name="arch" type="xml">
+            
                 <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="date"/>
@@ -621,7 +622,7 @@
 
         <act_window
            id="act_account_journal_2_account_bank_statement"
-           name="Bank statements"
+           name="Register Statements"
            context="{'search_default_journal_id':active_id}"
            res_model="account.bank.statement"
            src_model="account.journal"/>
