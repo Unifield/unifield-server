@@ -313,7 +313,7 @@ class stock_picking(osv.osv):
                                 self._logger.info(message)
                                 raise Exception(message)
                             else:
-                                in_data = self.read(cr, uid, closed_in_id[0], ['state', 'name'], context=context)
+                                in_data = self.read(cr, uid, closed_in_id, ['state', 'name'], context=context)
                                 if in_data['state'] == 'done':
                                     message = "The IN " + in_data['name'] + " containing the line number " + str(ln) + " is already done"
                                 else:
