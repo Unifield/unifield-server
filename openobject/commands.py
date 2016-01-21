@@ -19,6 +19,15 @@ class ConfigurationError(Exception):
 
 DISTRIBUTION_CONFIG = os.path.join('doc', 'openerp-web.cfg')
 FROZEN_DISTRIBUTION_CONFIG = os.path.join('conf', 'openerp-web.cfg')
+OVERRIDE_CONFIG = os.path.join('conf', 'openerp-web-oc.cfg')
+def get_config_override_file():
+    if hasattr(sys, 'frozen'):
+        configfile = os.path.join(openobject.paths.root(), OVERRIDE_CONFIG)
+        if os.path.exists(configfile):
+            return configfile
+
+    return False
+
 def get_config_file():
     if hasattr(sys, 'frozen'):
         configfile = os.path.join(openobject.paths.root(), FROZEN_DISTRIBUTION_CONFIG)
@@ -37,6 +46,8 @@ def start():
     parser = OptionParser(version="%s" % (openobject.release.version))
     parser.add_option("-c", "--config", metavar="FILE", dest="config",
                       help="configuration file", default=get_config_file())
+    parser.add_option("--config-override", metavar="FILE", dest="config_override",
+                      help="override configuration file", default=get_config_override_file())
     parser.add_option("-a", "--address", help="host address, overrides server.socket_host")
     parser.add_option("-p", "--port", help="port number, overrides server.socket_port")
     parser.add_option("--openerp-host", dest="openerp_host", help="overrides openerp.server.host")
@@ -50,13 +61,26 @@ def start():
     if not os.path.exists(options.config):
         raise ConfigurationError(_("Could not find configuration file: %s") %
                                  options.config)
-                                 
+
+    error_config = False
     app_config = as_dict(options.config)
-    
+    if options.config_override:
+        try:
+            over_config = as_dict(options.config_override)
+            for section, value in over_config.iteritems():
+                app_config.setdefault(section, {}).update(value)
+        except Exception, error_config:
+            pass
     openobject.configure(app_config)
+
+    if error_config:
+        cherrypy.log('Unable to parse %s\nError: %s' % (options.config_override, error_config), "ERROR")
+        raise ConfigurationError(_("Unable to parse: %s") %
+                                 options.config_override)
+
     if options.static:
         openobject.enable_static_paths()
-    
+
     if options.address:
         cherrypy.config['server.socket_host'] = options.address
     if options.port:
@@ -64,6 +88,11 @@ def start():
             cherrypy.config['server.socket_port'] = int(options.port)
         except:
             pass
+    port = cherrypy.config.get('server.socket_port')
+    if not isinstance(port, (int, long)) or port < 1 or port > 65535:
+        cherrypy.log('Wrong configuration socket_port: %s' % (port,), "ERROR")
+        raise ConfigurationError(_("Wrong configuration socket_port: %s") %
+                                 port)
     if options.openerp_host:
         cherrypy.config['openerp.server.host'] = options.openerp_host
     if options.openerp_port:

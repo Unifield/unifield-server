@@ -253,5 +253,6 @@ class TempFileName(str):
     def __deepcopy__(self, visit):
         return self
 
-
+def is_server_local():
+    return cherrypy.config.get('openerp.server.host') in ['127.0.0.1', 'localhost']
 # vim: ts=4 sts=4 sw=4 si et

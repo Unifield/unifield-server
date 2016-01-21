@@ -151,7 +151,8 @@ Section OpenERP_Web_Client SectionOpenERP_Web_Client
     File "win32\stop.bat"
 
     SetOutPath "$INSTDIR\conf"
-    File "/oname=openerp-web.cfg" ".\doc\openerp-web.cfg"
+    File "/oname=openerp-web.cfg" ".\doc\openerp-web-win.cfg"
+    File "/oname=openerp-web-oc.cfg" ".\doc\openerp-web-oc.cfg"
 
     !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
         ;Create shortcuts
@@ -159,7 +160,7 @@ Section OpenERP_Web_Client SectionOpenERP_Web_Client
         
         CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Start OpenERP Web.lnk" "$INSTDIR\service\start.bat"
         CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Stop OpenERP Web.lnk" "$INSTDIR\service\stop.bat"
-        CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Edit Web Config.lnk" "notepad.exe" "$INSTDIR\conf\openerp-web.cfg"
+        CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Edit Web Config.lnk" "notepad.exe" "$INSTDIR\conf\openerp-web-oc.cfg"
         CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\uninstall.exe"
         !insertmacro CreateInternetShortcut "$SMPROGRAMS\$STARTMENU_FOLDER\Forum" "http://www.openerp.com/forum"
         !insertmacro CreateInternetShortcut "$SMPROGRAMS\$STARTMENU_FOLDER\Translation" "https://translations.launchpad.net/openobject"

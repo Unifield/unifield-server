@@ -21,6 +21,7 @@
 import base64
 import re
 import time
+import os
 
 import cherrypy
 import formencode
@@ -31,7 +32,9 @@ import openobject
 import openobject.errors
 
 from openerp import validators
-from openerp.utils import rpc, get_server_version
+from openerp.utils import rpc, get_server_version, is_server_local, serve_file
+from tempfile import NamedTemporaryFile
+import shutil
 
 def get_lang_list():
     langs = [('en_US', 'English (US)')]
@@ -94,14 +97,19 @@ class FormBackup(DBForm):
     fields = [openobject.widgets.SelectField(name='dbname', options=get_db_list, label=_('Database:'), validator=validators.String(not_empty=True)),
               openobject.widgets.PasswordField(name='password', label=_('Backup password:'), validator=formencode.validators.NotEmpty())]
 
+class FileField(openobject.widgets.FileField):
+    def adjust_value(self, value, **params):
+        return False
+
 class FormRestore(DBForm):
     name = "restore"
     string = _('Restore database')
     action = '/openerp/database/do_restore'
     submit_text = _('Restore')
-    fields = [openobject.widgets.FileField(name="filename", label=_('File:')),
+    fields = [FileField(name="filename", label=_('File:')),
               openobject.widgets.PasswordField(name='password', label=_('Restore password:'), validator=formencode.validators.NotEmpty()),
               openobject.widgets.TextField(name='dbname', label=_('New database name:'), validator=formencode.validators.NotEmpty(), readonly=1, attrs={'readonly': ''})]
+    hidden_fields = [openobject.widgets.HiddenField(name='fpath', label=_('Path:'))]
 
 class FormPassword(DBForm):
     name = "password"
@@ -245,15 +253,24 @@ class Database(BaseController):
     def do_backup(self, dbname, password, **kw):
         self.msg = {}
         try:
-            res = rpc.session.execute_db('dump', password, dbname)
             filename = [dbname, time.strftime('%Y%m%d-%H%M%S')]
             version = get_server_version(dbname)
             if version:
                 filename.append(version)
-            if res:
-                cherrypy.response.headers['Content-Type'] = "application/data"
-                cherrypy.response.headers['Content-Disposition'] = 'filename="%s.dump"' % '-'.join(filename)
-                return base64.decodestring(res)
+
+            if is_server_local():
+                res = rpc.session.execute_db('dump_file', password, dbname)
+                try:
+                    return serve_file.serve_file(res, "application/x-download", 'attachment', '%s.dump' % '-'.join(filename), delete=True)
+                finally:
+                    if os.path.exists(res):
+                        os.remove(res)
+            else:
+                res = rpc.session.execute_db('dump', password, dbname)
+                if res:
+                    cherrypy.response.headers['Content-Type'] = "application/data"
+                    cherrypy.response.headers['Content-Disposition'] = 'filename="%s.dump"' % '-'.join(filename)
+                    return base64.decodestring(res)
         except openobject.errors.AccessDenied, e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
@@ -292,19 +309,31 @@ class Database(BaseController):
                 self.msg = {'message': _('The choosen file in not a valid database file'),
                             'title': _('Error')}
                 return self.restore()
-        else:
-            self.msg = {'message': _('The choosen file in not a valid database file'),
-                        'title': _('Error')}
-            return self.restore()
         try:
-            data = base64.encodestring(filename.file.read())
-            rpc.session.execute_db('restore', password, dbname, data)
+            if is_server_local():
+                if not filename.filename and kw.get('fpath'):
+                    filename = kw.get('fpath')
+                else:
+                    newfile = NamedTemporaryFile(delete=False)
+                    shutil.copyfileobj(filename.file, newfile)
+                    filename = newfile.name
+                    newfile.close()
+                rpc.session.execute_db('restore_file', password, dbname, filename)
+            else:
+                data = base64.encodestring(filename.file.read())
+                rpc.session.execute_db('restore', password, dbname, data)
         except openobject.errors.AccessDenied, e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
+            if hasattr(cherrypy.request, 'input_values') and filename:
+                cherrypy.request.input_values['fpath'] = filename
             return self.restore()
-        except Exception:
-            self.msg = {'message': _("Could not restore database")}
+        except Exception, e:
+            msg = _("Could not restore database")
+            if isinstance(e, openobject.errors.TinyException):
+                if 'Database already exists' in e.message:
+                    msg = _("Could not restore: database already exists")
+            self.msg = {'message': msg}
             return self.restore()
         raise redirect('/openerp/login', db=dbname)
 
