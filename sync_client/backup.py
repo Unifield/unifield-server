@@ -25,17 +25,11 @@ from osv import fields
 import tools
 from datetime import datetime
 from tools.translate import _
+from updater import get_server_version
 import release
 import re
 import time
 import logging
-
-def get_server_version():
-    version = release.version or ""
-    ver_match = re.match('(.*)-\d{8}-\d{6}$', version)
-    if ver_match:
-        version = ver_match.group(1)
-    return version
 
 class BackupConfig(osv.osv):
     """ Backup configurations """
@@ -63,6 +57,24 @@ class BackupConfig(osv.osv):
         'afterautomaticsync' : True,
         'beforepatching': False,
     }
+
+    def get_server_version(self, cr, uid, context=None):
+        revisions = self.pool.get('sync_client.version')
+        if not revisions:
+            return release.version or 'UNKNOW_VERSION'
+        current_revision = revisions._get_last_revision(cr, uid, context=context)
+        # get the version name from db
+        if current_revision and current_revision.name:
+            return current_revision.name
+        # if nothing found, take it from the unifield-version.txt file
+        elif current_revision and current_revision.sum:
+            # get the version from unifield-version.txt file
+            version_list = get_server_version()
+            for version in version_list:
+                if current_revision.sum == version['md5sum'] and version['name']:
+                    return version['name']
+        # in case nothing found, return UNKNOW_VERSION instead of a wrong name
+        return 'UNKNOW_VERSION'
 
     def _set_pg_psw_env_var(self):
         if os.name == 'nt' and not os.environ.get('PGPASSWORD', ''):
@@ -107,7 +119,10 @@ class BackupConfig(osv.osv):
             self._set_pg_psw_env_var()
             try:
                 # US-386: Check if file/path exists and raise exception, no need to prepare the backup, thus no pg_dump is executed
-                outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" % (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"), suffix, get_server_version()))
+                outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" %
+                        (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
+                            suffix, self.get_server_version(cr, uid,
+                                context=context)))
                 bkpfile = open(outfile,"wb")
                 bkpfile.close()
             except Exception, e:
