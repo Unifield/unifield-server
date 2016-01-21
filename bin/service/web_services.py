@@ -59,11 +59,11 @@ class db(netsvc.ExportService):
             passwd = params[0]
             params = params[1:]
             security.check_super_dropdb(passwd)
-        elif method == 'dump':
+        elif method in ('dump', 'dump_file'):
             passwd = params[0]
             params = params[1:]
             security.check_super_bkpdb(passwd)
-        elif method == 'restore':
+        elif method in ('restore', 'restore_file'):
             passwd = params[0]
             params = params[1:]
             security.check_super_restoredb(passwd)
@@ -203,76 +203,71 @@ class db(netsvc.ExportService):
         if os.name == 'nt' and self._pg_psw_env_var_is_set:
             os.environ['PGPASSWORD'] = ''
 
+    def exp_dump_file(self, db_name):
+        # get a tempfilename
+        f = NamedTemporaryFile(delete=False)
+        f_name = f.name
+        f.close()
+        res = tools.pg_dump(db_name, f_name)
+        if res:
+            raise Exception, "Couldn't dump database"
+        return f_name
+
+
     def exp_dump(self, db_name):
         logger = netsvc.Logger()
-
-        self._set_pg_psw_env_var()
-
-        cmd = ['pg_dump', '--format=c', '--no-owner']
-        if tools.config['db_user']:
-            cmd.append('--username=' + tools.config['db_user'])
-        if tools.config['db_host']:
-            cmd.append('--host=' + tools.config['db_host'])
-        if tools.config['db_port']:
-            cmd.append('--port=' + str(tools.config['db_port']))
-        cmd.append(db_name)
-
-        stdin, stdout = tools.exec_pg_command_pipe(*tuple(cmd))
-        stdin.close()
-        data = stdout.read()
-        res = stdout.close()
+        data, res = tools.pg_dump(db_name)
         if res:
             logger.notifyChannel("web-services", netsvc.LOG_ERROR,
                     'DUMP DB: %s failed\n%s' % (db_name, data))
             raise Exception, "Couldn't dump database"
-        logger.notifyChannel("web-services", netsvc.LOG_INFO,
-                'DUMP DB: %s' % (db_name))
-
-        self._unset_pg_psw_env_var()
-
         return base64.encodestring(data)
+
+    def exp_restore_file(self, db_name, filename):
+        try:
+            logger = netsvc.Logger()
+
+            self._set_pg_psw_env_var()
+
+            if self.exp_db_exist(db_name):
+                logger.notifyChannel("web-services", netsvc.LOG_WARNING,
+                        'RESTORE DB: %s already exists' % (db_name,))
+                raise Exception, "Database already exists"
+
+            self._create_empty_database(db_name)
+
+            cmd = ['pg_restore', '--no-owner', '--no-acl']
+            if tools.config['db_user']:
+                cmd.append('--username=' + tools.config['db_user'])
+            if tools.config['db_host']:
+                cmd.append('--host=' + tools.config['db_host'])
+            if tools.config['db_port']:
+                cmd.append('--port=' + str(tools.config['db_port']))
+            cmd.append('--dbname=' + db_name)
+            cmd.append(filename)
+            res = tools.exec_pg_command(*cmd)
+            os.remove(filename)
+            if res:
+                raise Exception, "Couldn't restore database"
+
+            logger.notifyChannel("web-services", netsvc.LOG_INFO,
+                    'RESTORE DB: %s' % (db_name))
+            self._unset_pg_psw_env_var()
+
+            return True
+        except Exception, e:
+            logging.getLogger('web-services').error("Restore %s failed" % (db_name, ), exc_info=1)
+            raise
 
     def exp_restore(self, db_name, data):
         logger = netsvc.Logger()
-
-        self._set_pg_psw_env_var()
-
-        if self.exp_db_exist(db_name):
-            logger.notifyChannel("web-services", netsvc.LOG_WARNING,
-                    'RESTORE DB: %s already exists' % (db_name,))
-            raise Exception, "Database already exists"
-
-        self._create_empty_database(db_name)
-
-        cmd = ['pg_restore', '--no-owner', '--no-acl']
-        if tools.config['db_user']:
-            cmd.append('--username=' + tools.config['db_user'])
-        if tools.config['db_host']:
-            cmd.append('--host=' + tools.config['db_host'])
-        if tools.config['db_port']:
-            cmd.append('--port=' + str(tools.config['db_port']))
-        cmd.append('--dbname=' + db_name)
-        args2 = tuple(cmd)
-
-
+        logging.getLogger('web-services').info("Restore DB from memory")
         buf=base64.decodestring(data)
         tmpfile = NamedTemporaryFile('w+b', delete=False)
         tmpfile.write(buf)
         tmpfile.close()
 
-        args2=list(args2)
-        args2.append(tmpfile.name)
-        args2=tuple(args2)
-        res = tools.exec_pg_command(*args2)
-        os.remove(tmpfile.name)
-        if res:
-            raise Exception, "Couldn't restore database"
-        logger.notifyChannel("web-services", netsvc.LOG_INFO,
-                'RESTORE DB: %s' % (db_name))
-
-        self._unset_pg_psw_env_var()
-
-        return True
+        return self.exp_restore_file(db_name, tmpfile.name)
 
     def exp_rename(self, old_name, new_name):
         sql_db.close_db(old_name)
@@ -784,7 +779,12 @@ class report_spool(netsvc.ExportService):
                 if not result:
                     tb = sys.exc_info()
                     self._reports[id]['exception'] = ExceptionWithTraceback('RML is not available at specified location or not enough data to print!', tb)
-                self._reports[id]['result'] = result
+                if isinstance(result, tools.misc.Path):
+                    self._reports[id]['path'] = result.path
+                    self._reports[id]['result'] = ''
+                    self._reports[id]['delete'] = result.delete
+                else:
+                    self._reports[id]['result'] = result
                 self._reports[id]['format'] = format
                 self._reports[id]['state'] = True
             except Exception, exception:
@@ -826,6 +826,9 @@ class report_spool(netsvc.ExportService):
             if res2:
                 res['result'] = base64.encodestring(res2)
             res['format'] = result['format']
+            if 'path' in result:
+                res['path'] = result['path']
+                res['delete'] = result.get('delete', False)
             del self._reports[report_id]
         return res
 
