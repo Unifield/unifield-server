@@ -183,6 +183,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_type']" position="after">
                     <field name="shrink_entries_for_hq"/>
+                    <field name="display_in_reports"/>
                 </xpath>
             </field>
         </record>
