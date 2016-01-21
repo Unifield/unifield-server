@@ -517,12 +517,13 @@ class purchase_order_sync(osv.osv):
         if partner_type == 'section':
             #US-620: If the FO type is donation or loan, then remove the analytic distribution
             if so_info.order_type in ('loan', 'donation_st', 'donation_exp'):
-                del header_result['analytic_distribution_id']
+                if 'analytic_distribution_id' in header_result:
+                    del header_result['analytic_distribution_id']
             else:
                 raise Exception, "Sorry, Push Flow for intersection partner is only available for Donation or Loan FOs! " + source
 
         # the case of intermission, the AD will be updated below, after creating the PO
-        if partner_type == 'intermission':
+        if partner_type == 'intermission' and 'analytic_distribution_id' in header_result:
             del header_result['analytic_distribution_id']
 
         default = {}
@@ -639,7 +640,7 @@ class purchase_order_sync(osv.osv):
 
         # UTP-952: If the partner is section or intermission, remove the AD
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
-        if partner_type in ['section', 'intermission']:
+        if partner_type in ['section', 'intermission'] and 'analytic_distribution_id' in header_result:
             del header_result['analytic_distribution_id']
 
         # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
@@ -700,7 +701,7 @@ class purchase_order_sync(osv.osv):
 
         # UTP-952: If the partner is section or intermission, remove the AD
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
-        if partner_type in ['section', 'intermission']:
+        if partner_type in ['section', 'intermission'] and 'analytic_distribution_id' in header_result:
             del header_result['analytic_distribution_id']
 
         original_po = self.browse(cr, uid, po_id, context=context)
