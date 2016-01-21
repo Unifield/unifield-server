@@ -516,7 +516,7 @@
             </field>
         </record>
 
-    <!-- Bank Statement Tree  US-807: force the priority to 10 to avoid showing the view in addons -->
+    <!-- Bank Statement Tree  US-807: force the priority to 10 to avoid showing the view in addons, for default tree view, check the view named account.view_bank_statement_tree_for_journal for more info -->
         <record id="account.view_bank_statement_tree" model="ir.ui.view">
             <field name="name">account.bank.statement.tree</field>
             <field name="model">account.bank.statement</field>
@@ -536,6 +536,28 @@
                     <field name="state"/>
                     <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- US-807: force the priority to 5 to show by default for all cases, BUT when the tree is called from Bank/Cash/Cheque main menu, then the explicit view name will be picked in the python code "register_accounting/account_bank_statement.py" method: get_statement() -->
+        <record id="account.view_bank_statement_tree_for_journal" model="ir.ui.view">
+            <field name="name">account.bank.statement.tree.journal</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+            
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1"  editable="bottom" noteditable="1">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="currency"/>
+                    <field name="journal_id"/>
+                    <field name="balance_start"/>
+                    <field name="balance_end" />
+                    <field name="balance_end_real"/>
+                    <field name="state"/>
                 </tree>
             </field>
         </record>
