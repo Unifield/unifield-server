@@ -123,24 +123,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
         common_report_header._set_context(self, data)
 
-        # UF-1714 accounts 8*, 9* are not displayed:
-        # have to deduce 8/9 balance amounts to MSF account view (root account)
-        deduce_accounts_index = [ '8', '9', ]
-        self._deduce_accounts_data = {
-            'debit': 0., 'credit': 0., 'balance': 0.,
-        }
-        if deduce_accounts_index:
-            a_ids = a_obj.search(self.cr, self.uid,
-                [('code', 'in', [ c for c in deduce_accounts_index ])],
-                context=used_context)
-            if a_ids:
-                for account in a_obj.browse(self.cr, self.uid, a_ids,
-                    context=used_context):
-                    self._deduce_accounts_data['debit'] += account.debit
-                    self._deduce_accounts_data['credit'] += account.credit
-                    self._deduce_accounts_data['balance'] += \
-                        account.debit - account.credit
-
         if self.account_ids:
             # add parent(s) of filtered accounts
             self.account_ids += self.pool.get('account.account')._get_parent_of(
@@ -279,13 +261,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
     def get_children_accounts(self, account, ccy=False):
         res = []
         currency_obj = self.pool.get('res.currency')
-         
-        ids_acc = self.pool.get('account.account')._get_children_and_consol(self.cr, self.uid, account.id)
+        account_obj = self.pool.get('account.account')
+        # XXX in the future, remove=True parameter will probably be useless as
+        # the method _get_children_and_consol itself will check the context,
+        # and if it is a report context, remove the account that should not be
+        # displayed
+        ids_acc = account_obj._get_children_and_consol(self.cr,
+                self.uid, account.id, remove=True)
         currency = account.currency_id and account.currency_id or account.company_id.currency_id
         for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
-            if child_account.code.startswith('8') or child_account.code.startswith('9'):
-                # UF-1714: exclude accounts '8*'/'9*'
-                continue
             if self.account_report_types:
                 # filter by B/S P&L report type
                 if child_account.user_type \
@@ -441,10 +425,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         """
         if account.type == 'view':
             amount = getattr(account, field)
-            if not account.parent_id:
-                # deduce balance of not displayed accounts
-                if field in self._deduce_accounts_data:
-                    amount = amount - self._deduce_accounts_data[field]
             return True, self._currency_conv(amount)
 
         return False, 0.
