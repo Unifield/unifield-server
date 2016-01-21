@@ -30,33 +30,22 @@ from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
 class account_period_state(osv.osv):
     _name = "account.period.state"
 
-    def _get_instance_name(self, cr, uid, ids, name, args, context=None):
-        res = {}
-        if not ids:
-            return res
-        obj_ids = self.browse(cr, uid, ids, context=context)
-        for obj in obj_ids:
-            res[obj.id] = obj.instance_id and obj.instance_id.name or ""
-
-        return res
-
-    def _get_search_by_instance(self, cr, uid, obj, name, args,
-                                context=None):
-        inst_obj = self.pool.get('msf.instance')
-        args = [('name', args[0][1], args[0][2])]
-        inst_ids = inst_obj.search(cr, uid, args, context=context)
-        return [('instance_id', 'in', inst_ids)]
-
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State',
                                   readonly=True),
-        'instance_name': fields.function(_get_instance_name, type='char',
-                                         fnct_search=_get_search_by_instance,
-                                         method=True,
-                                         string="Proprietary Instance"),
     }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and not vals.get('period_id'):
+            # US-841: period is required but we got
+            # an update related to non existant period: ignore it
+            return False
+
+        return super(account_period_state, self).create(cr, uid, vals, context=context)
 
     def get_period(self, cr, uid, ids, context=None):
         mod_obj = self.pool.get('ir.model.data')
@@ -87,10 +76,12 @@ class account_period_state(osv.osv):
         if isinstance(period_ids, (int, long)):
             period_ids = [period_ids]
 
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        model_data = self.pool.get('ir.model.data')
+        period_state = self.pool.get('account.period.state')
+        parent = user.company_id.instance_id.id
+        ids_to_write = []
         for period_id in period_ids:
-            user = self.pool.get('res.users').browse(cr, uid, uid,
-                                                     context=context)
-            parent = user.company_id.instance_id.id
             period = self.pool.get('account.period').read(cr, uid, period_id,
                                                           ['id', 'state'],
                                                           context=context)
@@ -105,11 +96,23 @@ class account_period_state(osv.osv):
                         'state': period['state']
                     }
                     self.write(cr, uid, ids, vals, context=context)
+                    for period_state_id in ids:
+                        period_state_xml_id = period_state.get_sd_ref(cr, uid, period_state_id)
+                        ids_to_write.append(model_data._get_id(cr, uid, 'sd',
+                            period_state_xml_id))
+
                 else:
                     vals = {
                         'period_id': period['id'],
                         'instance_id': parent,
                         'state': period['state']}
                     self.create(cr, uid, vals, context=context)
+
+        # US-649 : in context of synchro last_modification date must be updated
+        # on account.period.state because they are created with synchro and
+        # they need to be sync down to other instances
+        if ids_to_write:
+            model_data.write(cr, uid, ids_to_write, {'last_modification':fields.datetime.now()})
+
         return True
 account_period_state()
