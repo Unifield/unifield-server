@@ -431,8 +431,10 @@ class stock_inventory_line(osv.osv):
         if hidden_batch_management_mandatory and not batch:
             if bad_batch_name:
                 comment += _('Incorrect batch number format.\n')
-            elif batch_name and not bad_expiry:
+            elif batch_name and not bad_expiry and expiry:
                 comment += _('Batch not found.\n')
+            elif batch_name and not bad_expiry and not expiry:
+                comment += _('Expiry date is missing.\n')
             elif batch_name and bad_expiry:
                 comment += _('Incorrectly formatted expiry date. Batch not created.\n')
             else:
@@ -440,7 +442,9 @@ class stock_inventory_line(osv.osv):
                 vals['expiry_date'] = False
 
         if hidden_perishable_mandatory and not expiry and not batch and batch_name:
-            if bad_expiry:
+            if bad_batch_name:
+                comment += _('Incorrect batch number format.\n')
+            elif bad_expiry:
                 comment += _('Incorrectly formatted expiry date.\n')
             else:
                 comment += _('Batch not found.\n')
@@ -600,6 +604,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             batch = False
             expiry = False
             bad_expiry = None
+            batch_name = None
             bad_batch_name = None
             product_qty = 0.00
             product_uom = False
