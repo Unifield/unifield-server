@@ -182,7 +182,7 @@ class account_bank_statement(osv.osv):
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, readonly=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
-        'notes': fields.text('Comments'),
+        'notes': fields.text('Comments', states={'confirm': [('readonly', True)]}),
         'period_number': fields.related('period_id', 'number', relation='account.period', string="Period number", type="integer", store=True, readonly=True),
         'closing_date': fields.date("Closed On"),
         'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id', 'Responsible'),

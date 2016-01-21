@@ -25,80 +25,63 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
-class cashbox_write_off(osv.osv_memory):
-    _name = 'cashbox.write.off'
+class register_reopen(osv.osv_memory):
+    _name = 'register.reopen'
 
     _columns = {
         # Deleted from selection since UTP-209:
         #('writeoff', 'Accept write-off and close register'),
-        'choice' : fields.selection( [('reopen', 'Re-open Register')], \
-            string="Decision about CashBox", required=True),
-        'account_id': fields.many2one('account.account', string="Write-off Account", domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"),
-        'amount': fields.float(string="CashBox difference", digits=(16, 2), readonly=True),
+        'choice' : fields.selection( [('reopen', 'Reopen Register')], \
+            string="Decision to make", required=True),
     }
 
-    def default_get(self, cr, uid, fields=None, context=None):
-        """
-        Return the difference between balance_end and balance_end_cash from the cashbox and diplay it in the wizard.
-        """
-        if context is None:
-            context = {}
-        res = super(cashbox_write_off, self).default_get(cr, uid, fields, context=context)
-        # Have we got any cashbox id ?
-        if 'active_id' in context:
-            # search values
-            cashbox_id = context.get('active_id')
-            cashbox = self.pool.get('account.bank.statement').browse(cr, uid, cashbox_id)
-            amount = cashbox.balance_end - cashbox.balance_end_cash
-            res.update({'amount': amount})
-        return res
-
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """
-        Define elements for two case:
-         - when raising an error : give a wizard with some information
-         - other case : give the normal wizard
-        """
-        res = super(cashbox_write_off, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        res = super(register_reopen, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if 'active_id' in context:
             # search values
             cashbox_id = context.get('active_id')
             cashbox = self.pool.get('account.bank.statement').browse(cr, uid, cashbox_id)
-            if cashbox.state not in ['partial_close', 'confirm']:
-                raise osv.except_osv(_('Warning'), _("Please use 'Close CashBox' button before."))
+            if cashbox.state not in ['confirm']:
+                raise osv.except_osv(_('Warning'), _("This action is only applied to closed registers!"))
+
+            period = cashbox.period_id
+            if not period or 'closed' in period.state:
+                raise osv.except_osv(_('Warning'), _('The period \'%s\' of this register is already \'%s\', the register cannot be reopen!') % (period.name, period.state))
+
         return res
 
-    def action_confirm_choice(self, cr, uid, ids, context=None):
-        """
-        Do what the user wants, but not coffee ! Just this :
-        - re-open the cashbox
-        - do a write-off
-        """
+    def action_confirm_reopen(self, cr, uid, ids, context=None):
+        '''
+        US-807: Allow user to reopen the closed registers for those in open periods.
+        '''
         if context is None:
             context = {}
         w_id = context.get('active_id', False)
         if not w_id:
-            raise osv.except_osv(_('Warning'), _('You cannot decide about Cash Discrepancy without selecting any CashBox!'))
+            raise osv.except_osv(_('Warning'), _('You have to select a closed register!'))
         else:
             # search cashbox object
             cashbox = self.pool.get('account.bank.statement').browse(cr, uid, w_id)
             cstate = cashbox.state
             # What about cashbox state ?
-            if cstate not in ['partial_close', 'confirm']:
-                raise osv.except_osv(_('Warning'), _('You cannot do anything as long as the "Close CashBox" button has not been used.'))
+            if cstate not in ['confirm']:
+                raise osv.except_osv(_('Warning'), _('This action is only applied to closed registers.'))
             # look at user choice
             choice = self.browse(cr,uid,ids)[0].choice
             if choice == 'reopen':
-                if cstate not in ['partial_close']:
-                    raise osv.except_osv(_('Warning'), _('This action is only for partially closed registers.'))
+                #US-807: Check if the given period is still open, if it's closed -> cannot reopen this register!
+                period = cashbox.period_id
+                if not period or 'closed' in period.state:
+                    raise osv.except_osv(_('Warning'), _('The period \'%s\' of this register is already \'%s\', the register cannot be reopen!') % (period.name, period.state))
+
                 # re-open case
-                cashbox.write({'state': 'open'})
+                cashbox.write({'state': 'open', 'closing_balance_frozen': False})
                 return { 'type': 'ir.actions.act_window_close', 'res_id': w_id}
             # Write-off choice have been disabled since UTP-209
             else:
                 raise osv.except_osv(_('Warning'), _('An error has occured !'))
         return { 'type': 'ir.actions.act_window_close', 'res_id': w_id}
 
-cashbox_write_off()
+register_reopen()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
