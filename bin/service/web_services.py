@@ -351,12 +351,15 @@ class db(netsvc.ExportService):
     def exp_list_lang(self):
         return tools.scan_languages()
 
-    def exp_server_version(self, dbname):
+    def exp_server_version(self, dbname=False):
         """ Return the version of the server from the sql table
         sync_client_version. If it's not found return the version found from
         the unified-version.txt (old base)
             Used by the client to verify the compatibility with its own version
         """
+        if not dbname:
+            return release.version
+
         db = sql_db.db_connect(dbname)
         cr = db.cursor()
 
