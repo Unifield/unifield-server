@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+import datetime
 import time
 
 from osv import osv
@@ -528,6 +529,23 @@ class unconsistent_stock_report(osv.osv):
             'datas': data,
             'context': context,
         }
+
+    def delete_unused_lines(self, cr, uid, ids, context=None):
+        """
+        Remove the unconsistent.stock.report.line and unconsistent.stock.report
+        with age larger than 2 days.
+        """
+        if not ids:
+            ids = []
+
+        max_age = datetime.datetime.now() - datetime.timedelta(days=2)
+        report_ids = self.search(cr, uid, [
+            ('name', '<', max_age.strftime('%Y-%m-%d %H:%M:%S')),
+        ], context=context)
+
+        self.unlink(cr, uid, report_ids, context=context)
+
+        return True
 
 unconsistent_stock_report()
 
