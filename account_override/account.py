@@ -98,7 +98,10 @@ class account_account(osv.osv):
             'credit': "COALESCE(SUM(l.credit), 0) as credit"
         }
         #get all the necessary accounts
-        children_and_consolidated = self._get_children_and_consol(cr, uid, ids, context=context)
+        # XXX remove some account only if we are in context of report (to be
+        # modified in this way)
+        children_and_consolidated = self._get_children_and_consol(cr, uid, ids,
+                remove=True, context=context)
         #compute for each account the balance/debit/credit from the move lines
         accounts = {}
         sums = {}
@@ -176,6 +179,13 @@ class account_account(osv.osv):
                 for fn in field_names:
                     sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
                     for child in current.child_id:
+                        # XXX here in context of report, we need to remove
+                        # child accounts that should not be displayed. For now
+                        # it is hardcoded (8, and 9) but it should be a
+                        # property on the accounts.
+                        # XXX check the context is reporting before doing this
+                        if child.code.startswith('8') or child.code.startswith('9'):
+                            continue
                         if child.company_id.currency_id.id == current.company_id.currency_id.id:
                             sums[current.id][fn] += sums[child.id][fn]
                         else:
