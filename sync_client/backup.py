@@ -116,7 +116,6 @@ class BackupConfig(osv.osv):
         bkp = self.browse(cr, uid, ids, context)
         if bkp and bkp[0] and bkp[0].name: #US-786 If no path define -> return
             bck = bkp[0]
-            self._set_pg_psw_env_var()
             try:
                 # US-386: Check if file/path exists and raise exception, no need to prepare the backup, thus no pg_dump is executed
                 outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" %
@@ -134,19 +133,9 @@ class BackupConfig(osv.osv):
                 self._logger.exception('Cannot perform the backup %s' % error)
                 raise osv.except_osv(_('Error! Cannot perform the backup'), error)
 
-            cmd = ['pg_dump', '--format=c', '--no-owner', '-f', outfile]
-            if tools.config['db_user']:
-                cmd.append('--username=' + tools.config['db_user'])
-            if tools.config['db_host']:
-                cmd.append('--host=' + tools.config['db_host'])
-            if tools.config['db_port']:
-                cmd.append('--port=' + str(tools.config['db_port']))
-            cmd.append(cr.dbname)
-
-            res = tools.exec_pg_command(*tuple(cmd))
+            res = tools.pg_dump(cr.dbname, outfile)
             if res:
                 raise Exception, "Couldn't dump database"
-            self._unset_pg_psw_env_var()
             return "Backup done"
         raise osv.except_osv(_('Error! Cannot perform the backup'), "No backup path defined")
 
