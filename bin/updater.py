@@ -33,7 +33,9 @@ restart_delay = 5
 
 md5hex_size = (md5().digest_size * 8 / 4)
 base_version = '8' * md5hex_size
-re_version = re.compile(r'^\s*([a-fA-F0-9]{'+str(md5hex_size)+r'}\b)')
+# match 3 groups : md5sum <space> date (yyyy-mm-dd hh:mm:ss) <space> version
+#example : 694d9c65bce826551df26cefcc6565e1 2015-11-27 16:15:00 UF2.0rc3
+re_version = re.compile(r'^\s*([a-fA-F0-9]{'+str(md5hex_size)+r'}\b)\s*(\d+-\d+-\d+\s*\d+:\d+:\d+)\s*(.*)')
 logger = logging.getLogger('updater')
 
 def restart_server():
@@ -72,8 +74,13 @@ def parse_version_file(filepath):
             line = line.rstrip()
             if not line: continue
             try:
-                m = re_version.match(line)
-                versions.append( m.group(1) )
+                result = re_version.findall(line)
+                if not result: continue
+                md5sum, date, version_name = result[0]
+                versions.append({'md5sum': md5sum,
+                                 'date': date,
+                                 'name': version_name,
+                                })
             except AttributeError:
                 raise Exception("Unable to parse version from file `%s': %s" % (filepath, line))
     return versions
@@ -174,7 +181,6 @@ def do_update():
         else:
             warn(lock_file, 'removed')
         ## Now, update
-        application_time = now()
         revisions = []
         files = None
         try:
@@ -259,9 +265,10 @@ def do_update():
                             os.rename(f, bak)
                         warn("`%s' -> `%s'" % (target, f))
                         os.rename(target, f)
-            add_versions([(x, application_time) for x in revisions])
+            add_versions([(x['md5sum'], x['date'],
+                           x['name']) for x in revisions])
             warn("Update successful.")
-            warn("Revisions added: ", ", ".join(revisions))
+            warn("Revisions added: ", ", ".join([x['md5sum'] for x in revisions]))
             ## No database update here. I preferred to set modules to update just after the preparation
             ## The reason is, when pool is populated, it will starts by upgrading modules first
 
@@ -342,13 +349,13 @@ def do_prepare(cr, revision_ids):
     for rev in version.browse(cr, 1, revision_ids):
         # Check presence of the patch
         if not rev.patch:
-            missing.append( rev )
+            missing.append(rev)
             continue
         # Check if the file match the expected sum
-        patch = b64decode( rev.patch )
+        patch = b64decode(rev.patch)
         local_sum = md5(patch).hexdigest()
         if local_sum != rev.sum:
-            corrupt.append( rev )
+            corrupt.append(rev)
         elif not (corrupt or missing):
             # Extract the Zip
             f = StringIO(patch)
@@ -358,7 +365,7 @@ def do_prepare(cr, revision_ids):
             finally:
                 f.close()
             # Store to list of updates
-            new_revisions.append( (rev.sum, ("[%s] %s - %s" % (rev.importance, rev.date, rev.name))) )
+            new_revisions.append((rev.sum, ("%s %s" % (rev.date, rev.name))))
             if rev.state == 'not-installed':
                 need_restart.append(rev.id)
     # Remove corrupted patches
@@ -412,7 +419,7 @@ def test_do_upgrade(cr):
     db_versions = []
     for ver in cr.fetchall():
         db_versions.append(ver[0])
-    if set(server_version) - set(db_versions) - set([base_version]):
+    if set([x['md5sum'] for x in server_version]) - set(db_versions) - set([base_version]):
         return True
     return False
 
@@ -424,8 +431,8 @@ def do_upgrade(cr, pool):
 
     db_versions = versions.read(cr, 1, versions.search(cr, 1, [('state','=','installed')]), ['sum'])
     db_versions = map(lambda x:x['sum'], db_versions)
-    server_lack_versions = set(db_versions) - set(server_version)
-    db_lack_versions = set(server_version) - set(db_versions) - set([base_version])
+    server_lack_versions = set(db_versions) - set([x['md5sum'] for x in server_version])
+    db_lack_versions = set([x['md5sum'] for x in server_version]) - set(db_versions) - set([base_version])
 
     if server_lack_versions:
         revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
