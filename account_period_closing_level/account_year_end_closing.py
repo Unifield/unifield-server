@@ -180,11 +180,16 @@ class account_year_end_closing(osv.osv):
                     # check that we have same count of mission-closed fy
                     # in fy report than in true coordos
                     # => so all have sync up their fy state report
-                    closed_ci_ids = afs_obj.search(cr, uid, [
+                    closed_afs_ids = afs_obj.search(cr, uid, [
                             ('fy_id', '=', fy_rec.id),
                             ('instance_id', 'in', ci_ids),
                             ('state', 'in', ('mission-closed', 'done', )),
                         ], context=context)
+                    closed_ci_ids = []
+                    if closed_afs_ids:
+                        closed_ci_ids = [ afs.instance_id.id \
+                            for afs in afs_obj.browse(cr, uid, closed_afs_ids,
+                                context=context) ]
                     if len(closed_ci_ids) != len(ci_ids):
                         # enumerate left open coordos for user info warn message
                         wrong_ci_ids = [ id for id in ci_ids if id not in closed_ci_ids ]
