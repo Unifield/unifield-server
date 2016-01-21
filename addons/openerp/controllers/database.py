@@ -247,7 +247,7 @@ class Database(BaseController):
         try:
             res = rpc.session.execute_db('dump', password, dbname)
             filename = [dbname, time.strftime('%Y%m%d-%H%M%S')]
-            version = get_server_version()
+            version = get_server_version(dbname)
             if version:
                 filename.append(version)
             if res:
@@ -292,6 +292,10 @@ class Database(BaseController):
                 self.msg = {'message': _('The choosen file in not a valid database file'),
                             'title': _('Error')}
                 return self.restore()
+        else:
+            self.msg = {'message': _('The choosen file in not a valid database file'),
+                        'title': _('Error')}
+            return self.restore()
         try:
             data = base64.encodestring(filename.file.read())
             rpc.session.execute_db('restore', password, dbname, data)
