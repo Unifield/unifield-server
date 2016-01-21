@@ -214,15 +214,27 @@ class account_account(osv.osv):
         return super(account_account, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
 
-    def _get_children_and_consol(self, cr, uid, ids, context=None):
+    def _get_children_and_consol(self, cr, uid, ids, remove=False, context=None):
         #this function search for all the children and all consolidated children (recursively) of the given account ids
+
         ids2 = self.search(cr, uid, [('parent_id', 'child_of', ids)], context=context)
         ids3 = []
         for rec in self.browse(cr, uid, ids2, context=context):
+            # XXX remove the account starting with 8 or 9.
+            # this is temporary modification and should not be kept as it is
+            # now. The final goal is to have a new property on account (like a
+            # checkbox "display this account in financial report" and to remove
+            # this accounts from the list here (only if we are in context of
+            # report)
+            if remove and (rec.code.startswith('8') or\
+                    rec.code.startswith('9')):
+                ids2.remove(rec.id)
+                continue
             for child in rec.child_consol_ids:
                 ids3.append(child.id)
         if ids3:
-            ids3 = self._get_children_and_consol(cr, uid, ids3, context)
+            ids3 = self._get_children_and_consol(cr, uid, ids3, remove=remove,
+                    context=context)
         return ids2 + ids3
 
     def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
@@ -246,7 +258,9 @@ class account_account(osv.osv):
             'credit': "COALESCE(SUM(l.credit), 0) as credit"
         }
         #get all the necessary accounts
-        children_and_consolidated = self._get_children_and_consol(cr, uid, ids, context=context)
+        # XXX remove some account only if we are in context of report
+        children_and_consolidated = self._get_children_and_consol(cr, uid, ids,
+                remove=True, context=context)
         #compute for each account the balance/debit/credit from the move lines
         accounts = {}
         sums = {}
@@ -301,6 +315,13 @@ class account_account(osv.osv):
                 for fn in field_names:
                     sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
                     for child in current.child_id:
+                        # XXX here in context of report, we need to remove
+                        # child accounts that should not be displayed. For now
+                        # it is hardcoded (8, and 9) but it should be a
+                        # property on the accounts.
+                        # XXX check the context is reporting before doing this
+                        if child.code.startswith('8') or child.code.startswith('9'):
+                            continue
                         if child.company_id.currency_id.id == current.company_id.currency_id.id:
                             sums[current.id][fn] += sums[child.id][fn]
                         else:
