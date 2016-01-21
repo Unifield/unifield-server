@@ -132,7 +132,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].company_id.partner_id and get_from(objects[0].company_id.partner_id.id) or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].company_id.partner_id.name ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -161,7 +161,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].company_id.partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].company_id.partner_id and get_from(objects[0].company_id.partner_id.id) or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
