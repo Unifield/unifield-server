@@ -43,6 +43,9 @@
         <blockTableStyle id="HeaderInfos">
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
+            <lineStyle kind="GRID" colorName="black" start="0,0" stop="0,1" />
+            <lineStyle kind="GRID" colorName="black" start="2,0" stop="2,1" />
+            <lineStyle kind="GRID" colorName="black" start="4,0" stop="4,1" />
         </blockTableStyle>
 
         <blockTableStyle id="WarningTable">
@@ -105,7 +108,7 @@
 
         <!-- Picking Ticket header values -->
 
-        <blockTable colWidths="300.0,170.0,170.0,165.0" style="HeaderInfos">
+        <blockTable colWidths="300.0,10.0,160.0,10.0,160.0,165.0" style="HeaderInfos">
             <tr>
                 <td>
                     <para style="HeaderInfosTitle">Requester Ref:      [[ pt.sale_id and pt.sale_id.client_order_ref or '' ]]</para>
@@ -116,12 +119,18 @@
                     <para style="HeaderInfosTitle">Transport mode:  [[ pt.sale_id and pt.sale_id.transport_type and getSel(pt.sale_id, 'transport_type') or '' ]]</para>
                 </td>
                 <td>
+                    <para style="HeaderInfosTitle"></para>
+                </td>
+                <td>
                     [[ repeatIn(getShipper(), 'ship', 'td') ]]
                     <para style="HeaderInfosTitle">Shipper:</para>
                     <para style="HeaderInfosTitle">[[ ship.get('shipper_name', '') ]]</para>
                     <para style="HeaderInfosTitle">[[ ship.get('shipper_contact', '') ]]</para>
                     <para style="HeaderInfosTitle">[[ ship.get('shipper_address', '') ]]</para>
                     <para style="HeaderInfosTitle">[[ ship.get('shipper_phone', '') ]]</para>
+                    <para style="HeaderInfosTitle"></para>
+                </td>
+                <td>
                     <para style="HeaderInfosTitle"></para>
                 </td>
                 <td>
@@ -247,7 +256,8 @@
                     <para style="LineHeader">Weight per pack (kg)</para>
                 </td>
                 <td>
-                    <para style="LineHeader">Size (w x l x h) (cm)</para>
+                    <para style="LineHeader">Size</para>
+                    <para style="LineHeader">(w x l x h) (cm)</para>
                 </td>
             </tr>
         </blockTable>
