@@ -131,6 +131,16 @@ class real_average_consumption(osv.osv):
                 res[obj.id] = True
         return res
 
+    def _get_stock_location(self, cr, uid, ids, context=None):
+        """
+        Return the list of real consumption reports to update
+        """
+        return self.pool.get('real.average.consumption').search(cr, uid, [
+            '|',
+            ('cons_location_id', 'in', ids),
+            ('activity_id', 'in', ids),
+        ], context=context)
+
     def _get_act_name(self, cr, uid, ids, fields, arg, context=None):
         """
         Set the activity name when the activity_id is changed
@@ -154,11 +164,13 @@ class real_average_consumption(osv.osv):
         'creation_date': fields.datetime(string='Creation date', required=1),
         'cons_location_id': fields.many2one('stock.location', string='Consumer location', domain=[('usage', '=', 'internal')], required=True),
         'cons_location_name': fields.function(_get_act_name, method=True, type='char', string='Consumer location Name', readonly=True, size=128, multi='loc_name', store={
-                'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['cons_location_name'], 10),
+                'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['cons_location_id'], 10),
+                'stock.location': (_get_stock_location, ['name'], 20),
             },),
         'activity_id': fields.many2one('stock.location', string='Activity', domain=[('usage', '=', 'customer')], required=1),
         'activity_name': fields.function(_get_act_name, method=True, type='char', string='Activity Name', readonly=True, size=128, multi='loc_name', store={
                 'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['activity_id'], 10),
+                'stock.location': (_get_stock_location, ['name'], 20),
             },),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
