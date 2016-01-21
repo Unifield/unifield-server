@@ -176,6 +176,11 @@ class account_fiscalyear_state(osv.osv):
         if isinstance(fy_ids, (int, long)):
             fy_ids = [fy_ids]
 
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        model_data = self.pool.get('ir.model.data')
+        fy_state_obj = self.pool.get('account.fiscalyear.state')
+        parent = user.company_id.instance_id.id
+        ids_to_write = []
         for fy_id in fy_ids:
             user = self.pool.get('res.users').browse(cr, uid, uid,
                 context=context)
@@ -193,6 +198,11 @@ class account_fiscalyear_state(osv.osv):
                         'state': fy['state']
                     }
                     self.write(cr, uid, ids, vals, context=context)
+                    for fy_state_id in ids:
+                        fy_state_xml_id = fy_state_obj.get_sd_ref(cr, uid,
+                            fy_state_id)
+                        ids_to_write.append(model_data._get_id(cr, uid, 'sd',
+                            fy_state_xml_id))
                 else:
                     vals = {
                         'fy_id': fy['id'],
@@ -200,6 +210,13 @@ class account_fiscalyear_state(osv.osv):
                         'state': fy['state']
                     }
                     self.create(cr, uid, vals, context=context)
+
+        # like for US-649 period state: in context of synchro last_modification
+        # date must be updated on account.fisclayear.state because they are
+        # created with synchro and they need to be sync down to other instances
+        if ids_to_write:
+            model_data.write(cr, uid, ids_to_write,
+                {'last_modification': fields.datetime.now()})
         return True
 
 account_fiscalyear_state()
