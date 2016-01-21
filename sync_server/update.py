@@ -465,8 +465,10 @@ class update(osv.osv):
                     ids = ids[:ids.index(update.id)]
                     break
 
-                key = (update.model, update.rule_id.id, update.source.id, update.is_deleted)
-
+                # If this update is exactly the same as the previous one, we can pack
+                #  them together because they can be executed together. Here we pack them
+                #  if they behave the same way (same model, same rule, same source,
+                #  same sequence, update type)
                 if not updates_master or updates_master[-1].model != update.model or \
                     updates_master[-1].rule_id.id != update.rule_id.id or \
                     updates_master[-1].source.id != update.source.id or \
