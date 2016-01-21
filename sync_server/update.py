@@ -447,6 +447,7 @@ class update(osv.osv):
         ids = []
 
         updates_to_send, updates_master = [], []
+        offset_increment = 0
         packet_size = 0
 
         self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
@@ -479,6 +480,7 @@ class update(osv.osv):
                 packet_size += 1
 
             offset = (offset[0], offset[1]+len(ids))
+            offset_increment += len(ids)
 
         if not updates_to_send:
             self._logger.info("::::::::[%s] No (more) update to send" % (entity.name,))
@@ -499,7 +501,7 @@ class update(osv.osv):
                 'source_name' : update_master.source.name,
                 'sequence' : update_master.sequence,
                 'rule' : update_master.rule_id.sequence_number,
-                'offset' : offset,
+                'offset' : (offset[0], offset_increment),
                 'update_id': update_to_send[-1].id
             }
 

@@ -583,6 +583,7 @@ class Entity(osv.osv):
             res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
             if res and res[0]:
                 if res[1]: check_md5(res[3], res[1], _('method get_update'))
+                increment_to_offset = 0
                 for package in (res[1] or []):
                     updates_count += updates.unfold_package(cr, uid, package, context=context)
 
@@ -591,9 +592,11 @@ class Entity(osv.osv):
                         logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
                         logger.write()
                     if package:
-                        offset_recovery += package['offset'][1]
+                        increment_to_offset = package['offset'][1]
                         offset = (package['update_id'], 0)
-                        self.write(cr, uid, entity.id, {'update_offset' : offset_recovery}, context=context)
+
+                offset_recovery += increment_to_offset
+                self.write(cr, uid, entity.id, {'update_offset' : offset_recovery}, context=context)
                 last = res[2]
             elif res and not res[0]:
                 raise Exception, res[1]
