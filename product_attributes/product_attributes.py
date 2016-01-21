@@ -1055,6 +1055,26 @@ class product_attributes(osv.osv):
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
     ]
 
+    def create(self, cr, user, vals, context=None):
+        """
+        At product.product creation, create a standard.price.track.changes
+        record with the standard price as new value and None as old value.
+        :param cr: Cursor to the database
+        :param user: ID of the user that creates the record
+        :param vals: Values of the new product.product to create
+        :param context: Context of the call
+        :return: The ID of the new product.template record
+        """
+        sptc_obj = self.pool.get('standard.price.track.changes')
+
+        res = super(product_attributes, self).create(cr, user, vals,
+                                                     context=context)
+
+        sptc_obj.track_change(cr, user, res, _('Product creation'), vals,
+                              context=context)
+
+        return res
+
 product_attributes()
 
 
