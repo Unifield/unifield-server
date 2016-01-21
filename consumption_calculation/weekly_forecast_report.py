@@ -246,7 +246,10 @@ class weekly_forecast_report(osv.osv):
         :return Return a dictionary with the action to open the report
         :rtype dict
         """
-        datas = {'ids': ids}
+        datas = {
+            'ids': ids,
+            'target_filename': 'Periodical Forecast Report.xls',
+        }
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'weekly.forecast.report_xls',
