@@ -130,6 +130,9 @@ class patch_scripts(osv.osv):
         obj.clean_translation(cr, uid, context={})
         obj.add_xml_ids(cr, uid, context={})
 
+    def us_394_3_patch(self, cr, uid, *a, **b):
+        self.us_394_2_patch(cr, uid, *a, **b)
+
     def update_us_435_2(self, cr, uid, *a, **b):
         period_obj = self.pool.get('account.period')
         period_state_obj = self.pool.get('account.period.state')
