@@ -101,6 +101,7 @@ class stock_inventory(osv.osv):
         # ignore the first row
         reader.next()
         line_num = 1
+        product_error = []
         for row in reader:
             line_num += 1
             # Check length of the row
@@ -119,6 +120,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             product_qty = 0.00
             product_uom = False
             comment = ''
+            bad_expiry = None
+            bad_batch_name = None
             to_correct_ok = False
 
             # Product code
@@ -145,7 +148,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             if not product_id:
                 to_correct_ok = True
                 import_to_correct = True
-                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
+                product_error.append(line_num)
+                continue
 
             # Location
             loc_id = row.cells[2].data
@@ -177,13 +181,19 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     batch = str(batch)
                 try:
                     batch = batch.strip()
-                    batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
-                    if not batch_ids:
-                        batch_name = batch
+                    if ',' in batch:
+                        bad_batch_name = True
+                        batch_name = False
                         batch = False
                         to_correct_ok = True
                     else:
-                        batch = batch_ids[0]
+                        batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
+                        if not batch_ids:
+                            batch_name = batch
+                            batch = False
+                            to_correct_ok = True
+                        else:
+                            batch = batch_ids[0]
                 except Exception:
                     batch = False
 
@@ -192,6 +202,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 if row.cells[4].type == 'datetime':
                     expiry = row.cells[4].data.strftime('%Y-%m-%d')
                 else:
+                    bad_expiry = True
+                    comment += _('Incorrectly formatted expiry date.')
                     to_correct_ok = True
                     import_to_correct = True
                 if expiry and not batch:
@@ -271,6 +283,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 'location_id': location_id,
                 'prod_lot_id': batch,
                 'expiry_date': expiry,
+                'bad_expiry': bad_expiry,
+                'bad_batch_name': bad_batch_name,
                 'product_qty': product_qty,
                 'product_uom': product_uom,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
@@ -280,6 +294,15 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             }
 
             vals['inventory_line_id'].append((0, 0, to_write))
+
+        if product_error:
+            raise osv.except_osv(
+                _('Error'),
+                _('Product not found in the database for %s line%s: %s') % (
+                    len(product_error) > 1 and 'these' or 'this',
+                    len(product_error) > 1 and 's' or '',
+                    ' / '.join(str(x) for x in product_error)),
+            )
 
         # write order line on Inventory
         context['import_in_progress'] = True
@@ -369,19 +392,38 @@ class stock_inventory_line(osv.osv):
         batch = vals.get('prod_lot_id')
         expiry = vals.get('expiry_date')
         batch_name = vals.get('batch_name')
+        bad_expiry = vals.get('bad_expiry')
+        bad_batch_name = vals.get('bad_batch_name')
+
+        if 'bad_expiry' in vals:
+            del vals['bad_expiry']
+
+        if 'bad_batch_name' in vals:
+            del vals['bad_batch_name']
 
         if not location_id:
             comment += _('Location is missing.\n')
 
         if hidden_batch_management_mandatory and not batch:
-            if batch_name:
+            if bad_batch_name:
+                comment += _('Incorrect batch number format.\n')
+            elif batch_name and not bad_expiry and expiry:
                 comment += _('Batch not found.\n')
+            elif batch_name and not bad_expiry and not expiry:
+                comment += _('Expiry date is missing.\n')
+            elif batch_name and bad_expiry:
+                comment += _('Incorrectly formatted expiry date. Batch not created.\n')
             else:
                 comment += _('Batch is missing.\n')
                 vals['expiry_date'] = False
 
         if hidden_perishable_mandatory and not expiry and not batch and batch_name:
-            comment += _('Batch not found.\n')
+            if bad_batch_name:
+                comment += _('Incorrect batch number format.\n')
+            elif bad_expiry:
+                comment += _('Incorrectly formatted expiry date.\n')
+            else:
+                comment += _('Batch not found.\n')
         elif hidden_perishable_mandatory and not expiry:
             comment += _('Expiry date is missing.\n')
             vals['expiry_date'] = False
@@ -513,6 +555,7 @@ class initial_stock_inventory(osv.osv):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         product_cache = {}
+        product_error = []
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
 
@@ -536,6 +579,9 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             location_id = False
             batch = False
             expiry = False
+            bad_expiry = None
+            batch_name = None
+            bad_batch_name = None
             product_qty = 0.00
             product_uom = False
             comment = ''
@@ -565,7 +611,8 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             if not product_id:
                 to_correct_ok = True
                 import_to_correct = True
-                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
+                product_error.append(line_num)
+                continue
 
             # Average cost
             cost = row.cells[2].data
@@ -608,6 +655,10 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 try:
                     batch = batch.strip()
                     batch_name = batch
+                    if ',' in batch_name:
+                        batch_name = False
+                        batch = False
+                        bad_batch_name = True
                 except Exception:
                     pass
 
@@ -616,6 +667,8 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 if row.cells[5].type == 'datetime':
                     expiry = row.cells[5].data
                 else:
+                    bad_expiry = True
+                    comment += _('Incorrectly formatted expiry date.')
                     to_correct_ok = True
                     import_to_correct = True
             else:
@@ -661,6 +714,8 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 'location_id': location_id,
                 'prodlot_name': batch,
                 'expiry_date': expiry and expiry.strftime('%Y-%m-%d') or False,
+                'bad_expiry': bad_expiry,
+                'bad_batch_name': bad_batch_name,
                 'product_qty': product_qty,
                 'product_uom': product_uom,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
@@ -670,6 +725,15 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             }
 
             vals['inventory_line_id'].append((0, 0, to_write))
+
+        if product_error:
+            raise osv.except_osv(
+                _('Error'),
+                _('Product not found in the database for %s line%s: %s') % (
+                    len(product_error) > 1 and 'these' or 'this',
+                    len(product_error) > 1 and 's' or '',
+                    ' / '.join(str(x) for x in product_error)),
+            )
 
         # write order line on Inventory
         vals.update({'file_to_import': False})
@@ -758,17 +822,32 @@ class initial_stock_inventory_line(osv.osv):
             vals.update({'prodlot_name':batch})
         expiry = vals.get('expiry_date')
         batch_name = vals.get('batch_name')
+        bad_expiry = vals.get('bad_expiry')
+        bad_batch_name = vals.get('bad_batch_name')
+
+        if 'bad_expiry' in vals:
+            del vals['bad_expiry']
+
+        if 'bad_batch_name' in vals:
+            del vals['bad_batch_name']
 
         if not location_id:
             comment += _('Location is missing.\n')
 
         if hidden_batch_management_mandatory and not batch:
-            if batch_name:
+            if bad_batch_name:
+                comment += _('Incorrect batch number format.\n')
+            elif batch_name and not bad_expiry:
                 comment += _('Batch not found.\n')
+            elif batch_name and bad_expiry:
+                comment += _('Incorrectly formatted expiry date. Batch not created.\n')
             else:
                 comment += _('Batch is missing.\n')
         if hidden_perishable_mandatory and not expiry:
-            comment += _('Expiry date is missing.\n')
+            if bad_expiry:
+                comment += _('Incorrectly formatted expiry date.\n')
+            else:
+                comment += _('Expiry date is missing.\n')
 
         if not comment:
             vals.update({'comment': comment, 'to_correct_ok': False})
