@@ -173,9 +173,7 @@ class account_year_end_closing(osv.osv):
                     _('FY+1 required to close FY'))
 
             # HQ level: check that all coordos have their FY mission closed
-            # TODO reactive after testing:
-            # => during testing not all instances are closed
-            """if level == 'section':
+            if level == 'section':
                 mi_obj = self.pool.get('msf.instance')
                 ci_ids = mi_obj.search(cr, uid, [
                         ('parent_id', '=', instance_id.id),
@@ -209,7 +207,7 @@ class account_year_end_closing(osv.osv):
                         msg = _('%s Coordo(s): proceed year end closing' \
                             ' first') % (
                             ', '.join(codes), )
-                        raise osv.except_osv(_('Warning'), msg)"""
+                        raise osv.except_osv(_('Warning'), msg)
 
         return level
 
