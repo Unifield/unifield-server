@@ -2187,6 +2187,18 @@ class account_bank_statement_line(osv.osv):
                 account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
 
             if postype == "hard":
+                if absl.imported_invoice_line_ids:
+                    # US-518/1.2
+                    imported_total_amount = 0
+
+                    for inv_move_line in absl.imported_invoice_line_ids:
+                        imported_total_amount += inv_move_line.amount_currency
+                    if absl.amount_out > abs(imported_total_amount) or\
+                            absl.amount_in > abs(imported_total_amount):
+                        raise osv.except_osv(_('Warning'),
+                            _('You can not hard post with an amount greater'
+                                ' than total of imported invoices'))
+
                 # Update analytic lines
                 if absl.account_id.is_analytic_addicted:
                     self.update_analytic_lines(cr, uid, absl)
