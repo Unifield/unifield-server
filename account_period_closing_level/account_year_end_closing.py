@@ -376,25 +376,24 @@ class account_year_end_closing(osv.osv):
         local_context = context.copy() if context else {}
 
         # compute balance for ticked accounts, exclude period 16 itself
-        sql = '''select ml.currency_id as currency_id,
-            max(c.name) as currency_code,
-            ml.account_id as account_id, max(a.code) as account_code,
-            sum(ml.debit_currency - ml.credit_currency) as balance_currency,
-            sum(ml.debit - ml.credit) as balance
+        sql = '''select ml.account_id as account_id, max(a.code) as account_code,
+            ml.currency_id as currency_id, max(c.name) as currency_code,
+            (sum(ml.debit_currency) - sum(ml.credit_currency)) as balance_currency,
+            (sum(ml.debit) - sum(ml.credit)) as balance
             from account_move_line ml
             inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join res_currency c on c.id = ml.currency_id
             where ml.instance_id = %d and a.include_in_yearly_move = 't'
             and ml.date >= '%s' and ml.date <= '%s' and m.period_id != %d
-            group by ml.currency_id, ml.account_id
+            group by ml.account_id, ml.currency_id
         ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, period_id)
         cr.execute(sql)
         if not cr.rowcount:
             return
 
         je_by_ccy = {}  # JE/CCY, key: ccy id, value: JE id
-        for ccy_id, ccy_code, account_id, account_code, \
+        for account_id, account_code, ccy_id, ccy_code, \
             balance_currency, balance in cr.fetchall():
             balance_currency = float(balance_currency)
             balance = float(balance)
@@ -515,7 +514,7 @@ class account_year_end_closing(osv.osv):
 
         # P/L accounts BAL TOTAL in functional ccy
         # date inclusion to have period 0/1-15/16
-        sql = '''select sum(ml.debit - ml.credit) as bal
+        sql = '''select (sum(ml.debit) - sum(ml.credit)) as bal
             from account_move_line ml
             inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
@@ -566,12 +565,14 @@ class account_year_end_closing(osv.osv):
                 context=local_context)
 
         def create_journal_item(ccy_id=False, ccy_code='', account_id=False,
-            account_code='', balance_currency=0., balance=0., je_id=False):
+            account_code='', balance_currency=0., balance=0., je_id=False,
+            name=False):
             """
             create state valid JI in its CCY/JE
             """
-            name = "IB-%d-%s-%s-%s" % (fy_year, account_code, instance_rec.code,
-                ccy_code, )
+            if not name:
+                name = "IB-%d-%s-%s-%s" % (fy_year, account_code,
+                    instance_rec.code, ccy_code, )
 
             vals = {
                 'account_id': account_id,
@@ -646,6 +647,7 @@ class account_year_end_closing(osv.osv):
         # P/L accounts BAL TOTAL in functional ccy
         # date inclusion to have period 0/1-15/16
         re_account_id = False
+        pl_balance = 0.
         sql = '''select sum(ml.debit - ml.credit) as bal
             from account_move_line ml
             inner join account_move m on m.id = ml.move_id
@@ -667,11 +669,11 @@ class account_year_end_closing(osv.osv):
 
         # compute B/S balance in BOOKING breakdown in BOOKING/account
         # date inclusion to have periods 0/1-15/16
-        sql = '''select ml.currency_id as currency_id,
-            max(c.name) as currency_code,
+        sql = '''select
             ml.account_id as account_id, max(a.code) as account_code,
-            sum(ml.debit_currency - ml.credit_currency) as balance_currency,
-            sum(ml.debit - ml.credit) as balance
+            ml.currency_id as currency_id, max(c.name) as currency_code,
+            (sum(ml.debit_currency) - sum(ml.credit_currency)) as balance_currency,
+            (sum(ml.debit) - sum(ml.credit)) as balance
             from account_move_line ml
             inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
@@ -680,7 +682,7 @@ class account_year_end_closing(osv.osv):
             where ml.instance_id = %d
             and t.report_type in ('asset', 'liability')
             and ml.date >= '%s' and ml.date <= '%s'
-            group by ml.currency_id, ml.account_id
+            group by ml.account_id, ml.currency_id
         ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
         cr.execute(sql)
         if not cr.rowcount:
@@ -688,19 +690,10 @@ class account_year_end_closing(osv.osv):
 
         re_account_found_in_bs = False
         je_by_ccy = {}  # JE/CCY, key: ccy id, value: JE id
-        for ccy_id, ccy_code, account_id, account_code, \
+        for account_id, account_code, ccy_id, ccy_code, \
             balance_currency, balance in cr.fetchall():
             balance_currency = float(balance_currency)
             balance = float(balance)
-
-            if ccy_id == cpy_rec.currency_id.id:
-                # entry in functional ccy
-                if account_id == re_account_rec.id:
-                    # For Regular/Equity account add balance of all P/L balances
-                    # note: booking == functional for entry and P/S in functional
-                    balance_currency += pl_balance
-                    balance += pl_balance
-                    re_account_found_in_bs = True
 
             # CCY JE
             je_id = je_by_ccy.get(ccy_id, False)
@@ -715,14 +708,16 @@ class account_year_end_closing(osv.osv):
                 balance_currency=balance_currency, balance=balance, je_id=je_id)
 
         if not re_account_found_in_bs:
-            # No B/S result for result account, add entry with P/L balance
+            # Regular/Equity account result entry for P&L
             je_id = je_by_ccy.get(cpy_rec.currency_id.id, False)
             if not je_id:
-                je_id = create_journal_entry(ccy_id=ccy_id, ccy_code=ccy_code)
+                je_id = create_journal_entry(ccy_id=ccy_id,
+                    ccy_code=cpy_rec.currency_id.name)
             create_journal_item(ccy_id=cpy_rec.currency_id.id,
                 ccy_code=cpy_rec.currency_id.name,
                 account_id=re_account_rec.id, account_code=re_account_rec.code,
-                balance_currency=balance_currency, balance=balance, je_id=je_id)
+                balance_currency=pl_balance, balance=pl_balance, je_id=je_id,
+                name="P&L Result report / Previous Fiscal Year")
 
     def update_fy_state(self, cr, uid, fy_id, reopen=False, context=None):
         instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
