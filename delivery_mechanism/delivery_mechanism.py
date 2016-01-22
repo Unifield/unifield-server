@@ -368,6 +368,9 @@ class stock_move(osv.osv):
                'product_id': move.product_id.id,
                'product_uom': move.product_uom.id,
                'product_qty': move.product_qty,
+               'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
+               'asset_id': move.asset_id and move.asset_id.id or False,
+               'expired_date': move.expired_date or False,
                'location_dest_id': move.location_dest_id.id,
                'move_cross_docking_ok': move.move_cross_docking_ok,
                }
@@ -1248,7 +1251,7 @@ class stock_picking(osv.osv):
                     if bo_move.product_qty != bo_qty:
                         # Create the corresponding move in the backorder - reset batch - reset asset_id
                         bo_values = {
-                            'asset_id': False,
+                            'asset_id': data_back['asset_id'],
                             'product_qty': bo_qty,
                             'product_uos_qty': bo_qty,
                             'product_uom': data_back['product_uom'],
@@ -1256,7 +1259,8 @@ class stock_picking(osv.osv):
                             'product_id': data_back['product_id'],
                             'location_dest_id': data_back['location_dest_id'],
                             'move_cross_docking_ok': data_back['move_cross_docking_ok'],
-                            'prodlot_id': False,
+                            'prodlot_id': data_back['prodlot_id'],
+                            'expired_date': data_back['expired_date'],
                             'state': 'assigned',
                             'move_dest_id': False,
                             'change_reason': False,
