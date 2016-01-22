@@ -254,7 +254,7 @@ class stock_location(osv.osv):
         result = 'internal'
         if (from_location.usage=='internal') and (to_location and to_location.usage in ('customer', 'supplier')):
             result = 'out'
-        elif (from_location.usage in ('supplier', 'customer')) and (to_location.usage == 'internal'):
+        elif (from_location.usage in ('supplier', 'customer')) and (to_location.usage in ('internal', 'inventory')):
             result = 'in'
         return result
 
