@@ -19,6 +19,7 @@
 #
 ##############################################################################
 import specific_rules
+import unconsistent_stock_report
 import stock
 import wizard
 import report
