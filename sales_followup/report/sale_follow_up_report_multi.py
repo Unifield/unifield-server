@@ -53,40 +53,43 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
     def _get_orders(self, report):
         orders = []
-
-        for order in report.order_ids:
-            if len(order.order_line):
-                orders.append(order)
+        for order_id in report.order_ids:
+            if self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)]):
+                orders.append(order_id)
 
         self._nb_orders = len(orders)
 
-        return orders
+        for order in orders:
+            yield self.pool.get('sale.order').browse(self.cr, self.uid, order)
+
+        raise StopIteration
 
     def _get_products(self, order, count=False):
         '''
         Returns the list of products in the order
         '''
-        prod_obj = self.pool.get('product.product')
+        self.cr.execute('''SELECT COUNT(DISTINCT(product_id)) FROM sale_order_line WHERE order_id = %(order_id)s''', {'order_id': order.id})
+        return self.cr.fetchone()[0]
 
-        self.cr.execute('''SELECT distinct(product_id) FROM sale_order_line WHERE order_id = %(order_id)s''', {'order_id': order.id})
-        product_ids = [x[0] for x in self.cr.fetchall() if x[0] is not None]
+    def _get_order_line(self, order_id):
+        order_line_ids = self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)])
+        for order_line_id in order_line_ids:
+            yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id)
 
-        if count:
-            return len(product_ids)
-
-        return prod_obj.browse(self.cr, self.uid, product_ids)
+        raise StopIteration
 
     def _get_lines(self, order, grouped=False):
         '''
         Get all lines with OUT/PICK for an order
         '''
-        res = []
         keys = []
-        for line in order.order_line:
+        for line in self._get_order_line(order.id):
             if not grouped:
                 keys = []
             lines = []
             first_line = True
+            fl_index = 0
+            m_index = 0
             bo_qty = line.product_uom_qty
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
@@ -155,6 +158,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     else:
                         keys.append(key)
                         lines.append(data)
+                        if data.get('first_line'):
+                            fl_index= m_index
+                        m_index += 1
 
             # No move found
             if first_line:
@@ -173,11 +179,12 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 lines.append(data)
 
             # Put the backorderd qty on the first line
-            for l in lines:
-                if l.get('first_line'):
-                    l['backordered_qty'] = bo_qty
+            if not lines:
+                continue
+            lines[fl_index]['backordered_qty'] = bo_qty
 
-            res.extend(lines)
+            for line in lines:
+                yield line
 
         self._order_iterator += 1
 
@@ -185,7 +192,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             percent = float(self._order_iterator) / float(self._nb_orders)
             self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
 
-        return res
+        raise StopIteration
 
     def _parse_date_xls(self, dt_str, is_datetime=True):
         if not dt_str or dt_str == 'False':

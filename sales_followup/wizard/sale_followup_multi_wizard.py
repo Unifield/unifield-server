@@ -61,13 +61,17 @@ class sale_followup_multi_wizard(osv.osv_memory):
             string='Status',
             readonly=True,
         ),
-        'order_ids': fields.many2many(
-            'sale.order',
-            'followup_per_client_rel',
-            'report_id',
-            'order_id',
+        'order_ids': fields.text(
             string='Orders',
+            readonly=True
         ),
+        #'order_ids': fields.many2many(
+        #    'sale.order',
+        #    'followup_per_client_rel',
+        #    'report_id',
+        #    'order_id',
+        #    string='Orders',
+        #),
         'order_id': fields.many2one(
             'sale.order',
             string='Order Ref.',
@@ -173,7 +177,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
                         _('No data found with these parameters'),
                     )
 
-            self.write(cr, uid, [wizard.id], {'order_ids': [(6,0,fo_ids)]}, context=context)
+            self.write(cr, uid, [wizard.id], {'order_ids': fo_ids}, context=context)
 
         return True
 
