@@ -278,9 +278,11 @@ sql_params)
         # UF-2272
         # enumeration of models where to skip their one2many(s)
         # was decided to do a specific skip versus global impact of touch...
-        write_skip_o2m = [
-            'supplier.catalogue',
-        ]
+        # list of o2m fields to skip, if empty ignore all o2m fields
+        write_skip_o2m = {
+            'supplier.catalogue': [],
+            'account.bank.statement': ['line_ids'],
+        }
 
         _previous_calls = _previous_calls or []
         me = (self._name, ids)
@@ -372,7 +374,8 @@ sql_params)
                 if synchronize:
                     for field, column in filter_o2m(whole_fields):
                         if context.get('from_orm_write', False) and \
-                            write_skip_o2m and self._name in write_skip_o2m:
+                            self._name in write_skip_o2m and \
+                            (not write_skip_o2m.get(self._name) or field in write_skip_o2m[self._name]):
                             # UF-2272 skip model's one2many(s)
                             continue
                         self.pool.get(column._obj).touch(
