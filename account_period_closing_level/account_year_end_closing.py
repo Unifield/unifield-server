@@ -466,7 +466,7 @@ class account_year_end_closing(osv.osv):
             create state valid JI in its CCY/JE
             """
             name = "EOY-%d-%s-%s-%s" % (fy_year, account_rec.code,
-                instance_rec.name, cpy_rec.currency_id.name, )
+                instance_rec.code, cpy_rec.currency_id.name, )
 
             vals = {
                 'account_id': account_rec.id,
