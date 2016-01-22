@@ -137,6 +137,12 @@ class account_year_end_closing(osv.osv):
                 self.report_bs_balance_to_next_fy(cr, uid, fy_rec, context=context)
         self.update_fy_state(cr, uid, fy_rec.id, context=context)
 
+    def _get_mission_ids_from_coordo(self, cr, uid, coo_id, context=None):
+        res = self.pool.get('msf.instance').search(cr, uid,
+            [('parent_id', '=', coo_id), ], context=context) or []
+        res.insert(0, coo_id)
+        return res
+
     def check_before_closing_process(self, cr, uid, fy_rec, context=None):
         """
         :return: instance level
@@ -356,6 +362,8 @@ class account_year_end_closing(osv.osv):
                 _("B/S counterparts accounts credit/debit not set" \
                     " in company settings 'B/S Move to 0 accounts'"))
         instance_rec = cpy_rec.instance_id
+        instance_ids = self._get_mission_ids_from_coordo(cr, uid,
+            instance_rec.id, context=context)
 
         fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
         posting_date = "%d-12-31" % (fy_year, )
@@ -386,10 +394,11 @@ class account_year_end_closing(osv.osv):
             inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join res_currency c on c.id = ml.currency_id
-            where ml.instance_id = %d and a.include_in_yearly_move = 't'
+            where ml.instance_id in %s and a.include_in_yearly_move = 't'
             and ml.date >= '%s' and ml.date <= '%s' and m.period_id != %d
             group by ml.account_id, ml.currency_id
-        ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, period_id)
+        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop,
+            period_id)
         cr.execute(sql)
         if not cr.rowcount:
             return
@@ -494,6 +503,8 @@ class account_year_end_closing(osv.osv):
             raise osv.except_osv(_('Error'),
                 _("Accounts not set in company settings 'P&L result accounts'"))
         instance_rec = cpy_rec.instance_id
+        instance_ids = self._get_mission_ids_from_coordo(cr, uid,
+            instance_rec.id, context=context)
 
         fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
         posting_date = "%d-12-31" % (fy_year, )
@@ -521,10 +532,10 @@ class account_year_end_closing(osv.osv):
             from account_move_line ml
             inner join account_account a on a.id = ml.account_id
             inner join account_account_type t on t.id = a.user_type
-            where ml.instance_id = %d
+            where ml.instance_id in %s
             and t.report_type in ('income', 'expense')
             and ml.date >= '%s' and ml.date <= '%s'
-        ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
+        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop, )
         cr.execute(sql)
         if not cr.rowcount:
             return
@@ -626,6 +637,8 @@ class account_year_end_closing(osv.osv):
                 _("B/S Regular Equity result accounts credit/debit not set" \
                     " in company settings 'P&L result accounts'"))
         instance_rec = cpy_rec.instance_id
+        instance_ids = self._get_mission_ids_from_coordo(cr, uid,
+            instance_rec.id, context=context)
 
         fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
         next_fy_id = self._get_next_fy_id(cr, uid, fy_rec, context=context)
@@ -654,13 +667,12 @@ class account_year_end_closing(osv.osv):
         pl_balance = 0.
         sql = '''select sum(ml.debit - ml.credit) as bal
             from account_move_line ml
-            inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join account_account_type t on t.id = a.user_type
-            where ml.instance_id = %d
+            where ml.instance_id in %s
             and t.report_type in ('income', 'expense')
             and ml.date >= '%s' and ml.date <= '%s'
-        ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
+        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop, )
         cr.execute(sql)
         if cr.rowcount:
             pl_balance = float(cr.fetchone()[0])
@@ -679,15 +691,14 @@ class account_year_end_closing(osv.osv):
             (sum(ml.debit_currency) - sum(ml.credit_currency)) as balance_currency,
             (sum(ml.debit) - sum(ml.credit)) as balance
             from account_move_line ml
-            inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join account_account_type t on t.id = a.user_type
             inner join res_currency c on c.id = ml.currency_id
-            where ml.instance_id = %d
+            where ml.instance_id in %s
             and t.report_type in ('asset', 'liability')
             and ml.date >= '%s' and ml.date <= '%s'
             group by ml.account_id, ml.currency_id
-        ''' % (instance_rec.id, fy_rec.date_start, fy_rec.date_stop, )
+        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop, )
         cr.execute(sql)
         if not cr.rowcount:
             return
