@@ -244,6 +244,10 @@ class account_move_line(osv.osv):
         """
         if not context:
             context = {}
+        if context.get('sync_update_execution'):
+            # US-836: no need to cascade actions in sync context
+            # AJI deletion and JE validation are sync'ed
+            return super(account_move_line, self).unlink(cr, uid, ids, context=context, check=False)
         move_ids = []
         if ids:
             # Search manual moves to revalidate
