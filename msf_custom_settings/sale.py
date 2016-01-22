@@ -36,17 +36,11 @@ class sale_order(osv.osv):
         if not order_type:
             return res
         msg = _('Partner type is not compatible with given Order Type!')
-        if order_type in ['regular', 'donation_st', 'loan']:
+        if order_type in ['regular', 'donation_st', 'loan', 'donation_exp']:
             # Check that partner correspond
             if partner_id:
                 partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
                 if partner and partner.partner_type not in ['internal', 'intermission', 'section', 'external']:
-                    return {'warning': {'title': _('Error'), 'message': msg}}
-        elif order_type in ['donation_exp']:
-            # Check that partner correspond
-            if partner_id:
-                partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
-                if partner and partner.partner_type not in ['internal', 'intermission', 'section']:
                     return {'warning': {'title': _('Error'), 'message': msg}}
         else:
             pass
@@ -68,7 +62,7 @@ class sale_order(osv.osv):
             'regular':      ['internal', 'intermission', 'section', 'external'],
             'donation_st':  ['internal', 'intermission', 'section', 'external'],
             'loan':         ['internal', 'intermission', 'section', 'external'],
-            'donation_exp': ['internal', 'intermission', 'section'],
+            'donation_exp': ['internal', 'intermission', 'section', 'external'],
             'in_kind':      ['internal', 'intermission', 'section', 'external', 'esc'],
             'direct':       ['internal', 'intermission', 'section', 'external', 'esc'],
         }
