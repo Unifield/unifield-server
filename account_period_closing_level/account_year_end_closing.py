@@ -728,6 +728,10 @@ class account_year_end_closing(osv.osv):
 
         if not re_account_found_in_bs:
             # Regular/Equity account result entry for P&L
+
+            # invert balance amount to debit or credit amount after account dispatch
+            pl_balance *= -1
+
             je_id = je_by_acc_ccy.get(
                 (re_account_rec.id, cpy_rec.currency_id.id, ), False)
             if not je_id:
