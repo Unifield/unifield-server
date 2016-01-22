@@ -262,12 +262,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         res = []
         currency_obj = self.pool.get('res.currency')
         account_obj = self.pool.get('account.account')
-        # XXX in the future, remove=True parameter will probably be useless as
-        # the method _get_children_and_consol itself will check the context,
-        # and if it is a report context, remove the account that should not be
-        # displayed
+
+        # force the context to financial_report=True
+        # this make possible not to consider the accounts that are marked (or
+        # their parents) as display_in_reports=False
+        context = {'financial_report': True}
         ids_acc = account_obj._get_children_and_consol(self.cr,
-                self.uid, account.id, remove=True)
+                self.uid, account.id, context=context)
         currency = account.currency_id and account.currency_id or account.company_id.currency_id
         for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
             if self.account_report_types:
@@ -424,6 +425,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         :return : (is_view, amount, )
         """
         if account.type == 'view':
+            account._context.update({'financial_report':True})
             amount = getattr(account, field)
             return True, self._currency_conv(amount)
 
