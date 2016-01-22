@@ -123,6 +123,7 @@ class account_common_report(osv.osv_memory):
         if context is None:
             context = {}
         result = {}
+        result['financial_report'] = True
         result['fiscalyear'] = 'fiscalyear_id' in data['form'] and data['form']['fiscalyear_id'] or False
         result['journal_ids'] = 'journal_ids' in data['form'] and data['form']['journal_ids'] or False
         result['chart_account_id'] = 'chart_account_id' in data['form'] and data['form']['chart_account_id'] or False
