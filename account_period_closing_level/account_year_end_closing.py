@@ -384,6 +384,7 @@ class account_year_end_closing(osv.osv):
         # local context for transac
         # (write sum of booking and functional fx rate agnostic)
         local_context = context.copy() if context else {}
+        local_context.update({'force_accounting_item': True})
 
         # compute balance for ticked accounts, exclude period 16 itself
         sql = '''select ml.account_id as account_id, max(a.code) as account_code,
@@ -525,6 +526,7 @@ class account_year_end_closing(osv.osv):
         # local context for transac
         # (write sum of booking and functional fx rate agnostic)
         local_context = context.copy() if context else {}
+        local_context.update({'force_accounting_item': True})
 
         # P/L accounts BAL TOTAL in functional ccy
         # date inclusion to have period 0/1-15/16
@@ -660,6 +662,7 @@ class account_year_end_closing(osv.osv):
         # local context for transac
         # (write sum of booking and functional fx rate agnostic)
         local_context = context.copy() if context else {}
+        local_context.update({'force_accounting_item': True})
 
         # P/L accounts BAL TOTAL in functional ccy
         # date inclusion to have period 0/1-15/16

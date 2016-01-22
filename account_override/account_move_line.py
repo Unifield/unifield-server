@@ -321,7 +321,8 @@ class account_move_line(osv.osv):
         return res
 
     def _check_date(self, cr, uid, vals, context=None, check=True):
-        if 'date' in vals and vals['date'] is not False and 'account_id' in vals:
+        force = context and context.get('force_accounting_item', False) or False
+        if not force and 'date' in vals and vals['date'] is not False and 'account_id' in vals:
             account_obj = self.pool.get('account.account')
             account = account_obj.browse(cr, uid, vals['account_id'])
             if vals['date'] < account.activation_date \
