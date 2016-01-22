@@ -82,14 +82,22 @@
                 header="False"
                 rml="addons/msf_outgoing/report/picking_ticket.rml"
                 string="Picking Ticket" />
+
+        <report auto="False"
+                id="empty_picking_ticket"
+                model="stock.picking"
+                name="empty.picking.ticket"
+                header="False"
+                rml="addons/msf_outgoing/report/empty_picking_ticket.rml"
+                string="Pre-Packing List" />
         
-        <report auto="False" 
+        <!--<report auto="False"
                 id="pre_packing_list" 
                 model="stock.picking" 
                 name="pre.packing.list"
                 header="False"
                 rml="addons/msf_outgoing/report/pre_packing_list.rml"
-                string="Pre-Packing List" />
+                string="Pre-Packing List" />-->
                 
         <report auto="False" 
                 id="labels" 

@@ -67,7 +67,62 @@ class picking_ticket(report_sxw.rml_parse):
             'getStock': self.get_qty_available,
             'getNbItems': self.get_nb_items,
             'getLines': self.get_lines,
+            'getShipper': self.get_shipper,
+            'getConsignee': self.get_consignee,
         })
+
+    def get_consignee(self, picking):
+        """
+        Return values for consignee
+        @param picking: browse_record of the picking.ticket
+        @return: A dictionnary with consignee values
+        """
+        partner_obj = self.pool.get('res.partner')
+        addr_obj = self.pool.get('res.partner.address')
+        cr = self.cr
+        uid = self.uid
+        res = {}
+
+        if picking.partner_id2:
+            consignee_partner = picking.partner_id2
+            consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
+            consignee_addr = None
+
+            addr = ''
+            if consignee_addr_id:
+                consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id)
+                if consignee_addr.street:
+                    addr += consignee_addr.street
+                    addr += ' '
+                if consignee_addr.street2:
+                    addr += consignee_addr.street2
+                    addr += ' '
+                if consignee_addr.zip:
+                    addr += consignee_addr.zip
+                    addr += ' '
+                if consignee_addr.city:
+                    addr += consignee_addr.city
+                    addr += ' '
+                if consignee_addr.country_id:
+                    addr += consignee_addr.country_id.name
+
+            res.update({
+                'consignee_name': consignee_partner.name,
+                'consignee_contact': consignee_partner.partner_type == 'internal' and 'Supply responsible' or consignee_addr and consignee_addr.name or '',
+                'consignee_address': addr,
+                'consignee_phone': consignee_addr and consignee_addr.phone or '',
+                'consignee_email': consignee_addr and consignee_addr.email or '',
+            })
+
+        return [res]
+
+    def get_shipper(self):
+        """
+        Return the shipper value for the given field
+        @param field: Name of the field to retrieve
+        @return: The value of the shipper field
+        """
+        return [self.pool.get('shipment').default_get(self.cr, self.uid, [])]
 
     def get_lines(self, picking):
         """
@@ -196,7 +251,7 @@ class picking_ticket(report_sxw.rml_parse):
         :return Call the super() method
         """
         for obj in objects:
-            if obj.subtype != 'picking':
+            if obj.subtype not in ('picking', 'ppl'):
                 raise osv.except_osv(_('Warning !'), _('Picking Ticket is only available for Picking Ticket Objects!'))
 
         return super(picking_ticket, self).set_context(objects, data, ids, report_type=report_type)
@@ -208,3 +263,12 @@ report_sxw.report_sxw(
     parser=picking_ticket,
     header=False,
 )
+
+report_sxw.report_sxw(
+    'report.empty.picking.ticket',
+    'stock.picking',
+    'addons/msf_outgoing/report/empty_picking_ticket.rml',
+    parser=picking_ticket,
+    header=False,
+)
+

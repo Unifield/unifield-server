@@ -197,7 +197,9 @@
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
+							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
+								   domain="[('partner_id', '=', partner_id2)]"
+								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}" />
 							<field name="backorder_id" readonly="1" />
 							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
 						</group>
@@ -582,7 +584,10 @@
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
+							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
+								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}"
+								   domain="[('partner_id', '=', partner_id2)]"
+							/>
 							<field name="invoice_state" invisible="1" />
 							<field name="backorder_id" readonly="1" />
 							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
@@ -965,7 +970,9 @@
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" />
+							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
+								   domain="[('partner_id', '=', partner_id2)]"
+							/>
 							<field name="invoice_state"/>
 							<field name="backorder_id" readonly="1" />
 							<field name="shipment_id" readonly="True" />
@@ -1212,7 +1219,9 @@
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                                 required="1"
 								attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-							<field name="address_id" context="{'contact_display':'partner'}" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+							<field name="address_id" context="{'contact_display':'partner'}"
+								   domain="[('partner_id', '=', partner_id2)]"
+								   attrs="{'readonly': ['|', ('partner_id2', '=', False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
 							<field name="in_ref" readonly="True" />
 						</group>
 					</group>
