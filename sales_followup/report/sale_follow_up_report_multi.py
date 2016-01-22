@@ -91,13 +91,22 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             fl_index = 0
             m_index = 0
             bo_qty = line.product_uom_qty
+            po_name = ''
+            cdd = False
+            if line.procurement_id and line.procurement_id.purchase_id:
+                po_name = line.procurement_id.purchase_id.name
+                cdd = line.procurement_id.purchase_id.delivery_confirmed_date
+
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and move.location_dest_id.usage == 'customer'
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
                 if m_type and (ppl or s_out):
-                    data = {}
+                    data = {
+                        'po_name': po_name,
+                        'cdd': cdd,
+                    }
                     if first_line:
                         data.update({
                             'line_number': line.line_number,
