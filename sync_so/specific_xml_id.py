@@ -18,7 +18,7 @@ from osv import fields
 #    and finally remove all dots (unexpected dots appears when the system
 #    language is not english)
 def get_valid_xml_name(*args):
-    return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '')
+    return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '').replace(',', '_')
 
 class fiscal_year(osv.osv):
 
