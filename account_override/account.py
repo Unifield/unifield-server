@@ -178,8 +178,8 @@ class account_account(osv.osv):
                 for fn in field_names:
                     sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
                     for child in current.child_id:
-                        # in context of report, check if the current account
-                        # should be displayed or not
+                        # in context of report, if the current account is not
+                        # displayed, it should no impact the total amount
                         if is_financial_report and not child.display_in_reports:
                             continue
                         if child.company_id.currency_id.id == current.company_id.currency_id.id:
