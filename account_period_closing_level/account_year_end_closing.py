@@ -547,6 +547,8 @@ class account_year_end_closing(osv.osv):
         else:
             account = cpy_rec.ye_pl_ne_debit_account  # Debit Account P&L<0 (Expense account)
             cp_account = cpy_rec.ye_pl_ne_credit_account  # Credit Account P&L<0 (B/S account)
+        # invert balance amount to debit or credit amount after account dispatch
+        balance *= -1
 
         je_id = create_journal_entry()
         create_journal_item(account, balance, je_id=je_id)
