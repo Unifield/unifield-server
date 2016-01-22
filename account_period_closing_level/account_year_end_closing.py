@@ -666,7 +666,7 @@ class account_year_end_closing(osv.osv):
         # date inclusion to have period 0/1-15/16
         re_account_id = False
         pl_balance = 0.
-        sql = '''select sum(ml.debit - ml.credit) as bal
+        sql = '''select (sum(ml.debit) - sum(ml.credit)) as bal
             from account_move_line ml
             inner join account_account a on a.id = ml.account_id
             inner join account_account_type t on t.id = a.user_type
