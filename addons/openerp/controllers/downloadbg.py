@@ -40,7 +40,7 @@ class DownLoadBg(SecuredController):
         if data_bg['percent'] >= 1.00:
             if not data_bg['finished']:
                 download.write([int(res_id)], {'finished': True}, rpc.session.context)
-                finished = data_bg['finished'] and "True" or "False"
+                finished = "True"
             else:
                 report = rpc.session.execute('report', 'report_get', data_bg['report_id'])
                 finish = report['state'] or ""
