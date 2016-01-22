@@ -287,11 +287,13 @@ class account_year_end_closing(osv.osv):
         """
         action 1
         """
-        def create_journal_entry(ccy_id=False, ccy_code=''):
+        def create_journal_entry(ccy_id=False, ccy_code='', account_id=False,
+            account_code=''):
             """
             create draft CCY/JE to log JI into
             """
-            name = "EOY-%d-%s-%s" % (fy_year, instance_rec.code, ccy_code, )
+            name = "EOY-%d-%s-%s-%s" % (fy_year, account_code,
+                instance_rec.code, ccy_code, )
 
             vals = {
                 'block_manual_currency_id': True,
@@ -392,7 +394,7 @@ class account_year_end_closing(osv.osv):
         if not cr.rowcount:
             return
 
-        je_by_ccy = {}  # JE/CCY, key: ccy id, value: JE id
+        je_by_acc_ccy = {}  # JE/ ACC/CCY, key: (acc_id, ccy_id), value: JE id
         for account_id, account_code, ccy_id, ccy_code, \
             balance_currency, balance in cr.fetchall():
             balance_currency = float(balance_currency)
@@ -405,11 +407,12 @@ class account_year_end_closing(osv.osv):
                 cp_account = cpy_rec.ye_pl_cp_for_bs_credit_bal_account
 
              # CCY JE
-            je_id = je_by_ccy.get(ccy_id, False)
+            je_id = je_by_acc_ccy.get((account_id, ccy_id, ), False)
             if not je_id:
                 # 1st processing of a ccy: create its JE
-                je_id = create_journal_entry(ccy_id=ccy_id, ccy_code=ccy_code)
-                je_by_ccy[ccy_id] = je_id
+                je_id = create_journal_entry(ccy_id=ccy_id, ccy_code=ccy_code,
+                    account_id=account_id, account_code=account_code)
+                je_by_acc_ccy[(account_id, ccy_id, )] = je_id
 
             # 2 entries tied to their CCY JE
             # per ccy/account item move to 0: inversed balance
@@ -516,7 +519,6 @@ class account_year_end_closing(osv.osv):
         # date inclusion to have period 0/1-15/16
         sql = '''select (sum(ml.debit) - sum(ml.credit)) as bal
             from account_move_line ml
-            inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join account_account_type t on t.id = a.user_type
             where ml.instance_id = %d
@@ -544,11 +546,13 @@ class account_year_end_closing(osv.osv):
         action 3: report B/S balances to next FY period 0
         """
 
-        def create_journal_entry(ccy_id=False, ccy_code=''):
+        def create_journal_entry(ccy_id=False, ccy_code='', account_id=False,
+            account_code=''):
             """
             create draft CCY/JE to log JI into
             """
-            name = "IB-%d-%s-%s" % (fy_year, instance_rec.code, ccy_code, )
+            name = "IB-%d-%s-%s-%s" % (fy_year, account_code,
+                instance_rec.code, ccy_code, )
 
             vals = {
                 'block_manual_currency_id': True,
@@ -689,18 +693,19 @@ class account_year_end_closing(osv.osv):
             return
 
         re_account_found_in_bs = False
-        je_by_ccy = {}  # JE/CCY, key: ccy id, value: JE id
+        je_by_acc_ccy = {}  # JE/ ACC/CCY, key: (acc_id, ccy_id), value: JE id
         for account_id, account_code, ccy_id, ccy_code, \
             balance_currency, balance in cr.fetchall():
             balance_currency = float(balance_currency)
             balance = float(balance)
 
             # CCY JE
-            je_id = je_by_ccy.get(ccy_id, False)
+            je_id = je_by_acc_ccy.get((account_id, ccy_id, ), False)
             if not je_id:
                 # 1st processing of a ccy: create its JE
-                je_id = create_journal_entry(ccy_id=ccy_id, ccy_code=ccy_code)
-                je_by_ccy[ccy_id] = je_id
+                je_id = create_journal_entry(ccy_id=ccy_id, ccy_code=ccy_code,
+                    account_id=account_id, account_code=account_code)
+                je_by_acc_ccy[(account_id, ccy_id, )] = je_id
 
             # per ccy/account initial balance item, tied to its CCY JE
             create_journal_item(ccy_id=ccy_id, ccy_code=ccy_code,
@@ -709,10 +714,13 @@ class account_year_end_closing(osv.osv):
 
         if not re_account_found_in_bs:
             # Regular/Equity account result entry for P&L
-            je_id = je_by_ccy.get(cpy_rec.currency_id.id, False)
+            je_id = je_by_acc_ccy.get(
+                (re_account_rec.id, cpy_rec.currency_id.id, ), False)
             if not je_id:
                 je_id = create_journal_entry(ccy_id=ccy_id,
-                    ccy_code=cpy_rec.currency_id.name)
+                    ccy_code=cpy_rec.currency_id.name,
+                    account_id=re_account_rec.id,
+                    account_code=re_account_rec.code)
             create_journal_item(ccy_id=cpy_rec.currency_id.id,
                 ccy_code=cpy_rec.currency_id.name,
                 account_id=re_account_rec.id, account_code=re_account_rec.code,
