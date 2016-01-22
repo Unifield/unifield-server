@@ -91,7 +91,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and move.location_dest_id.usage == 'customer'
-                s_out = move.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
+                s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
                 if m_type and (ppl or s_out):
                     data = {}
@@ -130,10 +130,11 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         else:
                             key = (packing, False, move.product_uom.name, line.line_number)
                         data.update({
-                            'packing': packing,
-                            'delivery_qty': move.product_qty,
+                            'packing': '',
+                            'delivered_qty': move.product_qty,
                             'delivered_uom': move.product_uom.name,
                             'rts': move.picking_id.min_date[0:10],
+                            'shipment': packing,
                         })
 
                     bo_qty -= self.pool.get('product.uom')._compute_qty(
