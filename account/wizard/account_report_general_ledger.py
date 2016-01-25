@@ -26,9 +26,20 @@ class account_report_general_ledger(osv.osv_memory):
     _name = "account.report.general.ledger"
     _description = "General Ledger Report"
 
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
     _columns = {
         'initial_balance': fields.boolean("Include initial balances",
             help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
+        'is_initial_balance_available': fields.function(_get_fake, method=True, type='boolean', string="Is initial balance filter available ?"),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
         'sortby': fields.selection([('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')], 'Sort By', required=True),
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
@@ -71,6 +82,7 @@ class account_report_general_ledger(osv.osv_memory):
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
         'account_type': 'all',
         'unreconciled': False,
+        'is_initial_balance_available': True,
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -82,9 +94,55 @@ class account_report_general_ledger(osv.osv_memory):
         return res
 
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear=False, context=None):
+        res = {
+            'value': {
+                'is_initial_balance_available': fiscalyear or False,
+            },
+        }
+        return res
+
+    def onchange_filter(self, cr, uid, ids, fiscalyear_id=False, context=None):
+        res = super(account_report_general_ledger, self).onchange_filter(cr,
+            uid, ids, fiscalyear_id=fiscalyear_id, context=context)
+        if res is None:
+            res = {}
+        if not 'value' in res:
+            res['value'] = {
+                'is_initial_balance_available': fiscalyear_id or False,
+            }
+        else:
+            res['value']['is_initial_balance_available'] = \
+                fiscalyear_id or False
+        return res
+
+    def onchange_filter_date(self, cr, uid, ids, filter, fiscalyear_id,
+        date_from, date_to, period_from, period_to, context=None):
+        # US-822: initial balance available if FY/01/01 included in the
+        # date selection (posting date of initial balance)
+        # AND if only one FY included in the selection
+        # as we can't sum both balances and aggregated balances of period 0
         res = {}
-        if not fiscalyear:
-            res['value'] = {'initial_balance': False}
+        ib_available = fiscalyear_id or False
+        if ib_available and filter and filter != 'filter_no':
+            fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
+                fiscalyear_id, context=context)
+            if filter in ('filter_date_doc', 'filter_date', ):
+                ib_available = date_from and date_to \
+                    and date_from == fy_rec.date_start \
+                    and date_to <= fy_rec.date_stop
+            elif filter in 'filter_period':
+                if not period_from or not period_to:
+                    ib_available = False
+                else:
+                    period_from_rec = self.pool.get('account.period').browse(cr,
+                        uid,  period_from, context=context)
+                    period_to_rec = self.pool.get('account.period').browse(cr,
+                        uid,  period_to, context=context)
+                    ib_available = \
+                        period_from_rec.date_start == fy_rec.date_start \
+                        and period_to_rec.date_stop <= fy_rec.date_stop
+
+        res['value'] = {'is_initial_balance_available': ib_available, }
         return res
         
     def remove_journals(self, cr, uid, ids, context=None):
@@ -94,6 +152,10 @@ class account_report_general_ledger(osv.osv_memory):
         return {}
 
     def _print_report(self, cr, uid, ids, data, context=None):
+        if not ids:
+            return
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
@@ -103,6 +165,18 @@ class account_report_general_ledger(osv.osv_memory):
             'output_currency', 'instance_ids', 'export_format',
             'account_type', 'unreconciled', 'account_ids', ]
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
+
+        # US-822: safe initial balance check box
+        rec = self.browse(cr, uid, ids[0], context=context)
+        ofd_res = self.onchange_filter_date(cr, uid, [ids[0]],
+            rec.filter, rec.fiscalyear_id.id,
+            rec.date_from, rec.date_to,
+            rec.period_from.id, rec.period_to.id, context=context)
+        if ofd_res and 'value' in ofd_res \
+            and not ofd_res['value'].get('is_initial_balance_available', True):
+            # initial balance not applicable
+            # (check onchange_filter_date comments)
+            data['form']['initial_balance'] = False
 
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form']['initial_balance'] = False
@@ -125,7 +199,6 @@ class account_report_general_ledger(osv.osv_memory):
             'report_name': 'account.general.ledger_landscape',
             'datas': data,
             }
-
         
 account_report_general_ledger()
 
