@@ -34,6 +34,8 @@
     'update_xml': [
         'account_period_closing_level_view.xml',
         'wizard/account_period_create_view.xml',
+        'wizard/year_end_closing.xml',
+        'account_year_end_closing.xml',
     ],
     "test": [
         'test/account_period_closing_level.yml',

@@ -24,17 +24,25 @@
     #  - 'created' for Draft
     #  - 'draft' for Open
     #  - 'done' for HQ-Closed
-ACCOUNT_PERIOD_STATE_SELECTION = [('created','Draft'),
-                                  ('draft', 'Open'),
-                                  ('field-closed', 'Field-Closed'),
-                                  ('mission-closed', 'Mission-Closed'),
-                                  ('done', 'HQ-Closed')
-                                   ]
+ACCOUNT_PERIOD_STATE_SELECTION = [
+    ('created','Draft'),
+    ('draft', 'Open'),
+    ('field-closed', 'Field-Closed'),
+    ('mission-closed', 'Mission-Closed'),
+    ('done', 'HQ-Closed')
+]
+
+ACCOUNT_FY_STATE_SELECTION = [
+    ('draft', 'Open'),
+    ('mission-closed', 'Mission-Closed'),
+    ('done', 'HQ-Closed')
+]
 
 import account
 import account_period
 import account_fiscalyear
 import account_journal_period
+import account_year_end_closing
 import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

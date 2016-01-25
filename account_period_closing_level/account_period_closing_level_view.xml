@@ -14,11 +14,27 @@
                     <field name="end_journal_period_id" position="replace"/>
 
                     <xpath expr="//group[2]" position="after">
-                        <field name="is_closable" invisible="1" />
-                        <group
-                            attrs="{'invisible': [('is_closable', '=', False)]}">
-                            <button name="uf_close_fy" type="object"
-                                string="Close (HQ)" icon="gtk-go-forward"/>
+                        <field name="is_mission_closable" invisible="1" />
+                        <group attrs="{'invisible': [('is_mission_closable', '=', False)]}">
+                            <button name="btn_mission_close" type="object"
+                                string="Mission close the fiscal year"
+                                icon="gtk-go-forward"/>
+                        </group>
+                        <field name="is_hq_closable" invisible="1" />
+                        <group attrs="{'invisible': [('is_hq_closable', '=', False)]}">
+                            <button name="btn_hq_close" type="object"
+                                string="HQ close the fiscal year"
+                                icon="gtk-go-forward"/>
+                        </group>
+                        <newline />
+                        <field name="can_reopen_mission" invisible="1" />
+                        <group colspan="4" col="2"
+                            attrs="{'invisible': [('can_reopen_mission', '=', False)]}">
+                            <label string="" colspan="1"/>
+                            <button name="btn_mission_reopen"
+                                groups="sd.base_group_erp_manager"
+                                string="Reopen FY" type="object" icon="gtk-go-forward" colspan="1"
+                                confirm="Are you sure you want to reopen this FY ?"/>
                         </group>
                     </xpath>
                 </data>
@@ -35,8 +51,12 @@
                     <form position="attributes">
                         <attribute name="hide_duplicate_button">1</attribute>
                         <attribute name="hide_new_button">1</attribute>
+                        <attribute name="hide_delete_button">is_system == True</attribute>
+                        <attribute name="noteditable">is_system == True</attribute>
                     </form>
-                    <field name="code" position="replace"/>
+                    <field name="code" position="replace">
+                        <field name="is_system"/>
+                    </field>
                     <field name="company_id" position="replace"/>
                     <button name="action_draft" position="replace">
                         <newline/>
@@ -169,13 +189,14 @@
             <field name="inherit_id" ref="account.view_account_period_tree"/>
             <field name="arch" type="xml">
                 <tree string="Period" position="replace">
-                    <tree colors="blue:state in ('created');gray:state in ('done')" hide_new_button="1" string="Period">
+                    <tree colors="blue:state in ('created');gray:is_system or state in ('done')" hide_new_button="1" string="Period">
                         <field name="name"/>
                         <field name="date_start"/>
                         <field name="date_stop"/>
                         <field name="special"/>
                         <field name="state"/>
                         <field name="number" invisible="1"/>
+                        <field name="is_system" invisible="1"/>
                         <button name="action_reopen_field" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" colspan="1"/>
                         <button name="action_open_period" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" colspan="1"/>
                     </tree>
@@ -187,7 +208,7 @@
             <field name="name">Close a Period</field>
             <field name="res_model">account.period</field>
             <field name="inherit_id" ref="account.action_account_period_tree"/>
-            <field name="domain">[('state','!=','created')]</field>
+            <field name="domain">[('state','!=','created'), ('is_system', '=', False)]</field>
             <field name="context">{'search_default_draft': 1}</field>
             <field name="help">A period is a fiscal period of time during which accounting entries should be recorded for accounting related activities. Monthly period is the norm but depending on your countries or company needs, you could also have quarterly periods. Closing a period will make it impossible to record new accounting entries, all new entries should then be made on the following open period. Close a period when you do not want to record new entries and want to lock this period for tax related calculation.</field>
         </record>

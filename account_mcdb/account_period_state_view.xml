@@ -2,6 +2,8 @@
 <openerp>
     <data>
 
+        <!-- _______________________________________________________________-->
+        <!-- account period state -->
         <record id="action_server_period_state" model="ir.actions.server">
             <field name="name">Period states</field>
             <field name="model_id" ref="model_account_period_state"/>
@@ -37,12 +39,58 @@
             <field name="type">search</field>
             <field name="priority" eval="5"/>
             <field name="arch" type="xml">
-                <search string="Register Lines">
+                <search string="Periods">
                     <field name="instance_id"/>
                     <field name="period_id" />
                     <field name="state" />
                 </search>
             </field>
         </record>
+
+        <!-- _______________________________________________________________-->
+        <!-- US-822 account fiscal year state -->
+        <record id="action_server_fiscalyear_state" model="ir.actions.server">
+            <field name="name">Fiscal year states</field>
+            <field name="model_id" ref="model_account_fiscalyear_state"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_fy(context=context)</field>
+        </record>
+
+        <record id="act_list_fiscalyear_state" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.fiscalyear</field>
+            <field name="name">Fiscal year states</field>
+            <field eval="'ir.actions.server,%d'%action_server_fiscalyear_state" name="value"/>
+            <field eval="True" name="object"/>
+            <field eval="1" name="sequence"/>
+        </record>
+
+        <record id="account_fiscalyear_state_view" model="ir.ui.view">
+            <field name="name">account_fiscalyear_state_view</field>
+            <field name="model">account.fiscalyear.state</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <data >
+                    <field name="instance_id" />
+                    <field name="fy_id" />
+                    <field name="state" />
+                </data>
+            </field>
+        </record>
+
+        <record id="account_fiscalyear_state_filter" model="ir.ui.view">
+            <field name="name">Account Fiscal Year State</field>
+            <field name="model">account.fiscalyear.state</field>
+            <field name="type">search</field>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+                <search string="Fiscal years">
+                    <field name="instance_id"/>
+                    <field name="fy_id" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
     </data>
 </openerp>

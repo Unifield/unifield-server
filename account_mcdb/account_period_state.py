@@ -22,6 +22,7 @@
 from osv import fields, osv
 from tools.translate import _
 from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
+from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
 
 # account_period_state is on account_mcdb because it's depend to msf.instance
 # and account.period.
@@ -115,4 +116,92 @@ class account_period_state(osv.osv):
             model_data.write(cr, uid, ids_to_write, {'last_modification':fields.datetime.now()})
 
         return True
+
 account_period_state()
+
+
+class account_fiscalyear_state(osv.osv):
+    # model since US-822
+    _name = "account.fiscalyear.state"
+
+    _columns = {
+        'fy_id': fields.many2one('account.fiscalyear', 'Fiscal Year',
+            required=True, ondelete='cascade'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',
+            readonly=True),
+    }
+
+    def get_fy(self, cr, uid, ids, context=None):
+        mod_obj = self.pool.get('ir.model.data')
+        view_id = mod_obj.get_object_reference(cr, uid, 'account_mcdb',
+            'account_fiscalyear_state_view')
+        view_id = view_id and view_id[1] or False
+
+        search_id = mod_obj.get_object_reference(cr, uid, 'account_mcdb',
+            'account_fiscalyear_state_filter')
+        search_id = search_id and search_id[1] or False
+
+        view = {
+            'name': _('Fiscal year states'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.fiscalyear.state',
+            'view_type': 'form',
+            'view_mode': 'tree',
+            'search_view_id': search_id,
+            'view_id': [view_id],
+            'context': context,
+            'domain': [],
+            'target': 'current',
+        }
+
+        return view
+
+    def update_state(self, cr, uid, fy_ids, context=None):
+        if isinstance(fy_ids, (int, long)):
+            fy_ids = [fy_ids]
+
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        model_data = self.pool.get('ir.model.data')
+        fy_state_obj = self.pool.get('account.fiscalyear.state')
+        parent = user.company_id.instance_id.id
+        ids_to_write = []
+        for fy_id in fy_ids:
+            user = self.pool.get('res.users').browse(cr, uid, uid,
+                context=context)
+            parent = user.company_id.instance_id.id
+            fy = self.pool.get('account.fiscalyear').read(cr, uid, fy_id,
+                ['id', 'state'], context=context)
+            if parent and fy and parent != '':
+                args = [
+                    ('instance_id', '=', parent),
+                    ('fy_id', '=', fy['id'])
+                ]
+                ids = self.search(cr, uid, args, context=context)
+                if ids:
+                    vals = {
+                        'state': fy['state']
+                    }
+                    self.write(cr, uid, ids, vals, context=context)
+                    for fy_state_id in ids:
+                        fy_state_xml_id = fy_state_obj.get_sd_ref(cr, uid,
+                            fy_state_id)
+                        ids_to_write.append(model_data._get_id(cr, uid, 'sd',
+                            fy_state_xml_id))
+                else:
+                    vals = {
+                        'fy_id': fy['id'],
+                        'instance_id': parent,
+                        'state': fy['state']
+                    }
+                    self.create(cr, uid, vals, context=context)
+
+        # like for US-649 period state: in context of synchro last_modification
+        # date must be updated on account.fisclayear.state because they are
+        # created with synchro and they need to be sync down to other instances
+        if ids_to_write:
+            model_data.write(cr, uid, ids_to_write,
+                {'last_modification': fields.datetime.now()})
+        return True
+
+account_fiscalyear_state()

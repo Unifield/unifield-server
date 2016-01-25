@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_company_inherit_ye_form" model="ir.ui.view">
+            <field name="name">view.company.inherit.ye.form</field>
+            <field name="inherit_id" ref="account_override.view_company_inherit_3_form"/>
+            <field name="model">res.company</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <data>
+                    <page position="inside" string="Configuration">
+                        <separator colspan="4" string="B/S Move to 0 accounts"/>
+                        <field name="ye_pl_cp_for_bs_debit_bal_account" />
+                        <field name="ye_pl_cp_for_bs_credit_bal_account" />
+                        <separator colspan="4" string="P&amp;L result accounts"/>
+                        <field name="ye_pl_pos_credit_account" />
+                        <field name="ye_pl_ne_credit_account" />
+                        <field name="ye_pl_pos_debit_account" />
+                        <field name="ye_pl_ne_debit_account" />
+                    </page>
+                </data>
+            </field>
+        </record>
+
+        <record id="view_account_form_inherit" model="ir.ui.view">
+            <field name="name">account.account.form</field>
+            <field name="model">account.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="End Year Closing"  attrs="{'invisible': [('instance_level', '=', 'project')]}">
+                        <field name="include_in_yearly_move"
+                            attrs="{'readonly': ['|', ('instance_level', '!=', 'section'), ('type', 'not in', ['other', ])]}"/>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="account.action_account_fiscalyear_form" model="ir.actions.act_window">
+            <field name="name">Fiscal Years</field>
+            <field name="res_model">account.fiscalyear</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'show_period_0': 1}</field>
+            <field name="help">Define your company's financial year according to your needs. A financial year is a period at the end of which a company's accounts are made up (usually 12 months). The financial year is usually referred to by the date in which it ends. For example, if a company's financial year ends November 30, 2011, then everything between December 1, 2010 and November 30, 2011  would be referred to as FY 2011. You are not obliged to follow the actual calendar year.</field>
+        </record>
+
+        <record id="account.action_account_period_form" model="ir.actions.act_window">
+            <field name="name">Periods</field>
+            <field name="res_model">account.period</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_draft': 1, 'show_period_0': 1}</field>
+            <field name="help">Here you can define a financial period, an interval of time in your company's financial year. An accounting period typically is a month or a quarter. It usually corresponds to the periods of the tax declaration. Create and manage periods from here and decide whether a period should be closed or left open depending on your company's activities over a specific period.</field>
+        </record>
+
+    </data>
+</openerp>

@@ -269,6 +269,16 @@ class hq_report_ocb(report_sxw.report_sxw):
         else:
             raise osv.except_osv(_('Error'), _('Wrong value for selection: %s.') % (selection,))
 
+        # US-822:
+        # if December is picked should include Period 16 (Year end) for OCB
+        period_ids = [ period_id, ]  # for bs and bs consolidated statements
+        rawdata_tpl_context= {'clause16': '', }
+        if period.number == 12:
+            ayec_obj = pool.get("account.year.end.closing")
+            period_ids.append(ayec_obj._get_period_id(cr, uid, fy_id, 16))
+            rawdata_tpl_context['clause16'] = " or p2.number=16"
+        period_ids = tuple(period_ids)  # adhoc query param for cr.execute
+
         # Prepare SQL requests and PROCESS requests for finance_archive object
 
         # SQLREQUESTS DICTIONNARY
@@ -430,9 +440,11 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.journal_id = j.id
                 AND al.move_id = aml.id
                 AND aml.id in (select aml2.id 
-                               from account_move_line aml2, account_move am
-                               where am.id = aml2.move_id 
-                                and am.state = 'posted')
+                               from account_move_line aml2, account_move am,
+                               account_period as p2
+                               where am.id = aml2.move_id and p2.id = am.period_id
+                               and ((p2.number not in (0, 16) and am.state = 'posted')$clause16)
+                              )
                 AND al.instance_id = i.id
                 AND aml.journal_id = aj.id
                 AND aml.period_id = %s
@@ -446,7 +458,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             'bs_entries_consolidated': """
                 SELECT aml.id
                 FROM account_move_line AS aml, account_account AS aa, account_journal AS j
-                WHERE aml.period_id = %s
+                WHERE aml.period_id in %s
                 AND aml.account_id = aa.id
                 AND aml.journal_id = j.id
                 AND j.type not in %s
@@ -481,7 +493,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND aml.journal_id = j.id
                 AND e.currency_id = cc.id
                 AND aml.instance_id = i.id
-                AND aml.period_id = %s
+                AND aml.period_id in %s
                 AND a.shrink_entries_for_hq != 't'
                 AND j.type not in %s
                 AND aml.exported in %s
@@ -563,7 +575,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'rawdata',
                 'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with
                 'fnct_params': 'account.analytic.line',
-                'query_params': (period_id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
+                'query_params': (first_day_of_period, last_day_of_period, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
+                'query_tpl_context': rawdata_tpl_context,
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',
@@ -571,7 +584,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             {
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'bs_entries_consolidated',
-                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
+                'query_params': (period_ids, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'function': 'postprocess_consolidated_entries',
                 'fnct_params': excluded_journal_types,
                 },
@@ -580,7 +593,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'bs_entries',
                 'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with
                 'fnct_params': 'account.move.line',
-                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
+                'query_params': (period_ids, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
