@@ -180,8 +180,7 @@ class account_account(osv.osv):
     _parent_store = True
     logger = netsvc.Logger()
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if context is None:
             context = {}
         pos = 0
@@ -1822,7 +1821,8 @@ class account_tax(osv.osv):
             if journal.type in ('sale', 'purchase'):
                 args += [('type_tax_use','in',[journal.type,'all'])]
 
-        return super(account_tax, self).search(cr, uid, args, offset, limit, order, context, count)
+        return super(account_tax, self).search(cr, uid, args, offset, limit,
+                order, context, count)
 
     def name_get(self, cr, uid, ids, context=None):
         if not ids:

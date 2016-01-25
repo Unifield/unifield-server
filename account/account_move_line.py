@@ -701,7 +701,8 @@ class account_move_line(osv.osv):
             if not partner:
                 return []
             args.append(('partner_id', '=', partner[0]))
-        return super(account_move_line, self).search(cr, uid, args, offset, limit, order, context, count)
+        return super(account_move_line, self).search(cr, uid, args, offset,
+                limit, order, context, count)
 
     def get_next_partner_only(self, cr, uid, offset=0, context=None):
         cr.execute(
