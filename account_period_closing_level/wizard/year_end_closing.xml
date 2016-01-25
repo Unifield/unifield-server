@@ -36,7 +36,7 @@
         </record>
 
         <menuitem id="menu_account_yearly_closure" name="Yearly closure"
-            parent="sd.account_menu_account_end_year_treatments" />
+            parent="account.menu_account_end_year_treatments" />
 
         <menuitem id="menu_action_year_end_closing" name="Close the fiscal year"
             parent="menu_account_yearly_closure" action="action_account_year_end_closing" />
