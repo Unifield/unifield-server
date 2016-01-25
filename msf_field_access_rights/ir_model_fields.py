@@ -15,6 +15,7 @@ class ir_model_field(osv.osv):
         return super(ir_model_field, self).name_search(cr, uid, name, args=args, operator=operator, context=context, limit=limit)
         
     def search(self, cr, uid, args, offset=0, limit=None, order='', context=None, count=False):
-        args = self._modify_search_args(args) 
-        return super(ir_model_field, self).search(cr, uid, args, offset, limit, order, context, count)
+        args = self._modify_search_args(args)
+        return super(ir_model_field, self).search(cr, uid, args, offset, limit,
+                order, context, count)
 ir_model_field()

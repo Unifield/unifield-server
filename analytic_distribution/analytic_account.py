@@ -136,12 +136,16 @@ class analytic_account(osv.osv):
         for i, arg in enumerate(args):
             if arg[0] and arg[0] == 'tuple_destination':
                 fp_ids = []
-                destination_ids = self.pool.get('account.destination.link').search(cr, uid, [('account_id', '=', arg[2][0]), ('destination_id', '=', arg[2][1])])
+                destination_ids = self.pool.get('account.destination.link').search(cr, uid,
+                        [('account_id', '=', arg[2][0]),
+                         ('destination_id', '=', arg[2][1])],
+                        order='NO_ORDER')
                 for adl in self.pool.get('account.destination.link').read(cr, uid, destination_ids, ['funding_pool_ids']):
                     fp_ids.append(adl.get('funding_pool_ids'))
                 fp_ids = flatten(fp_ids)
                 args[i] = ('id', 'in', fp_ids)
-        return super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return super(analytic_account, self).search(cr, uid, args, offset,
+                limit, order, context=context, count=count)
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

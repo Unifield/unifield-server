@@ -362,7 +362,8 @@ class ir_module(osv.osv):
                                                     ('src', '=', src),
                                                     ('name', '=', 'ir.actions.act_window,name'),
                                                     ('value', '=', trans),
-                                                    ('res_id', '=', act)], context=context)
+                                                    ('res_id', '=', act)],
+                                                    limit=1, order='NO_ORDER', context=context)
                     if not exist:
                         tr_obj.create(cr, uid, {'lang': lang,
                                                 'src': src,
@@ -504,7 +505,9 @@ class audittrail_rule(osv.osv):
             # End Loop
 
         # Check if an export model already exist for audittrail.rule
-        export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=', 'Log Lines'), ('resource', '=', 'audittrail.log.line')])
+        export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=',
+            'Log Lines'), ('resource', '=', 'audittrail.log.line')], limit=1,
+            order='NO_ORDER')
         if not export_ids:
             export_id = self.pool.get('ir.exports').create(cr, uid, {'name': 'Log Lines',
                                                                      'resource': 'audittrail.log.line'})
@@ -589,7 +592,7 @@ class audittrail_rule(osv.osv):
                 domain = eval(rule.domain_filter)
             if domain:
                 new_dom = ['&', ('id', 'in', obj_ids)] + domain
-                res_ids = obj.search(cr, uid, new_dom)
+                res_ids = obj.search(cr, uid, new_dom, order='NO_ORDER')
                 if not res_ids:
                     continue
 
@@ -852,8 +855,9 @@ class audittrail_log_line(osv.osv):
 
         return res
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-               context={}, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if context is None:
+            context = {}
 
         search_ids = super(audittrail_log_line, self).search(cr, uid, args, offset=0,
                                                              limit=None, order=order,
@@ -861,7 +865,7 @@ class audittrail_log_line(osv.osv):
         # US-313: check if the context provides active_model in order to search for inherited models for other fields, if not just return 
         if 'active_model' not in context:
             return search_ids
-        
+
         id_model_obj = self.pool.get('ir.model')
         model_id = context['active_model']
         current_obj = self.pool.get(model_id)
@@ -984,9 +988,10 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = []
             if values and values != '[]':
                 values = values[1:-1].split(',')
-                for v in values:
-                    relation_model_object = relation_model_pool.read(cr, uid, int(v), [relation_model_pool._rec_name])
-                    res.append(relation_model_object[relation_model_pool._rec_name])
+                values = (int(v) for v in values)
+                res = [x[relation_model_pool._rec_name] for x in \
+                        relation_model_pool.read(cr, uid, values,
+                    [relation_model_pool._rec_name])]
             return res
         elif field['ttype'] == 'date':
             res = False

@@ -440,11 +440,14 @@ WHERE n3.level = 3)
 
                     if impobj._name == 'product.product':
                         # UF-2254: Allow to update the product, use xmlid_code now for searching
-                        ids_to_update = impobj.search(cr, uid, [('xmlid_code', '=', data['xmlid_code'])])
+                        ids_to_update = impobj.search(cr, uid, [('xmlid_code',
+                            '=', data['xmlid_code'])], order='NO_ORDER')
                     elif impobj._name == 'product.nomenclature':
-                        ids_to_update = impobj.search(cr, uid, [('msfid', '=', data['msfid'])])
+                        ids_to_update = impobj.search(cr, uid, [('msfid', '=',
+                            data['msfid'])], order='NO_ORDER')
                     elif impobj._name == 'product.category':
-                        ids_to_update = impobj.search(cr, uid, [('msfid', '=', data['msfid'])])
+                        ids_to_update = impobj.search(cr, uid, [('msfid', '=',
+                            data['msfid'])], order='NO_ORDER')
 
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case

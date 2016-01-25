@@ -239,9 +239,7 @@ class wizard_account_invoice(osv.osv):
             am = absl.move_ids[0]
             aml_obj = self.pool.get('account.move.line')
             aml_ids = aml_obj.search(cr, uid,[('move_id','=',am.id)], context=context)
-            amls = aml_obj.browse(cr, uid, aml_ids, context=context)
-            for aml in amls:
-                aml_obj.write(cr, uid, aml.id, {'reference': inv_number}, context=context, check=False, update_check=False)
+            aml_obj.write(cr, uid, aml_ids, {'reference': inv_number}, context=context, check=False, update_check=False)
 
         # Delete the wizard
         self.unlink(cr, uid, ids, context=context)

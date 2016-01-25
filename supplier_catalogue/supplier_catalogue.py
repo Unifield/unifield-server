@@ -127,7 +127,8 @@ class supplier_catalogue(osv.osv):
                                                                                               ('period_from', '<=', period_from),
                                                                                               '|',
                                                                                               ('period_to', '>=', period_from),
-                                                                                              ('period_to', '=', False),], context=context)
+                                                                                              ('period_to', '=', False)],
+                                                                                              order='NO_ORDER', context=context)
 
         # Update these catalogues with an end date which is the start date - 1 day of
         # the new catalogue
@@ -207,7 +208,8 @@ class supplier_catalogue(osv.osv):
                 pricelist_ids += [x[0] for x in cr.fetchall() if x[0] is not None]
                 #pricelist_ids =  cr.fetchall()  returns tuples - may be a problem
                 # Update the supplier info and price lines
-                supplierinfo_ids = supinfo_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
+                supplierinfo_ids = supinfo_obj.search(cr, uid,
+                        [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
                 supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
                 price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
@@ -220,7 +222,8 @@ class supplier_catalogue(osv.osv):
         ids = isinstance(ids, (int, long)) and [ids] or ids
         line_obj = self.pool.get('supplier.catalogue.line')
 
-        line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
+        line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)],
+                order='NO_ORDER', context=context)
 
         if not all(x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)):
             raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue'))
@@ -286,7 +289,8 @@ class supplier_catalogue(osv.osv):
         if context.get('search_default_partner_id', False):
             args.append(('partner_id', '=', context.get('search_default_partner_id', False)))
 
-        return super(supplier_catalogue, self)._search(cr, uid, args, offset, limit, order, context, count, access_rights_uid)
+        return super(supplier_catalogue, self)._search(cr, uid, args, offset,
+                limit, order, context, count, access_rights_uid)
 
     def _get_active(self, cr, uid, ids, field_name, arg, context=None):
         '''
@@ -1179,7 +1183,9 @@ class from_supplier_choose_catalogue(osv.osv_memory):
 
         partner_id = context.get('active_id')
 
-        if not self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id', '=', partner_id)], context=context):
+        if not self.pool.get('supplier.catalogue').search(cr, uid,
+                [('partner_id', '=', partner_id)],
+                limit=1, context=context, order='NO_ORDER'):
             raise osv.except_osv(_('Error'), _('No catalogue found !'))
 
         res = super(from_supplier_choose_catalogue, self).default_get(cr, uid, fields, context=context)

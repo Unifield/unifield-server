@@ -553,7 +553,8 @@ class account_invoice(osv.osv):
                     if 'account_tax_id' in tax_line[2]:
                         args = [('price_include', '=', '1'),
                                 ('id', '=', tax_line[2]['account_tax_id'])]
-                        tax_ids = tax_obj.search(cr, uid, args, context=context)
+                        tax_ids = tax_obj.search(cr, uid, args, limit=1,
+                                order='NO_ORDER', context=context)
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
@@ -1310,12 +1311,14 @@ class account_invoice_line(osv.osv):
             sale_lines_obj = self.pool.get('sale.order.line')
 
             if purchase_lines_obj:
-                purchase_line_ids = purchase_lines_obj.search(cr, uid, [('invoice_lines', 'in', [inv_id])])
+                purchase_line_ids = purchase_lines_obj.search(cr, uid,
+                        [('invoice_lines', 'in', [inv_id])], order='NO_ORDER')
                 if purchase_line_ids:
                     purchase_lines_obj.write(cr, uid, purchase_line_ids, {'invoice_lines': [(4, new_id)]})
 
             if sale_lines_obj:
-                sale_lines_ids =  sale_lines_obj.search(cr, uid, [('invoice_lines', 'in', [inv_id])])
+                sale_lines_ids =  sale_lines_obj.search(cr, uid,
+                        [('invoice_lines', 'in', [inv_id])], order='NO_ORDER')
                 if sale_lines_ids:
                     sale_lines_obj.write(cr, uid,  sale_lines_ids, {'invoice_lines': [(4, new_id)]})
 
@@ -1347,7 +1350,9 @@ class account_invoice_line(osv.osv):
             if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
                 direct_invoice_ids.append(invl.invoice_id.id)
                 # find account_bank_statement_lines and used this to delete the account_moves and associated records
-                absl_ids = abst_obj.search(cr, uid, [('invoice_id','=',invl.invoice_id.id)])
+                absl_ids = abst_obj.search(cr, uid,
+                        [('invoice_id','=',invl.invoice_id.id)],
+                        order='NO_ORDER')
                 if absl_ids:
                     abst_obj.unlink_moves(cr, uid, absl_ids, context)
         # Normal behaviour

@@ -223,10 +223,9 @@ class account_period(osv.osv):
 ###################################################
 
                 # Write changes
-                if not isinstance(ids, (int, long)):
+                if isinstance(ids, (int, long)):
                     ids = [ids]
-                for p_id in ids:
-                    self.write(cr, uid, p_id, {'state':'field-closed', 'field_process': False}, context=context)
+                self.write(cr, uid, ids, {'state':'field-closed', 'field_process': False}, context=context)
                 return True
 
             # UFTP-351: Check that no Journal Entries are Unposted for this period
@@ -247,10 +246,9 @@ class account_period(osv.osv):
                 journal_state = 'done'
             else:
                 journal_state = 'draft'
-            for per_id in ids:
-                cr.execute('update account_journal_period set state=%s where period_id=%s', (journal_state, per_id))
-                # Change cr.execute for period state by a self.write() because of Document Track Changes on Periods ' states
-                self.write(cr, uid, per_id, {'state': state, 'field_process': False}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
+            cr.execute('UPDATE account_journal_period SET state=%s WHERE period_id IN %s',  (journal_state, tuple(ids)))
+            # Change cr.execute for period state by a self.write() because of Document Track Changes on Periods ' states
+            self.write(cr, uid, ids, {'state': state, 'field_process': False}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
         return True
 
     def _get_payroll_ok(self, cr, uid, ids, field_name=None, arg=None, context=None):

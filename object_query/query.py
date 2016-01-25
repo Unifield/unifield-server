@@ -140,6 +140,8 @@ class object_query(osv.osv):
         Construct the view according to the user choices
         '''
         view_obj = self.pool.get('ir.ui.view')
+        export_line_obj = self.pool.get('ir.exports.line')
+        export_obj = self.pool.get('ir.exports')
         self.set_sequence(cr, uid, ids) 
         for query in self.browse(cr, uid, ids, context=context):
             search_view_id = query.search_view_id and query.search_view_id.id or False
@@ -149,16 +151,13 @@ class object_query(osv.osv):
             search_group = ''
             tree_fields = ''
             tree_field_ids = []
-            export_line_obj = self.pool.get('ir.exports.line')
-            export_obj = self.pool.get('ir.exports')
-            
+
             if query.export_id:
                 export_obj.unlink(cr, uid, query.export_id.id)
 
             export_id = export_obj.create(cr, uid, {'name': query.name,
                                         'resource': query.object_id.model_id.model,})
             self.write(cr, uid, [query.id], {'export_id': export_id})
-    
 
             forced_values = []
             domain = []
@@ -584,7 +583,8 @@ class ir_fields(osv.osv):
             if ids_to_remove:
                 args.append(('id', 'not in', ids_to_remove))
         
-        return super(ir_fields, self).search(cr, uid, args, offset, limit, order, context, count)
+        return super(ir_fields, self).search(cr, uid, args, offset, limit,
+                order, context, count)
     
 ir_fields()
 

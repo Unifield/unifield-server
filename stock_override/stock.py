@@ -353,12 +353,13 @@ class stock_picking(osv.osv):
         inactive_lines = self.pool.get('stock.move').search(cr, uid, [('product_id.active', '=', False),
                                                                       ('product_id', '!=', product_tbd),
                                                                       ('picking_id', 'in', ids),
-                                                                      ('picking_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+                                                                      ('picking_id.state', 'not in', ['draft', 'cancel', 'done'])],
+                                                                      count=True, context=context)
 
         if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
-            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            plural = inactive_lines == 1 and _('A product has') or _('Some products have')
+            l_plural = inactive_lines == 1 and _('line') or _('lines')
+            p_plural = inactive_lines == 1 and _('this inactive product') or _('those inactive products')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
             return False
         return True
@@ -526,11 +527,11 @@ class stock_picking(osv.osv):
 
             out_loc_ids = self.pool.get('stock.location').search(cr, uid, [
                 ('outgoing_dest', '=', context['partner_id']),
-            ], context=context)
+            ], order='NO_ORDER', context=context)
             move_ids = self.pool.get('stock.move').search(cr, uid, [
                 ('picking_id', 'in', ids),
                 ('location_dest_id', 'not in', out_loc_ids),
-            ], context=context)
+            ], limit=1, order='NO_ORDER', context=context)
             if move_ids:
                 return {
                     'value': {'partner_id2': False, 'partner_id': False,},
@@ -1779,7 +1780,8 @@ class stock_move(osv.osv):
                     if not context.get('yml_test', False):
                         if not move_unlinked and move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
-                            if not self.search(cr, uid, [('move_dest_id', '=', move.id)], context=context):
+                            if not self.search(cr, uid, [('move_dest_id', '=',
+                                move.id)], limit=1, order='NO_ORDER', context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
             elif move.state == 'confirmed':
                 # we remove the prodlot_id in case that the move is not available
@@ -1795,7 +1797,7 @@ class stock_move(osv.osv):
         no_product = self.search(cr, uid, [
             ('id', 'in', ids),
             ('product_qty', '<=', 0.00),
-        ], count=True, context=context)
+        ], limit=1, order='NO_ORDER', context=context)
 
         if no_product:
             raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
@@ -1912,23 +1914,30 @@ class stock_move(osv.osv):
                                                 'product_uos_qty': move.product_uos_qty + move_data['product_uos_qty']}, context=context)
 
                 # Update all link objects
-                proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', move_data['id'])], context=context)
+                proc_ids = self.pool.get('procurement.order').search(cr, uid,
+                        [('move_id', '=', move_data['id'])], order='NO_ORDER',context=context)
                 if proc_ids:
                     self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': move.id}, context=context)
 
-                pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('move_dest_id', '=', move_data['id'])], context=context)
+                pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
+                        [('move_dest_id', '=', move_data['id'])],
+                        order='NO_ORDER', context=context)
                 if pol_ids:
                     self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': move.id}, context=context)
 
-                move_dest_ids = self.search(cr, uid, [('move_dest_id', '=', move_data['id'])], context=context)
+                move_dest_ids = self.search(cr, uid, [('move_dest_id', '=',
+                    move_data['id'])], order='NO_ORDER', context=context)
                 if move_dest_ids:
                     self.write(cr, uid, move_dest_ids, {'move_dest_id': move.id}, context=context)
 
-                backmove_ids = self.search(cr, uid, [('backmove_id', '=', move_data['id'])], context=context)
+                backmove_ids = self.search(cr, uid, [('backmove_id', '=',
+                    move_data['id'])], order='NO_ORDER', context=context)
                 if backmove_ids:
                     self.write(cr, uid, backmove_ids, {'backmove_id': move.id}, context=context)
 
-                pack_backmove_ids = self.search(cr, uid, [('backmove_packing_id', '=', move_data['id'])], context=context)
+                pack_backmove_ids = self.search(cr, uid,
+                        [('backmove_packing_id', '=', move_data['id'])],
+                        order='NO_ORDER', context=context)
                 if pack_backmove_ids:
                     self.write(cr, uid, pack_backmove_ids, {'backmove_packing_id': move.id}, context=context)
 
@@ -2309,7 +2318,9 @@ class stock_location(osv.osv):
         if prod_obj and prod_obj.type == 'consu':
             if arg[0][2][1] == 'in':
                 id_virt = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
-                ids_child = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', id_virt)])
+                ids_child = self.pool.get('stock.location').search(cr, uid,
+                        [('location_id', 'child_of', id_virt)],
+                        order='NO_ORDER')
                 return [('id', 'in', [id_nonstock, id_cross] + ids_child)]
             else:
                 return [('id', 'in', [id_cross])]
@@ -2339,12 +2350,14 @@ class stock_location(osv.osv):
             context = {}
         prod_obj = self.pool.get('product.product').browse(cr, uid, arg[0][2])
         if prod_obj.type == 'service_recep':
-            ids = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'inventory')])
+            ids = self.pool.get('stock.location').search(cr, uid, [('usage',
+                '=', 'inventory')], order='NO_ORDER')
             return [('id', 'in', ids)]
         elif prod_obj.type == 'consu':
             return []
         else:
-            ids = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')])
+            ids = self.pool.get('stock.location').search(cr, uid, [('usage',
+                '=', 'internal')], order='NO_ORDER')
             return [('id', 'in', ids)]
         return []
 
@@ -2466,7 +2479,8 @@ class stock_move_cancel_wizard(osv.osv_memory):
             move_id = wiz.move_id.id
             picking_id = wiz.move_id.picking_id.id
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
-            move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)], context=context)
+            move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)],
+                    limit=1, order='NO_ORDER', context=context)
             if move_ids and  wiz.move_id.has_to_be_resourced:
                 self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled and resourced" % (move_id, picking_id))
             else:

@@ -453,7 +453,8 @@ class account_move_line(osv.osv):
             args.append(('currency_id', '=', context.get('currency_id')))
         if context.get('move_state'):
             args.append(('move_state', '=', context.get('move_state')))
-        return super(account_move_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return super(account_move_line, self).search(cr, uid, args, offset,
+                limit, order, context=context, count=count)
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """

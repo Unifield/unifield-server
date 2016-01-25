@@ -329,7 +329,6 @@ class account_invoice(osv.osv):
                     reference = inv_number
                 # all lines are populated with the header ref
                 aml_obj.write(cr, uid, move_line.id, {'reference': reference}, context=context)
-                aal_ids = aal_obj.search(cr, uid, [('move_id','=',move_line.id)], context=context)
 
             if ail.reference and inv_header_ref:
                 # move_line.account_id.type == other is the actually the 'expense' account
