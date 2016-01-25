@@ -1251,20 +1251,7 @@ class account_invoice_line(osv.osv):
                 sequence = invoice.sequence_id
                 line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
-        res = super(account_invoice_line, self).create(cr, uid, vals, context)
-        if vals.get('invoice_id', False):
-            inv_obj_name = 'account.invoice'
-            if self._name != 'account.invoice.line':
-                inv_obj_name = 'wizard.account.invoice'
-            invoice = self.pool.get(inv_obj_name).browse(cr, uid, vals.get('invoice_id'))
-            if invoice and invoice.is_direct_invoice and invoice.state == 'draft':
-                amount = 0.0
-                for l in invoice.invoice_line:
-                    amount += l.price_subtotal
-                amount += vals.get('price_unit', 0.0) * vals.get('quantity', 0.0)
-                self.pool.get('account.invoice').write(cr, uid, [invoice.id], {'check_total': amount}, context)
-                self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invoice.register_line_ids], {'amount': -1 * amount}, context)
-        return res
+        return super(account_invoice_line, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
