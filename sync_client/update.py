@@ -23,6 +23,7 @@ from osv import osv, fields
 import tools
 from tools.translate import _
 from tools.safe_eval import safe_eval as eval
+from datetime import datetime
 
 import re
 import logging
@@ -70,10 +71,11 @@ class local_rule(osv.osv):
         for vals in (dict(data) for data in data_list):
             assert 'server_id' in vals, "The following rule doesn't seem to have the required field server_id: %s" % vals
 
-            # Check model exists or is null
+            # Check model exists and is not null
             if not vals.get('model'):
                 vals['active'] = False
-            elif not self.pool.get('ir.model').search(cr, uid, [('model', '=', vals['model'])], limit=1, context=context):
+            elif not self.pool.get('ir.model').search(cr, uid, [('model', '=',
+                vals['model'])], limit=1, order='NO_ORDER', context=context):
                 self._logger.debug("The following rule doesn't apply to your database and has been disabled. Reason: model %s does not exists!\n%s" % (vals['model'], vals))
                 continue #do not save the rule if there is no valid model
             elif 'active' not in vals:
@@ -87,7 +89,8 @@ class local_rule(osv.osv):
                 self.create(cr, uid, vals, context=context)
 
         # The rest is just disabled
-        self.write(cr, uid, list(remaining_ids), {'active':False}, context=context)
+        if remaining_ids:
+            self.write(cr, uid, list(remaining_ids), {'active':False}, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         return self.write(cr, uid, ids, {'active':False}, context=context)
@@ -144,7 +147,7 @@ class update_to_send(osv.osv):
             export_fields = eval(rule.included_fields or '[]')
             if 'id' not in export_fields:
                 export_fields.append('id')
-            ids_need_to_push = self.need_to_push(cr, uid, [], 
+            ids_need_to_push = self.need_to_push(cr, uid, [],
                 [m.group(0) for m in map(re_fieldname.match, export_fields)],
                 empty_ids=True,
                 context=context)
@@ -321,7 +324,8 @@ class update_received(osv.osv):
         if not packet:
             return 0
         self._logger.debug("Unfold package %s" % packet['model'])
-        if not self.pool.get('ir.model').search(cr, uid, [('model', '=', packet['model'])], context=context):
+        if not self.pool.get('ir.model').search(cr, uid, [('model', '=',
+            packet['model'])], limit=1, order='NO_ORDER', context=context):
             sync_log(self, "Model %s does not exist" % packet['model'], data=packet)
         packet_type = packet.get('type', 'import')
         if packet_type == 'import':
@@ -391,7 +395,6 @@ class update_received(osv.osv):
             else:
                 group_key = (update.sequence_number, 0,  update.rule_sequence)
             update_groups.setdefault(group_key, []).append(update)
-        self.write(cr, uid, update_ids, {'execution_date': fields.datetime.now()}, context=context)
 
         def secure_import_data(obj, fields, values):
             try:
@@ -437,13 +440,22 @@ class update_received(osv.osv):
             logs = {}
 
             def success(update_ids, versions):
-                self.write(cr, uid, update_ids, {
-                    'editable' : False,
-                    'run' : True,
-                    'log' : '',
-                }, context=context)
+                # write only for ids not in log as another write is performed
+                # for those in logs. This avoid two writes on the same object
+                ids_not_in_logs = list(set(update_ids) - set(logs.keys()))
+                execution_date = datetime.now()
+                if ids_not_in_logs:
+                    self.write(cr, uid, ids_not_in_logs, {
+                        'execution_date': execution_date,
+                        'editable' : False,
+                        'run' : True,
+                        'log' : '',
+                    }, context=context)
                 for update_id, log in logs.items():
                     self.write(cr, uid, [update_id], {
+                        'execution_date': execution_date,
+                        'editable' : False,
+                        'run' : True,
                         'log' : log,
                     }, context=context)
                 logs.clear()
@@ -488,7 +500,7 @@ class update_received(osv.osv):
                     #2 if conflict => manage conflict according rules : report conflict and how it's solve
                     index_id = eval(update.fields).index('id')
                     sd_ref = eval(update.values)[index_id]
-                    logs[update.id] = sync_log(self, "Conflict detected!", 'warning', data=(update.id, sd_ref)) + "\n"
+                    logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
 
             if bad_fields:
                 import_fields = [import_fields[i] for i in range(len(import_fields)) if i not in bad_fields]
@@ -501,6 +513,7 @@ class update_received(osv.osv):
                     import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, str(import_error), "\n".join([str(v) for v in values]))
                     # Rare Exception: import_data raised an Exception
                     self.write(cr, uid, update_ids, {
+                        'execution_date': datetime.now(),
                         'run' : False,
                         'log' : import_error.strip(),
                     }, context=context)
@@ -527,11 +540,15 @@ class update_received(osv.osv):
                         values.pop(value_index)
                         versions.pop(value_index)
                         self.write(cr, uid, [update_ids.pop(value_index)], {
+                            'execution_date': datetime.now(),
                             'run' : False,
                             'log' : import_message.strip(),
                         }, context=context)
                     else:
                         # Rare case where no line is given by import_data
+                        self.write(cr, uid, update_ids, {
+                            'execution_date': datetime.now(),
+                            }, context=context)
                         message += "Cannot import data in model %s:\nReason: %s\n" % (obj._name, import_message)
                         raise Exception(message)
                     # Re-start import_data on rows that succeeds before
@@ -577,6 +594,7 @@ class update_received(osv.osv):
                     e = "Error during unlink on model %s!\nUpdate ids: %s\nReason: %s\nSD ref:\n%s\n" \
                         % (obj._name, update_ids, tools.ustr(error), update.sdref)
                     self.write(cr, uid, [update_id], {
+                        'execution_date': datetime.now(),
                         'run' : False,
                         'log' : tools.ustr(e)
                     }, context=context)
@@ -591,26 +609,30 @@ class update_received(osv.osv):
 #                    raise
                 else:
                     done_ids.append(update_id)
-                    self.write(cr, uid, [update_id], {
-                        'editable' : False,
-                        'run' : True,
-                        'log' : '',
-                    }, context=context)
 
-                sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
-                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False)], context=context)
-                if toSetRun_ids:
-                    self.write(cr, uid, toSetRun_ids, {
-                        'editable' : False,
-                        'run' : True,
-                        'log' : 'Manually set to run by the system. Due to a delete',
-                    }, context=context)
+            self.write(cr, uid, done_ids, {
+                'execution_date': datetime.now(),
+                'editable' : False,
+                'run' : True,
+                'log' : '',
+            }, context=context)
+            sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
+            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
+                ('is_deleted', '=', False)], order='NO_ORDER', context=context)
+            if toSetRun_ids:
+                self.write(cr, uid, toSetRun_ids, {
+                    'editable' : False,
+                    'run' : True,
+                    'log' : 'Manually set to run by the system. Due to a delete',
+                }, context=context)
 
             return
 
         error_message = ""
         imported, deleted = 0, 0
-        for rule_seq in sorted(update_groups.keys()):
+        rule_seq_list = update_groups.keys()
+        rule_seq_list.sort()
+        for rule_seq in rule_seq_list:
             updates = update_groups[rule_seq]
             obj, do_deletion, force_recreation = self.pool.get(updates[0].model), updates[0].is_deleted, updates[0].force_recreation
             assert obj is not None, "Cannot find object model=%s" % updates[0].model
@@ -629,25 +651,29 @@ class update_received(osv.osv):
                 update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
             deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
 
-            self.write(cr, uid, deleted_update_ids, {
-                'editable' : False,
-                'run' : True,
-                'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
-            }, context=context)
-
-            sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
-            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('is_deleted', '=', False), ('run', '=', False)], context=context)
-            if toSetRun_ids:
-                self.write(cr, uid, toSetRun_ids, {
-                    'editable' : False,
-                    'run' : True,
-                    'log' : 'Manually set to run by the system. Due to a delete',
-                }, context=context)
-
+            if deleted_update_ids:
+                sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
+                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
+                    ('is_deleted', '=', False), ('run', '=', False)],
+                    order='NO_ORDER', context=context)
+                if toSetRun_ids:
+                    self.write(cr, uid, toSetRun_ids, {
+                        'execution_date': datetime.now(),
+                        'editable' : False,
+                        'run' : True,
+                        'log' : 'Manually set to run by the system. Due to a delete',
+                    }, context=context)
+                else:
+                    self.write(cr, uid, deleted_update_ids, {
+                        'execution_date': datetime.now(),
+                        'editable' : False,
+                        'run' : True,
+                        'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
+                    }, context=context)
 
             updates = filter(lambda update: update.id not in deleted_update_ids or
-                                            (not do_deletion and force_recreation),
-                             updates)
+                    (not do_deletion and force_recreation), updates)
+
             if not updates:
                 continue
             # ignore updates of instances that have lower priorities
@@ -680,22 +706,24 @@ class update_received(osv.osv):
                             "(update source: %s > local instance: %s)"
                             % (update.id, update.sdref,
                                update.source, local_entity.name))
-                self.write(cr, uid,
-                    [update.id for update in updates_to_ignore],
-                    {
-                        'editable' : False,
-                        'run' : True,
-                        'log' : \
-                            "This update has been ignored because it " \
-                            "interfere with a local modification while the " \
-                            "origin instance has a lower priority.\n\n" \
-                            "(update source: %s < local instance: %s)" \
-                            % (update.source, local_entity.name),
-                    },
-                    context=context)
-                updates = filter(
-                    lambda update: update not in updates_to_ignore,
-                    updates)
+                if updates_to_ignore:
+                    self.write(cr, uid,
+                        [update.id for update in updates_to_ignore],
+                        {
+                            'execution_date': datetime.now(),
+                            'editable' : False,
+                            'run' : True,
+                            'log' : \
+                                "This update has been ignored because it " \
+                                "interfere with a local modification while the " \
+                                "origin instance has a lower priority.\n\n" \
+                                "(update source: %s < local instance: %s)" \
+                                % (update.source, local_entity.name),
+                        },
+                        context=context)
+                    updates = filter(
+                        lambda update: update not in updates_to_ignore,
+                        updates)
             # Proceed
             if not updates:
                 continue
@@ -773,7 +801,7 @@ class update_received(osv.osv):
                                              % fb)
                     except ValueError, e:
                         message += 'Missing record %s and %s, set to False\n' \
-                                   % (xmlid, e.message)
+                                   % (xmlid, e)
                     else:
                         message += 'Missing record %s replaced by %s\n' \
                                    % (xmlid, fb)

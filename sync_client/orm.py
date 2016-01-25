@@ -267,6 +267,14 @@ sql_params)
         if context is None:
             context = {}
 
+        result_iterable = hasattr(ids, '__iter__')
+        if not result_iterable:
+            ids = [ids]
+            if previous_values is not None:
+                previous_values = [previous_values]
+        if not ids: return {}
+
+
         assert not self._name == 'ir.model.data', \
             "Can not call this method on object ir.model.data!"
         assert hasattr(self, '_all_columns'), \
@@ -290,13 +298,6 @@ sql_params)
             _previous_calls.append(me)
         else:
             return {}
-
-        result_iterable = hasattr(ids, '__iter__')
-        if not result_iterable:
-            ids = [ids]
-            if previous_values is not None:
-                previous_values = [previous_values]
-        if not ids: return {}
 
         data = self.pool.get('ir.model.data')
         if isinstance(synchronize, dict):
@@ -370,6 +371,7 @@ sql_params)
                     touch([data_id], list(
                         modified.union(eval(touched) if touched else [])
                     ))
+                # UF-2272 skip model's one2many(s)
                 # handle one2many (because orm don't call write() on them)
                 if synchronize:
                     for field, column in filter_o2m(whole_fields):
@@ -389,6 +391,11 @@ sql_params)
             changes = context['changes'].setdefault(self._name, {})
         else:
             changes = {}
+
+        # do not track changes if the dict are the same
+        if previous_values == current_values:
+            return changes
+
         if previous_values is not None:
             for res_id in ids:
                 if res_id not in changes:
@@ -411,7 +418,6 @@ sql_params)
                             changes[res_id][field] = \
                                 (previous_values[res_id][field],
                                  current_values[res_id][field])
-
         return changes
 
     def synchronize(self, cr, uid, ids, context=None):
@@ -507,7 +513,10 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
     @orm_method_overload
     def write(self, original_write, cr, uid, ids, values, context=None):
-        if context is None: context = {}
+        if not ids:
+            return True
+        if context is None:
+            context = {}
 
         audit_rule_ids = self.check_audit(cr, uid, 'write')
         audit_obj = self.pool.get('audittrail.rule')
@@ -620,7 +629,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
                 # Add commat for prevent delete other object
                 tr_name = str(self._name) + ',%'
                 args = [('name', 'like', tr_name), ('res_id', '=', obj_id)]
-                tr_ids = tr_obj.search(cr, uid, args)
+                tr_ids = tr_obj.search(cr, uid, args, order='NO_ORDER')
                 tr_obj.unlink(cr, uid, tr_ids)
         return original_unlink(self, cr, uid, ids, context=context)
 
@@ -801,7 +810,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 
             """
             def __export_row_json(self, cr, uid, row, fields, json_data, context=None):
-                    if not context:
+                    if context is None:
                         context = {}
 
                     def get_name(row):

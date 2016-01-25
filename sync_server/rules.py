@@ -54,7 +54,8 @@ class ir_model_field(osv.osv):
 
     def search(self, cr, uid, args, offset=0, limit=80, order='', context=None, count=False):
         args = self._modify_search_args(args)
-        return super(ir_model_field, self).search(cr, uid, args, offset, limit, order, context, count)
+        return super(ir_model_field, self).search(cr, uid, args, offset, limit,
+                order, context, count)
 
 ir_model_field()
 
@@ -388,7 +389,9 @@ class sync_rule(osv.osv):
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
                 model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
-                if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model_id','in', model_ids),('name','=',base_field)], context=context)): raise KeyError
+                if not self.pool.get('ir.model.fields').search(cr, uid,
+                    [('model_id','in', model_ids),('name','=',base_field)],
+                    limit=1, order='NO_ORDER', context=context): raise KeyError
         except TypeError:
             message += "failed (Fields list should be a list of string)!\n"
             error = True
@@ -505,7 +508,9 @@ class sync_rule(osv.osv):
             message.append(mess)
 
             message.append("* Sequence is unique... ")
-            if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
+            if self.search(cr, uid,
+                    [('sequence_number','=',rec.sequence_number)],
+                    order='NO_ORDER', context=context, count=True) > 1:
                 message.append("failed!\n")
                 error = True
             else:
@@ -685,7 +690,9 @@ class message_rule(osv.osv):
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
                 model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
-                if not len(self.pool.get('ir.model.fields').search(cr, uid,  [('model_id','in', model_ids),('name','=',base_field)], context=context)):
+                if not self.pool.get('ir.model.fields').search(cr, uid,
+                    [('model_id','in', model_ids),('name','=',base_field)],
+                    limit=1, order='NO_ORDER', context=context):
                     field_error = field
                     raise KeyError
         except TypeError:
@@ -712,7 +719,9 @@ class message_rule(osv.osv):
             # Check destination_name
             message.append(_("* Destination Name... "))
             try:
-                field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',rec.destination_name)], context=context)
+                field_ids = self.pool.get('ir.model.fields').search(cr, uid,
+                        [('model','=',rec.model_id),('name','=',rec.destination_name)],
+                        limit=1, order='NO_ORDER', context=context)
                 if not field_ids: raise StandardError
             except Exception, e:
                 sync_log(self, e, 'error')
@@ -759,7 +768,9 @@ class message_rule(osv.osv):
 
             # Sequence is unique
             message.append("* Sequence is unique... ")
-            if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
+            if self.search(cr, uid,
+                    [('sequence_number','=',rec.sequence_number)],
+                    order='NO_ORDER', context=context, count=True) > 1:
                 message.append("failed!\n")
                 error = True
             else:

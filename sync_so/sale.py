@@ -146,7 +146,8 @@ class sale_order_sync(osv.osv):
                 if ref:
                     ref = source + "." + ref
                     po_object = self.pool.get('purchase.order')
-                    po_ids = po_object.search(cr, uid, [('partner_ref', '=', ref)], context=context)
+                    po_ids = po_object.search(cr, uid, [('partner_ref', '=',
+                        ref)], order='NO_ORDER', context=context)
 
                     # in both case below, the FO become counter part
                     if po_ids: # IF the PO Loan has already been created, if not, just update the value reference, then when creating the PO loan, this value will be updated
@@ -352,7 +353,7 @@ class sale_order_sync(osv.osv):
             existing_message_id = msg_to_send_obj.search(cr, uid, [
                 ('identifier', '=', xml_id),
                 ('destination_name', '=', partner_name),
-            ], context=context)
+            ], limit=1, order='NO_ORDER', context=context)
             if existing_message_id:
                 return
 
@@ -377,7 +378,8 @@ class sale_order_sync(osv.osv):
 
         if original_id:
             orig_partner_name = self.browse(cr, uid, original_id, context=context).partner_id.name
-            available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain), context=context)
+            available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain),
+                    order='NO_ORDER', context=context)
             if nfo_model_obj and nfo_rule and original_id in available_nfo_ids:
                 generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner_name)
             if vfo_model_obj and vfo_rule:

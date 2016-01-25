@@ -226,7 +226,9 @@ class entity(osv.osv):
         return uuid.uuid4().hex
     
     def _check_duplicate(self, cr, uid, name, uuid, context=None):
-        duplicate_id = self.search(cr, uid, [('user_id', '!=', uid), '|', ('name', '=', name), ('identifier', '=', uuid)], context=context)
+        duplicate_id = self.search(cr, uid, [('user_id', '!=', uid), '|',
+            ('name', '=', name), ('identifier', '=', uuid)],
+            limit=1, order='NO_ORDER', context=context)
         return bool(duplicate_id)
         
     def _get_ancestor(self, cr, uid, id, context=None):
@@ -317,7 +319,8 @@ class entity(osv.osv):
                                     ('hardware_id', '=', hardware_id),
                                     ('user_id', '=', uid), 
                                     ('state', '=', 'updated'), 
-                                    ('update_token', '=', token)], context=context)
+                                    ('update_token', '=', token)], 
+                                    order='NO_ORDER', context=context)
         if not ids:
             return (False, 'Ack not valid')
         self.write(cr, 1, ids, {'state' : 'validated'}, context=context)
@@ -444,7 +447,8 @@ class entity(osv.osv):
                 return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be actived")
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want to validate is not one of your children")
-        ids_to_validate = self.search(cr, uid, [('identifier', 'in', uuid_list)], context=context)
+        ids_to_validate = self.search(cr, uid, [('identifier', 'in',
+            uuid_list)], context=context)
         self.write(cr, 1, ids_to_validate, {'state': 'validated'}, context=context)
         self._send_validation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now validated" % ", ".join(uuid_list))
@@ -456,7 +460,8 @@ class entity(osv.osv):
                 return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be actived")
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want validate is not one of your children")
-        ids_to_validate = self.search(cr, uid, [('identifier', 'in', uuid_list)], context=context)
+        ids_to_validate = self.search(cr, uid, [('identifier', 'in',
+            uuid_list)], context=context)
         self.write(cr, 1, ids_to_validate, {'state': 'invalidated'}, context=context)
         self._send_invalidation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now invalidated" % ", ".join(uuid_list))
@@ -574,7 +579,7 @@ class entity(osv.osv):
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         to_order = False
-        if not count and order and ('last_dateactivity' in order or 'activity' in order):
+        if not count and order and order != 'NO_ORDER' and ('last_dateactivity' in order or 'activity' in order):
             to_order = True
             init_offset = offset
             init_limit = limit
@@ -783,7 +788,9 @@ class sync_manager(osv.osv):
     def get_message_ids(self, cr, uid, entity, context=None):
         # UTP-1179: store temporarily this ids of messages to be sent to this entity at the moment of getting the update
         # to avoid having messages that are not belonging to the same "sequence" of the update  
-        msg_ids_tmp = self.pool.get("sync.server.message").search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], context=context)
+        msg_ids_tmp = self.pool.get("sync.server.message").search(cr, uid,
+                [('destination', '=', entity.id), ('sent', '=', False)],
+                order='NO_ORDER', context=context)
 
         len_ids = 0
         if msg_ids_tmp:

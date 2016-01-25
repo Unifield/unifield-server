@@ -195,7 +195,7 @@ class purchase_order_sync(osv.osv):
                      ('remote_call', '=', 'sale.order.create_so'),
                      ('identifier', 'like', po_identifier),
                      ],
-                    context=context)
+                    limit=1, order='NO_ORDER', context=context)
                 res[po.id] = bool(sync_msg_ids)
         return res
 
@@ -230,7 +230,10 @@ class purchase_order_sync(osv.osv):
         for spl_brw in self.pool.get('purchase.order.line.to.split').browse(cr, uid, split_po_line_ids, context=context):
             pol_id = False
             if not spl_brw.line_id:
-                already_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', spl_brw.new_sync_order_line_db_id)], context=context)
+                already_pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
+                        [('sync_order_line_db_id', '=',
+                            spl_brw.new_sync_order_line_db_id)],
+                        limit=1, order='NO_ORDER', context=context)
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', spl_brw.sync_order_line_db_id)], context=context)
                 if not pol_ids or already_pol_ids:
                     continue
@@ -345,7 +348,8 @@ class purchase_order_sync(osv.osv):
             header_result['state'] = 'sourced'
 
         # UF-1830: Check if the future FO split exists in the system, if it is the case, then the message is coming from a recovery from the partner!
-        check_exist = self.search(cr, uid, [('name', '=', header_result['name'])])
+        check_exist = self.search(cr, uid, [('name', '=',
+            header_result['name'])], order='NO_ORDER')
         if check_exist:
             # if it is the case, then just update the reference to the newly created FO-split at the partner side
             self.write(cr, uid, check_exist, {'partner_ref': header_result['partner_ref']} , context=context)
@@ -416,8 +420,7 @@ class purchase_order_sync(osv.osv):
                     if cancel_ids:
                         orig_line_txt = self.pool.get('sale.order.line.cancel').read(cr, uid, cancel_ids[0], ['resource_sync_line_db_id'], context=context)['resource_sync_line_db_id']
                         orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', orig_line_txt)], context=context)
-
-                if orig_line:
+                else:
                     line = line_obj.browse(cr, uid, orig_line[0], context=context)
                     origin_lines.append(line.id)
                     if line.procurement_id:

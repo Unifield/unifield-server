@@ -481,7 +481,8 @@ class Object(object):
         if limit is None:
             limit = self.search_count(domain)
 
-        arguments = [domain, offset, limit, order is not None and order or False]
+        arguments = [domain, offset, limit, order is not None and\
+                order != 'NO_ORDER' and order or False]
 
         arguments = self.__add_context(arguments, context)
 

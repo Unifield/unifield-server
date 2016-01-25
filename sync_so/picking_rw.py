@@ -397,7 +397,8 @@ class stock_picking(osv.osv):
         if context.get('rw_sync_in_progress', False) and not order:
             order = 'id'
     
-        return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+        return super(stock_picking, self).search(cr, uid, args, offset=offset,
+                limit=limit, order=order, context=context, count=count)
 
     #UF-2531: The last param for the case no need to check for partner, such as the case of INT from scratch created at RW
     def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context, need_partner_check=True):
@@ -666,7 +667,10 @@ class stock_picking(osv.osv):
                     header_result['state'] = 'assigned' # for CONSO OUT, do not take "done state" -> can't execute workflow later
                 
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
-                existing_pick = self.search(cr, uid, [('name', '=', pick_name), ('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
+                existing_pick = self.search(cr, uid, [('name', '=', pick_name),
+                    ('origin', '=', origin), ('subtype', '=', 'picking'),
+                    ('type', '=', 'out'), ('state', '=', 'draft')],
+                    limit=1, order='NO_ORDER', context=context)
                 if existing_pick:
                     message = "Sorry, the document: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
@@ -701,7 +705,9 @@ class stock_picking(osv.osv):
                 self._logger.info(message)
                 raise Exception, message
         elif rw_type == self.CENTRAL_PLATFORM  and not origin and 'OUT' in pick_name and 'RW' in pick_name: #US-702: sync also the OUT from scratch, no link to IR/FO
-                existing_pick = self.search(cr, uid, [('name', '=', pick_name), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
+                existing_pick = self.search(cr, uid, [('name', '=', pick_name),
+                    ('subtype', '=', 'picking'), ('type', '=', 'out'),
+                    ('state', '=', 'draft')], limit=1, order='NO_ORDER', context=context)
                 if existing_pick:
                     message = "Sorry, the OUT: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
@@ -1111,7 +1117,7 @@ class stock_picking(osv.osv):
                     ('origin', '=', origin),
                     ('subtype', '=', 'picking'),
                     ('state', 'in', ['assigned', 'draft']),
-                ], context=context)
+                ], limit=1, order='NO_ORDER', context=context)
                 if same_ids:
                     message = "The Picking: " + pick_name + " is already replicated in " + cr.dbname
                     self._logger.info(message)
@@ -1199,7 +1205,8 @@ class stock_picking(osv.osv):
 
                     wizard_line_obj.create(cr, uid, vals, context=context)
 
-        line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id), ('quantity', '=', 0.00)], context=context)
+        line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=',
+            proc_id), ('quantity', '=', 0.00)], order='NO_ORDER', context=context)
         if line_to_del:
             wizard_line_obj.unlink(cr, uid, line_to_del, context=context)
 
@@ -1311,7 +1318,9 @@ class stock_picking(osv.osv):
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
                     pick_id = False
                     for pick in pick_ids:
-                        if not self.pool.get('ppl.processor').search(cr, uid, [('picking_id', '=', pick)]):
+                        if not self.pool.get('ppl.processor').search(cr, uid,
+                                [('picking_id', '=', pick)],
+                                limit=1, order='NO_ORDER'):
                             pick_id = pick
                             break
                     if pick_id:
