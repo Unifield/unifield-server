@@ -152,7 +152,7 @@
                         <field name="order_state_purchase_order_line" invisible="True" />
                         <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
                             attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('order_state_purchase_order_line', 'not in', ('draft', 'wait', 'confirmed'))]}" />
-                        <button string="Delete" icon="gtk-del" type="object" name="ask_unlink"
+                        <button string="Delete" icon="gtk-del" type="object" name="ask_unlink" confirm="You requested to cancel a line in the PO. Do you want to proceed?" 
                             attrs="{'invisible': ['|', ('tender_line_id', '!=', False), ('order_state_purchase_order_line', 'not in', ('rfq_sent', 'draft', 'wait', 'confirmed'))]}" />
                     </xpath>
 

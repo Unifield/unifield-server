@@ -291,7 +291,7 @@ class account_bank_statement_line_report_xls(SpreadsheetReport):
         super(account_bank_statement_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, context)
+        ids = getIds(self, cr, uid, ids, context=context)
         if 'output_currency_id' in data:
             context.update({'output_currency_id': data.get('output_currency_id')})
         else:

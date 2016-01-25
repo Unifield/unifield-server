@@ -89,6 +89,16 @@ class product_list(osv.osv):
             string='Type',
             required=True,
         ),
+        'creator': fields.selection(
+            selection=[
+                ('hq', 'HQ'),
+                ('coordo', 'Coordination'),
+                ('project', 'Project'),
+                ('temp', 'Temporary'),
+            ],
+            string='Creator',
+            required=True,
+        ),
         'description': fields.char(
             size=256,
             string='Description',
@@ -145,6 +155,7 @@ class product_list(osv.osv):
 
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'creator': lambda *a: 'temp',
     }
 
     _sql_constraints = [
