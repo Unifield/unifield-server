@@ -234,9 +234,8 @@ class account_year_end_closing(osv.osv):
                 'date_stop': '%s-%02d-31' % period_year_month,
                 'fiscalyear_id': fy_id,
                 'state': 'draft',  # opened by default
+                'active': pn!=0, #0 period hidden by default
             }
-            if pn == number:
-                vals['active'] = False
 
             self.pool.get('account.period').create(cr, uid, vals,
                 context=context)
