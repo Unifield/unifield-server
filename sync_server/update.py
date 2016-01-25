@@ -431,7 +431,7 @@ class update(osv.osv):
             filters.append("direction = 'down' AND source IN (" + (','.join(map(str,ancestor))) + ")")
         filters.append("direction = 'bidirectional'")
         if recover:
-            filters.append("source = " + entitiy.id)
+            filters.append("source = " + entity.id)
         filters.append("direction = 'bi-private' AND (is_deleted = 't' OR owner IN (" + (','.join(map(str, children + [entity.id]))) + "))")
         base_query += ' AND ((' + ') OR ('.join(filters) + '))'
 
