@@ -441,7 +441,7 @@ class update(osv.osv):
             else:
                 base_query += " AND sync_server_update.source != %s" % entity.id
 
-        base_query += " AND sync_server_update.id > %s ORDER BY sequence ASC, id ASC OFFSET %s LIMIT %s"
+        base_query += " AND sync_server_update.id > %s ORDER BY id ASC, sequence ASC OFFSET %s LIMIT %s"
 
         ## Search first update which is "master", then find next updates to send
         ids = []
@@ -491,6 +491,12 @@ class update(osv.osv):
         # Point of no return
         #for update_to_send in updates_to_send:
             #self._cache_pullers.add(entity, update_to_send)
+        for updates_by_type in updates_to_send:
+            for update in iter(updates_by_type):
+                self.pool.get('sync.server.puller_logs').create(cr, 1, {
+                    'update_id': update.id,
+                    'entity_id': entity.id,
+                }, context=context)
 
         data_packages = []
 
