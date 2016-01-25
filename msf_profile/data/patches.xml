@@ -30,6 +30,7 @@
 
         <record id="us_841_patch" model="patch.scripts">
             <field name="method">us_841_patch</field>
+        </record>
 
         <record id="us_822_patch" model="patch.scripts">
             <field name="method">us_822_patch</field>
