@@ -32,8 +32,8 @@ class account_period_state(osv.osv):
     _name = "account.period.state"
 
     _columns = {
-        'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade'),
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade', select=1),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State',
                                   readonly=True),
     }
@@ -126,11 +126,21 @@ class account_fiscalyear_state(osv.osv):
 
     _columns = {
         'fy_id': fields.many2one('account.fiscalyear', 'Fiscal Year',
-            required=True, ondelete='cascade'),
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+            required=True, ondelete='cascade', select=1),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',
             readonly=True),
     }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and not vals.get('fy_id'):
+            # US-841: period is required but we got
+            # an update related to non existant period: ignore it
+            return False
+
+        return super(account_fiscalyear_state, self).create(cr, uid, vals, context=context)
 
     def get_fy(self, cr, uid, ids, context=None):
         mod_obj = self.pool.get('ir.model.data')
