@@ -279,6 +279,8 @@ class shipment(osv.osv):
         '''
         Create the shipment from an existing draft shipment, then perform the ship
         '''
+        if context is None:
+            context = {}
         # from the picking Id, search for the shipment
         ship = self.browse(cr, uid, ship_id, context=context)
         
@@ -288,15 +290,22 @@ class shipment(osv.osv):
             'shipment_id': ship.id,
             'address_id': ship.address_id.id,
         }
+        pack_families = ship_dict.get('pack_family_memory_ids', False)
+        if not pack_families:
+            raise Exception, "This Ship " + ship.name + " is empty!"
+        
+        # US-803: point 9: If the ship contains description, add it to the context and will be added while creating the ship
+        # description is "cloned" to all ship lines, so just only get once
+        for line in pack_families:
+            if line['description_ppl']:
+                context['description_ppl'] = line['description_ppl'] 
+                break
+        
         wizard_line_obj = self.pool.get('shipment.family.processor')
         proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
         ship_proc_obj.create_lines(cr, uid, proc_id, context=context)
         wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
 
-        pack_families = ship_dict.get('pack_family_memory_ids', False)
-        if not pack_families:
-            raise Exception, "This Ship " + ship.name + " is empty!"
-        
         for family in wizard.family_ids:
             wizard_line_obj.write(cr, uid, [family.id], {'selected_number': 0,}, context=context)
         
@@ -521,6 +530,12 @@ class stock_picking(osv.osv):
         else:
             raise Exception, "Location cannot be empty"
 
+        # US-803: point 20. Added the price currency for IN line
+        if data['price_currency_id'] and data['price_currency_id']['id']:
+            price_currency_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(data['price_currency_id']['id']), context=context)
+        else:
+            raise Exception, "Currency  at line cannot be empty"
+         
         if data['reason_type_id'] and data['reason_type_id']['id']:
             reason_type_id = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(data['reason_type_id']['id']), context=context)
         else:
