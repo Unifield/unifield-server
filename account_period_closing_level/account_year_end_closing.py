@@ -121,6 +121,10 @@ class account_year_end_closing(osv.osv):
         'IB': 'Initial Balances',
     }
 
+    # IMPORTANT NOTE: be aware that this pattern is used by OCB VI
+    # to search PL RESULT entries to export with December
+    _book_pl_results_seqnum_pattern = "EOY-%d-%s-%s-PL-RESULT"
+
     def process_closing(self, cr, uid, fy_rec,
         has_move_regular_bs_to_0=False, has_book_pl_results=False,
         context=None):
@@ -440,8 +444,8 @@ class account_year_end_closing(osv.osv):
             """
             create draft CCY/JE to log JI into
             """
-            name = "EOY-%d-%s-%s-PL-RESULT" % (fy_year, instance_rec.code,
-                cpy_rec.currency_id.name, )
+            name = self._book_pl_results_seqnum_pattern % (fy_year,
+                instance_rec.code, cpy_rec.currency_id.name, )
 
             vals = {
                 'block_manual_currency_id': True,
@@ -461,7 +465,7 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
-            name = "EOY-%d-%s-%s-%s" % (fy_year, account_rec.code,
+            name = self._book_pl_results_seqnum_pattern % (fy_year,
                 instance_rec.code, cpy_rec.currency_id.name, )
 
             vals = {
