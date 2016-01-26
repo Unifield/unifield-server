@@ -582,6 +582,11 @@ class shipment(osv.osv):
 
                 add_line_obj.create(cr, uid, line_vals, context=context)
 
+            # US-803: point 9, add the ship description, then remove it from the context
+            description_ppl = context.get('description_ppl', False)
+            if context.get('description_ppl', False):
+                del context['description_ppl']
+            
             for family in wizard.family_ids:
                 if not family.selected_number: # UTP-1015 fix from Quentin
                     continue
@@ -607,6 +612,7 @@ class shipment(osv.osv):
                     'non_stock_noupdate': True,
                     'shipment_proc_id': wizard.id,
                     'draft_packing_id': picking.id,
+                    'description_ppl': description_ppl, # US-803: added the description
                 })
 
                 new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
