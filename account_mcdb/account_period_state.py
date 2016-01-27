@@ -176,6 +176,7 @@ class account_fiscalyear_state(osv.osv):
         fy_state_obj = self.pool.get('account.fiscalyear.state')
         parent = user.company_id.instance_id.id
         ids_to_write = []
+        state_to_update = []
         for fy_id in fy_ids:
             user = self.pool.get('res.users').browse(cr, uid, uid,
                 context=context)
@@ -193,25 +194,26 @@ class account_fiscalyear_state(osv.osv):
                         'state': fy['state']
                     }
                     self.write(cr, uid, ids, vals, context=context)
-                    for fy_state_id in ids:
-                        fy_state_xml_id = fy_state_obj.get_sd_ref(cr, uid,
-                            fy_state_id)
-                        ids_to_write.append(model_data._get_id(cr, uid, 'sd',
-                            fy_state_xml_id))
+                    state_to_update = ids[:]
                 else:
                     vals = {
                         'fy_id': fy['id'],
                         'instance_id': parent,
                         'state': fy['state']
                     }
-                    self.create(cr, uid, vals, context=context)
+                    nid = self.create(cr, uid, vals, context=context)
+                    state_to_update = [nid]
+
+        for fy_state_id in state_to_update:
+            fy_state_xml_id = fy_state_obj.get_sd_ref(cr, uid, fy_state_id)
+            ids_to_write.append(model_data._get_id(cr, uid, 'sd', fy_state_xml_id))
 
         # like for US-649 period state: in context of synchro last_modification
         # date must be updated on account.fisclayear.state because they are
         # created with synchro and they need to be sync down to other instances
         if ids_to_write:
             model_data.write(cr, uid, ids_to_write,
-                {'last_modification': fields.datetime.now()})
+                {'last_modification': fields.datetime.now(), 'touched': "['state']"})
         return True
 
 account_fiscalyear_state()
