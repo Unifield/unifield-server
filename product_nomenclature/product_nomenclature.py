@@ -53,9 +53,14 @@ class product_nomenclature(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
-        if context is None:
+
+        # Here we explicitly want to recreate another context in case the
+        # context is empty. Because name_get() call read(), which call
+        # name_get(), which call read(), ...... and if we reuse the same
+        # context all the time it ends up in an infinite loop error
+        if not context:
             context = {}
-            
+
         if not context.get('lang') or context.get('lang') == 'en_US':
             # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
             lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
