@@ -263,16 +263,31 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         comment += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry:
                     comment += _('Expiry date is missing.\n')
-                if not hidden_perishable_mandatory and not hidden_batch_management_mandatory and batch_name:
-                    comment += _('This product is not Batch Number managed.\n')
+                if not hidden_perishable_mandatory and not hidden_batch_management_mandatory and (batch_name or batch or bad_batch_name):
                     batch = False
-                if not hidden_perishable_mandatory and expiry:
-                    comment += _('This product is not Expiry Date managed.\n')
+                    bad_batch_name = False
                     expiry = False
+                    bad_expiry = False
+                    # Remove the res.log that indicates errors on import
+                    if to_correct_ok and location_id and not location_not_found:
+                        to_correct_ok = False
+                        comment = ''
+                    comment += _('This product is not Batch Number managed.\n')
+                if not hidden_perishable_mandatory and (expiry or bad_expiry):
+                    batch = False
+                    bad_batch_name = False
+                    expiry = False
+                    bad_expiry = False
+                    # Remove the res.log that indicates errors on import
+                    if to_correct_ok and location_id and not location_not_found:
+                        to_correct_ok = False
+                        comment = ''
+                    comment += _('This product is not Expiry Date managed.\n')
             else:
                 product_uom = self.pool.get('product.uom').search(cr, uid, [], context=context)[0]
                 hidden_batch_management_mandatory = False
                 hidden_perishable_mandatory = False
+
 
             if product_uom and product_qty:
                 product_qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, product_uom, product_qty)
@@ -317,7 +332,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
 
         view_id = obj_data.get_object_reference(cr, uid, 'specific_rules','stock_initial_inventory_form_view')[1]
 
-        if import_to_correct:
+        if any(x[2]['to_correct'] for x in vals['inventory_line_id']):
             msg_to_return = _("The import of lines had errors, please correct the red lines below")
 
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
@@ -712,6 +727,26 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                         comment += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry:
                     comment += _('Expiry date is missing.\n')
+                if not hidden_perishable_mandatory and not hidden_batch_management_mandatory and (batch or bad_batch_name):
+                    batch = False
+                    bad_batch_name = False
+                    expiry = False
+                    bad_expiry = False
+                    # Remove the res.log that indicates errors on import
+                    if to_correct_ok and location_id and not location_not_found:
+                        to_correct_ok = False
+                        comment = ''
+                    comment += _('This product is not Batch Number managed.\n')
+                if not hidden_perishable_mandatory and (expiry or bad_expiry):
+                    batch = False
+                    bad_batch_name = False
+                    expiry = False
+                    bad_expiry = False
+                    # Remove the res.log that indicates errors on import
+                    if to_correct_ok and location_id and not location_not_found:
+                        to_correct_ok = False
+                        comment = ''
+                    comment += _('This product is not Expiry Date managed.\n')
             else:
                 product_uom = self.pool.get('product.uom').search(cr, uid, [], context=context)[0]
                 hidden_batch_management_mandatory = False
@@ -755,7 +790,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
 
         view_id = obj_data.get_object_reference(cr, uid, 'specific_rules','stock_initial_inventory_form_view')[1]
 
-        if import_to_correct:
+        if any(x[2]['to_correct'] for x in vals['inventory_line_id']):
             msg_to_return = _("The import of lines had errors, please correct the red lines below")
 
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
@@ -870,8 +905,10 @@ class initial_stock_inventory_line(osv.osv):
                 comment += _('Expiry date is missing.\n')
 
         if not comment:
+            if vals.get('comment'):
+                comment = vals.get('comment')
             vals.update({'comment': comment, 'to_correct_ok': False})
-        else:
+        elif context.get('import_in_progress'):
             vals.update({'comment': comment, 'to_correct_ok': True})
 
         res = super(initial_stock_inventory_line, self).create(cr, uid, vals, context=context)
