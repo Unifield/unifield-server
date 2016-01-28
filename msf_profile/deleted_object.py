@@ -41,6 +41,8 @@ class deleted_object(osv.osv):
         'deletion_date': fields.datetime('Deletion Date', read_only=True),
         'user_id': fields.many2one('res.users', 'User who delete',
             read_only=True),
+        'deleted_in_sync': fields.boolean(string='Deleted by sync',
+            help='This object has been deleted during a synchronization'),
     }
 
 deleted_object()
@@ -72,6 +74,8 @@ class extended_orm_delete_method:
     def unlink(self, original_unlink, cr, uid, ids, context=None):
         """Create a delete_object in case the current object is not blacklisted
         to keep track of deleted objects"""
+        if context is None:
+            context = {}
         res = original_unlink(self, cr, uid, ids, context=context)
         if not res:
             return res
@@ -94,16 +98,18 @@ class extended_orm_delete_method:
             # sync client not installed
             return res
         obj_sd_ref = model_obj.get_sd_ref(cr, uid, ids)
+        is_sync_context = context.get('sync_update_execution', False)
+        deleted_obj_module = self.pool.get('deleted.object')
         for sub_ids in cr.split_for_in_conditions(ids):
             # keep a track of deleted object if there are not blacklisted
-            # by creating a delete_object
+            # by creating a deleted.object
             for obj_id in sub_ids:
                 vals = {'model': self._name,
                         'deleted_obj_id': obj_id,
                         'deleted_obj_sd_ref': obj_sd_ref[obj_id],
                         'deletion_date': deletion_date,
-                        'user_id': uid,}
-                deleted_obj_module = self.pool.get('deleted.object')
+                        'user_id': uid,
+                        'deleted_in_sync': is_sync_context,}
                 del_obj = deleted_obj_module.create(cr, uid, vals)
         return res
 
