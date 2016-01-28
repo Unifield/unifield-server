@@ -721,7 +721,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 hidden_batch_management_mandatory = product.batch_management
                 hidden_perishable_mandatory = product.perishable
 
-                if hidden_perishable_mandatory and (batch or bad_batch_name):
+                if hidden_perishable_mandatory and not hidden_batch_management_mandatory and (batch or bad_batch_name):
                     batch = False
                     bad_batch_name = False
 
@@ -791,7 +791,9 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
 
         # write order line on Inventory
         vals.update({'file_to_import': False})
+        context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
+        context['import_in_progress'] = False
 
         view_id = obj_data.get_object_reference(cr, uid, 'specific_rules','stock_initial_inventory_form_view')[1]
 
@@ -858,6 +860,7 @@ class initial_stock_inventory_line(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
+        pl_obj = self.pool.get('stock.production.lot')
         comment = ''
         hidden_batch_management_mandatory = False
         hidden_perishable_mandatory = False
@@ -909,6 +912,16 @@ class initial_stock_inventory_line(osv.osv):
             else:
                 comment += _('Expiry date is missing.\n')
 
+        if hidden_batch_management_mandatory and batch and expiry:
+            pl_ids = pl_obj.search(cr, uid, [('name', '=', batch), ('product_id', '=', vals.get('product_id'))], context=context)
+            if pl_ids and pl_obj.read(cr, uid, pl_ids[0], ['life_date'], context=context)['life_date'] != expiry:
+                comment += _('Expiry date and batch not consistent')
+                vals.update({
+                    'prod_lot_id': False,
+                    'prodlot_name': '',
+                    'expiry_date': False,
+                })
+
         if not comment:
             if vals.get('comment'):
                 comment = vals.get('comment')
@@ -939,10 +952,7 @@ class initial_stock_inventory_line(osv.osv):
         if not location_id:
             comment += _('Location is missing.\n')
         if hidden_batch_management_mandatory and not batch:
-            if batch_name:
-                comment += _('Batch not found.\n')
-            else:
-                comment += _('Batch is missing.\n')
+            comment += _('Batch is missing.\n')
         if hidden_perishable_mandatory and not expiry:
             comment += _('Expiry date is missing.\n')
 
