@@ -116,8 +116,8 @@ class account_move_line(osv.osv):
             if ml.corrected_upstream and level == 'project':
                 res[ml.id] = False
                 continue
-            # False if this line is a revaluation
-            if ml.journal_id.type == 'revaluation':
+            # False if this line is a revaluation or a system entry
+            if ml.journal_id.type in ('revaluation', 'system', ):
                 res[ml.id] = False
                 continue
         return res

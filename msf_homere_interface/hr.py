@@ -291,8 +291,7 @@ class hr_employee(osv.osv):
                 vals.update({'funding_pool_id': False})
         return {'value': vals}
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-               context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
 
         if not args:
             args = []

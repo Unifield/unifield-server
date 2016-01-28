@@ -30,6 +30,7 @@ import zipfile
 from tempfile import NamedTemporaryFile
 import os
 from hashlib import md5
+from string import Template
 
 class finance_archive():
     """
@@ -43,6 +44,7 @@ class finance_archive():
      - filename: the name of the result filename in the future ZIP file
      - key: the name of the key in SQLREQUESTS DICTIONNARY to have the right SQL request
      - [optional] query_params: data to use to complete SQL requests
+     - [optional] query_tpl_context: dict data to use to complete SQL requests with templating like $var
      - [optional] function: name of the function to postprocess data (example: to change selection field into a human readable text)
      - [optional] fnct_params: params that would used on the given function
      - [optional] delete_columns: list of columns to delete before writing files into result
@@ -195,6 +197,9 @@ class finance_archive():
 
             # fetch data with given sql query
             sql = self.sqlrequests[fileparams['key']]
+            if fileparams.get('query_tpl_context', False):
+                sql = Template(sql).safe_substitute(
+                    fileparams.get('query_tpl_context'))
             if fileparams.get('query_params', False):
                 cr.execute(sql, fileparams['query_params'])
             else:

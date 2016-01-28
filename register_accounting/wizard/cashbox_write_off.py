@@ -90,7 +90,7 @@ class cashbox_write_off(osv.osv_memory):
             choice = self.browse(cr,uid,ids)[0].choice
             if choice == 'reopen':
                 if cstate not in ['partial_close']:
-                    raise osv.except_osv(_('Warning'), _('You cannot re-open a Closed Register.'))
+                    raise osv.except_osv(_('Warning'), _('This action is only for partially closed registers.'))
                 # re-open case
                 cashbox.write({'state': 'open'})
                 return { 'type': 'ir.actions.act_window_close', 'res_id': w_id}

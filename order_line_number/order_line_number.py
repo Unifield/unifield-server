@@ -432,7 +432,7 @@ class ir_sequence(osv.osv):
         correct a bug as sequence_id is passed as an array, which
         is not taken into account in the override in account
         '''
-        if not context:
+        if context is None:
             context = {}
         if isinstance(sequence_id, list):
             return super(ir_sequence, self).get_id(cr, uid, sequence_id[0], code_or_id, context=context)

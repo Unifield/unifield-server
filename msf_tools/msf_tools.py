@@ -620,7 +620,7 @@ class ir_translation(osv.osv):
         return res
 
     # US_394: Remove duplicate lines for ir.translation
-    def create(self, cr, uid, vals, context=None):
+    def create(self, cr, uid, vals, clear=True, context=None):
         domain = []
         # Search xml_id
         if not vals.get('xml_id', False):
@@ -653,19 +653,19 @@ class ir_translation(osv.osv):
                     ids = existing_ids
                 res = self.write(cr, uid, ids, vals, context=context)
                 return ids[0]
-        res = super(ir_translation, self).create(cr, uid, vals, context=context)
+        res = super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
         return res
 
     # US_394: add xml_id for each lines
     def add_xml_ids(self, cr, uid, context=None):
-        domain = [('type', '=', 'model')]
+        domain = [('type', '=', 'model'), ('xml_id', '=', False)]
         translation_ids = self.search(cr, uid, domain, context=context)
         translation_obj = self.browse(cr, uid, translation_ids, context=context)
         for translation in translation_obj:
-            if translation['xml_id'] is None:
-                xml_id = self.get_xml_id(cr, uid, translation, context=context)
-                vals = {'xml_id': xml_id}
-                self.write(cr, uid, translation['id'], vals, context=context)
+            v = {'name': translation.name, 'res_id': translation.res_id}
+            xml_id = self.get_xml_id(cr, uid, v, context=context)
+            vals = {'xml_id': xml_id}
+            self.write(cr, uid, translation['id'], vals, context=context)
         return
 
     # US_394: remove orphean ir.translation lines

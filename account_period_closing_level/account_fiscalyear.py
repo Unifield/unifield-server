@@ -24,13 +24,14 @@ from osv import fields, osv
 from tools.translate import _
 import datetime
 from dateutil.relativedelta import relativedelta
+from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
+
 
 class account_fiscalyear(osv.osv):
     _name = "account.fiscalyear"
     _inherit = "account.fiscalyear"
 
     def _get_is_closable(self, cr, uid, ids, field_names, args, context=None):
-        # US-131: closable if all periods HQ closed (special ones too)
         res = {}
         if not ids:
             return res
@@ -39,34 +40,66 @@ class account_fiscalyear(osv.osv):
 
         level = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id.instance_id.level
-        if level != 'section':
-            # not at HQ level: FY not closable
-            for id in ids:
-                res[id] = False
-            return res
+        ayec_obj = self.pool.get('account.year.end.closing')
 
-        # check:
-        # - FY is not already closed
-        # - all FY's periods are HQ closed (state 'done') (special ones too)
-        for br in self.browse(cr, uid, ids, context=context):
-            closable = False
+        # check matching of:
+        # - instance level
+        # - FY state
+        # - periods, with special ones too except those for year end closing
+        for fy in self.browse(cr, uid, ids, context=context):
+            # check previous FY closed
+            # check next FY exists (we need FY+1 Period 0 for initial balances)
+            mission = False
+            hq = False
 
-            if br.state != 'done':
-                closable = all([ True if p.state == 'done' else False \
-                    for p in br.period_ids ])
+            prev_fy_id = ayec_obj._get_next_fy_id(cr, uid, fy,
+                get_previous=True, context=context)
+            if prev_fy_id:
+                prev_fy = self.browse(cr, uid, prev_fy_id, context=context)
+                prev_fy_ok = False
+                if level == 'coordo':
+                    prev_fy_ok = prev_fy.state in ('mission-closed', 'done', )
+                elif level == 'section':
+                    prev_fy_ok = prev_fy.state in ('done', )
+            else:
+                prev_fy_ok = True
 
-            res[br.id] = closable
+            if prev_fy_ok:
+                mission = level == 'coordo' and fy.state == 'draft' \
+                    and all([ p.state in ('mission-closed', 'done') \
+                        for p in fy.period_ids if 0 < p.number < 16 ]) \
+                    or False
+                hq = level == 'section' and fy.state in ('draft', 'mission-closed') \
+                    and all([ p.state == 'done' \
+                        for p in fy.period_ids if 0 < p.number < 16 ]) \
+                    or False
 
+            res[fy.id] = {
+                'is_mission_closable': mission,
+                'is_hq_closable': hq,
+                'can_reopen_mission': level == 'coordo' \
+                    and fy.state == 'mission-closed' or False,
+            }
         return res
 
     _columns = {
-        # US-131
-        'is_closable': fields.function(_get_is_closable, type='boolean',
-            method=True, string='Closable ? (all periods HQ closed)'),
+        'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',
+            readonly=True),
+        'is_mission_closable': fields.function(_get_is_closable, type='boolean',
+            method=True, multi="closable",
+            string='Mission Closable ? (all periods Mission closed)'),
+        'is_hq_closable': fields.function(_get_is_closable, type='boolean',
+            method=True, multi="closable",
+            string='HQ Closable ? (all periods HQ closed)'),
+        'can_reopen_mission': fields.function(_get_is_closable, type='boolean',
+            method=True, multi="closable",
+            string='Mission reopen available ?'),
     }
 
     _defaults = {
-        'is_closable': False,
+        'is_mission_closable': False,
+        'is_hq_closable': False,
+        'can_reopen_mission': False,
     }
 
     def create_period(self,cr, uid, ids, context=None, interval=1):
@@ -113,6 +146,11 @@ class account_fiscalyear(osv.osv):
             context = {}
         # First default behaviour
         res = super(account_fiscalyear, self).create(cr, uid, vals, context=context)
+
+        # update fiscalyear state
+        self.pool.get('account.fiscalyear.state').update_state(cr, uid, [res],
+            context=context)
+
         # Prepare some values
         current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
         name = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.name
@@ -122,25 +160,64 @@ class account_fiscalyear(osv.osv):
             self.pool.get('account.journal').create_fiscalyear_sequence(cr, uid, res, name, "journal_%s"%(journal.id), vals['date_start'], journal.sequence_id and journal.sequence_id.id or False, context=context)
         return res
 
-    def uf_close_fy(self, cr, uid, ids, context=None):
-        """
-        US-131: Close FY(s) at HQ level: just set state to 'done'
-        (to prevent use of FY(s) in many2one fields)
-        """
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return False
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        res = super(account_fiscalyear, self).write(cr, uid, ids, vals,
+            context=context)
+
+        # update fiscalyear state
+        self.pool.get('account.fiscalyear.state').update_state(cr, uid, ids,
+            context=context)
+
+        return res
+
+    def _close_fy(self, cr, uid, ids, context=None):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if context is None:
+            context = {}
+        fy_id = ids[0]  # active form's FY
+
+        # open year end wizard
+        context['fy_id'] = fy_id
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+            'account_period_closing_level',
+            'wizard_view_account_year_end_closing')[1]
+        return {
+            'name': 'Close the fiscal year',
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.account.year.end.closing',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'target': 'new',
+            'context': context,
+        }
+
+    def btn_mission_close(self, cr, uid, ids, context=None):
+        return self._close_fy(cr, uid, ids, context=context)
+
+    def btn_hq_close(self, cr, uid, ids, context=None):
+        return self._close_fy(cr, uid, ids, context=context)
+
+    def btn_mission_reopen(self, cr, uid, ids, context=None):
+        if not ids:
+            return
+        if isinstance(ids, (int, long, )):
             ids = [ids]
+        fy_id = ids[0]
+        ayec_obj = self.pool.get('account.year.end.closing')
 
-        for r in self.read(cr, uid, ids, ['is_closable', ], context=context):
-            if not r['is_closable']:
-                raise osv.except_osv(_("Warning"),
-                    _("Fiscal Year can not be closed. Aborted." \
-                        " (All periods must be HQ closed)"))
-
-        self.write(cr, uid, ids, { 'state': 'done' }, context=context)
-        return res
+        ayec_obj.delete_year_end_entries(cr, uid, fy_id, context=context)
+        ayec_obj.update_fy_state(cr, uid, fy_id, reopen=True, context=context)
+        return {}
 
 account_fiscalyear()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

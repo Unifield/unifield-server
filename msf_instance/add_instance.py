@@ -260,7 +260,8 @@ class account_analytic_line(osv.osv):
             if isinstance(instance_ids, (int, long)):
                 instance_ids = [instance_ids]
             args.append(('instance_id', 'in', instance_ids))
-        return super(account_analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return super(account_analytic_line, self).search(cr, uid, args, offset,
+                limit, order, context=context, count=count)
 
 account_analytic_line()
 
@@ -345,7 +346,8 @@ class account_move_line(osv.osv):
             if isinstance(instance_ids, (int, long)):
                 instance_ids = [instance_ids]
             args.append(('instance_id', 'in', instance_ids))
-        return super(account_move_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return super(account_move_line, self).search(cr, uid, args, offset,
+                limit, order, context=context, count=count)
 
 account_move_line()
 

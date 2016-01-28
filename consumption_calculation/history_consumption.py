@@ -619,10 +619,11 @@ class product_product(osv.osv):
 
         hist_obj = self.pool.get('product.history.consumption.product')
 
-        res = super(product_product, self).search(cr, uid, args, offset, limit, order, context, count)
+        res = super(product_product, self).search(cr, uid, args, offset, limit,
+                order, context, count)
 
         if context.get('history_cons', False) and context.get('obj_id', False):
-            if order or average_domain:
+            if order and order != 'NO_ORDER' or average_domain:
                 hist_domain = [('consumption_id', '=', context.get('obj_id'))]
                 if context.get('amc') == 'AMC':
                     hist_domain.append(('cons_type', '=', 'amc'))
@@ -636,7 +637,7 @@ class product_product(osv.osv):
                     ('value', average_domain[1], average_domain[2])
                 ]
 
-            if order:
+            if order and order != 'NO_ORDER':
                 # sorting with or without average_domain
                 for order_part in order.split(','):
                     order_split = order_part.strip().split(' ')
@@ -649,7 +650,9 @@ class product_product(osv.osv):
                         break
             elif average_domain:
                 # UTP-501 'average' filter without sorting
-                hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset, limit=limit, order=order, context=context)
+                hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset,
+                        limit=limit, order=order,
+                        context=context)
                 res = [x['product_id'][0] for x in hist_obj.read(cr, uid, hist_ids, ['product_id'], context=context)]
 
         return res

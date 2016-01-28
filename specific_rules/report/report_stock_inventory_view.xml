@@ -114,5 +114,17 @@
             menu="False"
             />
 
+        <report
+            id="report_unconsistent_stock_xls"
+            string="Unconsistent stock"
+            model="unconsistent.stock.report"
+            name="unconsistent.stock.report_xls"
+            file="specific_rules/report/unconsistent_stock_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
     </data>
 </openerp>

@@ -401,7 +401,7 @@ class account_move_line_compute_currency(osv.osv):
             if move_line.source_date:
                 ctx['date'] = move_line.source_date
 
-            if move_line.period_id.state != 'done':
+            if move_line.period_id.state != 'done' and not move_line.period_id.is_system:
                 if move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0:
                     # amount currency is not set; it is computed from the 2 other fields
                     amount_currency = move_line.debit_currency - move_line.credit_currency
@@ -502,11 +502,13 @@ class account_move_line_compute_currency(osv.osv):
         # Some verifications
         self.check_date(cr, uid, vals)
         date_to_compute = False
+        is_system_period = False
 
         if 'period_id' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals.get('period_id'), context)
             if period and period.state == 'created':
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Item is created') % (period.name,))
+            is_system_period = period.is_system
 
         if not 'date' in vals:
             if vals.get('move_id'):
@@ -546,7 +548,7 @@ class account_move_line_compute_currency(osv.osv):
             else:
                 newvals['currency_id'] = curr_fun
         # Don't update values for addendum lines that come from a reconciliation
-        if not newvals.get('is_addendum_line', False):
+        if not is_system_period and not newvals.get('is_addendum_line', False):
             newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun, date=date_to_compute))
         return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
 
@@ -573,7 +575,8 @@ class account_move_line_compute_currency(osv.osv):
                 vals.update({'currency_id': line.move_id and line.move_id.manual_currency_id and line.move_id.manual_currency_id.id or False})
             currency_id = vals.get('currency_id') or line.currency_id.id
             func_currency = line.account_id.company_id.currency_id.id
-            newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency))
+            if line.period_id and not line.period_id.is_system:
+                newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency))
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
             # Update addendum line for reconciliation entries if this line is reconciled
             if line.reconcile_id:

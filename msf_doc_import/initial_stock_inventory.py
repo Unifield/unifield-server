@@ -101,6 +101,7 @@ class stock_inventory(osv.osv):
         # ignore the first row
         reader.next()
         line_num = 1
+        product_error = []
         for row in reader:
             line_num += 1
             # Check length of the row
@@ -119,15 +120,15 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             product_qty = 0.00
             product_uom = False
             comment = ''
+            bad_expiry = None
+            bad_batch_name = None
             to_correct_ok = False
-            error_list = []
 
             # Product code
             product_code = row.cells[0].data
             if not product_code:
                 to_correct_ok = True
                 import_to_correct = True
-                error_list.append('No Product Code.')
             else:
                 try:
                     product_code = product_code.strip()
@@ -139,7 +140,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                             product_id = product_ids[0]
                             product_cache.update({product_code: product_id})
                 except Exception:
-                    error_list.append(_('The Product Code has to be a string.'))
                     to_correct_ok = True
                     import_to_correct = True
 
@@ -148,8 +148,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             if not product_id:
                 to_correct_ok = True
                 import_to_correct = True
-                error_list.append(_('The Product was not found in the list of the products.'))
-                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
+                product_error.append(line_num)
+                continue
 
             # Location
             loc_id = row.cells[2].data
@@ -157,7 +157,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 location_id = False
                 to_correct_ok = True
                 import_to_correct = True
-                error_list.append('No location')
             else:
                 try:
                     location_name = loc_id.strip()
@@ -166,11 +165,9 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         location_id = False
                         to_correct_ok = True
                         import_to_correct = True
-                        error_list.append(_('The location was not found in the of the locations.'))
                     else:
                         location_id = loc_ids[0]
                 except Exception:
-                    error_list.append(_('The Location has to be a string.'))
                     location_id = False
 
             product = False
@@ -184,25 +181,29 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     batch = str(batch)
                 try:
                     batch = batch.strip()
-                    batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
-                    if not batch_ids:
-                        batch_name = batch
+                    if ',' in batch:
+                        bad_batch_name = True
+                        batch_name = False
                         batch = False
                         to_correct_ok = True
-                        import_to_correct = True
-                        error_list.append(_('The batch %s was not found in the database.') % batch_name)
                     else:
-                        batch = batch_ids[0]
+                        batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
+                        if not batch_ids:
+                            batch_name = batch
+                            batch = False
+                            to_correct_ok = True
+                        else:
+                            batch = batch_ids[0]
                 except Exception:
                     batch = False
-                    error_list.append(_('The Batch has to be a string.'))
 
             # Expiry date
             if row.cells[4].data:
                 if row.cells[4].type == 'datetime':
                     expiry = row.cells[4].data.strftime('%Y-%m-%d')
                 else:
-                    error_list.append(_('The date format was not good so we took the date from the parent.'))
+                    bad_expiry = True
+                    comment += _('Incorrectly formatted expiry date.')
                     to_correct_ok = True
                     import_to_correct = True
                 if expiry and not batch:
@@ -216,7 +217,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = False
                         to_correct_ok = True
                         import_to_correct = True
-                        error_list.append(_('Batch is missing'))
                     else:
                         if batch_name:
                             batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry), ('name', '=', batch_name)], context=context)
@@ -228,35 +228,23 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                             batch = False
                             to_correct_ok = True
                             import_to_correct = True
-                            error_list.append(_('No batch found for the expiry date %s.') % (expiry,))
                         else:
                             batch = batch_ids[0]
                 elif expiry and batch:
                     b_expiry = batch_obj.browse(cr, uid, batch, context=context).life_date
                     if expiry != b_expiry:
                         err_exp_message = _('Expiry date inconsistent with %s') % row.cells[3].data
-                        error_list.append(err_exp_message)
                         comment += err_exp_message
                         comment += '\n'
-
-#            if not expiry and batch:
-#                expiry = batch_obj.read(cr, uid, [batch], ['life_date'], context=context)[0]['life_date']
-#                err_exp_message = _('Expiry date not set. Get the expiry date from batch')
-#                error_list.append(err_exp_message)
-#                comment += err_exp_message
-#                comment += '\n'
-
             # Quantity
             p_qty = row.cells[5].data
             if not p_qty:
                 product_qty = 0.00
-                error_list.append(_('The Product Quantity was not set, we set it to 0.00.'))
             else:
                 if row.cells[5].type in ['int', 'float']:
                     product_qty = row.cells[5].data
                 else:
                     product_qty = 0.00
-                    error_list.append(_('The Product Quantity was not set, we set it to 0.00.'))
 
             if not location_id:
                 comment += _('Location is missing.\n')
@@ -295,6 +283,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 'location_id': location_id,
                 'prod_lot_id': batch,
                 'expiry_date': expiry,
+                'bad_expiry': bad_expiry,
+                'bad_batch_name': bad_batch_name,
                 'product_qty': product_qty,
                 'product_uom': product_uom,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
@@ -304,6 +294,15 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             }
 
             vals['inventory_line_id'].append((0, 0, to_write))
+
+        if product_error:
+            raise osv.except_osv(
+                _('Error'),
+                _('Product not found in the database for %s line%s: %s') % (
+                    len(product_error) > 1 and 'these' or 'this',
+                    len(product_error) > 1 and 's' or '',
+                    ' / '.join(str(x) for x in product_error)),
+            )
 
         # write order line on Inventory
         context['import_in_progress'] = True
@@ -393,19 +392,38 @@ class stock_inventory_line(osv.osv):
         batch = vals.get('prod_lot_id')
         expiry = vals.get('expiry_date')
         batch_name = vals.get('batch_name')
+        bad_expiry = vals.get('bad_expiry')
+        bad_batch_name = vals.get('bad_batch_name')
+
+        if 'bad_expiry' in vals:
+            del vals['bad_expiry']
+
+        if 'bad_batch_name' in vals:
+            del vals['bad_batch_name']
 
         if not location_id:
             comment += _('Location is missing.\n')
 
         if hidden_batch_management_mandatory and not batch:
-            if batch_name:
+            if bad_batch_name:
+                comment += _('Incorrect batch number format.\n')
+            elif batch_name and not bad_expiry and expiry:
                 comment += _('Batch not found.\n')
+            elif batch_name and not bad_expiry and not expiry:
+                comment += _('Expiry date is missing.\n')
+            elif batch_name and bad_expiry:
+                comment += _('Incorrectly formatted expiry date. Batch not created.\n')
             else:
                 comment += _('Batch is missing.\n')
                 vals['expiry_date'] = False
 
         if hidden_perishable_mandatory and not expiry and not batch and batch_name:
-            comment += _('Batch not found.\n')
+            if bad_batch_name:
+                comment += _('Incorrect batch number format.\n')
+            elif bad_expiry:
+                comment += _('Incorrectly formatted expiry date.\n')
+            else:
+                comment += _('Batch not found.\n')
         elif hidden_perishable_mandatory and not expiry:
             comment += _('Expiry date is missing.\n')
             vals['expiry_date'] = False
@@ -537,6 +555,7 @@ class initial_stock_inventory(osv.osv):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         product_cache = {}
+        product_error = []
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
 
@@ -560,18 +579,19 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             location_id = False
             batch = False
             expiry = False
+            bad_expiry = None
+            batch_name = None
+            bad_batch_name = None
             product_qty = 0.00
             product_uom = False
             comment = ''
             to_correct_ok = False
-            error_list = []
 
             # Product code
             product_code = row.cells[0].data
             if not product_code:
                 to_correct_ok = True
                 import_to_correct = True
-                error_list.append('No Product Code.')
             else:
                 try:
                     product_code = product_code.strip()
@@ -583,7 +603,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                             product_id = product_ids[0]
                             product_cache.update({product_code: product_id})
                 except Exception:
-                    error_list.append(_('The Product Code has to be a string.'))
                     to_correct_ok = True
                     import_to_correct = True
 
@@ -592,27 +611,23 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             if not product_id:
                 to_correct_ok = True
                 import_to_correct = True
-                error_list.append(_('The Product was not found in the list of the products.'))
-                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
+                product_error.append(line_num)
+                continue
 
             # Average cost
             cost = row.cells[2].data
             if not cost:
                 if product_id:
                     product_cost = product_obj.browse(cr, uid, product_id).standard_price
-                    error_list.append(_('The Average Cost was not set, we set it to the standard price of the product.'))
                 else:
                     product_cost = 1.00
-                    error_list.append(_('The Average Cost was not set, we set it to 1.00.'))
             else:
                 if row.cells[2].type in ('int', 'float'):
                     product_cost = cost
                 elif product_id:
                     product_cost = product_obj.browse(cr, uid, product_id).standard_price
-                    error_list.append(_('The Average Cost was not set, we set it to the standard price of the product.'))
                 else:
                     product_cost = 1.00
-                    error_list.append(_('The Average Cost was not set, we set it to 1.00.'))
 
 
             # Location
@@ -621,7 +636,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 location_id = False
                 to_correct_ok = True
                 import_to_correct = True
-                error_list.append('No location')
             else:
                 try:
                     location_name = loc_id.strip()
@@ -630,11 +644,9 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                         location_id = False
                         to_correct_ok = True
                         import_to_correct = True
-                        error_list.append(_('The location was not found in the of the locations.'))
                     else:
                         location_id = loc_ids[0]
                 except Exception:
-                    error_list.append(_('The Location has to be a string.'))
                     location_id = False
 
             # Batch
@@ -643,19 +655,23 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 try:
                     batch = batch.strip()
                     batch_name = batch
+                    if ',' in batch_name:
+                        batch_name = False
+                        batch = False
+                        bad_batch_name = True
                 except Exception:
-                    error_list.append(_('The Batch has to be a string.'))
+                    pass
 
             # Expiry date
             if row.cells[5].data:
                 if row.cells[5].type == 'datetime':
                     expiry = row.cells[5].data
                 else:
-                    error_list.append(_('The date format was not good so we took the date from the parent.'))
+                    bad_expiry = True
+                    comment += _('Incorrectly formatted expiry date.')
                     to_correct_ok = True
                     import_to_correct = True
             else:
-                error_list.append(_('The date was not specified or so we took the one from the parent.'))
                 to_correct_ok = True
                 import_to_correct = True
 
@@ -663,13 +679,11 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             p_qty = row.cells[6].data
             if not p_qty:
                 product_qty = 0.00
-                error_list.append(_('The Product Quantity was not set, we set it to 0.00.'))
             else:
                 if row.cells[6].type in ['int', 'float']:
                     product_qty = row.cells[6].data
                 else:
                     product_qty = 0.00
-                    error_list.append(_('The Product Quantity was not set, we set it to 0.00.'))
 
             if not location_id:
                 comment += _('Location is missing.\n')
@@ -700,6 +714,8 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 'location_id': location_id,
                 'prodlot_name': batch,
                 'expiry_date': expiry and expiry.strftime('%Y-%m-%d') or False,
+                'bad_expiry': bad_expiry,
+                'bad_batch_name': bad_batch_name,
                 'product_qty': product_qty,
                 'product_uom': product_uom,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
@@ -709,6 +725,15 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             }
 
             vals['inventory_line_id'].append((0, 0, to_write))
+
+        if product_error:
+            raise osv.except_osv(
+                _('Error'),
+                _('Product not found in the database for %s line%s: %s') % (
+                    len(product_error) > 1 and 'these' or 'this',
+                    len(product_error) > 1 and 's' or '',
+                    ' / '.join(str(x) for x in product_error)),
+            )
 
         # write order line on Inventory
         vals.update({'file_to_import': False})
@@ -797,17 +822,32 @@ class initial_stock_inventory_line(osv.osv):
             vals.update({'prodlot_name':batch})
         expiry = vals.get('expiry_date')
         batch_name = vals.get('batch_name')
+        bad_expiry = vals.get('bad_expiry')
+        bad_batch_name = vals.get('bad_batch_name')
+
+        if 'bad_expiry' in vals:
+            del vals['bad_expiry']
+
+        if 'bad_batch_name' in vals:
+            del vals['bad_batch_name']
 
         if not location_id:
             comment += _('Location is missing.\n')
 
         if hidden_batch_management_mandatory and not batch:
-            if batch_name:
+            if bad_batch_name:
+                comment += _('Incorrect batch number format.\n')
+            elif batch_name and not bad_expiry:
                 comment += _('Batch not found.\n')
+            elif batch_name and bad_expiry:
+                comment += _('Incorrectly formatted expiry date. Batch not created.\n')
             else:
                 comment += _('Batch is missing.\n')
         if hidden_perishable_mandatory and not expiry:
-            comment += _('Expiry date is missing.\n')
+            if bad_expiry:
+                comment += _('Incorrectly formatted expiry date.\n')
+            else:
+                comment += _('Expiry date is missing.\n')
 
         if not comment:
             vals.update({'comment': comment, 'to_correct_ok': False})

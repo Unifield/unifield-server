@@ -55,7 +55,8 @@ class product_status(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        ids_p = self.pool.get('product.product').search(cr, uid, [('state','in',ids)])
+        ids_p = self.pool.get('product.product').search(cr, uid,
+                [('state','in',ids)], limit=1, order='NO_ORDER')
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this status because it\'s used at least in one product'))
         return super(product_status, self).unlink(cr, uid, ids, context=context)
@@ -79,7 +80,9 @@ class product_international_status(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Raise an error if the status is used in a product
-        ids_p = self.pool.get('product.product').search(cr, uid, [('international_status','in',ids)])
+        ids_p = self.pool.get('product.product').search(cr, uid,
+                [('international_status','in',ids)],
+                limit=1, order='NO_ORDER')
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this product creator because it\'s used at least in one product'))
 
@@ -110,7 +113,9 @@ class product_heat_sensitive(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        ids_p = self.pool.get('product.product').search(cr, uid, [('heat_sensitive_item','in',ids)])
+        ids_p = self.pool.get('product.product').search(cr, uid,
+                [('heat_sensitive_item','in',ids)],
+                limit=1, order='NO_ORDER')
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this heat sensitive because it\'s used at least in one product'))
         return super(product_heat_sensitive, self).unlink(cr, uid, ids, context=context)
@@ -129,7 +134,9 @@ class product_cold_chain(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        ids_p = self.pool.get('product.product').search(cr, uid, [('cold_chain','in',ids)])
+        ids_p = self.pool.get('product.product').search(cr, uid,
+                [('cold_chain','in',ids)],
+                limit=1, order='NO_ORDER')
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this cold chain because it\'s used at least in one product'))
         return super(product_cold_chain, self).unlink(cr, uid, ids, context=context)
@@ -228,7 +235,7 @@ class product_attributes(osv.osv):
         '''
         Filter the search according to the args parameter
         '''
-        if not context:
+        if context is None:
             context = {}
 
         ids = []
@@ -318,7 +325,7 @@ class product_attributes(osv.osv):
         '''
         Search available products for the partner given in args
         '''
-        if not context:
+        if context is None:
             context = {}
 
         for arg in args:
@@ -492,7 +499,7 @@ class product_attributes(osv.osv):
         '''
         Add a filter if the 'available_for_restriction' attribute is passed on context
         '''
-        if not context:
+        if context is None:
             context = {}
 
         res = super(product_attributes, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
@@ -720,7 +727,7 @@ class product_attributes(osv.osv):
         De-activate product.
         Check if the product is not used in any document in Unifield
         '''
-        if not context:
+        if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
@@ -807,7 +814,7 @@ class product_attributes(osv.osv):
             # Check if the product is in an invoice
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
                                                             ('invoice_id', '!=', False),
-                                                            ('invoice_id.state', 'not in', ['open', 'paid', 'proforma', 'proforma2', 'cancel'])], context=context)
+                                                            ('invoice_id.state', 'not in', ['paid', 'proforma', 'proforma2', 'cancel'])], context=context)
 
             # Check if the product has stock in internal locations
             has_stock = product.qty_available
@@ -1055,6 +1062,26 @@ class product_attributes(osv.osv):
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
     ]
 
+    def create(self, cr, user, vals, context=None):
+        """
+        At product.product creation, create a standard.price.track.changes
+        record with the standard price as new value and None as old value.
+        :param cr: Cursor to the database
+        :param user: ID of the user that creates the record
+        :param vals: Values of the new product.product to create
+        :param context: Context of the call
+        :return: The ID of the new product.template record
+        """
+        sptc_obj = self.pool.get('standard.price.track.changes')
+
+        res = super(product_attributes, self).create(cr, user, vals,
+                                                     context=context)
+
+        sptc_obj.track_change(cr, user, res, _('Product creation'), vals,
+                              context=context)
+
+        return res
+
 product_attributes()
 
 
@@ -1103,7 +1130,7 @@ class product_deactivation_error_line(osv.osv_memory):
         '''
         Open the associated documents
         '''
-        if not context:
+        if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
@@ -1126,7 +1153,7 @@ class product_deactivation_error_line(osv.osv_memory):
         '''
         Return the good view according to the type of the object
         '''
-        if not context:
+        if context is None:
             context = {}
 
         view_id = False

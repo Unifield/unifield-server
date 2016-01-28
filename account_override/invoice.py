@@ -553,7 +553,8 @@ class account_invoice(osv.osv):
                     if 'account_tax_id' in tax_line[2]:
                         args = [('price_include', '=', '1'),
                                 ('id', '=', tax_line[2]['account_tax_id'])]
-                        tax_ids = tax_obj.search(cr, uid, args, context=context)
+                        tax_ids = tax_obj.search(cr, uid, args, limit=1,
+                                order='NO_ORDER', context=context)
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
@@ -1250,20 +1251,7 @@ class account_invoice_line(osv.osv):
                 sequence = invoice.sequence_id
                 line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
-        res = super(account_invoice_line, self).create(cr, uid, vals, context)
-        if vals.get('invoice_id', False):
-            inv_obj_name = 'account.invoice'
-            if self._name != 'account.invoice.line':
-                inv_obj_name = 'wizard.account.invoice'
-            invoice = self.pool.get(inv_obj_name).browse(cr, uid, vals.get('invoice_id'))
-            if invoice and invoice.is_direct_invoice and invoice.state == 'draft':
-                amount = 0.0
-                for l in invoice.invoice_line:
-                    amount += l.price_subtotal
-                amount += vals.get('price_unit', 0.0) * vals.get('quantity', 0.0)
-                self.pool.get('account.invoice').write(cr, uid, [invoice.id], {'check_total': amount}, context)
-                self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invoice.register_line_ids], {'amount': -1 * amount}, context)
-        return res
+        return super(account_invoice_line, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -1310,12 +1298,14 @@ class account_invoice_line(osv.osv):
             sale_lines_obj = self.pool.get('sale.order.line')
 
             if purchase_lines_obj:
-                purchase_line_ids = purchase_lines_obj.search(cr, uid, [('invoice_lines', 'in', [inv_id])])
+                purchase_line_ids = purchase_lines_obj.search(cr, uid,
+                        [('invoice_lines', 'in', [inv_id])], order='NO_ORDER')
                 if purchase_line_ids:
                     purchase_lines_obj.write(cr, uid, purchase_line_ids, {'invoice_lines': [(4, new_id)]})
 
             if sale_lines_obj:
-                sale_lines_ids =  sale_lines_obj.search(cr, uid, [('invoice_lines', 'in', [inv_id])])
+                sale_lines_ids =  sale_lines_obj.search(cr, uid,
+                        [('invoice_lines', 'in', [inv_id])], order='NO_ORDER')
                 if sale_lines_ids:
                     sale_lines_obj.write(cr, uid,  sale_lines_ids, {'invoice_lines': [(4, new_id)]})
 
@@ -1347,7 +1337,9 @@ class account_invoice_line(osv.osv):
             if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
                 direct_invoice_ids.append(invl.invoice_id.id)
                 # find account_bank_statement_lines and used this to delete the account_moves and associated records
-                absl_ids = abst_obj.search(cr, uid, [('invoice_id','=',invl.invoice_id.id)])
+                absl_ids = abst_obj.search(cr, uid,
+                        [('invoice_id','=',invl.invoice_id.id)],
+                        order='NO_ORDER')
                 if absl_ids:
                     abst_obj.unlink_moves(cr, uid, absl_ids, context)
         # Normal behaviour

@@ -32,6 +32,7 @@ import invoice
 import purchase
 import report
 import account_analytic_line
+import account_direct_invoice_wizard
 
 
 

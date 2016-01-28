@@ -86,6 +86,7 @@ class account_period_create(osv.osv_memory):
                     'special': True,
                     'number': period_nb,
                 })
+        self.pool.get('account.year.end.closing').create_periods(cr, uid, fiscalyear_id, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

@@ -158,6 +158,8 @@ class parser_account_move_line(report_sxw.rml_parse):
             #'getSub': self.getSub,
         })
 
+    def getObjects(self, cr, uid, ids, context):
+        return getIterObjects(self, cr, uid, ids, context)
 #    def getSub(self):
 #        len_ids = len(self.localcontext.get('ids'))
 #        obj = self.pool.get('account.move.line')
@@ -174,6 +176,12 @@ class parser_account_move_line(report_sxw.rml_parse):
 #            l = l+steps
 #            yield obj.browse(self.cr, self.uid, self.localcontext.get('ids')[old_l:l], context={'output_currency_id': output_cur})
 #        yield []
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context=context)
+        if context is None:
+            context = {}
+        return super(parser_account_move_line, self).create(cr, uid, ids, data, context=context)
 
     def reconcile_name(self, r_id=None, context=None):
         if not r_id:
@@ -218,6 +226,9 @@ class account_analytic_line_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_analytic_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
+    def getObjects(self, cr, uid, ids, context):
+        return getIterObjects(self, cr, uid, ids, context)
+
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, limit=65000, context=context)
         if context is None:
@@ -254,6 +265,12 @@ class account_bank_statement_line_report(report_sxw.report_sxw):
     def getObjects(self, cr, uid, ids, context):
         return getObjects(self, cr, uid, ids, context)
 
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context=context)
+        if context is None:
+            context = {}
+        return super(account_bank_statement_line_report, self).create(cr, uid, ids, data, context=context)
+
 account_bank_statement_line_report('report.account.bank.statement.line','account.bank.statement.line','addons/account_mcdb/report/report_account_bank_statement_line.rml')
 
 
@@ -274,7 +291,7 @@ class account_bank_statement_line_report_xls(SpreadsheetReport):
         super(account_bank_statement_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, context)
+        ids = getIds(self, cr, uid, ids, context=context)
         if 'output_currency_id' in data:
             context.update({'output_currency_id': data.get('output_currency_id')})
         else:

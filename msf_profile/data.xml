@@ -6,8 +6,6 @@
         <field name="time_format">%H:%M</field>
         <field name="active" eval="False" />
     </record>
-    
-<!--    <delete model="ir.values" search="[('name', '=', 'lang'), ('key', '=', 'default'), ('model', '=', 'res.partner'), ('value', 'like', 'en_US'), ('create_uid', '=', 1)]" /> -->
     <record id="lang_msf_en" model="res.lang">
         <field name="code">en_MF</field>
         <field name="name">MSF English</field>

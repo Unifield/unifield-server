@@ -179,25 +179,7 @@ class sale_order(osv.osv):
                 o_ana_dist_id = so.analytic_distribution_id and so.analytic_distribution_id.id
                 distrib_id = l_ana_dist_id or o_ana_dist_id or False
 
-                # For inter-mission partner, define a default ana. distribution if no one is defined on FO
-                if not distrib_id and so.partner_id.partner_type == 'intermission':
-                    account_id = line.account_4_distribution and line.account_4_distribution.id or False
-                    # Search default destination_id
-                    destination_id = acc_obj.read(cr, uid, account_id, ['default_destination_id']).get('default_destination_id', False)
-                    distrib_id = ana_obj.create(cr, uid, {
-                        'sale_order_line_ids': [(4, line.id)],
-                        'cost_center_lines': [(0, 0, {
-                            'destination_id': destination_id[0],
-                            'analytic_id': intermission_cc[1],
-                            'percentage': '100',
-                            'currency_id': so.currency_id.id,
-                        })],
-                    }, context=context)
-                    # UFTP-277: Check funding pool lines if missing
-                    ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
-                    sol_obj.write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id}, context=context)
-                    line = sol_obj.browse(cr, uid, line.id, context=context)
-
+                #US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
                 if not distrib_id and not so.from_yml_test and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
                     raise osv.except_osv(
                         _('Warning'),

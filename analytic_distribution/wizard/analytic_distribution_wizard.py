@@ -553,6 +553,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[wiz.id] = True
             elif wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id and wiz.direct_invoice_line_id.invoice_id.analytic_distribution_id:
                 res[wiz.id] = True
+            elif wiz.account_direct_invoice_wizard_line_id and\
+                    wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id and\
+                    wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.analytic_distribution_id:
+                res[wiz.id] = True
             elif wiz.commitment_line_id and wiz.commitment_line_id.commit_id and wiz.commitment_line_id.commit_id.analytic_distribution_id:
                 res[wiz.id] = True
             elif wiz.cash_return_line_id and wiz.cash_return_line_id.wizard_id and wiz.cash_return_line_id.wizard_id.analytic_distribution_id:
@@ -615,6 +619,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
         'direct_invoice_id': fields.many2one('wizard.account.invoice', string="Direct Invoice"),
         'direct_invoice_line_id': fields.many2one('wizard.account.invoice.line', string="Direct Invoice Line"),
+        'account_direct_invoice_wizard_id': fields.many2one('account.direct.invoice.wizard', string="Direct Invoice Wizard"),
+        'account_direct_invoice_wizard_line_id': fields.many2one('account.direct.invoice.wizard.line', string="Direct Invoice Wizard Line"),
         'sale_order_id': fields.many2one('sale.order', string="Sale Order"),
         'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
         'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True),
@@ -1047,7 +1053,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'),
                     ('commitment_line_id', 'account.commitment.line'), ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
                     ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move'),
-                    ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line')]:
+                    ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line'),
+                    ('account_direct_invoice_wizard_id','account.direct.invoice.wizard'),
+                    ('account_direct_invoice_wizard_line_id','account.direct.invoice.wizard.line'),]:
                     if getattr(wiz, el[0], False):
                         obj_id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [obj_id], {'analytic_distribution_id': distrib_id}, context=context)
@@ -1087,6 +1095,31 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'name': "Supplier Direct Invoice",
                     'type': 'ir.actions.act_window',
                     'res_model': 'wizard.account.invoice',
+                    'target': 'new',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'res_id': direct_invoice_id,
+                    'context': context,
+                }
+        if wiz and (wiz.account_direct_invoice_wizard_id or wiz.account_direct_invoice_wizard_line_id):
+            # Get direct_invoice id
+            direct_invoice_id = (wiz.account_direct_invoice_wizard_id and wiz.account_direct_invoice_wizard_id.id) or\
+                    (wiz.account_direct_invoice_wizard_line_id and\
+                            wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
+            # Get register from which we come from
+            direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr, uid, [direct_invoice_id], context=context)[0]
+            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            if register_id:
+                context.update({
+                    'active_id': register_id,
+                    'type': 'in_invoice',
+                    'journal_type': 'purchase',
+                    'active_ids': register_id,
+                    })
+                return {
+                    'name': "Supplier Direct Invoice",
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'account.direct.invoice.wizard',
                     'target': 'new',
                     'view_mode': 'form',
                     'view_type': 'form',
@@ -1252,11 +1285,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Take distribution from invoice if we come from an invoice line
             if wiz.invoice_line_id:
                 il = wiz.invoice_line_id
-                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
+                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id or False
             # Same thing for purchase order line
             elif wiz.purchase_line_id:
                 pl = wiz.purchase_line_id
-                distrib = pl.order_id and pl.order_id.analytic_distribution_id and pl.order_id.analytic_distribution_id or False
+                distrib = pl.order_id and pl.order_id.analytic_distribution_id  or False
             elif wiz.commitment_line_id:
                 pl = wiz.commitment_line_id
                 distrib = pl.commit_id and pl.commit_id.analytic_distribution_id or False
@@ -1265,7 +1298,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                 distrib = pl.model_id and pl.model_id.analytic_distribution_id or False
             elif wiz.direct_invoice_line_id:
                 il = wiz.direct_invoice_line_id
-                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
+                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id or False
+            elif wiz.account_direct_invoice_wizard_line_id:
+                il = wiz.account_direct_invoice_wizard_line_id
+                distrib = il.invoice_wizard_id and \
+                    il.invoice_wizard_id.analytic_distribution_id or False
             elif wiz.cash_return_line_id:
                 crl = wiz.cash_return_line_id
                 distrib = crl.wizard_id.analytic_distribution_id or False
@@ -1336,6 +1373,35 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'res_id': direct_invoice_id,
                     'context': context,
                 }
+        if wiz and (wiz.account_direct_invoice_wizard_id or wiz.account_direct_invoice_wizard_line_id):
+            # Get direct_invoice id
+            direct_invoice_id = (wiz.account_direct_invoice_wizard_id and \
+                    wiz.account_direct_invoice_wizard_id.id) or\
+                    (wiz.account_direct_invoice_wizard_line_id and\
+                    wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
+            # Get register from which we come from
+            direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr,
+                    uid, [direct_invoice_id], context=context)[0]
+            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            if register_id:
+                context.update({
+                    'active_id': register_id,
+                    'active_ids': register_id,
+                    })
+            context.update({
+                'type': 'in_invoice',
+                'journal_type': 'purchase',
+                })
+            return {
+                'name': "Supplier Direct Invoice",
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.direct.invoice.wizard',
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': direct_invoice_id,
+                'context': context,
+            }
         wizard_account_invoice = self._check_open_wizard_account_invoice(cr, uid, wiz, context)
         if wizard_account_invoice:
             return wizard_account_invoice

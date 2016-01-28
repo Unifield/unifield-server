@@ -48,7 +48,7 @@ class account_move_line(osv.osv):
          - all other case are "invalid"
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -71,7 +71,7 @@ class account_move_line(osv.osv):
         If move have an analytic distribution, return False, else return True
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -121,7 +121,7 @@ class account_move_line(osv.osv):
         Create analytic lines on analytic-a-holic accounts that have an analytical distribution.
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
@@ -242,8 +242,12 @@ class account_move_line(osv.osv):
         Delete analytic lines before unlink move lines.
         Update Manual Journal Entries.
         """
-        if not context:
+        if context is None:
             context = {}
+        if context.get('sync_update_execution'):
+            # US-836: no need to cascade actions in sync context
+            # AJI deletion and JE validation are sync'ed
+            return super(account_move_line, self).unlink(cr, uid, ids, context=context, check=False)
         move_ids = []
         if ids:
             # Search manual moves to revalidate
@@ -270,7 +274,7 @@ class account_move_line(osv.osv):
         Launch analytic distribution wizard on an move line
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -321,7 +325,7 @@ class account_move_line(osv.osv):
         Check that analytic distribution could be retrieved from given employee.
         If not employee, return True.
         """
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -382,7 +386,7 @@ class account_move_line(osv.osv):
         """
         Check line if we come from web (from_web_menu)
         """
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -409,9 +413,9 @@ class account_move_line(osv.osv):
         Copy analytic_distribution
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
-        if not default:
+        if default is None:
             default = {}
         # Default method
         res = super(account_move_line, self).copy(cr, uid, aml_id, default, context)
@@ -429,7 +433,7 @@ class account_move_line(osv.osv):
         Return FP analytic lines attached to move lines
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if 'active_ids' in context:
             ids = context.get('active_ids')
@@ -454,7 +458,7 @@ class account_move_line(osv.osv):
         Return FREE1 analytic lines attached to move lines
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if 'active_ids' in context:
             ids = context.get('active_ids')
@@ -479,7 +483,7 @@ class account_move_line(osv.osv):
         Return FREE2 analytic lines attached to move lines
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if 'active_ids' in context:
             ids = context.get('active_ids')

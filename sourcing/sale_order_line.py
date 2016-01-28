@@ -1140,9 +1140,11 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         order_to_check = {}
         for line in self.read(cr, uid, ids, ['order_id', 'estimated_delivery_date', 'price_unit', 'product_uom_qty'], context=context):
-            order_data = order_obj.read(cr, uid, line['order_id'][0], ['procurement_request', 'order_type'], context=context)
+            order_data = order_obj.read(cr, uid, line['order_id'][0], ['procurement_request', 'order_type', 'state'], context=context)
             order_proc = order_data['procurement_request']
             order_type = order_data['order_type']
+            if order_data['state'] != 'validated':
+                continue
             state_to_use = order_proc and 'confirmed' or 'sourced'
             self.write(cr, uid, [line['id']], {
                 'state': state_to_use,

@@ -128,6 +128,9 @@ class res_log(osv.osv):
             ('user_id', '=', uid),
             ('read', '=', False),
         ], context=context)
+        result = []
+        if not unread_log_ids:
+            return result
 
         list_of_fields = [
             'name',
@@ -143,7 +146,6 @@ class res_log(osv.osv):
         res = self.read(cr, uid, unread_log_ids, list_of_fields, context=context)
         res.reverse()
 
-        result = []
         res_dict = {}
 
         for r in res:

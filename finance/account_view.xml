@@ -69,9 +69,9 @@
                 <form string="Journal Entries" position="replace">
                     <form string="Journal Entries" hide_delete_button="1">
                         <group colspan="4" col="6">
-                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}" context="{'from_manual_entry': True}"/>
+                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}" context="{'from_manual_entry': True}" domain="[('type', '!=', 'system')]"/>
                             <field name="name" readonly="1"/>
-                            <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
+                            <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}" domain="[('number', '!=', 16)]"/>
                             <field name="document_date" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
                             <field name="date" string="Posting Date" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
 
@@ -168,6 +168,7 @@
             <field name="view_id" ref="account.view_move_tree"/>
             <field name="search_view_id" ref="account.view_account_move_filter"/>
             <field name="help">A journal entry consists of several journal items, each of which is either a debit or a credit transaction. OpenERP automatically creates one journal entry per accounting document: invoice, refund, supplier payment, bank statements, etc.</field>
+            <field name="domain">[('period_id.number', '!=', 0)]</field>
             <field name="context">{'from_web_menu': True}</field>
         </record>
 
