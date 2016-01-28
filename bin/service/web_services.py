@@ -775,10 +775,13 @@ class report_spool(netsvc.ExportService):
             import sys
             try:
                 obj = netsvc.LocalService('report.'+object)
+                bg_obj = pooler.get_pool(cr.dbname).get('memory.background.report')
                 (result, format) = obj.create(cr, uid, ids, datas, context)
                 if not result:
                     tb = sys.exc_info()
                     self._reports[id]['exception'] = ExceptionWithTraceback('RML is not available at specified location or not enough data to print!', tb)
+                if context.get('background_id'):
+                    bg_obj.update_percent(cr, uid, context['background_id'], {'percent': 1.00}, context=context)
                 if isinstance(result, tools.misc.Path):
                     self._reports[id]['path'] = result.path
                     self._reports[id]['result'] = ''
