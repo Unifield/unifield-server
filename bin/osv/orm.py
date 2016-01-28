@@ -78,7 +78,8 @@ def last_day_of_current_month():
     return time.strftime('%Y-%m-' + last_day)
 
 def intersect(la, lb):
-    return list(set(la).intersection(lb))
+    return filter(lambda x: x in lb, la)
+    #return list(set(la).intersection(lb)) # this is less compatible, see US-867
 
 class except_orm(Exception):
     def __init__(self, name, value):
