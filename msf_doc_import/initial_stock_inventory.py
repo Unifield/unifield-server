@@ -720,12 +720,17 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 product_uom = product.uom_id.id
                 hidden_batch_management_mandatory = product.batch_management
                 hidden_perishable_mandatory = product.perishable
+
+                if hidden_perishable_mandatory and (batch or bad_batch_name):
+                    batch = False
+                    bad_batch_name = False
+
                 if hidden_batch_management_mandatory and not batch:
                     if batch_name:
                         comment += _('Batch not found.\n')
                     else:
                         comment += _('Batch is missing.\n')
-                if hidden_perishable_mandatory and not expiry:
+                if hidden_perishable_mandatory and not expiry and not bad_expiry:
                     comment += _('Expiry date is missing.\n')
                 if not hidden_perishable_mandatory and not hidden_batch_management_mandatory and (batch or bad_batch_name):
                     batch = False
