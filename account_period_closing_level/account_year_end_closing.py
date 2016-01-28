@@ -761,7 +761,9 @@ class account_year_end_closing(osv.osv):
                 state = 'done'
 
         if state:
-            vals = { 'state': state, }
+            # US-879: for periods update 'state_sync_flag' field
+            # for adhoc sync state flow
+            vals = { 'state': state, 'state_sync_flag': state, }
             # period 0 (FY+1)/16 state
             period_ids = self._get_periods_ids(cr, uid,
                 self._browse_fy(cr, uid, fy_id, context=context),
@@ -771,6 +773,7 @@ class account_year_end_closing(osv.osv):
                     context=context)
 
             # fy state
+            vals = { 'state': state, }
             fy_obj.write(cr, uid, [fy_id], vals, context=context)
 
     def _search_record(self, cr, uid, model, domain, context=None):
