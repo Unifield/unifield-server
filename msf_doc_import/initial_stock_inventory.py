@@ -114,6 +114,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             product_cost = 1.00
             currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
             location_id = False
+            location_not_found = False
             batch = False
             batch_name = False
             expiry = False
@@ -165,6 +166,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         location_id = False
                         to_correct_ok = True
                         import_to_correct = True
+                        location_not_found = True
                     else:
                         location_id = loc_ids[0]
                 except Exception:
@@ -246,8 +248,10 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 else:
                     product_qty = 0.00
 
-            if not location_id:
+            if not location_id and not location_not_found:
                 comment += _('Location is missing.\n')
+            elif location_not_found:
+                comment += _('Location not found.\n')
             if product:
                 product_uom = product.uom_id.id
                 hidden_batch_management_mandatory = product.batch_management
@@ -281,6 +285,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 'reason_type_id': discrepancy_id,
                 'currency_id': currency_id,
                 'location_id': location_id,
+                'location_not_found': location_not_found,
                 'prod_lot_id': batch,
                 'expiry_date': expiry,
                 'bad_expiry': bad_expiry,
@@ -389,6 +394,11 @@ class stock_inventory_line(osv.osv):
             vals['hidden_perishable_mandatory'] = hidden_perishable_mandatory
 
         location_id = vals.get('location_id')
+        location_not_found = vals.get('location_not_found')
+
+        if 'location_not_found' in vals:
+            del vals['location_not_found']
+
         batch = vals.get('prod_lot_id')
         expiry = vals.get('expiry_date')
         batch_name = vals.get('batch_name')
@@ -401,8 +411,10 @@ class stock_inventory_line(osv.osv):
         if 'bad_batch_name' in vals:
             del vals['bad_batch_name']
 
-        if not location_id:
+        if not location_id and not location_not_found:
             comment += _('Location is missing.\n')
+        elif location_not_found:
+            comment += _('Location not found.\n')
 
         if hidden_batch_management_mandatory and not batch:
             if bad_batch_name:
@@ -577,6 +589,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             product_cost = 1.00
             currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
             location_id = False
+            location_not_found = False
             batch = False
             expiry = False
             bad_expiry = None
@@ -644,6 +657,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                         location_id = False
                         to_correct_ok = True
                         import_to_correct = True
+                        location_not_found = True
                     else:
                         location_id = loc_ids[0]
                 except Exception:
@@ -671,9 +685,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     comment += _('Incorrectly formatted expiry date.')
                     to_correct_ok = True
                     import_to_correct = True
-            else:
-                to_correct_ok = True
-                import_to_correct = True
 
             # Quantity
             p_qty = row.cells[6].data
@@ -685,8 +696,10 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 else:
                     product_qty = 0.00
 
-            if not location_id:
+            if not location_id and not location_not_found:
                 comment += _('Location is missing.\n')
+            elif location_not_found:
+                comment += _('Location not found.\n')
             if product_id:
                 product = product_obj.browse(cr, uid, product_id)
                 product_uom = product.uom_id.id
@@ -712,6 +725,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 'average_cost': product_cost,
                 'currency_id': currency_id,
                 'location_id': location_id,
+                'location_not_found': location_not_found,
                 'prodlot_name': batch,
                 'expiry_date': expiry and expiry.strftime('%Y-%m-%d') or False,
                 'bad_expiry': bad_expiry,
@@ -814,6 +828,10 @@ class initial_stock_inventory_line(osv.osv):
             hidden_perishable_mandatory = product.perishable
 
         location_id = vals.get('location_id')
+        location_not_found = vals.get('location_not_found')
+
+        if 'location_not_found' in vals:
+            del vals['location_not_found']
 
         batch = vals.get('prodlot_name')
         batch_numer = vals.get('prod_lot_id', False)
@@ -831,8 +849,10 @@ class initial_stock_inventory_line(osv.osv):
         if 'bad_batch_name' in vals:
             del vals['bad_batch_name']
 
-        if not location_id:
+        if not location_id and not location_not_found:
             comment += _('Location is missing.\n')
+        elif location_not_found:
+            comment += _('Location not found.\n')
 
         if hidden_batch_management_mandatory and not batch:
             if bad_batch_name:
