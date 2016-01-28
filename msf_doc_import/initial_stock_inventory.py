@@ -219,25 +219,15 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = False
                         to_correct_ok = True
                         import_to_correct = True
-                    else:
-                        if batch_name:
-                            batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry), ('name', '=', batch_name)], context=context)
-                        else:
-                            batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry)], context=context)
-                        if not batch_ids:
-                            if batch_name:
-                                expiry = False
-                            batch = False
-                            to_correct_ok = True
-                            import_to_correct = True
-                        else:
-                            batch = batch_ids[0]
                 elif expiry and batch:
                     b_expiry = batch_obj.browse(cr, uid, batch, context=context).life_date
                     if expiry != b_expiry:
                         err_exp_message = _('Expiry date inconsistent with %s') % row.cells[3].data
                         comment += err_exp_message
                         comment += '\n'
+                        if product.batch_management:
+                            expiry = False
+
             # Quantity
             p_qty = row.cells[5].data
             if not p_qty:
@@ -458,11 +448,9 @@ class stock_inventory_line(osv.osv):
                 comment += _('Incorrectly formatted expiry date.\n')
             vals['expiry_date'] = False
 
-        if batch and expiry and pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date'] != expiry:
-            comment += _('Expiry date and batch not consistent')
+        if hidden_perishable_mandatory and batch and expiry and pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date'] != expiry:
             vals.update({
                 'prod_lot_id': False,
-                'expiry_date': False,
             })
 
         if hidden_batch_management_mandatory and batch and not expiry:
