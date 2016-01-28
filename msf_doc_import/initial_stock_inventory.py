@@ -261,7 +261,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         comment += _('Batch not found.\n')
                     else:
                         comment += _('Batch is missing.\n')
-                if hidden_perishable_mandatory and not expiry:
+                if hidden_perishable_mandatory and not expiry and not bad_expiry:
                     comment += _('Expiry date is missing.\n')
                 if not hidden_perishable_mandatory and not hidden_batch_management_mandatory and (batch_name or batch or bad_batch_name):
                     batch = False
@@ -452,7 +452,10 @@ class stock_inventory_line(osv.osv):
             else:
                 comment += _('Batch not found.\n')
         elif hidden_perishable_mandatory and not expiry:
-            comment += _('Expiry date is missing.\n')
+            if not bad_expiry:
+                comment += _('Expiry date is missing.\n')
+            else:
+                comment += _('Incorrectly formatted expiry date.\n')
             vals['expiry_date'] = False
 
         if batch and expiry and pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date'] != expiry:
