@@ -1175,6 +1175,7 @@ You cannot choose this supplier because some destination locations are not avail
 
         return True
 
+    @check_cp_rw
     def change_all_location(self, cr, uid, ids, context=None):
         '''
         Launch the wizard to change all destination location of stock moves
