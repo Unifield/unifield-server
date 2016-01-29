@@ -248,6 +248,10 @@ class account_year_end_closing(osv.osv):
             context=context)[0].company_id.instance_id
         if instance_rec.level != 'coordo':
             return
+        if context is None:
+            context = {}
+        local_context = context.copy()
+        local_context['allow_journal_system_create'] = True
 
         for code in self._journals:
             id = self._get_journal(cr, uid, code, context=context)
@@ -261,7 +265,7 @@ class account_year_end_closing(osv.osv):
                     'analytic_journal_id': False,  # no AJI year end entries
                 }
                 self.pool.get('account.journal').create(cr, uid, vals,
-                    context=context)
+                    context=local_context)
 
     def delete_year_end_entries(self, cr, uid, fy_id, context=None):
         """
