@@ -608,7 +608,8 @@ class ir_translation(osv.osv):
                 # product.template xml_id is not create, so we search the product.product xml_id
                 if "product.template" in model_name:
                     target_ids = self.pool.get('product.product')\
-                            .search(cr, uid, [('product_tmpl_id', '=', target_ids)], context=context)
+                            .search(cr, uid, [('product_tmpl_id', '=', target_ids),
+                                ('active', 'in', ('t', 'f'))], context=context)
                     model_name = 'product.product'
 
                 if isinstance(target_ids, (int, long)):
