@@ -465,14 +465,14 @@ class stock_inventory_line(osv.osv):
                 comment += _('Incorrectly formatted expiry date.\n')
             vals['expiry_date'] = False
 
-        if hidden_perishable_mandatory and ((batch and expiry and pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date'] != expiry) \
-            or (not batch and expiry and not bad_expiry)):
-            comment += _('Expiry date will be created (with its internal batch).\n')
-            just_warn = True
-            vals.update({
-                'prod_lot_id': False,
-                'to_correct_ok': False,
-            })
+        #if hidden_perishable_mandatory and ((batch and expiry and pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date'] != expiry) \
+        #    or (not batch and expiry and not bad_expiry)):
+        #    comment += _('Expiry date will be created (with its internal batch).\n')
+        #    just_warn = True
+        #    vals.update({
+        #        'prod_lot_id': False,
+        #        'to_correct_ok': False,
+        #    })
 
         if hidden_batch_management_mandatory and batch and not expiry:
             expiry = pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date']
@@ -946,16 +946,16 @@ class initial_stock_inventory_line(osv.osv):
                 else:
                     batch = False
                     vals['prodlot_name'] = False
-            if expiry and not batch:
-                comment += _('Expiry date will be created (with its internal batch).\n')
-                just_warn = True
-                vals.update({
-                    'to_correct_ok': False,
-                    'prodlot_name': False,
-                })
-            if expiry and batch:
-                comment += _('Expiry date selected (with its internal batch).\n')
-                just_warn = True
+#            if expiry and not batch:
+#                comment += _('Expiry date will be created (with its internal batch).\n')
+#                just_warn = True
+#                vals.update({
+#                    'to_correct_ok': False,
+#                    'prodlot_name': False,
+#                })
+#            if expiry and batch:
+#                comment += _('Expiry date selected (with its internal batch).\n')
+#                just_warn = True
             if not expiry:
                 if bad_expiry:
                     comment += _('Incorrectly formatted expiry date.\n')
