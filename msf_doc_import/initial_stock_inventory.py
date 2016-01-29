@@ -228,11 +228,13 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 elif expiry and batch:
                     b_expiry = batch_obj.browse(cr, uid, batch, context=context).life_date
                     if expiry != b_expiry:
-                        err_exp_message = _('Expiry date inconsistent with %s.\n') % row.cells[3].data
-                        comment += err_exp_message
-                        comment += '\n'
                         if product.batch_management:
+                            err_exp_message = _('Expiry date inconsistent with %s.\n') % row.cells[3].data
+                            comment += err_exp_message
+                            comment += '\n'
                             expiry = False
+                        elif product.perishable:
+                            batch = False
 
             # Quantity
             p_qty = row.cells[5].data
