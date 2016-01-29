@@ -1083,7 +1083,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 (wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id.id) or False
             # Get register from which we come from
             direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
-            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            register_id = direct_invoice and\
+                    hasattr(direct_invoice, 'register_id') and\
+                    direct_invoice.register_id.id or False
             if register_id:
                 context.update({
                     'active_id': register_id,
@@ -1108,7 +1110,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                             wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
             # Get register from which we come from
             direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr, uid, [direct_invoice_id], context=context)[0]
-            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            register_id = direct_invoice and\
+                    hasattr(direct_invoice, 'register_id') and\
+                    direct_invoice.register_id.id or False
             if register_id:
                 context.update({
                     'active_id': register_id,
@@ -1356,7 +1360,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Get register from which we come from
             direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
             register_id = direct_invoice and\
-                    getattr(direct_invoice, 'register_id', False) and\
+                    hasattr(direct_invoice, 'register_id') and\
                     direct_invoice.register_id.id or False
             if register_id:
                 context.update({
@@ -1384,7 +1388,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Get register from which we come from
             direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr,
                     uid, [direct_invoice_id], context=context)[0]
-            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            register_id = direct_invoice and\
+                    hasattr(direct_invoice, 'register_id') and\
+                    direct_invoice.register_id.id or False
             if register_id:
                 context.update({
                     'active_id': register_id,
