@@ -50,6 +50,6 @@ class DownLoadBg(SecuredController):
                     cherrypy.response.headers['Content-Disposition'] = 'filename="' + data_bg['report_name'] + '.' + report_type + '"'
                     return actions._print_data(report)
 
-        return dict(finish=finish, percent=data_bg['percent'], total=finished)
+        return dict(finish=finish, percent=data_bg['percent'], total=finished, report_name=data_bg['report_name'], res_id=res_id)
 
 
