@@ -389,6 +389,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         vals = {
             'total_amount': amount,
             'direct_invoice_id': invoice.id,
+            'account_direct_invoice_wizard_id': invoice.id,
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': account_id or False,
