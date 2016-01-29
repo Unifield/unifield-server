@@ -1,11 +1,7 @@
 <%inherit file="/openerp/controllers/templates/base_dispatch.mako"/>
 
 <%def name="header()">
-    %if total == 'True':
-        <title>Report Generation [Done]</title>
-    %else:
-        <title>Report Generation</title>
-    %endif
+    <title>[${'%d'%(percent*100)}%] Report Generation</title>
     <script type="text/javascript">
         if ('${total}' != 'True' && '${finish}' == '') {
             setTimeout(function () {window.location.reload();}, 3000);
