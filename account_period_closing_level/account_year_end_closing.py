@@ -773,19 +773,19 @@ class account_year_end_closing(osv.osv):
                 self.pool.get('account.period').write(cr, uid, period_ids, vals,
                     context=context)
 
-            # then after 'state_sync_flag' set, set account_journal_period state
-            # and period true state
-            # (DO NOT CHANGE 'state' in same write than 'state_sync_flag'
-            if state == 'done':
-                journal_state = 'done'
-            else:
-                journal_state = 'draft'
-            cr.execute('UPDATE account_journal_period' \
-                ' SET state=%s WHERE period_id IN %s', (
-                    journal_state, tuple(period_ids), ))
-            vals = {'state': state, 'field_process': False}
-            self.pool.get('account.period').write(cr, uid, period_ids, vals,
-                    context=context)
+                # then after 'state_sync_flag' set, set account_journal_period state
+                # and period true state
+                # (DO NOT CHANGE 'state' in same write than 'state_sync_flag'
+                if state == 'done':
+                    journal_state = 'done'
+                else:
+                    journal_state = 'draft'
+                cr.execute('UPDATE account_journal_period' \
+                    ' SET state=%s WHERE period_id IN %s', (
+                        journal_state, tuple(period_ids), ))
+                vals = {'state': state, 'field_process': False}
+                self.pool.get('account.period').write(cr, uid, period_ids, vals,
+                        context=context)
 
             # then set FY state
             vals = { 'state': state, }
