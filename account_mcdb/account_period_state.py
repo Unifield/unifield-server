@@ -32,8 +32,8 @@ class account_period_state(osv.osv):
     _name = "account.period.state"
 
     _columns = {
-        'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade'),
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade', select=1),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State',
                                   readonly=True),
     }
@@ -126,11 +126,21 @@ class account_fiscalyear_state(osv.osv):
 
     _columns = {
         'fy_id': fields.many2one('account.fiscalyear', 'Fiscal Year',
-            required=True, ondelete='cascade'),
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+            required=True, ondelete='cascade', select=1),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',
             readonly=True),
     }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and not vals.get('fy_id'):
+            # US-841: period is required but we got
+            # an update related to non existant period: ignore it
+            return False
+
+        return super(account_fiscalyear_state, self).create(cr, uid, vals, context=context)
 
     def get_fy(self, cr, uid, ids, context=None):
         mod_obj = self.pool.get('ir.model.data')
@@ -166,6 +176,7 @@ class account_fiscalyear_state(osv.osv):
         fy_state_obj = self.pool.get('account.fiscalyear.state')
         parent = user.company_id.instance_id.id
         ids_to_write = []
+        state_to_update = []
         for fy_id in fy_ids:
             user = self.pool.get('res.users').browse(cr, uid, uid,
                 context=context)
@@ -183,25 +194,26 @@ class account_fiscalyear_state(osv.osv):
                         'state': fy['state']
                     }
                     self.write(cr, uid, ids, vals, context=context)
-                    for fy_state_id in ids:
-                        fy_state_xml_id = fy_state_obj.get_sd_ref(cr, uid,
-                            fy_state_id)
-                        ids_to_write.append(model_data._get_id(cr, uid, 'sd',
-                            fy_state_xml_id))
+                    state_to_update = ids[:]
                 else:
                     vals = {
                         'fy_id': fy['id'],
                         'instance_id': parent,
                         'state': fy['state']
                     }
-                    self.create(cr, uid, vals, context=context)
+                    nid = self.create(cr, uid, vals, context=context)
+                    state_to_update = [nid]
+
+        for fy_state_id in state_to_update:
+            fy_state_xml_id = fy_state_obj.get_sd_ref(cr, uid, fy_state_id)
+            ids_to_write.append(model_data._get_id(cr, uid, 'sd', fy_state_xml_id))
 
         # like for US-649 period state: in context of synchro last_modification
         # date must be updated on account.fisclayear.state because they are
         # created with synchro and they need to be sync down to other instances
         if ids_to_write:
             model_data.write(cr, uid, ids_to_write,
-                {'last_modification': fields.datetime.now()})
+                {'last_modification': fields.datetime.now(), 'touched': "['state']"})
         return True
 
 account_fiscalyear_state()
