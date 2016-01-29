@@ -255,7 +255,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         vals.update({'date_invoice': vals['date_invoice']})
         vals.update({'register_posting_date': vals['register_posting_date']})
 
-        # delete original analytic_distribution because a copie has been done
+        # delete original analytic_distribution because a copy has been done
         # and linked to the original invoice
         if invoice.analytic_distribution_id:
             analytic_distribution.unlink(cr, uid, invoice.analytic_distribution_id.id)
@@ -275,7 +275,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         for original_line_id, vals_dict in vals['invoice_line']:
             # get the original invoice line
             if original_line_id: # if there is a corresponding original invoice line
-                # delete original analytic_distribution because a copie has been done
+                # delete original analytic_distribution because a copy has been done
                 # and will be linked to the original invoice_line
                 orig_line = invl_obj.browse(cr, uid, original_line_id, context)
                 if orig_line.analytic_distribution_id:
@@ -389,6 +389,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         vals = {
             'total_amount': amount,
             'direct_invoice_id': invoice.id,
+            'account_direct_invoice_wizard_id': invoice.id,
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': account_id or False,

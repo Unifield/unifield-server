@@ -1077,30 +1077,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         self._check_analytic_account_validity(cr, uid, ids)
         # Return on direct invoice if we come from this one
         wiz = self.browse(cr, uid, ids, context=context)[0]
-        if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
-            # Get direct_invoice id
-            direct_invoice_id = (wiz.direct_invoice_id and wiz.direct_invoice_id.id) or \
-                (wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id.id) or False
-            # Get register from which we come from
-            direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
-            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
-            if register_id:
-                context.update({
-                    'active_id': register_id,
-                    'type': 'in_invoice',
-                    'journal_type': 'purchase',
-                    'active_ids': register_id,
-                    })
-                return {
-                    'name': "Supplier Direct Invoice",
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'wizard.account.invoice',
-                    'target': 'new',
-                    'view_mode': 'form',
-                    'view_type': 'form',
-                    'res_id': direct_invoice_id,
-                    'context': context,
-                }
         if wiz and (wiz.account_direct_invoice_wizard_id or wiz.account_direct_invoice_wizard_line_id):
             # Get direct_invoice id
             direct_invoice_id = (wiz.account_direct_invoice_wizard_id and wiz.account_direct_invoice_wizard_id.id) or\
@@ -1108,7 +1084,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                             wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
             # Get register from which we come from
             direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr, uid, [direct_invoice_id], context=context)[0]
-            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            register_id = direct_invoice and\
+                    hasattr(direct_invoice, 'register_id') and\
+                    direct_invoice.register_id.id or False
             if register_id:
                 context.update({
                     'active_id': register_id,
@@ -1116,16 +1094,50 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'journal_type': 'purchase',
                     'active_ids': register_id,
                     })
-                return {
-                    'name': "Supplier Direct Invoice",
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'account.direct.invoice.wizard',
-                    'target': 'new',
-                    'view_mode': 'form',
-                    'view_type': 'form',
-                    'res_id': direct_invoice_id,
-                    'context': context,
-                }
+            context.update({
+                'type': 'in_invoice',
+                'journal_type': 'purchase',
+                })
+            return {
+                'name': "Supplier Direct Invoice",
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.direct.invoice.wizard',
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': direct_invoice_id,
+                'context': context,
+            }
+        if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
+            # Get direct_invoice id
+            direct_invoice_id = (wiz.direct_invoice_id and wiz.direct_invoice_id.id) or \
+                (wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id.id) or False
+            # Get register from which we come from
+            direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
+            register_id = direct_invoice and\
+                    hasattr(direct_invoice, 'register_id') and\
+                    direct_invoice.register_id.id or False
+            if register_id:
+                context.update({
+                    'active_id': register_id,
+                    'type': 'in_invoice',
+                    'journal_type': 'purchase',
+                    'active_ids': register_id,
+                    })
+            context.update({
+                'type': 'in_invoice',
+                'journal_type': 'purchase',
+                })
+            return {
+                'name': "Supplier Direct Invoice",
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.account.invoice',
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': direct_invoice_id,
+                'context': context,
+            }
         wizard_account_invoice = self._check_open_wizard_account_invoice(cr, uid, wiz, context)
         if wizard_account_invoice:
             return wizard_account_invoice
@@ -1349,30 +1361,6 @@ class analytic_distribution_wizard(osv.osv_memory):
             # US-99 do not refresh lines as imported JE has no pencil
             # (only AD wizard button allowed)
             o2m_toreload = {}
-        if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
-            # Get direct_invoice id
-            direct_invoice_id = (wiz.direct_invoice_id and wiz.direct_invoice_id.id) or \
-                (wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id.id) or False
-            # Get register from which we come from
-            direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
-            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
-            if register_id:
-                context.update({
-                    'active_id': register_id,
-                    'type': 'in_invoice',
-                    'journal_type': 'purchase',
-                    'active_ids': register_id,
-                    })
-                return {
-                    'name': "Supplier Direct Invoice",
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'wizard.account.invoice',
-                    'target': 'new',
-                    'view_mode': 'form',
-                    'view_type': 'form',
-                    'res_id': direct_invoice_id,
-                    'context': context,
-                }
         if wiz and (wiz.account_direct_invoice_wizard_id or wiz.account_direct_invoice_wizard_line_id):
             # Get direct_invoice id
             direct_invoice_id = (wiz.account_direct_invoice_wizard_id and \
@@ -1382,7 +1370,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Get register from which we come from
             direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr,
                     uid, [direct_invoice_id], context=context)[0]
-            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            register_id = direct_invoice and\
+                    hasattr(direct_invoice, 'register_id') and\
+                    direct_invoice.register_id.id or False
             if register_id:
                 context.update({
                     'active_id': register_id,
@@ -1396,6 +1386,36 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'name': "Supplier Direct Invoice",
                 'type': 'ir.actions.act_window',
                 'res_model': 'account.direct.invoice.wizard',
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': direct_invoice_id,
+                'context': context,
+            }
+        if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
+            # Get direct_invoice id
+            direct_invoice_id = (wiz.direct_invoice_id and wiz.direct_invoice_id.id) or \
+                (wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id.id) or False
+            # Get register from which we come from
+            direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
+            register_id = direct_invoice and\
+                    hasattr(direct_invoice, 'register_id') and\
+                    direct_invoice.register_id.id or False
+            if register_id:
+                context.update({
+                    'active_id': register_id,
+                    'type': 'in_invoice',
+                    'journal_type': 'purchase',
+                    'active_ids': register_id,
+                    })
+            context.update({
+                'type': 'in_invoice',
+                'journal_type': 'purchase',
+                })
+            return {
+                'name': "Supplier Direct Invoice",
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.account.invoice',
                 'target': 'new',
                 'view_mode': 'form',
                 'view_type': 'form',
