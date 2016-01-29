@@ -355,7 +355,7 @@
                         <para style="LineValue">[[ not m.no_product and m.line_number or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValueLeft">[[ mot m.no_product and (m.sale_line_id and m.sale_line_id.product_id.default_code or m.product_id.default_code) or '' ]]</para>
+                        <para style="LineValueLeft">[[ not m.no_product and (m.sale_line_id and m.sale_line_id.product_id.default_code) or (m.product_id and m.product_id.default_code) or '' ]]</para>
                     </td>
                     <td>
                         <para style="LineValueLeft">[[ not m.no_product and (m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name) or '' ]]</para>

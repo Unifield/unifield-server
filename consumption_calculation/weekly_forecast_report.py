@@ -248,7 +248,7 @@ class weekly_forecast_report(osv.osv):
         """
         datas = {
             'ids': ids,
-            'target_filename': 'Periodical Forecast Report.xls',
+            'target_filename': 'Periodical Forecast Report',
         }
         return {
             'type': 'ir.actions.report.xml',
