@@ -238,10 +238,11 @@ class account_journal(osv.osv):
             context = {}
 
         if not context.get('sync_update_execution', False):
-            if vals.get('type', '') == 'system':
-                # user not allowed to create 'system' journal
-                raise osv.except_osv(_('Warning'),
-                    _('You can not create a System journal'))
+            if not context.get('allow_journal_system_create', False):
+                if vals.get('type', '') == 'system':
+                    # user not allowed to create 'system' journal
+                    raise osv.except_osv(_('Warning'),
+                        _('You can not create a System journal'))
 
         # Prepare some values
         seq_pool = self.pool.get('ir.sequence')
