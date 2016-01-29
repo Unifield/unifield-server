@@ -637,6 +637,8 @@ class account_move(osv.osv):
             # UTFTP-262: Make manual_name mandatory
             if 'manual_name' not in vals or not vals.get('manual_name', False) or vals.get('manual_name') == '':
                 raise osv.except_osv(_('Error'), _('Description is mandatory!'))
+            if journal.type == 'system':
+                raise osv.except_osv(_('Warning'), _('You can not record a Journal Entry on a system journal'))
 
         if context.get('seqnums',False):
             # utp913 - reuse sequence numbers if in the context
@@ -684,8 +686,11 @@ class account_move(osv.osv):
             if context.get('from_web_menu', False):
                 fields += ['document_date', 'date']
             for m in self.browse(cr, uid, ids):
-                if context.get('from_web_menu', False) and m.status == 'sys':
-                    raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
+                if context.get('from_web_menu', False):
+                    if m.status == 'sys':
+                        raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
+                    if m.journal_id.type == 'system':
+                        raise osv.except_osv(_('Warning'), _('You can not edit a Journal Entry on a system journal'))
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
                 ml_vals = {}
