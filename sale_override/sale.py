@@ -2651,7 +2651,7 @@ class sale_order_line(osv.osv):
                 if test:
                     return res
 
-            type = product_obj.read(cr, uid, [product], 'procure_method')[0]['procure_method']
+            type = product_obj.read(cr, uid, [product], ['procure_method'])[0]['procure_method']
             if 'value' in res:
                 res['value'].update({'type': type})
             else:
