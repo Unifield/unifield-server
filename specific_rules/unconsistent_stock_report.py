@@ -520,7 +520,7 @@ class unconsistent_stock_report(osv.osv):
             'report_name': 'unconsistent.stock.report_xls',
         }, context=context)
         context['background_id'] = background_id
-        context['background_time'] = 30
+        context['background_time'] = 20
 
         data = {'ids': ids, 'context': context}
         return {

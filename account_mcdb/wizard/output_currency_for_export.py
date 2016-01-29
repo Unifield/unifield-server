@@ -47,7 +47,7 @@ class output_currency_for_export(osv.osv_memory):
         'domain': lambda cr, u, ids, c: c and c.get('search_domain',[]),
         'export_selected': lambda *a: False,
         'state': lambda *a: 'normal',
-        'background_time': lambda *a: 200,
+        'background_time': lambda *a: 20,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

@@ -54,7 +54,7 @@ class po_follow_up(osv.osv_memory):
     
     _defaults = {
         'export_format': lambda *a: 'xls',
-        'background_time': lambda *a: 200,
+        'background_time': lambda *a: 20,
     }
     
     def button_validate(self, cr, uid, ids, context=None):
