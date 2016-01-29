@@ -1,7 +1,11 @@
 <%inherit file="/openerp/controllers/templates/base_dispatch.mako"/>
 
 <%def name="header()">
-    <title>Report Generation</title>
+    %if total == 'True':
+        <title>Report Generation [Done]</title>
+    %else:
+        <title>Report Generation</title>
+    %endif
     <script type="text/javascript">
         if ('${total}' != 'True' && '${finish}' == '') {
             setTimeout(function () {window.location.reload();}, 3000);
@@ -24,6 +28,13 @@
         {
             font-size: 120%;
             text-align: center;
+        }
+        #explanations
+        {
+            font-size: 90%;
+            text-align: center;
+            margin-top: 15px;
+            margin-bottom: 15px;
         }
         #pwidget
         {
@@ -61,7 +72,6 @@
         .percentage
         {
             position: absolute;
-
         }
     </style>
 </%def>
@@ -78,6 +88,9 @@
             <div id="indicator" style="width: ${'%d'%(percent*250)}px"></div>
         </div>
     </div>
+    %if total != 'True':
+        <div id="explanations">${_('A button to download the report will be displayed when finished.')}</div>
+    %endif
     <div id="report_name">${_('Name of the requested report: ')}${report_name}
     %if total == 'True':
         <div>
