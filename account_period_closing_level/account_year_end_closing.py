@@ -121,6 +121,10 @@ class account_year_end_closing(osv.osv):
         'IB': 'Initial Balances',
     }
 
+    # IMPORTANT NOTE: be aware that this pattern is used by OCB VI
+    # to search PL RESULT entries to export with December
+    _book_pl_results_seqnum_pattern = "EOY-%d-%s-%s-PL-RESULT"
+
     def process_closing(self, cr, uid, fy_rec,
         has_move_regular_bs_to_0=False, has_book_pl_results=False,
         context=None):
@@ -234,7 +238,7 @@ class account_year_end_closing(osv.osv):
                 'date_stop': '%s-%02d-31' % period_year_month,
                 'fiscalyear_id': fy_id,
                 'state': 'draft',  # opened by default
-                'active': pn!=0, #0 period hidden by default
+                'active': pn != 0, # 0 period hidden by default
             }
 
             self.pool.get('account.period').create(cr, uid, vals,
@@ -444,8 +448,8 @@ class account_year_end_closing(osv.osv):
             """
             create draft CCY/JE to log JI into
             """
-            name = "EOY-%d-%s-%s-PL-RESULT" % (fy_year, instance_rec.code,
-                cpy_rec.currency_id.name, )
+            name = self._book_pl_results_seqnum_pattern % (fy_year,
+                instance_rec.code, cpy_rec.currency_id.name, )
 
             vals = {
                 'block_manual_currency_id': True,
@@ -465,7 +469,7 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
-            name = "EOY-%d-%s-%s-%s" % (fy_year, account_rec.code,
+            name = self._book_pl_results_seqnum_pattern % (fy_year,
                 instance_rec.code, cpy_rec.currency_id.name, )
 
             vals = {
@@ -746,6 +750,16 @@ class account_year_end_closing(osv.osv):
                 name="P&L Result report / Previous Fiscal Year")
 
     def update_fy_state(self, cr, uid, fy_id, reopen=False, context=None):
+        def hq_close_post_entries(period_ids):
+            am_obj = self.pool.get('account.move')
+            am_ids = am_obj.search(cr, uid, [
+                    ('period_id', 'in', period_ids),
+                    ('state', '!=', 'posted')
+                ], context=context)
+            if am_ids:
+                am_obj.write(cr, uid, am_ids, {'state': 'posted', },
+                    context=context)
+
         instance_rec = self.pool.get('res.users').browse(cr, uid, [uid],
             context=context)[0].company_id.instance_id
         state = False
@@ -773,6 +787,12 @@ class account_year_end_closing(osv.osv):
             period_ids = self._get_periods_ids(cr, uid,
                 self._browse_fy(cr, uid, fy_id, context=context),
                 context=context)
+
+            # HQ JE posting all year end closing entries
+            if period_ids and not reopen and instance_rec.level == 'section':
+                hq_close_post_entries(period_ids)
+
+            # periods state
             if period_ids:
                 self.pool.get('account.period').write(cr, uid, period_ids, vals,
                     context=context)
