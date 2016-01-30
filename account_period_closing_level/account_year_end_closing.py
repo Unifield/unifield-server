@@ -765,8 +765,11 @@ class account_year_end_closing(osv.osv):
                 state = 'done'
 
         if state:
-            vals = { 'state': state, }
             # period 0 (FY+1)/16 state
+
+            # US-879: for periods update, set 'state_sync_flag' field first,
+            # for adhoc sync state flow, like in account_period.action_set_state
+            vals = { 'state_sync_flag': state, }
             period_ids = self._get_periods_ids(cr, uid,
                 self._browse_fy(cr, uid, fy_id, context=context),
                 context=context)
@@ -774,7 +777,22 @@ class account_year_end_closing(osv.osv):
                 self.pool.get('account.period').write(cr, uid, period_ids, vals,
                     context=context)
 
-            # fy state
+                # then after 'state_sync_flag' set, set account_journal_period state
+                # and period true state
+                # (DO NOT CHANGE 'state' in same write than 'state_sync_flag'
+                if state == 'done':
+                    journal_state = 'done'
+                else:
+                    journal_state = 'draft'
+                cr.execute('UPDATE account_journal_period' \
+                    ' SET state=%s WHERE period_id IN %s', (
+                        journal_state, tuple(period_ids), ))
+                vals = {'state': state, 'field_process': False}
+                self.pool.get('account.period').write(cr, uid, period_ids, vals,
+                        context=context)
+
+            # then set FY state
+            vals = { 'state': state, }
             fy_obj.write(cr, uid, [fy_id], vals, context=context)
 
     def _search_record(self, cr, uid, model, domain, context=None):
