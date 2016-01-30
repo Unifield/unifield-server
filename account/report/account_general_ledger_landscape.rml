@@ -328,7 +328,33 @@
       </blockTable>
 
       <section>
-        <para style="terp_default_8">[[ repeatIn(lines(o), 'line') ]]</para>
+        <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=True), 'line') ]]</para>
+        <blockTable colWidths="442.0,60.0,71.0,71.0,71.0,71.0" style="Table9">
+          <tr>
+            <td>
+              <para style="terp_default_9_Right">[[ line['move'] or '' ]]</para>
+            </td>
+            <td>
+                <para style="terp_default_9_Right">[[ line['currency_name'] or '' ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_9_Right">[[ formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_9_Right">[[ formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_9_Right">[[ formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_9_Right">[[ formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account')) ]]</para>
+            </td>
+           </tr>
+        </blockTable>
+      </section>
+
+      <section>
+        <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=False), 'line') ]]</para>
         <blockTable colWidths="114.0,80.0,248.0,60.0,71.0,71.0,71.0,71.0" style="Table9">
           <tr>
             <td>

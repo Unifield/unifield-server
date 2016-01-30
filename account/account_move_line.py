@@ -1249,6 +1249,8 @@ class account_move_line(osv.osv):
     def _update_check(self, cr, uid, ids, context=None):
         done = {}
         for line in self.browse(cr, uid, ids, context=context):
+            if line.period_id and line.period_id.is_system:
+                continue  # US-822 bypass checks below for period 0/16
             if line.move_id.state <> 'draft' and (not line.journal_id.entry_posted):
                 raise osv.except_osv(_('Error !'), _('You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !'))
             if line.reconcile_id:

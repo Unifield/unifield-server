@@ -297,7 +297,30 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Cell>
 </Row>
 
-% for line in lines(o):
+% for line in lines(o, initial_balance_mode=True):
+<Row>
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
+    <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
+    <Data ss:Type="String">${(line['currency_name'] or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
+    <Data ss:Type="Number">${get_line_debit(line, booking=True)}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
+    <Data ss:Type="Number">${get_line_credit(line, booking=True)}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
+    <Data ss:Type="Number">${get_line_balance(line, booking=True)}</Data>
+</Cell>
+<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
+    <Data ss:Type="Number">${get_line_balance(line, booking=False)}</Data>
+</Cell>
+</Row>
+% endfor
+
+% for line in lines(o, initial_balance_mode=False):
 <Row>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>

@@ -1427,6 +1427,10 @@ class account_move(osv.osv):
             # this use case happens in the pull sync,
             # when the account_bank_statement_line has a modification date > to the associated account_move and
             # if the associated account_move was previously synced.
+            if move.journal_id.type == 'system':
+                # US-822: consider system journal JE always valid (bypass)
+                valid_moves.append(move)
+                continue
             if not context.get('do_not_create_analytic_line') or not context.get('sync_update_execution'):
                 for obj_line in move.line_id:
                     for obj in obj_line.analytic_lines:
