@@ -603,6 +603,7 @@ class shipment(osv.osv):
                     'backorder_id': picking.id,
                     'shipment_id': False,
                     'move_lines': [],
+                    'description_ppl': description_ppl, # US-803: added the description
                 }
                 # Update context for copy
                 context.update({
@@ -612,7 +613,6 @@ class shipment(osv.osv):
                     'non_stock_noupdate': True,
                     'shipment_proc_id': wizard.id,
                     'draft_packing_id': picking.id,
-                    'description_ppl': description_ppl, # US-803: added the description
                 })
 
                 new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
