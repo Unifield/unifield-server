@@ -387,48 +387,41 @@ class stock_picking(osv.osv):
         # Check if there is any ship message UNSENT related to this picking
         picks = self.browse(cr, uid, ids, context=context)
         if picks and picks[0]:
+            # get the current pick which has been changed in description
             pick = picks[0]
             usb_entity = self._get_usb_entity_type(cr, uid)
-            if pick and pick.shipment_id and usb_entity == self.REMOTE_WAREHOUSE:
+            if pick and pick.shipment_id and usb_entity == self.REMOTE_WAREHOUSE: # only special handle when it's in RW
                 # Now, check if there is any sync message UNSENT for this shipment
                 rule_obj = self.pool.get("sync.client.message_rule")
                 msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
-
-
-
-
-
-
-
-
-
-
-
-                # Default it's an OUT message
                 remote_call = "shipment.usb_create_shipment"
-                rule = rule_obj.get_rule_by_remote_call(cr, uid, remote_call, context)
+                # Get only the unsent ships, normal there should be a minimum numbers of msg unsent
                 shipmsgs = msg_to_send_obj.search(cr, uid, [('remote_call', '=', remote_call), ('sent', '=', False)], context=context)
                 for s in shipmsgs:
                     identifier = msg_to_send_obj.read(cr, uid, s, ['identifier'])['identifier']
+                    # build the identifier for the given pick
                     shipment_name = "shipment/" + str(pick.shipment_id.id) + "/RW_"
                     if shipment_name in identifier:
+                        # if it's related to the current pick, then start to update the message 
                         arguments = msg_to_send_obj.read(cr, uid, s, ['arguments'])['arguments']
-                        old = '\'description_ppl\': False'
-                        # get the new description_ppl and replace this in the shipment
-                        new = '\'description_ppl\': \'' + pick.description_ppl + '\''
+                        st = arguments.find('\'description_ppl\': False')
+                        if st >= 0: # if the original description is empty, normally on creation of the message, then search for text with False
+                            old_desc = '\'description_ppl\': False'
+                        else:
+                            # otherwise, search for the old desc 
+                            st = arguments.find('\'description_ppl\': ')
+                            ende = arguments.find('\',',st)
+                            old_desc = arguments[st:ende + 1]
                         
+                        # build the new desc, if it's empty -> False
+                        new_desc = '\'description_ppl\': False'                        
+                        if pick.description_ppl:
+                            new_desc = '\'description_ppl\': \'' + pick.description_ppl + '\''
                         
-                        
-                        
-                        
-                        
-                        HERE HERE HERE
-                        
-                        
-                        
-                        
-                        arguments = arguments.replace(old, new)
+                        # replace the desc in argument and save it into the message
+                        arguments = arguments.replace(old_desc, new_desc)
                         msg_to_send_obj.write(cr, uid, s, {'arguments':arguments}, context=context)
+                        break # One pick is only valid for one ship, no need to go further
         
         return super(stock_picking, self).change_description_save(cr, uid, ids, context=context)
 
