@@ -382,6 +382,56 @@ class stock_picking(osv.osv):
                  'rw_force_seq': -1,
                  }
 
+    #US-803: Tricky case: when saving the ship description, if the ship message has not been sent, this description must be completed into the message!
+    def change_description_save(self, cr, uid, ids, context=None):
+        # Check if there is any ship message UNSENT related to this picking
+        picks = self.browse(cr, uid, ids, context=context)
+        if picks and picks[0]:
+            pick = picks[0]
+            usb_entity = self._get_usb_entity_type(cr, uid)
+            if pick and pick.shipment_id and usb_entity == self.REMOTE_WAREHOUSE:
+                # Now, check if there is any sync message UNSENT for this shipment
+                rule_obj = self.pool.get("sync.client.message_rule")
+                msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
+
+
+
+
+
+
+
+
+
+
+
+                # Default it's an OUT message
+                remote_call = "shipment.usb_create_shipment"
+                rule = rule_obj.get_rule_by_remote_call(cr, uid, remote_call, context)
+                shipmsgs = msg_to_send_obj.search(cr, uid, [('remote_call', '=', remote_call), ('sent', '=', False)], context=context)
+                for s in shipmsgs:
+                    identifier = msg_to_send_obj.read(cr, uid, s, ['identifier'])['identifier']
+                    shipment_name = "shipment/" + str(pick.shipment_id.id) + "/RW_"
+                    if shipment_name in identifier:
+                        arguments = msg_to_send_obj.read(cr, uid, s, ['arguments'])['arguments']
+                        old = '\'description_ppl\': False'
+                        # get the new description_ppl and replace this in the shipment
+                        new = '\'description_ppl\': \'' + pick.description_ppl + '\''
+                        
+                        
+                        
+                        
+                        
+                        
+                        HERE HERE HERE
+                        
+                        
+                        
+                        
+                        arguments = arguments.replace(old, new)
+                        msg_to_send_obj.write(cr, uid, s, {'arguments':arguments}, context=context)
+        
+        return super(stock_picking, self).change_description_save(cr, uid, ids, context=context)
+
     def cancel_moves_before_process(self, cr, uid, pick_ids, context=None):
         if context is None:
             context = {}
