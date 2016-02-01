@@ -325,8 +325,7 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
-            name = "EOY-%d-%s-%s-%s" % (fy_year, account_code,
-                instance_rec.code, ccy_code, )
+            name = 'Balance move to 0'
 
             vals = {
                 'account_id': account_id,
@@ -469,8 +468,7 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
-            name = self._book_pl_results_seqnum_pattern % (fy_year,
-                instance_rec.code, cpy_rec.currency_id.name, )
+            name = 'P&L Result'
 
             vals = {
                 'account_id': account_rec.id,
@@ -569,7 +567,7 @@ class account_year_end_closing(osv.osv):
             """
             create draft CCY/JE to log JI into
             """
-            name = "IB-%d-%s-%s-%s" % (fy_year, account_code,
+            name = "IB-%d-%s-%s-%s" % (fy_year + 1, account_code,
                 instance_rec.code, ccy_code, )
 
             vals = {
@@ -592,9 +590,7 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
-            if not name:
-                name = "IB-%d-%s-%s-%s" % (fy_year, account_code,
-                    instance_rec.code, ccy_code, )
+            default_name = 'Balance report / Previous Fiscal Year'
 
             vals = {
                 'account_id': account_id,
@@ -604,7 +600,7 @@ class account_year_end_closing(osv.osv):
                 'document_date': posting_date,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
-                'name': name,
+                'name': name or default_name,
                 'period_id': period_id,
                 'source_date': posting_date,
 
