@@ -297,8 +297,11 @@ class account_journal(osv.osv):
 
             #BKLG-53 get the next draft period from today
             current_date = datetime.date.today().strftime('%Y-%m-%d')
-            periods = self.pool.get('account.period').search(cr, uid, [('date_stop','>=',current_date),('state','=','draft')],
-                                                         context=context, limit=1, order='date_stop')
+            periods = self.pool.get('account.period').search(cr, uid, [
+                    ('date_stop','>=',current_date),
+                    ('state','=','draft'),
+                    ('is_system', '=', False),
+                ], context=context, limit=1, order='date_stop')
             if not periods:
                 raise osv.except_osv(_('Warning'), _('Sorry, No open period for creating the register!'))
             self.pool.get('account.bank.statement') \

@@ -290,7 +290,7 @@ class account_period(osv.osv):
             raise osv.except_osv(_('Error'), msg)
         operator = 'in' if args[0][2] else 'not in'
 
-        return [('number', operator, (0, 16, ))]
+        return [('number', operator, [0, 16, ])]
 
     _columns = {
         'name': fields.char('Period Name', size=64, required=True, translate=True),
