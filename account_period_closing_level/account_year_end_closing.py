@@ -33,13 +33,16 @@ class res_company(osv.osv):
     _columns = {
         # US-822 counterpart for BS account
         'ye_pl_cp_for_bs_debit_bal_account': fields.many2one('account.account',
-            'Counterpart for B/S debit balance'),
+            'Counterpart for B/S debit balance',
+            domain=['|', ('user_type.code', 'in', ('income', 'expense', 'equity')), '&', ('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
         'ye_pl_cp_for_bs_credit_bal_account': fields.many2one('account.account',
-            'Counterpart for B/S credit balance'),
+            'Counterpart for B/S credit balance',
+            domain=['|', ('user_type.code', 'in', ('income', 'expense')), '&', ('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
 
         # US-822 PL/BS matrix of dev2/dev3 accounts"
         'ye_pl_pos_credit_account': fields.many2one('account.account',
-            'Credit Account for P&L>0 (Income account)'),
+            'Credit Account for P&L>0 (Income account)',
+            domain=[('user_type.code', '=', 'income')]),
         'ye_pl_pos_debit_account': fields.many2one('account.account',
             'Debit Account for P&L>0 (B/S account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
@@ -47,7 +50,8 @@ class res_company(osv.osv):
             'Credit Account P&L<0 (B/S account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
         'ye_pl_ne_debit_account': fields.many2one('account.account',
-            'Debit Account P&L<0 (Expense account)'),
+            'Debit Account P&L<0 (Expense account)',
+            domain=[('user_type.code', '=', 'expense')]),
     }
 
 res_company()
