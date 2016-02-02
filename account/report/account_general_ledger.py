@@ -591,12 +591,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if self.target_move == 'posted':
             move_state = ['posted','']
 
-        initial_balance = False
-        if self.init_balance:
-            if booking:
-                initial_balance = is_sub_total and ccy or False
-            else:
-                initial_balance = not is_sub_total
+        # add initial balance if ticked in wizard and booking subtotal
+        # amount or any functional amount
+        initial_balance = self.init_balance and (
+            (booking and is_sub_total and ccy) or True) or False
         amount = self.__sum_amount_account(account, move_state, 'balance',
             ccy=ccy, booking=booking, initial_balance=initial_balance)
         return self._currency_conv(amount)
