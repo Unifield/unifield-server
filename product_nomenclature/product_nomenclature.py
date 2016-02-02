@@ -53,9 +53,14 @@ class product_nomenclature(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
-        if context is None:
+
+        # Here we explicitly want to recreate another context in case the
+        # context is empty. Because name_get() call read(), which call
+        # name_get(), which call read(), ...... and if we reuse the same
+        # context all the time it ends up in an infinite loop error
+        if not context:
             context = {}
-            
+
         if not context.get('lang') or context.get('lang') == 'en_US':
             # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
             lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
@@ -415,7 +420,6 @@ class product_nomenclature(osv.osv):
             return []
         narg = []
         for arg in args:
-            id_rech = self.search(cr, uid, [('parent_id', '=', arg[2])])
             if arg[2] == 'mandatory':
                 narg += [('type', '=', arg[2])]
             else:
@@ -816,8 +820,10 @@ class product_product(osv.osv):
             xmlid_code = vals.get('xmlid_code', False)
             if not default_code or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
-            exist_dc = self.search(cr, uid, [('default_code', '=', default_code)], limit=1, context=context)
-            exist_xc = self.search(cr, uid, [('xmlid_code', 'in', [default_code, xmlid_code])], limit=1, context=context)
+            exist_dc = self.search(cr, uid, [('default_code', '=',
+                default_code)], limit=1, order='NO_ORDER', context=context)
+            exist_xc = self.search(cr, uid, [('xmlid_code', 'in', [default_code, xmlid_code])],
+                    limit=1, order='NO_ORDER', context=context)
             if exist_dc:  # if any of the code exists, report error!,
                 raise Exception, "Problem creating product: Duplicate default_code found"
             if exist_xc:  # if any of the code exists, report error!,

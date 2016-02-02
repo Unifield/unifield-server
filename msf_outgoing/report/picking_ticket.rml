@@ -69,6 +69,7 @@
             <blockSpan start="9,0" stop="9,-1" />
             <blockSpan start="10,0" stop="10,-1" />
             <blockSpan start="11,0" stop="11,-1" />
+            <blockSpan start="12,0" stop="12,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="LinesValues">
@@ -89,6 +90,7 @@
             <blockSpan start="9,0" stop="9,-1" />
             <blockSpan start="10,0" stop="10,-1" />
             <blockSpan start="11,0" stop="11,-1" />
+            <blockSpan start="12,0" stop="12,-1" />
         </blockTableStyle>
 
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />

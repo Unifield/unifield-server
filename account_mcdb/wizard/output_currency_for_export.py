@@ -47,7 +47,7 @@ class output_currency_for_export(osv.osv_memory):
         'domain': lambda cr, u, ids, c: c and c.get('search_domain',[]),
         'export_selected': lambda *a: False,
         'state': lambda *a: 'normal',
-        'background_time': lambda *a: 200,
+        'background_time': lambda *a: 20,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -122,9 +122,9 @@ class output_currency_for_export(osv.osv_memory):
         if wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
         else:
-            export_obj = self.pool.get(model)
-            args = context.get('search_domain')
-            datas = {'ids': export_obj.search(cr, uid, args, context=context)}
+            #export_obj = self.pool.get(model)
+            #args = context.get('search_domain')
+            #datas = {'ids': export_obj.search(cr, uid, args, context=context)}
             context['from_domain'] = True
         # Update context with wizard currency or default currency
         context.update({'output_currency_id': currency_id})
@@ -158,7 +158,6 @@ class output_currency_for_export(osv.osv_memory):
             background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': datas['target_filename'], 'report_name': report_name}, context=context)
             context['background_id'] = background_id
             context['background_time'] = wiz.background_time
-
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
@@ -177,8 +176,13 @@ class background_report(osv.osv_memory):
             'report_name': fields.char('Report Name', size=256),
             'report_id': fields.integer('Report id'),
             'percent': fields.float('Percent'),
+            'finished': fields.boolean('Finished'),
         }
         def update_percent(self, cr, uid, ids, percent, context=None):
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            if percent > 1.00:
+                percent = 1.00
             self.write(cr, uid, ids, {'percent': percent})
 
 

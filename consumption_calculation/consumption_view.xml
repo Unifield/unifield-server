@@ -102,8 +102,8 @@
             <field name="arch" type="xml">
                 <tree string="Real consumption reports">
             <field name="name" />
-                    <field name="cons_location_id" />
-                    <field name="activity_id" />
+                    <field name="cons_location_name" string="Consumer location" />
+                    <field name="activity_name" string="Activity" />
                     <field name="period_from" />
                     <field name="period_to" />
                     <field name="nb_lines" />

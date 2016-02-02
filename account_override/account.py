@@ -425,11 +425,13 @@ class account_account(osv.osv):
         if not context:
             context = {}
         if context.get('filter_inactive_accounts'):
-            args.append(('activation_date', '<=', datetime.date.today().strftime('%Y-%m-%d')))
-            args.append('|')
-            args.append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
-            args.append(('inactivation_date', '=', False))
-        return super(account_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+            args_append = args.append
+            args_append(('activation_date', '<=', datetime.date.today().strftime('%Y-%m-%d')))
+            args_append('|')
+            args_append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
+            args_append(('inactivation_date', '=', False))
+        return super(account_account, self).search(cr, uid, args, offset,
+                limit, order, context=context, count=count)
 
 account_account()
 
@@ -635,6 +637,8 @@ class account_move(osv.osv):
             # UTFTP-262: Make manual_name mandatory
             if 'manual_name' not in vals or not vals.get('manual_name', False) or vals.get('manual_name') == '':
                 raise osv.except_osv(_('Error'), _('Description is mandatory!'))
+            if journal.type == 'system':
+                raise osv.except_osv(_('Warning'), _('You can not record a Journal Entry on a system journal'))
 
         if context.get('seqnums',False):
             # utp913 - reuse sequence numbers if in the context
@@ -682,8 +686,11 @@ class account_move(osv.osv):
             if context.get('from_web_menu', False):
                 fields += ['document_date', 'date']
             for m in self.browse(cr, uid, ids):
-                if context.get('from_web_menu', False) and m.status == 'sys':
-                    raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
+                if context.get('from_web_menu', False):
+                    if m.status == 'sys':
+                        raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
+                    if m.journal_id.type == 'system':
+                        raise osv.except_osv(_('Warning'), _('You can not edit a Journal Entry on a system journal'))
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
                 ml_vals = {}
@@ -696,8 +703,9 @@ class account_move(osv.osv):
                     ml_vals.update({'name': vals.get('manual_name', '')})
                 # Update document date AND date at the same time
                 if ml_vals:
-                    for ml in m.line_id:
-                        self.pool.get('account.move.line').write(cr, uid, ml.id, ml_vals, context, False, False)
+                    ml_id_list  = [ml.id for ml in m.line_id]
+                    self.pool.get('account.move.line').write(cr, uid,
+                            ml_id_list, ml_vals, context, False, False)
         res = super(account_move, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)

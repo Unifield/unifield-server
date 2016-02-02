@@ -230,7 +230,8 @@ class wizard_import_pick_line(osv.osv_memory):
                                                                                 product_obj=product_obj,
                                                                                 bn_cell_nb=6, ed_cell_nb=7, 
                                                                                 date_format=date_format,
-                                                                                product_id=to_write.get('product_id'),)
+                                                                                product_id=to_write.get('product_id'),
+                                                                                picking_type=picking.type)
 
                             # Create the internal batch number if not exists
                             if not product.batch_management and product.perishable and batch_value['expired_date'] and not batch_value['prodlot_id'] and not batch_value['error_list']:

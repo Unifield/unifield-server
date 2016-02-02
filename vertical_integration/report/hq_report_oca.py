@@ -312,7 +312,9 @@ class hq_report_oca(report_sxw.report_sxw):
                         account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] += funct_balance
 
         # UFTP-375: Do not include FREE1 and FREE2 analytic lines
-        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
+        # US-817: search period from JI (VI from HQ so AJI always with its JI)
+        # (AJI period_id is a field function always deduced from date since UTP-943)
+        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('move_id.period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['hq', 'engagement', 'migration']),
                                                                                ('account_id.category', 'not in', ['FREE1', 'FREE2']),
@@ -346,6 +348,9 @@ class hq_report_oca(report_sxw.report_sxw):
                 and analytic_line.journal_id.type == 'cur_adj' or False
             is_analytic_rev_entry = analytic_line.journal_id \
                 and analytic_line.journal_id.type == 'revaluation' or False
+            # US-817: display period from JI (VI from HQ so AJI always with its JI)
+            # (AJI period_id is a field function always deduced from date since UTP-943)
+            aji_period_id = analytic_line.move_id and analytic_line.move_id.period_id or analytic_line.period_id
 
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
@@ -355,7 +360,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               analytic_line.ref or "",
                               datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                              analytic_line.period_id and analytic_line.period_id.code or "",
+                              aji_period_id and aji_period_id.code or "",
                               account and account.code + " " + account.name or "",
                               analytic_line.destination_id and analytic_line.destination_id.code or "",
                               analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",

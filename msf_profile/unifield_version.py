@@ -29,27 +29,18 @@ class unifield_version(osv.osv_memory):
     _name = 'unifield.version'
     _rec_name = 'version'
 
-    def _get_info(self, key):
-        '''
-        Get the version values from server/bin/release.py
-
-        :param key: The key of the release.py info to get
-        '''
-        if hasattr(release, key):
-            return getattr(release, key)
-        else:
-            return 'Not Found'
-
     def default_get(self, cr, uid, field_list=[], context=None):
         res = super(unifield_version, self).default_get(cr, uid, field_list, context=context)
+        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='sync_client_version'")
 
-        fields = [
-            'version',
-        ]
-
-        for f in fields:
-            res[f] = self._get_info(f)
-
+        # US-872: by default, use the value in release.py, or Unknown,
+        # otherwise get the valid value from DB
+        res['version'] = release.version or 'UNKNOWN_VERSION'
+        if cr.fetchone():
+            revisions = self.pool.get('sync_client.version')
+            currev = revisions._get_last_revision(cr, 1, context=context)
+            if currev and currev.name:
+                res['version']=currev.name
         return res
 
     _columns = {

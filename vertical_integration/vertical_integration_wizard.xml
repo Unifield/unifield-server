@@ -12,7 +12,7 @@
             <form string="Export to HQ system">
                 <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
                 <field name="fiscalyear_id"/>
-                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '&lt;&gt;', 'created')]"/>
+                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '&lt;&gt;', 'created'), ('number', '&lt;', 16)]"/>
                 <newline/>
                 <button icon="terp-camera_test" string="Export" name="button_create_report" type="object" default_focus="1"/>
             </form>
@@ -43,7 +43,7 @@
             <form string="Export to HQ system">
                 <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
                 <field name="fiscalyear_id"/>
-                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', 'in', ['mission-closed'])]"/>
+                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', 'in', ['mission-closed']), ('number', '&lt;', 16)]"/>
                 <field name="selection"/>
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>
@@ -78,7 +78,7 @@
             <form string="Export to HQ system">
                 <field name="instance_id" domain="[('level', 'in', ['coordo','section'])]"/>
                 <field name="fiscalyear_id"/>
-                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id)]"/>
+                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '&lt;', 16)]"/>
                 <field name="selection"/>
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>
@@ -146,7 +146,7 @@
             <form string="Export to HQ system">
                 <field name="instance_id" domain="[('level', 'in', ['coordo','section'])]"/>
                 <field name="fiscalyear_id"/>
-                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id)]"/>
+                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '&lt;', 16)]"/>
                 <field name="selection"/>
 
                 <group colspan="6" col="4">

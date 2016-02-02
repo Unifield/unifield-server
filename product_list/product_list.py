@@ -89,6 +89,16 @@ class product_list(osv.osv):
             string='Type',
             required=True,
         ),
+        'creator': fields.selection(
+            selection=[
+                ('hq', 'HQ'),
+                ('coordo', 'Coordination'),
+                ('project', 'Project'),
+                ('temp', 'Temporary'),
+            ],
+            string='Creator',
+            required=True,
+        ),
         'description': fields.char(
             size=256,
             string='Description',
@@ -145,6 +155,7 @@ class product_list(osv.osv):
 
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'creator': lambda *a: 'temp',
     }
 
     _sql_constraints = [
@@ -457,10 +468,10 @@ product and can't be deleted"""),
                 prd_domain = set()
                 pl_ids = pl_obj.search(cr, uid, [
                     ('name', a[1], a[2])
-                ], context=context)
+                ], order='NO_ORDER', context=context)
                 pll_ids = pll_obj.search(cr, uid, [
                     ('list_id', 'in', pl_ids),
-                ], context=context)
+                ], order='NO_ORDER', context=context)
                 for line in pll_obj.browse(cr, uid, pll_ids, context=context):
                     prd_domain.add(line.name.id)
 
@@ -471,7 +482,8 @@ product and can't be deleted"""),
                 if not prd_domain:
                     return []
 
-        return super(product_product, self).search(cr, uid, args, offset, limit, order, context, count)
+        return super(product_product, self).search(cr, uid, args, offset,
+                limit, order, context, count)
 
     def write(self, cr, uid, ids, value, context=None):
         single = False
@@ -483,7 +495,7 @@ product and can't be deleted"""),
             xxx_ids = self.search(cr, uid, [
                 ('id', 'in', ids),
                 ('default_code', '=', 'XXX'),
-            ], context=context)
+            ], order='NO_ORDER', context=context)
             if xxx_ids:
                 self.write(cr, uid, xxx_ids, {
                     'xmlid_code': value['default_code'],

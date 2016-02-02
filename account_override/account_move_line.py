@@ -322,12 +322,23 @@ class account_move_line(osv.osv):
 
     def _check_date(self, cr, uid, vals, context=None, check=True):
         if 'date' in vals and vals['date'] is not False and 'account_id' in vals:
+            do_check = True
+
             account_obj = self.pool.get('account.account')
             account = account_obj.browse(cr, uid, vals['account_id'])
-            if vals['date'] < account.activation_date \
-            or (account.inactivation_date != False and \
-                vals['date'] >= account.inactivation_date):
-                raise osv.except_osv(_('Error !'), _('The selected account is not active: %s.') % (account.code or '',))
+            if vals.get('period_id', False):
+                period_obj = self.pool.get('account.period')
+                if period_obj.browse(cr, uid, vals['period_id'],
+                    context=context).is_system:
+                        # US-822: no check for system periods -sync or not-
+                        # 0/16 periods entries -during FY deactivated accounts-
+                        do_check = False
+
+            if do_check:
+                if vals['date'] < account.activation_date \
+                or (account.inactivation_date != False and \
+                    vals['date'] >= account.inactivation_date):
+                    raise osv.except_osv(_('Error !'), _('The selected account is not active: %s.') % (account.code or '',))
         return super(account_move_line, self)._check_date(cr, uid, vals, context, check)
 
     def _check_document_date(self, cr, uid, ids, vals=None, context=None):
@@ -453,7 +464,8 @@ class account_move_line(osv.osv):
             args.append(('currency_id', '=', context.get('currency_id')))
         if context.get('move_state'):
             args.append(('move_state', '=', context.get('move_state')))
-        return super(account_move_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return super(account_move_line, self).search(cr, uid, args, offset,
+                limit, order, context=context, count=count)
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """

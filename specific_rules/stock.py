@@ -136,10 +136,20 @@ class initial_stock_inventory(osv.osv):
         
         move_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
+        sptc_obj = self.pool.get('standard.price.track.changes')
         for inv in self.browse(cr, uid, ids, context=context):
             # Set the cost price on product form with the new value, and process the stock move
             for move in inv.move_ids:
                 new_std_price = move.price_unit
+                sptc_obj.track_change(cr,
+                                      uid,
+                                      move.product_id.id,
+                                      _('Initial stock inventory %s') % inv.name,
+                                      vals={
+                                          'standard_price': new_std_price,
+                                          'old_price': move.product_id.standard_price,
+                                      },
+                                      context=context)
                 prod_obj.write(cr, uid, move.product_id.id, {'standard_price': new_std_price}, context=context)
                 move_obj.action_done(cr, uid, move.id, context=context)
 
@@ -244,17 +254,29 @@ class initial_stock_inventory_line(osv.osv):
     _inherit = 'stock.inventory.line'
     
     def _get_error_msg(self, cr, uid, ids, field_name, args, context=None):
+        prodlot_obj = self.pool.get('stock.production.lot')
+        dt_obj = self.pool.get('date.tools')
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = ''
             if not line.location_id:
-                res[line.id] = 'You must define a stock location'
+                res[line.id] = _('You must define a stock location')
             if line.hidden_batch_management_mandatory and not line.prodlot_name:
-                res[line.id] = 'You must define a batch number'
+                res[line.id] = _('You must define a batch number')
             elif line.hidden_perishable_mandatory and not line.expiry_date:
-                res[line.id] = 'You must define an expiry date'
-        
+                res[line.id] = _('You must define an expiry date')
+            elif line.prodlot_name and line.expiry_date and line.product_id:
+                prodlot_ids = prodlot_obj.search(cr, uid, [
+                    ('name', '=', line.prodlot_name),
+                    ('product_id', '=', line.product_id.id),
+                ], context=context)
+                if prodlot_ids:
+                    prodlot = prodlot_obj.browse(cr, uid, prodlot_ids[0], context=context)
+                    life_date = dt_obj.get_date_formatted(cr, uid, datetime=prodlot.life_date)
+                    if prodlot.life_date != line.expiry_date:
+                        res[line.id] = _('The batch number \'%s\' is already in the system but its expiry date is %s') % (line.prodlot_name, life_date)
+
         return res
     
     _columns = {
@@ -477,11 +499,21 @@ class stock_cost_reevaluation(osv.osv):
         '''
         Change the price of the products in the lines
         '''
+        sptc_obj = self.pool.get('standard.price.track.changes')
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.reevaluation_line_ids:
+                sptc_obj.track_change(cr,
+                                      uid,
+                                      line.product_id.id,
+                                      _('Product cost reevaluation %s') % obj.name,
+                                      vals={
+                                          'standard_price': line.average_cost,
+                                          'old_price': line.product_id.standard_price,
+                                      }, context=context)
                 self.pool.get('product.product').write(cr, uid, line.product_id.id, {'standard_price': line.average_cost})
         
         return self.write(cr, uid, ids, {'state': 'done'}, context=context)

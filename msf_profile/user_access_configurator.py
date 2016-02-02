@@ -798,7 +798,8 @@ class res_groups(osv.osv):
 
             args = new_args
 
-        return super(res_groups, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return super(res_groups, self).search(cr, uid, args, offset, limit,
+                order, context=context, count=count)
 
     def _update_inactive(self, cr, uid, ids, vals, context=None):
         '''

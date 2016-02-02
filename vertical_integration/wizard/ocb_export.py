@@ -21,6 +21,7 @@
 
 from osv import fields
 from osv import osv
+from tools.translate import _
 
 from time import strftime
 from time import strptime
@@ -57,6 +58,28 @@ class ocb_export_wizard(osv.osv_memory):
         if wizard.period_id:
             data['form'].update({'period_id': wizard.period_id.id})
             period_name = strftime('%Y%m', strptime(wizard.period_id.date_start, '%Y-%m-%d'))
+            # US-822: check period
+            # 1) can not pick 16 as included in 12 for OCB
+            # 2) when picking 12: target mission FY should be closed
+            # OCB cancels the check 2) but keep it in case they rollback
+            # => they want to export whereas there is PL RESULT entries or not
+            # for the target coordo
+            if wizard.period_id.number == 16:
+                msg = _("You can not select '%s' as already included in' \
+                    '  December export")  % (
+                        wizard.period_id.name or 'Period 16', )
+                raise osv.except_osv(_('Warning'), msg)
+            """elif wizard.period_id.number == 12:
+                domain = [
+                    ('instance_id', '=', wizard.instance_id.id),
+                    ('fy_id', '=', wizard.period_id.fiscalyear_id.id),
+                    ('state', '=', 'mission-closed'),
+                ]
+                if not self.pool.get('account.fiscalyear.state').search(cr, uid,
+                    domain, count=True, context=context):
+                    msg = _("Target instance '%s' should be at least' \
+                        yearly closed")  % (wizard.instance_id.code, )
+                    raise osv.except_osv(_('Error'), msg)"""
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         data['form'].update({'selection': wizard.selection})

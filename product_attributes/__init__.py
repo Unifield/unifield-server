@@ -20,6 +20,8 @@
 ##############################################################################
 
 import product_attributes
+import standard_price_track_changes
 import wizard
+import report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

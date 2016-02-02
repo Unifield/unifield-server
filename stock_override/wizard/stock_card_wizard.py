@@ -38,6 +38,13 @@ class stock_card_wizard(osv.osv_memory):
         'perishable': fields.boolean(string='Perishable'),
         'prodlot_id': fields.many2one('stock.production.lot',
                                       string='Batch number'),
+        'expiry_date': fields.related(
+            'prodlot_id',
+            'life_date',
+            type='date',
+            string='Expiry date',
+            readonly=True,
+        ),
         'from_date': fields.date(string='From date'),
         'to_date': fields.date(string='To date'),
         'available_stock': fields.float(digits=(16,2), string='Available stock'),

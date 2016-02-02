@@ -54,6 +54,7 @@
         'account_bank_statement_workflow.xml',
         'wizard/wizard_closing_cashbox.xml',
         'wizard/wizard_cashbox_write_off.xml',
+        'wizard/wizard_register_reopen.xml',
         'wizard/wizard_temp_posting.xml',
         'wizard/wizard_hard_posting.xml',
         'wizard/wizard_liquidity_position.xml',
@@ -69,6 +70,7 @@
         'register_accounting_report.xml',
         'account_wizard.xml',
         'wizard/wizard_register_import.xml',
+        'wizard/account_direct_invoice_wizard_view.xml',
     ],
     "demo_xml" : [],
     "test": [

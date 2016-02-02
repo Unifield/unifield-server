@@ -408,6 +408,12 @@ class po_follow_up_mixin(object):
 
         return res
 
+    def yieldPoLines(self, po_line_ids):
+        for pol_id in po_line_ids:
+            yield self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id)
+
+        raise StopIteration
+
     def getPOLines(self, po_id):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         # TODO the multiplier is the value populated for no change in stock_move.price_unit
@@ -418,17 +424,16 @@ class po_follow_up_mixin(object):
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)], order='line_number')
-        po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
+#        po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
         report_lines = []
         order = po_obj.browse(self.cr, self.uid, po_id)
-        for line in po_lines:
-            in_lines = self.getAllLineIN(line.id)
+        for line in self.yieldPoLines(po_line_ids):
             analytic_lines = self.getAnalyticLines(line)
             same_product_same_uom = []
             same_product = []
             other_product = []
 
-            for inl in in_lines:
+            for inl in self.getAllLineIN(line.id):
                 if inl.get('product_id') and inl.get('product_id') == line.product_id.id:
                     if inl.get('product_uom') and inl.get('product_uom') == line.product_uom.id:
                         same_product_same_uom.append(inl)
@@ -539,7 +544,10 @@ class po_follow_up_mixin(object):
                 }
                 report_lines.append(report_line)
 
-        return report_lines
+            for rl in report_lines:
+                yield rl
+
+        raise StopIteration
 
     def getAnalyticLines(self,po_line):
         ccdl_obj = self.pool.get('cost.center.distribution.line')
@@ -570,7 +578,10 @@ class po_follow_up_mixin(object):
                 sm.picking_id = sp.id
             ORDER BY
                 sp.name, sm.id asc''', tuple([po_line_id]))
-        return self.cr.dictfetchall()
+        for res in self.cr.dictfetchall():
+            yield res
+
+        raise StopIteration
 
     def getReportHeaderLine1(self):
         return self.datas.get('report_header')[0]
@@ -645,18 +656,6 @@ class ir_values(osv.osv):
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
         trans_obj = self.pool.get('ir.translation')
-# already defined in the module tender_flow
-#        if context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'purchase.order' in [x[0] for x in models]:
-#            new_act = []
-#            for v in values :
-#                if v[2]['name'] == 'Purchase Order Excel Export' and context['_terp_view_name'] == 'Purchase Orders' \
-#                or v[2].get('report_name', False) == 'purchase.msf.order' and context['_terp_view_name'] == 'Purchase Orders' \
-#                or v[2].get('report_name', False) == 'purchase.order.merged' and context['_terp_view_name'] == 'Purchase Orders' \
-#                or v[2].get('report_name', False) == 'po.line.allocation.report' and context['_terp_view_name'] == 'Purchase Orders' \
-#                or v[2].get('report_name', False) == 'purchase.msf.quotation' and context['_terp_view_name'] == 'Requests for Quotation' \
-#                or v[2].get('report_name', False) == 'request.for.quotation_xls' and context['_terp_view_name'] == 'Requests for Quotation' :
-#                    new_act.append(v)
-#                values = new_act
         
         Internal_Requests = trans_obj.tr_view(cr, 'Internal Requests', context)
         Field_Orders = trans_obj.tr_view(cr, 'Sales Orders', context)
@@ -686,7 +685,7 @@ class ir_values(osv.osv):
             Internal_Moves = trans_obj.tr_view(cr, 'Internal Moves', context)
             for v in values:
                 if v[2].get('report_name', False) == 'picking.ticket' and (context.get('_terp_view_name') in (Picking_Tickets, Picking_Ticket) or context.get('picking_type') == 'picking_ticket') and context.get('picking_screen', False)\
-                or v[2].get('report_name', False) == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
+                or v[2].get('report_name', False) in ('empty.picking.ticket', 'pre.packing.list') and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
                 or v[2].get('report_name', False) == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
                 or v[2].get('report_name', False) in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
                 or v[2].get('report_name', False) == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):

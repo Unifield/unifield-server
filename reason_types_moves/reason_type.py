@@ -254,7 +254,9 @@ class stock_picking(osv.osv):
                 new_arg = arg
             new_args.append(new_arg)
 
-        return super(stock_picking, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=False)
+        return super(stock_picking, self).search(cr, uid, new_args,
+                offset=offset, limit=limit, order=order,
+                context=context, count=False)
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -359,7 +361,8 @@ class stock_move(osv.osv):
                 new_arg = arg
             new_args.append(new_arg)
 
-        return super(stock_move, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=count)
+        return super(stock_move, self).search(cr, uid, new_args, offset=offset,
+                limit=limit, order=order, context=context, count=count)
 
     def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
         res = {}

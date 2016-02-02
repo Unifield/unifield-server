@@ -182,7 +182,7 @@ class account_bank_statement(osv.osv):
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, readonly=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
-        'notes': fields.text('Comments'),
+        'notes': fields.text('Comments', states={'confirm': [('readonly', True)]}),
         'period_number': fields.related('period_id', 'number', relation='account.period', string="Period number", type="integer", store=True, readonly=True),
         'closing_date': fields.date("Closed On"),
         'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id', 'Responsible'),
@@ -1630,7 +1630,7 @@ class account_bank_statement_line(osv.osv):
                         # UTP-1097 ref field is cleared (a value to empty/False)
                         # ref of JIs/AJIs is not properly cleared in this case
                         aml_ids = acc_move_line_obj.search(cr, uid,
-                            [('move_id', '=', register_line.move_id.id), ],
+                            [('move_id', '=', register_line.move_id.id), ('ref', '!=', '')],
                             context = context)
                         if aml_ids:
                             # note: move line will update its AJIs ref
@@ -1925,6 +1925,31 @@ class account_bank_statement_line(osv.osv):
         # Then update analytic distribution
         res = []
         must_return = False
+
+        # US-836: _update_move_from_st_line is called on temp posted reg line
+        # it deletes / creates AJI
+        # call _update_move_from_st_line only if values have changed
+        to_update_ids = []
+        if state == 'temp' and not context.get('sync_update_execution'):
+            to_remove= ['from_import_cheque_id', 'down_payment_id', 'imported_invoice_line_ids', 'move_ids']
+            keys_to_read = [x for x in values.keys() if x not in to_remove]
+            if keys_to_read:
+                for x in self.read(cr, uid, isinstance(ids, (int, long)) and [ids] or ids, keys_to_read, context=context):
+                    for k in keys_to_read:
+                        if isinstance(x[k], tuple) and x[k]:
+                            if x[k][0] != values[k]:
+                                to_update_ids.append(x['id'])
+                                break
+                        elif k == 'partner_type':
+                            if not values[k] and x[k].get('selection', '').endswith(','):
+                                continue
+                            if x[k].get('selection') != values[k]:
+                                to_update_ids.append(x['id'])
+                                break
+                        elif x[k] != values[k]:
+                                to_update_ids.append(x['id'])
+                                break
+
         # US-351: fixed the wrong condition
         if 'employee_id' in values or 'partner_type' in values:
             must_return = True
@@ -1971,8 +1996,8 @@ class account_bank_statement_line(osv.osv):
             saveddate = False
             if values.get('date'):
                 saveddate = values['date']
-            if not context.get('sync_update_execution'):
-                self._update_move_from_st_line(cr, uid, ids, values, context=context)
+            if not context.get('sync_update_execution') and to_update_ids:
+                self._update_move_from_st_line(cr, uid, to_update_ids, values, context=context)
             if saveddate:
                 values['date'] = saveddate
 
@@ -2162,6 +2187,18 @@ class account_bank_statement_line(osv.osv):
                 account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
 
             if postype == "hard":
+                if absl.imported_invoice_line_ids:
+                    # US-518/1.2
+                    imported_total_amount = 0
+
+                    for inv_move_line in absl.imported_invoice_line_ids:
+                        imported_total_amount += inv_move_line.amount_currency
+                    if absl.amount_out > abs(imported_total_amount) or\
+                            absl.amount_in > abs(imported_total_amount):
+                        raise osv.except_osv(_('Warning'),
+                            _('You can not hard post with an amount greater'
+                                ' than total of imported invoices'))
+
                 # Update analytic lines
                 if absl.account_id.is_analytic_addicted:
                     self.update_analytic_lines(cr, uid, absl)
@@ -2454,45 +2491,141 @@ class account_bank_statement_line(osv.osv):
         """
         Open the attached invoice
         """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # special processing for cash_return
         cash_return = False
         for st_line in self.browse(cr, uid, ids, context=context):
             if not st_line.invoice_id:
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
             if st_line.from_cash_return:
                 cash_return = True
-        invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
-        view_name = 'direct_supplier_invoice_form'
-        name = _('Supplier Direct Invoice')
+                break
         if cash_return:
+            invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
             view_name = 'invoice_supplier_form_2'
             name = _('Supplier Invoice')
-        # Search the customized view we made for Supplier Invoice (for * Register's users)
-        irmd_obj = self.pool.get('ir.model.data')
-        view_ids = irmd_obj.search(cr, uid, [('name', '=', view_name), ('model', '=', 'ir.ui.view')])
-        # Préparation de l'élément permettant de trouver la vue à  afficher
-        if view_ids:
-            view = irmd_obj.read(cr, uid, view_ids[0])
-            view_id = (view.get('res_id'), view.get('name'))
-        else:
-            raise osv.except_osv(_('Error'), _("View not found."))
+            # Search the customized view we made for Supplier Invoice (for * Register's users)
+            irmd_obj = self.pool.get('ir.model.data')
+            view_ids = irmd_obj.search(cr, uid, [('name', '=', view_name), ('model', '=', 'ir.ui.view')])
+            # Préparation de l'élément permettant de trouver la vue à  afficher
+            if view_ids:
+                view = irmd_obj.read(cr, uid, view_ids[0])
+                view_id = (view.get('res_id'), view.get('name'))
+            else:
+                raise osv.except_osv(_('Error'), _("View not found."))
+            context.update({
+                'active_id': ids[0],
+                'type': invoice.type,
+                'journal_type': invoice.journal_id.type,
+                'active_ids': ids,
+                'from_register': True,
+                })
+            return {
+                'name': name,
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.invoice',
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'view_id': view_id,
+                'res_id': invoice.id,
+                'context': context,
+            }
+
+        ## Direct Invoice processing using temp objects
+
+        # Prepare some values
+        invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
+
+        # copy the analytic_distribution not to modify the original one
+        analytic_distribution = self.pool.get('analytic.distribution')
+        new_ad_id = None
+        if invoice.analytic_distribution_id:
+            new_ad_id = analytic_distribution.copy(cr, uid,
+                    invoice.analytic_distribution_id.id, context=context)
+
+        create_date = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        # Prepare values for wizard
+        vals = {
+            'account_id': invoice.account_id.id,
+            'address_invoice_id': invoice.address_invoice_id.id,
+            'address_contact_id': invoice.address_contact_id.id,
+            'amount_total': invoice.amount_total,
+            'analytic_distribution_id': new_ad_id,
+            'comment': invoice.comment,
+            'company_id': invoice.company_id.id,
+            'create_date': create_date,
+            'currency_id': invoice.currency_id.id,
+            'date_invoice': invoice.date_invoice,
+            'document_date': invoice.document_date,
+            'is_direct_invoice': invoice.is_direct_invoice,
+            'journal_id': invoice.journal_id.id,
+            'name': invoice.name,
+            'number': invoice.number,
+            'origin': invoice.origin,
+            'original_invoice_id': invoice.id,
+            'partner_id': invoice.partner_id.id,
+            'partner_bank_id':invoice.partner_bank_id.id,
+            'payment_term': invoice.payment_term.id or False,
+            'reference': invoice.reference,
+            'register_posting_date': invoice.register_posting_date,
+            'register_line_id': invoice.register_line_ids[0].id,
+            'register_id': invoice.register_line_ids[0].statement_id.id,
+            'state': invoice.state,
+            'type': invoice.type,
+            'user_id': invoice.user_id.id,
+            }
+        # Create the wizard
+        wiz_obj = self.pool.get('account.direct.invoice.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+
+        # recreate invoice line as temp objects
+        wiz_invoice_line = self.pool.get('account.direct.invoice.wizard.line')
+        for ivl in invoice.invoice_line:
+            # copy the analytic_distribution not to modify the original one
+            new_line_ad_id = None
+            if ivl.analytic_distribution_id:
+                new_line_ad_id = analytic_distribution.copy(cr, uid,
+                        ivl.analytic_distribution_id.id, context=context)
+            ivl_values = {
+                    'account_id':ivl.account_id.id,
+                    'analytic_distribution_id': new_line_ad_id,
+                    'create_date': create_date,
+                    'invoice_wizard_id':wiz_id,
+                    'name':ivl.name,
+                    'original_invoice_line_id':ivl.id,
+                    'price_unit':ivl.price_unit,
+                    'price_subtotal':ivl.price_subtotal,
+                    'product_id':ivl.product_id.id,
+                    'quantity':ivl.quantity,
+                    'reference':ivl.reference,
+                    'uos_id':ivl.uos_id.id,
+                    }
+            ivl_id = wiz_invoice_line.create(cr, uid, ivl_values, context=context)
+
+        # Update some context values
         context.update({
             'active_id': ids[0],
-            'type': invoice.type,
-            'journal_type': invoice.journal_id.type,
             'active_ids': ids,
-            'from_register': True,
-            })
+        })
+        # Open it!
         return {
-            'name': name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.invoice',
-            'target': 'new',
-            'view_mode': 'form',
-            'view_type': 'form',
-            'view_id': view_id,
-            'res_id': invoice.id,
-            'context': context,
+                'name': _('Direct Invoice'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.direct.invoice.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
         }
+
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """
@@ -2507,7 +2640,6 @@ class account_bank_statement_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.statement_id and line.statement_id.state != 'open':
                 raise osv.except_osv(_('Warning'), _("Register not open, you can't duplicate lines."))
-
             default_vals = ({
                 'name': '(copy) ' + line.name,
                 'cheque_number': None,

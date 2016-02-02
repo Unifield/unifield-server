@@ -51,6 +51,16 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_841_patch(self, cr, uid, *a, **b):
+        # fix incorrect period state on upper level by re-sending state
+        p_ids = self.pool.get('account.period').search(cr, uid, [])
+        if p_ids:
+            cr.execute("""update ir_model_data
+                set last_modification=NOW(),
+                touched='[''state'']'
+                where model='account.period.state' and res_id in %s
+                """, (tuple(p_ids), ))
+
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
         user_obj = self.pool.get('res.users')
@@ -120,6 +130,9 @@ class patch_scripts(osv.osv):
         obj.clean_translation(cr, uid, context={})
         obj.add_xml_ids(cr, uid, context={})
 
+    def us_394_3_patch(self, cr, uid, *a, **b):
+        self.us_394_2_patch(cr, uid, *a, **b)
+
     def update_us_435_2(self, cr, uid, *a, **b):
         period_obj = self.pool.get('account.period')
         period_state_obj = self.pool.get('account.period.state')
@@ -167,6 +180,36 @@ class patch_scripts(osv.osv):
 
             if vals:
                 po_obj.write(cr, uid, [po['id']], vals)
+
+    def us_822_patch(self, cr, uid, *a, **b):
+        fy_obj = self.pool.get('account.fiscalyear')
+        level = self.pool.get('res.users').browse(cr, uid,
+            [uid])[0].company_id.instance_id.level
+
+        # create FY15 /FY16 'system' periods (number 0 and 16)
+        if level == 'section':
+            fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [
+                ('date_start', 'in', ('2015-01-01', '2016-01-01', ))
+            ])
+            if fy_ids:
+                for fy_rec in fy_obj.browse(cr, uid, fy_ids):
+                    year = int(fy_rec['date_start'][0:4])
+                    periods_to_create = [16, ]
+                    if year != 2015:
+                        # for FY15 period 0 not needed as no initial balance for
+                        # the first FY of UF start
+                        periods_to_create.insert(0, 0)
+
+                    self.pool.get('account.year.end.closing').create_periods(cr,
+                        uid, fy_rec.id, periods_to_create=periods_to_create)
+
+        # update fiscal year state (new model behaviour-like period state)
+        fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [])
+        if fy_ids:
+            self.pool.get('account.fiscalyear.state').update_state(cr, uid,
+                fy_ids)
+
+        return True
 
     def disable_crondoall(self, cr, uid, *a, **b):
         cron_obj = self.pool.get('ir.cron')

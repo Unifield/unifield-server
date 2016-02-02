@@ -1207,7 +1207,9 @@ class stock_production_lot(osv.osv):
         '''
         search function of production lot
         '''
-        result = super(stock_production_lot, self).search(cr, uid, args=args, offset=offset, limit=limit, order=order, context=context, count=count)
+        result = super(stock_production_lot, self).search(cr, uid, args=args,
+                offset=offset, limit=limit, order=order,
+                context=context, count=count)
 
         return result
 
