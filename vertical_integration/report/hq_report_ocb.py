@@ -648,10 +648,10 @@ class hq_report_ocb(report_sxw.report_sxw):
             processrequests.append({
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'plresult',
-                #'function': 'postprocess_add_db_id_plresult', # to take analytic line IDS and make a DB ID with
-                #'fnct_params': 'account.move.line',
+                'function': 'postprocess_add_db_id', # to take move line ids and make a DB ID with
+                'fnct_params': 'account.move.line',
                 'query_params': (tuple(plresult_ji_in_ids), ),
-                #'delete_columns': [0],
+                'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
             })
