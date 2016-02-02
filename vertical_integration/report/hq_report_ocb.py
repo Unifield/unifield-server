@@ -546,7 +546,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 INNER JOIN account_move m on m.id = aml.move_id
                 INNER JOIN account_account a on a.id = aml.account_id
                 INNER JOIN res_currency c on c.id = aml.currency_id
-                WHERE aml.id in %s
+                WHERE aml.id in %s AND aml.exported in %s
             """
 
         # PROCESS REQUESTS LIST: list of dict containing info to process some SQL requests
@@ -650,7 +650,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'plresult',
                 'function': 'postprocess_add_db_id', # to take move line ids and make a DB ID with
                 'fnct_params': 'account.move.line',
-                'query_params': (tuple(plresult_ji_in_ids), ),
+                'query_params': (tuple(plresult_ji_in_ids), tuple(to_export), ),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
