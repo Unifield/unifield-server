@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
+        <record model="ir.ui.view" id="entity_group_search">
+            <field name="name">sync.client.entity_group_search</field>
+            <field name="model">sync.client.entity_group</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
         <record model="ir.ui.view" id="reg_wizard_view">
             <field name="name">sync_client.register_wiz</field>
             <field name="model">sync.client.register_entity</field>
