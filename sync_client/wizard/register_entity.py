@@ -222,6 +222,7 @@ activate_entity()
 
 class instance_temp(osv.osv):
     _name = "sync_client.instance.temp"
+    _description = "Parent Instance"
 
     _columns = {
         'name' : fields.char("Instance Name", size=64, required=True)      
