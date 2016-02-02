@@ -254,9 +254,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         period = pool.get('account.period').browse(cr, uid, period_id)
         last_day_of_period = period.date_stop
         first_day_of_period = period.date_start
-        period_name = period.name
         selection = form.get('selection', False)
-        to_export = ['f'] # Default export value for exported field on analytic/move lines
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year
         year = str(year_num)
@@ -264,6 +262,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         period_yyyymm = "{0}{1}".format(year,month)
         if not selection:
             raise osv.except_osv(_('Error'), _('No selection value for lines to select.'))
+        # Default export value for exported field on analytic/move lines
         if selection == 'all':
             to_export = ['f', 't']
         elif selection == 'unexported':
@@ -276,7 +275,6 @@ class hq_report_ocb(report_sxw.report_sxw):
         #   of target Coordo
         rawdata_tpl_context= {
             'plres': '',
-            'plres2': '',
         }
         if period.number == 12:
             ayec_obj = pool.get("account.year.end.closing")
@@ -309,9 +307,6 @@ class hq_report_ocb(report_sxw.report_sxw):
                             rawdata_tpl_context.update({
                                 # pl result JIs clause (aml alias version)
                                 'plres':  ' or aml.id in (%s)' % (
-                                    plresult_ji_in_ids, ),
-                                # pl result JIs clause (aml2 alias version)
-                                'plres2':  ' or aml2.id in (%s)' % (
                                     plresult_ji_in_ids, ),
                             })
 
@@ -458,7 +453,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                      account_account AS a, 
                      account_analytic_account AS aa, 
                      account_analytic_account AS aa2, 
-                     account_analytic_account AS aa3, 
+                     account_analytic_account AS aa3,
                      res_currency AS c, 
                      res_company AS e, 
                      res_currency AS cc, 
@@ -479,11 +474,11 @@ class hq_report_ocb(report_sxw.report_sxw):
                                from account_move_line aml2, account_move am,
                                account_period as p2
                                where am.id = aml2.move_id and p2.id = am.period_id
-                               and ((p2.number not in (0, 16) and am.state = 'posted')$plres2)
+                               and p2.number not in (0, 16) and am.state = 'posted'
                               )
                 AND al.instance_id = i.id
                 AND aml.journal_id = aj.id
-                AND (aml.period_id = %s$plres)
+                AND aml.period_id = %s
                 AND j.type not in %s
                 AND al.exported in %s
                 AND al.instance_id in %s;
