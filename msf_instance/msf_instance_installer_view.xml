@@ -22,7 +22,7 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-                <field name="instance_id" />
+                <field name="instance_id" on_change="check_name(instance_id)"/>
               </group>
            </group>
         </data>
