@@ -23,13 +23,14 @@ class msf_instance_setup(osv.osv_memory):
         return {}
 
     def get_instance(self, cr, uid, context=None):
-        entity_obj = self.pool.get('sync.client.entity')
-        if entity_obj:
-            entity = entity_obj.get_entity(cr, uid, context=context)
-            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('code', '=', entity.name), ('instance','=', False)])
-            if instance_ids:
-                return instance_ids[0]
         return False
+#        entity_obj = self.pool.get('sync.client.entity')
+#        if entity_obj:
+#            entity = entity_obj.get_entity(cr, uid, context=context)
+#            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('code', '=', entity.name), ('instance','=', False)])
+#            if instance_ids:
+#                return instance_ids[0]
+#        return False
 
     _defaults = {
         'instance_id': get_instance,
