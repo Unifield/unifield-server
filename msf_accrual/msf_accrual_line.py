@@ -72,7 +72,7 @@ class msf_accrual_line(osv.osv):
     _columns = {
         'date': fields.date("Date"),
         'document_date': fields.date("Document Date", required=True),
-        'period_id': fields.many2one('account.period', 'Period', required=True, domain=[('state', '=', 'draft')]),
+        'period_id': fields.many2one('account.period', 'Period', required=True, domain=[('state', '=', 'draft'), ('is_system', '=', False)]),
         'description': fields.char('Description', size=64, required=True),
         'reference': fields.char('Reference', size=64),
         'expense_account_id': fields.many2one('account.account', 'Expense Account', required=True, domain=[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]),
