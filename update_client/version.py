@@ -38,7 +38,7 @@ class version(osv.osv):
         return dict(cr.fetchall())
 
     _columns = {
-        'name' : fields.char(string='Tag', size=256, readonly=True),
+        'name' : fields.char(string='Version', size=256, readonly=True),
         'patch' : fields.binary('Patch', readonly=True),
         'sum' : fields.char(string="Commit Hash", size=256, required=True, readonly=True),
         'date' : fields.datetime(string="Revision Date", readonly=True),
@@ -69,16 +69,26 @@ class version(osv.osv):
             versions_id = dict([(x['sum'], x['id']) for x in current_versions])
             current_versions.append( {'sum':base_version,'state':'installed'} )
             # Create non-existing versions in db
-            for rev in set(server_version) - set([x['sum'] for x in current_versions]):
-                versions_id[rev] = self.create(cr, 1, {'sum':rev, 'state':'installed', 'applied':now})
+            server_version_keys = [x['md5sum'] for x in server_version]
+            for rev in set(server_version_keys) - set([x['sum'] for x in current_versions]):
+                for s_ver in server_version:
+                    if rev == s_ver['md5sum']:
+                        versions_id[rev] = self.create(cr, 1,
+                            {'sum':rev,
+                             'state':'installed',
+                             'applied':now,
+                             'version':version,
+                             'name':s_ver['name'],
+                             'date':s_ver['date']})
+                        break
             # Update existing ones
             self.write(cr, 1, [x['id'] for x in current_versions \
-                               if x['sum'] in server_version and not x['state'] == 'installed'], \
+                               if x['sum'] in server_version_keys and not x['state'] == 'installed'], \
                               {'state':'installed','applied':now})
             # Set last revision (assure last update has the last applied date)
             time.sleep(1)
-            if len(server_version) > 1:
-                self.write(cr, 1, [versions_id[server_version[-1]]], {'applied':fields.datetime.now()})
+            if len(server_version_keys) > 1:
+                self.write(cr, 1, [versions_id[server_version_keys[-1]]], {'applied':fields.datetime.now()})
         except BaseException, e:
             self._logger.exception("version init failure!")
 
@@ -195,7 +205,8 @@ class entity(osv.osv):
             return (False, "Need restart")
         current_revision = revisions._get_last_revision(cr, uid, context=context)
         if current_revision: current_revision = current_revision.sum
-        if not (current_revision == server_version[-1] or (current_revision is False and server_version[-1] == base_version)):
+        if not (current_revision == server_version[-1]['md5sum'] or\
+                (current_revision is False and server_version[-1]['md5sum'] == base_version)):
             return (False, (_("Cannot continue while OpenERP Server version is different than database %s version! Try to login/logout again and restart OpenERP Server.") % cr.dbname))
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         try:

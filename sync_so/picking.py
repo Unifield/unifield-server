@@ -258,6 +258,7 @@ class stock_picking(osv.osv):
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
         in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
         if in_id:
+            in_name = self.read(cr, uid, in_id, ['name'], context=context)['name']
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
             self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context)
             partial_datas = {}
@@ -305,9 +306,20 @@ class stock_picking(osv.osv):
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
                         if not move_ids:
-                            message = "Line number " + str(ln) + " is not found in the original IN or PO"
-                            self._logger.info(message)
-                            raise Exception(message)
+                            closed_in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'cancel'], context)
+                            if closed_in_id:
+                                search_move = [('picking_id', '=', closed_in_id), ('line_number', '=', data.get('line_number'))]
+                                move_ids = move_obj.search(cr, uid, search_move, context=context)
+                            if not move_ids:
+                                message = "Line number " + str(ln) + " is not found in the original IN or PO"
+                                self._logger.info(message)
+                                raise Exception(message)
+                            else:
+                                message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
+                                    in_name, po_name,
+                                )
+                                self._logger.info(message)
+                                raise Exception(message)
 
                     move_id = False # REF-99: declare the variable before using it, otherwise if it go to else, then line 268 "if not move_id" -> problem!
                     if move_ids and len(move_ids) == 1:  # if there is only one move, take it for process
@@ -389,10 +401,21 @@ class stock_picking(osv.osv):
             #UFTP-332: Check if shipment/out is given
             if shipment_ref:
                 same_in = self.search(cr, uid, [('id', '=', in_id), ('shipment_ref', '=', shipment_ref)], context=context)
+                processed_in = None
+                if not same_in:
+                    # Check if the IN has not been manually processed (forced)
+                    processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
+                    if processed_in:
+                        in_name = self.browse(cr, uid, in_id, context=context)['name']
+                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
+                            in_name, po_name,
+                        )
+                if not same_in and not processed_in:
+                    message = "Sorry, this seems to be an extra ship. This feature is not available now!"
             else:
                 same_in = self.search(cr, uid, [('id', '=', in_id)], context=context)
-            if not same_in:
                 message = "Sorry, this seems to be an extra ship. This feature is not available now!"
+            if not same_in:
                 self._logger.info(message)
                 raise Exception(message)
 

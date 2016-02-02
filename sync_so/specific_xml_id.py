@@ -18,7 +18,7 @@ from osv import fields
 #    and finally remove all dots (unexpected dots appears when the system
 #    language is not english)
 def get_valid_xml_name(*args):
-    return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '')
+    return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '').replace(',', '_')
 
 class fiscal_year(osv.osv):
 
@@ -602,7 +602,9 @@ class account_analytic_line(osv.osv):
                     new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
                     if new_destination_name and xml_id:
                         identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
-                        exist_ids = msg_to_send_obj.search(cr, uid, [('identifier', '=', identifier), ('sent', '=', False)])
+                        exist_ids = msg_to_send_obj.search(cr, uid,
+                                [('identifier', '=', identifier), ('sent', '=',
+                                    False)], order='NO_ORDER')
                         if exist_ids:
                             msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
 
@@ -629,18 +631,17 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
-        if not context:
+        if context is None:
             context = {}
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         # Do workflow if line is coming from sync, is now reconciled and it has an unpaid invoice
         if context.get('sync_update_execution', False) and 'reconcile_id' in vals and vals['reconcile_id']:
             invoice_ids = []
-            for line in self.browse(cr, uid, ids, context=context):
-                if line.invoice and line.invoice.state != 'paid':
-                    invoice_ids.append(line.invoice.id)
+            line_list = self.browse(cr, uid, ids, context=context)
+            invoice_ids = [line.invoice.id for line in line_list if
+                    line.invoice and line.invoice.state != 'paid']
             if self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
                 self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
-
         return res
 
 account_move_line()
@@ -730,7 +731,9 @@ class product_product(osv.osv):
 
         # if the default_code is empty or XXX, rebuild the xmlid
         model_data_obj = self.pool.get('ir.model.data')
-        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','=',res_id),('module','=','sd')])
+        sdref_ids = model_data_obj.search(cr, uid,
+                [('model','=',self._name),('res_id','=',res_id),('module','=','sd')],
+                order='NO_ORDER')
         if not sdref_ids: # xmlid not exist in ir model data -> create new
             identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
             name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))

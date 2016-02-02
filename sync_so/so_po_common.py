@@ -209,7 +209,9 @@ class so_po_common(osv.osv_memory):
         if 'ready_to_ship_date' in header_info:
             header_result['ready_to_ship_date'] = header_info.get('ready_to_ship_date')
 
-        if 'analytic_distribution_id' in header_info:
+        # US-830: If the PO is intermission/intersection, don't take the AD from the sync. message
+        partner_type = self.get_partner_type(cr, uid, source, context)
+        if 'analytic_distribution_id' in header_info and partner_type not in ['section', 'intermission']:
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
 
         if 'sync_date' in header_info:
@@ -663,7 +665,9 @@ class so_po_common(osv.osv_memory):
             return
 
         xml_id = identifiers[object_id]
-        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier',
+            '=', xml_id), ('destination_name', '=', partner_name)],
+            limit=1, order='NO_ORDER', context=context)
         if existing_message_id: # if similar message does not exist in the system, then do nothing
             return
 
@@ -686,7 +690,9 @@ class so_po_common(osv.osv_memory):
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
 
         xml_id = cr.dbname + "_recovery_" + partner_name + "_object_" + name
-        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier',
+            '=', xml_id), ('destination_name', '=', partner_name)],
+            limit=1, order='NO_ORDER', context=context)
         if existing_message_id: # if similar message does not exist in the system, then do nothing
             return
 
