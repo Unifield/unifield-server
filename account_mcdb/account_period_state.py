@@ -118,7 +118,7 @@ class account_period_state(osv.osv):
         # on account.period.state because they are created with synchro and
         # they need to be sync down to other instances
         if ids_to_write:
-            model_data.write(cr, uid, ids_to_write, 
+            model_data.write(cr, uid, ids_to_write,
                 {'last_modification': fields.datetime.now(), 'touched': "['state']"})
         return True
 
