@@ -576,8 +576,6 @@ class stock_picking(osv.osv):
         # US-803: point 20. Added the price currency for IN line
         if data['price_currency_id'] and data['price_currency_id']['id']:
             price_currency_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(data['price_currency_id']['id']), context=context)
-        else:
-            raise Exception, "Currency  at line cannot be empty"
          
         if data['reason_type_id'] and data['reason_type_id']['id']:
             reason_type_id = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(data['reason_type_id']['id']), context=context)
