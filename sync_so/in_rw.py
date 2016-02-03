@@ -117,13 +117,12 @@ class stock_picking(osv.osv):
 
         pick_dict = int_info.to_dict()
         pick_name = pick_dict['name']
-        origin = pick_dict['origin']
 
         self._logger.info("+++ RW: Cancel the Internal Picking: %s from %s to %s" % (pick_name, source, cr.dbname))
 
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.REMOTE_WAREHOUSE:
-            existing_pick = self.search(cr, uid, [('name', '=', pick_name), ('type', '=', 'int'), ('state', '!=', 'done')], context=context)
+            existing_pick = self.search(cr, uid, [('name', '=', pick_name), ('type', '=', 'internal'), ('state', '!=', 'done')], context=context)
             if not existing_pick:
                 message = "Sorry, the INT: " + pick_name + " does not exist in " + cr.dbname
                 self._logger.info(message)
