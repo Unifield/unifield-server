@@ -82,6 +82,7 @@ class account_period_state(osv.osv):
         period_state = self.pool.get('account.period.state')
         parent = user.company_id.instance_id.id
         ids_to_write = []
+        new_ids = []
         for period_id in period_ids:
             period = self.pool.get('account.period').read(cr, uid, period_id,
                                                           ['id', 'state'],
@@ -107,14 +108,18 @@ class account_period_state(osv.osv):
                         'period_id': period['id'],
                         'instance_id': parent,
                         'state': period['state']}
-                    self.create(cr, uid, vals, context=context)
+                    new_period_state_id = self.create(cr, uid, vals, context=context)
+                    new_period_state_xml_id=period_state.get_sd_ref(cr, uid,
+                                                                    period_state_id)
+                    ids_to_write.append(model_data._get_id(cr, uid, 'sd',
+                                                           new_period_state_xml_id))
 
         # US-649 : in context of synchro last_modification date must be updated
         # on account.period.state because they are created with synchro and
         # they need to be sync down to other instances
         if ids_to_write:
-            model_data.write(cr, uid, ids_to_write, {'last_modification':fields.datetime.now()})
-
+            model_data.write(cr, uid, ids_to_write, 
+                {'last_modification': fields.datetime.now(), 'touched': "['state']"})
         return True
 
 account_period_state()
