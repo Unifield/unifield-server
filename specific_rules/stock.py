@@ -119,6 +119,17 @@ class initial_stock_inventory(osv.osv):
 
                     self.pool.get('initial.stock.inventory.line').write(cr, uid, [inventory_line.id], {'prod_lot_id': prodlot_id}, context=context)
 
+                if inventory_line.product_id.perishable and not inventory_line.product_id.batch_management:
+                    if not inventory_line.prodlot_name and inventory_line.expiry_date:
+                        prodlot_ids = prodlot_obj.search(cr, uid, [
+                            ('type', '=', 'internal'),
+                            ('product_id', '=', inventory_line.product_id.id),
+                            ('life_date', '=', inventory_line.expiry_date),
+                        ], context=context)
+                        if prodlot_ids:
+                            self.pool.get('initial.stock.inventory.line').write(cr, uid, [inventory_line.id], {
+                                'prodlot_name': prodlot_obj.read(cr, uid, prodlot_ids[0], ['name'], context=context)['name'],
+                            }, context=context)
         
         return super(initial_stock_inventory, self).action_confirm(cr, uid, ids, context=context)
     

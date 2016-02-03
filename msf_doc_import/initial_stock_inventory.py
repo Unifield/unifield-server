@@ -948,6 +948,7 @@ class initial_stock_inventory_line(osv.osv):
                 else:
                     batch = False
                     vals['prodlot_name'] = False
+                    comment += _('Other batch exists for this expiry date')
 #            if expiry and not batch:
 #                comment += _('Expiry date will be created (with its internal batch).\n')
 #                just_warn = True
