@@ -215,12 +215,13 @@ class account_year_end_closing(osv.osv):
 
         return level
 
-    def create_periods(self, cr, uid, fy_id, periods_to_create=[0, 16, ],
+    def create_periods(self, cr, uid, fy_id, periods_to_create=[0, 16],
         context=None):
         """
         create closing special periods 0/16 for given FY
         :param fy_id: fy id to create periods in
         """
+        period_obj = self.pool.get('account.period')
         period_numbers = [ pn for pn in periods_to_create \
             if pn in self._period_month_map.keys() ]
         fy_rec = self._browse_fy(cr, uid, fy_id, context=context)
@@ -229,20 +230,22 @@ class account_year_end_closing(osv.osv):
         for pn in period_numbers:
             period_year_month = (fy_year, self._period_month_map[pn], )
             code = "Period %d" % (pn, )
-            vals = {
-                'name': code,
-                'code': code,
-                'number': pn,
-                'special': True,
-                'date_start': '%s-%02d-01' % period_year_month,
-                'date_stop': '%s-%02d-31' % period_year_month,
-                'fiscalyear_id': fy_id,
-                'state': 'draft',  # opened by default
-                'active': pn != 0, # 0 period hidden by default
-            }
+            if not period_obj.search(cr, uid, [('fiscalyear_id', '=', fy_id), ('number', '=', pn), ('active', 'in', ['t', 'f'])],
+                    order='NO_ORDER', context=context):
+                vals = {
+                    'name': code,
+                    'code': code,
+                    'number': pn,
+                    'special': True,
+                    'date_start': '%s-%02d-01' % period_year_month,
+                    'date_stop': '%s-%02d-31' % period_year_month,
+                    'fiscalyear_id': fy_id,
+                    'state': 'draft',  # opened by default
+                    'active': pn != 0, # 0 period hidden by default
+                }
 
-            self.pool.get('account.period').create(cr, uid, vals,
-                context=context)
+                period_obj.create(cr, uid, vals,
+                    context=context)
 
     def setup_journals(self, cr, uid, context=None):
         """
