@@ -158,21 +158,22 @@ class stock_picking_out_rw(osv.osv):
     _inherit = 'stock.picking'
     
     # Do not show the button new, duplicate in the tree and form view
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         so_po_common = self.pool.get('so.po.common')
         res = super(stock_picking_out_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
         
+        rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
         if view_type in ['tree','form'] and 'out' in res['name']:
             return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type, so_po_common.CENTRAL_PLATFORM)
-        elif view_type in ['form'] and 'picking' in res['name']:
-            # US-702: Block the buttons in PICK
-            rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
-            if rw_type == so_po_common.REMOTE_WAREHOUSE:
+        elif context.get('picking_type') == 'internal_move':
+            #US-803: Point 12: hide all in CP for INT views
+            if rw_type == so_po_common.CENTRAL_PLATFORM:
                 root = etree.fromstring(res['arch'])
                 root.set('hide_new_button', 'True')
                 root.set('hide_delete_button', 'True')
                 root.set('hide_duplicate_button', 'True')
-                res['arch'] = etree.tostring(root)                  
+                res['arch'] = etree.tostring(root)
         
         return res
     

@@ -189,6 +189,8 @@ class so_po_common(osv.osv_memory):
             header_result['notes'] = header_info.get('note')
             header_result['note'] = header_info.get('note')
 
+        if 'origin' in header_info:
+            header_result['origin'] = header_info.get('origin')
         if 'order_type' in header_info:
             header_result['order_type'] = header_info.get('order_type')
         if 'priority' in header_info:
