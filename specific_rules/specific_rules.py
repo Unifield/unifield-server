@@ -1478,8 +1478,16 @@ Expiry date. Only one line with same data is expected."""))
                 # if perishable product
                 if line.hidden_perishable_mandatory and not line.hidden_batch_management_mandatory:
                     # integrity test
-                    assert line.product_id.perishable, 'product is not perishable but line is'
-                    assert line.expiry_date, 'expiry date is not set'
+                    if not line.product_id.perishable:
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('Product is not perishable but line is.')
+                        )
+                    if not line.expiry_date:
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('Expiry date is not set'),
+                        )
                     # if no production lot, we create a new one
                     if not line.prod_lot_id:
                         # double check to find the corresponding prodlot
@@ -1498,6 +1506,10 @@ Expiry date. Only one line with same data is expected."""))
                             prodlot_id = prodlot_ids[0]
                         # update the line
                         line.write({'prod_lot_id': prodlot_id,},)
+
+                if line.prod_lot_id and not line.expiry_date:
+                    line.write({'expiry_date': line.prod_lot_id.life_date})
+
                 line_ids.append(line.id)
 
         if line_ids:
