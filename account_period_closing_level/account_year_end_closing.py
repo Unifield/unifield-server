@@ -710,7 +710,6 @@ class account_year_end_closing(osv.osv):
         if not cr.rowcount:
             return
 
-        re_account_found_in_bs = False
         je_by_acc_ccy = {}  # JE/ ACC/CCY, key: (acc_id, ccy_id), value: JE id
         for account_id, account_code, ccy_id, ccy_code, \
             balance_currency, balance in cr.fetchall():
@@ -730,24 +729,20 @@ class account_year_end_closing(osv.osv):
                 account_id=account_id, account_code=account_code,
                 balance_currency=balance_currency, balance=balance, je_id=je_id)
 
-        if not re_account_found_in_bs:
-            # Regular/Equity account result entry for P&L
-
-            # invert balance amount to debit or credit amount after account dispatch
-            pl_balance *= -1
-
-            je_id = je_by_acc_ccy.get(
-                (re_account_rec.id, cpy_rec.currency_id.id, ), False)
-            if not je_id:
-                je_id = create_journal_entry(ccy_id=ccy_id,
-                    ccy_code=cpy_rec.currency_id.name,
-                    account_id=re_account_rec.id,
-                    account_code=re_account_rec.code)
-            create_journal_item(ccy_id=cpy_rec.currency_id.id,
+        # Regular/Equity account result entry for P&L
+        # => invert balance amount to debit or credit amount after account dispatch
+        je_id = je_by_acc_ccy.get(
+            (re_account_rec.id, cpy_rec.currency_id.id, ), False)
+        if not je_id:
+            je_id = create_journal_entry(ccy_id=ccy_id,
                 ccy_code=cpy_rec.currency_id.name,
-                account_id=re_account_rec.id, account_code=re_account_rec.code,
-                balance_currency=pl_balance, balance=pl_balance, je_id=je_id,
-                name="P&L Result report / Previous Fiscal Year")
+                account_id=re_account_rec.id,
+                account_code=re_account_rec.code)
+        create_journal_item(ccy_id=cpy_rec.currency_id.id,
+            ccy_code=cpy_rec.currency_id.name,
+            account_id=re_account_rec.id, account_code=re_account_rec.code,
+            balance_currency=pl_balance, balance=pl_balance, je_id=je_id,
+            name="P&L Result report / Previous Fiscal Year")
 
     def update_fy_state(self, cr, uid, fy_id, reopen=False, context=None):
         def hq_close_post_entries(period_ids):
