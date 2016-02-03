@@ -1462,10 +1462,19 @@ Expiry date. Only one line with same data is expected."""))
 
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
+            import pdb
+            pdb.set_trace()
+            if obj.import_error_ok:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Plase fix issue on red lines before confirm the inventory.')
+                )
+
             for line in obj.inventory_line_id:
                 if self._name == 'initial.stock.inventory' and line.product_qty == 0.00:
                     line.write({'dont_move': True})
                     continue
+
                 if line.hidden_perishable_mandatory and not line.expiry_date:
                     raise osv.except_osv(_('Error'), _('The product %s is perishable but the line with this product has no expiry date') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
                 if line.hidden_batch_management_mandatory and not line.prod_lot_id:

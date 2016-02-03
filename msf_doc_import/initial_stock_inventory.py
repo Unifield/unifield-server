@@ -221,6 +221,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                             'life_date': expiry,
                             'name': batch_name,
                         }, context=context)
+                        to_correct_ok = False
                     elif product.batch_management and not batch_name:
                         batch = False
                         to_correct_ok = True
@@ -934,6 +935,14 @@ class initial_stock_inventory_line(osv.osv):
                 comment += _('Incorrectly formatted expiry date. Batch not created.\n')
             else:
                 comment += _('Batch is missing.\n')
+        elif hidden_batch_management_mandatory and batch and expiry:
+            batch_ids = pl_obj.search(cr, uid, [
+                ('product_id', '=', product.id),
+                ('life_date', '=', expiry),
+                ('name', '!=', batch),
+            ], context=context)
+            if batch_ids:
+                comment += _('Other batch exists for this expiry date')
 
         if not product.batch_management and hidden_perishable_mandatory:
             if expiry and batch:
@@ -977,7 +986,7 @@ class initial_stock_inventory_line(osv.osv):
         if hidden_batch_management_mandatory and batch and expiry:
             pl_ids = pl_obj.search(cr, uid, [('name', '=', batch), ('product_id', '=', vals.get('product_id'))], context=context)
             if pl_ids and pl_obj.read(cr, uid, pl_ids[0], ['life_date'], context=context)['life_date'] != expiry:
-                comment += _('Expiry date and batch not consistent.\n')
+                comment += _('Please check expiry date is correct.\n')
                 vals.update({
                     'prod_lot_id': False,
                     'prodlot_name': '',
