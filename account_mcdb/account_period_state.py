@@ -206,8 +206,8 @@ class account_fiscalyear_state(osv.osv):
                         'instance_id': parent,
                         'state': fy['state']
                     }
-                    nid = self.create(cr, uid, vals, context=context)
-                    state_to_update = [nid]
+                    new_id = self.create(cr, uid, vals, context=context)
+                    state_to_update.append(new_id)
 
         for fy_state_id in state_to_update:
             fy_state_xml_id = fy_state_obj.get_sd_ref(cr, uid, fy_state_id)
