@@ -37,14 +37,11 @@ class account_period_create(osv.osv_memory):
 
     def account_period_create_periods(self, cr, uid, ids, context=None):
         data = self.read(cr, uid, ids, [], context=context)[0]
+        year = datetime.date.today().year
         if data['fiscalyear'] == 'next':
-            # Jan 1st of next year
-            start_date = datetime.date(datetime.date.today().year + 1, 1, 1)
-            end_date = datetime.date(datetime.date.today().year + 1, 12, 31)
-        else:
-            # First day of the current month
-            start_date = datetime.date(datetime.date.today().year, datetime.date.today().month, 1)
-            end_date = datetime.date(datetime.date.today().year, 12, 31)
+            year += 1
+        start_date = datetime.date(year, 1, 1)
+        end_date = datetime.date(year, 12, 31)
 
         fiscalyear_obj = self.pool.get('account.fiscalyear')
 
