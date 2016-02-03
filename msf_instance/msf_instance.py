@@ -220,7 +220,29 @@ class msf_instance(osv.osv):
          (_check_move_prefix_unicity, 'You cannot have the same move prefix than an active instance!', ['move_prefix']),
          (_check_reconcile_prefix_unicity, 'You cannot have the same reconciliation prefix than an active instance!', ['reconcile_prefix']),
     ]
-    
+
+    def get_child_ids(self, cr, uid, instance_ids=None, children_ids_list=None, context=None):
+        """
+        Search for all the children ids of the instance_ids parameter
+        Get the current instance id if no instance_ids is given
+        """
+        if context is None:
+            context = {}
+        if instance_ids is None:
+            user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+            if user.company_id and user.company_id.instance_id:
+                instance_ids = [user.company_id.instance_id.id]
+        current_children = self.search(cr, uid, [('parent_id', 'in',
+                                                  tuple(instance_ids))])
+        if not current_children:
+            return children_ids_list
+        if children_ids_list is None:
+            children_ids_list = []
+        children_ids_list.extend(current_children)
+        self.get_child_ids(cr, uid, current_children, children_ids_list,
+                           context)
+        return children_ids_list
+
     def name_get(self, cr, user, ids, context=None):
         if context is None:
             context = {}
