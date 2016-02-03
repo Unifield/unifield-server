@@ -37,7 +37,6 @@ class so_po_common(osv.osv_memory):
             root = etree.fromstring(res['arch'])
             root.set('hide_new_button', 'True')
             root.set('hide_delete_button', 'True')
-            root.set('noteditable', 'True')
             root.set('hide_duplicate_button', 'True')
             res['arch'] = etree.tostring(root)
         return res
