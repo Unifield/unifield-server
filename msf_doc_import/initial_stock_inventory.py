@@ -948,6 +948,14 @@ class initial_stock_inventory_line(osv.osv):
                 else:
                     batch = False
                     vals['prodlot_name'] = False
+            if expiry and not batch:
+                batch_ids = pl_obj.search(cr, uid, [
+                    ('product_id', '=', product.id),
+                    ('life_date', '=', expiry),
+                ], context=context)
+                if batch_ids:
+                    batch = False
+                    vals['prodlot_name'] = False
                     comment += _('Other batch exists for this expiry date')
 #            if expiry and not batch:
 #                comment += _('Expiry date will be created (with its internal batch).\n')
