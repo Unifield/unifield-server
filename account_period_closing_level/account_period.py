@@ -150,7 +150,8 @@ class account_period(osv.osv):
                 pp_ids = self.search(
                     cr, uid,
                     [('date_start', '<', period.date_start),
-                    ('fiscalyear_id', '=', period.fiscalyear_id.id)],
+                    ('fiscalyear_id', '=', period.fiscalyear_id.id),
+                    ('number', '>', 0), ('number', '<', 16)],
                     context=context)
                 for pp in self.browse(cr, uid, pp_ids, context=context):
                     if check_states.index(pp.state) <= check_states.index(period.state):
@@ -161,7 +162,8 @@ class account_period(osv.osv):
                 np_ids = self.search(
                     cr, uid,
                     [('date_start', '>', period.date_start),
-                    ('fiscalyear_id', '=', period.fiscalyear_id.id)],
+                    ('fiscalyear_id', '=', period.fiscalyear_id.id),
+                    ('number', '>', 0), ('number', '<', 16)],
                     context=context)
                 for np in self.browse(cr, uid, np_ids, context=context):
                     if check_states.index(np.state) >= check_states.index(period.state):
