@@ -300,7 +300,7 @@ class account_journal(osv.osv):
             periods = self.pool.get('account.period').search(cr, uid, [
                     ('date_stop','>=',current_date),
                     ('state','=','draft'),
-                    ('is_system', '=', False),
+                    ('special', '=', False),
                 ], context=context, limit=1, order='date_stop')
             if not periods:
                 raise osv.except_osv(_('Warning'), _('Sorry, No open period for creating the register!'))
