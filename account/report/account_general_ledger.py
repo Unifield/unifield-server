@@ -352,8 +352,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             return res
 
         if not initial_balance_mode:
-            move_state = [ 'posted', ] if self.target_move == 'posted' \
-                else [ 'draft', 'posted', ]
+            move_state_in = "('posted')" if self.target_move == 'posted' \
+                else "('draft', 'posted')"
 
             # First compute all counterpart strings for every move_id where this account appear.
             # Currently, the counterpart info is used only in landscape mode
@@ -404,11 +404,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 LEFT JOIN account_account ac on (ac.id=l.account_id)
                 JOIN account_journal j on (l.journal_id=j.id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
-            """ %(self.query, tuple(move_state), sql_sort)
+            """ %(self.query, move_state_in, sql_sort)
             sql = sql.replace('{{reconcile}}',
                     self.unreconciled_filter and \
                         " AND reconcile_id is null and ac.reconcile ='t'" or '')
-            self.cr.execute(sql, (account.id,))
+            self.cr.execute(sql, (account.id, ))
             res = self.cr.dictfetchall()
         else:
             if self.init_balance:
