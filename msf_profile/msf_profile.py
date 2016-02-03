@@ -51,15 +51,54 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
-    def us_841_patch(self, cr, uid, *a, **b):
-        # fix incorrect period state on upper level by re-sending state
-        p_ids = self.pool.get('account.period').search(cr, uid, [])
-        if p_ids:
-            cr.execute("""update ir_model_data
-                set last_modification=NOW(),
+    def us_898_patch(self, cr, uid, *a, **b):
+        context = {}
+        # remove period state from upper levels as an instance should be able
+        # to see only the children account.period.state's
+        period_state_obj = self.pool.get('account.period.state')
+        msf_instance_obj = self.pool.get('msf.instance')
+
+        # get the current instance id
+        instance_ids = []
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        if user.company_id and user.company_id.instance_id:
+            instance_ids = [user.company_id.instance_id.id]
+
+        # get all the children of this instance
+        children_ids = msf_instance_obj.get_child_ids(cr, uid)
+        import pdb; pdb.set_trace()
+
+        # remove period_state that are not concerning current instance or his
+        # children
+        period_state_ids = []
+        period_state_ids = period_state_obj.search(cr, uid,
+                            [('instance_id', 'not in', children_ids + instance_ids)])
+        if period_state_ids:
+            period_state_obj.unlink(cr, uid, period_state_ids)
+
+        if instance_ids:
+            # touch all ir.model.data object related to the curent
+            # instance account.period.state
+            # this permit to fix incorrect period state on upper level
+            # by re-sending state
+            p_ids = period_state_obj.search(cr, uid,
+                                 [('instance_id', '=', instance_ids[0])])
+
+            cr.execute("""UPDATE ir_model_data
+                SET last_modification=NOW(),
                 touched='[''state'']'
-                where model='account.period.state' and res_id in %s
+                WHERE model='account.period.state' AND
+                       res_id in %s
                 """, (tuple(p_ids), ))
+
+            # delete ir.model.data related to deleted account.period.state
+            model_data = self.pool.get('ir.model.data')
+            ids_to_delete = []
+            for period_state_id in period_state_ids:
+                period_state_xml_id = period_state_obj.get_sd_ref(cr, uid, period_state_id)
+                ids_to_delete.append(model_data._get_id(cr, uid, 'sd',
+                                                       period_state_xml_id))
+            model_data.unlink(cr, uid, ids_to_delete)
 
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
