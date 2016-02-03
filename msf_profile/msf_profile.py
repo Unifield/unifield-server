@@ -66,7 +66,6 @@ class patch_scripts(osv.osv):
 
         # get all the children of this instance
         children_ids = msf_instance_obj.get_child_ids(cr, uid)
-        import pdb; pdb.set_trace()
 
         # remove period_state that are not concerning current instance or his
         # children
