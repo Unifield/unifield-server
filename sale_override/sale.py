@@ -1763,6 +1763,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             for pick_id in picks_to_check:
                 wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
                 # We also do a first 'check availability': cancel then check
+                context['already_checked'] = False
                 picking_obj.cancel_assign(cr, uid, [pick_id], context)
                 picking_obj.action_assign(cr, uid, [pick_id], context)
 
