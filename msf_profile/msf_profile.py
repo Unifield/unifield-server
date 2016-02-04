@@ -56,6 +56,7 @@ class patch_scripts(osv.osv):
         # remove period state from upper levels as an instance should be able
         # to see only the children account.period.state's
         period_state_obj = self.pool.get('account.period.state')
+        period_obj = self.pool.get('account.period')
         msf_instance_obj = self.pool.get('msf.instance')
 
         # get the current instance id
@@ -75,30 +76,22 @@ class patch_scripts(osv.osv):
         if period_state_ids:
             period_state_obj.unlink(cr, uid, period_state_ids)
 
+        # delete ir.model.data related to deleted account.period.state
+        model_data = self.pool.get('ir.model.data')
+        ids_to_delete = []
+        for period_state_id in period_state_ids:
+            period_state_xml_id = period_state_obj.get_sd_ref(cr, uid, period_state_id)
+            ids_to_delete.append(model_data._get_id(cr, uid, 'sd',
+                                                   period_state_xml_id))
+        model_data.unlink(cr, uid, ids_to_delete)
+
         if instance_ids:
             # touch all ir.model.data object related to the curent
-            # instance account.period.state
+            # instance periods
             # this permit to fix incorrect period state on upper level
-            # by re-sending state
-            p_ids = period_state_obj.search(cr, uid,
-                                 [('instance_id', '=', instance_ids[0])])
-
-            if p_ids:
-                cr.execute("""UPDATE ir_model_data
-                    SET last_modification=NOW(),
-                    touched='[''state'']'
-                    WHERE model='account.period.state' AND
-                           res_id in %s
-                    """, (tuple(p_ids), ))
-
-            # delete ir.model.data related to deleted account.period.state
-            model_data = self.pool.get('ir.model.data')
-            ids_to_delete = []
-            for period_state_id in period_state_ids:
-                period_state_xml_id = period_state_obj.get_sd_ref(cr, uid, period_state_id)
-                ids_to_delete.append(model_data._get_id(cr, uid, 'sd',
-                                                       period_state_xml_id))
-            model_data.unlink(cr, uid, ids_to_delete)
+            # by re-sending state and create the missing period_states
+            period_ids = period_obj.search(cr, uid, [])
+            period_state_obj.update_state(cr, uid, period_ids)
 
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
