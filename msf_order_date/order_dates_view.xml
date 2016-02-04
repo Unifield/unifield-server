@@ -216,6 +216,7 @@
             <field name="name">res.company</field>
             <field name="model">res.company</field>
             <field name="type">form</field>
+            <field name="priority">7</field>
             <field name="inherit_id" ref="purchase.mrp_company" />
             <field name="arch" type="xml">
                 <field name="po_lead" position="replace">
@@ -229,7 +230,7 @@
             <field name="name">res.company.mrp.config</field>
             <field name="model">res.company</field>
             <field name="type">form</field>
-            <field name="priority">24</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="sale.mrp_company"/>
             <field name="arch" type="xml">
             	<data>

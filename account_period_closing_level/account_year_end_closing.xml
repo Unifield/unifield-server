@@ -4,6 +4,7 @@
 
         <record id="view_company_inherit_ye_form" model="ir.ui.view">
             <field name="name">view.company.inherit.ye.form</field>
+            <field name="priority">9</field>
             <field name="inherit_id" ref="account_override.view_company_inherit_3_form"/>
             <field name="model">res.company</field>
             <field name="type">form</field>

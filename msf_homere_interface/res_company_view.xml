@@ -8,6 +8,7 @@
 
         <record model="ir.ui.view" id="view_company_inherit_4_form">
             <field name="name">res.company.form.inherit</field>
+            <field name="priority" eval="5"/>
             <field name="inherit_id" ref="base.view_company_form"/>
             <field name="model">res.company</field>
             <field name="type">form</field>

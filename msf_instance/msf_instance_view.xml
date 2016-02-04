@@ -106,6 +106,7 @@
         <!-- UF-1631, 1632: not allow to duplicate, delete or add new company -->
         <record id="view_company_inherit_4_form" model="ir.ui.view">
             <field name="name">res.company.form.instance.inherit</field>
+            <field name="priority">10</field>
             <field name="inherit_id" ref="account_override.view_company_inherit_3_form"/>
             <field name="model">res.company</field>
             <field name="type">form</field>
