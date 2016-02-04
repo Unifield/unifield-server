@@ -389,6 +389,7 @@ class stock_inventory_line(osv.osv):
 
     _columns = {
         'batch_name': fields.char(size=128, string='Batch name'),
+        'inv_expiry_date': fields.date(string='Invisible expiry date'),
         'to_correct_ok': fields.boolean('To correct'),
         'comment': fields.text('Comment', readonly=True),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
@@ -421,6 +422,9 @@ class stock_inventory_line(osv.osv):
 
         if 'location_not_found' in vals:
             del vals['location_not_found']
+
+        if not vals.get('expiry_date') and vals.get('inv_expiry_date'):
+            vals['expiry_date'] = vals.get('inv_expiry_date')
 
         batch = vals.get('prod_lot_id')
         expiry = vals.get('expiry_date')

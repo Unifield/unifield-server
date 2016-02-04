@@ -1618,7 +1618,10 @@ class stock_inventory_line(osv.osv):
             expiry_date = prodlot_obj.browse(cr, uid, prod_lot_id).life_date
         else:
             expiry_date = False
-        result['value']['expiry_date'] = expiry_date
+        result['value'].update({
+            'expiry_date': expiry_date,
+            'inv_expiry_date': expiry_date,
+        })
         if expiry_date:
             prod_brw = prod_obj.browse(cr, uid, product)
             # UFTP-50: got an expiry value,
@@ -1822,14 +1825,19 @@ class stock_inventory_line(osv.osv):
                    result[obj.id]['has_problem'] = True
 
             result[obj.id]['duplicate_line'] = False
-            if self.search(cr, uid, [
+            src_domain = [
                 ('inventory_id', '=', obj.inventory_id.id),
                 ('location_id', '=', obj.location_id.id),
                 ('product_id', '=', obj.product_id.id),
-                ('prod_lot_id', '=', obj.prod_lot_id and obj.prod_lot_id.id or False),
                 ('expiry_date', '=', obj.expiry_date or False),
                 ('id', '!=', obj.id),
-            ], limit=1, context=context):
+            ]
+
+            if self._name == 'initial.stock.inventory.line':
+                src_domain.append(('prodlot_name', '=', obj.prodlot_name))
+            else:
+                src_domain.append(('prod_lot_id', '=', obj.prod_lot_id and obj.prod_lot_id.id or False))
+            if self.search(cr, uid, src_domain, limit=1, context=context):
                 result[obj.id]['duplicate_line'] = True
         return result
 
