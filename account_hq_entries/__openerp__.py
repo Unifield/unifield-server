@@ -31,7 +31,6 @@
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
-        'res_company_view.xml',
         'wizard/wizard_view.xml',
         'account_view.xml',
     ],

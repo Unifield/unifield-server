@@ -216,7 +216,7 @@
             <field name="name">res.company</field>
             <field name="model">res.company</field>
             <field name="type">form</field>
-            <field name="priority">7</field>
+            <field name="priority">10</field>
             <field name="inherit_id" ref="purchase.mrp_company" />
             <field name="arch" type="xml">
                 <field name="po_lead" position="replace">
