@@ -79,7 +79,6 @@ class account_period_state(osv.osv):
 
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         model_data = self.pool.get('ir.model.data')
-        period_state = self.pool.get('account.period.state')
         parent = user.company_id.instance_id.id
         ids_to_write = []
         new_ids = []
@@ -99,7 +98,7 @@ class account_period_state(osv.osv):
                     }
                     self.write(cr, uid, ids, vals, context=context)
                     for period_state_id in ids:
-                        period_state_xml_id = period_state.get_sd_ref(cr, uid, period_state_id)
+                        period_state_xml_id = self.get_sd_ref(cr, uid, period_state_id)
                         ids_to_write.append(model_data._get_id(cr, uid, 'sd',
                             period_state_xml_id))
 
@@ -109,7 +108,7 @@ class account_period_state(osv.osv):
                         'instance_id': parent,
                         'state': period['state']}
                     new_period_state_id = self.create(cr, uid, vals, context=context)
-                    new_period_state_xml_id=period_state.get_sd_ref(cr, uid,
+                    new_period_state_xml_id = self.get_sd_ref(cr, uid,
                                                                     new_period_state_id)
                     ids_to_write.append(model_data._get_id(cr, uid, 'sd',
                                                            new_period_state_xml_id))
