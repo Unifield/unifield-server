@@ -225,6 +225,8 @@ class patch_scripts(osv.osv):
         #if last_version don't have any name
         # and the previous is UF2.0-0p1
         last_line = lines[-1]
+        if not last_line: #  the last is an empty line, no new patch was installed
+            return True
         last_line.rstrip()
         result = re_version.findall(last_line)
         md5sum, date, version_name = result[0]
