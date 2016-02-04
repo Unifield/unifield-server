@@ -232,6 +232,8 @@ class msf_instance(osv.osv):
             user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
             if user.company_id and user.company_id.instance_id:
                 instance_ids = [user.company_id.instance_id.id]
+        if not instance_ids:
+            return []
         current_children = self.search(cr, uid, [('parent_id', 'in',
                                                   tuple(instance_ids))])
         if children_ids_list is None:
