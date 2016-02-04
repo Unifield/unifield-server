@@ -83,12 +83,13 @@ class patch_scripts(osv.osv):
             p_ids = period_state_obj.search(cr, uid,
                                  [('instance_id', '=', instance_ids[0])])
 
-            cr.execute("""UPDATE ir_model_data
-                SET last_modification=NOW(),
-                touched='[''state'']'
-                WHERE model='account.period.state' AND
-                       res_id in %s
-                """, (tuple(p_ids), ))
+            if p_ids:
+                cr.execute("""UPDATE ir_model_data
+                    SET last_modification=NOW(),
+                    touched='[''state'']'
+                    WHERE model='account.period.state' AND
+                           res_id in %s
+                    """, (tuple(p_ids), ))
 
             # delete ir.model.data related to deleted account.period.state
             model_data = self.pool.get('ir.model.data')
