@@ -110,7 +110,7 @@ class account_period_state(osv.osv):
                         'state': period['state']}
                     new_period_state_id = self.create(cr, uid, vals, context=context)
                     new_period_state_xml_id=period_state.get_sd_ref(cr, uid,
-                                                                    period_state_id)
+                                                                    new_period_state_id)
                     ids_to_write.append(model_data._get_id(cr, uid, 'sd',
                                                            new_period_state_xml_id))
 
