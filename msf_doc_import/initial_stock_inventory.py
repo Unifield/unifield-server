@@ -944,6 +944,7 @@ class initial_stock_inventory_line(osv.osv):
             ], context=context)
             if batch_ids:
                 comment += _('Other batch exists for this expiry date')
+                just_warn = True
 
         if not product.batch_management and hidden_perishable_mandatory:
             if expiry and batch:
@@ -967,6 +968,7 @@ class initial_stock_inventory_line(osv.osv):
                     batch = False
                     vals['prodlot_name'] = False
                     comment += _('Other batch exists for this expiry date')
+                    just_warn = True
 #            if expiry and not batch:
 #                comment += _('Expiry date will be created (with its internal batch).\n')
 #                just_warn = True
