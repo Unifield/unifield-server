@@ -218,7 +218,6 @@ class patch_scripts(osv.osv):
         import re
         from tools import config
         file_path = os.path.join(config['root_path'], 'unifield-version.txt')
-        import pdb; pdb.set_trace()
         # get the last known patch line
         # 16679c0321623dd7e13fdd5fad6f677c 2015-12-22 14:30:00 UF2.0-0p1
         with open(file_path, 'r') as f:
@@ -236,7 +235,7 @@ class patch_scripts(osv.osv):
             previous_line_res = re_version.findall(previous_line)
             p_md5sum, p_date, p_version_name = previous_line_res[0]
             if p_md5sum == '16679c0321623dd7e13fdd5fad6f677c':
-                last_line = '%s %s %s' % (md5sum, date, 'UF2.1')
+                last_line = '%s %s %s' % (md5sum, date, 'UF2.1') + os.linesep
                 lines[-1] = last_line
                 with open(file_path, 'w') as file:
                         file.writelines(lines)
