@@ -211,6 +211,36 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_908_patch(self, cr, uid, *a, **b):
+        # add the version to unifield-version.txt as the code which
+        # automatically add this version name is contained in the patch itself.
+        from updater import re_version, md5hex_size
+        import re
+        from tools import config
+        file_path = os.path.join(config['root_path'], 'unifield-version.txt')
+        import pdb; pdb.set_trace()
+        # get the last known patch line
+        # 16679c0321623dd7e13fdd5fad6f677c 2015-12-22 14:30:00 UF2.0-0p1
+        with open(file_path, 'r') as f:
+            lines = f.readlines()
+        #if last_version don't have any name
+        # and the previous is UF2.0-0p1
+        last_line = lines[-1]
+        last_line.rstrip()
+        result = re_version.findall(last_line)
+        md5sum, date, version_name = result[0]
+        if not version_name:
+            # check that the previous patch was UF2.1
+            previous_line = lines[-2].rstrip() or lines[-3].rstrip() #  may be
+                                                # there is a blank line between
+            previous_line_res = re_version.findall(previous_line)
+            p_md5sum, p_date, p_version_name = previous_line_res[0]
+            if p_md5sum == '16679c0321623dd7e13fdd5fad6f677c':
+                last_line = '%s %s %s' % (md5sum, date, 'UF2.1')
+                lines[-1] = last_line
+                with open(file_path, 'w') as file:
+                        file.writelines(lines)
+
     def disable_crondoall(self, cr, uid, *a, **b):
         cron_obj = self.pool.get('ir.cron')
         cron_ids = cron_obj.search(cr, uid, [('doall', '=', True), ('active', 'in', ['t', 'f'])])
