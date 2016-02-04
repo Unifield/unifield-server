@@ -234,10 +234,10 @@ class msf_instance(osv.osv):
                 instance_ids = [user.company_id.instance_id.id]
         current_children = self.search(cr, uid, [('parent_id', 'in',
                                                   tuple(instance_ids))])
-        if not current_children:
-            return children_ids_list
         if children_ids_list is None:
             children_ids_list = []
+        if not current_children:
+            return children_ids_list
         children_ids_list.extend(current_children)
         self.get_child_ids(cr, uid, current_children, children_ids_list,
                            context)
