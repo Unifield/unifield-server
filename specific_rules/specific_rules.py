@@ -1462,12 +1462,16 @@ Expiry date. Only one line with same data is expected."""))
 
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
-            import pdb
-            pdb.set_trace()
             if obj.import_error_ok:
                 raise osv.except_osv(
                     _('Error'),
                     _('Plase fix issue on red lines before confirm the inventory.')
+                )
+
+            if any(l.to_correct_ok for l in obj.inventory_line_id):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Please fix issue on red lines before confirm the inventory.')
                 )
 
             for line in obj.inventory_line_id:

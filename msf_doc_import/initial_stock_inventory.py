@@ -47,7 +47,7 @@ class stock_inventory(osv.osv):
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format.
                                         \n The columns should be in this order : Product Code*, Product Description*, Location*, Batch, Expiry Date, Quantity"""),
-        'import_error_ok':fields.function(_get_import_error,  method=True, type="boolean", string="Error in Import", store=True),
+        'import_error_ok':fields.function(_get_import_error,  method=True, type="boolean", string="Error in Import", store=False),
     }
 
     def _check_active_product(self, cr, uid, ids, context=None):
@@ -480,6 +480,7 @@ class stock_inventory_line(osv.osv):
         if hidden_batch_management_mandatory and batch and not expiry:
             expiry = pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date']
             comment += _('Please check Expiry Date is correct!.\n')
+            vals['to_correct_ok'] = True
 
         if not comment:
             if vals.get('comment'):
@@ -991,6 +992,7 @@ class initial_stock_inventory_line(osv.osv):
                     'prod_lot_id': False,
                     'prodlot_name': '',
                     'expiry_date': False,
+                    'to_correct_ok': True,
                 })
 
         if not comment:
@@ -1001,7 +1003,7 @@ class initial_stock_inventory_line(osv.osv):
             if just_warn:
                 vals.update({'comment': comment, 'to_correct_ok': False})
             else:
-                vals.update({'comment': comment, 'to_correct_ok': False})
+                vals.update({'comment': comment, 'to_correct_ok': True})
 
 
         res = super(initial_stock_inventory_line, self).create(cr, uid, vals, context=context)
