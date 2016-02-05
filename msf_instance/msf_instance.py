@@ -77,6 +77,36 @@ class msf_instance(osv.osv):
                 if len(parent_cost_centers) > 0:
                     res[instance.id] = parent_cost_centers[0]
         return res
+
+    def _get_instance_child_ids(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        child_ids = []
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        if user.company_id and user.company_id.instance_id:
+            instance_id = user.company_id.instance_id.id
+            child_ids = self.get_child_ids(cr, uid)
+            child_ids.append(instance_id)
+        for i in self.search(cr, uid, ids):
+            if not child_ids or i in child_ids:
+                res[i['id']] = i
+        return res
+
+    def _search_instance_child_ids(self, cr, uid, obj, name, args, context=None):
+        res = []
+        for arg in args:
+            if arg[0] == 'instance_child_ids':
+                user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+                if user.company_id and user.company_id.instance_id:
+                    instance_id = user.company_id.instance_id.id
+                    child_ids = self.get_child_ids(cr, uid)
+                    # add current instance to display it in the search
+                    child_ids.append(instance_id)
+                    res.append(('id', 'in', child_ids))
+            else:
+                res.append(arg)
+        return res
     
     _columns = {
         'level': fields.selection([('section', 'Section'),
@@ -100,6 +130,11 @@ class msf_instance(osv.osv):
         'top_cost_center_id': fields.function(_get_top_cost_center, method=True, store=False, string="Top cost centre for budget consolidation", type="many2one", relation="account.analytic.account", readonly="True"),
         'po_fo_cost_center_id': fields.function(_get_po_fo_cost_center, method=True, store=False, string="Cost centre picked for PO/FO reference", type="many2one", relation="account.analytic.account", readonly="True"),
         'instance_identifier': fields.char('Instance identifier', size=64, readonly=1),
+        'instance_child_ids': fields.function(_get_instance_child_ids, method=True,
+                                            string='Proprietary Instance',
+                                            type='many2one',
+                                            relation='msf.instance',
+                                            fnct_search=_search_instance_child_ids),
     }
     
     _defaults = {
