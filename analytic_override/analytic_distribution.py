@@ -286,6 +286,7 @@ class distribution_line(osv.osv):
                 'move_id': move_line.id,
                 'name': name or move_line.name,
                 'distrib_id': line.distribution_id.id,
+                'distribution_id': line.distribution_id.id,
                 'distrib_line_id': '%s,%s'%(self._name, line.id),
                 'ref': ref or move_line.move_id.name,
             }
