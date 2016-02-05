@@ -161,20 +161,20 @@
                                     <td class="pager-cell-button">
                                         % if m2m:
                                             % if not hide_new_button:
-                                            <button title="${_('Add records...')}" id="${name}_add_records">
+                                            <button title="${_('Add records...')}" id="${name}_add_records" type="button">
                                                     ${_('Add')}
                                             </button>
                                             % endif
                                         % elif o2m:
                                            % if not hide_new_button:
                                             <button title="${_('Create new record.')}" id="${name}_btn_"
-                                                onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;">
+                                                onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;" type="button">
                                                     ${_('New')}
                                             </button>
                                            % endif
                                         % else:
                                             % if not dashboard and not hide_new_button:
-                                                <button id="${name}_new" title="${_('Create new record.')}">${_('New')}</button>
+                                                <button id="${name}_new" title="${_('Create new record.')}" type="button">${_('New')}</button>
                                                 % if editors:
                                                     <script type="text/javascript">
                                                         jQuery('[id=${name}_new]').click(function() {
@@ -203,12 +203,12 @@
                                     <td class="pager-cell-button" style="display: none;">
                                         % if not hide_delete_button:
 	                                        % if m2m:
-	                                            <button id="${name}_delete_record" title="${_('Delete record(s).')}">
+	                                            <button id="${name}_delete_record" title="${_('Delete record(s).')}" type="button">
 	                                                ${_('Delete')}
 	                                            </button>
 	                                        % else:
 	                                            <button id="${name}_delete_record" title="${_('Delete record(s).')}"
-	                                                onclick="new ListView('${name}').remove(null,this); return false;">
+	                                                onclick="new ListView('${name}').remove(null,this); return false;" type="button">
 	                                                    ${_('Delete')}
 	                                            </button>
 	                                        % endif
