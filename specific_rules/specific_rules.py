@@ -1517,8 +1517,9 @@ Expiry date. Only one line with same data is expected."""))
                             prodlot_id = prodlot_obj.create(cr, uid, vals, context=context)
                         else:
                             prodlot_id = prodlot_ids[0]
+                        prodlot_name = prodlot_obj.read(cr, uid, prodlot_id, ['name'], context=context)['name']
                         # update the line
-                        line.write({'prod_lot_id': prodlot_id,},)
+                        line.write({'prod_lot_id': prodlot_id, 'prodlot_name': prodlot_name},)
 
                 if line.prod_lot_id and not line.expiry_date:
                     line.write({'expiry_date': line.prod_lot_id.life_date})
