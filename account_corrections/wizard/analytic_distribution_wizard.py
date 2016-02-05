@@ -112,6 +112,19 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         For each given wizard compare old (distrib_id) and new analytic distribution. Then adapt analytic lines.
         """
+        # US-900: get the next OD journal sequence only 1st time it is needed
+        # for the correction transaction
+        def get_entry_seq(entry_seq_data):
+            res = entry_seq_data.get('sequence', False)
+            if not res:
+                seqnum = self.pool.get('ir.sequence').get_id(
+                    cr, uid, journal.sequence_id.id,
+                    context={'fiscalyear_id': period.fiscalyear_id.id})
+                res = "%s-%s-%s" % (move_prefix, code, seqnum)
+                entry_seq_data['sequence'] = res
+            return res
+
+
         if context is None:
             context = {}
         # Prepare some values
@@ -143,8 +156,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (wizard.date or ''))
         period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
         move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
-        seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
-        entry_seq = "%s-%s-%s" % (move_prefix, code, seqnum)
+        entry_seq_data = {}
 
         # US-676: check wizard lines total matches JI amount
         # the wizard already check distri is 100% allocated
@@ -237,7 +249,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # Set right journal and right entry sequence
                 ana_obj.write(cr, uid, reversed_ids, {'journal_id': correction_journal_id})
                 for reversed_id in reversed_ids:
-                    cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, reversed_id) )
+                    cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), reversed_id) )
                 # delete the distribution line
                 wiz_line.unlink()
                 any_reverse = True
@@ -304,7 +316,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.pool.get('account.analytic.line').write(cr, uid, [reversed_id], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence})
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
             self.pool.get('account.analytic.line').write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True})
-            cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, reversed_id) )
+            cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), reversed_id) )
 
             # update the distrib line
             name = False
@@ -330,13 +342,13 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Add link to first analytic lines
             for ret_id in ret:
                 self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
-                cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, ret[ret_id]) )
+                cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), ret[ret_id]) )
             if ret and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
                 greater_amount['aji_id'] = ret[ret.keys()[0]]
                 greater_amount['date'] = wizard.date
         # UFTP-194: Set missing entry sequence for created analytic lines
         if have_been_created:
-            cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (entry_seq, to_reverse_ids[0], tuple(have_been_created)))
+            cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (get_entry_seq(entry_seq_data), to_reverse_ids[0], tuple(have_been_created)))
 
         #####
         ## FP: TO OVERRIDE
