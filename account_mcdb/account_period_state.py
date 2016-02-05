@@ -86,7 +86,6 @@ class account_period_state(osv.osv):
         model_data = self.pool.get('ir.model.data')
         parent = user.company_id.instance_id.id
         ids_to_write = []
-        new_ids = []
         for period_id in period_ids:
             period = self.pool.get('account.period').read(cr, uid, period_id,
                                                           ['id', 'state'],
