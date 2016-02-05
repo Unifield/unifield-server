@@ -1433,9 +1433,12 @@ class stock_inventory(osv.osv):
                 %s_line l
             WHERE
                 l.inventory_id in %%s
-            GROUP BY l.product_id, l.location_id, l.prod_lot_id, l.expiry_date
+            GROUP BY l.product_id, l.location_id, l.%s, l.expiry_date
             HAVING count(l.id) > 1
-            ORDER BY count(l.id) DESC""" % self._name.replace('.', '_')
+            ORDER BY count(l.id) DESC""" % (
+                self._name.replace('.', '_'),
+                self._name == 'stock.inventory' and 'prod_lot_id' or 'prodlot_name',
+            )
         cr.execute(sql_req, (tuple(ids),))
         check_res = cr.dictfetchall()
         if check_res:
