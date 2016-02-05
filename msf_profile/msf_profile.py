@@ -85,13 +85,12 @@ class patch_scripts(osv.osv):
                                                    period_state_xml_id))
         model_data.unlink(cr, uid, ids_to_delete)
 
-        if instance_ids:
-            # touch all ir.model.data object related to the curent
-            # instance periods
-            # this permit to fix incorrect period state on upper level
-            # by re-sending state and create the missing period_states
-            period_ids = period_obj.search(cr, uid, [])
-            period_state_obj.update_state(cr, uid, period_ids)
+        # touch all ir.model.data object related to the curent
+        # instance periods
+        # this permit to fix incorrect period state on upper level
+        # by re-sending state and create the missing period_states
+        period_ids = period_obj.search(cr, uid, [('active', 'in', ('t', 'f'))])
+        period_state_obj.update_state(cr, uid, period_ids)
 
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
