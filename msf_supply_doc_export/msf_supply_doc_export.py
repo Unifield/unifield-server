@@ -691,7 +691,6 @@ class ir_values(osv.osv):
                 or v[2].get('report_name', False) in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
                 or v[2].get('report_name', False) == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):
                     new_act.append(v)
-                    print v[2].get('report_name')
                 values = new_act
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
             new_act = []
