@@ -21,8 +21,18 @@
             </xpath>
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="display_account"/>
-                <field name="reserve_account_id" required="1"/>
-                <field name="display_type"/>
+                <field name="reserve_account_id" required="1"
+                     domain="[('user_type.code', '=', 'equity'),('type', '=', 'other')]" />
+                <newline />
+                <field name="export_format"/>
+                <field name="display_type" attrs="{'invisible':[('export_format','=','xls')]}"/>
+                <newline/>
+                <field name="instance_ids">
+                    <tree noteditable="1" editable="top" string="Proprietary Instances">
+                        <field name="code" />
+                        <field name="name" />
+                    </tree>
+                </field>
                 <newline/>
             </xpath>
             </data>

@@ -207,7 +207,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Journals</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Display</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data)!='No Filter' and get_filter(data) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
 <Cell ss:StyleID="ssH" ss:MergeAcross="1"><Data ss:Type="String">Proprietary Instances</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>

@@ -31,10 +31,13 @@ class account_pl_report(osv.osv_memory):
     _name = "account.pl.report"
     _description = "Account Profit And Loss Report"
     _columns = {
+        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
         'display_type': fields.boolean("Landscape Mode"),
+        'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
     }
 
     _defaults = {
+        'export_format': 'pdf',
         'display_type': True,
         'journal_ids': [],
         'target_move': False
@@ -43,10 +46,26 @@ class account_pl_report(osv.osv_memory):
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
+        update_fields = [
+            'export_format',
+            'display_type',
+            'instance_ids',
+        ]
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['display_type'])[0])
+        data['form'].update(self.read(cr, uid, ids, update_fields)[0])
         instance = self.pool.get('ir.sequence')._get_instance(cr, uid)
         data['target_filename'] = _('Account Profit_and_Loss_%s_%s') % (instance, time.strftime('%Y%m%d'))
+
+        if data['form']['export_format'] \
+           and data['form']['export_format'] == 'xls':
+            # US-227: excel version
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.profit.loss_xls',
+                'datas': data,
+            }
+
+        # PDF versions
         if data['form']['display_type']:
             return {
                 'type': 'ir.actions.report.xml',
