@@ -418,7 +418,7 @@ class po_follow_up_mixin(object):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         # TODO the multiplier is the value populated for no change in stock_move.price_unit
         # TODO it probably should be 1
-        multiplier = 1.0000100000000001 
+        multiplier = 1.0000100000000001
         po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
@@ -544,10 +544,7 @@ class po_follow_up_mixin(object):
                 }
                 report_lines.append(report_line)
 
-            for rl in report_lines:
-                yield rl
-
-        raise StopIteration
+        return report_lines
 
     def getAnalyticLines(self,po_line):
         ccdl_obj = self.pool.get('cost.center.distribution.line')
