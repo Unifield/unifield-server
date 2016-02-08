@@ -352,9 +352,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             return res
 
         if not initial_balance_mode:
-            move_state = ['draft','posted']
-            if self.target_move == 'posted':
-                move_state = ['posted', '']
+            move_state_in = "('posted')" if self.target_move == 'posted' \
+                else "('draft', 'posted')"
 
             # First compute all counterpart strings for every move_id where this account appear.
             # Currently, the counterpart info is used only in landscape mode
@@ -405,11 +404,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 LEFT JOIN account_account ac on (ac.id=l.account_id)
                 JOIN account_journal j on (l.journal_id=j.id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
-            """ %(self.query, tuple(move_state), sql_sort)
+            """ %(self.query, move_state_in, sql_sort)
             sql = sql.replace('{{reconcile}}',
                     self.unreconciled_filter and \
                         " AND reconcile_id is null and ac.reconcile ='t'" or '')
-            self.cr.execute(sql, (account.id,))
+            self.cr.execute(sql, (account.id, ))
             res = self.cr.dictfetchall()
         else:
             if self.init_balance:
@@ -460,12 +459,41 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         """
         :return : (is_view, amount, )
         """
+        def compute_initial_balance():
+            # drill child accounts entries (always fonctional ccy)
+            aa_obj = self.pool.get('account.account')
+            account_ids = aa_obj._get_children_and_consol(self.cr, self.uid,
+                [account.id])
+            if not account_ids:
+                return 0.
+
+            move_state = [ 'posted', ] if self.target_move == 'posted' \
+                else [ 'draft', 'posted', ]
+            if field == 'balance':
+                sum_expr = '(sum(l.debit) - sum(l.credit))'
+            else:
+                sum_expr = 'sum(l.{field})'.replace('{field}', field)
+            sql = 'SELECT {sum}' \
+                ' FROM account_move_line l' \
+                ' JOIN account_move am ON am.id = l.move_id' \
+                ' LEFT JOIN account_period per ON per.id = l.period_id' \
+                ' WHERE per.number = 0' \
+                ' AND am.state in %s AND l.account_id in %s'
+            sql = sql.replace('{sum}', sum_expr)
+            self.cr.execute(sql, (tuple(move_state), tuple(account_ids), ))
+
+            return self.cr.fetchone()[0] or 0.
+
         if account.type == 'view':
             amount = getattr(account, field)
             if not account.parent_id:
-                # deduce balance of not displayed accounts
+                # MSF CoA root: deduce balance of not displayed accounts
                 if field in self._deduce_accounts_data:
                     amount = amount - self._deduce_accounts_data[field]
+            if not ccy and self.init_balance:
+                # all views: include the optional initial balance of IB period 0
+                # entries
+                amount += compute_initial_balance()
             return True, self._currency_conv(amount)
 
         return False, 0.
@@ -528,9 +556,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if is_view:
             return amount
 
-        move_state = ['draft','posted']
-        if self.target_move == 'posted':
-            move_state = ['posted','']
+        move_state = [ 'posted', ] if self.target_move == 'posted' \
+            else [ 'draft', 'posted', ]
 
         initial_balance = False
         if self.init_balance:
@@ -555,9 +582,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if is_view:
             return amount
 
-        move_state = ['draft','posted']
-        if self.target_move == 'posted':
-            move_state = ['posted','']
+        move_state = [ 'posted', ] if self.target_move == 'posted' \
+            else [ 'draft', 'posted', ]
 
         initial_balance = False
         if self.init_balance:
@@ -587,16 +613,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             ccy_pattern = ""
 
-        move_state = ['draft','posted']
-        if self.target_move == 'posted':
-            move_state = ['posted','']
+        move_state = [ 'posted', ] if self.target_move == 'posted' \
+            else [ 'draft', 'posted', ]
 
-        initial_balance = False
-        if self.init_balance:
-            if booking:
-                initial_balance = is_sub_total and ccy or False
-            else:
-                initial_balance = not is_sub_total
+        # add initial balance if ticked in wizard and booking subtotal
+        # amount or any functional amount
+        initial_balance = self.init_balance and (
+            (booking and is_sub_total and ccy) or True) or False
         amount = self.__sum_amount_account(account, move_state, 'balance',
             ccy=ccy, booking=booking, initial_balance=initial_balance)
         return self._currency_conv(amount)
