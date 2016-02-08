@@ -1433,9 +1433,12 @@ class stock_inventory(osv.osv):
                 %s_line l
             WHERE
                 l.inventory_id in %%s
-            GROUP BY l.product_id, l.location_id, l.prod_lot_id, l.expiry_date
+            GROUP BY l.product_id, l.location_id, l.%s, l.expiry_date
             HAVING count(l.id) > 1
-            ORDER BY count(l.id) DESC""" % self._name.replace('.', '_')
+            ORDER BY count(l.id) DESC""" % (
+                self._name.replace('.', '_'),
+                self._name == 'stock.inventory' and 'prod_lot_id' or 'prodlot_name',
+            )
         cr.execute(sql_req, (tuple(ids),))
         check_res = cr.dictfetchall()
         if check_res:
@@ -1462,10 +1465,23 @@ Expiry date. Only one line with same data is expected."""))
 
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
+            if obj.import_error_ok:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Plase fix issue on red lines before confirm the inventory.')
+                )
+
+            if any(l.to_correct_ok for l in obj.inventory_line_id):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Please fix issue on red lines before confirm the inventory.')
+                )
+
             for line in obj.inventory_line_id:
                 if self._name == 'initial.stock.inventory' and line.product_qty == 0.00:
                     line.write({'dont_move': True})
                     continue
+
                 if line.hidden_perishable_mandatory and not line.expiry_date:
                     raise osv.except_osv(_('Error'), _('The product %s is perishable but the line with this product has no expiry date') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
                 if line.hidden_batch_management_mandatory and not line.prod_lot_id:
@@ -1478,8 +1494,16 @@ Expiry date. Only one line with same data is expected."""))
                 # if perishable product
                 if line.hidden_perishable_mandatory and not line.hidden_batch_management_mandatory:
                     # integrity test
-                    assert line.product_id.perishable, 'product is not perishable but line is'
-                    assert line.expiry_date, 'expiry date is not set'
+                    if not line.product_id.perishable:
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('Product is not perishable but line is.')
+                        )
+                    if not line.expiry_date:
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('Expiry date is not set'),
+                        )
                     # if no production lot, we create a new one
                     if not line.prod_lot_id:
                         # double check to find the corresponding prodlot
@@ -1496,8 +1520,13 @@ Expiry date. Only one line with same data is expected."""))
                             prodlot_id = prodlot_obj.create(cr, uid, vals, context=context)
                         else:
                             prodlot_id = prodlot_ids[0]
+                        prodlot_name = prodlot_obj.read(cr, uid, prodlot_id, ['name'], context=context)['name']
                         # update the line
-                        line.write({'prod_lot_id': prodlot_id,},)
+                        line.write({'prod_lot_id': prodlot_id, 'prodlot_name': prodlot_name},)
+
+                if line.prod_lot_id and not line.expiry_date:
+                    line.write({'expiry_date': line.prod_lot_id.life_date})
+
                 line_ids.append(line.id)
 
         if line_ids:
@@ -1593,7 +1622,10 @@ class stock_inventory_line(osv.osv):
             expiry_date = prodlot_obj.browse(cr, uid, prod_lot_id).life_date
         else:
             expiry_date = False
-        result['value']['expiry_date'] = expiry_date
+        result['value'].update({
+            'expiry_date': expiry_date,
+            'inv_expiry_date': expiry_date,
+        })
         if expiry_date:
             prod_brw = prod_obj.browse(cr, uid, product)
             # UFTP-50: got an expiry value,
@@ -1797,14 +1829,19 @@ class stock_inventory_line(osv.osv):
                    result[obj.id]['has_problem'] = True
 
             result[obj.id]['duplicate_line'] = False
-            if self.search(cr, uid, [
+            src_domain = [
                 ('inventory_id', '=', obj.inventory_id.id),
                 ('location_id', '=', obj.location_id.id),
                 ('product_id', '=', obj.product_id.id),
-                ('prod_lot_id', '=', obj.prod_lot_id and obj.prod_lot_id.id or False),
                 ('expiry_date', '=', obj.expiry_date or False),
                 ('id', '!=', obj.id),
-            ], limit=1, context=context):
+            ]
+
+            if self._name == 'initial.stock.inventory.line':
+                src_domain.append(('prodlot_name', '=', obj.prodlot_name))
+            else:
+                src_domain.append(('prod_lot_id', '=', obj.prod_lot_id and obj.prod_lot_id.id or False))
+            if self.search(cr, uid, src_domain, limit=1, context=context):
                 result[obj.id]['duplicate_line'] = True
         return result
 
