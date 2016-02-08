@@ -155,6 +155,9 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             accounts_temp = []
             for account in accounts:
                 """ before US-227/1
+                PAY ATTENTION TO KEEP THIS COMMENTED AS OCA NEED TO DISCUSS
+                IF ALL THE WORK IS DONE COA SETTINGS LEVEL VS
+                US-227/1, breakdown in asset/liability below
                 if (account.user_type.report_type) and (account.user_type.report_type == typ):
                     account_dict = {
                         'id': account.id,
@@ -163,6 +166,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                         'level': account.level,
                         'balance':account.balance,
                     }"""
+                # US-227/1 starts from here
                 register_account = False
                 if typ == 'asset':
                     # US-227/1, breakdown in asset:
@@ -195,7 +199,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                         'name': account.name,
                         'level': account.level,
                         'balance':account.balance,
-                    }
+                    } # US-227/1 ends here
                     currency = account.currency_id and account.currency_id or account.company_id.currency_id
                     if typ == 'liability' and account.type <> 'view' and (account.debit <> account.credit):
                         self.result_sum_dr += account.balance
