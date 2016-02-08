@@ -1712,7 +1712,8 @@ class stock_move(osv.osv):
             if compare_date:
                 compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
             else:
-                compare_date = datetime.today()
+                today = datetime.today()
+                compare_date = datetime(today.year, today.month, today.day)
             # FEFO logic
             if move.state == 'assigned' and not move.prodlot_id:  # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
                 needed_qty = move.product_qty
