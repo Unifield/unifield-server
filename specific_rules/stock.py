@@ -289,6 +289,26 @@ class initial_stock_inventory_line(osv.osv):
                         res[line.id] = _('The batch number \'%s\' is already in the system but its expiry date is %s') % (line.prodlot_name, life_date)
 
         return res
+
+    def _get_bm_perishable(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {
+                'hidden_batch_management_mandatory': line.product_id.batch_management,
+                'hidden_perishable_mandatory': line.product_id.perishable,
+            }
+
+        return res
+
+    def _get_products(self, cr, uid, ids, context=None):
+        inv_ids = self.pool.get('initial.stock.inventory').search(cr, uid, [
+            ('state', 'not in', ['done', 'cancel']),
+        ], context=context)
+        return self.pool.get('initial.stock.inventory.line').search(cr, uid, [
+            ('inventory_id', 'in', inv_ids),
+            ('product_id', 'in', ids),
+        ], context=context)
     
     _columns = {
         'inventory_id': fields.many2one('initial.stock.inventory', string='Inventory', ondelete='cascade'),
@@ -296,13 +316,35 @@ class initial_stock_inventory_line(osv.osv):
         'average_cost': fields.float(string='Initial average cost', digits_compute=dp.get_precision('Sale Price Computation'), required=True),
         'currency_id': fields.many2one('res.currency', string='Functional currency', readonly=True),
         'err_msg': fields.function(_get_error_msg, method=True, type='char', string='Message', store=False),
+        'hidden_perishable_mandatory': fields.function(
+            _get_bm_perishable,
+            type='boolean',
+            method=True,
+            string='Hidden Flag for Perishable product',
+            multi='bm_perishable',
+            store={
+                'initial.stock.inventory.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 10),
+                'product.product': (_get_products, ['perishable'], 20),
+            },
+        ),
+        'hidden_batch_management_mandatory': fields.function(
+            _get_bm_perishable,
+            type='boolean',
+            method=True,
+            string='Hidden Flag for Perishable product',
+            multi='bm_perishable',
+            store={
+                'initial.stock.inventory.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 10),
+                'product.product': (_get_products, ['batch_management'], 20),
+            },
+        ),
     }
     
     _defaults = {
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'average_cost': lambda *a: 0.00,
         'product_qty': lambda *a: 0.00,
-        'reason_type_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_stock_initialization')[1]
+        'reason_type_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_stock_initialization')[1],
     }
     
     def _check_batch_management(self, cr, uid, ids, context=None):
