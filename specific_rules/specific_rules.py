@@ -1838,9 +1838,49 @@ class stock_inventory_line(osv.osv):
                     return False
         return True
 
+    def _get_bm_perishable(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {
+                'hidden_batch_management_mandatory': line.product_id.batch_management,
+                'hidden_perishable_mandatory': line.product_id.perishable,
+            }
+
+        return res
+
+    def _get_products(self, cr, uid, ids, context=None):
+        inv_ids = self.pool.get('stock.inventory').search(cr, uid, [
+            ('state', 'not in', ['done', 'cancel']),
+        ], context=context)
+        return self.pool.get('stock.inventory.line').search(cr, uid, [
+            ('inventory_id', 'in', inv_ids),
+            ('product_id', 'in', ids),
+        ], context=context)
+
     _columns = {
-        'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
-        'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+        'hidden_perishable_mandatory': fields.function(
+            _get_bm_perishable,
+            type='boolean',
+            method=True,
+            string='Hidden Flag for Perishable product',
+            multi='bm_perishable',
+            store={
+                'stock.inventory.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 10),
+                'product.product': (_get_products, ['perishable'], 20),
+            },
+        ),
+        'hidden_batch_management_mandatory': fields.function(
+            _get_bm_perishable,
+            type='boolean',
+            method=True,
+            string='Hidden Flag for Perishable product',
+            multi='bm_perishable',
+            store={
+                'stock.inventory.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 10),
+                'product.product': (_get_products, ['batch_management'], 20),
+            },
+        ),
         # Remove the 'required' attribute on location_id to allow the possiblity to fill lines with list or nomenclature
         # The required attribute is True on the XML view
         'location_id': fields.many2one('stock.location', 'Location'),
