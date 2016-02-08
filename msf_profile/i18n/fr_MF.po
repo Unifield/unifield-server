@@ -17819,7 +17819,7 @@ msgstr "Emirats Arabes Unis"
 #. module: account
 #: model:ir.actions.act_window,name:account.action_account_pl_report
 msgid "Account Profit And Loss"
-msgstr "Compte de Résultat (pertes & profits)"
+msgstr "Compte de Résultat (pertes et profits)"
 
 #. module: base
 #: code:addons/fields.py:473
@@ -36937,7 +36937,7 @@ msgstr "Date:"
 #: view:account.pl.report:0
 #: model:ir.ui.menu,name:account.menu_account_pl_report
 msgid "Profit And Loss"
-msgstr "Produis et Charges"
+msgstr "Produits et Charges"
 
 #. modules: account, register_accounting, sale
 #: field:account.invoice,address_invoice_id:0
