@@ -26,7 +26,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <data >
-                    <field name="instance_id"/>
+                    <field name="instance_id" />
                     <field name="period_id" />
                     <field name="state" />
                 </data>

@@ -49,11 +49,6 @@ class account_period_state(osv.osv):
         return super(account_period_state, self).create(cr, uid, vals, context=context)
 
     def get_period(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        domain = []
-        if context.get('active_ids', False):
-            domain = [('period_id', 'in', tuple(context.get('active_ids', [])))]
         mod_obj = self.pool.get('ir.model.data')
         view_id = mod_obj.get_object_reference(cr, uid, 'account_mcdb',
                                                'account_period_state_view')
@@ -72,7 +67,7 @@ class account_period_state(osv.osv):
             'search_view_id': search_id,
             'view_id': [view_id],
             'context': context,
-            'domain': domain,
+            'domain': [],
             'target': 'current',
         }
 
