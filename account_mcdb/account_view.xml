@@ -160,7 +160,7 @@
                         <group>
                             <field name="partner_id" select='1' string="3RD Party Partner"/>
                             <field name="employee_id" select='1' string="3RD Party Employee"/>
-                            <field name="transfer_journal_id" select='1' string="3RD Party Journal"/>
+                            <field name="transfer_journal_id" select='1' string="3RD Party Journal" context="{'exclude_journals': ['IB']}"/>
                             <field name="is_reconciled" select='1'/>
                             <field name="reconcile_total_partial_id" select='1'/>
                             <newline/>
@@ -168,7 +168,7 @@
                         <newline/>
                         <group>
                             <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
-                            <field name="journal_id_fake" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
+                            <field name="journal_id_fake" context="{'journal_id':self, 'visible_id':self, 'normal_view':False, 'exclude_journals': ['IB']}"/>
                             <field name="journal_type"/>
                         </group>
                         <newline/>
@@ -184,7 +184,7 @@
                         <group expand="0" string="Group By..." colspan="4" col="20">
                             <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                             <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
-                            <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
+                            <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id', 'exclude_journals': ['IB']}"/>
                             <separator orientation="vertical"/>
                             <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
                             <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
@@ -386,12 +386,12 @@
                             <group col='8' colspan='4'>
                                 <field name="partner_id" select="1" string="3RD Party Partner"/>
                                 <field name="employee_id" select="1" string="3RD Party Employee"/>
-                                <field name="transfer_journal_id" select="1" string="3RD Party Journal"/>
+                                <field name="transfer_journal_id" select="1" string="3RD Party Journal" context="{'exclude_journals': ['IB']}"/>
                             </group>
                             <newline/>
                             <group col='8' colspan='4'>
                                 <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
-                                <field name="journal_id_fake"/>
+                                <field name="journal_id_fake" context="{'exclude_journals': ['IB']}" />
                                 <field name="journal_type"/>
                             </group>
                             <newline/>
@@ -400,7 +400,7 @@
                                 <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
                                 <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
                                 <separator orientation="vertical"/>
-                                <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                                <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id', 'exclude_journals': ['IB']}"/>
                                 <filter string="States" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
                                 <separator orientation="vertical"/>
                                 <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>

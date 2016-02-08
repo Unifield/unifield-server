@@ -33,13 +33,16 @@ class res_company(osv.osv):
     _columns = {
         # US-822 counterpart for BS account
         'ye_pl_cp_for_bs_debit_bal_account': fields.many2one('account.account',
-            'Counterpart for B/S debit balance'),
+            'Counterpart for B/S debit balance',
+            domain=['|', ('user_type.code', 'in', ('income', 'expense', 'equity')), '&', ('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
         'ye_pl_cp_for_bs_credit_bal_account': fields.many2one('account.account',
-            'Counterpart for B/S credit balance'),
+            'Counterpart for B/S credit balance',
+            domain=['|', ('user_type.code', 'in', ('income', 'expense')), '&', ('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
 
         # US-822 PL/BS matrix of dev2/dev3 accounts"
         'ye_pl_pos_credit_account': fields.many2one('account.account',
-            'Credit Account for P&L>0 (Income account)'),
+            'Credit Account for P&L>0 (Income account)',
+            domain=[('user_type.code', '=', 'income')]),
         'ye_pl_pos_debit_account': fields.many2one('account.account',
             'Debit Account for P&L>0 (B/S account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
@@ -47,7 +50,8 @@ class res_company(osv.osv):
             'Credit Account P&L<0 (B/S account)',
             domain=[('type', '=', 'other'), ('user_type.code', '=', 'equity')]),
         'ye_pl_ne_debit_account': fields.many2one('account.account',
-            'Debit Account P&L<0 (Expense account)'),
+            'Debit Account P&L<0 (Expense account)',
+            domain=[('user_type.code', '=', 'expense')]),
     }
 
 res_company()
@@ -328,8 +332,7 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
-            name = "EOY-%d-%s-%s-%s" % (fy_year, account_code,
-                instance_rec.code, ccy_code, )
+            name = 'Balance move to 0'
 
             vals = {
                 'account_id': account_id,
@@ -472,8 +475,7 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
-            name = self._book_pl_results_seqnum_pattern % (fy_year,
-                instance_rec.code, cpy_rec.currency_id.name, )
+            name = 'P&L Result'
 
             vals = {
                 'account_id': account_rec.id,
@@ -572,7 +574,7 @@ class account_year_end_closing(osv.osv):
             """
             create draft CCY/JE to log JI into
             """
-            name = "IB-%d-%s-%s-%s" % (fy_year, account_code,
+            name = "IB-%d-%s-%s-%s" % (fy_year + 1, account_code,
                 instance_rec.code, ccy_code, )
 
             vals = {
@@ -595,9 +597,7 @@ class account_year_end_closing(osv.osv):
             """
             create state valid JI in its CCY/JE
             """
-            if not name:
-                name = "IB-%d-%s-%s-%s" % (fy_year, account_code,
-                    instance_rec.code, ccy_code, )
+            default_name = 'Balance report / Previous Fiscal Year'
 
             vals = {
                 'account_id': account_id,
@@ -607,7 +607,7 @@ class account_year_end_closing(osv.osv):
                 'document_date': posting_date,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
-                'name': name,
+                'name': name or default_name,
                 'period_id': period_id,
                 'source_date': posting_date,
 
@@ -713,7 +713,6 @@ class account_year_end_closing(osv.osv):
         if not cr.rowcount:
             return
 
-        re_account_found_in_bs = False
         je_by_acc_ccy = {}  # JE/ ACC/CCY, key: (acc_id, ccy_id), value: JE id
         for account_id, account_code, ccy_id, ccy_code, \
             balance_currency, balance in cr.fetchall():
@@ -733,24 +732,20 @@ class account_year_end_closing(osv.osv):
                 account_id=account_id, account_code=account_code,
                 balance_currency=balance_currency, balance=balance, je_id=je_id)
 
-        if not re_account_found_in_bs:
-            # Regular/Equity account result entry for P&L
-
-            # invert balance amount to debit or credit amount after account dispatch
-            pl_balance *= -1
-
-            je_id = je_by_acc_ccy.get(
-                (re_account_rec.id, cpy_rec.currency_id.id, ), False)
-            if not je_id:
-                je_id = create_journal_entry(ccy_id=ccy_id,
-                    ccy_code=cpy_rec.currency_id.name,
-                    account_id=re_account_rec.id,
-                    account_code=re_account_rec.code)
-            create_journal_item(ccy_id=cpy_rec.currency_id.id,
+        # Regular/Equity account result entry for P&L
+        # => invert balance amount to debit or credit amount after account dispatch
+        je_id = je_by_acc_ccy.get(
+            (re_account_rec.id, cpy_rec.currency_id.id, ), False)
+        if not je_id:
+            je_id = create_journal_entry(ccy_id=ccy_id,
                 ccy_code=cpy_rec.currency_id.name,
-                account_id=re_account_rec.id, account_code=re_account_rec.code,
-                balance_currency=pl_balance, balance=pl_balance, je_id=je_id,
-                name="P&L Result report / Previous Fiscal Year")
+                account_id=re_account_rec.id,
+                account_code=re_account_rec.code)
+        create_journal_item(ccy_id=cpy_rec.currency_id.id,
+            ccy_code=cpy_rec.currency_id.name,
+            account_id=re_account_rec.id, account_code=re_account_rec.code,
+            balance_currency=pl_balance, balance=pl_balance, je_id=je_id,
+            name="P&L Result report / Previous Fiscal Year")
 
     def update_fy_state(self, cr, uid, fy_id, reopen=False, context=None):
         def hq_close_post_entries(period_ids):
