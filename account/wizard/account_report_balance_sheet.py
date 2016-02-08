@@ -41,7 +41,6 @@ class account_bs_report(osv.osv_memory):
 
     _columns = {
         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
-        'display_type': fields.boolean("Landscape Mode"),
         'reserve_account_id': fields.many2one('account.account', 'Reserve & Profit/Loss Account',
                                       required=True,
                                       help='This Account is used for transfering Profit/Loss ' \
@@ -54,7 +53,6 @@ class account_bs_report(osv.osv_memory):
 
     _defaults={
         'export_format': 'pdf',
-        'display_type': True,
         'journal_ids': [],
         'reserve_account_id': _get_def_reserve_account,
     }
@@ -73,7 +71,6 @@ class account_bs_report(osv.osv_memory):
             context = {}
         update_fields = [
             'export_format',
-            'display_type',
             'reserve_account_id',
             'instance_ids',
         ]
@@ -93,19 +90,12 @@ class account_bs_report(osv.osv_memory):
                 'datas': data,
             }
 
-        # PDF versions
-        if data['form']['display_type']:
-            return {
-                'type': 'ir.actions.report.xml',
-                'report_name': 'account.balancesheet.horizontal',
-                'datas': data,
-            }
-        else:
-            return {
-                'type': 'ir.actions.report.xml',
-                'report_name': 'account.balancesheet',
-                'datas': data,
-            }
+        # PDF version (portrait version 'account.balancesheet' not used now)
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.balancesheet.horizontal',
+            'datas': data,
+        }
 
 account_bs_report()
 

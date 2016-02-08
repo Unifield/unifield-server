@@ -25,7 +25,6 @@
                      domain="[('user_type.code', '=', 'equity'),('type', '=', 'other')]" />
                 <newline />
                 <field name="export_format"/>
-                <field name="display_type" attrs="{'invisible':[('export_format','=','xls')]}"/>
                 <newline/>
                 <field name="instance_ids">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">

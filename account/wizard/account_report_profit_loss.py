@@ -32,13 +32,11 @@ class account_pl_report(osv.osv_memory):
     _description = "Account Profit And Loss Report"
     _columns = {
         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
-        'display_type': fields.boolean("Landscape Mode"),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
     }
 
     _defaults = {
         'export_format': 'pdf',
-        'display_type': True,
         'journal_ids': [],
         'target_move': False
     }
@@ -48,7 +46,6 @@ class account_pl_report(osv.osv_memory):
             context = {}
         update_fields = [
             'export_format',
-            'display_type',
             'instance_ids',
         ]
         data = self.pre_print_report(cr, uid, ids, data, context=context)
@@ -65,19 +62,12 @@ class account_pl_report(osv.osv_memory):
                 'datas': data,
             }
 
-        # PDF versions
-        if data['form']['display_type']:
-            return {
-                'type': 'ir.actions.report.xml',
-                'report_name': 'pl.account.horizontal',
-                'datas': data,
-            }
-        else:
-            return {
-                'type': 'ir.actions.report.xml',
-                'report_name': 'pl.account',
-                'datas': data,
-            }
+        # PDF version (portrait version 'pl.account' not used now)
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'pl.account.horizontal',
+            'datas': data,
+        }
 
 account_pl_report()
 
