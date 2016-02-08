@@ -108,8 +108,8 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
                     for line in lines[distrib_id]:
                         # Update distribution
                         self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
-                        # Then update analytic line
-                        self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, wiz.date, context=context)
+                    # Then update analytic line
+                    self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, wiz.date, context=context)
             cr.commit()
         finally:
             values = {'process_in_progress': False}
