@@ -40,7 +40,7 @@
             <field name="priority" eval="5"/>
             <field name="arch" type="xml">
                 <search string="Periods">
-                    <field name="instance_id"/>
+                    <field name="instance_id" domain="[('instance_child_ids','=',True)]"/>
                     <field name="period_id" />
                     <field name="state" />
                 </search>
