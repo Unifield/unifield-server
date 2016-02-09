@@ -7,7 +7,7 @@
          <field name="res_model">po.follow.up</field>
          <field name="view_type">form</field>
          <field name="view_mode">form</field>
-         <field name="view_id" ref="po_follow_up_view"></field>
+         <!--         <field name="view_id" ref="po_follow_up_view" />-->
          <field name="context">{}</field>
          <field name="help">The Purchase Order follow up report.</field>
       </record>
