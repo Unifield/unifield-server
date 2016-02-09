@@ -61,7 +61,7 @@ class BackupConfig(osv.osv):
     def get_server_version(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
         if not revisions:
-            return release.version or 'UNKNOW_VERSION'
+            return release.version or 'UNKNOWN_VERSION'
         current_revision = revisions._get_last_revision(cr, uid, context=context)
         # get the version name from db
         if current_revision and current_revision.name:
@@ -73,8 +73,8 @@ class BackupConfig(osv.osv):
             for version in version_list:
                 if current_revision.sum == version['md5sum'] and version['name']:
                     return version['name']
-        # in case nothing found, return UNKNOW_VERSION instead of a wrong name
-        return 'UNKNOW_VERSION'
+        # in case nothing found, return UNKNOWN_VERSION instead of a wrong name
+        return 'UNKNOWN_VERSION'
 
     def _set_pg_psw_env_var(self):
         if os.name == 'nt' and not os.environ.get('PGPASSWORD', ''):
