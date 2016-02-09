@@ -237,7 +237,7 @@ class patch_scripts(osv.osv):
             previous_line_res = re_version.findall(previous_line)
             p_md5sum, p_date, p_version_name = previous_line_res[0]
             if p_md5sum == '16679c0321623dd7e13fdd5fad6f677c':
-                last_line = '%s %s %s' % (md5sum, date, 'UF2.1') + os.linesep
+                last_line = '%s %s %s' % (md5sum, date, 'UF2.1-0') + os.linesep
                 lines[-1] = last_line
                 with open(file_path, 'w') as file:
                         file.writelines(lines)
