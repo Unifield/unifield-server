@@ -363,7 +363,7 @@ class db(netsvc.ExportService):
         if not cr.fetchone():
             # the table sync_client_version doesn't exists, fallback on the
             # version from release.py file
-            return release.version or 'UNKNOW_VERSION'
+            return release.version or 'UNKNOWN_VERSION'
 
         cr.execute("SELECT name, sum FROM sync_client_version WHERE state='installed' ORDER BY applied DESC")
         res = cr.fetchone()
@@ -375,7 +375,7 @@ class db(netsvc.ExportService):
             for version in version_list:
                 if res[1] == version['md5sum'] and version['name']:
                     return version['name']
-        return 'UNKNOW_VERSION'
+        return 'UNKNOWN_VERSION'
 
     def exp_migrate_databases(self,databases):
 
