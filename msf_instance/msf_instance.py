@@ -82,15 +82,8 @@ class msf_instance(osv.osv):
         res = {}
         if not ids:
             return res
-        child_ids = []
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        if user.company_id and user.company_id.instance_id:
-            instance_id = user.company_id.instance_id.id
-            child_ids = self.get_child_ids(cr, uid)
-            child_ids.append(instance_id)
-        for i in self.search(cr, uid, ids):
-            if not child_ids or i in child_ids:
-                res[i['id']] = i
+        for id in ids:
+            res[id] = False
         return res
 
     def _search_instance_child_ids(self, cr, uid, obj, name, args, context=None):
