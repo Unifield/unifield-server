@@ -99,11 +99,7 @@ class msf_instance(osv.osv):
             p_id = self.search(cr, uid, [('instance', '=', entity_obj.parent)])
             if not p_id:
                 return []
-            parent_level = self.read(cr, uid, p_id[0], ['level'])['level']
-            if parent_level == 'section':
-                return [('level', '=', 'coordo')]
-            if parent_level == 'coordo':
-                return [('level', '=', 'project')]
+            return [('parent_id', 'in', p_id)]
         return []
 
     _columns = {
