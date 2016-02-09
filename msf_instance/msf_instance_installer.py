@@ -11,7 +11,7 @@ class msf_instance_setup(osv.osv_memory):
     _inherit = 'res.config'
 
     _columns = {
-         'instance_id': fields.many2one('msf.instance', string="Proprietary instance", required=True, domain=[('instance', '=', False)]),
+         'instance_id': fields.many2one('msf.instance', string="Proprietary instance", required=True, domain=[('instance', '=', False), ('restrict_level_from_entity', '=', True)]),
     }
 
     def check_name(self, cr, uid, id, instance_id, context=None):

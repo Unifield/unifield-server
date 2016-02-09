@@ -77,7 +77,35 @@ class msf_instance(osv.osv):
                 if len(parent_cost_centers) > 0:
                     res[instance.id] = parent_cost_centers[0]
         return res
-    
+
+    def _get_restrict_level_from_entity(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if not ids:
+            return res
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_restrict_level_from_entity(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        entity = self.pool.get('sync.client.entity')
+        if entity:
+            entity_obj = entity.get_entity(cr, uid, context=context)
+            if not entity_obj:
+                return []
+            if not entity_obj.parent:
+                return [('level', '=', 'section')]
+            p_id = self.search(cr, uid, [('instance', '=', entity_obj.parent)])
+            if not p_id:
+                return []
+            parent_level = self.read(cr, uid, p_id[0], ['level'])['level']
+            if parent_level == 'section':
+                return [('level', '=', 'coordo')]
+            if parent_level == 'coordo':
+                return [('level', '=', 'project')]
+        return []
+
     _columns = {
         'level': fields.selection([('section', 'Section'),
                                    ('coordo', 'Coordo'),
@@ -100,6 +128,7 @@ class msf_instance(osv.osv):
         'top_cost_center_id': fields.function(_get_top_cost_center, method=True, store=False, string="Top cost centre for budget consolidation", type="many2one", relation="account.analytic.account", readonly="True"),
         'po_fo_cost_center_id': fields.function(_get_po_fo_cost_center, method=True, store=False, string="Cost centre picked for PO/FO reference", type="many2one", relation="account.analytic.account", readonly="True"),
         'instance_identifier': fields.char('Instance identifier', size=64, readonly=1),
+        'restrict_level_from_entity': fields.function(_get_restrict_level_from_entity, method=True, store=False, fnct_search=_search_restrict_level_from_entity, string='Filter instance from entity info'),
     }
     
     _defaults = {
