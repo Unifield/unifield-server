@@ -418,7 +418,7 @@ class po_follow_up_mixin(object):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         # TODO the multiplier is the value populated for no change in stock_move.price_unit
         # TODO it probably should be 1
-        multiplier = 1.0000100000000001 
+        multiplier = 1.0000100000000001
         po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
@@ -544,10 +544,7 @@ class po_follow_up_mixin(object):
                 }
                 report_lines.append(report_line)
 
-            for rl in report_lines:
-                yield rl
-
-        raise StopIteration
+        return report_lines
 
     def getAnalyticLines(self,po_line):
         ccdl_obj = self.pool.get('cost.center.distribution.line')
@@ -685,7 +682,8 @@ class ir_values(osv.osv):
             Internal_Moves = trans_obj.tr_view(cr, 'Internal Moves', context)
             for v in values:
                 if v[2].get('report_name', False) == 'picking.ticket' and (context.get('_terp_view_name') in (Picking_Tickets, Picking_Ticket) or context.get('picking_type') == 'picking_ticket') and context.get('picking_screen', False)\
-                or v[2].get('report_name', False) in ('empty.picking.ticket', 'pre.packing.list') and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
+                or v[2].get('report_name', False) == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
+                or v[2].get('report_name', False) == 'empty.picking.ticket' and (context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) or context.get('picking_type', False) == 'picking_ticket')\
                 or v[2].get('report_name', False) == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
                 or v[2].get('report_name', False) in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
                 or v[2].get('report_name', False) == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):

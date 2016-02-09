@@ -305,8 +305,10 @@ class analytic_line(osv.osv):
                         if p.state != 'draft':
                             raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (p.name,))
                     # then create new lines
+                    cor_name = self.pool.get('account.analytic.line').join_without_redundancy(aline.name, 'COR')
                     cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
-                        'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id}, context=context)
+                        'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id,
+                        'name': cor_name, 'ref': aline.entry_sequence}, context=context)
                     self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
