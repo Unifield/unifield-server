@@ -36937,7 +36937,7 @@ msgstr "Date:"
 #: view:account.pl.report:0
 #: model:ir.ui.menu,name:account.menu_account_pl_report
 msgid "Profit And Loss"
-msgstr "Produits et Charges"
+msgstr "Pertes et Profits"
 
 #. modules: account, register_accounting, sale
 #: field:account.invoice,address_invoice_id:0
@@ -39816,9 +39816,39 @@ msgstr "Africa/Timbuktu"
 #: model:ir.ui.menu,name:account.menu_action_account_period_form
 #: model:ir.ui.menu,name:account.next_id_23
 #: view:account.mcdb:0
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
 #, python-format
 msgid "Periods"
 msgstr "Périodes"
+
+#. module: account
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
+#, python-format
+msgid "Start Period"
+msgstr "Période de début"
+
+#. module: account
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
+#, python-format
+msgid "End Period"
+msgstr "Période de fin"
+
+#. module: account
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
+#, python-format
+msgid "Start Date"
+msgstr "Date de début"
+
+#. module: account
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
+#, python-format
+msgid "End Date"
+msgstr "Date de fin"
 
 #. module: product_asset
 #: field:product.asset,orig_mission_code:0
@@ -56776,6 +56806,8 @@ msgstr "Tâches"
 
 #. module: account
 #: code:addons/account/report/common_report_header.py:100
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
 #, python-format
 msgid "No Filter"
 msgstr "Pas de filtre"
