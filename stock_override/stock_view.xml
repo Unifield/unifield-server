@@ -245,7 +245,7 @@
             <field name="name">Split in batches</field>
         </record>
 
-        <!--        <record id="batch_view_inventory_tree" model="ir.ui.view">
+        <record id="batch_view_inventory_tree" model="ir.ui.view">
             <field name="name">batch.view.inventory.tree</field>
             <field name="model">stock.inventory</field>
             <field name="type">tree</field>
@@ -255,7 +255,7 @@
                     <attribute name="string">Physical inventory</attribute>
                 </xpath>
             </field>
-        </record>-->
+        </record>
         
         <record id="view_location_tree_tree" model="ir.ui.view">
             <field name="name">stock.location.tree.tree</field>
