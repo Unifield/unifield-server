@@ -130,8 +130,8 @@ class common_report_header(object):
             elif data['form']['filter'] == 'filter_date_doc':
                 return _('Document Date')
             elif data['form']['filter'] == 'filter_period':
-                return _('Periods')
-        return _('No Filter')
+                return 'Periods'
+        return ''
 
     def _sum_debit_period(self, period_id, journal_id=None):
         journals = journal_id or self.journal_ids
