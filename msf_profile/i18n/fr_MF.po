@@ -9777,6 +9777,8 @@ msgstr "Enchaînement des Piquages internes à partir des IN (entrées)"
 #: selection:account.partner.balance,display_partner:0
 #: selection:account.pl.report,display_account:0
 #: selection:account.report.general.ledger,display_account:0
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
 msgid "With balance is not equal to 0"
 msgstr "Avec un solde qui n'est pas égal à 0"
 
@@ -24500,6 +24502,8 @@ msgstr "Délai d'Expédition"
 #: selection:account.common.account.report,display_account:0
 #: selection:account.pl.report,display_account:0
 #: selection:account.report.general.ledger,display_account:0
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
 msgid "With movements"
 msgstr "Avec écritures"
 
@@ -62112,6 +62116,8 @@ msgstr "Africa/Asmera"
 #: selection:account.tax,type_tax_use:0
 #: selection:account.tax.template,type_tax_use:0
 #: selection:account.bank.statement,display_type:0
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
 msgid "All"
 msgstr "Tous(tes)"
 
@@ -73428,3 +73434,9 @@ msgstr "Ligne n°"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:616
 msgid "Prepared by"
 msgstr "Preparé par"
+
+#. module: account
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
+msgid "Profit And Loss"
+msgstr "Pertes et Profits"
