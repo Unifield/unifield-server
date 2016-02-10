@@ -36941,7 +36941,7 @@ msgstr "Date:"
 #: view:account.pl.report:0
 #: model:ir.ui.menu,name:account.menu_account_pl_report
 msgid "Profit And Loss"
-msgstr "Pertes et Profits"
+msgstr "Compte de Résultat"
 
 #. modules: account, register_accounting, sale
 #: field:account.invoice,address_invoice_id:0
@@ -73439,4 +73439,4 @@ msgstr "Preparé par"
 #: report:pl.account.horizontal:0
 #: report:pl.account:0
 msgid "Profit And Loss"
-msgstr "Pertes et Profits"
+msgstr "Compte de Résultat"
