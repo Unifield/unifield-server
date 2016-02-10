@@ -1658,6 +1658,58 @@ class stock_move(osv.osv):
                 return False
         return True
 
+    def _update_pas(self, cr, uid, ids, field_name, args, context=None):
+        pas_obj = self.pool.get('product.stock.availability')
+        uom_obj = self.pool.get('product.uom')
+        res = {}
+
+        for move in self.browse(cr, uid, ids, context=context):
+            res[move.id] = True
+            if move.state != 'done':
+                continue
+
+            product_qty = move.product_qty
+            if move.product_uom.id != move.product_id.uom_id.id:
+                product_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qyt, move.product_id.uom_id.id)
+
+            pas_ids = pas_obj.search(cr, uid, [
+                ('product_id', '=', move.product_id.id),
+                ('prodlot_id', '=', move.prodlot_id and move.prodlot_id.id or False),
+                '|',
+                ('location_id', '=', move.location_id.id),
+                ('location_id', '=', move.location_dest_id.id),
+            ], context=context)
+            src_pas_id = False
+            dst_pas_id = False
+
+            for pas in pas_obj.browse(cr, uid, pas_ids, context=context):
+                # If PAS is for source location
+                if pas.location_id.id == move.location_id.id:
+                    upd_quantity = -product_qty
+                    src_pas_id = pas.id
+                else:
+                    upd_quantity = product_qty
+                    dst_pas_id = pas.id
+                pas_obj.write(cr, uid, [pas.id], {'quantity': pas.quantity + upd_quantity}, context=context)
+
+            # There is not Src or Dst Document found
+            if not src_pas_id:
+                pas_obj.create(cr, uid, {
+                    'product_id': move.product_id.id,
+                    'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
+                    'location_id': move.location_id.id,
+                    'quantity': -product_qty,
+                })
+            if not dst_pas_id:
+                pas_obj.create(cr, uid, {
+                    'product_id': move.product_id.id,
+                    'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
+                    'location_id': move.location_dest_id.id,
+                    'quantity': product_qty,
+                })
+
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'priority': fields.selection([('0', 'Not urgent'), ('1', 'Urgent')], 'Priority'),
@@ -1698,6 +1750,15 @@ class stock_move(osv.osv):
 
         # used for colors in tree views:
         'scrapped': fields.related('location_dest_id','scrap_location',type='boolean',relation='stock.location',string='Scrapped', readonly=True),
+        'update_pas': fields.function(
+            _update_pas,
+            method=True,
+            type='boolean',
+            string='Update PAS',
+            store={
+                'stock.move': (lambda self, cr, uid, ids, c=None: [x.id for x in self.browse(cr, uid, ids, context=c) if x.state == 'done'], ['state'], 10),
+            }
+        )
     }
     _constraints = [
         (_check_tracking,
