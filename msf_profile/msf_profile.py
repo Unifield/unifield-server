@@ -69,10 +69,9 @@ class patch_scripts(osv.osv):
                                 [('values', 'like', '%sd.ZMW%')],)
         for update_id in updates_to_modify:
             update =  sync_server_update_module.browse(cr, uid, update_id, context={})
-            values = update.values()
             update_values = eval(update.values)
             if 'sd.ZMW' in update_values:
-                values[values.index('sd.ZMW')]='sd.base_ZMW'
+                update_values[update_values.index('sd.ZMW')]='sd.base_ZMW'
             vals = {
                     'values': update_values,
                     }
