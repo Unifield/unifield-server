@@ -19,7 +19,7 @@
                             <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="journal_id" domain="[('type', '=', 'bank'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
                             <newline/>
-                            <field name="period_id" domain="[('state', '=', 'draft')]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
+                            <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                             <field name="currency" readonly="1"/>
                             <newline/>
                             <field name="prev_reg_id" invisible="1"/>
@@ -180,7 +180,7 @@
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" domain="[('type','=','cash'),('is_current_instance','=',True)]" select="1"/>
                             <newline/>
 
-                            <field name="period_id" select="1" domain="[('state', '=', 'draft')]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
+                            <field name="period_id" select="1" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                             <field name="currency" readonly="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
@@ -698,7 +698,7 @@
                         <field name="journal_id" domain="[('type', '=', 'cheque'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
                         <newline/>
                         <field name="date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
-                        <field name="period_id" domain="[('state', '=', 'draft')]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
+                        <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                         <field name="currency" readonly="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
