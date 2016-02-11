@@ -346,7 +346,7 @@ class sync_rule(osv.osv):
             ids = [ids]
 
         rule_to_check = []
-        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','included_fields','status'], context=context):
+        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','included_fields'], context=context):
             dirty = False
             for k in rule_data.keys():
                 if k in values and values[k] != rule_data[k]:
@@ -487,13 +487,6 @@ class sync_rule(osv.osv):
             mess, err = self.check_fields(cr, uid, rec, title="* Included fields syntax... ", context=context)
             error = err or error
             message.append(mess)
-            # Check for valid status
-            message.append(_("* Valid status... "))
-            if rec.status == 'invalid':
-                message.append('failed! Rule has status=invalid\n')
-                error=True
-            else:
-                message.append('pass.\n')
             # Check force values syntax (can be empty)
             mess, err = self.check_forced_values(cr, uid, rec, context)
             error = err or error
@@ -661,7 +654,7 @@ class message_rule(osv.osv):
             ids = [ids]
 
         rule_to_check = []
-        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','remote_call', 'arguments', 'destination_name', 'status'], context=context):
+        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','remote_call', 'arguments', 'destination_name'], context=context):
             dirty = False
             for k in rule_data.keys():
                 if k in values and values[k] != rule_data[k]:
@@ -737,13 +730,6 @@ class message_rule(osv.osv):
             elif not hasattr(self.pool.get(rec.model_id), rec.filter_method):
                 message.append('Filter Method %s does not exist on object %s\n' % (rec.filter_method, rec.model_id))
                 error = True
-
-            message.append(_("* Valid status... "))
-            if rec.status == 'invalid':
-                message.append('failed! Rule has status=invalid\n')
-                error = True
-            else:
-                message.append('pass.\n')
 
             # Remote Call Possible
             call_tree = rec.remote_call.split('.')
