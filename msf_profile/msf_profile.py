@@ -51,6 +51,71 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_918_patch(self, cr, uid, *a, **b):
+
+        sync_server_update_module = self.pool.get('sync.server.update')
+        # if this script is exucuted on server side, update the first delete
+        # update of ZMK to be executed before the creation of ZMW (sequence
+        # 4875).
+        # this will solve the problem on all new instances (init sync)
+        cr.execute("UPDATE sync_server_update SET sequence=4874 WHERE id='2222677'")
+
+        # change sdref ZMW to base_ZMW
+        cr.execute("UPDATE sync_server_update SET sdref='base_ZMW' WHERE model='res.currency' AND sdref='ZMW'")
+
+
+        # get all updates concerning sdref='sd.ZMW' to change to 'sd.base_ZMW'
+        updates_to_modify = sync_server_update_module.search(cr, uid,
+                                [('values', 'like', '%sd.ZMW%')],)
+        for update_id in updates_to_modify:
+            update =  sync_server_update_module.browse(cr, uid, update_id, context={})
+            values = update.values()
+            update_values = eval(update.values)
+            if 'sd.ZMW' in update_values:
+                values[values.index('sd.ZMW')]='sd.base_ZMW'
+            vals = {
+                    'values': update_values,
+                    }
+            sync_server_update_module.write(cr, uid, update_id, vals)
+
+        return True
+
+
+
+
+        # if this script is exucuted on server side, update the updates to use
+        # the good sdref
+        if sync_server_update_module:  # if we are on a server instance
+            updates_to_modify = sync_server_update_module.search(cr, uid,
+                                    [('model', '=', 'res.currency'),
+                                     ('sdref', 'in', ('base_ZMK', 'ZMW'))],)
+            for update_id in updates_to_modify:
+                update =  sync_server_update_module.browse(cr, uid, update_id, context={})
+                # if the update is is_deleted, remove it from the server, it
+                # will be deleted on every instances
+                if update.is_deleted:
+                    sync_server_update_module.unlink(cr, uid, update_id)
+                else:
+                    import pdb; pdb.set_trace()
+                    update_values = eval(update.values)
+                    if 'id' in eval(update.fields):
+                        update_values['id']='sd.base_ZMW'
+                    if 'name' in eval(update.fileds):
+                        update_values['name']='ZMW'
+                    vals = {
+                            'sdref': 'base.ZMW',
+                            'values': update_values,
+                            }
+                    sync_server_update_module.write(cr, uid, update_id, vals)
+
+
+
+
+        # update the local currency
+        currency_module = self.pool.get('res.currency')
+
+
+
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
         # remove period state from upper levels as an instance should be able
