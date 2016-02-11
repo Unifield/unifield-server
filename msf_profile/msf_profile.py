@@ -54,37 +54,38 @@ class patch_scripts(osv.osv):
     def us_918_patch(self, cr, uid, *a, **b):
 
         sync_server_update_module = self.pool.get('sync.server.update')
-        # if this script is exucuted on server side, update the first delete
-        # update of ZMK to be executed before the creation of ZMW (sequence
-        # 4875).
-        # this will solve the problem on all new instances (init sync)
-        cr.execute("UPDATE sync_server_update SET sequence=4874 WHERE id='2222677'")
-
-        # change sdref ZMW to base_ZMW
-        cr.execute("UPDATE sync_server_update SET sdref='base_ZMW' WHERE model='res.currency' AND sdref='ZMW'")
-
-
-        # get all updates concerning sdref='sd.ZMW' to change to 'sd.base_ZMW'
-        updates_to_modify = sync_server_update_module.search(cr, uid,
-                                [('values', 'like', '%sd.ZMW%')],)
-        for update_id in updates_to_modify:
-            update =  sync_server_update_module.browse(cr, uid, update_id, context={})
-            update_values = eval(update.values)
-            if 'sd.ZMW' in update_values:
-                update_values[update_values.index('sd.ZMW')]='sd.base_ZMW'
-            vals = {
-                    'values': update_values,
-                    }
-            sync_server_update_module.write(cr, uid, update_id, vals)
-
-        return True
-
-
-
-
-        # if this script is exucuted on server side, update the updates to use
-        # the good sdref
         if sync_server_update_module:  # if we are on a server instance
+            # if this script is exucuted on server side, update the first delete
+            # update of ZMK to be executed before the creation of ZMW (sequence
+            # 4875).
+            # this will solve the problem on all new instances (init sync)
+            cr.execute("UPDATE sync_server_update SET sequence=4874 WHERE id='2222677'")
+
+            # change sdref ZMW to base_ZMW
+            cr.execute("UPDATE sync_server_update SET sdref='base_ZMW' WHERE model='res.currency' AND sdref='ZMW'")
+
+
+            # get all updates concerning sdref='sd.ZMW' to change to 'sd.base_ZMW'
+            updates_to_modify = sync_server_update_module.search(cr, uid,
+                                    [('values', 'like', '%sd.ZMW%')],)
+            for update_id in updates_to_modify:
+                update =  sync_server_update_module.browse(cr, uid, update_id, context={})
+                update_values = eval(update.values)
+                if 'sd.ZMW' in update_values:
+                    update_values[update_values.index('sd.ZMW')]='sd.base_ZMW'
+                vals = {
+                        'values': update_values,
+                        }
+                sync_server_update_module.write(cr, uid, update_id, vals)
+
+            return True
+
+
+            # XXX following part not executed
+
+
+            # if this script is exucuted on server side, update the updates to use
+            # the good sdref
             updates_to_modify = sync_server_update_module.search(cr, uid,
                                     [('model', '=', 'res.currency'),
                                      ('sdref', 'in', ('base_ZMK', 'ZMW'))],)
