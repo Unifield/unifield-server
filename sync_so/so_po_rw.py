@@ -172,4 +172,11 @@ class purchase_order_rw(osv.osv):
     
 purchase_order_rw()
 
-
+class return_claim_rw(osv.osv):
+    _inherit = "return.claim"
+    _logger = logging.getLogger('------sync.return.claim')
+    
+    def usb_replicate_claim(self, cr, uid, source, sync_values, context=None):
+        return
+            
+return_claim_rw()
