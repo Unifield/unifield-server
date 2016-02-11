@@ -65,7 +65,9 @@ class patch_scripts(osv.osv):
             cr.execute("UPDATE sync_server_update SET sdref='base_ZMW' WHERE model='res.currency' AND sdref='ZMW'")
 
 
-            # get all updates concerning sdref='sd.ZMW' to change to 'sd.base_ZMW'
+            # some update where refering to the old currency with sdref=sd.ZMW
+            # as the reference changed, we need to modify all of this updates
+            # pointing to a wrong reference
             updates_to_modify = sync_server_update_module.search(cr, uid,
                                     [('values', 'like', '%sd.ZMW%')],)
             for update_id in updates_to_modify:
@@ -73,6 +75,19 @@ class patch_scripts(osv.osv):
                 update_values = eval(update.values)
                 if 'sd.ZMW' in update_values:
                     update_values[update_values.index('sd.ZMW')]='sd.base_ZMW'
+                vals = {
+                        'values': update_values,
+                        }
+                sync_server_update_module.write(cr, uid, update_id, vals)
+
+            # do the same with sdref=sd.base_ZMK
+            updates_to_modify = sync_server_update_module.search(cr, uid,
+                                    [('values', 'like', '%sd.base_ZMK%')],)
+            for update_id in updates_to_modify:
+                update =  sync_server_update_module.browse(cr, uid, update_id, context={})
+                update_values = eval(update.values)
+                if 'sd.base_ZMK' in update_values:
+                    update_values[update_values.index('sd.base_ZMK')]='sd.base_ZMW'
                 vals = {
                         'values': update_values,
                         }
