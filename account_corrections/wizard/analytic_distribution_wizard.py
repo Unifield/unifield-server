@@ -385,7 +385,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 })
             if greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
                 greater_amount['aji_id'] = to_override_ids[0]
-                greater_amount['date'] = date_to_use
+                greater_amount['date'] = orig_date
 
         #####
         # US-676
