@@ -27,6 +27,32 @@ import decimal_precision as dp
 class product_stock_availability(osv.osv):
     _name = 'product.stock.availability'
 
+    def update_uom_qantity(self, cr, uid, ids, old_uom, new_uom, context=None):
+        """
+        Compute the quantity of the product.stock.availability in the UoM of associated product
+        :param cr: Cursor to the database
+        :param uid: ID of user that calls the method
+        :param ids: ID of product.stock.availability to update
+        :param old_uom: ID of the old Unit of Measure of the product
+        :param new_uom: ID of the new Unit of Measure of the product
+        :param context: Context of the call
+        :return: True
+        """
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pas in self.browse(cr, uid, ids, context=context):
+            self.write(cr, uid, [pas.id], {
+                'quantity': uom_obj._compute_qty(cr, uid, old_uom, pas.quantity, new_uom)
+            }, context=context)
+
+        return True
+
     _columns = {
         'product_id': fields.many2one(
             'product.product',
@@ -445,6 +471,25 @@ class product_product(osv.osv):
                         res['fields']['qty_available']['string'] = _('Produced Qty')
         return res
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check if we need to update the quantities in the product.stock.availability
+        :param cr: Cursor to the database
+        :param uid: ID of the user that calls the write
+        :param ids: List of ID of product.product updated
+        :param vals: Values to update in product.product
+        :param context: Context of the call
+        :return: True
+        """
+        psa_obj = self.pool.get('product.stock.availability')
+
+        if vals.get('uom_id', False):
+            prd_ids = [x for x in self.read(cr, uid, ids, ['uom_id'], context=context) if x['uom_id'] != vals['uom_id']]
+            psa_ids = psa_obj.search(cr, uid, [('product_id', 'in', prd_ids)], context=context)
+            psa_obj.update_uom_qantity(cr, uid, psa_ids, context=context)
+
+        return super(product_product, self).write(cr, uid, ids, vals, context=context)
+
 product_product()
 
 class product_template(osv.osv):
@@ -504,7 +549,7 @@ class product_category(osv.osv):
     _columns = {
         'property_stock_journal': fields.property('account.journal',
             relation='account.journal', type='many2one',
-            string='Stock journal', method=True, view_load=True,
+            string='Stock journal', method=pas_idsTrue, view_load=True,
             help="When doing real-time inventory valuation, this is the Accounting Journal in which entries will be automatically posted when stock moves are processed."),
         'property_stock_account_input_categ': fields.property('account.account',
             type='many2one', relation='account.account',

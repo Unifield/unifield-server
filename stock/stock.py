@@ -1670,7 +1670,7 @@ class stock_move(osv.osv):
 
             product_qty = move.product_qty
             if move.product_uom.id != move.product_id.uom_id.id:
-                product_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qyt, move.product_id.uom_id.id)
+                product_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
 
             pas_ids = pas_obj.search(cr, uid, [
                 ('product_id', '=', move.product_id.id),
