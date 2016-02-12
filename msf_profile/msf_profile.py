@@ -67,7 +67,7 @@ class patch_scripts(osv.osv):
                        "SET sdref='base_ZMW' "
                        "WHERE model='res.currency' AND sdref='ZMW'")
         else:  # we are on a client instance
-            update_module = self.pool.get('sync.client.update.received')
+            update_module = self.pool.get('sync.client.update_received')
             # update the local currency
             currency_module = self.pool.get('res.currency')
             currency_ids = currency_module.search(cr, uid, [('name', '=', 'ZMK')])
