@@ -287,7 +287,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 create_date = ml.date
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
-            period_closed = self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id)
+            #period_closed = self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id)
+            period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
             if period_closed:
                 create_date = wizard.date
                 name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
@@ -307,12 +308,13 @@ class analytic_distribution_wizard(osv.osv_memory):
             # delete distrib line
             self.pool.get('funding.pool.distribution.line').unlink(cr, uid, [line.id])
             # delete associated analytic line
-            to_delete_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.id)])
+            to_delete_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
             self.pool.get('account.analytic.line').unlink(cr, uid, to_delete_ids)
 
         #####
         ## FP: TO REVERSE
         ###
+        to_reverse_ids = []
         for line in to_reverse:
             # reverse the line
             to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
@@ -358,7 +360,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 greater_amount['aji_id'] = ret[ret.keys()[0]]
                 greater_amount['date'] = wizard.date
         # UFTP-194: Set missing entry sequence for created analytic lines
-        if have_been_created:
+        if have_been_created and to_reverse_ids:
             cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (get_entry_seq(entry_seq_data), to_reverse_ids[0], tuple(have_been_created)))
 
         #####
