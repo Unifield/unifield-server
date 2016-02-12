@@ -62,25 +62,9 @@ class patch_scripts(osv.osv):
                        "SET sequence=4874 "
                        "WHERE id=2222677")
 
-            # change sdref ZMW to base_ZMW
-            cr.execute("UPDATE sync_server_update "
-                       "SET sdref='base_ZMW' "
-                       "WHERE model='res.currency' AND sdref='ZMW'")
-            # some update where refering to the old currency with sdref=sd.ZMW
+            # some update where refering to the old currency with sdref=sd.ZMK
             # as the reference changed, we need to modify all of this updates
             # pointing to a wrong reference
-            updates_to_modify = update_module.search(
-                cr, uid, [('values', 'like', '%sd.ZMW%')],)
-            for update in update_module.browse(cr, uid, updates_to_modify,
-                                               context={}):
-                update_values = eval(update.values)
-                if 'sd.ZMW' in update_values:
-                    index = update_values.index('sd.ZMW')
-                    update_values[index] = 'sd.base_ZMW'
-                vals = {
-                    'values': update_values,
-                }
-                update_module.write(cr, uid, update.id, vals)
             # do the same with sdref=sd.base_ZMK
             updates_to_modify = update_module.search(
                 cr, uid, [('values', 'like', '%sd.base_ZMK%')],)
@@ -89,7 +73,7 @@ class patch_scripts(osv.osv):
                 update_values = eval(update.values)
                 if 'sd.base_ZMK' in update_values:
                     index = update_values.index('sd.base_ZMK')
-                    update_values[index] = 'sd.base_ZMW'
+                    update_values[index] = 'sd.ZMW'
                 vals = {
                     'values': update_values,
                 }
