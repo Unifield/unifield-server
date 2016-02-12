@@ -108,6 +108,16 @@ class analytic_distribution_wizard(osv.osv_memory):
             del to_override[oline.id]
         return True, _("All is OK."), to_reverse, to_override
 
+    def _check_period_closed_on_fp_distrib_line(self, cr, uid, distrib_line_id, context=None):
+        ana_obj = self.pool.get('account.analytic.line')
+        period_obj = self.pool.get('account.period')
+        aa_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%distrib_line_id), ('is_reversal', '=', False), ('is_reallocated', '=', False)], context=context)
+        if aa_ids:
+            for ana in ana_obj.browse(cr, uid, aa_ids, context=context):
+                if ana.period_id and ana.period_id.state in ('done', 'mission-closed'):
+                    return True
+        return False
+
     def do_analytic_distribution_changes(self, cr, uid, wizard_id, distrib_id, context=None):
         """
         For each given wizard compare old (distrib_id) and new analytic distribution. Then adapt analytic lines.
@@ -143,7 +153,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         to_reverse = []
         old_line_ok = []
         any_reverse = False
-        period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
+        #period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
         ana_obj = self.pool.get('account.analytic.line')
         # Prepare journal and period information for entry sequences
         cr.execute("select id, code from account_journal where type = 'correction' and is_current_instance = true")
@@ -218,7 +228,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         if (old_line.cost_center_id.id != wiz_line.cost_center_id.id or
                                 old_line.destination_id.id != wiz_line.destination_id.id or
                                 old_line.percentage != wiz_line.percentage):
-                            if period_closed:
+                            if self._check_period_closed_on_fp_distrib_line(cr, uid, old_line.id):
                                 to_reverse.append(wiz_line)
                             else:
                                 to_override.append(wiz_line)
@@ -240,7 +250,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # distribution line deleted by user
             if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
                 raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.analytic_id.code))
-            if period_closed:
+            if self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id):
                 # reverse the line
                 to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
                 reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
@@ -277,6 +287,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 create_date = ml.date
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
+            period_closed = self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id)
             if period_closed:
                 create_date = wizard.date
                 name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
