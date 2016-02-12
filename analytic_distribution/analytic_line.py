@@ -263,7 +263,7 @@ class analytic_line(osv.osv):
         for aline in self.browse(cr, uid, ids, context=context):
             if account.category in ['OC', 'DEST']:
                 # Period verification
-                period = aline.move_id and aline.move_id.period_id or False
+                period = aline.period_id
                 # Prepare some values
                 fieldname = 'cost_center_id'
                 if account.category == 'DEST':
