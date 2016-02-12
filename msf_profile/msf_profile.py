@@ -68,7 +68,13 @@ class patch_scripts(osv.osv):
             cr.execute("UPDATE sync_server_update "
                        "SET sdref='base_ZMW' "
                        "WHERE model='res.currency' AND sdref='ZMW'")
+            cr.commit()
         else:  # we are on a client instance
+            # change sdref ZMW to base_ZMW
+            cr.execute("UPDATE sync_client_update_received "
+                       "SET sdref='base_ZMW', run='f', force_recreation='t' "
+                       "WHERE model='res.currency' AND sdref='ZMW'")
+            cr.commit()
             update_module = self.pool.get('sync.client.update_received')
             # update the local currency
             currency_module = self.pool.get('res.currency')
@@ -92,7 +98,10 @@ class patch_scripts(osv.osv):
                 'values': update_values,
             }
             if not is_server:
-                vals.update({'force_recreation': True})
+                vals.update({
+                    'run': False,
+                    'force_recreation': True,
+                })
             update_module.write(cr, uid, update.id, vals)
         # do the same with sdref=sd.base_ZMK
         updates_to_modify = update_module.search(
@@ -107,7 +116,10 @@ class patch_scripts(osv.osv):
                 'values': update_values,
             }
             if not is_server:
-                vals.update({'force_recreation': True})
+                vals.update({
+                    'run': False,
+                    'force_recreation': True,
+                })
             update_module.write(cr, uid, update.id, vals)
 
     def us_898_patch(self, cr, uid, *a, **b):
