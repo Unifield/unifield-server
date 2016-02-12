@@ -52,9 +52,8 @@ class patch_scripts(osv.osv):
             self.write(cr, uid, [ps['id']], {'run': True})
 
     def us_918_patch(self, cr, uid, *a, **b):
-
-        sync_server_update_module = self.pool.get('sync.server.update')
-        if sync_server_update_module:  # if we are on a server instance
+        update_module = self.pool.get('sync.server.update')
+        if update_module:  # if we are on a server instance
             # if this script is exucuted on server side, update the first delete
             # update of ZMK to be executed before the creation of ZMW (sequence
             # 4875).
@@ -67,40 +66,8 @@ class patch_scripts(osv.osv):
             cr.execute("UPDATE sync_server_update "
                        "SET sdref='base_ZMW' "
                        "WHERE model='res.currency' AND sdref='ZMW'")
-
-            # some update where refering to the old currency with sdref=sd.ZMW
-            # as the reference changed, we need to modify all of this updates
-            # pointing to a wrong reference
-            updates_to_modify = sync_server_update_module.search(
-                cr, uid, [('values', 'like', '%sd.ZMW%')],)
-            for update in sync_server_update_module.browse(cr, uid,
-                                                           updates_to_modify,
-                                                           context={}):
-                update_values = eval(update.values)
-                if 'sd.ZMW' in update_values:
-                    index = update_values.index('sd.ZMW')
-                    update_values[index] = 'sd.base_ZMW'
-                vals = {
-                    'values': update_values,
-                }
-                sync_server_update_module.write(cr, uid, update.id, vals)
-
-            # do the same with sdref=sd.base_ZMK
-            updates_to_modify = sync_server_update_module.search(
-                cr, uid, [('values', 'like', '%sd.base_ZMK%')],)
-            for update in sync_server_update_module.browse(cr, uid,
-                                                           updates_to_modify,
-                                                           context={}):
-                update_values = eval(update.values)
-                if 'sd.base_ZMK' in update_values:
-                    index = update_values.index('sd.base_ZMK')
-                    update_values[index] = 'sd.base_ZMW'
-                vals = {
-                    'values': update_values,
-                }
-                sync_server_update_module.write(cr, uid, update.id, vals)
-
-        else:  # if we are on a client instance
+        else:  # we are on a client instance
+            update_module = self.pool.get('sync.client.update.received')
             # update the local currency
             currency_module = self.pool.get('res.currency')
             currency_ids = currency_module.search(cr, uid, [('name', '=', 'ZMK')])
@@ -108,6 +75,34 @@ class patch_scripts(osv.osv):
                 'name': 'ZMW',
             }
             currency_module.write(cr, uid, currency_ids, values)
+        # some update where refering to the old currency with sdref=sd.ZMW
+        # as the reference changed, we need to modify all of this updates
+        # pointing to a wrong reference
+        updates_to_modify = update_module.search(
+            cr, uid, [('values', 'like', '%sd.ZMW%')],)
+        for update in update_module.browse(cr, uid, updates_to_modify,
+                                           context={}):
+            update_values = eval(update.values)
+            if 'sd.ZMW' in update_values:
+                index = update_values.index('sd.ZMW')
+                update_values[index] = 'sd.base_ZMW'
+            vals = {
+                'values': update_values,
+            }
+            update_module.write(cr, uid, update.id, vals)
+        # do the same with sdref=sd.base_ZMK
+        updates_to_modify = update_module.search(
+            cr, uid, [('values', 'like', '%sd.base_ZMK%')],)
+        for update in update_module.browse(cr, uid, updates_to_modify,
+                                           context={}):
+            update_values = eval(update.values)
+            if 'sd.base_ZMK' in update_values:
+                index = update_values.index('sd.base_ZMK')
+                update_values[index] = 'sd.base_ZMW'
+            vals = {
+                'values': update_values,
+            }
+            update_module.write(cr, uid, update.id, vals)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
