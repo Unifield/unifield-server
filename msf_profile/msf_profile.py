@@ -53,7 +53,9 @@ class patch_scripts(osv.osv):
 
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
+        is_server = False
         if update_module:  # if we are on a server instance
+            is_server = True
             # if this script is exucuted on server side, update the first delete
             # update of ZMK to be executed before the creation of ZMW (sequence
             # 4875).
@@ -89,6 +91,8 @@ class patch_scripts(osv.osv):
             vals = {
                 'values': update_values,
             }
+            if not is_server:
+                vals.update({'force_recreation': True})
             update_module.write(cr, uid, update.id, vals)
         # do the same with sdref=sd.base_ZMK
         updates_to_modify = update_module.search(
@@ -102,6 +106,8 @@ class patch_scripts(osv.osv):
             vals = {
                 'values': update_values,
             }
+            if not is_server:
+                vals.update({'force_recreation': True})
             update_module.write(cr, uid, update.id, vals)
 
     def us_898_patch(self, cr, uid, *a, **b):
