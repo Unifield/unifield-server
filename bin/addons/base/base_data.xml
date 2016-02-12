@@ -2495,7 +2495,7 @@
             <field name="active" eval="False"/>
             <field name="currency_name">YEMENI RIAL</field>
         </record>
-        <record id="base.ZMW" model="res.currency" forcecreate="0">
+        <record id="ZMW" model="res.currency" forcecreate="0">
             <field name="name">ZMW</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
