@@ -234,6 +234,13 @@ class product_product(osv.osv):
         return res
 
     def get_product_pas(self, cr, uid, ids, location_ids, prodlot_id, context=None):
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if isinstance(location_ids, (int, long)):
+            location_ids = [location_ids]
+
         sql_req = '''
             SELECT product_id, sum(quantity)
             FROM product_stock_availability
@@ -549,7 +556,7 @@ class product_category(osv.osv):
     _columns = {
         'property_stock_journal': fields.property('account.journal',
             relation='account.journal', type='many2one',
-            string='Stock journal', method=pas_idsTrue, view_load=True,
+            string='Stock journal', method=True, view_load=True,
             help="When doing real-time inventory valuation, this is the Accounting Journal in which entries will be automatically posted when stock moves are processed."),
         'property_stock_account_input_categ': fields.property('account.account',
             type='many2one', relation='account.account',

@@ -427,28 +427,24 @@ class stock_location(osv.osv):
                     return False
 
             # XXX TODO: rewrite this with one single query, possibly even the quantity conversion
-            cr.execute("""SELECT product_uom, sum(product_qty) AS product_qty
-                          FROM stock_move
-                          WHERE location_dest_id=%s AND
-                                location_id<>%s AND
-                                product_id=%s AND
-                                state='done'
-                          GROUP BY product_uom
-                       """,
-                       (id, id, product_id))
-            results = cr.dictfetchall()
+            qty_av = self.pool.get('product.product').get_product_pas(cr, uid, product_id, id, False, context=context)[product_id]
+            prd_uom_id = self.pool.get('product.product').read(cr, uid, product_id, ['uom_id'], context=context)['uom_id'][0]
+            if context.get('uom', False) and  prd_uom_id != context.get('uom', False):
+                qty_av = pool_uom._compute_qty(cr, uid, prd_uom_id, qty_av, context.get('uom', False))
+
+            results = []
             cr.execute("""SELECT product_uom,-sum(product_qty) AS product_qty
                           FROM stock_move
                           WHERE location_id=%s AND
                                 location_dest_id<>%s AND
                                 product_id=%s AND
-                                state in ('done', 'assigned')
+                                state in ('assigned')
                           GROUP BY product_uom
                        """,
                        (id, id, product_id))
             results += cr.dictfetchall()
-            total = 0.0
-            results2 = 0.0
+            total = qty_av
+            results2 = qty_av
 
             for r in results:
                 amount = pool_uom._compute_qty(cr, uid, r['product_uom'], r['product_qty'], context.get('uom', False))
