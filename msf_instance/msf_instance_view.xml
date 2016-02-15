@@ -163,7 +163,8 @@
             <field eval="30" name="priority"/>
             <field name="arch" type="xml">
                 <field name="journal_id" position="replace">
-                    <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                    <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"
+                           on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
                     <field name="journal_id_fake"/>
                 </field>
             </field>
