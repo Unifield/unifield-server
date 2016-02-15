@@ -22,7 +22,7 @@
 
     <table class="view" cellpadding="0" cellspacing="0" style="padding-top: 25px; border:none;">
         <tr>
-            <td style="padding:35px 10px 5px 35px; min-width:100px;" valign="top" width="450">
+            <td style="padding:35px 10px 5px 35px; min-width:100px; display:block; margin:auto; " valign="top" width="450px">
                 <form action="${py.url(target)}" method="post" name="loginform" id="loginform" style="padding-bottom: 5px; min-width: 100px;">
                     % for key, value in origArgs.items():
                         <input type="hidden" name="${key}" value="${value}"/>
@@ -88,42 +88,6 @@
                 % endif
                 <div style="margin-top: 10px; height: 150px">
                 </div>
-            </td>
-
-            <td style="padding:55px 35px 5px 10px; min-width: 200px;" valign="top">
-                <p>${_("We think that daily job activities can be more intuitive, efficient, automated, .. and even fun.")}</p>
-                <h3>${_("OpenERP's vision to be:")}</h3>
-
-                <table cellpadding="0" cellspacing="0" width="100%" style="border:none;">
-                    <tr>
-                        <td class="feature-image">
-                            <img src="/openerp/static/images/icons/product.png"/>
-                        </td>
-                        <td class="feature-description">
-                            <strong>${_("Full featured")}</strong><br/>
-                            ${_("Today's enterprise challenges are multiple. We provide one module for each need.")}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="feature-image">
-                            <img src="/openerp/static/images/icons/accessories-archiver.png"/>
-                        </td>
-                        <td class="feature-description">
-                            <strong>${_("Open Source")}</strong><br/>
-                            ${_("To Build a great product, we rely on the knowledge of thousands of contributors.")}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="feature-image">
-                            <img src="/openerp/static/images/icons/partner.png"/>
-                        </td>
-                        <td class="feature-description">
-                            <strong>${_("User Friendly")}</strong><br/>
-                            ${_("In order to be productive, people need clean and easy to use interface.")}
-                        </td>
-                    </tr>
-                </table>
-
             </td>
         </tr>
     </table>
