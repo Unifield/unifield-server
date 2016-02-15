@@ -51,15 +51,46 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
-    def us_841_patch(self, cr, uid, *a, **b):
-        # fix incorrect period state on upper level by re-sending state
-        p_ids = self.pool.get('account.period').search(cr, uid, [])
-        if p_ids:
-            cr.execute("""update ir_model_data
-                set last_modification=NOW(),
-                touched='[''state'']'
-                where model='account.period.state' and res_id in %s
-                """, (tuple(p_ids), ))
+    def us_898_patch(self, cr, uid, *a, **b):
+        context = {}
+        # remove period state from upper levels as an instance should be able
+        # to see only the children account.period.state's
+        period_state_obj = self.pool.get('account.period.state')
+        period_obj = self.pool.get('account.period')
+        msf_instance_obj = self.pool.get('msf.instance')
+
+        # get the current instance id
+        instance_ids = []
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        if user.company_id and user.company_id.instance_id:
+            instance_ids = [user.company_id.instance_id.id]
+
+        # get all the children of this instance
+        children_ids = msf_instance_obj.get_child_ids(cr, uid)
+
+        # remove period_state that are not concerning current instance or his
+        # children
+        period_state_ids = []
+        period_state_ids = period_state_obj.search(cr, uid,
+                            [('instance_id', 'not in', children_ids + instance_ids)])
+        if period_state_ids:
+            period_state_obj.unlink(cr, uid, period_state_ids)
+
+        # delete ir.model.data related to deleted account.period.state
+        model_data = self.pool.get('ir.model.data')
+        ids_to_delete = []
+        for period_state_id in period_state_ids:
+            period_state_xml_id = period_state_obj.get_sd_ref(cr, uid, period_state_id)
+            ids_to_delete.append(model_data._get_id(cr, uid, 'sd',
+                                                   period_state_xml_id))
+        model_data.unlink(cr, uid, ids_to_delete)
+
+        # touch all ir.model.data object related to the curent
+        # instance periods
+        # this permit to fix incorrect period state on upper level
+        # by re-sending state and create the missing period_states
+        period_ids = period_obj.search(cr, uid, [('active', 'in', ('t', 'f'))])
+        period_state_obj.update_state(cr, uid, period_ids)
 
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
@@ -210,6 +241,37 @@ class patch_scripts(osv.osv):
                 fy_ids)
 
         return True
+
+    def us_908_patch(self, cr, uid, *a, **b):
+        # add the version to unifield-version.txt as the code which
+        # automatically add this version name is contained in the patch itself.
+        from updater import re_version, md5hex_size
+        import re
+        from tools import config
+        file_path = os.path.join(config['root_path'], 'unifield-version.txt')
+        # get the last known patch line
+        # 16679c0321623dd7e13fdd5fad6f677c 2015-12-22 14:30:00 UF2.0-0p1
+        with open(file_path, 'r') as f:
+            lines = f.readlines()
+        #if last_version don't have any name
+        # and the previous is UF2.0-0p1
+        last_line = lines[-1]
+        last_line = last_line.rstrip()
+        if not last_line: #  the last is an empty line, no new patch was installed
+            return True
+        result = re_version.findall(last_line)
+        md5sum, date, version_name = result[0]
+        if not version_name:
+            # check that the previous patch was UF2.1
+            previous_line = lines[-2].rstrip() or lines[-3].rstrip() #  may be
+                                                # there is a blank line between
+            previous_line_res = re_version.findall(previous_line)
+            p_md5sum, p_date, p_version_name = previous_line_res[0]
+            if p_md5sum == '16679c0321623dd7e13fdd5fad6f677c':
+                last_line = '%s %s %s' % (md5sum, date, 'UF2.1-0') + os.linesep
+                lines[-1] = last_line
+                with open(file_path, 'w') as file:
+                        file.writelines(lines)
 
     def disable_crondoall(self, cr, uid, *a, **b):
         cron_obj = self.pool.get('ir.cron')

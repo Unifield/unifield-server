@@ -77,6 +77,29 @@ class msf_instance(osv.osv):
                 if len(parent_cost_centers) > 0:
                     res[instance.id] = parent_cost_centers[0]
         return res
+
+    def _get_instance_child_ids(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_instance_child_ids(self, cr, uid, obj, name, args, context=None):
+        res = []
+        for arg in args:
+            if arg[0] == 'instance_child_ids':
+                user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+                if user.company_id and user.company_id.instance_id:
+                    instance_id = user.company_id.instance_id.id
+                    child_ids = self.get_child_ids(cr, uid)
+                    # add current instance to display it in the search
+                    child_ids.append(instance_id)
+                    res.append(('id', 'in', child_ids))
+            else:
+                res.append(arg)
+        return res
     
     _columns = {
         'level': fields.selection([('section', 'Section'),
@@ -100,6 +123,11 @@ class msf_instance(osv.osv):
         'top_cost_center_id': fields.function(_get_top_cost_center, method=True, store=False, string="Top cost centre for budget consolidation", type="many2one", relation="account.analytic.account", readonly="True"),
         'po_fo_cost_center_id': fields.function(_get_po_fo_cost_center, method=True, store=False, string="Cost centre picked for PO/FO reference", type="many2one", relation="account.analytic.account", readonly="True"),
         'instance_identifier': fields.char('Instance identifier', size=64, readonly=1),
+        'instance_child_ids': fields.function(_get_instance_child_ids, method=True,
+                                            string='Proprietary Instance',
+                                            type='many2one',
+                                            relation='msf.instance',
+                                            fnct_search=_search_instance_child_ids),
     }
     
     _defaults = {
@@ -220,7 +248,31 @@ class msf_instance(osv.osv):
          (_check_move_prefix_unicity, 'You cannot have the same move prefix than an active instance!', ['move_prefix']),
          (_check_reconcile_prefix_unicity, 'You cannot have the same reconciliation prefix than an active instance!', ['reconcile_prefix']),
     ]
-    
+
+    def get_child_ids(self, cr, uid, instance_ids=None, children_ids_list=None, context=None):
+        """
+        Search for all the children ids of the instance_ids parameter
+        Get the current instance id if no instance_ids is given
+        """
+        if context is None:
+            context = {}
+        if instance_ids is None:
+            user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+            if user.company_id and user.company_id.instance_id:
+                instance_ids = [user.company_id.instance_id.id]
+        if not instance_ids:
+            return []
+        current_children = self.search(cr, uid, [('parent_id', 'in',
+                                                  tuple(instance_ids))])
+        if children_ids_list is None:
+            children_ids_list = []
+        if not current_children:
+            return children_ids_list
+        children_ids_list.extend(current_children)
+        self.get_child_ids(cr, uid, current_children, children_ids_list,
+                           context)
+        return children_ids_list
+
     def name_get(self, cr, user, ids, context=None):
         if context is None:
             context = {}

@@ -254,6 +254,7 @@ class account_analytic_line(osv.osv):
                 'amount_currency': al.amount_currency * -1,
                 'currency_id': al.currency_id.id,
                 'is_reversal': True,
+                'ref': al.entry_sequence,
             }
             new_al = self.copy(cr, uid, al.id, vals, context=context)
             res.append(new_al)

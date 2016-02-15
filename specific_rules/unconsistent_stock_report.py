@@ -191,7 +191,7 @@ class unconsistent_stock_report(osv.osv):
                 (
                     (sp.subtype = 'packing' AND sp.state IN ('draft', 'assigned'))
                   OR
-                    (sp.subtype != 'packing' AND sp.state NOT IN ('cancel', 'done'))
+                    (sp.subtype != 'packing' AND sp.state NOT IN ('cancel', 'done') AND sm.state = 'assigned')
                 )
               AND
                 pp.batch_management = %%s
@@ -245,7 +245,7 @@ class unconsistent_stock_report(osv.osv):
             WHERE
                 sl.usage = 'internal'
                 AND
-                si.state NOT IN ('done', 'cancel')
+                si.state NOT IN ('draft', 'done', 'cancel')
                 AND
                 (
                     (pp.perishable AND NOT pp.batch_management AND (sil.expiry_date IS NULL OR spl.type != 'internal'))

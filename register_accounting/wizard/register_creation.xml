@@ -11,7 +11,7 @@
                 <form string="Register creation wizard">
                     <label string="Choose a period then click on 'Confirm period' to display all register that could be created." colspan="4" align="0.0"/>
                     <group col="6" colspan="4">
-                        <field name="period_id" colspan="2" domain="[('state', '=', 'draft'), ('number', '&lt;=', 12.0)]"/>
+                        <field name="period_id" colspan="2" domain="[('state', '=', 'draft'), ('special', '!=', True)]"/>
                         <field name="instance_id" colspan="2" />
                         <button name="button_confirm_period" type="object" string="Confirm period" icon="gtk-execute" colspan="1"/>
                         <label string="" colspan="1"/>

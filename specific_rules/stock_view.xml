@@ -19,7 +19,7 @@
                         <field name="nomen_manda_0"
                             domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
                             widget="selection"
-                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                              on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
                         />
                         <field name="nomen_manda_1"
                             domain="[('id','=', 0)]"

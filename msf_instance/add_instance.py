@@ -192,9 +192,30 @@ class account_journal_fake(osv.osv):
 
         ret = []
         for journal in self.read(cr, uid, ids, ['code', 'instance_id']):
+            if context:
+                exclude_journals = context.get('exclude_journals', False)
+                if exclude_journals:
+                    if isinstance(exclude_journals, str):
+                        exclude_journals = [exclude_journals]
+                    if journal['code'] in exclude_journals:
+                        continue
             ret.append((journal['id'], '%s / %s'%(journal['instance_id'] and journal['instance_id'][1] or '', journal['code'])))
-
         return ret
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None,
+        count=False):
+        if args is None:
+            args = []
+        if context:
+            exclude_journals = context.get('exclude_journals', False)
+            if exclude_journals:
+                if isinstance(exclude_journals, str):
+                    exclude_journals = [exclude_journals]
+            args.append(('code', 'not in', exclude_journals))
+        res = super(account_journal_fake, self).search(cr, uid, args,
+            offset=offset, limit=limit, order=order, context=context,
+            count=count)
+        return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         return self.pool.get('account.journal').fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)

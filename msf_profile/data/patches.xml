@@ -28,12 +28,16 @@
             <field name="method">us_332_patch</field>
         </record>
 
-        <record id="us_841_patch" model="patch.scripts">
-            <field name="method">us_841_patch</field>
+        <record id="us_898_patch" model="patch.scripts">
+            <field name="method">us_898_patch</field>
         </record>
 
         <record id="us_822_patch" model="patch.scripts">
             <field name="method">us_822_patch</field>
+        </record>
+
+        <record id="us_908_patch" model="patch.scripts">
+            <field name="method">us_908_patch</field>
         </record>
 
         <record id="bar_action_patch" model="patch.scripts">

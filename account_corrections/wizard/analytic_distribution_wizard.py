@@ -112,6 +112,19 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         For each given wizard compare old (distrib_id) and new analytic distribution. Then adapt analytic lines.
         """
+        # US-900: get the next OD journal sequence only 1st time it is needed
+        # for the correction transaction
+        def get_entry_seq(entry_seq_data):
+            res = entry_seq_data.get('sequence', False)
+            if not res:
+                seqnum = self.pool.get('ir.sequence').get_id(
+                    cr, uid, journal.sequence_id.id,
+                    context={'fiscalyear_id': period.fiscalyear_id.id})
+                res = "%s-%s-%s" % (move_prefix, code, seqnum)
+                entry_seq_data['sequence'] = res
+            return res
+
+
         if context is None:
             context = {}
         # Prepare some values
@@ -143,8 +156,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (wizard.date or ''))
         period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
         move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
-        seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
-        entry_seq = "%s-%s-%s" % (move_prefix, code, seqnum)
+        entry_seq_data = {}
 
         # US-676: check wizard lines total matches JI amount
         # the wizard already check distri is 100% allocated
@@ -237,7 +249,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # Set right journal and right entry sequence
                 ana_obj.write(cr, uid, reversed_ids, {'journal_id': correction_journal_id})
                 for reversed_id in reversed_ids:
-                    cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, reversed_id) )
+                    cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), reversed_id) )
                 # delete the distribution line
                 wiz_line.unlink()
                 any_reverse = True
@@ -304,7 +316,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.pool.get('account.analytic.line').write(cr, uid, [reversed_id], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence})
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
             self.pool.get('account.analytic.line').write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True})
-            cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, reversed_id) )
+            cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), reversed_id) )
 
             # update the distrib line
             name = False
@@ -330,13 +342,13 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Add link to first analytic lines
             for ret_id in ret:
                 self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
-                cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, ret[ret_id]) )
+                cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), ret[ret_id]) )
             if ret and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
                 greater_amount['aji_id'] = ret[ret.keys()[0]]
                 greater_amount['date'] = wizard.date
         # UFTP-194: Set missing entry sequence for created analytic lines
         if have_been_created:
-            cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (entry_seq, to_reverse_ids[0], tuple(have_been_created)))
+            cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (get_entry_seq(entry_seq_data), to_reverse_ids[0], tuple(have_been_created)))
 
         #####
         ## FP: TO OVERRIDE
@@ -348,13 +360,6 @@ class analytic_distribution_wizard(osv.osv_memory):
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
-            date_to_use = orig_date
-            if ml.journal_id.type == 'hq':
-                # US-773: keep date when correcting hq entry
-                date_to_use = False
-            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
-            if ml.corrected_line_id:
-                date_to_use = ml.date
             vals = {
                 'account_id': line.analytic_id.id,
                 'cost_center_id': line.cost_center_id.id,
@@ -362,21 +367,15 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'amount_currency': amount_cur,
                 'amount': amount,
             }
-            if date_to_use:
+
+            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
+            if ml.corrected_line_id:
                 vals.update({
-                    'date': date_to_use,
+                    'date': ml.date,
                     'source_date': orig_date,
                     'document_date': orig_document_date,
                 })
             self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, vals)
-            # UTP-1118: Fix problem of entry_sequence that is not the right one regarding the journal
-
-            # UFTP-373: The block below is commented out, as there is no reason to replace the Seq in here
-#             for ana_line in self.pool.get('account.analytic.line').browse(cr, uid, to_override_ids, context=context):
-#                 prefix = ana_line.instance_id.move_prefix
-#                 seqnum = ana_line.entry_sequence.split('-')[2]
-#                 entry_seq = "%s-%s-%s" % (prefix, ana_line.journal_id.code, seqnum)
-#                 cr.execute('UPDATE account_analytic_line SET entry_sequence = %s WHERE id = %s', (entry_seq, ana_line.id))
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
                     'analytic_id': line.analytic_id.id,
@@ -386,7 +385,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 })
             if greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
                 greater_amount['aji_id'] = to_override_ids[0]
-                greater_amount['date'] = date_to_use
+                greater_amount['date'] = orig_date
 
         #####
         # US-676

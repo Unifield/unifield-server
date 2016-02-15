@@ -31,7 +31,7 @@ class account_mcdb(osv.osv):
 
     _columns = {
         'description': fields.char("Query name", required=False, readonly=False, size=255),
-        'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code"),
+        'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code", domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal
         'instance_ids': fields.many2many('msf.instance', 'instance_mcdb', 'mcdb_id', 'instance_id', string="Proprietary instance"),
         'analytic_journal_ids': fields.many2many(obj='account.analytic.journal', rel='account_analytic_journal_mcdb', id1='mcdb_id', id2='analytic_journal_id', string="Analytic journal code"),
         'abs_id': fields.many2one('account.bank.statement', string="Register name"), # Change into many2many ?
@@ -45,7 +45,7 @@ class account_mcdb(osv.osv):
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
         'partner_id': fields.many2one('res.partner', string="Partner"),
         'employee_id': fields.many2one('hr.employee', string="Employee"),
-        'transfer_journal_id': fields.many2one('account.journal', string="Journal"),
+        'transfer_journal_id': fields.many2one('account.journal', string="Journal", domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal
         'reconciled': fields.selection([('reconciled', 'Reconciled'), ('unreconciled', 'NOT reconciled')], string='Reconciled?'),
         'functional_currency_id': fields.many2one('res.currency', string="Functional currency", readonly=True),
         'amount_func_from': fields.float('Begin amount in functional currency'),

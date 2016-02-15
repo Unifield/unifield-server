@@ -489,10 +489,16 @@ class account_journal(osv.osv):
                 context=context)[0].company_id.instance_id
             if self_instance:
                 forbid_levels = []
-                if self_instance.level and self_instance.level == 'coordo':
-                    # BKLG-19/7: forbid creation of MANUAL journal entries
-                    # from COORDO on a PROJECT journal
-                    forbid_levels.append('project')
+                if self_instance.level:
+                    if self_instance.level == 'coordo':
+                        # BKLG-19/7: forbid creation of MANUAL journal entries
+                        # from COORDO on a PROJECT journal
+                        forbid_levels = ['project']
+                    elif self_instance.level == 'project':
+                        # US-896: project should only see project journals
+                        # (coordo register journals sync down to project for
+                        #  example)
+                        forbid_levels = ['coordo', 'section']
                 if forbid_levels:
                     msf_instance_obj = self.pool.get('msf.instance')
                     forbid_instance_ids = msf_instance_obj.search(cr, uid, 
@@ -527,7 +533,7 @@ class account_move(osv.osv):
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, domain="[('state', '=', 'draft')]"),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj']), ('instance_filter', '=', True)]"),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system']), ('instance_filter', '=', True)]"),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
             help="This indicates which Journal Type is attached to this Journal Entry"),
