@@ -686,7 +686,7 @@ class ir_translation(osv.osv):
             if not res:
                 unlink_ids.append(translation.id)
         if unlink_ids:
-            self.unlink(cr, uid, unlink_ids, context=context)
+            self.purge(cr, uid, unlink_ids, context=context)
         return
 
 ir_translation()
