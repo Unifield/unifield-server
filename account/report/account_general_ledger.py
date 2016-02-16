@@ -165,10 +165,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         move_states = [ 'posted', ] if self.target_move == 'posted' \
             else [ 'draft', 'posted', ]
         # UF-1714 accounts 8*, 9* are not displayed
-        deduce_accounts_ctx = used_context.copy()
+        """deduce_accounts_ctx = used_context.copy()
         exclude_parents_ids = a_obj.search(self.cr, self.uid,
                 [('code', 'in', [ '8', '9', ])],
-                context=deduce_accounts_ctx)
+                context=deduce_accounts_ctx)"""
+        exclude_parents_ids = False
         self._drill = self.pool.get("account.drill").build_tree(self.cr,
             self.uid, query, query_ib, move_states=move_states,
             exclude_parents_ids=exclude_parents_ids, context=used_context)
@@ -374,6 +375,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def lines(self, account, initial_balance_mode=False):
         res = []
+        if account.level < 4:
+            return res
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
             return res
