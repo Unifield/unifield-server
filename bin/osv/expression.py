@@ -371,18 +371,26 @@ class expression(object):
                              ') UNION ('                \
                              '  SELECT id'              \
                              '    FROM "' + working_table._table + '"'       \
-                             '   WHERE "' + left + '" ' + operator + ' ' +" (" + instr + "))"
+                             '   WHERE "' + left + '" ' + operator + ' ' +" (" + instr + ")" \
+                             '     AND id NOT IN ' + query1 + ' AND src ' + operator + ' ' + " (" + instr + ")" \
+                             '))'
                     else:
                         query1 += '     AND value ' + operator + instr +   \
                              ') UNION ('                \
                              '  SELECT id'              \
                              '    FROM "' + working_table._table + '"'       \
-                             '   WHERE "' + left + '" ' + operator + instr + ")"
+                             '   WHERE "' + left + '" ' + operator + instr + "" \
+                             '     AND id NOT IN ' + query1 + ' AND src ' + operator + instr + ""\
+                             '))'
 
                     query2 = [working_table._name + ',' + left,
                               context.get('lang', False) or 'en_US',
                               'model',
                               right,
+                              right,
+                              working_table._name + ',' + left,
+                              context.get('lang', False) or 'en_US',
+                              'model',
                               right,
                              ]
 
