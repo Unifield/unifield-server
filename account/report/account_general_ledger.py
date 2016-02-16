@@ -130,6 +130,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         # UF-1714 accounts 8*, 9* are not displayed:
         # have to deduce 8/9 balance amounts to MSF account view (root account)
+        # TODO remove since US-926
         deduce_accounts_index = [ '8', '9', ]
         self._deduce_accounts_data = {
             'debit': 0., 'credit': 0., 'balance': 0.,
@@ -156,6 +157,22 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             # add parent(s) of filtered accounts
             self.account_ids += self.pool.get('account.account')._get_parent_of(
                     self.cr, self.uid, self.account_ids)
+
+        query = self.query
+        if self.unreconciled_filter:
+            query += " AND reconcile_id is null"
+        query_ib = self.init_balance and self.init_query or False
+        move_states = [ 'posted', ] if self.target_move == 'posted' \
+            else [ 'draft', 'posted', ]
+        # UF-1714 accounts 8*, 9* are not displayed
+        deduce_accounts_ctx = used_context.copy()
+        exclude_parents_ids = a_obj.search(self.cr, self.uid,
+                [('code', 'in', [ '8', '9', ])],
+                context=deduce_accounts_ctx)
+        self._drill = self.pool.get("account.drill").build_tree(self.cr,
+            self.uid, query, query_ib, move_states=move_states,
+            exclude_parents_ids=exclude_parents_ids, context=used_context)
+
         
         return res
 
@@ -202,6 +219,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_ccy_label': self.get_ccy_label,
             'get_title': self._get_title,
             'get_initial_balance': self._get_initial_balance,
+            'get_tree_nodes': self._get_tree_nodes,
         })
         
         # company currency
@@ -219,6 +237,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             raise osv.except_osv(_('Error !'), _('Company has no default currency'))
 
         self.context = context
+        self._drill = None
+
+    def _get_tree_nodes(self, account):
+        res = []
+        node = self._drill.next_node()
+        while node:
+            res.append(node)
+            node = self._drill.next_node()
+        return res
 
     def _sum_currency_amount_account(self, account):
         reconcile_pattern = self.unreconciled_filter and \

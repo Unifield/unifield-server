@@ -303,32 +303,32 @@
       </tr>
     </blockTable>
     <section>
-      <para style="terp_default_8">[[ repeatIn(get_children_accounts(a), 'o') ]]</para>
+      <para style="terp_default_8">[[ repeatIn(get_tree_nodes(a), 'o') ]]</para>
       <blockTable colWidths="442.0,60.0,71.0,71.0,71.0,71.0" style="Table8_header">
         <tr>
           <td>
-            <para style="terp_default_Bold_9">[[ '..'*(o.level-1) ]] [[ o.code ]] [[ o.name ]]</para>
+            <para style="terp_default_Bold_9">[[ '..'*(o.level-1) ]] [[ o.name ]]</para>
           </td>
           <td>
               <para style="terp_default_Bold_9_Right">[[ get_output_currency_code(data) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_account(o), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(o.data['*']['debit'], digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_account(o), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(o.data['*']['credit'], digits=get_digits(dp='Account')) ]]</para>
           </td>
            <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_balance_account(o), digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_Bold_9_Right">[[ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account')) ]]</para>
           </td>
         </tr>
       </blockTable>
 
       <section>
-        <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=True), 'line') ]]</para>
+        <para style="terp_default_8">[[ repeatIn(lines(o.obj, initial_balance_mode=True), 'line') ]]</para>
         <blockTable colWidths="442.0,60.0,71.0,71.0,71.0,71.0" style="Table9">
           <tr>
             <td>
@@ -354,7 +354,7 @@
       </section>
 
       <section>
-        <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=False), 'line') ]]</para>
+        <para style="terp_default_8">[[ repeatIn(lines(o.obj, initial_balance_mode=False), 'line') ]]</para>
         <blockTable colWidths="114.0,80.0,248.0,60.0,71.0,71.0,71.0,71.0" style="Table9">
           <tr>
             <td>
@@ -386,26 +386,26 @@
       </section>
 
       <section>
-      <para style="terp_default_8">[[ repeatIn(get_currencies_account_subtotals(account=o), 'sub') ]]</para>
+      <para style="terp_default_8">[[ repeatIn(o.get_currencies(), 'ccy') ]]</para>
       <blockTable colWidths="442.0,60.0,71.0,71.0,71.0,71.0" style="Table8_subtotal_ccy">
         <tr>
           <td>
-            <para style="terp_default_9_Right">[[ sub.get('account_code', '') or '' ]]</para>
+            <para style="terp_default_9_Right">[[ o.code ]]</para>
           </td>
           <td>
-              <para style="terp_default_9_Right">[[ sub.get('ccy_name', '') or '' ]]</para>
+              <para style="terp_default_9_Right">[[ ccy ]]</para>
           </td>
           <td>
-            <para style="terp_default_9_Right">[[ formatLang(sub.get('debit', 0.) or 0., digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit_ccy'], digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_9_Right">[[ formatLang(sub.get('credit', 0.) or 0., digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')) ]]</para>
           </td>
            <td>
-            <para style="terp_default_9_Right">[[ formatLang(sub.get('bal', 0.) or 0., digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_9_Right">[[ formatLang(sub.get('bal_func', 0.) or 0., digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit'] - o.data[ccy]['credit'], digits=get_digits(dp='Account')) ]]</para>
           </td>
         </tr>
       </blockTable>
