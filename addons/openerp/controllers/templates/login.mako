@@ -22,7 +22,7 @@
 
     <table class="view" cellpadding="0" cellspacing="0" style="padding-top: 25px; border:none;">
         <tr>
-            <td style="padding:35px 10px 5px 35px; min-width:100px; display:block; margin:auto; " valign="top" width="450px">
+            <td style="padding:35px 10px 5px 35px; min-width:100px;" valign="top" width="450">
                 <form action="${py.url(target)}" method="post" name="loginform" id="loginform" style="padding-bottom: 5px; min-width: 100px;">
                     % for key, value in origArgs.items():
                         <input type="hidden" name="${key}" value="${value}"/>
@@ -88,6 +88,10 @@
                 % endif
                 <div style="margin-top: 10px; height: 150px">
                 </div>
+            </td>
+
+            <td style="padding:55px 35px 5px 10px; min-width: 200px;" valign="top">
+                <p>${_("All MSF missions will share UniField, integrating finance and supply, enhancing functional and technical capacities, improving visibility and transparency in the management of our operations.")}</p>
             </td>
         </tr>
     </table>

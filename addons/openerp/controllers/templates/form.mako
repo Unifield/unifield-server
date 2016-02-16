@@ -10,7 +10,7 @@
             viewRecord(id, src);
         }
         jQuery(document).ready(function() {
-            document.title = "${title|n}" + " - OpenERP";
+            document.title = "${title|n}" + " - Unifield";
             /*
             % if form.screen.view_type == 'form':
             */
