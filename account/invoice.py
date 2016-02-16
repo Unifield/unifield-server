@@ -749,10 +749,11 @@ class account_invoice(osv.osv):
             for tax in inv.tax_line:
                 if tax.manual:
                     continue
-                key = (tax.tax_code_id.id, tax.base_code_id.id, tax.account_id.id)
+                key = tax.account_tax_id.id  # taxes are grouped by id
                 tax_key.append(key)
                 if not key in compute_taxes:
-                    raise osv.except_osv(_('Warning !'), _('Global taxes defined, but are not in invoice lines !'))
+                    raise osv.except_osv(_('Warning !'),
+                                         _('Global taxes are defined. Please click on compute to update tax base !'))
                 base = compute_taxes[key]['base']
                 if abs(base - tax.base) > inv.company_id.currency_id.rounding:
                     raise osv.except_osv(_('Warning !'), _('Tax base different !\nClick on compute to update tax base'))
@@ -1766,6 +1767,7 @@ class account_invoice_tax(osv.osv):
                 val['manual'] = False
                 val['sequence'] = tax['sequence']
                 val['base'] = tax['price_unit'] * line['quantity']
+                val['account_tax_id'] = tax['id']
 
                 if inv.type in ('out_invoice','in_invoice'):
                     val['base_code_id'] = tax['base_code_id']
@@ -1780,7 +1782,7 @@ class account_invoice_tax(osv.osv):
                     val['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['amount'] * tax['ref_tax_sign'], context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
                     val['account_id'] = tax['account_paid_id'] or line.account_id.id
 
-                key = (val['tax_code_id'], val['base_code_id'], val['account_id'])
+                key = tax['id']  # taxes are grouped by id
                 if not key in tax_grouped:
                     tax_grouped[key] = val
                 else:
