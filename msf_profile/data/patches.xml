@@ -46,10 +46,5 @@
         <record id="bar_action_patch" model="patch.scripts">
             <field name="method">bar_action_patch</field>
         </record>
-
-        <record id="update_sp_222" model="patch.scripts">
-            <field name="method">update_sp_222</field>
-        </record>
-
     </data>
 </openerp>
