@@ -548,6 +548,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             self.cr,
             self.uid,
             self.datas['moves'],
+            context=self.localcontext
         ):
             move_vals = {
                 'product_code': move.product_id.default_code,
