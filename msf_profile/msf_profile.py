@@ -68,6 +68,8 @@ class patch_scripts(osv.osv):
                        "WHERE model='res.currency' AND sdref='ZMW'")
         else:  # we are on a client instance
             update_module = self.pool.get('sync.client.update_received')
+            if not update_module:
+                return True  # this is a client without sync module installed
             # update the local currency
             currency_module = self.pool.get('res.currency')
             currency_ids = currency_module.search(cr, uid, [('name', '=', 'ZMK')])
@@ -80,7 +82,6 @@ class patch_scripts(osv.osv):
             cr.execute("UPDATE ir_model_data "
                        "SET name='base_ZMW' "
                        "WHERE model='res.currency' AND name='ZMW'")
-
         # some update where refering to the old currency with sdref=sd.ZMW
         # as the reference changed, we need to modify all of this updates
         # pointing to a wrong reference
@@ -344,36 +345,36 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
-    def update_sp_222(self, cr, uid, *a, **b):
-        update_module = self.pool.get('sync.server.update')
-        if not update_module:
-            return True
-        logger = logging.getLogger('update')
+   # def update_sp_222(self, cr, uid, *a, **b):
+   #     update_module = self.pool.get('sync.server.update')
+   #     if not update_module:
+   #         return True
+   #     logger = logging.getLogger('update')
 
-        # get all the updates with same sdref, rule_id and source that are
-        # present multiple times
-        cr.execute("""SELECT sdref, rule_id, source FROM
-        sync_server_update GROUP BY sdref, rule_id, source
-              HAVING COUNT(*)>1;""")
-        multiple_updates = cr.fetchall()
-        logger.warn('SP_222: %d udaptes have duplicate entries.' %
-                    len(multiple_updates))
-        delted_count = 0
-        for sdref, rule_id, source in multiple_updates:
-            # get all the updates with this parameters
-            similar_update_ids = update_module.search(cr, uid,
-                    [('sdref', '=', sdref),
-                     ('rule_id', '=', rule_id),
-                     ('source', '=', source)],
-                    order='write_date asc, id')
-            # keep the last update
-            update_to_delete_ids = similar_update_ids[:-1]
-            delted_count += len(update_to_delete_ids)
-            update_module.unlink(cr, uid, update_to_delete_ids)
-            cr.commit()
-            logger.warn('SP_222: %d udaptes deleted.' % len(update_to_delete_ids))
-        logger.warn('SP_222: ------ %d udaptes deleted in total. ------' % delted_count)
-        return True
+   #     # get all the updates with same sdref, rule_id and source that are
+   #     # present multiple times
+   #     cr.execute("""SELECT sdref, rule_id, source FROM
+   #     sync_server_update GROUP BY sdref, rule_id, source
+   #           HAVING COUNT(*)>1;""")
+   #     multiple_updates = cr.fetchall()
+   #     logger.warn('SP_222: %d udaptes have duplicate entries.' %
+   #                 len(multiple_updates))
+   #     delted_count = 0
+   #     for sdref, rule_id, source in multiple_updates:
+   #         # get all the updates with this parameters
+   #         similar_update_ids = update_module.search(cr, uid,
+   #                 [('sdref', '=', sdref),
+   #                  ('rule_id', '=', rule_id),
+   #                  ('source', '=', source)],
+   #                 order='write_date asc, id')
+   #         # keep the last update
+   #         update_to_delete_ids = similar_update_ids[:-1]
+   #         delted_count += len(update_to_delete_ids)
+   #         update_module.unlink(cr, uid, update_to_delete_ids)
+   #         cr.commit()
+   #         logger.warn('SP_222: %d udaptes deleted.' % len(update_to_delete_ids))
+   #     logger.warn('SP_222: ------ %d udaptes deleted in total. ------' % delted_count)
+   #     return True
 
 patch_scripts()
 
