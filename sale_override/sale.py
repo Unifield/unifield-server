@@ -494,7 +494,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             rule_domain.append(('log_write', '=', True))
         rule_ids = rule_obj.search(cr, uid, rule_domain, context=context)
         if fld_ids and rule_ids:
-            if fld_ids[0] not in rule_obj.browse(cr, uid, rule_ids[0], context=context).field_ids:
+            for fld in rule_obj.browse(cr, uid, rule_ids[0], context=context).field_ids:
+                if fld.id == fld_ids[0]:
+                    break
+            else:
                 return
 
         log_sequence = audit_seq_obj.search(cr, uid, domain)
