@@ -456,6 +456,68 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             res[sale.id] = sale.order_type != 'regular' or sale.partner_id.partner_type == 'internal'
         return res
 
+    def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
+        """
+        If state_hidden_sale_order is modified, add an audittrail.log.line
+        @param cr: Cursor to the database
+        @param uid: ID of the user that change the state
+        @param order_id: ID of the sale.order on which the state is modified
+        @param new_state: The value of the new state
+        @param context: Context of the call
+        @return: True
+        """
+        audit_line_obj = self.pool.get('audittrail.log.line')
+        audit_seq_obj = self.pool.get('audittrail.log.sequence')
+        log = 1
+
+        if context is None:
+            context = {}
+
+        domain = [
+            ('model', '=', 'sale.order'),
+            ('res_id', '=', order_id),
+        ]
+
+        object_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sale.order')], context=context)[0]
+
+        log_sequence = audit_seq_obj.search(cr, uid, domain)
+        if log_sequence:
+            log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
+            log = log_seq.get_id(code_or_id='id')
+
+        # Get readable value
+        new_state_txt = False
+        old_state_txt = False
+        for st in SALE_ORDER_STATE_SELECTION:
+            if new_state_txt and old_state_txt:
+                break
+            if new_state == st[0]:
+                new_state_txt = st[1]
+            if old_state == st[0]:
+                old_state_txt = st[1]
+
+        vals = {
+            'user_id': uid,
+            'method': 'write',
+            'name': _('State'),
+            'object_id': object_id,
+            'res_id': order_id,
+            'fct_object_id': False,
+            'fct_res_id': False,
+            'sub_obj_name': '',
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'field_description': _('State'),
+            'trans_field_description': _('State'),
+            'new_value': new_state,
+            'new_value_text': new_state_txt or new_state,
+            'new_value_fct': False,
+            'old_value': old_state,
+            'old_value_text': old_state_txt or old_state,
+            'old_value_fct': '',
+            'log': log,
+        }
+        audit_line_obj.create(cr, uid, vals, context=context)
+
     def _vals_get_sale_override(self, cr, uid, ids, fields, arg, context=None):
         '''
         get function values
@@ -470,6 +532,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             result[obj.id]['state_hidden_sale_order'] = obj.state
             if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order' and not obj.procurement_request:
                 result[obj.id]['state_hidden_sale_order'] = 'split_so'
+
+            if obj.state_hidden_sale_order != result[obj.id]['state_hidden_sale_order']:
+                self.add_audit_line(cr, uid, obj.id,
+                                    obj.state_hidden_sale_order,
+                                    result[obj.id]['state_hidden_sale_order'],
+                                    context=context)
 
         return result
 
