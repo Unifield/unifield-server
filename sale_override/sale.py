@@ -468,6 +468,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         """
         audit_line_obj = self.pool.get('audittrail.log.line')
         audit_seq_obj = self.pool.get('audittrail.log.sequence')
+        fld_obj = self.pool.get('ir.model.fields')
+        model_obj = self.pool.get('ir.model')
+        rule_obj = self.pool.get('audittrail.rule')
         log = 1
 
         if context is None:
@@ -478,7 +481,21 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ('res_id', '=', order_id),
         ]
 
-        object_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sale.order')], context=context)[0]
+        object_id = model_obj.search(cr, uid, [('model', '=', 'sale.order')], context=context)[0]
+        # If the field 'state_hidden_sale_order' is not in the fields to trace, don't trace it.
+        fld_ids = fld_obj.search(cr, uid, [
+            ('model', '=', 'sale.order'),
+            ('name', '=', 'state_hidden_sale_order'),
+        ], context=context)
+        rule_domain = [('object_id', '=', object_id)]
+        if not old_state:
+            rule_domain.append(('log_create', '=', True))
+        else:
+            rule_domain.append(('log_write', '=', True))
+        rule_ids = rule_obj.search(cr, uid, rule_domain, context=context)
+        if fld_ids and rule_ids:
+            if fld_ids[0] not in rule_obj.browse(cr, uid, rule_ids[0], context=context).field_ids:
+                return
 
         log_sequence = audit_seq_obj.search(cr, uid, domain)
         if log_sequence:
