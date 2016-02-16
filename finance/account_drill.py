@@ -30,12 +30,18 @@ class AccountDrillNode(object):
     """
     def __init__(self, parent=None, level=0, account_id=False):
         super(AccountDrillNode, self).__init__()
+        # set during maping
         self.parent = parent
         self.childs = []
         self.level = level
-
         self.account_id = account_id
+
+        # set during maping/reduce
         self.data = {}
+
+        # set during next_node() calls
+        self.name = ''
+        self.obj = None
 
     def output(self):
         """
@@ -78,7 +84,7 @@ class AccountDrill(object):
         GROUP BY l.currency_id'''
 
     def __init__(self, pool, cr, uid, query, query_ib, move_states=[],
-        context=None):
+        exclude_parents_ids=[], context=None):
         super(AccountDrill, self).__init__()
         self.pool = pool
         self.cr = cr
@@ -93,11 +99,14 @@ class AccountDrill(object):
         self.move_states = move_states
         if not self.move_states:
             self.move_states = [ 'draft', 'posted', ]
+        self.exclude_parents_ids = exclude_parents_ids
 
         self.root = None
+        self.nodes_flat = []
         self.nodes_by_id = {}  # flat nodes by account_id
         self.nodes_by_level = {}  # flat nodes by level
 
+        self._next_node_index = 0  # current node index used by next_node()
 
     def output(self):
         """
@@ -119,6 +128,7 @@ class AccountDrill(object):
 
         self.root = self._create_node(parent=None, level=0, account_id=root_id)
         self._map_dive(self.root, 1)
+        self.nodes_count = len(self.nodes_flat)
 
     def reduce(self):
         """
@@ -152,15 +162,17 @@ class AccountDrill(object):
     def _map_dive(self, parent, level):
         if level > self._move_level:
             return
-        child_ids = self._search([
-            ('parent_id', '=', parent.account_id),
-            ('level', '=', level),
-        ])
-        if child_ids:
-            for id in child_ids:
-                node = self._create_node(parent=parent, level=level,
-                    account_id=id)
-                self._map_dive(node, level + 1)
+        if not self.exclude_parents_ids \
+            or parent.account_id not in self.exclude_parents_ids:
+            child_ids = self._search([
+                ('parent_id', '=', parent.account_id),
+                ('level', '=', level),
+            ])
+            if child_ids:
+                for id in child_ids:
+                    node = self._create_node(parent=parent, level=level,
+                        account_id=id)
+                    self._map_dive(node, level + 1)
 
     def _create_node(self, parent=None, level=0, account_id=False):
         """
@@ -207,6 +219,7 @@ class AccountDrill(object):
 
         node = AccountDrillNode(parent=parent, level=level,
             account_id=account_id)
+        self.nodes_flat.append(node)
         self.nodes_by_id[account_id] = node
         if level not in self.nodes_by_level:
             self.nodes_by_level[level] = []
@@ -234,6 +247,17 @@ class AccountDrill(object):
         return self.model.search(self.cr, self.uid, domain,
             context=self.context)
 
+    def next_node(self):
+        if self._next_node_index >= self.nodes_count:
+            return None
+        node = self.nodes_flat[self._next_node_index]
+        if not node.name:
+            node.obj = self.model.browse(self.cr, self.uid, node.account_id,
+                self.context)
+            node.name = "%s %s" % (node.obj.code, node.obj.name, )
+
+        self._next_node_index += 1
+        return node
 
 
 class account_drill(osv.osv):
@@ -241,7 +265,7 @@ class account_drill(osv.osv):
     _auto = False
 
     def build_tree(self, cr, uid, query, query_ib, move_states=[],
-        context=None):
+        exclude_parents_ids=False, context=None):
         """
         build account amounts consolidated tree
         using query for where clause for regular move lines
@@ -249,7 +273,8 @@ class account_drill(osv.osv):
         (pass it False if no ib to compute => no 01/01/FY in date selection)
         """
         ac = AccountDrill(self.pool, cr, uid, query, query_ib,
-            move_states=move_states, context=context)
+            move_states=move_states, exclude_parents_ids=exclude_parents_ids,
+            context=context)
         ac.map()
         ac.reduce()
         return ac
