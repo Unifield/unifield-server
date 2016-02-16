@@ -472,6 +472,7 @@ class update(osv.osv):
                     updates_master[-1].rule_id.id != update.rule_id.id or \
                     updates_master[-1].source.id != update.source.id or \
                     updates_master[-1].sequence != update.sequence or \
+                    updates_master[-1].fields != update.fields or \
                     updates_master[-1].is_deleted != update.is_deleted:
                     updates_master.append(update)
                     updates_to_send.append([update])
