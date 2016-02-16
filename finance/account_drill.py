@@ -40,8 +40,14 @@ class AccountDrillNode(object):
         self.data = {}
 
         # set during next_node() calls
+        self.code = ''
         self.name = ''
         self.obj = None
+
+    def get_currencies(self):
+        if not self.data:
+            return []
+        return [ c for c in self.data.keys() if c != '*' ]
 
     def output(self):
         """
@@ -254,7 +260,8 @@ class AccountDrill(object):
         if not node.name:
             node.obj = self.model.browse(self.cr, self.uid, node.account_id,
                 self.context)
-            node.name = "%s %s" % (node.obj.code, node.obj.name, )
+            node.code = node.obj.code
+            node.name = "%s %s" % (node.code, node.obj.name, )
 
         self._next_node_index += 1
         return node
