@@ -316,7 +316,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if self.unreconciled_filter:
                 if child_account.id in self.unreconciliable_accounts:
                     # unreconciliable filter:
-                    # do not display unreciliable account
+                    # do not display unreconciliable account
                     continue
             if self.account_ids and child_account.id not in self.account_ids:
                     continue  # filtered account
