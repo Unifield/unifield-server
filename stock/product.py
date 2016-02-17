@@ -27,13 +27,12 @@ import decimal_precision as dp
 class product_stock_availability(osv.osv):
     _name = 'product.stock.availability'
 
-    def update_uom_qantity(self, cr, uid, ids, old_uom, new_uom, context=None):
+    def update_uom_qantity(self, cr, uid, ids, new_uom, context=None):
         """
         Compute the quantity of the product.stock.availability in the UoM of associated product
         :param cr: Cursor to the database
         :param uid: ID of user that calls the method
         :param ids: ID of product.stock.availability to update
-        :param old_uom: ID of the old Unit of Measure of the product
         :param new_uom: ID of the new Unit of Measure of the product
         :param context: Context of the call
         :return: True
@@ -48,7 +47,7 @@ class product_stock_availability(osv.osv):
 
         for pas in self.browse(cr, uid, ids, context=context):
             self.write(cr, uid, [pas.id], {
-                'quantity': uom_obj._compute_qty(cr, uid, old_uom, pas.quantity, new_uom)
+                'quantity': uom_obj._compute_qty(cr, uid, pas.product_id.uom_id.id, pas.quantity, new_uom)
             }, context=context)
 
         return True
@@ -509,9 +508,9 @@ class product_product(osv.osv):
         psa_obj = self.pool.get('product.stock.availability')
 
         if vals.get('uom_id', False):
-            prd_ids = [x for x in self.read(cr, uid, ids, ['uom_id'], context=context) if x['uom_id'] != vals['uom_id']]
+            prd_ids = [x['id'] for x in self.read(cr, uid, ids, ['uom_id'], context=context) if x['uom_id'] != vals['uom_id']]
             psa_ids = psa_obj.search(cr, uid, [('product_id', 'in', prd_ids)], context=context)
-            psa_obj.update_uom_qantity(cr, uid, psa_ids, context=context)
+            psa_obj.update_uom_qantity(cr, uid, psa_ids, vals['uom_id'], context=context)
 
         return super(product_product, self).write(cr, uid, ids, vals, context=context)
 
