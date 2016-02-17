@@ -234,6 +234,17 @@ class product_product(osv.osv):
         return res
 
     def get_product_pas(self, cr, uid, ids, location_ids, prodlot_id, context=None):
+        """
+        Compute the available quantities for products by using the intermediate table product_stock_availability
+        @param cr: Cursor to the database
+        @param uid: ID of the user that calls the method
+        @param ids: List of ID of product.product
+        @param location_ids: List of ID of stock.location where the quantities must be computed
+        @param prodlot_id: ID of the stock.production.lot on which the quantities must be computed
+        @param context: Context of the call
+        @return: A dictionary with the ID of products as keys and the computed quantities as values.
+        """
+        uom_obj = self.pool.get('product.uom')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -255,6 +266,11 @@ class product_product(osv.osv):
         results = cr.dictfetchall()
         res = {}
         for r in results:
+            if context.get('uom', False):
+                prd_brw = prd_obj.browse(cr, uid, r['product_id'], context=context)
+                uom_brw = uom_obj.browse(cr, uid, context.get('uom'), context=context)
+                res[r['product_id']] = uom_obj.\
+                    _compute_qty_obj(cr, uid, prd_brw.uom_id, r['sum'], uom_brw, context=context)
             res[r['product_id']] = r['sum']
 
         if not res:
@@ -380,12 +396,14 @@ class product_product(osv.osv):
         #TOCHECK: before change uom of product, stock move line are in old uom.
         context.update({'raise-exception': False})
         for amount, prod_id, prod_uom in results:
-            amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                     uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
+            if prod_uom != context.get('uom', product2uom[prod_id]):
+                amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
+                         uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
             res[prod_id] += amount
         for amount, prod_id, prod_uom in results2:
-            amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                    uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
+            if prod_uom != context.get('uom', product2uom[prod_id]):
+                amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
+                        uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
             res[prod_id] -= amount
         return res
 
