@@ -753,7 +753,7 @@ class account_invoice(osv.osv):
                 tax_key.append(key)
                 if not key in compute_taxes:
                     raise osv.except_osv(_('Warning !'),
-                                         _('Global taxes are defined. Please click on compute to update tax base !'))
+                                         _('Global taxes defined, click on compute to update tax base !'))
                 base = compute_taxes[key]['base']
                 if abs(base - tax.base) > inv.company_id.currency_id.rounding:
                     raise osv.except_osv(_('Warning !'), _('Tax base different !\nClick on compute to update tax base'))
@@ -1692,11 +1692,13 @@ class account_invoice_tax(osv.osv):
 
 
     def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed,
-        amount_total):
-        atx_obj = self.pool.get('account.tax')
-        atx = atx_obj.browse(cr, uid, account_tax_id)
-        return {'value': {'account_id': atx.account_collected_id.id, 'name': "{0} - {1}".format(atx.name,atx.description), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id, amount_untaxed, amount_total)}}
-
+        amount_total, context=None):
+        ret = {}
+        if account_tax_id:
+            atx_obj = self.pool.get('account.tax')
+            atx = atx_obj.browse(cr, uid, account_tax_id, context=context)
+            ret = {'value': {'account_id': atx.account_collected_id.id, 'name': "{0} - {1}".format(atx.name, atx.description or ''), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id, amount_untaxed, amount_total)}}
+        return ret
 
     def _calculate_tax(self, cr, uid, account_tax_id, amount_untaxed,
         amount_total):
