@@ -23824,8 +23824,8 @@ msgstr "En curso"
 #. module: account
 #: code:addons/account/invoice.py:740
 #, python-format
-msgid "Global taxes defined, but are not in invoice lines !"
-msgstr "¡Los impuestos generales están definidos, pero no aparecen en las líneas de factura!"
+msgid "Global taxes defined, click on compute to update tax base !"
+msgstr "¡Los impuestos generales están definidos, pulse en 'calcular' para actualizar la base imponible!"
 
 #. module: account
 #: view:res.partner:0
