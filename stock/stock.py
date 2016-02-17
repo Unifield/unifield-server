@@ -719,9 +719,13 @@ class stock_picking(osv.osv):
             default['backorder_id'] = False
         res = super(stock_picking, self).copy(cr, uid, id, default, context)
         if self._erase_prodlot_hook(cr, uid, id, context=context, res=res):
-            picking_obj = self.browse(cr, uid, res, context=context)
-            for move in picking_obj.move_lines:
-                move_obj.write(cr, uid, [move.id], {'tracking_id': False,'prodlot_id':False})
+            move_ids = move_obj.search(cr, uid, [
+                ('picking_id', '=', res),
+                '|',
+                ('tracking_id', '!=', False),
+                ('prodlot_id', '!=', False),
+            ], order='NO_ORDER', context=context)
+            move_obj.write(cr, uid, move_ids, {'tracking_id': False,'prodlot_id':False})
         return res
 
     def onchange_partner_in(self, cr, uid, context=None, partner_id=None):
