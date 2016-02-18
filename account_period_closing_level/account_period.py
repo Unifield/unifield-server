@@ -333,9 +333,6 @@ class account_period(osv.osv):
             if vals['state_sync_flag'] != 'none':
                 vals['state'] = vals['state_sync_flag']
                 vals['state_sync_flag'] = 'none'
-            else:
-                vals['state_sync_flag'] = 'none'
-
         res = super(account_period, self).write(cr, uid, ids, vals, context=context)
         self.pool.get('account.period.state').update_state(cr, uid, ids,
                                                            context=context)
