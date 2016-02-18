@@ -90,8 +90,13 @@ class msf_accrual_line(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'functional_amount': fields.function(_get_functional_amount, method=True, store=False, string="Functional Amount", type="float", readonly="True"),
         'functional_currency_id': fields.many2one('res.currency', 'Functional Currency', required=True, readonly=True),
+        'accrual_type': fields.selection([
+                ('reversing_accrual', 'Reversing accrual'),
+                ('one_time_accrual', 'One Time accrual'),
+            ], 'Accrual type', required=True),
         'state': fields.selection([('draft', 'Draft'),
                                    ('posted', 'Posted'),
+                                   ('partially_posted', 'Partially posted'),
                                    ('cancel', 'Cancelled')], 'Status', required=True),
         # Field to store the third party's name for list view
         'third_party_name': fields.char('Third Party', size=64),
@@ -105,6 +110,7 @@ class msf_accrual_line(osv.osv):
                                                                                               ('is_current_instance', '=', True)])[0],
         'functional_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
+        'accrual_type' : 'reversing_accrual',
     }
 
     def _create_write_set_vals(self, cr, uid, vals, context=None):

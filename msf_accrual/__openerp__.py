@@ -32,7 +32,8 @@
         'security/ir.model.access.csv',
         'msf_accrual_view.xml',
         'account_view.xml',
-        'wizard/wizard_accrual_view.xml'
+        'wizard/wizard_accrual_view.xml',
+        'wizard/wizard_accrual_reversal_view.xml'
     ],
     'test': [
         #'test/accrual_test.yml'

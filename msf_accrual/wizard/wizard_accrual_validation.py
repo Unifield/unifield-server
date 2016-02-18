@@ -45,19 +45,20 @@ class wizard_accrual_validation(osv.osv_memory):
                     raise osv.except_osv(_('Warning !'), _("The line '%s' has no analytic distribution!") % accrual_line.description)
                 else:
                     move_date = accrual_line.period_id.date_stop
-                    reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
-                    # check if periods are open
-                    reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)
-                    if len(reversal_period_ids) == 0:
-                        raise osv.except_osv(_('Warning !'), _("No period (M+1) was found in the system!"))
+                    if accrual_line.accrual_type == 'reversing_accrual':
+                        reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+                        # check if periods are open
+                        reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)
+                        if len(reversal_period_ids) == 0:
+                            raise osv.except_osv(_('Warning !'), _("No period (M+1) was found in the system!"))
 
-                    reversal_period_id = reversal_period_ids[0]
-                    reversal_period = period_obj.browse(cr, uid, reversal_period_id, context=context)
+                        reversal_period_id = reversal_period_ids[0]
+                        reversal_period = period_obj.browse(cr, uid, reversal_period_id, context=context)
 
                     # US-770/1
                     if accrual_line.period_id.state not in ('draft', 'field-closed'):
                         raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
-                    elif reversal_period.state not in ('draft', 'field-closed'):
+                    elif accrual_line.accrual_type == 'reversing_accrual' and reversal_period.state not in ('draft', 'field-closed'):
                         raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
 
                     # Create moves
@@ -67,16 +68,18 @@ class wizard_accrual_validation(osv.osv_memory):
                         'journal_id': accrual_line.journal_id.id,
                         'date': move_date
                     }
-                    reversal_move_vals = {
-                        'ref': accrual_line.reference,
-                        'period_id': reversal_period_id,
-                        'journal_id': accrual_line.journal_id.id,
-                        'date': reversal_move_date
-                    }
+                    if accrual_line.accrual_type == 'reversing_accrual':
+                        reversal_move_vals = {
+                            'ref': accrual_line.reference,
+                            'period_id': reversal_period_id,
+                            'journal_id': accrual_line.journal_id.id,
+                            'date': reversal_move_date
+                        }
                     move_id = move_obj.create(cr, uid, move_vals, context=context)
-                    reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
+                    if accrual_line.accrual_type == 'reversing_accrual':
+                        reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
                     
-                    reversal_description = "REV - " + accrual_line.description
+                        reversal_description = "REV - " + accrual_line.description
                     
                     # Create move lines
                     booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
@@ -117,53 +120,65 @@ class wizard_accrual_validation(osv.osv_memory):
                     }
                     
                     # and their reversal (source_date to keep the old change rate)
-                    booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
-                    reversal_accrual_move_line_vals = {
-                        'accrual': True,
-                        'move_id': reversal_move_id,
-                        'date': reversal_move_date,
-                        'document_date': reversal_move_date,
-                        'source_date': move_date,
-                        'journal_id': accrual_line.journal_id.id,
-                        'period_id': reversal_period_id,
-                        'reference': accrual_line.reference,
-                        'name': reversal_description,
-                        'account_id': accrual_line.accrual_account_id.id,
-                        'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                        'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        booking_field: abs(accrual_line.accrual_amount),
-                        'currency_id': accrual_line.currency_id.id,
-                    }
-                    booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
-                    reversal_expense_move_line_vals = {
-                        'accrual': True,
-                        'move_id': reversal_move_id,
-                        'date': reversal_move_date,
-                        'document_date': reversal_move_date,
-                        'source_date': move_date,
-                        'journal_id': accrual_line.journal_id.id,
-                        'period_id': reversal_period_id,
-                        'reference': accrual_line.reference,
-                        'name': reversal_description,
-                        'account_id': accrual_line.expense_account_id.id,
-                        'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                        'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        booking_field: abs(accrual_line.accrual_amount),
-                        'currency_id': accrual_line.currency_id.id,
-                        'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
-                    }
+                    if accrual_line.accrual_type == 'reversing_accrual':
+                        booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
+                        reversal_accrual_move_line_vals = {
+                            'accrual': True,
+                            'move_id': reversal_move_id,
+                            'date': reversal_move_date,
+                            'document_date': reversal_move_date,
+                            'source_date': move_date,
+                            'journal_id': accrual_line.journal_id.id,
+                            'period_id': reversal_period_id,
+                            'reference': accrual_line.reference,
+                            'name': reversal_description,
+                            'account_id': accrual_line.accrual_account_id.id,
+                            'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
+                            'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                            booking_field: abs(accrual_line.accrual_amount),
+                            'currency_id': accrual_line.currency_id.id,
+                        }
+                        booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+                        reversal_expense_move_line_vals = {
+                            'accrual': True,
+                            'move_id': reversal_move_id,
+                            'date': reversal_move_date,
+                            'document_date': reversal_move_date,
+                            'source_date': move_date,
+                            'journal_id': accrual_line.journal_id.id,
+                            'period_id': reversal_period_id,
+                            'reference': accrual_line.reference,
+                            'name': reversal_description,
+                            'account_id': accrual_line.expense_account_id.id,
+                            'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
+                            'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                            booking_field: abs(accrual_line.accrual_amount),
+                            'currency_id': accrual_line.currency_id.id,
+                            'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
+                        }
                     
                     accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
                     expense_move_line_id = move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
-                    reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
-                    reversal_expense_move_line_id = move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
+                    if accrual_line.accrual_type == 'reversing_accrual':
+                        reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
+                        reversal_expense_move_line_id = move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
                     
                     # Post the moves
-                    move_obj.post(cr, uid, [move_id, reversal_move_id], context=context)
+                    if accrual_line.accrual_type == 'reversing_accrual':
+                        move_obj.post(cr, uid, [move_id, reversal_move_id], context=context)
+                    else:
+                        move_obj.post(cr, uid, move_id, context=context)
+
                     # Reconcile the accrual move line with its reversal
-                    move_line_obj.reconcile_partial(cr, uid, [accrual_move_line_id, reversal_accrual_move_line_id], context=context)
+                    if accrual_line.accrual_type == 'reversing_accrual':
+                        move_line_obj.reconcile_partial(cr, uid, [accrual_move_line_id, reversal_accrual_move_line_id], context=context)
+
                     # validate the accrual line
-                    accrual_line_obj.write(cr, uid, [accrual_line.id], {'state': 'posted'}, context=context)
+                    if accrual_line.accrual_type == 'one_time_accrual':
+                        status = 'partially_posted'
+                    else:
+                        status = 'posted'
+                    accrual_line_obj.write(cr, uid, [accrual_line.id], {'state': status}, context=context)
                 
         # we open a wizard
         return {'type' : 'ir.actions.act_window_close'}
