@@ -754,6 +754,7 @@ audittrail_rule()
 class audittrail_log_line(osv.osv):
     """
     Audittrail Log Line.
+    This object is used to track changes via the "Track changes" button.
     """
     _name = 'audittrail.log.line'
     _description = "Log Line"
