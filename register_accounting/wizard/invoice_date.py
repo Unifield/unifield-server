@@ -51,6 +51,20 @@ class wizard_invoice_date(osv.osv_memory):
 
             inv_obj.write(cr, uid, [wiz.invoice_id.id], values)
             wf_service.trg_validate(uid, 'account.invoice', wiz.invoice_id.id, 'invoice_open', cr)
+
+        fw = context and context.get('from_wizard', False) or False
+        if fw:
+            # since US-777: go back to wizard in progress
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': fw['model'],
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': fw['res_id'],
+                'context': context,
+                'target': 'new',
+            }
+
         return { 'type': 'ir.actions.act_window_close', }
 
 wizard_invoice_date()

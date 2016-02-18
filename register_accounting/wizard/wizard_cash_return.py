@@ -367,7 +367,10 @@ class wizard_cash_return(osv.osv_memory):
 
     def create(self, cr, uid, values, context=None):
         w_id = super(wizard_cash_return, self).create(cr, uid, values, context=context)
-        if context and 'statement_line_id' in context:
+        if context is None:
+            context = {}
+
+        if 'statement_line_id' in context:
             """"
             UTP-482 if statment line of Operational Advance,
             is linked to a PO, automatically adding PO invoices
@@ -396,6 +399,11 @@ class wizard_cash_return(osv.osv_memory):
                             " Entering a 100% cash return (advance return amount = initial advance amount) you will be able to close this advance without linking it to an invoice."
                         values['comment'] = msg
                     self.write(cr, uid, [w_id], values, context=context)
+
+        context['from_wizard'] = {
+            'model': 'wizard.cash.return',
+            'res_id': w_id,
+        }
         return w_id
 
     def onchange_addl_amount(self, cr, uid, returned_amount, context=None):
