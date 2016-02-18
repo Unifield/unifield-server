@@ -319,6 +319,9 @@ class account_period(osv.osv):
                 vals['state'] = 'created'
             else:
                 vals['state'] = 'draft'  # passtrough for system periods: 'Open'
+            if vals.get('state_sync_flag', 'none') != 'none':
+                vals['state'] = vals['state_sync_flag']
+                vals['state_sync_flag'] = 'none'
 
         res = super(account_period, self).create(cr, uid, vals, context=context)
         self.pool.get('account.period.state').update_state(cr, uid, res,
