@@ -458,7 +458,7 @@ class sale_order_line(osv.osv):
                                                                p_data['id'],
                                                                '').get('value', {}))
             else:
-                values.update(self.product_id_change(cr, uid, False, order_data['pricelist_id'][0],
+                values.update(self.product_id_on_change(cr, uid, False, order_data['pricelist_id'][0],
                                                                      p_data['id'],
                                                                      p_data['import_product_qty'],
                                                                      p_data['uom_id'][0],
@@ -470,7 +470,8 @@ class sale_order_line(osv.osv):
                                                                      order_data['date_order'],
                                                                      False,
                                                                      order_data['fiscal_position'] and order_data['fiscal_position'][0] or False,
-                                                                     False).get('value', {}))
+                                                                     False).get('value', {}),
+                                                                     context=context)
 
             # Set the quantity to 0.00
             values.update({'product_uom_qty': p_data['import_product_qty'], 'product_uos_qty': p_data['import_product_qty']})

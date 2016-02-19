@@ -2638,15 +2638,79 @@ class sale_order_line(osv.osv):
                 'view_id': [view_id],
                 }
 
+    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty=0,
+            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
+        """
+        Call sale_order_line.product_id_change() method and check if the selected product is consistent
+        with order category.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order.line where product is changed
+        :param pricelist: ID of the product.pricelist of the order of the line
+        :param product: ID of product.product of the selected product
+        :param qty: Quantity of the sale.order.line
+        :param uom: ID of the product.uom of the UoM of the sale.order.line
+        :param qty_uos: Quantity of the sale.order.line converted in UoS
+        :param uos: ID of the product.uom of the Unit of Sale of the sale.order.line
+        :param name: Description of the sale.order.line
+        :param partner_id: ID of res.partner of the order of the line
+        :param lang: Lang of the user
+        :param update_tax: Boolean to check if the taxes should be updated
+        :param date_order: Date of the order of the line
+        :param packaging: Packaging selected for the line
+        :param fiscal_position: Fiscal position selected on the order of the line
+        :param flag: ???
+        :param context: Context of the call
+        :return: Result of the sale_order_line.product_id_change() method
+        """
+        prod_obj = self.pool.get('product.product')
+
+        if context is None:
+            context = {}
+
+        res = self.product_id_change(cr, uid, ids,
+                                     pricelist,
+                                     product,
+                                     qty=qty,
+                                     uom=uom,
+                                     qty_uos=qty_uos,
+                                     uos=uos,
+                                     name=name,
+                                     partner_id=partner_id,
+                                     lang=lang,
+                                     update_tax=update_tax,
+                                     date_order=date_order,
+                                     packaging=packaging,
+                                     fiscal_position=fiscal_position,
+                                     flag=flag)
+
+        if context and context.get('categ') and product:
+            # Check consistency of product
+            consistency_message = prod_obj.check_consistency(cr, uid, product, context.get('categ'), context=context)
+            if consistency_message:
+                res.setdefault('warning', {})
+                res['warning'].setdefault('title', 'Warning')
+                res['warning'].setdefault('message', '')
+
+                res['warning']['message'] = '%s \n %s' % \
+                    (res.get('warning', {}).get('message', ''), consistency_message)
+
+        return res
+
+
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
             uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
         """
         If we select a product we change the procurement type to its own procurement method (procure_method).
         If there isn't product, the default procurement method is 'From Order' (make_to_order).
         Both remains changeable manually.
         """
         product_obj = self.pool.get('product.product')
+
+        if context is None:
+            context = {}
 
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
             uom, qty_uos, uos, name, partner_id,
