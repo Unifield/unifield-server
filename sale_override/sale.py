@@ -657,31 +657,68 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
-    def onchange_categ(self, cr, uid, ids, categ, context=None):
-        '''
+    def onchange_categ(self, cr, uid, ids, category, context=None):
+        """
         Check if the list of products is valid for this new category
-        '''
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of purchase.order to check
+        :param category: DB value of the new choosen category
+        :param context: Context of the call
+        :return: A dictionary containing the warning message if any
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+
+        if context is None:
+            context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         message = {}
-        if ids and categ in ['service', 'transport']:
-            # Avoid selection of non-service producs on Service FO
-            category = categ == 'service' and 'service_recep' or 'transport'
+        res = False
+
+        if ids and category in ['log', 'medical']:
+            # Check if all product nomenclature of products in FO/IR lines are consistent with the category
+            try:
+                med_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+            try:
+                log_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+
+            nomen_id = category == 'log' and log_nomen or med_nomen
+            cr.execute('''SELECT l.id
+                          FROM sale_order_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN sale_order so ON l.order_id = so.id
+                          WHERE (t.nomen_manda_0 != %s) AND so.id in %s LIMIT 1''',
+                       (nomen_id, tuple(ids)))
+            res = cr.fetchall()
+
+        if ids and category in ['service', 'transport']:
+            # Avoid selection of non-service products on Service FO
+            category = category == 'service' and 'service_recep' or 'transport'
             transport_cat = ''
             if category == 'transport':
                 transport_cat = 'OR p.transport_ok = False'
-            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+            cr.execute('''SELECT l.id
                           FROM sale_order_line l
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN sale_order fo ON l.order_id = fo.id
-                          WHERE (t.type != 'service_recep' %s) AND fo.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+                          WHERE (t.type != 'service_recep' %s) AND fo.id in %%s LIMIT 1''' % transport_cat,
+                       (tuple(ids),))
             res = cr.fetchall()
-            if res:
-                cat_name = categ == 'service' and 'Service' or 'Transport'
-                message.update({'title': _('Warning'),
-                                'message': _('This order category is not consistent with product(s) on this order.')})
+
+        if res:
+            message.update({
+                'title': _('Warning'),
+                'message': _('This order category is not consistent with product(s) on this order.'),
+            })
 
         return {'warning': message}
 
