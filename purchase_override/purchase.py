@@ -434,31 +434,6 @@ class purchase_order(osv.osv):
         (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
     ]
 
-    def _check_service(self, cr, uid, ids, vals, context=None):
-        '''
-        Avoid the saving of a PO with non service products on Service PO
-        '''
-        # UTP-871 : Remove check of service
-        return True
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        if context.get('import_in_progress'):
-            return True
-
-        for order in self.browse(cr, uid, ids, context=context):
-            for line in order.order_line:
-                if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
-                    raise osv.except_osv(_('Error'), _('The product [%s]%s is not a \'Transport\' product. You can purchase only \'Transport\' products on a \'Transport\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-                elif vals.get('categ', order.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
-                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can purchase only \'Service\' products on a \'Service\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-
-        return True
-
     def purchase_cancel(self, cr, uid, ids, context=None):
         '''
         Call the wizard to ask if you want to re-source the line
@@ -574,8 +549,6 @@ class purchase_order(osv.osv):
         '''
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
-
-        self._check_service(cr, uid, ids, vals, context=context)
 
         for order in self.browse(cr, uid, ids, context=context):
             partner_type = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id', order.partner_id.id), context=context).partner_type
@@ -2174,7 +2147,6 @@ stock moves which are already processed : '''
         vals = self._get_location_id(cr, uid, vals, warehouse_id=vals.get('warehouse_id', False), context=context)
 
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
-        self._check_service(cr, uid, [res], vals, context=context)
 
         return res
 

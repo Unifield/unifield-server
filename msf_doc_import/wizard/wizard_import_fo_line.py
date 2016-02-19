@@ -233,12 +233,11 @@ class wizard_import_fo_line(osv.osv_memory):
 
                         # write order line on FO
                         vals['order_line'].append((0, 0, to_write))
-                        if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
-                            created_line.append(sale_line_obj.create(cr, uid, to_write, context=context_sol_create))
-                            if to_write['error_list']:
-                                lines_to_correct += 1
-                            percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                            complete_lines += 1
+                        created_line.append(sale_line_obj.create(cr, uid, to_write, context=context_sol_create))
+                        if to_write['error_list']:
+                            lines_to_correct += 1
+                        percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                        complete_lines += 1
 
                     except IndexError, e:
                         error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)

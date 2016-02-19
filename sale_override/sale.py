@@ -685,30 +685,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return {'warning': message}
 
-    def _check_service(self, cr, uid, ids, vals, context=None):
-        '''
-        Avoid the saving of a FO with a non service products on Service FO
-        '''
-        categ = {'transport': _('Transport'),
-                 'service': _('Service')}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        if context.get('import_in_progress'):
-            return True
-
-        for order in self.browse(cr, uid, ids, context=context):
-            for line in order.order_line:
-                if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
-                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Transport\' product. You can sale only \'Transport\' products on a \'Transport\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-                elif vals.get('categ', order.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
-                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can sale only \'Service\' products on a \'Service\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-
-        return True
-
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
@@ -730,7 +706,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 vals['invoice_quantity'] = 'order'
 
         res = super(sale_order, self).create(cr, uid, vals, context)
-        self._check_service(cr, uid, [res], vals, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -755,8 +730,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 vals['order_policy'] = 'manual'
             else:
                 vals['order_policy'] = 'picking'
-
-        self._check_service(cr, uid, ids, vals, context=context)
 
         res = super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
