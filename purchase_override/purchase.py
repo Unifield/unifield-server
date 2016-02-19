@@ -3567,10 +3567,9 @@ class purchase_order_line(osv.osv):
         elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
 
-
         if context and context.get('categ') and product:
             # Check consistency of product
-            consistency_message = self.pool.get('product.product').check_consistency(cr, uid, product, context.get('categ'), context=context)
+            consistency_message = product_obj.check_consistency(cr, uid, product, context.get('categ'), context=context)
             if consistency_message:
                 res.setdefault('warning', {})
                 res['warning'].setdefault('title', 'Warning')

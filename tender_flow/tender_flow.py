@@ -862,7 +862,7 @@ class tender_line(osv.osv):
     
     _SELECTION_TENDER_STATE = [('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'),]
     
-    def on_product_change(self, cr, uid, id, product_id, uom_id, product_qty, context=None):
+    def on_product_change(self, cr, uid, id, product_id, uom_id, product_qty, categ, context=None):
         '''
         product is changed, we update the UoM
         '''
@@ -887,6 +887,17 @@ class tender_line(osv.osv):
         
         if uom_id:
             result['value']['product_uom'] = uom_id
+
+        if categ and product_id:
+            # Check consistency of product
+            consistency_message = prod_obj.check_consistency(cr, uid, product_id, categ, context=context)
+            if consistency_message:
+                result.setdefault('warning', {})
+                result['warning'].setdefault('title', 'Warning')
+                result['warning'].setdefault('message', '')
+
+                result['warning']['message'] = '%s \n %s' % \
+                    (result.get('warning', {}).get('message', ''), consistency_message)
 
         return result
 
