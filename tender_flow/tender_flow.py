@@ -239,7 +239,7 @@ class tender(osv.osv):
             if res:
                 cat_name = categ=='service' and 'Service' or 'Transport'
                 message.update({'title': _('Warning'),
-                                'message': _('The product [%s] %s is not a \'%s\' product. You can have only \'%s\' products on a \'%s\' tender. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+                                'message': _('This order category is not consistent with product(s) on this tender.')})
                 
         return {'warning': message}
 

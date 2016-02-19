@@ -262,12 +262,16 @@ class wizard_import_fo_line(osv.osv_memory):
                             cr.commit()
 
                 sale_line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
+                categ_log = sale_obj.onchange_categ(
+                    cr, uid, [fo_id], wiz_browse.fo_id.categ, context=context).get('warning', {}).get('message', '').upper()
+                categ_log = categ_log.replace('THIS', 'THE')
             error_log += '\n'.join(error_list)
             if error_log:
                 error_log = _("Reported errors for ignored lines : \n") + error_log
             end_time = time.time()
             total_time = str(round(end_time-start_time)) + _(' second(s)')
             final_message = _('''
+%s
 Importation completed in %s!
 # of imported lines : %s on %s lines
 # of ignored lines: %s
@@ -275,7 +279,7 @@ Importation completed in %s!
 %s
 
 %s
-''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+''') % (categ_log, total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
             wizard_vals = {'message': final_message, 'state': 'done'}
             if line_with_error:
                 file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)

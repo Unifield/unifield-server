@@ -681,7 +681,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if res:
                 cat_name = categ == 'service' and 'Service' or 'Transport'
                 message.update({'title': _('Warning'),
-                                'message': _('The product [%s] %s is not a \'%s\' product. You can sale only \'%s\' products on a \'%s\' field order. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+                                'message': _('This order category is not consistent with product(s) on this order.')})
 
         return {'warning': message}
 
