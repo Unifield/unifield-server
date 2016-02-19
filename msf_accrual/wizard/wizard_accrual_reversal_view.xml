@@ -8,7 +8,16 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Post Accrual Reversal">
-                    <label string="Are you sure you want to post accrual reversal for those lines?" align="0.0" colspan="3"/>
+                    <group colspan="4" col="6">
+                        <field name="document_date"/>
+                        <field name="posting_date"/>
+                    </group>
+                    <html>
+                        <br style="line-height: 1em;"/>
+                    </html>
+                    <group colspan="4" col="6">
+                        <label string="Are you sure you want to post accrual reversal for those lines?" align="0.0" colspan="3"/>
+                    </group>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
                         <button special="cancel" string="No" icon="gtk-cancel"/>

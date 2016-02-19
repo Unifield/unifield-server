@@ -86,6 +86,8 @@
                                     domain="[('state', '=', 'draft')]"/>
                             <filter name="posted" icon="terp-camera_test" string="Posted"
                                     domain="[('state', '=', 'posted')]"/>
+                            <filter name="partially_posted" icon="terp-document-new" string="Partially Posted"
+                                    domain="[('state', '=', 'partially_posted')]"/>
                             <filter name="cancel" icon="terp-gtk-stop" string="Cancelled"
                                     domain="[('state', '=', 'cancel')]"/>
                             <separator orientation="vertical"/>
