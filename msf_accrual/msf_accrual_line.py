@@ -91,6 +91,7 @@ class msf_accrual_line(osv.osv):
         'functional_amount': fields.function(_get_functional_amount, method=True, store=False, string="Functional Amount", type="float", readonly="True"),
         'functional_currency_id': fields.many2one('res.currency', 'Functional Currency', required=True, readonly=True),
         'move_line_id': fields.many2one('account.move.line', 'Account Move Line', readonly=True),
+        'rev_move_id': fields.many2one('account.move', 'Rev Journal Entry', readonly=True),
         'accrual_type': fields.selection([
                 ('reversing_accrual', 'Reversing accrual'),
                 ('one_time_accrual', 'One Time accrual'),
@@ -185,22 +186,30 @@ class msf_accrual_line(osv.osv):
                 raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
 
             move_date = accrual_line.period_id.date_stop
-            reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+            if accrual_line.accrual_type == 'reversing_accrual':
+                reversal_move_posting_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+                reversal_move_document_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+            else:
+                reversal_move_posting_date = accrual_line.rev_move_id.date
+                reversal_move_document_date = accrual_line.rev_move_id.document_date
+
             # check if periods are open
-            reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)
-            reversal_period_id = reversal_period_ids[0]
+            reversal_period_id = accrual_line.rev_move_id.period_id.id
+
             # Create moves
             move_vals = {
                 'ref': accrual_line.reference,
                 'period_id': accrual_line.period_id.id,
                 'journal_id': accrual_line.journal_id.id,
-                'date': move_date
+                'date': move_date,
+                'document_date': accrual_line.document_date,
             }
             reversal_move_vals = {
                 'ref': accrual_line.reference,
                 'period_id': reversal_period_id,
                 'journal_id': accrual_line.journal_id.id,
-                'date': reversal_move_date
+                'date': reversal_move_posting_date,
+                'document_date': reversal_move_document_date,
             }
             move_id = move_obj.create(cr, uid, move_vals, context=context)
             reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
@@ -248,8 +257,8 @@ class msf_accrual_line(osv.osv):
             reversal_accrual_move_line_vals = {
                 'accrual': True,
                 'move_id': reversal_move_id,
-                'date': reversal_move_date,
-                'document_date': reversal_move_date,
+                'date': reversal_move_posting_date,
+                'document_date': reversal_move_document_date,
                 'source_date': move_date,
                 'journal_id': accrual_line.journal_id.id,
                 'period_id': reversal_period_id,
@@ -265,8 +274,8 @@ class msf_accrual_line(osv.osv):
             reversal_expense_move_line_vals = {
                 'accrual': True,
                 'move_id': reversal_move_id,
-                'date': reversal_move_date,
-                'document_date': reversal_move_date,
+                'date': reversal_move_posting_date,
+                'document_date': reversal_move_document_date,
                 'source_date': move_date,
                 'journal_id': accrual_line.journal_id.id,
                 'period_id': reversal_period_id,
@@ -392,7 +401,8 @@ class msf_accrual_line(osv.osv):
                     'ref': accrual_line.reference,
                     'period_id': accrual_line.period_id.id,
                     'journal_id': accrual_line.journal_id.id,
-                    'date': move_date
+                    'document_date': accrual_line.document_date,
+                    'date': move_date,
                 }
 
                 move_id = move_obj.create(cr, uid, move_vals, context=context)
@@ -469,7 +479,8 @@ class msf_accrual_line(osv.osv):
                     'ref': accrual_line.reference,
                     'period_id': reversal_period_id,
                     'journal_id': accrual_line.journal_id.id,
-                    'date': posting_date
+                    'date': posting_date,
+                    'document_date': document_date,
                 }
 
                 reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
@@ -523,7 +534,7 @@ class msf_accrual_line(osv.osv):
                 move_line_obj.reconcile_partial(cr, uid, [accrual_line.move_line_id.id, reversal_accrual_move_line_id], context=context)
 
                 # Change the status to "Posted"
-                self.write(cr, uid, [accrual_line.id], {'state': 'posted'}, context=context)
+                self.write(cr, uid, [accrual_line.id], {'state': 'posted', 'rev_move_id': reversal_move_id}, context=context)
 
 msf_accrual_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
