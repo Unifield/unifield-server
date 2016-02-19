@@ -37,6 +37,8 @@ class wizard_accrual_validation(osv.osv_memory):
                 # check for periods, distribution, etc.
                 if accrual_line.state == 'posted':
                     raise osv.except_osv(_('Warning !'), _("The line '%s' is already posted!") % accrual_line.description)
+                elif accrual_line.state == 'partially_posted':
+                    raise osv.except_osv(_('Warning !'), _("The line '%s' is already partially posted!") % accrual_line.description)
                 elif not accrual_line.period_id:
                     raise osv.except_osv(_('Warning !'), _("The line '%s' has no period set!") % accrual_line.description)
                 elif not accrual_line.analytic_distribution_id:
