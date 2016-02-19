@@ -208,14 +208,13 @@ class ir_sequence(osv.osv):
                 cr.execute("SELECT number_next FROM ir_sequence WHERE id=%s FOR UPDATE NOWAIT", (seq['id'],))
                 seq['number_next'] = cr.fetchone()
                 cr.execute("UPDATE ir_sequence SET number_next=number_next+number_increment WHERE id=%s ", (seq['id'],))
-            except psycopg2.OperationalError, e:
+            except psycopg2.OperationalError:
                 cr.rollback()
                 cr.close()
                 logger = logging.getLogger(self._name)
                 logger.exception("Can't acquire lock to set number_next of ir_sequence for sequence %s" % seq.get('name'))
                 raise
 
-        #d = self._interpolation_dict()
         try:
             interpolated_prefix = self._process(cr, uid, seq['prefix'])
             interpolated_suffix = self._process(cr, uid, seq['suffix'])
