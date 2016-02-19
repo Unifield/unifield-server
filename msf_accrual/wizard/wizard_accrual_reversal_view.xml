@@ -16,7 +16,8 @@
                         <br style="line-height: 1em;"/>
                     </html>
                     <group colspan="4" col="6">
-                        <label string="Are you sure you want to post accrual reversal for those lines?" align="0.0" colspan="3"/>
+                        <label string="Are you sure you want to post accrual reversal for those lines at the indicated dates?"
+                               align="0.0" colspan="3"/>
                     </group>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">

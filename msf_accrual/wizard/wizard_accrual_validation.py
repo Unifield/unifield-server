@@ -41,6 +41,9 @@ class wizard_accrual_validation(osv.osv_memory):
                     raise osv.except_osv(_('Warning !'), _("The line '%s' has no period set!") % accrual_line.description)
                 elif not accrual_line.analytic_distribution_id:
                     raise osv.except_osv(_('Warning !'), _("The line '%s' has no analytic distribution!") % accrual_line.description)
+                # US-770/1
+                elif accrual_line.period_id.state not in ('draft', 'field-closed'):
+                    raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
                 elif accrual_line.accrual_type == 'reversing_accrual':
                     # in case of a reversing accrual the reversal period must be open
                     move_date = accrual_line.period_id.date_stop

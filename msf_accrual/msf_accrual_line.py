@@ -387,11 +387,6 @@ class msf_accrual_line(osv.osv):
         if ids:
             for accrual_line in self.browse(cr, uid, ids, context=context):
                 move_date = accrual_line.period_id.date_stop
-
-                # US-770/1
-                if accrual_line.period_id.state not in ('draft', 'field-closed'):
-                    raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
-
                 # Create moves
                 move_vals = {
                     'ref': accrual_line.reference,
@@ -527,6 +522,8 @@ class msf_accrual_line(osv.osv):
                 # Reconcile the accrual move line with its reversal
                 move_line_obj.reconcile_partial(cr, uid, [accrual_line.move_line_id.id, reversal_accrual_move_line_id], context=context)
 
+                # Change the status to "Posted"
+                self.write(cr, uid, [accrual_line.id], {'state': 'posted'}, context=context)
 
 msf_accrual_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

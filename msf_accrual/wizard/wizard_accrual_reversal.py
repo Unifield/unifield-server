@@ -50,13 +50,19 @@ class wizard_accrual_reversal(osv.osv_memory):
                     raise osv.except_osv(_('Warning !'),
                                          _("The line '%s' isn't partially posted, the accrual reversal can't be posted!") % accrual_line.description)
 
-                # TODO : get the right dates
-                document_date = datetime.datetime.now().strftime('%Y-%m-%d')
-                posting_date = datetime.datetime.now().strftime('%Y-%m-%d')
+                # check for dates consistency
+                document_date = self.browse(cr, uid, ids, context=context)[0].document_date
+                posting_date = self.browse(cr, uid, ids, context=context)[0].posting_date
+                accrual_move_date = accrual_line.period_id.date_stop
+                if datetime.datetime.strptime(posting_date, "%Y-%m-%d").date() < datetime.datetime.strptime(document_date, "%Y-%m-%d").date():
+                    raise osv.except_osv(_('Warning !'), _("Posting date should be later than Document Date."))
+                if datetime.datetime.strptime(document_date, "%Y-%m-%d").date() < datetime.datetime.strptime(accrual_move_date, "%Y-%m-%d").date():
+                    raise osv.except_osv(_('Warning !'), _("Document Date should be later than the accrual date."))
+
                 # check if periods are open
                 reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
                 if len(reversal_period_ids) == 0:
-                    raise osv.except_osv(_('Warning !'), _("No period (M+1) was found in the system!"))
+                    raise osv.except_osv(_('Warning !'), _("The reversal period wasn't found in the system!"))
 
                 reversal_period_id = reversal_period_ids[0]
                 reversal_period = period_obj.browse(cr, uid, reversal_period_id, context=context)
