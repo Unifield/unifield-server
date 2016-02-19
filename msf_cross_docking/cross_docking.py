@@ -123,69 +123,92 @@ class purchase_order(osv.osv):
             res['value'].update({'cross_docking_ok': False})
         return res
 
-    def onchange_categ(self, cr, uid, ids, categ, warehouse_id, cross_docking_ok, location_id, context=None):
-        """ Sets cross_docking to False if the categ is service or transport.
-        @param categ: Changed value of categ.
-        @return: Dictionary of values.
+    def onchange_categ(self, cr, uid, ids, category, warehouse_id, cross_docking_ok, location_id, context=None):
         """
+        Check if the list of products is valid for this new category
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of purchase.order to check
+        :param category: DB value of the new choosen category
+        :param warehouse_id: ID of the new stock.warehouse of the PO
+        :param cross_docking_ok: Boolean to know if the PO is a Cross-Docking PO or not
+        :param location_id: ID of the new stock.location of the PO
+        :param context: Context of the call
+        :return: A dictionary containing the warning message if any
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+        loc_obj = self.pool.get('stock.location')
+        wh_obj = self.pool.get('stock.warehouse')
+        setup_obj = self.pool.get('unifield.setup.configuration')
+
+        if context is None:
+            context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-        stock_loc_obj = self.pool.get('stock.location')
-        warehouse_obj = self.pool.get('stock.warehouse')
+
+        setup = setup_obj.get_config(cr, uid)
+
         value = {}
         message = {}
-        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+
+        # Get specific location ID
         cross_loc = False
+        service_loc = loc_obj.get_service_location(cr, uid)
         if setup.allocation_setup != 'unallocated':
-            cross_loc = stock_loc_obj.get_cross_docking_location(cr, uid)
-        service_loc = stock_loc_obj.get_service_location(cr, uid)
+            cross_loc = loc_obj.get_cross_docking_location(cr, uid)
+
         if cross_docking_ok:
-            value = {'location_id': cross_loc}
-        elif categ in ['service', 'transport']:
-            value = {'location_id': service_loc}
+            value['location_id'] = cross_loc
+        elif category in ['service', 'transport']:
+            value['location_id'] = service_loc
         elif location_id == service_loc or (setup.allocation_setup != 'unallocated' and location_id == cross_loc):
             if warehouse_id:
-                value = {'location_id': warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]}
+                value['location_id'] = wh_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
             else:
-                value = {'location_id': False}
+                value['location_id'] = False
 
         res = False
-        if ids and categ in ['log', 'medical']:
+        if ids and category in ['log', 'medical']:
             try:
-                med_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+                med_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
             except IndexError:
                 raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
             try:
-                log_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+                log_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
             except IndexError:
                 raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
 
-            category = categ=='log' and log_nomen or med_nomen
-            cr.execute('''SELECT t.id
+            nomen_id = category == 'log' and log_nomen or med_nomen
+            cr.execute('''SELECT l.id
                           FROM purchase_order_line l
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN purchase_order po ON l.order_id = po.id
-                          WHERE (t.nomen_manda_0 != %s) AND po.id in %s''', (category, tuple(ids)))
+                          WHERE (t.nomen_manda_0 != %s) AND po.id in %s LIMIT 1''',
+                       (nomen_id, tuple(ids)))
             res = cr.fetchall()
         
-        if ids and categ in ['service', 'transport']:
+        if ids and category in ['service', 'transport']:
             # Avoid selection of non-service producs on Service PO
-            category = categ=='service' and 'service_recep' or 'transport'
+            category = category == 'service' and 'service_recep' or 'transport'
             transport_cat = ''
             if category == 'transport':
                 transport_cat = 'OR p.transport_ok = False'
-            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+            cr.execute('''SELECT l.id
                           FROM purchase_order_line l
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN purchase_order po ON l.order_id = po.id
-                          WHERE (t.type != 'service_recep' %s) AND po.id in %%s LIMIT 1''' % transport_cat, (tuple(ids),))
+                          WHERE (t.type != 'service_recep' %s) AND po.id in %%s LIMIT 1''' % transport_cat,
+                       (tuple(ids),))
             res = cr.fetchall()
 
         if res:
-            message.update({'title': _('Warning'),
-                            'message': _('This order category is not consistent with product(s) on this PO')})
+            message.update({
+                'title': _('Warning'),
+                'message': _('This order category is not consistent with product(s) on this PO'),
+            })
                 
         return {'value': value, 'warning': message}
 
