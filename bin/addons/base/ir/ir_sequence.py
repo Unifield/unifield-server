@@ -204,8 +204,8 @@ class ir_sequence(osv.osv):
             cr.execute("SELECT nextval('ir_sequence_%03d')" % seq['id'])
             seq['number_next'] = cr.fetchone()
         else:
+            cr.execute("SAVEPOINT ir_sequence_next")
             try:
-                cr.execute("SAVEPOINT ir_sequence_next")
                 cr.execute("SELECT number_next FROM ir_sequence WHERE id=%s FOR UPDATE NOWAIT", (seq['id'],))
                 cr.execute("UPDATE ir_sequence SET number_next=number_next+number_increment WHERE id=%s ", (seq['id'],))
                 seq['number_next'] = cr.fetchone()
@@ -214,6 +214,8 @@ class ir_sequence(osv.osv):
                 logger = logging.getLogger(self._name)
                 logger.info("Can't acquire lock to set number_next ir_sequence")
                 return False
+            else:
+                cr.execute("RELEASE SAVEPOINT ir_sequence_next")
 
         #d = self._interpolation_dict()
         try:
