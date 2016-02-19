@@ -3784,39 +3784,62 @@ class product_product(osv.osv):
     }
 
     def check_consistency(self, cr, uid, product_id, category, context=None):
-        '''
+        """
         Check the consistency of product according to category
-        '''
-        context = context is None and {} or context
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product_id: ID of the product.product to check
+        :param category: DB value of the category to check
+        :param context: Context of the call
+        :return: A warning message or False
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+
+        if context is None:
+            context = {}
+
         display_message = False
 
         # No check for Other
         if category == 'other':
             return False
 
-        product = self.read(cr, uid, product_id, ['nomen_manda_0', 'type', 'transport_ok'], context=context)
+        product = self.read(cr, uid, product_id, [
+            'nomen_manda_0',
+            'type',
+            'transport_ok',
+        ], context=context)
         transport_product = product['transport_ok']
         product_type = product['type']
         main_type = product['nomen_manda_0'][0]
 
         if category == 'medical':
             try:
-                med_nomen = self.pool.get('product.nomenclature').search(cr,
-                        uid, [('level', '=', 0), ('name', '=', 'MED')],
-                        context=context)[0]
+                med_nomen = nomen_obj.search(cr, uid, [
+                    ('level', '=', 0),
+                    ('name', '=', 'MED'),
+                ], context=context)[0]
             except IndexError:
-                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+                raise osv.except_osv(
+                    _('Error'),
+                    _('MED nomenclature Main Type not found'),
+            )
 
             if main_type != med_nomen:
                 display_message = True
 
         if category == 'log':
             try:
-                log_nomen = self.pool.get('product.nomenclature').search(cr,
-                        uid, [('level', '=', 0), ('name', '=', 'LOG')],
-                        context=context)[0]
+                log_nomen = nomen_obj.search(cr, uid, [
+                    ('level', '=', 0),
+                    ('name', '=', 'LOG'),
+                ], context=context)[0]
+
             except IndexError:
-                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+                raise osv.except_osv(
+                    _('Error'),
+                    _('LOG nomenclature Main Type not found')
+                )
 
             if main_type != log_nomen:
                 display_message = True
@@ -3828,7 +3851,8 @@ class product_product(osv.osv):
             display_message = True
 
         if display_message:
-            return 'Warning you are about to add a product which does not conform to this PO’s order category, do you wish to proceed ?'
+            return 'Warning you are about to add a product which does not conform to this' \
+                'PO’s order category, do you wish to proceed ?'
         else:
             return False
 
