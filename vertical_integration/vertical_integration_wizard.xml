@@ -10,7 +10,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Export to HQ system">
-                <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
+                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"/>
                 <field name="fiscalyear_id"/>
                 <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '&lt;&gt;', 'created'), ('number', '&lt;', 16)]"/>
                 <newline/>
@@ -41,7 +41,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Export to HQ system">
-                <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
+                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"/>
                 <field name="fiscalyear_id"/>
                 <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', 'in', ['mission-closed']), ('number', '&lt;', 16)]"/>
                 <field name="selection"/>
@@ -76,7 +76,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Export to HQ system">
-                <field name="instance_id" domain="[('level', 'in', ['coordo','section'])]"/>
+                <field name="instance_id" domain="['&amp;', ('level', 'in', ['coordo','section']), ('instance_to_display_ids','=',True)]"/>
                 <field name="fiscalyear_id"/>
                 <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '&lt;', 16)]"/>
                 <field name="selection"/>
@@ -111,7 +111,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="OCB matching export">
-                <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
+                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"/>
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>
                     <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
@@ -144,7 +144,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Export to HQ system">
-                <field name="instance_id" domain="[('level', 'in', ['coordo','section'])]"/>
+                <field name="instance_id" domain="['&amp;', ('level', 'in', ['coordo','section']), ('instance_to_display_ids','=',True)]"/>
                 <field name="fiscalyear_id"/>
                 <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '&lt;', 16)]"/>
                 <field name="selection"/>

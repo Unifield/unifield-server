@@ -199,7 +199,7 @@
             <field name="inherit_id" ref="account.view_analytic_journal_search"/>
             <field name="arch" type="xml">
                 <field name="code" position="before">
-                    <field name="instance_id" readonly="1"/>
+                    <field name="instance_id" domain="[('instance_to_display_ids','=',True)]" readonly="1"/>
                 </field>
             </field>
         </record>
@@ -236,7 +236,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/search//field[@name='code']" position="before">
-                        <field name="instance_id"/>
+                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                     </xpath>
                 </data>
             </field>
