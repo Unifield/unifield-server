@@ -2383,7 +2383,8 @@ class account_bank_statement_line(osv.osv):
                 if st_line.state == "hard":
                     raise osv.except_osv(_('Error'), _('You are not allowed to delete hard posting lines!'))
                 else:
-                    self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
+                    #US-960: No need to set the check flag to True when unlink a reg line, otherwise it could regenerate wrongly new AJIs!
+                    self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids], context=context, check=False) 
             # Delete direct invoice if exists
             if st_line.direct_invoice and st_line.invoice_id and not context.get('from_direct_invoice', False):
                 # unlink moves and analytic lines before deleting the line
