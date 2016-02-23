@@ -580,19 +580,17 @@ class update_received(osv.osv):
         def group_unlink_update_execution(obj, sdref_update_ids):
             obj_ids = obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), context=context)
             done_ids = []
-            for id, update_id in zip(
-                        obj_ids.values(),
-                        sdref_update_ids.values()
-                    ):
+            for sdref, id in obj_ids.items():
                 try:
+                    update_id = sdref_update_ids[sdref]
                     secure_unlink_data(obj, [id])
                 except BaseException, e:
                     if isinstance(e, osv.except_osv):
                         error = '%s: %s' % (e.name, e.value)
                     else:
                         error = e
-                    e = "Error during unlink on model %s!\nUpdate ids: %s\nReason: %s\nSD ref:\n%s\n" \
-                        % (obj._name, update_ids, tools.ustr(error), update.sdref)
+                    e = "Error during unlink on model %s!\nid: %s\nUpdate id: %s\nReason: %s\nSD ref:\n%s\n" \
+                        % (obj._name, id, update_id, tools.ustr(error), update.sdref)
                     self.write(cr, uid, [update_id], {
                         'execution_date': datetime.now(),
                         'run' : False,
@@ -617,7 +615,7 @@ class update_received(osv.osv):
                 'log' : '',
             }, context=context)
             sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
-            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
+            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('run', '=', False),
                 ('is_deleted', '=', False)], order='NO_ORDER', context=context)
             if toSetRun_ids:
                 self.write(cr, uid, toSetRun_ids, {
@@ -625,7 +623,6 @@ class update_received(osv.osv):
                     'run' : True,
                     'log' : 'Manually set to run by the system. Due to a delete',
                 }, context=context)
-
             return
 
         error_message = ""
