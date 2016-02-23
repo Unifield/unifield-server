@@ -299,6 +299,9 @@ class patch_scripts(osv.osv):
             view_obj.generate_button_access_rules(cr, uid, view)
 
 
+    def update_us_963_negative_rule_seq(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.update_received'):
+            cr.execute("update sync_client_update_received set rule_sequence=-rule_sequence where is_deleted='t'")
 patch_scripts()
 
 
