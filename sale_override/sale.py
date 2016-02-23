@@ -119,6 +119,7 @@ class sale_order_sourcing_progress(osv.osv):
                 'split_order': '/',
                 'check_data': '/',
                 'prepare_picking': '/',
+                'sourcing': '/'
             }
             if sp.order_id and sp.order_id.sourcing_trace_ok:
                 mem_id = mem_obj.search(cr, uid, [
@@ -161,6 +162,52 @@ class sale_order_sourcing_progress(osv.osv):
                     'check_data': _('Done'),
                     'prepare_picking': _('Done'),
                 }
+                sourcing = ''
+                fo_ids = self.pool.get('sale.order').search(cr, uid, [
+                    '|',
+                    ('original_so_id_sale_order', '=', sp.order_id.id),
+                    '&',
+                    ('procurement_request', '=', True),
+                    ('id', '=', sp.order_id.id),
+                ], context=context)
+
+                sourcing_ok = True
+                nb_order_lines = 0
+                total_sourced_lines = 0
+                min_date = False
+                max_date = False
+                for fo_brw in self.pool.get('sale.order').browse(cr, uid, fo_ids, context=context):
+                    sourced_lines = 0
+                    nb_order_lines += len(fo_brw.order_line)
+                    for o in fo_brw.order_ids:
+                        if not min_date or min_date > o.first_date:
+                            min_date = o.first_date
+                        if not max_date or max_date < o.last_date:
+                            max_date = o.last_date
+                        sourced_lines += len(o.sourcing_lines)
+                        sourcing += _('%s line%s sourced on %s.\n') % (
+                            len(o.sourcing_lines),
+                            len(o.sourcing_lines) > 1 and 's' or '',
+                            o.sourcing_document_name,
+                        )
+                    sourcing_ok = sourcing_ok and sourced_lines >= len(fo_brw.order_line)
+                    total_sourced_lines += sourced_lines
+
+                if sourcing_ok:
+                    sourcing_completed = _('Done (%s/%s)') % (nb_order_lines, nb_order_lines)
+                elif total_sourced_lines:
+                    sourcing_completed = _('In progress (%s/%s)') % (total_sourced_lines, nb_order_lines)
+                else:
+                    sourcing_completed = _('Not started (0/%s)') % nb_order_lines
+
+                res[sp.id].update({
+                    'sourcing': sourcing,
+                    'sourcing_completed': sourcing_completed,
+                    'sourcing_start': min_date,
+                    'sourcing_stop': max_date,
+                })
+
+                res[sp.id]['sourcing'] = sourcing
 
         return res
 
@@ -210,6 +257,45 @@ class sale_order_sourcing_progress(osv.osv):
             store=False,
             multi='memory',
         ),
+        'sourcing': fields.function(
+            _get_percent,
+            method=True,
+            type='text',
+            string='Sourcing Result',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'sourcing_completed': fields.function(
+            _get_percent,
+            method=True,
+            type='char',
+            size=64,
+            string='Sourcing status',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'sourcing_start': fields.function(
+            _get_percent,
+            method=True,
+            type='datetime',
+            size=64,
+            string='Sourcing start date',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'sourcing_stop': fields.function(
+            _get_percent,
+            method=True,
+            type='datetime',
+            size=64,
+            string='Sourcing end date',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
         'start_date': fields.datetime(
             string='Start date',
             readonly=True,
@@ -229,6 +315,8 @@ class sale_order_sourcing_progress(osv.osv):
         'check_data': '/',
         'prepare_picking': '/',
         'end_date': False,
+        'sourcing_start': False,
+        'sourcing_stop': False,
     }
 
 sale_order_sourcing_progress()
@@ -1616,12 +1704,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     if order.procurement_request:
                         move_obj.action_confirm(cr, uid, [move_id], context=context)
-                        prsd_obj.chk_create(cr, uid, {
-                            'order_id': order.id,
-                            'sourcing_document_id': picking_id,
-                            'sourcing_document_model': 'stock.picking',
-                            'sourcing_document_type': picking_data.get('type'),
-                        }, context=context)
+
+                    prsd_obj.chk_create(cr, uid, {
+                        'order_id': order.id,
+                        'sourcing_document_id': picking_id,
+                        'sourcing_document_model': 'stock.picking',
+                        'sourcing_document_type': picking_data.get('type'),
+                        'line_ids': line.id,
+                    }, context=context)
 
                     """
                     We update the procurement and the purchase orders if we are treating o FO which is

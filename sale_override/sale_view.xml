@@ -535,6 +535,10 @@
                     <field name="check_data" />
                     <field name="line_completed" />
                     <field name="prepare_picking" />
+                    <field name="sourcing_completed" />
+                    <field name="sourcing_start" />
+                    <field name="sourcing_stop" />
+                    <field name="sourcing" />
                     <field name="error" attrs="{'invisible': [('error', '=', False)}" />
                 </tree>
             </field>
