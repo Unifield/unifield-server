@@ -353,7 +353,7 @@ class update_received(osv.osv):
                 'source' : packet['source_name'],
                 'model' : packet['model'],
                 'sequence_number' : packet['sequence'],
-                'rule_sequence' : packet['rule'],
+                'rule_sequence' : -packet['rule'],
                 'is_deleted' : True,
             }
             for sdref in packet['unload']:
@@ -391,7 +391,7 @@ class update_received(osv.osv):
         update_groups = {}
         for update in whole:
             if update.is_deleted:
-                group_key = (update.sequence_number, 1, -update.rule_sequence)
+                group_key = (update.sequence_number, 1, update.rule_sequence)
             else:
                 group_key = (update.sequence_number, 0,  update.rule_sequence)
             update_groups.setdefault(group_key, []).append(update)
