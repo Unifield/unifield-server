@@ -387,6 +387,17 @@ class hq_report_oca(report_sxw.report_sxw):
                 and analytic_line.journal_id.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
                 # Add to second report (expenses only)
+                custom_rate = False
+                if period.number in (12, 13, 14, 15, 1, ) \
+                    and 'Revaluation - FY' in analytic_line.name:
+                        # US-953 Yearly revaluation entries are build with
+                        # an external ccy table: compute back rate instead of
+                        # using exported period rate
+                        if currency == func_currency:
+                            custom_rate = 1.
+                        elif analytic_line.amount_currency != 0.:
+                            custom_rate = round(1 / (abs(analytic_line.amount_currency) \
+                                / abs(analytic_line.amount)), 8)
                 other_formatted_data = [integration_ref ,
                                         analytic_line.document_date and datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         "0",
@@ -397,7 +408,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                         currency and currency.name or "0",
                                         analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
                                         "0",
-                                        rate,
+                                        custom_rate or rate,
                                         analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         analytic_line.entry_sequence or "0",
                                         "0",
