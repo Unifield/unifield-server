@@ -87,7 +87,7 @@ class account_move_line(osv.osv):
         """
         res = {}
         for line in self.browse(cr, uid, ids):
-            res[line.id] = ''
+            res[line.id] = False
             if line.reference:
                 res[line.id] = line.reference
                 continue

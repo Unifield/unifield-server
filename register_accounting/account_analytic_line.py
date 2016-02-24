@@ -43,15 +43,15 @@ class account_analytic_line(osv.osv):
             if context.get('sync_update_execution', False):
                 continue
             else:
-                res[l.id] = ''
+                res[l.id] = False
             if l.move_id:
                 if l.move_id.partner_type and l.move_id.partner_type.name:
-                    res[l.id] = l.move_id.partner_type.name or ''
+                    res[l.id] = l.move_id.partner_type.name or False
                 # UTP-1106: In case of HQ Entries, we don't have any "real 3RD party", but just a partner_txt. That's why we use it as it is!
                 else:
-                    res[l.id] = l.move_id.partner_txt or ''
+                    res[l.id] = l.move_id.partner_txt or False
             elif l.commitment_line_id and l.commitment_line_id.commit_id and l.commitment_line_id.commit_id.partner_id and l.commitment_line_id.commit_id.partner_id.name:
-                res[l.id] = l.commitment_line_id.commit_id.partner_id.name or ''
+                res[l.id] = l.commitment_line_id.commit_id.partner_id.name or False
             elif l.imported_commitment:
                 res[l.id] = l.imported_partner_txt
         return res
