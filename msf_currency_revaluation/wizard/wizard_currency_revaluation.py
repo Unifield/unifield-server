@@ -141,33 +141,20 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             period_br = period_obj.browse(cr, uid, [period_id],
                 context=context)[0]
             if period_br.number == 1:
-                # UFTP-385
-                # Jan month revaluation, check at line level if a previous FY,
-                # because we tolerate rev journal JIs reversal entries of the
-                # previous FY
-
-                # get previous FY
-                fy_obj = self.pool.get('account.fiscalyear')
-                fy_domain = [
-                    ('date_start', '<', period_br.fiscalyear_id.date_start),
-                ]
-                fy_ids = fy_obj.search(cr, uid, fy_domain, limit=1,
-                    order='date_start', context=context)
-                if fy_ids:
-                    fy_r = fy_obj.read(cr, uid, fy_ids, ['date_stop'],
-                        context=context)[0]
-                    if fy_r:
-                        # a previous FY so a potential year reval done and year
-                        # reval reversal lines are here.
-                        # search at line level and tolerate rev journal JIs
-                        # reversal entries of the previous FY.
-                        # so tolerate with a source date to end of previous FY
-                        account_model = 'account.move.line'
-                        domain += [
-                            '|',
-                            ('source_date', '!=', fy_r['date_stop']),
-                            ('source_date', '=', False),
-                        ]
+                # UFTP-385/US-957
+                # Jan month revaluation and a previous FY
+                # (potentially yearly revaluated)
+                # Since US-957 we tolerate any manual rev journal entries
+                # (potentially reval entries of the yearly reval autos entries)
+                # => we do not allow any rev entries of an already done jan
+                # reval
+                fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [
+                        ('date_start', '<', period_br.fiscalyear_id.date_start),
+                    ], limit=1, order='date_start', context=context)
+                if fy_ids:  # a previous FY
+                    account_model = 'account.move.line'
+                    domain.append(('name', 'like',
+                        "Revaluation - %s" % (period_br.name, )))
 
         if account_ids_domain:
             domain += account_ids_domain
