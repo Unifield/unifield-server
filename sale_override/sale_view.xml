@@ -527,7 +527,7 @@
             <field name="model">sale.order.sourcing.progress</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Sourcing progress" colors="blue: end_date != False; green: sourcing_stop != False">
+                <tree string="Sourcing progress" colors="green: sourcing_stop != False; blue: end_date != False &amp; sourcing_stop == False">
                     <field name="order_id" />
                     <field name="start_date" />
                     <field name="end_date" />
