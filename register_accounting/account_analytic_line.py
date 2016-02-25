@@ -67,7 +67,7 @@ class account_analytic_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         sql = "UPDATE " + self._table + " SET partner_txt = %s WHERE id in %s"
-        cr.execute(sql, (value or '', tuple(ids)))
+        cr.execute(sql, (value or False, tuple(ids)))
         return True
 
     _columns = {

@@ -180,7 +180,7 @@ class analytic_distribution1(osv.osv):
             'name': name,
             'date': source_date or date,
             'document_date': document_date,
-            'ref': ref or '',
+            'ref': ref or False,
             'journal_id': journal_id,
             'general_account_id': general_account_id or False,
             'move_id': move_id or False,
