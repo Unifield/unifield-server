@@ -116,16 +116,25 @@ class account_cash_statement(osv.osv):
         if context is None:
             context = {}
 
-        if not context.get('sync_update_execution') and vals.get('balance_end_real', False):
+        if not context.get('sync_update_execution') \
+                and 'balance_end_real' in vals:
             new_vals = {'balance_start': vals['balance_end_real']}
+            # US-948/2: carry over end of month balance to next registers if
+            # the source register is not 'end of month balance' frozen
+            # note: the last carry over is processed via
+            # 'button_confirm_closing_bank_balance' button
             to_write_id_list = []
-            for id in ids:
-                args = [('prev_reg_id', '=', id)]
-                search_ids = self.search(cr, uid, args, context=context)
-                to_write_id_list.extend(search_ids)
+            for r in self.read(cr, uid, ids, ['closing_balance_frozen'],
+                context=context):
+                if not r['closing_balance_frozen']:
+                    args = [('prev_reg_id', '=', r['id'])]
+                    search_ids = self.search(cr, uid, args, context=context)
+                    if search_ids:
+                        to_write_id_list.extend(search_ids)
             self.write(cr, uid, to_write_id_list, new_vals, context=context)
 
-        return super(account_cash_statement, self).write(cr, uid, ids, vals, context=context)
+        return super(account_cash_statement, self).write(cr, uid, ids, vals,
+            context=context)
 
     def button_open_cash(self, cr, uid, ids, context=None):
         if not context:
