@@ -252,7 +252,7 @@ class sale_order_sourcing_progress(osv.osv):
         fsl_nb = 0
         ool_nb = 0
         for order_id in order_ids:
-            # Save number of lines in the sale.order record
+            # Save number of lines in the sale.order records
             on_stock_nb_lines, on_order_nb_lines = self._get_nb_lines_by_type(cr, uid, order_id, context=context)
             fsl_nb += on_stock_nb_lines
             ool_nb += on_order_nb_lines
@@ -273,9 +273,17 @@ class sale_order_sourcing_progress(osv.osv):
 
 
     def _get_percent(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Returns the percentage of sourced lines
-        '''
+        """
+        Returns the different percentage of sourced lines
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order.sourcing.progress to compute
+        :param field_name: List of fields to compute
+        :param args: Extra arguments
+        :param context: Context of the call
+        :return: A dictionnary with ID of sale.order.sourcing.progress as keys
+                 and a dictionnary with computed field values as values.
+        """
         mem_obj = self.pool.get('sale.order.sourcing.progress.mem')
 
         if context is None:
