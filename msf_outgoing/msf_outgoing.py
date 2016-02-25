@@ -26,6 +26,7 @@ from datetime import datetime, date
 
 from order_types.stock import check_cp_rw
 from msf_order_date import TRANSPORT_TYPE
+from msf_partner import PARTNER_TYPE
 
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
@@ -290,6 +291,7 @@ class shipment(osv.osv):
                 # functions
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
                 'partner_id2': fields.many2one('res.partner', string='Customer', required=False),
+                'partner_type': fields.related('partner_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),  # old_multi ship_vals
