@@ -1,0 +1,248 @@
+from __future__ import with_statement
+import sys
+import os
+import logging
+import urllib2
+import threading
+from base64 import b64decode
+import hashlib
+from StringIO import StringIO
+import tarfile
+
+from osv import osv, fields
+from tools.translate import _
+import tools
+from tools import config
+from updater import *
+
+from version import IMPORT_PATCH_SUCCESS, IMPORT_PATCH_INVALID, IMPORT_PATCH_UNKNOWN, IMPORT_PATCH_IGNORED
+
+assert sys.version_info >= (2, 6), \
+    "timeout argument of urllib2.urlopen() needs Python >= 2.6"
+
+th_local = threading.local()
+
+def is_online():
+    if hasattr(th_local, 'is_online'):
+        print "Quick answer:", th_local.is_online
+        return th_local.is_online
+    print "Pinging..."
+    res = True
+    try:
+        urllib2.urlopen(os.environ.get('UF_TEST_URL', 'http://www.google.com'), timeout=2)
+    except urllib2.URLError:
+        res = False
+    print res
+    th_local.is_online = res
+    return res
+
+
+class upgrade(osv.osv_memory):
+    _name = 'sync_client.upgrade'
+    _description = "OpenERP Upgrade Wizard"
+
+    _logger = logging.getLogger('sync.client.upgrade')
+
+    def restart(self, cr, uid, ids, context=None):
+        os.chdir( config['root_path'] )
+        restart_server()
+        return {'type': 'ir.actions.act_window_close'}
+
+    def _get_error(self, cr, uid, context=None):
+        text = ""
+        account_move_obj = self.pool.get('account.move')
+        a_m_ids = account_move_obj.get_valid_but_unbalanced(cr, uid, context)
+        if a_m_ids:
+            text += "Warning ! Before patching please correct the following unbalanced Journal Entries: \n"
+            for a_m in account_move_obj.read(cr, uid, a_m_ids, ['name']):
+                text += " - %s\n"% (a_m['name'])
+        return text
+
+    def download(self, cr, uid, ids, context=None):
+        """Downlad the patch to fill the version record"""
+        revisions = self.pool.get('sync_client.version')
+        next_revisions = revisions._get_next_revisions(cr, uid, context=context)
+        if not next_revisions:
+            raise osv.except_osv(_("Error!"), _("Nothing to do."))
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        uuid = self.pool.get('sync.client.entity').get_uuid(cr, uid)
+        text = _("This/These patche(s) have been downloaded and are ready to install:")
+        text += "\n\n"
+        for rev in revisions.browse(cr, uid, next_revisions, context=context):
+            text += (" - [%(importance)s] %(name)s (%(date)s)\n   " % rev) + \
+                    (_("Comment: %(comment)s (sum is %(sum)s)") % rev) + "\n\n"
+            if not rev.patch:
+                patch = proxy.get_zip( uuid,  self.pool.get("sync.client.entity")._hardware_id, rev.sum )
+                if not patch[0]:
+                    raise osv.except_osv(_("Error!"), _("Can't retrieve the patch %(name)s (%(sum)s)!" % rev))
+                revisions.write(cr, uid, rev.id, {'patch':patch[1]})
+                cr.commit()
+        return self.write(cr, uid, ids, {
+            'message' : text,
+            'state' : 'need-install',
+        }, context=context)
+
+    def do_upgrade(self, cr, uid, ids, context=None):
+        """Actualy, prepare the upgrade to be done at server restart"""
+        ## Check if revision upgrade applies
+        next_state = self._get_state(cr, uid, context=context)
+        if next_state != 'need-install':
+            return self.write(cr, uid, ids, {
+                'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),
+                'state' : next_state,
+            }, context=context)
+        next_revisions = self.pool.get('sync_client.version')._get_next_revisions(cr, uid, context=context)
+        ## Prepare
+        (status, message, values) = do_prepare(cr, next_revisions)
+        wiz_value = {'message':_(message)}
+        if status in ('corrupt','missing'):
+            wiz_value['state'] = 'need-download'
+        elif status == 'success':
+            wiz_value['state'] = 'need-restart'
+            wiz_value['message'] = self._generate(cr, uid, context=context),
+        ## Refresh the window
+        if values: wiz_value['message'] = wiz_value['message'] % values
+        res = self.write(cr, uid, ids, wiz_value, context=context)
+        if status != 'success':
+            return res
+        ## Restart automatically
+        self.restart(cr, uid, ids, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+    def import_patch(self, cr, uid, ids, context=None):
+        revisions = self.pool.get('sync_client.version')
+        count = 0
+        ignored = 0
+        unknown = 0
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            status = revisions.import_patch(cr, uid, patch=wiz.patch, context=context)
+            if status == IMPORT_PATCH_SUCCESS:
+                cr.commit()
+                count += 1
+            elif status == IMPORT_PATCH_INVALID:
+                try:
+                    tar = tarfile.open(fileobj=StringIO(b64decode(wiz.patch)))
+                    for content in (fh.read() for fh in (tar.extractfile(name) for name in tar.getnames()) if fh):
+                        status = revisions.import_patch(cr, uid,
+                            decoded=content, context=context)
+                        cr.commit()
+                        if status == IMPORT_PATCH_SUCCESS: count += 1
+                        elif status == IMPORT_PATCH_INVALID: pass
+                        elif status == IMPORT_PATCH_UNKNOWN: unknown += 1
+                        elif status == IMPORT_PATCH_IGNORED: ignored += 1
+                except tarfile.ReadError:
+                    raise osv.except_osv(_("Error!"), _("Not recognized patch file!"))
+            elif status == IMPORT_PATCH_UNKNOWN:
+                unknown += 1
+            elif status == IMPORT_PATCH_IGNORED:
+                ignored += 1
+
+        self._logger.info("%d patches imported / %d ignored patches / %d unknown zip." \
+                          % (count, ignored, unknown))
+
+        if not count:
+            if ignored:
+                text = _("%d patches found already present in the database. " \
+                         "Nothing to do.") % count
+            elif unknown:
+                text = _("%d potential patches are found but they are unknown. " \
+                         "You may run first the synchronization process.") % unknown
+            else:
+                text = _("No patch has been found in the file provided. " \
+                         "Please check you uploaded the right file.")
+            self.write(cr, uid, ids, {'message':text}, context=context)
+        else:
+            self.write(cr, uid, ids, {
+                    'message' : _("%d revision(s) has been imported.") % count + \
+                                "\n\n" + self._generate(cr, uid, context=context),
+                    'state' : self._get_state(cr, uid, context=context),
+                }, context=context)
+
+        return {}
+
+    def _generate(self, cr, uid, context=None):
+        """Make the wizard caption"""
+        if self.pool.get('sync.client.entity').is_syncing():
+            return _("Blocked during synchro.\n\nPlease try again later.")
+        revisions = self.pool.get('sync_client.version')
+        if revisions._need_restart(cr, uid, context=context):
+            return _("OpenERP needs to be restarted to complete the installation.")
+        text = ""
+        currev = revisions._get_last_revision(cr, uid, context=context)
+        if currev:
+            if all([currev.name, currev.date]):
+                text += _("The current revision is %s (%s at %s) and has been applied at %s.") % (currev.name, currev.sum, currev.date, currev.applied)
+            else:
+                text += _("The server last sum is %s and has been applied on that database at %s.") % (currev.sum, currev.applied)
+        else:
+            text += _("No revision has been applied yet.")
+        text += "\n"
+        next_revisions = revisions.browse(cr, uid,
+            revisions._get_next_revisions(cr, uid, context=context),
+            context=context)
+        if next_revisions:
+            text += "\n"
+            if len(next_revisions) == 1:
+                text += _("There is one revision available.")
+            else:
+                text += _("There are %d revisions available.") % len(next_revisions)
+            text += "\n"
+            for rev in next_revisions:
+                info = "[%(importance)s] %(name)s (%(date)s)" % rev
+                need_download = _("(need to be downloaded)") if rev.need_download else ''
+                text += (" - %s\n   " % " ".join([info, need_download])) + \
+                        (_("Comment: %(comment)s (sum is %(sum)s)") % rev) + "\n\n"
+            if any(rev.need_download for rev in next_revisions) and not is_online():
+                text += _("But it seems you don't have an Internet access. " \
+                          "Please provide the patches manually.")+"\n"
+        else:
+            text += "\n"+_("Your OpenERP version is up-to-date.")+"\n"
+        return text
+
+    def _get_state(self, cr, uid, context=None):
+        if self.pool.get('sync.client.entity').is_syncing():
+            return 'blocked'
+        revisions = self.pool.get('sync_client.version')
+        if revisions._need_restart(cr, uid, context=context):
+            return 'need-restart'
+        next_revisions = revisions._get_next_revisions(cr, uid, context=context)
+        if not next_revisions:
+            return 'up-to-date'
+        if not revisions._is_update_available(cr, uid, next_revisions, context=context):
+            if self._is_remotewarehouse(cr, uid):
+                return 'need-provide-manually'
+            else:
+                return 'need-download'
+        return 'need-install'
+
+    def _is_remotewarehouse(self, cr, uid, context=None):
+        try:
+            entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
+            if entity.usb_instance_type == 'remote_warehouse':
+                return True
+        except Exception, e:
+            pass
+        return False
+
+    _columns = {
+        'message' : fields.text("Caption", readonly=True),
+        'state' : fields.selection([
+                ('need-provide-manually','Need To Provide Manually The Files'),
+                ('need-download','Need Download'),
+                ('up-to-date','Up-To-Date'),
+                ('need-install','Need Install'),
+                ('need-restart','Need Restart'),
+                ('blocked','Blocked')
+            ], string="Status"),
+        'patch' : fields.binary("Patch"),
+        'error': fields.text('Error', readonly="1"),
+    }
+
+    _defaults = {
+        'message' : _generate,
+        'state' : _get_state,
+        'error': _get_error,
+    }
+
+upgrade()

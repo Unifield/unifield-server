@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+        <wizard id="setup_remote_warehouse" string="Setup USB Synchronisation" model="sync_remote_warehouse.setup_remote_warehouse" name="setup_remote_warehouse.wizard" />
+        
+        <act_window name="Setup USB Synchronisation"
+        res_model="setup_remote_warehouse"
+        view_mode="form"
+        target="new"
+        id="act_window_setup_remote_warehouse"/>
+        
+        <menuitem id="menu_setup_remote_warehouse" name="Setup USB Synchronisation" action="act_window_setup_remote_warehouse" parent="sync_client.reg_menu" />
+        
+        <record id="todo_remote_warehouse" model="ir.actions.todo">
+    		<field name="action_id" ref="act_window_setup_remote_warehouse"/>
+    		<field name="state">done</field>
+    	</record>
+        
+    </data>
+</openerp>

@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+        <wizard id="wizard_usb_synchronisation" string="USB Synchronisation" model="usb_synchronisation" name="usb_synchronisation.wizard" />
+        
+        <act_window name="USB Synchronisation"
+        res_model="usb_synchronisation"
+        view_mode="form"
+        target="new"
+        id="act_window_usb_synchronisation"/>
+        
+        <menuitem id="menu_usb_synchronisation" name="USB Synchronisation" action="act_window_usb_synchronisation" parent="sync_client.sync_menu" sequence="30" />
+
+        <record id="action_ir_attachment_company" model="ir.actions.act_window">
+            <field name="name">USB Synchro files</field>
+            <field name="res_model">ir.attachment</field>
+            <field name="view_type">form</field>
+            <field name="vieww_mode">tree</field>
+            <field name="domain">[('res_model', '=', 'res.company')]</field>
+            <field name="context">{'from': 'usb_synchronization'}</field>
+        </record>
+
+        <menuitem id="menu_usb_files" name="USB Synchro files" action="action_ir_attachment_company" parent="sync_client.sync_menu" sequence="40"/>
+
+    </data>
+</openerp>

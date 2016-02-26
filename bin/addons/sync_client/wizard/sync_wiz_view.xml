@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="entity_group_search">
+            <field name="name">sync.client.entity_group_search</field>
+            <field name="model">sync.client.entity_group</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="sync_client_instance_temp_search">
+            <field name="name">sync_client.instance.temp_search</field>
+            <field name="model">sync_client.instance.temp</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="reg_wizard_view">
+            <field name="name">sync_client.register_wiz</field>
+            <field name="model">sync.client.register_entity</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Register" col="4">
+                    <field name="state" invisible="1" />
+                    <group colspan="4" states="register" width="450" height="200">
+                        <field name="name" colspan="4" readonly="1"/>
+                        <field name="email" colspan="4" />
+                        <separator string="" colspan="4" />
+                        <button type="special" special="cancel" string="Cancel" colspan="2" icon="gtk-cancel"/>
+                        <button type="object" string="Next" name="next" colspan="2" icon="gtk-go-forward"/>
+                    </group>
+                    <group colspan="4" col="5" states="parents" width="450" height="200">
+                        <field name="identifier" colspan="4"/><button type="object" string="Generate a new UUID" name="generate_uuid" colspan="1" icon="gtk-refresh"/>
+                        <field name="parent_id" colspan="5"/>
+                        <separator string="" colspan="5" />
+                        <button type="special" special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                        <label colspan="2" />
+                        <button type="object" string="Previous" name="previous" colspan="1" icon="gtk-go-back"/>
+                        <button type="object" string="Next" name="group_state" colspan="1" icon="gtk-go-forward"/>
+                    </group>
+                    <group colspan="4" col="5" states="groups" width="450" height="200">
+                        <field name="group_ids" mode="tree" nolabel="1" colspan="5" >
+                            <tree string="Groups" editable="top">
+                                <field name="name"/>
+                                <field name="type" />
+                            </tree>
+                        </field>
+                        <separator string="" colspan="5" />
+                        <button type="special" special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                        <label colspan="2" />
+                        <button type="object" string="Previous" name="previous" colspan="1" icon="gtk-go-back"/>
+                        <button type="object" string="Register" name="validate" colspan="1" icon="gtk-apply"/>
+                    </group>
+                    <group colspan="4" col="5" states="message" width="450" height="200">
+                        <separator string="Message" colspan="5" />
+                        <field name="message" colspan="5" nolabel="1"/>
+                        <button type="object" string="Previous" name="previous" colspan="1" icon="gtk-go-back"/>
+                        <label colspan="2" />
+                        <button special="cancel" string="Ok" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+       <!-- =====================  Manage Instance ================= -->
+        <record model="ir.ui.view" id="manage_entity_wizard_view">
+            <field name="name">sync.client.entity_manager_wiz</field>
+            <field name="model">sync.client.entity_manager</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Registration Status" col="6" >
+                    <field name="state" invisible="1"/>
+                    <group states="data_needed" width="700" height="200" col="1" colspan="6">
+                        <button type="object" string="Retrieve instance information" name="retrieve" icon="gtk-ok"/>
+                    </group>
+                    <group states="ready" colspan="4" col="6">
+                        <field name="name"/>
+                        <field name="parent"/>
+                        <field name="identifier"/>
+                        <field name="entity_status"/>
+                        <field name="email"/>
+                        <field name="group"/>
+                        <field name="entity_ids" nolabel="1" colspan="6" width="700" height="200"/>
+                    </group>
+                </form>
+               </field>
+       </record>
+
+       <record model="ir.ui.view" id="children_entities_wizard_view">
+            <field name="name">sync.client.child_entity.tree</field>
+            <field name="model">sync.client.child_entity</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Children Instances"  colors="red:state=='invalidated';blue:state in ('updated', 'pending')">
+                    <field name="name"/>
+                    <field name="identifier"/>
+                    <field name="email" />
+                    <field name="parent"/>
+                    <field name="state"/>
+                    <button type="object" string="Validate" name="validation" icon="gtk-ok" states="pending,invalidated"/>
+                    <button type="object" string="Invalidate" name="invalidation" icon="gtk-cancel" states="validated"/>
+                    <field name="group" />
+                </tree>
+               </field>
+       </record>
+
+       <!-- =====================  Instance Info Management ================= -->
+
+          <record model="ir.ui.view" id="activate_entity_wizard_view">
+            <field name="name">sync.client.activate_entity_wiz</field>
+            <field name="model">sync.client.activate_entity</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Activate entity" col="4" >
+                    <field name="name" />
+                    <newline />
+                    <button type="object" string="Activate" name="activate" icon="gtk-ok"/>
+                </form>
+               </field>
+       </record>
+
+       <record model="ir.ui.view" id="update_entity_wizard_view">
+            <field name="name">sync.client.aupdate_entity_wiz</field>
+            <field name="model">sync.client.update_entity</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Update entity" col="4" >
+                    <button type="object" string="Update" name="get_update" icon="gtk-ok"/>
+                </form>
+               </field>
+       </record>
+
+       <record model="ir.actions.act_window" id="activate_wizard_action">
+            <field name="name">Activate Instance</field>
+            <field name="res_model">sync.client.activate_entity</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+       <record model="ir.actions.act_window" id="update_wizard_action">
+            <field name="name">Update Instance</field>
+            <field name="res_model">sync.client.update_entity</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="maint_menu" name="Maintenance" parent="reg_menu" sequence="100"/>
+
+        <menuitem name="Activate Instance" parent="maint_menu"
+            id="activate_wiz_menu"
+            action="activate_wizard_action" sequence="99"/>
+
+        <menuitem name="Update Instance" parent="maint_menu"
+            id="update_wiz_menu"
+            action="update_wizard_action"/>
+
+       <!-- ================ DATA synchronization ===================== -->
+
+
+       <record model="ir.ui.view" id="sync_wizard_view">
+            <field name="name">sync.client.sync_wiz</field>
+            <field name="model">sync.client.sync_manager</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Manage Data synchronization" col="6" >
+                    <separator string="Synchronize" colspan="4"/>
+                    <group colspan="4" col="6" >
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start All Synchronization Process" name="sync" states="init"/>
+	                        <button type="object" string="Resume All Synchronization Process" name="sync" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
+	                    </group>
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start All Synchronization In Background" name="sync_manual_threaded" states="init"/>
+	                        <button type="object" string="Resume All Synchronization In Background" name="sync_manual_threaded" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
+	                    </group>
+	                </group>
+                    <separator string="Debug" colspan="4"/>
+                    <group colspan="4" col="6" >
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start Pushing Data" name="push_data" states="init"/>
+	                        <button type="object" string="Resume Pushing Data" name="push_data" states="update_send,update_validate" />
+	                    </group>
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start Pulling Data" name="pull_data" states="init"/>
+	                        <button type="object" string="Resume Pulling Data" name="pull_data" states="update_pull"/>
+	                    </group>
+	                </group>
+	                <group colspan="4" col="6" >
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start Pushing Message" name="push_message" states="init"/>
+	                        <button type="object" string="Resume Pushing Message" name="push_message" states="msg_push"/>
+	                    </group>
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start Pulling Message" name="pull_message" states="init"/>
+	                    </group>
+	                </group>
+	                <separator string="Recover After Restoring" colspan="4"/>
+	                <group colspan="4" col="1" >
+                    	<button type="object" string="Recover Data and Messages" name="recover_data_and_messages" states="init" />
+                    </group>
+                    <group colspan="4" col="3">
+                    	<label string="" />
+	                    <field name="state" />
+                    </group>
+                </form>
+               </field>
+       </record>
+
+        <record model="ir.actions.act_window" id="register_wizard_action">
+            <field name="name">Register</field>
+            <field name="res_model">sync.client.register_entity</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="manage_children_wizard_action">
+            <field name="name">Registration Status</field>
+            <field name="res_model">sync.client.entity_manager</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+
+        <record model="ir.actions.act_window" id="sync_wizard_action">
+            <field name="name">Synchronize</field>
+            <field name="res_model">sync.client.sync_manager</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem name="Register" parent="reg_menu"
+            id="reg_wiz_menu"
+            action="register_wizard_action"/>
+
+        <menuitem name="Registration Status" parent="mon_menu"
+            id="manage_child_wiz_menu"
+            action="manage_children_wizard_action" sequence="10"/>
+
+        <menuitem name="Manual" parent="sync_menu"
+            id="sync_wiz_menu"
+            action="sync_wizard_action"/>
+
+    </data>
+</openerp>
+<!--
+    vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+-->

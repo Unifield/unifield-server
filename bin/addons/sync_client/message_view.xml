@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data>
+
+    <menuitem id="message_menu" name="Message" parent="mon_menu" sequence="60"/>
+
+    <record model="ir.ui.view" id="message_received_tree_view">
+      <field name="name">message.received.tree</field>
+      <field name="model">sync.client.message_received</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree colors="red:run == False" string="Instance Tree">
+          <field name="identifier"/>
+          <field name="source"/>
+          <field name="remote_call"/>
+          <field name="run"/>
+          <field name="create_date"/>
+          <field name="execution_date"/>
+        </tree>
+      </field>
+    </record>
+
+
+    <record model="ir.ui.view" id="message_received_form_view">
+      <field name="name">message.received.form</field>
+      <field name="model">sync.client.message_received</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Message Received">
+          <group col="6" colspan="4">
+            <field name="identifier"/>
+            <field name="source"/>
+            <field name="run"/>
+            <field name="create_date"/>
+            <field name="execution_date"/>
+          </group>
+          <separator string="Execution log" colspan="4"/>
+          <field name="log" nolabel="1" colspan="4"/>
+          <group colspan="2" col="1">
+            <separator string="Call"/>
+            <field name="remote_call" nolabel="1"
+                   attrs="{'readonly':[('editable','=',False)]}"/>
+          </group>
+          <group colspan="2" col="1">
+            <separator string="Arguments"/>
+            <field name="arguments" nolabel="1"
+                   attrs="{'readonly':[('editable','=',False)]}"/>
+          </group>
+          <label string="" colspan="3"/>
+          <group colspan="1" col="3">
+            <field name="editable" attrs="{'invisible':[('run','=',True)]}"/>
+            <button string="Run manually" name="execute"
+                    type="object" attrs="{'invisible':[('run','=',True)]}"/>
+          </group>
+        </form>
+      </field>
+    </record>
+
+    <record id="message_received_search_view" model="ir.ui.view">
+      <field name="name">message.received.search</field>
+      <field name="model">sync.client.message_received</field>
+      <field name="type">search</field>
+      <field name="arch" type="xml">
+        <search string="Search update Received">
+          <field name="source"/>
+          <field name="remote_call"/>
+          <field name="create_date"/>
+          <field name="execution_date"/>
+          <newline/>
+          <filter icon="terp-check" string="Not Run"
+                  name="current" domain="[('run','=', False)]"/>
+          <newline/>
+          <group expand="0" string="Group By..." colspan="4">
+            <filter string="Source" icon="terp-partner"
+                    domain="[]" context="{'group_by':'source'}"/>
+            <filter string="Call" icon="terp-personal"
+                    domain="[]" context="{'group_by':'remote_call'}"/>
+            <filter string="Sequence" icon="terp-accessories-archiver"
+                    domain="[]" context="{'group_by':'sequence'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="message_received_action">
+      <field name="name">Message Received Monitor</field>
+      <field name="res_model">sync.client.message_received</field>
+      <field name="view_type">form</field>
+      <field name="view_mode">tree,form</field>
+      <field name="context">{}</field>
+    </record>
+
+    <menuitem id="Message_received_menu" name="Message Received Monitor"
+              parent="message_menu" action="message_received_action"/>
+
+    <record model="ir.ui.view" id="sync_client_message_to_send_tree_view">
+      <field name="name">sync.client.message_to_send.tree</field>
+      <field name="model">sync.client.message_to_send</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree colors="red:sent == False">
+          <field name="identifier"/>
+          <field name="destination_name"/>
+          <field name="remote_call"/>
+          <field name="sent"/>
+          <field name="sent_date"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="sync_client_message_to_send_form_view">
+      <field name="name">sync.client.message_to_send.form</field>
+      <field name="model">sync.client.message_to_send</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form>
+          <field name="identifier"/>
+          <field name="destination_name"/>
+          <field name="sent_date"/>
+          <field name="sent"/>
+          <group colspan="2" col="1">
+            <separator string="Call"/>
+            <field name="remote_call" nolabel="1"/>
+          </group>
+          <group colspan="2" col="1">
+            <separator string="Arguments"/>
+            <field name="arguments" nolabel="1"/>
+          </group>
+        </form>
+      </field>
+    </record>
+
+    <record id="sync_client_message_to_send_search_view" model="ir.ui.view">
+      <field name="name">sync.client.message_to_send.search</field>
+      <field name="model">sync.client.message_to_send</field>
+      <field name="type">search</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="sent_date"/>
+          <separator orientation="vertical"/>
+          <field name="identifier"/>
+          <field name="remote_call"/>
+          <field name="destination_name"/>
+          <newline/>
+          <filter icon="terp-check" string="Not Sent"
+                  domain="[('sent','=', False)]" name="current"/>
+          <newline/>
+          <group expand="0" string="Group By..." colspan="4">
+            <filter string="Destination" icon="terp-partner"
+                    domain="[]" context="{'group_by':'destination_name'}"/>
+            <filter string="Call" icon="terp-personal"
+                    domain="[]" context="{'group_by':'remote_call'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="message_sent_action">
+      <field name="name">Message Sent Monitor</field>
+      <field name="res_model">sync.client.message_to_send</field>
+      <field name="view_type">form</field>
+      <field name="view_mode">tree,form</field>
+      <field name="context">{}</field>
+    </record>
+
+    <menuitem id="message_sent_menu" name="Messages Sent Monitor"
+              parent="message_menu" action="message_sent_action"/>
+
+  </data>
+</openerp>
+<!--
+     vim:ts=2:sw=2:sts=2:expandtab:wrap:linebreak:
+  -->
