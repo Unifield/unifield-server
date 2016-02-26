@@ -102,11 +102,15 @@ class account_cash_statement(osv.osv):
             # if previous register closing balance is freezed, then retrieving previous closing balance
             # US_410: retrieving previous closing balance even closing balance is not freezed
             # if prev_reg.closing_balance_frozen:
+            # US-948: carry over for bank and cash registers, always carry over
+            # bank accountant manual field or cash box balance (manual)
+            bal_to_carry_over = None
             if journal.type == 'bank':
-                bal = prev_reg.closing_balance_frozen \
-                    and prev_reg.msf_calculated_balance \
-                    or prev_reg.balance_end_real
-                vals.update({'balance_start': bal})
+                bal_to_carry_over = balance_end_real or 0.0
+            elif journal.type == 'cash'
+                bal_to_carry_over = prev_reg.balance_end_cash
+            if bal_to_carry_over is not None:
+                vals.update({'balance_start': bal_to_carry_over})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists (or discard if they come from sync)
         if prev_reg_id and not sync_update:
