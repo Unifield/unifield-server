@@ -367,7 +367,8 @@ def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context=None
                     cashbox_line_obj.create(cr, uid, starting_vals, context=context)
             # update new register balance_start
             # US-948: carry over CashBox Balance at confirm
-            balance = st_obj._get_starting_balance(cr, uid, [next_reg_id], context=context)[next_reg_id].get('balance_end_cash', False)
+            #balance = st_obj._get_starting_balance(cr, uid, [next_reg_id], context=context)[next_reg_id].get('balance_start', False)
+            balance = st.balance_end_cash
             if balance:
                 st_obj.write(cr, uid, [next_reg_id], {'balance_start': balance}, context=context)
     return True
