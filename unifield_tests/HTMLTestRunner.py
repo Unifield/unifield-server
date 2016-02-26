@@ -633,11 +633,20 @@ class HTMLTestRunner(Template_mixin):
         "Run the given test case or test suite."
         start_time = datetime.now()
         result = _TestResult(self.verbosity)
-        test(result)
-        self.total_duration = str(datetime.now() - start_time)
-        self.generateReport(test, result)
-        print >>sys.stderr, '\nTime Elapsed: %s' % (self.total_duration)
-        return result
+        err = False
+        try:
+            test(result)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            err = True
+            raise
+        finally:
+            if not err:
+                self.total_duration = str(datetime.now() - start_time)
+                self.generateReport(test, result)
+                print >>sys.stderr, '\nTime Elapsed: %s' % (self.total_duration)
+                return result
 
 
     def sortResult(self, result_list):
