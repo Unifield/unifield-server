@@ -2801,7 +2801,7 @@ msgstr "Comptabilité financière"
 #: view:account.pl.report:0
 #: model:ir.ui.menu,name:account.menu_account_pl_report
 msgid "Profit And Loss"
-msgstr "Pertes et profits"
+msgstr "Compte de Résultat"
 
 #. module: account
 #: view:account.fiscal.position:0

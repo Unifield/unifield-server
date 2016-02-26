@@ -123,8 +123,14 @@ class common_report_header(object):
     def _get_sortby(self, data):
         raise (_('Error'), _('Not implemented'))
 
+    def _is_filtered(self, data):
+        if data.get('form', False) and data['form'].get('filter', False) and data['form']['filter'] != 'filter_no':
+            return True
+        else:
+            return False
+
     def _get_filter(self, data):
-        if data.get('form', False) and data['form'].get('filter', False):
+        if self._is_filtered(data):
             if data['form']['filter'] == 'filter_date':
                 return _('Date')
             elif data['form']['filter'] == 'filter_date_doc':
@@ -132,6 +138,18 @@ class common_report_header(object):
             elif data['form']['filter'] == 'filter_period':
                 return _('Periods')
         return _('No Filter')
+
+    def _is_filtered_by_date(self, data):
+        if self._is_filtered(data) and data['form']['filter'] == 'filter_date':
+            return True
+        else:
+            return False
+
+    def _is_filtered_by_period(self, data):
+        if self._is_filtered(data) and data['form']['filter'] == 'filter_period':
+            return True
+        else:
+            return False
 
     def _sum_debit_period(self, period_id, journal_id=None):
         journals = journal_id or self.journal_ids
