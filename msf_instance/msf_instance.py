@@ -78,6 +78,30 @@ class msf_instance(osv.osv):
                     res[instance.id] = parent_cost_centers[0]
         return res
 
+    def _get_restrict_level_from_entity(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if not ids:
+            return res
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_restrict_level_from_entity(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        entity = self.pool.get('sync.client.entity')
+        if entity:
+            entity_obj = entity.get_entity(cr, uid, context=context)
+            if not entity_obj:
+                return []
+            if not entity_obj.parent:
+                return [('level', '=', 'section')]
+            p_id = self.search(cr, uid, [('instance', '=', entity_obj.parent)])
+            if not p_id:
+                return []
+            return [('parent_id', 'in', p_id)]
+        return []
+
     def _get_instance_child_ids(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         if not ids:
@@ -100,7 +124,8 @@ class msf_instance(osv.osv):
             else:
                 res.append(arg)
         return res
-    
+
+
     _columns = {
         'level': fields.selection([('section', 'Section'),
                                    ('coordo', 'Coordo'),
@@ -128,6 +153,7 @@ class msf_instance(osv.osv):
                                             type='many2one',
                                             relation='msf.instance',
                                             fnct_search=_search_instance_child_ids),
+        'restrict_level_from_entity': fields.function(_get_restrict_level_from_entity, method=True, store=False, fnct_search=_search_restrict_level_from_entity, string='Filter instance from entity info'),
     }
     
     _defaults = {
