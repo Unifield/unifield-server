@@ -12,6 +12,7 @@
                     <field name="deleted_obj_sd_ref" />
                     <field name="deletion_date" />
                     <field name="user_id" />
+                    <field name="deleted_in_sync" />
                 </tree>
             </field>
         </record>
@@ -26,6 +27,7 @@
                     <field name="deleted_obj_sd_ref" />
                     <field name="deletion_date" />
                     <field name="user_id" />
+                    <field name="deleted_in_sync" />
                 </form>
             </field>
         </record>
@@ -40,6 +42,7 @@
                     <field name="deleted_obj_sd_ref" />
                     <field name="deletion_date"/>
                     <field name="user_id"/>
+                    <field name="deleted_in_sync" />
                 </search>
             </field>
         </record>
