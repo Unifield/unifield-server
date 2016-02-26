@@ -196,7 +196,7 @@ class account_move_line(osv.osv):
                     'amount': amt,
                     'general_account_id': obj_line.account_id.id,
                     'journal_id': obj_line.journal_id.analytic_journal_id.id,
-                    'ref': obj_line.ref,
+                    'ref': obj_line.ref or False,
                     'move_id': obj_line.id,
                     'user_id': uid
                 }
