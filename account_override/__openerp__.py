@@ -35,7 +35,6 @@
     ],
     "demo_xml" : [],
     "update_xml" : [
-        'res_company_view.xml',
         'res_partner_view.xml',
         'product_product_view.xml',
         'account_view.xml',

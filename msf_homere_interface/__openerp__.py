@@ -32,7 +32,6 @@
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
-        'res_company_view.xml',
         'hr_view.xml',
         'hr_payroll_wizard.xml',
         'hr_payroll_view.xml',

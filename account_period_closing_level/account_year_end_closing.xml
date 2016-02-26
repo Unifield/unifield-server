@@ -2,27 +2,6 @@
 <openerp>
     <data>
 
-        <record id="view_company_inherit_ye_form" model="ir.ui.view">
-            <field name="name">view.company.inherit.ye.form</field>
-            <field name="inherit_id" ref="account_override.view_company_inherit_3_form"/>
-            <field name="model">res.company</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <data>
-                    <page position="inside" string="Configuration">
-                        <separator colspan="4" string="B/S Move to 0 accounts"/>
-                        <field name="ye_pl_cp_for_bs_debit_bal_account" />
-                        <field name="ye_pl_cp_for_bs_credit_bal_account" />
-                        <separator colspan="4" string="P&amp;L result accounts"/>
-                        <field name="ye_pl_pos_credit_account" />
-                        <field name="ye_pl_ne_credit_account" />
-                        <field name="ye_pl_pos_debit_account" />
-                        <field name="ye_pl_ne_debit_account" />
-                    </page>
-                </data>
-            </field>
-        </record>
-
         <record id="view_account_form_inherit" model="ir.ui.view">
             <field name="name">account.account.form</field>
             <field name="model">account.account</field>
