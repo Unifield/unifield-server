@@ -52163,8 +52163,8 @@ msgstr "La date du Prêt à être Expédié devrait être antérieure à la date
 #. module: account
 #: code:addons/account/invoice.py:724
 #, python-format
-msgid "Global taxes defined, but are not in invoice lines !"
-msgstr "Taxes globales définies, mais elles ne sont pas dans les lignes de facture !"
+msgid "Global taxes defined, click on compute to update tax base !"
+msgstr "Taxes globales définies, cliquez sur 'Calculer les Taxes' pour mettre à jour la base imposable !"
 
 #. module: report_webkit
 #: help:res.company,lib_path:0
