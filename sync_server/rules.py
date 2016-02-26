@@ -141,7 +141,7 @@ class sync_rule(osv.osv):
         'master_data': True,
         'domain': '[]',
         'active': False,
-        'status': 'invalid',
+        'status': 'valid',
         'handle_priority' : False,
     }
 
@@ -585,7 +585,7 @@ class message_rule(osv.osv):
     _defaults = {
         'domain': '[]',
         'active': False,
-        'status': 'invalid',
+        'status': 'valid',
         'applies_to_type' : True,
     }
 
