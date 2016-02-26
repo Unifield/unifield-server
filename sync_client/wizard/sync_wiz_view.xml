@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
+        <record model="ir.ui.view" id="entity_group_search">
+            <field name="name">sync.client.entity_group_search</field>
+            <field name="model">sync.client.entity_group</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="sync_client_instance_temp_search">
+            <field name="name">sync_client.instance.temp_search</field>
+            <field name="model">sync_client.instance.temp</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
         <record model="ir.ui.view" id="reg_wizard_view">
             <field name="name">sync_client.register_wiz</field>
             <field name="model">sync.client.register_entity</field>
@@ -12,17 +33,17 @@
                         <field name="name" colspan="4" readonly="1"/>
                         <field name="email" colspan="4" />
                         <separator string="" colspan="4" />
-                        <button type="special" special="cancel" string="Cancel" colspan="2"/>
-                        <button type="object" string="Next" name="next" colspan="2"/>
+                        <button type="special" special="cancel" string="Cancel" colspan="2" icon="gtk-cancel"/>
+                        <button type="object" string="Next" name="next" colspan="2" icon="gtk-go-forward"/>
                     </group>
                     <group colspan="4" col="5" states="parents" width="450" height="200">
-                        <field name="identifier" colspan="4"/><button type="object" string="Generate a new UUID" name="generate_uuid" colspan="1"/>
+                        <field name="identifier" colspan="4"/><button type="object" string="Generate a new UUID" name="generate_uuid" colspan="1" icon="gtk-refresh"/>
                         <field name="parent_id" colspan="5"/>
                         <separator string="" colspan="5" />
-                        <button type="special" special="cancel" string="Cancel" colspan="1"/>
+                        <button type="special" special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
                         <label colspan="2" />
-                        <button type="object" string="Previous" name="previous" colspan="1"/>
-                        <button type="object" string="Next" name="group_state" colspan="1"/>
+                        <button type="object" string="Previous" name="previous" colspan="1" icon="gtk-go-back"/>
+                        <button type="object" string="Next" name="group_state" colspan="1" icon="gtk-go-forward"/>
                     </group>
                     <group colspan="4" col="5" states="groups" width="450" height="200">
                         <field name="group_ids" mode="tree" nolabel="1" colspan="5" >
@@ -32,15 +53,15 @@
                             </tree>
                         </field>
                         <separator string="" colspan="5" />
-                        <button type="special" special="cancel" string="Cancel" colspan="1"/>
+                        <button type="special" special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
                         <label colspan="2" />
-                        <button type="object" string="Previous" name="previous" colspan="1"/>
-                        <button type="object" string="Register" name="validate" colspan="1"/>
+                        <button type="object" string="Previous" name="previous" colspan="1" icon="gtk-go-back"/>
+                        <button type="object" string="Register" name="validate" colspan="1" icon="gtk-apply"/>
                     </group>
                     <group colspan="4" col="5" states="message" width="450" height="200">
                         <separator string="Message" colspan="5" />
                         <field name="message" colspan="5" nolabel="1"/>
-                        <button type="object" string="Previous" name="previous" colspan="1"/>
+                        <button type="object" string="Previous" name="previous" colspan="1" icon="gtk-go-back"/>
                         <label colspan="2" />
                         <button special="cancel" string="Ok" icon="gtk-ok"/>
                     </group>

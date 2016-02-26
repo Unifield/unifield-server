@@ -294,7 +294,7 @@ class update_received(osv.osv):
         'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
         'force_recreation' : fields.boolean('Force record recreation', readonly=True),
-        'sequence_number' : fields.integer('Sequence', readonly=True),
+        'sequence_number' : fields.integer('Sequence', readonly=True, group_operator='count'),
         'rule_sequence' : fields.integer('Rule Sequence', readonly=True),
         'version' : fields.integer('Version', readonly=True),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
