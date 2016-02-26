@@ -19,5 +19,6 @@
 #
 ##############################################################################
 import wizard_accrual_validation
+import wizard_accrual_reversal
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

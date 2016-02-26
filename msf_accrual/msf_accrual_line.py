@@ -90,8 +90,15 @@ class msf_accrual_line(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'functional_amount': fields.function(_get_functional_amount, method=True, store=False, string="Functional Amount", type="float", readonly="True"),
         'functional_currency_id': fields.many2one('res.currency', 'Functional Currency', required=True, readonly=True),
+        'move_line_id': fields.many2one('account.move.line', 'Account Move Line', readonly=True),
+        'rev_move_id': fields.many2one('account.move', 'Rev Journal Entry', readonly=True),
+        'accrual_type': fields.selection([
+                ('reversing_accrual', 'Reversing accrual'),
+                ('one_time_accrual', 'One Time accrual'),
+            ], 'Accrual type', required=True),
         'state': fields.selection([('draft', 'Draft'),
                                    ('posted', 'Posted'),
+                                   ('partially_posted', 'Partially posted'),
                                    ('cancel', 'Cancelled')], 'Status', required=True),
         # Field to store the third party's name for list view
         'third_party_name': fields.char('Third Party', size=64),
@@ -105,6 +112,7 @@ class msf_accrual_line(osv.osv):
                                                                                               ('is_current_instance', '=', True)])[0],
         'functional_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
+        'accrual_type' : 'reversing_accrual',
     }
 
     def _create_write_set_vals(self, cr, uid, vals, context=None):
@@ -178,22 +186,30 @@ class msf_accrual_line(osv.osv):
                 raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
 
             move_date = accrual_line.period_id.date_stop
-            reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
-            # check if periods are open
-            reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)
-            reversal_period_id = reversal_period_ids[0]
+            if accrual_line.accrual_type == 'reversing_accrual':
+                reversal_move_posting_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+                reversal_move_document_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+                reversal_period_ids = period_obj.find(cr, uid, reversal_move_posting_date, context=context)
+                reversal_period_id = reversal_period_ids[0]
+            else:
+                reversal_move_posting_date = accrual_line.rev_move_id.date
+                reversal_move_document_date = accrual_line.rev_move_id.document_date
+                reversal_period_id = accrual_line.rev_move_id.period_id.id
+
             # Create moves
             move_vals = {
                 'ref': accrual_line.reference,
                 'period_id': accrual_line.period_id.id,
                 'journal_id': accrual_line.journal_id.id,
-                'date': move_date
+                'date': move_date,
+                'document_date': accrual_line.document_date,
             }
             reversal_move_vals = {
                 'ref': accrual_line.reference,
                 'period_id': reversal_period_id,
                 'journal_id': accrual_line.journal_id.id,
-                'date': reversal_move_date
+                'date': reversal_move_posting_date,
+                'document_date': reversal_move_document_date,
             }
             move_id = move_obj.create(cr, uid, move_vals, context=context)
             reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
@@ -241,8 +257,8 @@ class msf_accrual_line(osv.osv):
             reversal_accrual_move_line_vals = {
                 'accrual': True,
                 'move_id': reversal_move_id,
-                'date': reversal_move_date,
-                'document_date': reversal_move_date,
+                'date': reversal_move_posting_date,
+                'document_date': reversal_move_document_date,
                 'source_date': move_date,
                 'journal_id': accrual_line.journal_id.id,
                 'period_id': reversal_period_id,
@@ -258,8 +274,8 @@ class msf_accrual_line(osv.osv):
             reversal_expense_move_line_vals = {
                 'accrual': True,
                 'move_id': reversal_move_id,
-                'date': reversal_move_date,
-                'document_date': reversal_move_date,
+                'date': reversal_move_posting_date,
+                'document_date': reversal_move_document_date,
                 'source_date': move_date,
                 'journal_id': accrual_line.journal_id.id,
                 'period_id': reversal_period_id,
@@ -368,6 +384,157 @@ class msf_accrual_line(osv.osv):
                     _('You can only delete draft accruals'))
         return super(msf_accrual_line, self).unlink(cr, uid, ids,
             context=context)
-    
+
+    def accrual_post(self, cr, uid, ids, context=None):
+        """
+        Post the accrual entries without their reversal
+        """
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('account.move')
+        move_line_obj = self.pool.get('account.move.line')
+        if ids:
+            for accrual_line in self.browse(cr, uid, ids, context=context):
+                move_date = accrual_line.period_id.date_stop
+                # Create moves
+                move_vals = {
+                    'ref': accrual_line.reference,
+                    'period_id': accrual_line.period_id.id,
+                    'journal_id': accrual_line.journal_id.id,
+                    'document_date': accrual_line.document_date,
+                    'date': move_date,
+                }
+
+                move_id = move_obj.create(cr, uid, move_vals, context=context)
+
+                # Create move lines
+                booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+                accrual_move_line_vals = {
+                    'accrual': True,
+                    'move_id': move_id,
+                    'date': move_date,
+                    'document_date': accrual_line.document_date,
+                    'journal_id': accrual_line.journal_id.id,
+                    'period_id': accrual_line.period_id.id,
+                    'reference': accrual_line.reference,
+                    'name': accrual_line.description,
+                    'account_id': accrual_line.accrual_account_id.id,
+                    'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
+                    'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                    booking_field: abs(accrual_line.accrual_amount),
+                    'currency_id': accrual_line.currency_id.id,
+                }
+                # negative amount for expense would result in an opposite
+                # behavior, expense in credit and a accrual in debit for the
+                # initial entry
+                booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
+                expense_move_line_vals = {
+                    'accrual': True,
+                    'move_id': move_id,
+                    'date': move_date,
+                    'document_date': accrual_line.document_date,
+                    'journal_id': accrual_line.journal_id.id,
+                    'period_id': accrual_line.period_id.id,
+                    'reference': accrual_line.reference,
+                    'name': accrual_line.description,
+                    'account_id': accrual_line.expense_account_id.id,
+                    'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
+                    'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                    booking_field: abs(accrual_line.accrual_amount),
+                    'currency_id': accrual_line.currency_id.id,
+                    'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
+                }
+
+                accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
+                move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
+
+                # Post the moves
+                move_obj.post(cr, uid, move_id, context=context)
+
+                # validate the accrual line
+                if accrual_line.accrual_type == 'one_time_accrual':
+                    status = 'partially_posted'
+                else:
+                    status = 'posted'
+                self.write(cr, uid, [accrual_line.id], {'state': status, 'move_line_id': accrual_move_line_id}, context=context)
+
+    def accrual_reversal_post(self, cr, uid, ids, document_date, posting_date, context=None):
+        """
+        Reverse the selected accruals
+        """
+        if context is None:
+            context = {}
+        period_obj = self.pool.get('account.period')
+        move_obj = self.pool.get('account.move')
+        move_line_obj = self.pool.get('account.move.line')
+
+        if ids:
+            for accrual_line in self.browse(cr, uid, ids, context=context):
+                move_date = accrual_line.period_id.date_stop
+
+                reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
+                reversal_period_id = reversal_period_ids[0]
+
+                reversal_move_vals = {
+                    'ref': accrual_line.reference,
+                    'period_id': reversal_period_id,
+                    'journal_id': accrual_line.journal_id.id,
+                    'date': posting_date,
+                    'document_date': document_date,
+                }
+
+                reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
+
+                reversal_description = "REV - " + accrual_line.description
+
+                # Create move lines / reversal entry (source_date to keep the old change rate):
+                booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
+                reversal_accrual_move_line_vals = {
+                    'accrual': True,
+                    'move_id': reversal_move_id,
+                    'date': posting_date,
+                    'document_date': document_date,
+                    'source_date': move_date,
+                    'journal_id': accrual_line.journal_id.id,
+                    'period_id': reversal_period_id,
+                    'reference': accrual_line.reference,
+                    'name': reversal_description,
+                    'account_id': accrual_line.accrual_account_id.id,
+                    'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
+                    'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                    booking_field: abs(accrual_line.accrual_amount),
+                    'currency_id': accrual_line.currency_id.id,
+                }
+                booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+                reversal_expense_move_line_vals = {
+                    'accrual': True,
+                    'move_id': reversal_move_id,
+                    'date': posting_date,
+                    'document_date': document_date,
+                    'source_date': move_date,
+                    'journal_id': accrual_line.journal_id.id,
+                    'period_id': reversal_period_id,
+                    'reference': accrual_line.reference,
+                    'name': reversal_description,
+                    'account_id': accrual_line.expense_account_id.id,
+                    'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
+                    'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                    booking_field: abs(accrual_line.accrual_amount),
+                    'currency_id': accrual_line.currency_id.id,
+                    'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
+                }
+
+                reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
+                move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
+
+                # Post the moves
+                move_obj.post(cr, uid, reversal_move_id, context=context)
+
+                # Reconcile the accrual move line with its reversal
+                move_line_obj.reconcile_partial(cr, uid, [accrual_line.move_line_id.id, reversal_accrual_move_line_id], context=context)
+
+                # Change the status to "Posted"
+                self.write(cr, uid, [accrual_line.id], {'state': 'posted', 'rev_move_id': reversal_move_id}, context=context)
+
 msf_accrual_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

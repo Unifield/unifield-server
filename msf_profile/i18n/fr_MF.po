@@ -8883,6 +8883,73 @@ msgstr "Exporter les infos du Contrat - PDF"
 msgid "The currency '%s' does not have any rate set for date '%s'!"
 msgstr "Aucun taux de change n'a été fixé pour la devise '%s' pour la date '%s'!"
 
+#. module: msf_accrual
+#: view:wizard.accrual.reversal:0
+msgid "Are you sure you want to post accrual reversal for those lines at the indicated dates?"
+msgstr "Are you sure you want to post accrual reversal for those lines at the indicated dates?"
+
+#. module: msf_accrual
+#: model:ir.actions.act_window,name:msf_accrual.action_wizard_post_accrual_reversal
+#: view:wizard.accrual.reversal:0
+msgid "Post Accrual Reversal"
+msgstr "Post Accrual Reversal"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:60
+#, python-format
+msgid "Document Date should be later than the accrual date."
+msgstr "La date du document devrait être postérieure à la date de la régularisation."
+
+#. module: msf_accrual
+#: selection:msf.accrual.line,state:0
+#: view:msf.accrual.line:0
+msgid "Partially posted"
+msgstr "Partiellement comptabilisé"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:51
+#, python-format
+msgid "The line '%s' isn't partially posted, the accrual reversal can't be posted!"
+msgstr "The line '%s' isn't partially posted, the accrual reversal can't be posted!"
+
+#. module: msf_accrual
+#: field:msf.accrual.line,accrual_type:0
+msgid "Accrual type"
+msgstr "Type de régularisation"
+
+#. module: msf_accrual
+#: selection:msf.accrual.line,accrual_type:0
+msgid "One Time accrual"
+msgstr "One Time accrual"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:65
+#, python-format
+msgid "The reversal period wasn't found in the system!"
+msgstr "The reversal period wasn't found in the system!"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Are you sure you want to cancel this accrual line ?"
+msgstr "Etes-vous sûr de vouloir annuler cette ligne de régularisation ?"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:48
+#, python-format
+msgid "The period '%s' is not open!"
+msgstr "La période '%s' n'est pas ouverte !"
+
+#. module: msf_accrual
+#: selection:msf.accrual.line,accrual_type:0
+msgid "Reversing accrual"
+msgstr "Reversing accrual"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:41
+#, python-format
+msgid "The line '%s' is already partially posted!"
+msgstr "La ligne '%s' est déjà partiellement comptabilisée !"
+
 #. module: account
 #: field:account.report.general.ledger,sortby:0
 msgid "Sort By"
@@ -10246,13 +10313,14 @@ msgstr "Règles non compatibles avec les objets osv_memory !"
 msgid "Transfers"
 msgstr "Transferts"
 
-#. modules: account_override, analytic_distribution_invoice
+#. modules: account_override, analytic_distribution_invoice, msf_accrual
 #: code:addons/account_override/account.py:175
 #: code:addons/account_override/account_analytic_line.py:105
 #: code:addons/account_override/account_analytic_line.py:120
 #: code:addons/account_override/invoice.py:146
 #: code:addons/analytic_distribution_invoice/account_invoice_refund.py:105
 #: code:addons/analytic_distribution_invoice/account_invoice_refund.py:116
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:58
 #, python-format
 msgid "Posting date should be later than Document Date."
 msgstr "Date de comptabilisation devrait être postérieure à celle du document."
@@ -12052,7 +12120,7 @@ msgstr "_Annuler piquage"
 msgid "'%s' Not comprehensive operator... Please use only '=', '!=', 'in' and 'not in' operators"
 msgstr "%s' N'est pas un opérateur global... Veuillez utiliser uniquement les opérateurs  '=', '!=', 'in' et 'not in'"
 
-#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, account_period_closing_level, order_types, mission_stock, msf_accrual, procurement_report
+#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, account_period_closing_level, order_types, mission_stock, msf_accrual, procurement_report, msf_accrual
 #: view:account.state.open:0
 #: view:wizard.confirm.closing.period:0
 #: selection:mission.stock.wizard,split_stock:0
@@ -12073,6 +12141,7 @@ msgstr "%s' N'est pas un opérateur global... Veuillez utiliser uniquement les o
 #: selection:product.product,sterilized:0
 #: view:wizard.confirm.bank:0
 #: view:wizard.open.empty.cashbox:0
+#: view:wizard.accrual.reversal:0
 #: code:addons/sales_followup/sale_followup.py:355
 #: code:addons/sales_followup/sale_followup.py:372
 #: selection:allocation.stock.setup,unallocated_ok:0
@@ -16577,11 +16646,12 @@ msgstr "Type de Référence"
 msgid "Select a fiscal year to close"
 msgstr "Sélectionnez un exercice comptable à clôturer"
 
-#. modules: account_mcdb, msf_doc_import, analytic_distribution, register_accounting
+#. modules: account_mcdb, msf_doc_import, analytic_distribution, register_accounting, msf_accrual
 #: view:account.mcdb:0
 #: field:analytic.distribution.wizard,document_date:0
 #: field:msf.doc.import.accounting.lines,document_date:0
 #: field:wizard.register.import.lines,document_date:0
+#: field:wizard.accrual.reversal,document_date:0
 msgid "Document date"
 msgstr "Date du document"
 
@@ -48076,7 +48146,7 @@ msgstr "Expression à remplir pour exécuter la transition"
 msgid "The currency %s is not defined!"
 msgstr "La devise %s n'est pas définie !"
 
-#. modules: account_msf, account, account_mcdb, register_accounting, account_hq_entries, account_override, analytic
+#. modules: account_msf, account, account_mcdb, register_accounting, account_hq_entries, account_override, analytic, msf_accrual
 #: field:account.bank.statement.line,date:0
 #: field:account.invoice,date_invoice:0
 #: field:hq.entries,date:0
@@ -48100,6 +48170,7 @@ msgstr "La devise %s n'est pas définie !"
 #: field:wizard.import.cheque.lines,date:0
 #: field:wizard.import.invoice.lines,date:0
 #: field:wizard.invoice.date,date:0
+#: field:wizard.accrual.reversal,posting_date:0
 #, python-format
 msgid "Posting Date"
 msgstr "Date de Comptabilisation"
@@ -70462,7 +70533,7 @@ msgstr "Annuler Expédition"
 msgid "NORWEGIAN KRONE"
 msgstr "NORWEGIAN KRONE"
 
-#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, account_period_closing_level, order_types, mission_stock, msf_accrual, procurement_report, stock
+#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, account_period_closing_level, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_accrual
 #: view:account.state.open:0
 #: view:account.payment.make.payment:0
 #: view:wizard.confirm.closing.period:0
@@ -70482,6 +70553,7 @@ msgstr "NORWEGIAN KRONE"
 #: view:wizard.confirm.bank:0
 #: view:wizard.open.empty.cashbox:0
 #: view:stock.inventory.merge:0
+#: view:wizard.accrual.reversal:0
 #: selection:allocation.stock.setup,unallocated_ok:0
 #, python-format
 msgid "Yes"
