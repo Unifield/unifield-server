@@ -114,8 +114,8 @@
                     </xpath>
                     
                     <xpath expr="/form/group/field[@name='date_order']" position="replace">
-                        <field name="date_order"
-                        	on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
+                        <field name="date_order" attrs="{'readonly': [('state_hidden_sale_order', 'not in', ['draft'])]}"
+                            on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)"/>
                     </xpath>
                                        
                     <!--  Add dates on 'Other Information' tab -->
