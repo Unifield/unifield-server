@@ -35,6 +35,7 @@ from selection import Selection
 from tree import Tree
 from wizard import Wizard
 import urllib
+import unicodedata
 import re
 import os
 
@@ -225,7 +226,12 @@ def execute_report(name, **data):
         cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
         report_type = val['format']
 
-        cherrypy.response.headers['Content-Disposition'] = '%sfilename="' % attachment + report_name.decode('utf-8') + '.' + report_type + '"'
+        try:
+            report_name = report_name.decode('utf-8')
+        except UnicodeEncodeError:
+            # replace all compatibility characters with their equivalents ("e with accent" becomes "e"...)
+            report_name = unicodedata.normalize('NFKD', report_name).encode('ascii','ignore')
+        cherrypy.response.headers['Content-Disposition'] = '%sfilename="' % attachment + report_name + '.' + report_type + '"'
 
         return _print_data(val)
 
