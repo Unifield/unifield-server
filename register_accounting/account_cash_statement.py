@@ -263,7 +263,8 @@ class account_cash_statement(osv.osv):
         """
         Sum of opening balance (balance_start) and sum of cash transaction (total_entry_encoding)
         """
-        # Prepare some values
+        if context is None:
+            context = {}
         res = {}
         for st in self.browse(cr, uid, ids):
             amount = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
@@ -273,12 +274,10 @@ class account_cash_statement(osv.osv):
                 next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
                 for next_st in self.browse(cr, uid, next_st_ids):
                     if next_st.state != 'confirm':
-                        if not st.closing_balance_frozen:
-                            # US-948: since cash register is not eom bal
-                            # frozen, carry over Cashbox balance
-                            # (when creating next register or updating)
-                            amount = st.balance_end_cash
-                        self.write(cr, uid, [next_st.id], {'balance_start': amount})
+                        # US-948: since cash register is not eom bal
+                        # frozen, carry over Cashbox balance
+                        # (when creating next register or updating)
+                        self.write(cr, uid, [next_st.id], {'balance_start': st.balance_end_cash})
         return res
 
     def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):
