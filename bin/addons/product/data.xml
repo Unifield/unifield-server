@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+    
+	    <record forcecreate="True" id="decimal_sale_computation" model="decimal.precision">
+	        <field name="name">Sale Price Computation</field>
+	        <field name="computation">True</field>
+	        <field name="digits">5</field>
+	    </record>
+	    
+	    <record forcecreate="True" id="decimal_purchase_computation" model="decimal.precision">
+	        <field name="name">Purchase Price Computation</field>
+	        <field name="computation">True</field>
+	        <field name="digits">5</field>
+	    </record>
+	    
+	    <record forcecreate="True" id="decimal_picking" model="decimal.precision">
+	        <field name="name">Picking Price</field>
+	        <field name="computation">False</field>
+	        <field name="digits">2</field>
+	    </record>
+	    <record forcecreate="True" id="decimal_picking_computation" model="decimal.precision">
+	        <field name="name">Picking Price Computation</field>
+	        <field name="computation">True</field>
+	        <field name="digits">5</field>
+	    </record>
+    
+	</data>
+</openerp>
