@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    <!-- PRODUCT -->
+        <menuitem id="purchase.menu_product_in_config_purchase" 
+        name="Product" 
+        parent="menu_supply_config" 
+        sequence="9" />
+        
+        <menuitem id="product_nomenclature.menu_product_nomenclature_action_form" 
+        parent="purchase.menu_product_in_config_purchase" 
+        sequence="5" />
+        
+        <!-- ASSET TYPE -->
+        
+        <menuitem id="menu_asset_type_sales" 
+        name="Asset Types" 
+        action="product_asset.asset_type_normal_action"
+        parent="purchase.menu_product_in_config_purchase"
+        sequence="20" />
+        
+        <!-- UOM -->
+        <menuitem id="menu_uom" 
+        name="Unit Of Measure" 
+        parent="purchase.menu_product_in_config_purchase" 
+        sequence="30" />
+        
+         <menuitem
+             action="product.product_uom_categ_form_action" 
+             name="Units of Measure Categories"
+             id="stock.menu_stock_uom_categ_form_action"
+             parent="menu_uom" 
+             sequence="1"/>
+        
+         <menuitem
+              action="product.product_uom_form_action" 
+              name="Units of Measure"
+              id="stock.menu_stock_uom_form_action"
+              parent="menu_uom" 
+              sequence="2" />
+        
+        
+    <!-- PARTNER -->
+        <menuitem id="base.menu_config_address_book" 
+        name="Partner" 
+        parent="menu_supply_config" 
+        sequence="10" />
+        
+        <menuitem id="base.menu_partner_category_form" 
+        parent="base.menu_config_address_book"  />
+        <!-- ADRESSES -->
+        <menuitem id="config_adresses" 
+        name="Adresses"
+        parent="base.menu_config_address_book"  />
+        
+	        <menuitem id="base.menu_country_partner" 
+	        parent="config_adresses" 
+	        sequence="10"/>
+	        
+	        <menuitem 
+	            id="base.menu_partner_title_partner" 
+	            parent="config_adresses" 
+	            sequence="11"/>
+	            
+            <menuitem 
+                id="base.menu_partner_title_contact" 
+                parent="config_adresses" 
+                sequence="12"/>
+    <!-- ORDER -->
+        <menuitem id="base.menu_sale_config_sales" 
+        parent="menu_supply_config" 
+        sequence="14" />
+        
+        <!-- We rename shop by wareĥouse -->
+        <menuitem id="sale.menu_action_shop_form"
+        parent="base.menu_sale_config_sales"
+        action="sale.action_shop_form"
+        name ="Order WH Assignment"
+        />
+        
+        <record id="sale.action_shop_form" model="ir.actions.act_window">
+            <field name="name">Warehouse</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.shop</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="sale.view_shop_tree"/>
+            <field name="help">If you have more than one shop reselling your company products, you can create and manage that from here. Whenever you will record a new quotation or sales order, it has to be linked to a shop. The shop also defines the warehouse from which the products will be delivered for each particular sales.</field>
+        </record>
+        
+        <!-- PURCHASE CONFIG -->
+        <menuitem id="purchase.menu_purchase_config_purchase" 
+        name="Purchase Configuration" 
+        parent="menu_supply_config" 
+        sequence="20" />
+        
+        <menuitem id="product.menu_product_price_type" 
+        name="Price Types"
+        parent="purchase.menu_purchase_config_pricelist" />
+    
+        <!-- we move the menu configuration of product (without asset type and product configuration) within the menu 'supply main config' -->
+        <menuitem id="base.menu_base_config" 
+        name="Configuration" 
+        parent="menu_supply_config" 
+        sequence="21" />
+        
+        <!-- we move the menu configuration of warehouse within the menu 'supply main warehouse configuration' -->
+        <menuitem id="stock.menu_stock_configuration" 
+        name="Warehouse Configuration" 
+        parent="menu_supply_config" 
+        sequence="22" />
+            
+            <!-- WAREHOUSE -->
+            <menuitem id="menu_reg_wh_mngt" 
+            name="Regular Warehouse Management"
+            parent="stock.menu_stock_configuration" 
+            sequence="7" />
+                
+                <menuitem id="msf_config_locations.menu_stock_location_configuration_wizard"
+                  action="msf_config_locations.action_stock_location_configuration_wizard"
+                  parent="menu_reg_wh_mngt" 
+                  sequence="10"/>
+                  
+                <menuitem id="msf_config_locations.menu_stock_remove_location_wizard"
+                  action="msf_config_locations.action_stock_remove_location_wizard"
+                  parent="menu_reg_wh_mngt" 
+                  sequence="11"/>
+                  
+                <menuitem id="msf_outgoing.menu_action_pack_type_tree" 
+                action="msf_outgoing.action_pack_type_tree" 
+                parent="menu_reg_wh_mngt"
+                sequence="12" />
+                
+            <menuitem id="menu_adv_wh_mngt" 
+            name="Advanced Warehouse Management"
+            parent="stock.menu_stock_configuration" 
+            sequence="8" />
+                
+                <menuitem action="stock.action_location_form" 
+                id="stock.menu_action_location_form" 
+                parent="menu_adv_wh_mngt"
+                sequence="10" />
+                
+                <menuitem action="stock.action_warehouse_form" 
+                id="stock.menu_action_warehouse_form" 
+                parent="menu_adv_wh_mngt"
+                sequence="12" />
+                
+                <menuitem action="stock.action_incoterms_tree" 
+                id="stock.menu_action_incoterm_open" 
+                parent="menu_adv_wh_mngt" 
+                sequence="13"/>
+                
+            <menuitem id="menu_report_cust" 
+            name="Report Customization"
+            parent="stock.menu_stock_configuration" 
+            sequence="9" />
+            
+                <menuitem action="msf_outgoing.action_labels_tree" 
+                id="msf_outgoing.menu_report_custo_labels" 
+                parent="menu_report_cust" 
+                sequence="7"/>
+
+            <record id="stock.action_location_form" model="ir.actions.act_window">
+                <field name="context">{'full':1, 'search_default_in_location':1, 'from_advanced_menu': 1}</field>
+            </record>
+
+    <!-- TOOLS -->
+        <menuitem id="menu_tools" 
+        name="Tools" 
+        parent="menu_supply_config" 
+        sequence="23" />
+        
+        <menuitem id="object_query.menu_object_query_object" 
+        parent="menu_tools" />
+    
+    </data>
+</openerp>

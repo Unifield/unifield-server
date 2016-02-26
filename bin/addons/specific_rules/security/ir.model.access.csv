@@ -1,0 +1,8 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_stock_report_prodlots_virtual","stock.report.prodlots.virtual.user","model_stock_report_prodlots_virtual",,1,1,1,1
+"access_initial_inventory_all","initial.stock.inventory.all","model_initial_stock_inventory",,1,1,1,1
+"access_initial_inventory_line_all","initial.stock.inventory.line.all","model_initial_stock_inventory_line",,1,1,1,1
+"access_stock_cost_reevaluation_all","stock.cost.reevaluation.all","model_stock_cost_reevaluation",,1,1,1,1
+"access_stock_cost_reevaluation_line_all","stock.cost.reevaluation.line.all","model_stock_cost_reevaluation_line",,1,1,1,1
+"access_unconsistent_stock_report_all","unconsistent.stock.report.all","model_unconsistent_stock_report",,1,1,1,1
+"access_unconsistent_stock_report_line_all","unconsistent.stock.report.line.all","model_unconsistent_stock_report_line",,1,1,1,1

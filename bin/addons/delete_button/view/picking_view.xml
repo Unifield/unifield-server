@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    <!-- INCOMING SHIPMENT -->
+        <record id="view_picking_in_form" model="ir.ui.view">
+            <field name="name">view.picking.in.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_in_form" />
+            <field eval="300" name="priority"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="hide_delete_button">1</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_picking_in_tree" model="ir.ui.view">
+            <field name="name">unifield.stock.picking.in.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_in_tree" />
+            <field eval="300" name="priority"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name="hide_delete_button">1</attribute>
+                        <attribute name="colors">blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('done');red:state not in ('cancel', 'done') and min_date &lt; current_date</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" states="draft"
+                        confirm='Do you really want to delete selected record(s) ?'/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+    <!-- INTERNAL MOVES -->
+        <record id="view_picking_form" model="ir.ui.view">
+            <field name="name">view.picking.form </field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field eval="300" name="priority"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="hide_delete_button">1</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="vpicktree" model="ir.ui.view">
+            <field name="name">stock.picking.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.vpicktree" />
+            <field eval="300" name="priority"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name="hide_delete_button">1</attribute>
+                        <attribute name="colors">blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" states="draft"
+                        confirm='Do you really want to delete selected record(s) ?'/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <!-- Delivery Orders : OUTGOING -->
+        <record id="view_picking_out_form" model="ir.ui.view">
+            <field name="name">stock.picking.out.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_out_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_picking_out_tree" model="ir.ui.view">
+            <field name="name">stock.picking.out.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_out_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                        <attribute name='colors'>blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                        attrs="{'invisible' : [('state','!=','draft')]}" confirm='Do you really want to delete selected record(s) ?'/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <!-- PICKING -->
+        <record id="view_picking_ticket_form" model="ir.ui.view">
+            <field name="name">picking.ticket.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                        <attribute name='hide_duplicate_button'>1</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_picking_ticket_tree" model="ir.ui.view">
+            <field name="name">picking.ticket.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                    <xpath expr="/tree/button[@name='validate_picking']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                        states='draft' confirm='Do you really want to delete selected record(s) ?'/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <!-- PACKING -->
+        <record id="view_packing_tree" model="ir.ui.view">
+            <field name="name">picking.ticket.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="msf_outgoing.view_packing_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                        states='draft' confirm='Do you really want to delete selected record(s) ?'/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+ 
+        <record id="real_average_consumption_tree_view" model="ir.ui.view">
+            <field name="name">real.average.consumption.tree.view</field>
+            <field name="model">real.average.consumption</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="consumption_calculation.real_average_consumption_tree_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                        states='draft'  confirm='Do you really want to delete selected record(s) ?'/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

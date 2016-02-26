@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+            
+        <record id="purchase_order_form_import" model="ir.ui.view">
+            <field name="name">purchase.order.form.import</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="priority">301</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="noteditable">import_in_progress==True</attribute>
+                    </xpath>
+
+                <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='currency_id']" position="after">
+                    <field name="to_correct_ok" invisible="1"/>
+                </xpath>
+                <xpath expr="/form/notebook/page/field[@name='order_line']/tree//field[@name='default_name']" position="after">
+                    <field name="inactive_product" invisible="1" />
+                </xpath>
+                <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes" >
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00</attribute>
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Notes']/field[@name='notes']" position="before">
+                    <field name="import_in_progress" readonly="1" invisible="0" />
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Notes']/field[@name='project_ref']" position="after">
+                    <separator colspan="4" string="Import filenames" />
+                    <field name="import_filenames" mode="tree" readonly="1" nolabel="1" colspan="4">
+                        <tree string="Imported filenames">
+                            <field name="timestamp" />
+                            <field name="filename" />
+                        </tree>
+                    </field>
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
+                  <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                    <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['|', ('po_from_fo', '=', True), ('po_from_ir', '=', True)]}" />
+                    <button name="button_remove_lines" string="Delete Lines" confirm="This document originated from an IR/FO, if you delete these products now, they will all be deleted. If you wish to Cancel &amp; Resource them, please do this line by line." icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': [('po_from_fo', '=', False), ('po_from_ir', '=', False)]}" />
+                    <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': rfq_ok}"/>
+                    <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
+                </group>
+                <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
+                <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
+                </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="purchase_order_line_form" model="ir.ui.view">
+            <field name="name">purchase.order.line.form</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">form</field>
+            <field name="priority" eval="100" />
+            <field name="inherit_id" ref="purchase_override.purchase_order_line_form_view_inherit" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//form//notebook" position="after">
+                        <field name="to_correct_ok" readonly="1" invisible="1"/>
+                        <field name="show_msg_ok" readonly="1" invisible="1"/>
+                        <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
+                            <html>
+                                <style>
+                                    #error_message_unifield 
+                                    {
+                                        border-style: solid;
+                                        border-width: 1px;
+                                        border-radius: 5px;
+                                        border-color: black;
+                                        background-color: #F0EBA4;
+                                    }
+
+                                    #view_form #error_message_unifield .readonlyfield
+                                    {
+                                        border-style: none;
+                                        padding: 5px;
+                                        color: red;
+                                        background-color: #F0EBA4;
+                                        font-weight: bold;
+                                        text-transform: uppercase;
+                                        width: 98%%;
+                                    }
+
+                                    #error_message_unifield p, #error_message_unifield span
+                                    {
+                                        height: 1em;
+                                        min-height: 1em;
+                                            color: red;
+                                        font-weight: bold;
+                                        text-transform: uppercase;
+                                        padding: 5px;
+                                    }
+                                </style>
+
+                                <div id="error_message_unifield">
+                                    <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="4"/>
+                                </div>
+                           </html>
+                       </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="wizard_export_po_integration_view" model="ir.ui.view">
+            <field name="name">wizard.export.po.view</field>
+            <field name="model">wizard.export.po</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="PO lines exported">
+                    <separator colspan="4" string="Message" />
+                    <field name="message" colspan="4" nolabel="1" />
+                    <separator colspan="4" string="File to download" />
+                    <field name="file" colspan="4" nolabel="1" filename="filename" />
+                    <field name="filename" invisible="1"/>
+                    <newline />
+                    <label colspan="2" />
+                    <button name="close_window" type="object" string="Close window" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="wizard_export_po_validated_form_view" model="ir.ui.view">
+            <field name="name">wizard.export.po.validated.form.view</field>
+            <field name="model">wizard.export.po.validated</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export PO validated">
+                    <separator colspan="4" string="File format" />
+                    <field name="file_type" />
+                    <separator colspan="4" string="Actions" />
+                    <group colspan="4" col="4">
+                        <label> </label>
+                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="1" />
+                        <button name="export_file" string="Download file" icon="gtk-execute" type="object" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

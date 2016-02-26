@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data noupdate="0">
+	
+		<record id="base.res_partner_desertic_hispafuentes" model="res.partner">
+			<field name="manufacturer">1</field>
+			<field name="partner_type">section</field>
+		</record>
+		
+		<record id="base.res_partner_tinyatwork" model="res.partner">
+			<field name="manufacturer">1</field>
+		</record>
+		
+		<record id="base.res_partner_asus" model="res.partner">
+            <field name="partner_type">external</field>
+        </record>
+        <record id="base.res_partner_agrolait" model="res.partner">
+        	<field name="partner_type">external</field>
+        </record>
+        <record id="base.res_partner_c2c" model="res.partner">
+        	<field name="partner_type">section</field>
+        </record>
+        <record id="base.res_partner_sednacom" model="res.partner">
+            <field name="partner_type">internal</field>
+        </record>
+        <record id="base.res_partner_thymbra" model="res.partner">
+            <field name="partner_type">internal</field>
+        </record>
+        
+        <record id="product.supplierinfo10" model="product.supplierinfo">
+        	<field name="manufacturer_id" ref="base.res_partner_tinyatwork" />
+        </record>
+		
+        <record id="product.supplierinfo11" model="product.supplierinfo">
+        	<field name="manufacturer_id" ref="base.res_partner_tinyatwork" />
+        </record>
+        
+        <record id="product.supplierinfo6" model="product.supplierinfo">
+        	<field name="manufacturer_id" ref="base.res_partner_desertic_hispafuentes" />
+        </record>
+        
+        <record id="product.supplierinfo7" model="product.supplierinfo">
+        	<field name="manufacturer_id" ref="base.res_partner_tinyatwork" />
+        </record>
+	</data>
+</openerp>

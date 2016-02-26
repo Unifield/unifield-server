@@ -1,0 +1,5 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"account_commitment","account.commitment","model_account_commitment",,1,1,1,1
+"account_commitment_line","account.commitment.line","model_account_commitment_line",,1,1,1,1
+"access_account_destination_link","account.destination.link","model_account_destination_link",,1,1,1,1
+"access_account_destination_summary","account.destination.summary","model_account_destination_summary",,1,1,1,1

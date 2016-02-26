@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+            
+        <record id="tender_form_view_import" model="ir.ui.view">
+            <field name="name">tender.form.view.import</field>
+            <field name="model">tender</field>
+            <field name="type">form</field>
+            <field name="priority">301</field>
+            <field name="inherit_id" ref="tender_flow.tender_form" />
+            <field name="arch" type="xml">
+                <data>
+                <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']/tree/field[@name='state']" position="after" >
+                    <field name="to_correct_ok" invisible="1"/>
+                    <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" readonly="1" />
+                    <field name="inactive_product" invisible="1" />
+                    <field name="inactive_error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" readonly="1" />
+                </xpath>
+                <xpath expr="/form//field[@name='product_uom']" position="attributes">
+                    <attribute name="on_change">onchange_uom(product_id, product_uom, qty)</attribute>
+                </xpath>
+                <!-- uf-1552: wrong on_change, we should refer to the one in tender_flow/tender_flow.py (original)
+                <xpath expr="/form//field[@name='product_id']" position="attributes">
+                    <attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+                </xpath>
+                 -->
+                <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']/tree" position="attributes" >
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True or created_by_rfq == True; grey: line_state=='cancel'</attribute>
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']" position="before" >
+                <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                    <button name="wizard_import_tender_line" string="Import lines" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                    <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': [('sale_order_id', '!=', False)]}" />
+                    <button name="button_remove_lines" string="Delete Lines" confirm="This document originated from an IR/FO, if you delete these products now, they will all be deleted. If you wish to Cancel &amp; Resource them, please do this line by line." icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': [('sale_order_id', '=', False)]}" />
+                    <field name="hide_column_error_ok" invisible="1" colspan="1" />
+                    <newline />
+                    <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
+                </group>
+                </xpath>
+                <xpath expr="/form//field[@name='tender_line_ids']" position="attributes" >
+                    <attribute name="context">{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}</attribute>
+                </xpath>
+                </data>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

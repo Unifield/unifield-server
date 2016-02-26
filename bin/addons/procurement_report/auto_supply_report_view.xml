@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="auto_supply_report_tree_view" model="ir.ui.view">
+			<field name="name">auto.supply.report.tree.view</field>
+			<field name="model">auto.supply.rules.report</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Automatic supply rules" editable="top" noteditable="1"
+    				hide_new_button="1" hide_delete_button="1">
+    				<field name="rule_id" />
+    				<field name="location_id" />
+    				<field name="nomen_name" />
+    				<field name="product_id" />
+    				<field name="product_uom_id" />
+    				<field name="frequency_id" />
+    				<field name="order_qty" />
+    				<field name="total_stock" />
+    				<field name="stock" />
+    				<field name="intermediate_stock" />
+    				<field name="consumption_stock" />
+    				<field name="amc" />
+    				<field name="moh" />
+    				<field name="fmc" />
+    			</tree>
+			</field>
+		</record>
+		
+		<record id="auto_supply_report_search_view" model="ir.ui.view">
+			<field name="name">auto.supply.report.search.view</field>
+			<field name="model">auto.supply.rules.report</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Automatic supply rules">
+					<field name="product_reference" />
+					<field name="product_name" />
+					<field name="product_id" />
+					<field name="location_id" />
+					<newline />
+    				<group expand="1" string="Nomenclature Filters...">
+						<field name="nomen_manda_0_s"
+							domain="[('parent_id', '=', False)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_1_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_2_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_3_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+					</group>
+				</search>
+			</field>
+		</record>
+		
+		<act_window
+			id="action_auto_supply_rules_report"
+			src_model="procurement.rules.report"
+			res_model="auto.supply.rules.report"
+			name="Automatic supply rules"
+			key2="client_action_multi"
+			view_type="form"
+			view_mode="tree,form" />
+		
+	</data>
+</openerp>

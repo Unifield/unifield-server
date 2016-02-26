@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+    <!--
+        Wizard form
+    -->
+
+        <record id="analytic_reallocation_wizard" model="ir.ui.view">
+            <field name="name">analytic.reallocation.wizard</field>
+            <field name="model">hr.analytic.reallocation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Reallocation">
+                    <group  colspan="6" col="6">
+                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    </group>
+                    <newline/>
+                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <group colspan="6" col="4">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="payroll_validation_wizard" model="ir.ui.view">
+            <field name="name">payroll.validation.wizard</field>
+            <field name="model">hr.payroll.validation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Payroll Validation">
+                    <label string="This will validate all Payroll entries and create accounting entries. This will take a while." colspan="4" align="0.0"/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="payroll_deletion_wizard" model="ir.ui.view">
+            <field name="name">payroll.deletion.wizard</field>
+            <field name="model">hr.payroll.deletion</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Payroll Deletion">
+                    <label string="Please pay ATTENTION. This will delete all Payroll entries!" colspan="4"/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test" confirm="This will delete all payroll entries. Are you sure?"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="payroll_employee_import" model="ir.ui.view">
+            <field name="name">payroll.employee.import</field>
+            <field name="model">hr.payroll.employee.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Employee Import">
+                    <label string="This will import employee from given ZIP file." colspan="4"/>
+                    <newline/>
+                    <field name="file" filename="filename" colspan="4"/>
+                    <field name="filename" invisible="1"/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="payroll_import_confirmation" model="ir.ui.view">
+            <field name="name">payroll.import.confirmation</field>
+            <field name="model">hr.payroll.import.confirmation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Confirmation">
+                    <field name="filename" attrs="{'invisible': [('filename', '=', False)]}"/>
+                    <group colspan="4" col="6">
+                        <field name="created" attrs="{'invisible': [('state', '=', 'none')]}"/>
+                        <field name="updated" invisible="context.get('from', False) != 'expat_employee_import'"/> <!-- attrs="{'invisible': ['!', ('updated', '=', False), ('state', 'in', ['none', 'payroll'])]}"/-->
+                        <field name="total" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
+                    </group>
+                    <field name="error_line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('nberrors', '=', 0)]}">
+                        <tree string="Error List">
+                            <field name="msg"/>
+                        </tree>
+                    </field>
+                    <group colspan="4" col="2">
+                        <label string="" colspan="1"/>
+                        <button name="button_validate" type="object" string="Ok" icon="gtk-ok"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                    <field name="errors" invisible="1"/>
+                </form>
+            </field>
+        </record>
+        
+        <record id="payroll_import_error" model="ir.ui.view">
+            <field name="name">payroll.import.error</field>
+            <field name="model">hr.payroll.import.confirmation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Errors">
+                    <field name="filename"/>
+                    <group colspan="4" col="6">
+                        <field name="total" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
+                        <field name="nberrors" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
+                    </group>
+                    <field name="errors" colspan="4" nolabel="1" />
+                    <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="2" />
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="payroll_import_wizard" model="ir.ui.view">
+            <field name="name">payroll.import.wizard</field>
+            <field name="model">hr.payroll.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Payroll">
+                    <field name="state" invisible="1" />
+                    <label string="This will import Payroll entries from Homere zipfile."
+                        colspan="4"/>
+                    <newline/>
+                    <field name="file" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                    <field name="date_format"/>
+                    <newline/>
+                    <group colspan="4" col="2"
+                        attrs="{'invisible': [('state', '=', 'simu')]}">
+                        <field name="msg" colspan="4"/>
+                    </group>
+                    <group colspan="4" col="2"
+                        attrs="{'invisible': [('state', '!=', 'simu')]}">
+                        <button string="Cancel" special="cancel"
+                            icon="gtk-cancel"/>
+                        <button name="button_simu" type="object"
+                            string="Check" icon="gtk-go-forward"
+                            states="simu"
+                        />
+                    </group>
+                    <group colspan="4" col="2"
+                        attrs="{'invisible': [('state', '=', 'simu')]}">
+                        <button string="Cancel" special="cancel"
+                            icon="gtk-cancel"/>
+                        <button name="button_proceed" type="object"
+                            string="Process Import" icon="terp-camera_test"
+                            states="proceed"
+                        />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="hr_expat_employee_import_wizard" model="ir.ui.view">
+            <field name="name">hr.expat.employee.import.wizard</field>
+            <field name="model">hr.expat.employee.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Expats">
+                  <label string="This wizard will import an Expat employees file in XML Spreadsheet 2003 format. To generate this file, create a Speadsheet with 3 columns: 'Name' , 'Code' and 'Active'." colspan="4"/>
+                    <newline/>
+                    <field name="file" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="hr_nat_staff_import_wizard" model="ir.ui.view">
+            <field name="name">hr.nat.staff.import.wizard</field>
+            <field name="model">hr.nat.staff.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import nat. staff">
+                  <label string="This wizard will import National staff employees file in XML Spreadsheet 2003 format. To generate this file, create a Speadsheet with some columns: 'Name', 'Code'." colspan="4"/>
+                    <newline/>
+                    <field name="file" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+    
+    <!--
+        Actions
+    -->
+
+        <!-- Mass reallocation wizard for Payroll -->
+        <act_window id="action_payroll_analytic_reallocation"
+            name="Payroll Analytic reallocation"
+            res_model="hr.analytic.reallocation"
+            src_model="hr.payroll.msf"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="analytic_reallocation_wizard"/>
+
+        <!-- Mass reallocation wizard for Employee -->
+        <act_window id="action_employee_analytic_reallocation"
+            name="Employee Analytic reallocation"
+            res_model="hr.analytic.reallocation"
+            src_model="hr.employee"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="analytic_reallocation_wizard"/>
+
+        <!-- Payroll entries validation wizard -->
+        <act_window id="action_payroll_validation"
+            name="Validate draft entries"
+            res_model="hr.payroll.validation"
+            src_model="hr.payroll.msf"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="payroll_validation_wizard"/>
+
+        <!-- Payroll entries deletion wizard -->
+        <act_window id="action_payroll_deletion"
+            name="Delete draft entries"
+            res_model="hr.payroll.deletion"
+            src_model="hr.payroll.msf"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="payroll_deletion_wizard"/>
+
+        <!-- Expat Employee Import -->
+        <record id="action_expat_employee_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import Expats</field>
+            <field name="res_model">hr.expat.employee.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hr_expat_employee_import_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <!-- National Staff Employee Import -->
+        <record id="action_nat_staff_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import nat. staff</field>
+            <field name="res_model">hr.nat.staff.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hr_nat_staff_import_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <!-- Delete "Employee Hierarchy" action -->
+        <delete model="ir.actions.act_window" search="[('name', 'ilike', '%Employee Hierarchy%')]"/>
+
+    <!--
+        Menus
+    -->
+        <menuitem id="import_expat_employees" parent="hr.menu_hr_main" name="Import expats" sequence="20" action="action_expat_employee_import_wizard"/>
+        <menuitem id="import_nat_staff" parent="hr.menu_hr_main" name="Import nat. staff" sequence="30" action="action_nat_staff_import_wizard"/>
+
+
+    </data>
+</openerp>

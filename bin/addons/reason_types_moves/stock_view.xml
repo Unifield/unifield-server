@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+        
+    	<!-- Override Stock Moves -->
+    	<record id="stock_move_tree2_type_id" model="ir.ui.view">
+            <field name="name">stock.move.tree2.type.id</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_tree2" />
+            <field name="arch" type="xml">
+				<data>
+		    		<xpath expr="/tree/field[@name='location_dest_id']" position="replace">
+						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]"/>
+		    		</xpath>
+
+                    <xpath expr="/tree/field[@name='product_uom']" position="after">
+	    	        	<field name="reason_type_id" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
+                        <field name="comment" />
+                    </xpath>
+				</data>
+            </field>
+        </record>
+
+        <record id="view_move_tree_type_id" model="ir.ui.view">
+            <field name="name">view.move.tree.type.id</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_move_tree" />
+            <field name="arch" type="xml">
+				<data>
+		    		<xpath expr="/tree/field[@name='location_dest_id']" position="replace">
+						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]" />
+		    		</xpath>
+
+	                <xpath expr="/tree/field[@name='create_date']" position="after">
+			    		<field name="reason_type_id" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
+       	                <field name="comment" />
+	                </xpath>
+	        	</data>
+            </field>
+        </record>
+
+        <record id="view_move_form_type_id" model="ir.ui.view">
+            <field name="name">view.move.form.type.id</field>
+            <field name="model">stock.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_move_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='tracking_id']" position="before">
+        	    	<field name="reason_type_id" widget="selection"
+        	    	       domain="[('internal_ok', '=', True)]" 
+        	    	       attrs="{'readonly': [('state', 'not in', ('draft', 'waiting', 'confirmed', 'assigned'))]}" />
+                    <field name="comment" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="inherit_view_move_form_reception_picking" model="ir.ui.view">
+            <field name="name">inherit.view.move.form.reception.picking</field>
+            <field name="model">stock.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
+            <field name="arch" type="xml">
+            	<data>
+                	<xpath expr="/form//field[@name='tracking_id']" position="before">
+                        <field name="reason_type_id" widget="selection" 
+                               domain="[('incoming_ok', '=', True)]"
+                               attrs="{'readonly': [('state', 'not in', ('draft', 'waiting', 'confirmed', 'assigned'))]}" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="view_move_search_type_id" model="ir.ui.view">
+            <field name="name">view.move.search.type.id</field>
+            <field name="model">stock.move</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_move_search" />
+            <field name="arch" type="xml">
+				<data>
+                    <xpath expr="/search//filter[@string='Done']" position="attributes">
+                        <attribute name="string">Closed</attribute>
+                    </xpath>
+	            <xpath expr="/search/group[@string='Group By...']/filter[@string='Destination']" position="after">
+                        <separator />
+                        <filter string="Reason Type" name="groupby_reason_type_id" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+                    </xpath>
+				</data>
+            </field>
+        </record>
+       
+        <record id="inherit_view_move_tree_reception_picking" model="ir.ui.view">
+            <field name="name">inherit.view.move.tree.reception.picking</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_move_tree_reception_picking" />
+            <field name="arch" type="xml">
+            	<data>
+                	<xpath expr="/tree/field[@name='picking_id']" position="after">
+                        <field name="reason_type_id" domain="[('incoming_ok', '=', True)]" />
+                    </xpath>
+
+                	<xpath expr="/tree" position="attributes">
+                        <attribute name="hide_new_button">True</attribute>
+                        <attribute name="hide_delete_button">True</attribute>
+                        <attribute name="editable">top</attribute>
+                        <attribute name="noteditable">True</attribute>
+                    </xpath>
+
+                </data>
+            </field>
+        </record>
+
+        <record id="inherit_view_move_search_reception_incoming_picking" model="ir.ui.view">
+            <field name="name">inherit.view.move.search.reception.incoming.picking</field>
+            <field name="model">stock.move</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_move_search_reception_incoming_picking" />
+            <field name="arch" type="xml">
+            	<data>
+                    <xpath expr="/search//filter[@string='Done']" position="attributes">
+                        <attribute name="string">Closed</attribute>
+                    </xpath>
+                    
+			 		<xpath expr="/search/group/field[@name='origin']" position="before">
+						<field name="picking_id" />
+						<field name="reason_type_id" widget="selection" domain="[('incoming_ok', '=', True)]" />
+					</xpath>
+					<xpath expr="/search//field[@name='product_id']" position="after">
+						<field name="order_category" />
+						<field name="state" />
+					</xpath>
+ 					<xpath expr="/search//filter[@string='Supplier']" position="after">
+ 						<filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+ 						<separator orientation="vertical" />
+ 					</xpath>
+ 					
+                </data>
+            </field>
+        </record>
+
+        <record id="inherit_view_move_search_reception_outcoming_picking" model="ir.ui.view">
+            <field name="name">inherit.view.move.search.reception.outcoming.picking</field>
+            <field name="model">stock.move</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_move_search_reception_outcoming_picking" />
+            <field name="arch" type="xml">
+            	<data>
+            		<xpath expr="/search//filter[@string='To Do']" position="attributes">
+            			<attribute name="string">In Progress</attribute>
+            		</xpath>
+                    <xpath expr="/search//filter[@string='Done']" position="attributes">
+                        <attribute name="string">Closed</attribute>
+                    </xpath>
+                    
+                    <xpath expr="/search//field[@name='origin']" position="before">
+                    	<field name="picking_id" />
+                    	<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
+                    </xpath>
+                    
+					<xpath expr="/search/group/field[@name='product_id']" position="after">
+					    <newline />
+					    <field name="order_category" />
+						<field name="state" />
+					</xpath>
+                            
+                    <xpath expr="/search//filter[@string='Customer']" position="after">
+                        <separator orientation="vertical" />
+                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+        	        </xpath>
+        	        
+        	        <xpath expr="/search/group[@string='Extended Filters...']/field[@name='tracking_id']" position="replace" />
+        		</data>
+            </field>
+        </record>
+
+
+	<record id="inherit_view_move_tree_reception_picking_board" model="ir.ui.view">
+		<field name="name">inherit.view.move.tree.reception.picking.board</field>
+		<field name="model">stock.move</field>
+		<field name="type">tree</field>
+		<field name="inherit_id" ref="stock.view_move_tree_reception_picking_board" />
+		<field name="arch" type="xml">
+			<data>
+				<xpath expr="/tree/field[@name='product_uom']" position="after">
+					<field name="reason_type_id" />
+				</xpath>
+				
+				<button name="action_done" position="attributes">
+           			<attribute name="invisible">1</attribute>
+           		</button>
+			</data>
+		</field>
+	</record>
+
+        <!-- id: inherit_view_picking_in_form, name: inherit.view.picking.in.form, inherit_id: stock.view_picking_in_form was here -->
+        <!-- id: inherit_view_picking_form, name: inherit.view.picking.form, inherit_id: stock.view_picking_form was here -->
+        <!-- id: inherit_view_picking_out_form, name: inherit.view.picking.out.form, inherit_id: stock.view_picking_out_form was here -->
+
+        <record id="stock.view_picking_in_search" model="ir.ui.view">
+			<field name="name">unifield.stock.picking.in.search</field>
+			<field name="model">stock.picking</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Incoming Shipments">
+                    <group col="8" colspan="4">
+                        <filter icon="terp-check" name="available" string="Available" domain="[('state','in',('assigned','shipped'))]" help="Incoming Shipments Available" />
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Incoming Shipments already processed"/>
+                        <separator orientation="vertical" />
+                        <filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />
+                        <separator orientation="vertical"/>
+                        <field name="name" string="Reference" />
+                        <field name="partner_id"/>
+                        <field name="origin"/>
+                        <field name="order_category" />
+                        <field name="reason_type_id" widget="selection" domain="[('incoming_ok', '=', True)]" />
+                        <newline />
+                        <field name="date" string="Creation date" />
+                        <field name="min_date" string="Expected date" />
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By..." colspan="4" col="8">
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
+                        <separator orientation="vertical" />
+                        <filter icon="terp-stock_effects-object-colorize" name="state" string="State" domain="[]" context="{'group_by':'state'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
+                        <filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />
+                    </group>
+                </search>
+			</field>
+		</record>
+		
+		<record id="stock.view_picking_in_tree" model="ir.ui.view">
+            <field name="name">unifield.stock.picking.in.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree colors="blue:state in ('draft');grey:state in ('done');red:state not in ('cancel', 'done') and date &lt; current_date" string="Incoming Shipments">
+                    <field name="name"/>
+                    <field name="partner_id" />
+                    <field name="backorder_id" />
+                    <field name="origin"/>
+                    <field name="purchase_id"/>
+                    <field name="order_category" />
+                    <field name="reason_type_id" domain="[('incoming_ok', '=', True)]" />
+                    <field name="date"/>
+                    <field name="min_date" string="Expected Receipt Date" />
+                    <field name="state"/>
+                    <!-- <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
+                    <button name="button_cancel" states="assigned,confirmed,draft" string="Cancel" icon="gtk-cancel" confirm="This operation will cancel the shipment. Do you want to continue?" /> -->
+                </tree>
+            </field>
+        </record>
+        
+        <record id="stock.action_picking_tree4" model="ir.actions.act_window">
+            <field name="context">{'contact_display': 'partner_address',
+                                   'subtype': 'in',
+                                   'picking_type': 'incoming_shipment',
+                                   'search_default_available':1}</field>
+        </record>
+	</data>
+</openerp>
+

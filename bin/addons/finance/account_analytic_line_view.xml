@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Redefine analytic line tree and form -->
+        <record id="account.view_account_analytic_line_tree" model="ir.ui.view">
+            <field name="name">account.analytic.line.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="10"/>
+            <field name="arch" type="xml">
+                <tree editable="top" noteditable="1" string="Analytic Journal Items" hide_delete_button="1" hide_new_button="1">
+                    <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
+                    <field name="move_id"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="general_account_id"/>
+                    <field name="account_id"/>
+                    <field name="amount_currency" sum="Sum"/>
+                    <field name="currency_id"/>
+                    <field name="amount" sum="Sum"/>
+                    <field name="functional_currency_id"/>
+                    <field name="reversal_origin"/>
+                    <field name="user_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account.view_account_analytic_line_form" model="ir.ui.view">
+            <field name="name">account.analytic.line.form</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">form</field>
+            <field name="priority" eval="10"/>
+            <field name="arch" type="xml">
+                <form string="Analytic Journal Item" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <separator string="General Information"/>
+                    <group col="4" colspan="4">
+                        <field name="name" readonly="True"/>
+                        <field name="ref" readonly="True"/>
+                        <field name="journal_id"/>
+                        <field name="period_id"/>
+                        <field name="document_date"/>
+                        <field name="date"/>
+                        <field name="source_date" invisible="1"/>
+                    </group>
+                    <separator string="Amount"/>
+                    <group col="6" colspan="4">
+                        <field name="destination_id" readonly="True"/>
+                        <field name="cost_center_id" readonly="True"/>
+                        <field name="account_id" readonly="True"/>
+                        <field name="partner_txt" widget="char"/>
+                        <field name="amount_currency"/>
+                        <field name="amount"/>
+                    </group>
+                    <group col="4" colspan="4">
+                        <group col="2" colspan="2">
+                            <separator string="Currency"/>
+                            <field name="currency_id"/>
+                            <field name="functional_currency_id"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Other information"/>
+                            <field name="move_id"/>
+                            <field name="is_reversal" readonly="True"/>
+                            <field name="reversal_origin"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

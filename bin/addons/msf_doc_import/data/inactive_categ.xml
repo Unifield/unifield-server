@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+        <!-- We deactivate the categ here because this file is loaded after the msf_doc_import_data.xml
+        Otherwise we may get the error "violate not Null constraint categ_id" when we load the product To Be Defined -->
+        <record id="cat_tbd" model="product.category">
+            <field name="active" eval="False" />
+        </record>
+
+        <record id="msf_doc_import.product_tbd" model="product.product">
+            <field name="property_stock_procurement" ref="stock.location_procurement" />
+            <field name="property_stock_production" ref="stock.location_production" />
+            <field name="property_stock_inventory" ref="stock.location_inventory" />
+        </record> 
+    </data>
+</openerp>

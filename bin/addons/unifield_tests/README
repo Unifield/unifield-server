@@ -1,0 +1,63 @@
+# Requirement
+
+You need a synchronization environment with these databases:
+
+  * hq
+  * coordo
+  * project
+  * sync server
+  * [optional] remote warehouse
+
+You can generate a synchronization environment by using the famous *mkdb.py* script. Either with sync_module_prod branch or sync-env branch.
+
+If you use sync_module_prod branch, change *unifield.config* file with this parameter:
+
+    tempo_mkdb: 0
+
+If not, use this:
+
+    tempo_mkdb: 1
+
+And it will do the trick.
+
+# Use it!
+
+To use PyUnit tests in this directory:
+
+    python test_runner.py
+
+# What does the script?
+
+  * Read the 'tests' directory
+  * For each file that begins by "test_" and ends with ".py" read the get_test_class() method that return the class to use
+  * Create a Test Suite with all given class
+  * Run all tests and create an "output.html" file that contains the result
+
+# Remote warehouse
+
+## Activate tests
+
+To test remote warehouse, be sure to add a parameter like that (in *unifield.config*):
+
+    RW: HQ1C1P1_RW
+
+This way, it will activate remote warehouse tests.
+
+## Develop remote warehouse tests
+
+In class you make to test remote warehouse, be sure to have this method:
+
+```
+  def setUp(self):
+        if not self.is_remote_warehouse:
+            raise UserWarning("Remote Warehouse deactivated. This test will be not achieve.")
+```
+
+Without this, all tests will be executed during the main TestSuite.
+
+# Notes
+
+  * Tests should inherit from UnifieldTest or for another Class that inherits from UnifieldTest
+  * UnifieldTest class checks that "unifield_tests" module is loaded in order to check that some data are loaded
+  * Master data are loaded via the master_data directory and the "init_xml" value from __openerp__.py file
+  * Master data are not updated if you reload the script on same databases. So to be sure tests are OK, generate a new set of databases

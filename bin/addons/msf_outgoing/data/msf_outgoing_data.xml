@@ -1,0 +1,22 @@
+<openerp>
+	<data noupdate="1">
+	
+		<record id="default_label_custo" model="ppl.customize.label">
+            <field name="name">Default Label</field>
+        </record>
+        
+        <record id="stock_location_packing" model="stock.location">
+            <field name="name">Packing</field>
+            <!-- <field name="location_id" ref="stock.stock_location_company"/> -->
+        </record>
+        <record id="stock_location_dispatch" model="stock.location">
+            <field name="name">Dispatch</field>
+            <!-- <field name="location_id" ref="stock.stock_location_company"/> -->
+        </record>
+        <record id="stock_location_distribution" model="stock.location">
+            <field name="name">Distribution</field>
+            <!-- <field name="location_id" ref="stock.stock_location_company"/> -->
+        </record>
+
+	</data>
+</openerp>

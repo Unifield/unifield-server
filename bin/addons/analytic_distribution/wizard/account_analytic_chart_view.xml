@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+        <record id="view_account_analytic_chart" model="ir.ui.view">
+            <field name="name">account.chart.form</field>
+            <field name="model">account.analytic.chart</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.account_analytic_chart_view"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//field[@name='from_date']" position="replace">
+                        <field name="period_from" /> <!-- utp-1030/13 -->
+                        <field name="from_date" invisible="1" />
+                    </xpath>
+                    <xpath expr="//field[@name='to_date']" position="replace">
+                        <field name="period_to" /> <!-- utp-1030/13 -->
+                        <field name="to_date" invisible="1" />
+                    </xpath>
+                    <xpath expr="//separator[@string='Select the Period for Analysis']" position="replace">
+                        <field name="fiscalyear" on_change="onchange_fiscalyear(fiscalyear)"/>
+                        <separator string="Periods"/>
+                    </xpath>
+                    <xpath expr="//label[@string='(Keep empty to open the current situation)']" position="replace">
+                        <separator string="Inactive accounts" colspan="4"/>
+                        <field name="show_inactive"/>
+                        <newline/>
+                        <separator string="Currency" colspan="4"/>
+                        <field name="currency_id"/>
+                        <!-- Desactivate output currency functionnality until further notice
+                        <newline/>
+                        <field name="output_currency_id"/>
+                        -->
+                    </xpath>
+                    <xpath expr="/form//button[@name='analytic_account_chart_open_window']" position="attributes">
+                        <attribute name="icon">terp-gtk-go-back-rtl</attribute>
+                        <attribute name="string">Show Balances</attribute>
+                    </xpath>
+                    <xpath expr="/form/group[1]" position="after">
+                        <group colspan="4" col="2">
+                            <label string="" colspan="1"/>
+                            <button icon="gtk-print" string="Export" name="button_export" type="object" colspan="1"/>
+                        </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!--
+         Redefine Chart of Analytic Accounts to "Balance by analytic account" (actions, menus, etc.)
+    -->
+
+        <record id="account.action_account_analytic_chart" model="ir.actions.act_window">
+          <field name="name">Balance by analytic account</field>
+          <field name="type">ir.actions.act_window</field>
+          <field name="res_model">account.analytic.chart</field>
+          <field name="view_type">form</field>
+          <field name="view_mode">form</field>
+          <field name="view_id" ref="view_account_analytic_chart"/>
+          <field name="target">new</field>
+        </record>
+
+        <menuitem
+          name="Balance by analytic account"
+          parent="account.final_accounting_reports"
+          action="account.action_account_analytic_chart"
+          id="account.menu_action_analytic_account_tree2"
+          icon="STOCK_INDENT"
+          groups="analytic.group_analytic_accounting" sequence="110"/>
+
+    <!--
+         New Chart of Analytic Accounts
+    -->
+
+        <record id="account_analytic_coa_view" model="ir.ui.view">
+            <field name="name">Chart of Analytic Accounts</field>
+            <field name="model">account.analytic.coa</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Account Charts">
+                    <field name="fiscalyear"/>
+                    <field name="show_inactive"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" string="Open Charts" type="object" icon="terp-gtk-go-back-rtl"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_account_analytic_coa" model="ir.actions.act_window">
+          <field name="name">Chart of Analytic Accounts</field>
+          <field name="type">ir.actions.act_window</field>
+          <field name="res_model">account.analytic.coa</field>
+          <field name="view_type">form</field>
+          <field name="view_mode">form</field>
+          <field name="view_id" ref="account_analytic_coa_view"/>
+          <field name="target">new</field>
+        </record>
+
+        <menuitem
+          name="Chart of Analytic Accounts"
+          parent="account.menu_finance_charts"
+          action="action_account_analytic_coa"
+          id="menu_action_account_analytic_coa"
+          icon="STOCK_INDENT"
+          sequence="40"/>
+
+    </data>
+</openerp>

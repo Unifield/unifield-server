@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data noupdate="0">
+		
+		<!-- Create the unifield configuration object -->
+	    <record id="unifield_setup" model="unifield.setup.configuration">
+	  		<field name="delivery_process">complex</field>
+	  		<field name="name">Unifield setup</field>
+	  		<field name="allocation_setup">allocated</field>
+	  		<field name="sale_price" eval="0.00" />
+	  		<field name="field_orders_ok" eval="True" />
+	    </record>
+	    
+	    		
+	</data>
+</openerp>

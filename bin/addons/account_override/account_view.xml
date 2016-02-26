@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="view_account_activable_form">
+            <field name="name">account.account_activable.form</field>
+            <field name="model">account.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_form"/>
+            <field name="priority" eval="17"/>
+            <field name="arch" type="xml">
+                <field name="company_id" position="replace"/>
+                <page string="General Information" position="replace">
+                    <page string="General Information">
+                        <group col="6" colspan="4">
+                            <field name="activation_date"/>
+                            <field name="inactivation_date"/>
+                            <field name="reconcile"/>
+                        </group>
+                    </page>
+                </page>
+            </field>
+        </record>
+
+    <!-- Tree view for Balance by Account result -->
+        <record model="ir.ui.view" id="balance_account_tree">
+            <field name="name">balance.account.tree</field>
+            <field name="model">account.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_id</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="note" invisible="1"/>
+                    <field name="type" invisible="1"/>
+                    <field name="user_type" invisible="1"/>
+                    <field name="balance"/>
+                    <field name="activation_date" invisible="1"/>
+                    <field name="inactivation_date" invisible="1"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Tree view for chart of account result -->
+        <record model="ir.ui.view" id="account.view_account_tree">
+            <field name="name">account.account_activable.tree</field>
+            <field name="model">account.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_id</field>
+            <field name="priority" eval="12"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1" nolink="1">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="note"/>
+                    <field name="type" invisible="1"/>
+                    <field name="user_type" invisible="1"/>
+                    <field name="activation_date" invisible="1"/>
+                    <field name="inactivation_date" invisible="1"/>
+                    <field name="parent_id" invisible="1"/>
+                    <field name="is_analytic_addicted" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_account_activable_search">
+            <field name="name">account.account_activable.search</field>
+            <field name="model">account.account</field>
+            <field name="type">search</field>
+            <field name="field_parent">child_id</field>
+            <field name="inherit_id" ref="account.view_account_search"/>
+            <field name="arch" type="xml">
+                <data>
+                    <group string="Group By..." position="replace">
+                        <group expand="0" string="Group By...">
+                            <filter string="Internal Type" icon="terp-stock_symbol-selection" context="{'group_by':'type'}"/>
+                        </group>
+                    </group>
+                </data>
+            </field>
+        </record>
+
+    <!-- Tree view for default tree view of accounts -->
+        <record id="account.view_account_list" model="ir.ui.view">
+            <field name="name">account.account_activable.list</field>
+            <field name="model">account.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_id</field>
+            <field name="priority" eval="10"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" nolink="1">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="type"/>
+                    <field name="activation_date"/>
+                    <field name="inactivation_date"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_account_activable_form" model="ir.actions.act_window">
+            <field name="name">Accounts</field>
+            <field name="res_model">account.account</field>
+            <field name="inherit_id" ref="account.action_account_form"/>
+            <field name="context">{'search_default_active': 1,}</field>
+        </record>
+
+        <!-- Account Types -->
+        <record id="view_account_type_tree_2" model="ir.ui.view">
+            <field name="name">account.account.type.tree.2</field>
+            <field name="model">account.account.type</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_type_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='code']" position="after">
+                    <field name="not_correctible"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_account_type_form_2" model="ir.ui.view">
+            <field name="name">account.account.type.form.2</field>
+            <field name="model">account.account.type</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_type_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/group[1]/field[@name='code']" position="after">
+                    <field name="not_correctible"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Menus -->
+        <menuitem action="action_account_activable_form" id="account.menu_action_account_form" parent="account.account_account_menu"/>
+
+      <!--
+          Reports
+      -->
+
+        <report
+            id="account_chart_export"
+            string="Balance by account"
+            model="account.account"
+            name="account.chart.export"
+            file="account_override/report/report_account_chart_export.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
+    </data>
+</openerp>

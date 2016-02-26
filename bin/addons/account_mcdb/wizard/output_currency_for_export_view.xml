@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Output currency choice wizard -->
+        <record id="output_currency_for_export_form_view" model="ir.ui.view">
+            <field name="name">ouptut.currency.for.export.form.view</field>
+            <field name="model">output.currency.for.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Output currency choice wizard">
+                    <separator colspan="4" string="Information" />
+                    <label string="Please choose an output currency before export." colspan="4" align="0.0"/>
+                    <field name="fx_table_id" colspan="2" on_change="onchange_fx_table(fx_table_id)"/>
+                    <field name="currency_id" colspan="2" domain="[('currency_table_id', '=', False), ('active', 'in', ['True', 'False'])]"/>
+                    <newline/>
+                    <field name="export_format" colspan="2"/>
+                    <field name="export_selected" />
+                    <label colspan="4" string="Excel and CSV format are limited to 65000 records. If the number of exported records exceeds 15000 the result will be a zip file." />
+                    <label colspan="4" string="PDF is limited to 5000 records." />
+                    <group col="4" colspan="6">
+                        <label string="" colspan="1"/>
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1"/>
+                        <button name="button_validate" type="object" string="Validate" icon="gtk-ok" colspan="1"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

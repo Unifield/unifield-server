@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<openerp>
+      <data>
+            <record model="ir.ui.view" id="wizard_closing_cashbox_form1">
+                  <field name='name'>wizard.closing.cashbox.form1</field>
+                  <field name='model'>wizard.closing.cashbox</field>
+                  <field name='type'>form</field>
+                  <field name='arch' type='xml'>
+                        <form string="Closing CashBox - Wizard">
+                            <separator string="Closing Cashbox" />
+                            <field name="be_sure" />
+                            <group colspan="4">
+                                <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2" />
+                                <button name="button_close_cashbox" string="Confirm" type="object" icon="gtk-apply" colspan="2" />
+                            </group>
+                        </form>
+                  </field>
+            </record>
+            <!-- Activities -->
+            <act_window name="Close CashBox"
+                        res_model="wizard.closing.cashbox"
+                        view_mode="form"
+                        view_type="form"
+                        target="new"
+                        id="act_wizard_closing_cashbox" />
+                        
+                        
+            <record model="ir.ui.view" id="wizard_open_empty_cashbox_form1">
+                  <field name='name'>wizard.open.empty.cashbox.form1</field>
+                  <field name='model'>wizard.open.empty.cashbox</field>
+                  <field name='type'>form</field>
+                  <field name='arch' type='xml'>
+                        <form string="Open Empty Cashbox Confirmation - Wizard">
+                            <separator string="Open Empty Cashbox Confirmation" />
+                            <field name="be_sure" colspan="4" readonly="1" />
+                            <group colspan="4">
+                                <button string='No' special='cancel' icon='gtk-cancel' colspan="2" />
+                                <button name="button_open_empty_cashbox" string="Yes" type="object" icon="gtk-apply" colspan="2" />
+                            </group>
+                        </form>
+                  </field>
+            </record>
+            <!-- Activities -->
+            <act_window name="Open Empty CashBox"
+                        res_model="wizard.open.empty.cashbox"
+                        view_mode="form"
+                        view_type="form"
+                        target="new"
+                        id="act_wizard_open_empty_cashbox" />
+                        
+                        
+      </data>
+</openerp>

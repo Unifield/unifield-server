@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        <!-- Sequences for commitment voucher --> 
+        <record id="seq_type_account_commitment" model="ir.sequence.type">
+            <field name="name">Account Commitment</field>
+            <field name="code">account.commitment</field>
+        </record>
+        <record id="seq_account_commitment" model="ir.sequence">
+            <field name="name">Account Commitment</field>
+            <field name="code">account.commitment</field>
+            <field name="padding">4</field>
+        </record>
+    </data>
+</openerp>

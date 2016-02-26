@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<openerp>
+      <data>
+            
+            <record id="view_msf_accrual_line_form" model="ir.ui.view">
+                <field name="name">msf.accrual.line.form</field>
+                <field name="model">msf.accrual.line</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form string="Accrual Line">
+                        <group colspan="2" col="4">
+                            <field name="period_id" colspan="2" on_change="onchange_period(period_id)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="date" colspan="2" readonly="1"/>
+                            <field name="document_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <newline/>
+                            <field name="description" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="reference" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <newline/>
+                            <field name="third_party_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="partner_id" nolabel="1" 
+                                attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('third_party_type', '=', 'res.partner')], 'invisible': [('third_party_type', '!=', 'res.partner')]}"/>
+                            <field name="employee_id" nolabel="1" context="{'search_default_active': True}"
+                                attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('third_party_type', '=', 'hr.employee')], 'invisible': [('third_party_type', '!=', 'hr.employee')]}"/>
+                            <newline/>
+                            <field name="expense_account_id" colspan="2" domain="[('restricted_area', '=', 'accruals')]" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="accrual_account_id" colspan="2" domain="[('restricted_area', '=', 'accruals_accrual')]" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <newline/>
+                            <field name="journal_id" domain="[('is_current_instance','=',True)]" colspan="2" readonly="1"/>
+                            <newline/>
+                            <field name="accrual_amount" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="currency_id" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <newline/>
+                            <field name="accrual_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <newline />
+                            <field name="state" colspan="2" readonly="1"/>
+                        </group>
+                        <newline />
+                        <group colspan="2" col="4">
+                            <button name="button_cancel" string="Cancel" states="posted" type="object" icon="gtk-cancel"
+                                confirm="Are you sure you want to cancel this accrual line ?"/>
+                        </group>
+                    </form>
+                </field>
+            </record>
+            
+            <record id="view_msf_accrual_line_tree" model="ir.ui.view">
+                <field name="name">msf.accrual.line.tree</field>
+                <field name="model">msf.accrual.line</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Accruals Management" 
+                        colors="red:not analytic_distribution_id; black: state in ('posted', 'partially_posted'); grey: state == 'cancel'; blue:analytic_distribution_id and state not in ('posted', 'cancel', 'partially_posted')"
+                        hide_delete_button="1">
+                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                        <field name="document_date"/>
+                        <field name="date"/>
+                        <field name="period_id"/>
+                        <field name="entry_sequence" />
+                        <field name="description"/>
+                        <field name="reference"/>
+                        <field name="third_party_name"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" 
+                            icon="terp-stock_symbol-selection" context="context"/>
+                        <field name="expense_account_id"/>
+                        <field name="accrual_account_id"/>
+                        <field name="accrual_amount"/>
+                        <field name="currency_id"/>
+                        <field name="functional_amount"/>
+                        <field name="functional_currency_id"/>
+                        <field name="accrual_type"/>
+                        <field name="state"/>
+                        <button name="button_delete" states="draft" string="Delete" type="object" icon="gtk-del"/>
+                    </tree>
+                </field>
+            </record>
+            
+            <record id="view_msf_accrual_line_search" model="ir.ui.view">
+                <field name="name">msf.accrual.line.search</field>
+                <field name="model">msf.accrual.line</field>
+                <field name="type">search</field>
+                <field name="arch" type="xml">
+                    <search string="Accruals Management">
+                        <group>
+                            <filter name="draft" icon="terp-check" string="Draft"
+                                    domain="[('state', '=', 'draft')]"/>
+                            <filter name="posted" icon="terp-camera_test" string="Posted"
+                                    domain="[('state', '=', 'posted')]"/>
+                            <filter name="partially_posted" icon="terp-document-new" string="Partially Posted"
+                                    domain="[('state', '=', 'partially_posted')]"/>
+                            <filter name="cancel" icon="terp-gtk-stop" string="Cancelled"
+                                    domain="[('state', '=', 'cancel')]"/>
+                            <separator orientation="vertical"/>
+                            <field name="period_id"/>
+                            <field name="expense_account_id"/>
+                            <field name="accrual_account_id"/>
+                        </group>
+                    </search>
+                </field>
+            </record>
+
+            <record id="action_msf_accrual_line_tree" model="ir.actions.act_window">
+                <field name="name">Accruals Management</field>
+                <field name="res_model">msf.accrual.line</field>
+                <field name="view_type">form</field>
+                <field name="view_mode">tree,form</field>
+                <field name="context">{}</field>
+            </record>
+
+            <menuitem action="action_msf_accrual_line_tree" id="menu_action_msf_accrual_line_tree" parent="account.menu_finance_periodical_processing" sequence="1"/>
+
+       </data>
+</openerp>

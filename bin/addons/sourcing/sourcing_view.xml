@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+		<!-- sale.order.line embedded in sale.order -->
+		<record id="view_order_form" model="ir.ui.view">
+			<field name="name">sale.order.form</field>
+			<field name="model">sale.order</field>
+			<field name="type">form</field>
+			<field name="priority">500</field>
+			<field name="inherit_id" ref="sale.view_order_form" />
+			<field name="arch" type="xml">
+				<data>
+					<field name="price_unit" position="after">
+						<field name="supplier" invisible="True" />
+						<field name="po_cft" invisible="True" />
+                    </field>
+
+                    <xpath expr="/form//field[@name='order_type']" position="after">
+                        <field name="sourcing_trace_ok" invisible="1" />
+                    </xpath>
+                    <xpath expr="/form//notebook" position="inside">
+                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
+                            <field name="sourcing_trace" colspan="4" nolabel="1" />
+                        </page>
+                    </xpath>
+				</data>
+			</field>
+        </record>
+
+        <record id="view_internal_request_form" model="ir.ui.view">
+            <field name="name">view.internal.request.form</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="priority" eval="500" />
+            <field name="inherit_id" ref="procurement_request.procurement_request_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="inside">
+                        <field name="sourcing_trace_ok" invisible="1" />
+                    </xpath>
+
+                    <xpath expr="/form//notebook" position="inside">
+                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
+                            <field name="sourcing_trace" colspan="4" nolabel="1" />
+                        </page>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+		<record id="sourcing_line_normal_form_view" model="ir.ui.view">
+			<field name="name">sale.order.line.sourcing.form</field>
+			<field name="model">sale.order.line</field>
+			<field name="type">form</field>
+			<field name="priority" eval="99" />
+			<field name="arch" type="xml">
+				<form string="Sourcing Line">
+					<field name="name" />
+					<field name="order_id" />
+					<field name="state" />
+				</form>
+			</field>
+		</record>
+
+		<record id="sourcing_line_normal_tree_view" model="ir.ui.view">
+			<field name="name">sale.order.line.sourcing.tree</field>
+			<field name="model">sale.order.line</field>
+			<field name="type">tree</field>
+			<field name="priority" eval="99" />
+			<field name="arch" type="xml">
+				<tree string="Sourcing Lines"
+				      editable="top"
+				      hide_new_button="1"
+				      hide_delete_button="1"
+				      colors="red:priority=='emergency';darkgreen:priority=='urgent';blue:priority=='medium'"
+				      >
+                    <field name="display_confirm_button" invisible="True" />
+                    <field name="sale_order_in_progress" invisible="True" />
+					<field name="loan_type" invisible="True" />
+					<field name="procurement_request" invisible="True" />
+					<field name="name" invisible="True" />
+					<field name="order_id" string="Order" attrs="{'readonly': []}" />
+					<field name="priority" readonly="True" />
+					<field name="categ" readonly="True" />
+					<field name="line_number" readonly="True" />
+					<field name="sale_order_state" readonly="True" />
+					<field name="state" invisible="True" />
+					<field name="product_id" readonly="True" />
+                    <field name="comment" readonly="True" />
+					<field name="product_uom_qty" string="Qty" attrs="{'readonly': []}" />
+					<field name="product_uom" attrs="{'readonly': []}" /> 
+                    <button name="open_split_wizard" type="object" string="Split line" icon="terp-stock_effects-object-colorize" 
+						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
+					<field name="rts" readonly="True" />
+					<field name="type" string="Proc. Method" on_change="onChangeType(type, location_id)" 
+						attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('loan_type', '=', True)]}" />
+					<field name="po_cft"
+					    on_change="onChangePoCft(po_cft, order_id, supplier)" 
+                        attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+                    <field name="location_id" 
+                        widget="selection"
+                        on_change="onChangeLocation(location_id, product_id, rts, order_id)"
+                        domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), ('scrap_location', '=', False), ('destruction_location', '=', False), ('output_ok', '=', False), ('input_ok', '=', False)]"
+                        attrs="{'readonly': ['|', ('type', '!=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_stock')]}" />
+					<field name="real_stock" />
+					<field name="available_stock" />
+                    <field name="virtual_stock" />
+                    <field name="stock_uom_id" readonly="1" string="UoM Stock" />
+					<!-- do not work: attrs="{'readonly': ['|', '|', ('type', '=', 'make_to_stock'), '&amp;', ('type', '=', 'make_to_order'), ('po_cft', '=', 'cft'), ('state', '!=', 'draft')]}" -->
+					<field name="company_id" invisible="1" />
+					<field name="supplier" colspan="2"
+						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft),('check_partner', '=', order_id)]"
+                        context="{'product_id': product_id, 'choose_supplier': True, 'uom': product_uom, 'product_qty': product_uom_qty}"
+						attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), '|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
+						on_change="onChangeSupplier(supplier)" />
+					<field name="customer" invisible="1" />
+					<field name="estimated_delivery_date" />
+					<button name="confirmLine" string="Source Line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('display_confirm_button', '=', False)]}" />
+                    <!-- does not work. openerp bug ? -->
+                    <button name="unconfirmLine" string="Unconfirm Line" icon="gtk-cancel" type="object" attrs="{'invisible': ['|', '|', ('sale_order_in_progress', '=', True), ('sale_order_state', '!=', 'Validated'), ('display_confirm_button', '=', True)]}" />
+
+				</tree>
+			</field>
+		</record>
+
+		<record id="sourcing_line_search_form_view" model="ir.ui.view">
+			<field name="name">sale.order.line.sourcing.search.form</field>
+			<field name="model">sale.order.line</field>
+			<field name="type">search</field>
+			<field name="priority" eval="99" />
+			<field name="arch" type="xml">
+				<search string="Sourcing Line">
+				
+					<!-- <filter name="need_sourcing" string="Need Sourcing" icon="gtk-indent" domain="[('display_confirm_button', '=', True)]" /> -->
+                    <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('need_sourcing', '=', True)]" />
+                    <filter name="in_progress" string="In Progress" icon="gtk-refresh" domain="[('in_progress', '=', True)]" />
+					<filter name="sourced" string="Sourced" icon="terp-camera_test" 
+					domain="['|', ('order_id.procurement_request', '=', True), ('order_id.split_type_sale_order', '!=', 'original_sale_order'), '|', ('type', '=', 'make_to_stock'), ('procurement_id.state', '!=', 'confirmed')]" />
+					<separator orientation="vertical"/>
+					<field name="order_id" string="Order" />
+					<field name="priority" />
+					<field name="categ" />
+					<field name="sale_order_state" />
+					<field name="product_id" />
+					<field name="type" />
+					<newline />
+					<group expand="0" string="Group By..." colspan="11" col="11">
+                        <filter string="IR/FO Order" icon="terp-accessories-archiver" domain="[]"
+							context="{'group_by':'order_id'}" />
+						<filter string="Product" icon="terp-product"
+							domain="[]" context="{'group_by':'product_id'}" />
+						<filter string="Supplier" icon="terp-personal+"
+							domain="[]" context="{'group_by':'supplier'}" />
+					</group>
+				</search>
+			</field>
+		</record>
+
+		<record id="sourcing_line_action" model="ir.actions.act_window">
+			<field name="name">Orders Sourcing Tool</field>
+			<field name="res_model">sale.order.line</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('state','!=','procurement')]</field>
+			<field name="context">{'search_default_need_sourcing': True}</field>
+			<field name="search_view_id" ref="sourcing_line_search_form_view" />
+		</record>
+		
+		<record id="sourcing_line_action_tree_view" model="ir.actions.act_window.view">
+             <field eval="2" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="sourcing_line_normal_tree_view"/>
+            <field name="act_window_id" ref="sourcing_line_action"/>
+        </record>
+        
+        <record id="sourcing_line_action_form_view" model="ir.actions.act_window.view">
+             <field eval="99" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="sourcing_line_normal_form_view"/>
+            <field name="act_window_id" ref="sourcing_line_action"/>
+        </record>
+
+		<menuitem icon="STOCK_INDENT" action="sourcing_line_action" sequence="2"
+			id="menu_sourcing_line" parent="base.menu_sales" />
+			
+		<act_window name="Auto POs creation"
+		    res_model="procurement.purchase.compute.all"
+		    src_model="sale.order.line"
+		    view_mode="form"
+		    target="new"
+            key2="client_action_multi"
+            empty_ids="1"
+		    id="action_compute_schedulers_sourcing"/>
+
+	</data>
+</openerp>

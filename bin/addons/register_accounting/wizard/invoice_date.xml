@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+    <!-- Register creation Form -->
+        <record model="ir.ui.view" id="wizard_invoice_date_form">
+            <field name='name'>wizard.invoice.date.form</field>
+            <field name='model'>wizard.invoice.date</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Missing information">
+                    <field name="state" invisible="1"/>
+                    <group colspan="4" attrs="{'invisible': [('state','=','amount')]}">
+                        <separator colspan="4" string="Please indicate an invoice date before approving the invoice:" />
+                        <field name="document_date" attrs="{'required': [('state', '!=', 'amount')]}"/>
+                        <field name="date" attrs="{'required': [('state','!=','amount')]}"/>
+                        <label string=" " colspan="4" />
+                        <label string=" " colspan="4" />
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('state','=','date')]}">
+                        <separator colspan="4" string="Please verify the price of the invoice ! The real total does not match the computed total:" />
+                        <field name="check_total" attrs="{'required': [('state','!=','date')]}"/>
+                        <field name="amount_total" />
+                        <label string=" " colspan="4" />
+                        <label string=" " colspan="4" />
+                    </group>
+                    <group colspan="4">
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button name="validate" type="object" string="Validate" icon="gtk-ok" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        
+        <record id="action_object_query" model="ir.actions.act_window">
+            <field name="name">Object Queries</field>
+            <field name="res_model">object.query</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+    
+        <menuitem id="main_menu_preferences" name="Tools" 
+                  web_icon="images/prefs.png"
+                  web_icon_hover="images/prefs-hover.png" 
+                  action="action_object_query"
+                  />
+        
+        <menuitem id="menu_preferences" name="Tools" parent="main_menu_preferences" />
+        <menuitem id="menu_preferences_conf" name="Configuration" parent="main_menu_preferences" />
+    
+        <record id="object_query_object_form_view" model="ir.ui.view">
+            <field name="name">object.query.object.form.view</field>
+            <field name="model">object.query.object</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Object for Queries">
+                    <field name="name" />
+                    <field name="model_id" />
+                </form>
+            </field>
+        </record>
+        
+        <record id="object_query_object_tree_view" model="ir.ui.view">
+            <field name="name">object.query.object.tree.view</field>
+            <field name="model">object.query.object</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Objects for Queries">
+                    <field name="name" />
+                    <field name="model_id" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="action_object_query_object" model="ir.actions.act_window">
+            <field name="name">Objects for Queries</field>
+            <field name="res_model">object.query.object</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <menuitem id="menu_object_query_object"
+                  action="action_object_query_object"
+                  parent="menu_preferences_conf" />
+                  
+        <record id="object_query_form_view" model="ir.ui.view">
+            <field name="name">object.query.form.view</field>
+            <field name="model">object.query</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Object query">
+                    <field name="name" />
+                    <field name="user_id" />
+                    <group colspan="3">
+                        <field name="object_id" widget="selection" 
+                            required="1" 
+                            attrs="{'readonly': [('newquery', '!=', True)]}" 
+                        />
+                        <button name="change_object" string="Change" 
+                            icon="terp-stock_effects-object-colorize" type="object" 
+                            confirm="This will reset your query."
+                            attrs="{'invisible': [('newquery', '=', True)]}"
+                        />
+                        <button name="dummy" string="Next Step"
+                            icon="terp-gtk-jump-to-ltr" type="object"
+                            attrs="{'invisible': [('newquery', '=', False)]}"
+                        />
+                    </group>
+                    <field name="model_ids" invisible="1" />
+                    <field name="newquery" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': [('newquery', '=', True)]}">
+                    <notebook colspan="4">
+                        <page string="Search fields">
+                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('is_unsearchable', '=', False)]" nolabel="1" mode="tree" 
+                                   context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search', 'model_ids': model_ids}"
+                                >
+                                <tree string="Search fields" noteditable="1" editable="top">
+                                    <field name="field_description" />
+                                    <field name="help" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Search values">
+                           <button name="open_wizard" type="object" string="Edit search values"  icon="gtk-justify-fill" colspan="2"/>
+                           <button name="reset_search_values" type="object" string="Reset search values"  icon="gtk-cancel" colspan="2" confirm="This will delete the filters."/>
+                           <field name="selection_data" colspan="4" nolabel="1">
+                                <tree editable="top" string="Search values" noteditable="1" hide_new_button="1">
+                                    <field name="field_id" />
+                                    <field name="text" />
+                                </tree>
+                           </field>
+                        </page>
+                        <page string="Result fields">
+                           <button name="populate_result" type="object" string="Populate from Search Fields"  icon="terp-stock_effects-object-colorize" colspan="2"/>
+                            <field name="result_simple_ids" colspan="4" nolabel="1" mode="tree" context="{'model_ids': model_ids, 'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search'}" domain="[('model_search_id', 'in', model_ids)]">
+                                <tree string="Result fields" editable="top" noteditable="1">
+                                    <field name="field_description" />
+                                    <field name="help" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Result fields order">
+                           <button name="set_sequence" type="object" string="Populate fields order"  icon="terp-stock_effects-object-colorize" colspan="2"/>
+                            <field name="result_ids" colspan="4" nolabel="1" mode="tree" context="{'model_ids': model_ids}">
+                                <tree string="Result fields order" editable="top" hide_new_button="1">
+                                    <field name="sequence" />
+                                    <field name="field_id" domain="[('model_search_id', 'in', context.get('model_ids'))]"
+                                           context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search'}" 
+                                           readonly="1"
+                                    />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Group by fields">
+                            <field name="group_by_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('ttype', 'not in', ('related', 'one2many', 'many2many')), ('is_function', '=', False)]" 
+                                   nolabel="1" mode="tree,search" context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search', 'model_ids': model_ids}">
+                                <tree string="Group by fields" noteditable="1" editable="top">
+                                    <field name="field_description" />
+                                    <field name="help" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <label colspan="2" />
+                    <button name="create_view" string="Run the query" type="object" icon="gtk-go-forward" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="object_query_tree_view" model="ir.ui.view">
+            <field name="name">object.query.tree.view</field>
+            <field name="model">object.query</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Object queries">
+                    <field name="name" />
+                    <field name="user_id" />
+                    <field name="object_id" />
+                    <field name="newquery" invisible="1" />
+                    <button name="create_view" type="object" icon="gtk-go-forward" attrs="{'invisible': [('newquery', '=', True)]}"/>
+                </tree>
+            </field>
+        </record>
+        
+        <menuitem id="menu_object_query"
+                  action="action_object_query"
+                  parent="menu_preferences" />
+                  
+        <record id="object_query_ir_field_tree" model="ir.ui.view">
+        	<field name="name">object.query.ir.field.tree</field>
+        	<field name="model">ir.model.fields</field>
+        	<field name="type">tree</field>
+        	<field name="arch" type="xml">
+        		<tree string="Fields">
+        			<field name="field_description" />
+        			<field name="help" />
+        		</tree>
+        	</field>
+        </record>
+        
+        <record id="object_query_ir_field_search" model="ir.ui.view">
+        	<field name="name">object.query.ir.field.search</field>
+        	<field name="model">ir.model.fields</field>
+        	<field name="type">tree</field>
+        	<field name="arch" type="xml">
+        		<search string="Fields">
+        			<field name="field_description" />
+        		</search>
+        	</field>
+        </record>
+
+    </data>
+</openerp>

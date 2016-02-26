@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="wizard_delete_lines_form_view" model="ir.ui.view">
+            <field name="name">wizard.delete.lines.form.view</field>
+            <field name="model">wizard.delete.lines</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Delete lines">
+                    <field name="initial_doc_id" invisible="True" />
+                    <field name="initial_doc_type" invisible="True" />
+                    <field name="to_remove_type" invisible="True" />
+                    <field name="linked_field_name" invisible="True" />
+                    <field name="qty_field" invisible="True" />
+                    <separator colspan="4" string="Lines to remove" />
+                    <button name="select_all_lines" type="object" icon="gtk-go-down" string="Select all lines" colspan="2" />
+                    <button name="select_empty_lines" type="object" icon="gtk-go-down" string="Select Qty=0 lines" attrs="{'invisible': [('qty_field', '=', False)]}" colspan="2" />
+                    <field name="line_ids" colspan="4" nolabel="1" context="{'from_delete_wizard': True, 'initial_doc_id': initial_doc_id, 'initial_doc_type': initial_doc_type}" mode="tree" />
+                    <separator colspan="4" string="Actions" />
+                    <group colspan="4" col="4" >
+                        <button special="cancel" icon="gtk-cancel" string="Close window" colspan="2" />
+                        <button name="remove_selected_lines" type="object" icon="gtk-execute" string="Remove selected lines" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="return_claim_product_line_form_delete_view" model="ir.ui.view">
+            <field name="name">return.claim.product.line.form.delete.view</field>
+            <field name="model">return.claim</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="return_claim.view_return_claim_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='product_line_ids_return_claim']" position="before">
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                    </xpath>                                                    
+                </data>
+            </field>
+        </record>
+
+        <record id="return_claim_product_line_tree_delete_view" model="ir.ui.view">
+            <field name="name">return.claim.product.line.tree.delete.view</field>
+            <field name="model">claim.product.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Claim product lines" noteditable="True">
+                    <field name="product_id_claim_product_line" />
+                    <field name="asset_id_claim_product_line" />
+                    <field name="composition_list_id_claim_product_line" />
+                    <field name="lot_id_claim_product_line" />
+                    <field name="expiry_date_claim_product_line" />
+                    <field name="src_location_id_claim_product_line" />
+                    <field name="qty_claim_product_line" />
+                    <field name="uom_id_claim_product_line" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="return_claim_product_line_search_delete_view" model="ir.ui.view">
+            <field name="name">return.claim.product.line.search.delete.view</field>
+            <field name="model">claim.product.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <search string="Claim product lines">
+                    <field name="product_id_claim_product_line" />
+                    <field name="asset_id_claim_product_line" />
+                    <field name="composition_list_id_claim_product_line" />
+                    <field name="lot_id_claim_product_line" />
+                    <field name="src_location_id_claim_product_line" />
+                </search>
+            </field>
+        </record>
+
+        <!-- Composition item delete tree/search views -->
+        <record id="composition_item_tree_delete_view" model="ir.ui.view">
+            <field name="name">composition.item.tree.delete.view</field>
+            <field name="model">composition.item</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Theoretical Items" noteditable="True">
+                    <field name="item_module" />
+                    <field name="item_product_id" />
+                    <field name="item_qty" />
+                    <field name="item_uom_id" />
+                    <field name="item_asset_id" />
+                    <field name="item_lot" />
+                    <field name="item_exp" />
+                </tree>
+            </field>
+        </record>
+
+
+        <!-- Stock move delete tree/search views -->
+        <record id="stock_move_tree_delete_view" model="ir.ui.view">
+            <field name="name">stock.move.tree.delete.view</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Stock moves to remove" noteditable="True" >
+                    <field name="product_id" />
+                    <field name="product_qty" />
+                    <field name="product_uom" />
+                    <field name="location_id" />
+                    <field name="location_dest_id" />
+                    <field name="asset_id" />
+                    <field name="prodlot_id" />
+                    <field name="expired_date" />
+                    <field name="date" />
+                    <field name="reason_type_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="stock_move_search_delete_view" model="ir.ui.view">
+            <field name="name">stock.move.search.delete.view</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <search string="Stock moves to remove">
+                    <field name="product_id" />
+                    <field name="product_qty" />
+                    <field name="location_id" />
+                    <field name="location_dest_id" />
+                    <field name="prodlot_id" />
+                    <field name="expired_date" />
+                    <field name="asset_id" />
+                    <field name="reason_type_id" />
+                </search>
+            </field>
+        </record>
+
+        <!-- Auto supply line delete tree/search views -->
+        <record id="stock_warehouse_automatic_supply_line_tree_delete_view" model="ir.ui.view">
+            <field name="name">stock.warehouse.automatic.supply.line.tree.delete.view</field>
+            <field name="model">stock.warehouse.automatic.supply.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Automatic supply lines to remove" noteditable="True" >
+                    <field name="product_id" />
+                    <field name="product_qty" />
+                    <field name="product_uom_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="stock_warehouse_automatic_supply_line_search_delete_view" model="ir.ui.view">
+            <field name="name">stock.warehouse.automatic.supply.line.search.delete.view</field>
+            <field name="model">stock.warehouse.automatic.supply.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Automatic supply lines to remove" noteditable="True">
+                    <field name="product_id" />
+                    <field name="product_qty" />
+                </tree>
+            </field>
+        </record>
+        
+        <!-- Threshold value line delete tree/search views -->
+        <record id="threshold_value_line_tree_delete_view" model="ir.ui.view">
+            <field name="name">threshold.value.line.tree.delete.view</field>
+            <field name="model">threshold.value.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Threshold value lines to remove" noteditable="True">
+                    <field name="product_id" />
+                    <field name="product_uom_id" />
+                    <field name="fixed_threshold_value" invisible="context.get('compute_method') != 'fixed'" />
+                    <field name="fixed_product_qty" invisible="context.get('compute_method') != 'fixed'" />
+                    <field name="threshold_value" invisible="context.get('compute_method') != 'computed'" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="threshold_value_line_search_delete_view" model="ir.ui.view">
+            <field name="name">threshold.value.line.search.delete.view</field>
+            <field name="model">threshold.value.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <search string="Threshold value lines to remove">
+                    <field name="product_id" />
+                    <field name="product_uom_id" />
+                </search>
+            </field>
+        </record>
+
+        <!-- Stock inventory line delete tree/search views -->
+        <record id="stock_inventory_line_tree_delete_view" model="ir.ui.view">
+            <field name="name">stock.inventory.line.tree.delete.view</field>
+            <field name="model">stock.inventory.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Stock inventory lines to remove" noteditable="True">
+                    <field name="product_id" />
+                    <field name="location_id" />
+                    <field name="prod_lot_id" />
+                    <field name="expiry_date" />
+                    <field name="product_qty" />
+                    <field name="product_uom" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="stock_inventory_line_search_delete_view" model="ir.ui.view">
+            <field name="name">stock.inventory.line.search.delete.view</field>
+            <field name="model">stock.inventory.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <search string="Stock inventory lines to remove">
+                    <field name="product_id" />
+                    <field name="product_qty" />
+                    <field name="product_uom" />
+                    <newline />
+                    <field name="location_id" />
+                    <field name="prod_lot_id" />
+                    <field name="expiry_date" />
+                </search>
+            </field>
+        </record>
+
+        <!-- Initial stock inventory line tree/search views -->
+        <record id="initial_stock_inventory_line_tree_delete_view" model="ir.ui.view">
+            <field name="name">initial.stock.inventory.line.tree.delete.view</field>
+            <field name="model">initial.stock.inventory.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Initial stock inventory lines to remove" noteditable="True">
+                    <field name="product_id" />
+                    <field name="average_cost" />
+                    <field name="currency_id" />
+                    <field name="location_id" />
+                    <field name="prodlot_name" />
+                    <field name="expiry_date" />
+                    <field name="product_qty" />
+                    <field name="product_uom" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="initial_stock_inventory_line_search_delete_view" model="ir.ui.view">
+            <field name="name">initial.stock.inventory.line.search.delete.view</field>
+            <field name="model">initial.stock.inventory.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <search string="Initial stock inventory lines to remove">
+                    <field name="product_id" />
+                    <field name="product_qty" />
+                    <field name="product_uom" />
+                    <newline />
+                    <field name="location_id" />
+                    <field name="average_cost" />
+                    <field name="prodlot_name" />
+                    <field name="expiry_date" />
+                </search>
+            </field>
+        </record>
+
+        <!-- Real average consumption line delete tree/search views -->
+        <record id="real_average_consumption_line_tree_delete_view" model="ir.ui.view">
+            <field name="name">real.average.consumption.line.tree.delete.view</field>
+            <field name="model">real.average.consumption.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Real average consumption line to delete" noteditable="True">
+                    <field name="product_id" />
+                    <field name="consumed_qty" />
+                    <field name="uom_id" />
+                    <field name="prodlot_id" />
+                    <field name="expiry_date" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="real_average_consumption_line_search_delete_view" model="ir.ui.view">
+            <field name="name">real.average.consumption.line.search.delete.view</field>
+            <field name="model">real.average.consumption.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <search string="Real average consumption line to delete">
+                    <field name="product_id" />
+                    <field name="consumed_qty" />
+                    <field name="uom_id" />
+                    <field name="prodlot_id" />
+                    <field name="expiry_date" />
+                </search>
+            </field>
+        </record>
+
+        <!-- Monthly review consumption line -->
+        <record id="monthly_review_consumption_line_tree_delete_view" model="ir.ui.view">
+            <field name="name">monthly.review.consumption.line.tree.delete.view</field>
+            <field name="model">monthly.review.consumption.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Monthly review consumption line to delete" noteditable="True">
+                    <field name="name" />
+                    <field name="amc" />
+                    <field name="fmc" />
+                    <field name="last_reviewed" />
+                    <field name="valid_ok" />
+                    <field name="valid_until" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="monthly_review_consumption_line_search_delete_view" model="ir.ui.view">
+            <field name="name">monthly.review.consumption.line.search.delete.view</field>
+            <field name="model">monthly.review.consumption.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <search string="Monthly review consumption line to delete">
+                    <field name="name" />
+                    <field name="amc" />
+                    <field name="fmc" />
+                    <field name="last_reviewed" />
+                    <field name="valid_ok" />
+                    <field name="valid_until" />
+                </search>
+            </field>
+        </record>
+
+    </data>
+</openerp>

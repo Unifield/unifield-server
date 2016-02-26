@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<document filename="test.pdf">
+  <template pageSize="(842.0,595.0)" title="Test" author="Martin Simon" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="28.0" y1="28.0" width="786" height="539"/>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+    <blockTableStyle id="Standard_Outline">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+    <blockTableStyle id="Table1">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" />
+    </blockTableStyle>
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    <paraStyle name="P1" fontName="Helvetica" fontSize="24.0" leading="29" alignment="CENTER"/>
+    <paraStyle name="P2" fontName="Helvetica" fontSize="12.0" leading="15" alignment="LEFT"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="11.0" leading="14" alignment="LEFT"/>
+    <paraStyle name="P4" fontName="Helvetica" fontSize="10.0" leading="13" alignment="LEFT"/>
+    <paraStyle name="P5" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="CENTER"/>
+    <paraStyle name="Standard" fontName="Helvetica"/>
+    <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
+    <paraStyle name="List" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
+    <paraStyle name="Caption" fontName="Helvetica" fontSize="12.0" leading="15" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="Index" fontName="Helvetica"/>
+    <paraStyle name="Table Contents" fontName="Helvetica"/>
+    <paraStyle name="Table Heading" fontName="Helvetica" alignment="CENTER"/>
+    <images/>
+  </stylesheet>
+  <story>
+    <para style="P1">Items stock transaction report</para>
+    <para style="P1">
+      <font color="white"> </font>
+    </para>
+    <para style="P1">
+      <font color="white"> </font>
+    </para>
+    <para style="P3">Product Description : [[ data['form']['product_id'] ]]</para>
+    <para style="P3">Product Code: [[ data['form']['product_code'] ]]</para>
+    <para style="P3">Batch number : [[ data['form']['prodlot_id'] ]]</para>
+    <para style="P3">Expired date : [[ data['form']['expired_date'] ]]</para>
+    <para style="P3">
+      <font color="white"> </font>
+    </para>
+    <para style="P3">All transactions :</para>
+    <para style="P2">
+      <font color="white"> </font>
+    </para>
+    <blockTable colWidths="86.0,86.0,86.0,75.0,116.0,135.0,135.0,67.0" style="Table1">
+      <tr>
+        <td>
+          <para style="P5">Date</para>
+        </td>
+        <td>
+          <para style="P5">Batch </para>
+          <para style="P5">number</para>
+        </td>
+        <td>
+          <para style="P5">Expired Date</para>
+        </td>
+        <td>
+          <para style="P5">Origin</para>
+        </td>
+        <td>
+          <para style="P5">Move number</para>
+        </td>
+        <td>
+          <para style="P5">Source </para>
+          <para style="P5">Location</para>
+        </td>
+        <td>
+          <para style="P5">Destination</para>
+          <para style="P5">Location</para>
+        </td>
+        <td>
+          <para style="P5">Qty</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P4">[[ repeatIn(objects, 'move') ]] [[ formatLang(move.date[0:10], date=True) ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ move.prodlot_id.name ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ move.expired_date and move.expired_date != "False" and formatLang(move.expired_date[0:10], date=True) or '/' ]]</para>
+        </td>
+        <td>
+          <parawrap style="P4">[[ move.origin ]]</parawrap>
+        </td>
+        <td>
+          <para style="P4">[[ move.name ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ move.location_id.name ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ move.location_dest_id.name]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ move.product_qty ]] [[ move.product_uom.name ]]</para>
+        </td>
+      </tr>
+    </blockTable>
+    <para style="P2">
+      <font color="white"> </font>
+    </para>
+  </story>
+</document>
+

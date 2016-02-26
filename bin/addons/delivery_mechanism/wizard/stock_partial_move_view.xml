@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+  
+        <record id="stock_move_memory_tree_in" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.in</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_in" />
+			<field name="arch" type="xml">
+				<data>
+				
+					<field name="product_id" position="before">
+						<field name="line_number" readonly="True" />
+					</field>
+					
+					<field name="product_id" position="after">
+						<button name="change_product" string="Change Product" colspan="1" type="object" icon="gtk-convert" attrs="{'invisible': [('type_check', '!=', 'in')]}" />
+					</field>
+					
+					<field name="product_id" position="attributes">
+						<attribute name="readonly">True</attribute>
+					</field>
+					
+					<field name="product_uom" position="attributes">
+                        <attribute name="readonly">False</attribute>
+                        <attribute name="domain">[('category_id', '=', uom_category)]</attribute>
+					</field>
+
+                    <field name="quantity" position="before">
+                        <field name="uom_category" invisible="1" />
+                        <field name="quantity_ordered" readonly="1"/>
+                        <field name="uom_ordered" readonly="1" />
+					</field>
+
+					<field name="quantity" position="after">
+						<field name="force_complete" invisible="True" />
+						<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('type_check', 'not in', ['in','internal','out'])]}" />
+					</field>
+					
+					<field name="cost" position="attributes">
+						<attribute name="required">True</attribute>
+					</field>
+					
+					<field name="currency" position="attributes">
+						<attribute name="readonly">True</attribute>
+					</field>
+				
+				</data>
+			</field>
+		</record>
+
+        <record id="stock_move_memory_tree_out" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.out</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_out" />
+			<field name="arch" type="xml">
+				<data>
+				
+					<field name="product_id" position="before">
+						<field name="line_number" readonly="True" />
+					</field>
+					
+					<field name="product_id" position="after">
+						<button name="change_product" string="Change Product" colspan="1" type="object" icon="gtk-convert" attrs="{'invisible': [('type_check', '!=', 'in')]}" />
+					</field>
+					
+					<field name="product_id" position="attributes">
+						<attribute name="readonly">True</attribute>
+					</field>
+					
+					<field name="product_uom" position="attributes">
+						<attribute name="readonly">False</attribute>
+                        <attribute name="domain">[('category_id', '=', uom_category)]</attribute>
+					</field>
+
+					<field name="quantity" position="before">
+                        <field name="uom_category" invisible="1" />
+                        <field name="quantity_ordered" readonly="1"  />
+                        <field name="uom_ordered" readonly="1" />
+					</field>
+				
+					<field name="quantity" position="after">
+						<field name="force_complete" invisible="True" />
+						<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('type_check', 'not in', ['in','internal','out'])]}" />
+					</field>
+				
+				</data>
+			</field>
+		</record>
+
+    </data>
+</openerp>

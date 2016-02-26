@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+  
+      <record id="po_follow_up_menu" model="ir.actions.act_window">
+         <field name="name">PO Follow Up per Supplier</field>
+         <field name="res_model">po.follow.up</field>
+         <field name="view_type">form</field>
+         <field name="view_mode">form</field>
+         <!--         <field name="view_id" ref="po_follow_up_view" />-->
+         <field name="context">{}</field>
+         <field name="help">The Purchase Order follow up report.</field>
+      </record>
+      
+        <menuitem id="po_follow_up_menu2" action="po_follow_up_menu" parent="base.next_id_73" sequence="4" />
+    </data>
+</openerp>
+			
+	

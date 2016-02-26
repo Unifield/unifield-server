@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    <!-- replaced by action call for automatic do_forecast on load
+    	<act_window name="Stock Level Forecast (List)"
+            res_model="stock.forecast"
+            src_model="product.product"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            id="act_stock_forecast"/>
+     -->
+             
+		<record id="action_stock_forecast" model="ir.actions.server">
+            <field name="name">Stock Level Forecast (List)</field>
+            <field name="model_id" ref="model_stock_forecast"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.start_forecast(context=context)</field>
+        </record>
+        
+        <record id="ir_open_stock_forecast" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Stock Level Forecast (List)</field>
+            <field eval="'ir.actions.server,%d'%action_stock_forecast" name="value"/>
+            <field eval="True" name="object"/>
+            <field eval="10000" name="sequence"/>
+        </record>
+            
+   		<record id="stock_forecast_line_tree" model="ir.ui.view">
+            <field name="name">stock.forecast.line.tree</field>
+            <field name="model">stock.forecast.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Forecasts" editable="top" colors="blue:(date &lt; current_date) &amp; ((stock_situation &gt; 0) | (stock_situation == 0));red:stock_situation &lt; 0;">
+                    <field name="first" invisible="1"/>
+                    <field name="date" />
+                    <field name="doc" />
+                    <field name="state" />
+                    <field name="order_type" />
+                    <field name="origin" />
+                    <field name="reference" />
+                    <field name="qty" />
+                    <field name="stock_situation" />
+                </tree>
+            </field>
+        </record>
+        
+        <record model="ir.ui.view" id="view_order_line_graph">
+		   <field name="name">stock.forecast.line.graph</field>
+		   <field name="model">stock.forecast.line</field>
+		   <field name="type">graph</field>
+		   <field name="arch" type="xml">
+		         <graph string="Stock Forecast Lines" type="bar">
+		              <field name="date" />
+		              <field name="stock_situation" operator="max" />
+		              <!-- <field name="qty" /> -->
+		        </graph>
+		    </field>
+		</record>
+
+        <record model="ir.ui.view" id="view_stock_forecast_from">
+            <field name="name">stock.forecast.form</field>
+            <field name="model">stock.forecast</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Stock Forecast">
+                    <group col="4" colspan="4">
+                        <field name="product_id" colspan="4" on_change="onchange_product(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                        <field name="product_family_info_id" />
+                        <field name="warehouse_id" on_change="onchange_warehouse(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                        <field name="product_uom_id" attrs="{'readonly':[('product_id', '=', False)]}" on_change="onchange_uom(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                        <field name="qty" />
+                    </group>
+                    <group col="2" colspan="2">
+                        <separator string="Procurement" />
+                        <field name="procurement_method" />
+                        <field name="supply_method" />
+                    </group>
+                    <group col="2" colspan="2">
+                        <separator string="Specific Information" />
+                        <field name="keep_cool" />
+                        <field name="short_shelf_life" />
+                        <field name="dangerous_goods" />
+                        <field name="justification_code_id" />
+                    </group>
+                    <newline />
+                    <field name="stock_forecast_lines" colspan="4" nolabel="1" mode="tree,form" readonly="1"></field>
+                    <group col="6" colspan="2">
+                        <button name="do_print" string="Print" type="object" icon="gtk-print" />
+                        <button name="do_export" string="Export" type="object" icon="gtk-save" />
+                        <button name="do_graph" string="Graph" type="object" icon="terp-account" />
+                    </group>
+                    <group col="6" colspan="2">
+                        <group col="6" colspan="2"></group>
+                        <button name="do_forecast" string="Refresh Forecast" type="object" icon="gtk-apply" />
+                        <button icon="gtk-cancel" special="cancel" string="Close Wizard"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

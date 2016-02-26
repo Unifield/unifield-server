@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+	
+        <record id="view_partner_tree" model="ir.ui.view">
+            <field name="name">res.partner.tree</field>
+            <field name="model">res.partner</field>
+            <field name="type">tree</field>
+            <field eval="8" name="priority"/>
+            <field name="inherit_id" ref="base.view_partner_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    
+                    <field name="country" position="after">
+                    	<field name="zone" />
+                    </field>
+                    
+                </data>
+            </field>
+        </record>
+
+		<record id="view_partner_form" model="ir.ui.view">
+            <field name="name">res.partner.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="priority" eval="35" />
+			<field name="inherit_id" ref="base.view_partner_form" />
+			<field name="arch" type="xml">
+				<data>
+
+					<field name="lang" position="after">
+						<field name="zone" />
+						<field name="po_by_project" attrs="{'invisible': [('supplier', '=', False)], 'required': [('supplier', '!=', False)]}" />
+					</field>
+					<field name="user_id" position="replace"></field>
+					<!-- <field name="leadtime" position="replace"></field> -->
+					<field name="parent_id" position="replace"></field>
+					<field name="active" position="replace"></field>
+					<field name="website" widget="url" position="replace"></field>
+					<separator string="General Information" colspan="4" position="replace"></separator>
+					<field name="function" position="after">
+						<field name="active" />
+						<!-- <field name="website" widget="url"/> -->
+					</field>
+					<field name="date" position="replace"></field>
+
+				</data>
+			</field>
+		</record>
+		
+	    <record id="view_partner_property_form" model="ir.ui.view">
+	      <field name="name">res.partner.stock.property.form.inherit</field>
+	      <field name="model">res.partner</field>
+	      <field name="type">form</field>
+	      <field name="priority" eval="16" />
+	      <field name="inherit_id" ref="stock.view_partner_property_form"/>
+	      <field name="arch" type="xml">
+			<data>
+			
+	            <xpath expr="//separator[@string='Inventory Properties']" position="before">
+                   	<group colspan="4" col="4">
+		            	<separator string="Default Lead Times (days)" colspan="4"/>
+		            	<field name="supplier_lt" attrs="{'invisible': [('supplier', '=', False)], 'required': [('supplier', '=', True)]}" /><newline/>
+		            	<field name="transport_0" />
+		            	<field name="transport_0_lt" on_change="on_change_lead_time(transport_0_lt,procurement_lt)" />
+		            	<field name="transport_1" />
+		            	<field name="transport_1_lt" />
+		            	<field name="transport_2" />
+		            	<field name="transport_2_lt" />
+		            	<field name="procurement_lt" on_change="on_change_lead_time(transport_0_lt,procurement_lt)" /><newline/>
+		            	<field name="customer_lt" attrs="{'invisible': [('customer', '=', False)], 'required': [('customer', '=', True)]}" />
+		          	</group>
+				</xpath>
+					        	
+	          </data>
+	      </field>
+	    </record>
+	    		
+	</data>
+</openerp>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="action_budget_summary_menu" model="ir.actions.act_window">
+            <field name="name">Budget Summary</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.budget.summary.export</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.values" id="action_budget_summary_values">
+            <field name="model_id" ref="msf_budget.model_msf_budget" />
+            <field name="object" eval="1" />
+            <field name="name">Budget Summary</field>
+            <field name="key2">client_print_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' +str(ref('action_budget_summary_menu'))" />
+            <field name="key">action</field>
+            <field name="model">msf.budget</field>
+        </record>
+
+        <record id="wizard_budget_summary_export_view" model="ir.ui.view">
+            <field name="name">Budget Summary PDF Export</field>
+            <field name="model">wizard.budget.summary.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget Summary PDF Export">
+                    <field name="granularity"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_confirm" string="Create PDF report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

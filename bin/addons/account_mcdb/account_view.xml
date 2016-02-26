@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Account Move Line search tree view -->
+        <record model="ir.ui.view" id="account_move_line_mcdb_search_result">
+            <field name="name">account.move.line.mcdb.search.result</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Account Entries" min_rows="100" hide_new_button="1" hide_delete_button="1"  noteditable="1" >
+                    <field name="instance_id"/>
+                    <field name="is_corrigible" invisible="1"/>
+                    <field name="have_an_historic" invisible="1"/>
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard"
+                        attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                    <button name="button_open_corrections" type="object" string="Open corrections history"
+                        attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id" domain="[('state','=','draft')]"/>
+                    <field name="account_id"/>
+                    <field name="account_type" invisible="1"/>
+                    <field name="move_state" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="transfer_journal_id" invisible="1"/>
+                    <field name="partner_txt"/>
+                    <field name="partner_type" invisible="1"/>
+                    <field name="debit_currency"/>
+                    <field name="credit_currency"/>
+                    <field name="currency_id"/>
+                    <field name="debit" sum="Total Functional Debit"/>
+                    <field name="credit" sum="Total Functional Credit"/>
+                    <field name="functional_currency_id"/>
+                    <field name="output_amount_debit"/>
+                    <field name="output_amount_credit"/>
+                    <field name="output_currency"/>
+                    <field name="reconcile_txt" />
+                    <field name="state"/>
+                    <field name="statement_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Account Analytic Line search tree view -->
+        <record model="ir.ui.view" id="account_analytic_line_mcdb_search_result">
+            <field name="name">account.analytic.line.mcdb.search.result</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Analytic Journal Items" min_rows="100" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
+                    <field name="is_reallocated" invisible="1"/>
+                    <field name="instance_id"/>
+                    <field name="is_reversal" invisible="1"/>
+                    <field name="journal_type" invisible="1"/>
+                    <field name="is_corrigible" invisible="1"/>
+                    <button name="button_corrections" type="object" string="Accounting info/correction"
+                        attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                    <button string="Have been reallocated?" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
+                    <field name="journal_id"/>
+                    <field name="entry_sequence"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="general_account_id"/>
+                    <field name="destination_id" string="Destination" invisible="not context.get('display_fp', False)"/>
+                    <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
+                    <field name="account_id"/>
+                    <field name="partner_txt"/>
+                    <field name="amount_currency"/>
+                    <field name="currency_id"/>
+                    <field name="amount"/>
+                    <field name="functional_currency_id"/>
+                    <field name="output_amount"/>
+                    <field name="output_currency"/>
+                    <field name="reversal_origin"/>
+                    <field name="user_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Account analytic line tree view -->
+        <record model="ir.ui.view" id="account_analytic_line_default">
+            <field name="name">account.analytic.line.default</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="40"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='journal_id']" position="before">
+                        <field name="is_reversal" invisible="1"/>
+                        <field name="journal_type" invisible="1"/>
+                        <field name="is_corrigible" invisible="1"/>
+                        <button name="button_corrections" type="object" string="Accounting info/correction"
+                            attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                        <field name="is_reallocated" invisible="1"/>
+                        <field name="last_corrected_id" invisible="1"/>
+                        <field name="is_engi" invisible="1"/>
+                        <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False), ('last_corrected_id', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
+                   </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="register_view_account_move_line_filter" model="ir.ui.view">
+            <field name="name">Journal Items</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_line_filter"/>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='journal_id']" position="before">
+                            <field name="instance_id"/>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Account move line search view -->
+        <record id="mcdb_view_account_move_line_filter" model="ir.ui.view">
+            <field name="name">Journal Items</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_filter"/>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+                <xpath expr="/search" position="replace">
+                    <search string="Search Journal Items">
+                        <group>
+                            <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
+                            <separator orientation="vertical"/>
+                            <filter icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
+                            <filter name="posted" icon="terp-camera_test" string="Posted" domain="[('move_id.state','=','posted')]" help="Posted Journal Items"/>
+                            <separator orientation="vertical"/>
+                            <filter
+                                icon="terp-dolar_ok!"
+                                string="Unreconciled"
+                                domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
+                                name="unreconciled"/>
+                            <filter icon="terp-personal" string="Employee" domain="[('employee_id', '!=', False)]" context="{'identification': 1}" />
+                            <field name="document_date"/>
+                            <field name="date" select='1'/>
+                            <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                        </group>
+                        <newline/>
+                        <group>
+                            <field name="move_id" select="1"/>
+                            <field name="ref" select="1" string="Reference"/>
+                            <field name="account_id" select='1'/>
+                            <field name="name" select="1"/>
+                        </group>
+                        <newline/>
+                        <group>
+                            <field name="partner_id" select='1' string="3RD Party Partner"/>
+                            <field name="employee_id" select='1' string="3RD Party Employee"/>
+                            <field name="transfer_journal_id" select='1' string="3RD Party Journal" context="{'exclude_journals': ['IB']}"/>
+                            <field name="is_reconciled" select='1'/>
+                            <field name="reconcile_total_partial_id" select='1'/>
+                            <newline/>
+                        </group>
+                        <newline/>
+                        <group>
+                            <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                            <field name="journal_id_fake" context="{'journal_id':self, 'visible_id':self, 'normal_view':False, 'exclude_journals': ['IB']}"/>
+                            <field name="journal_type"/>
+                        </group>
+                        <newline/>
+                        <group col="2" colspan="4">
+                            <field name="balance" string="Debit/Credit Fonctional" select='1'/>
+                            <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
+                        </group>
+                        <newline/>
+                        <group expand="0" string="Extended Filters..." col="20" colspan="6">
+                            <field name="narration" select="1"/>
+                        </group>
+                        <newline/>
+                        <group expand="0" string="Group By..." colspan="4" col="20">
+                            <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                            <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
+                            <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id', 'exclude_journals': ['IB']}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                            <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                            <filter string="Account Type"  icon="terp-folder-green" context="{'group_by':'account_type'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Register Name" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
+                        </group>
+                        <newline/>
+                    </search>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Redefine Journal Items action that launch the journal item view in order to use previous redefinition -->
+        <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('period_id.number', '!=', 0)]</field>
+            <field name="context">{'search_default_posted': 1, 'from_web_menu': True}</field>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+            <field name="help">This view can be used by accountants in order to quickly record entries in OpenERP. If you want to record a supplier invoice, start by recording the line of the expense account. OpenERP will propose to you automatically the Tax related to this account and the counterpart "Account Payable".</field>
+        </record>
+
+        <record id="account.action_move_line_select" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_move_line_mcdb_search_result"/>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+        </record>
+
+        <record id="account.action_view_move_line" model="ir.actions.act_window">
+            <field name="name">Lines to reconcile</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('account_id.reconcile', '=', True),('reconcile_id','=',False)]</field>
+            <field eval="False" name="view_id"/>
+            <field eval="True" name="filter"/>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+        </record>
+
+        <record id="account.action_move_line_select" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_move_line_mcdb_search_result"/>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+            <field name="domain">[('account_id', 'child_of', active_id)]</field>
+            <field name="context">{'account_id':active_id}</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_move_line_tree_from_move">
+            <field name="name">account.move.line.tree.from.move</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="1"/>
+            <field name="arch" type="xml">
+                <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1" hide_delete_button="1" >
+                    <field name="is_corrigible" invisible="1"/>
+                    <field name="have_an_historic" invisible="1"/>
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard"
+                        attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                    <button name="button_open_corrections" type="object" string="Open corrections history"
+                        attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
+                    <field name="instance_id" readonly="1"/>
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id" domain="[('state','=','draft')]"/>
+                    <field name="account_id"/>
+                    <field name="move_state" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="partner_txt"/>
+                    <field name="partner_type" invisible="1"/>
+                    <field name="debit_currency" sum="Total Book. Debit"/>
+                    <field name="credit_currency" sum="Total Book. Credit"/>
+                    <field name="currency_id"/>
+                    <field name="debit" sum="Total Func. Debit"/>
+                    <field name="credit" sum="Total Func. Credit"/>
+                    <field name="functional_currency_id"/>
+                    <field name="reconcile_total_partial_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <record id="account.action_move_line_search" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_move_line_mcdb_search_result"/>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+        </record>
+
+        <record id="account.act_account_move_to_account_move_line_open" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="res_model">account.move.line</field>
+            <field name="src_model">account.move</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_move_line_tree_from_move"/>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+            <field name="domain">[('move_id', 'in', [active_id])]</field>
+        </record>
+
+    <!-- Account analytic line search view -->
+        <record id="mcdb_view_account_analytic_line_filter" model="ir.ui.view">
+            <field name="name">mcdb.account.analytic.line.select</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="/search/group[1]/filter[@name='others']" position="before">
+                    <filter name="intl_engagements" string="ENGI"
+                            domain="[('imported_commitment', '=', True), ('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
+                            icon="terp-folder-violet"
+                            help="Analytic Journal Items related to an ENGI journal."
+                            />
+                </xpath>
+                <xpath expr="/search/group[1]/field[@name='date']" position='after'>
+                    <field name="document_date" select="1"/>
+                    <newline/>
+                </xpath>
+                <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">
+                </xpath>
+                <xpath expr="/search/group[2]/field[@name='product_id']" position="replace">
+                    <field name="amount_currency"/>
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='User']" position="replace">
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='Product']" position="replace">
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='Account']" position="replace">
+                    <filter string="CC" context="{'group_by':'cost_center_id'}" icon="terp-folder-green"/>
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='replace'>
+                    <filter string='G/L account' context="{'group_by':'general_account_id'}" icon="terp-folder-green"/>
+                    <separator orientation="vertical"/>
+                    <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Account Analytic Account Action -->
+        <record id="action_analytic_account_mass_reallocation_search" model="ir.actions.server">
+            <field name="name">Search for Mass Reallocation</field>
+            <field name="model_id" ref="model_mass_reallocation_search"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_filled_mcdb(context=context)</field>
+        </record>
+
+        <record id="ir_open_mcdb_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.analytic.account</field>
+            <field name="name">Search for Mass Reallocation</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_account_mass_reallocation_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+    <!-- Journal Entries Search (filter) -->
+        <record model="ir.ui.view" id="inherit_view_account_move_filter">
+            <field name="name">inherit.view.account.move.filter</field>
+            <field name="model">account.move</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_filter" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search" position="replace">
+                        <search string="Search Move">
+                            <group col='8' colspan='4'>
+                                <filter icon="terp-document-new" string="Unposted" domain="[('state','=','draft')]" help="Unposted Journal Entries"/>
+                                <filter icon="terp-camera_test" string="Posted" domain="[('state','=','posted')]" help="Posted Journal Entries"/>
+                                <separator orientation="vertical"/>
+                                <field name="document_date" select="1"/>
+                                <field name="date" select="1" string="Posting Date"/>
+                                <field name="period_id"/>
+                            </group>
+                            <newline/>
+                            <group col='8' colspan='4'>
+                                <field name="name"/>
+                                <field name="ref"/>
+                            </group>
+                            <newline/>
+                            <group col='8' colspan='4'>
+                                <field name="partner_id" select="1" string="3RD Party Partner"/>
+                                <field name="employee_id" select="1" string="3RD Party Employee"/>
+                                <field name="transfer_journal_id" select="1" string="3RD Party Journal" context="{'exclude_journals': ['IB']}"/>
+                            </group>
+                            <newline/>
+                            <group col='8' colspan='4'>
+                                <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                                <field name="journal_id_fake" context="{'exclude_journals': ['IB']}" />
+                                <field name="journal_type"/>
+                            </group>
+                            <newline/>
+                            <group expand="0" string="Group By..." colspan="12" col="10">
+                                <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                                <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
+                                <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
+                                <separator orientation="vertical"/>
+                                <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id', 'exclude_journals': ['IB']}"/>
+                                <filter string="States" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                                <separator orientation="vertical"/>
+                                <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                                <filter string="Date" icon="terp-go-month" domain="[]" context="{'group_by':'date'}"/>
+                                <separator orientation="vertical"/>
+                                <filter context="{'group_by': 'instance_id'}" domain="[]" icon="terp-stage" string="Proprietary Instance"/>
+                            </group>
+                        </search>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

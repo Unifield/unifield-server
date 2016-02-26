@@ -1,0 +1,6 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_date_tools","date.tools","model_date_tools","",1,1,1,1
+"access_fields_tools","fields.tools","model_fields_tools","",1,1,1,1
+"access_data_tools","data.tools","model_data_tools","",1,1,1,1
+"access_sequence_tools","sequence.tools","model_sequence_tools","",1,1,1,1
+"access_picking_tools","picking.tools","model_picking_tools","",1,1,1,1

@@ -1,0 +1,565 @@
+<openerp>
+	<data noupdate="1">
+		<!-- TIME FOR CREATION OF PRODUCTS - YOUPI -->
+        <record model="product.category" id="water_sanitation">
+            <field name="name">Water sanitation</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_camps_watersanitation" />
+        </record>
+        
+        <record model="product.category" id="progsuppkits">
+            <field name="name">Program support kits</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_kits_progsuppkits" />
+        </record>
+        
+        <record model="product.category" id="progsupp_coldchain">
+            <field name="name">Program support cold chain</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_programsupport_coldchain" />
+        </record>
+        
+        <record model="product.category" id="sparepartsyamaha">
+            <field name="name">Spare Parts Yamaha</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_transport_sparepartsyamaha" />
+        </record>
+        
+        <record model="product.category" id="camps_reparing">
+            <field name="name">Camps reparing</field>
+            <field name="family_id" ref="product_nomenclature.nomen_service_camps_reparing" />
+        </record>
+		
+    	<record model="product.product" id="product_nomenclature_01">
+    	
+    		<field name="name">DEXTROSE, 10%, 500 ml, plastic pouch + SET</field>
+    		<field name="default_code">DINFDEXT1P5</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_drugs" />
+			<field name="nomen_manda_2" ref="nomen_med_drugs_infusions" />
+			<field name="nomen_manda_3" ref="nomen_med_drugs_infusions_dex" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_02">
+    	
+    		<field name="name">DEXTROSE, 5%, 1 l, plastic pouch</field>
+    		<field name="default_code">DINFDEXT5N1</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_drugs" />
+			<field name="nomen_manda_2" ref="nomen_med_drugs_infusions" />
+			<field name="nomen_manda_3" ref="nomen_med_drugs_infusions_dex" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_03">
+    	
+    		<field name="name">HALOPERIDOL, 5 mg, tab.</field>
+    		<field name="default_code">DORAHALP5T-</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_drugs" />
+			<field name="nomen_manda_2" ref="nomen_med_drugs_oraldrugs" />
+			<field name="nomen_manda_3" ref="nomen_med_drugs_oraldrugs_halo" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_04">
+    	
+    		<field name="name">ALBENDAZOLE, 200 mg, tab.</field>
+    		<field name="default_code">DORAZYB0086</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_drugs" />
+			<field name="nomen_manda_2" ref="nomen_med_drugs_oraldrugs" />
+			<field name="nomen_manda_3" ref="nomen_med_drugs_oraldrugs_albe" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_med_200" />
+			
+
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_05">
+    	
+    		<field name="name">ALBENDAZOLE, 400 mg, tab.</field>
+    		<field name="default_code">DORAALBE4T-</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_drugs" />
+			<field name="nomen_manda_2" ref="nomen_med_drugs_oraldrugs" />
+			<field name="nomen_manda_3" ref="nomen_med_drugs_oraldrugs_albe" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_med_400" />
+			
+
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_06">
+    	
+    		<field name="name">KIT, 001, medical modules, 2 000 L</field>
+    		<field name="default_code">KMEDKCHO3M-</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_kits" />
+			<field name="nomen_manda_2" ref="nomen_med_kits_medicalkits" />
+			<field name="nomen_manda_3" ref="nomen_med_kits_medicalkits_cholera" />
+			
+		
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_07">
+    	
+    		<field name="name">KIT, 001, medical modules without infusions</field>
+    		<field name="default_code">KMEDKCHO4M-</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_kits" />
+			<field name="nomen_manda_2" ref="nomen_med_kits_medicalkits" />
+			<field name="nomen_manda_3" ref="nomen_med_kits_medicalkits_cholera" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_med_module" />
+			<field name="nomen_sub_1" ref="nomeno1_med_noinf" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_08">
+    	
+    		<field name="name">DENTAL SET, 20 instruments</field>
+    		<field name="default_code">KSUDBDEN20-</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_kits" />
+			<field name="nomen_manda_2" ref="nomen_med_kits_dentalinstbox" />
+			<field name="nomen_manda_3" ref="nomen_med_kits_dentalinstbox_dental" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_09">
+    	
+    		<field name="name">GLOVE, EXAMINATION, nitrile, s.u., non sterile, large</field>
+    		<field name="default_code">SMSUGLEN1L-</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_medicalrenewablesup" />
+			<field name="nomen_manda_2" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
+			<field name="nomen_manda_3" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies_gloexa" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_med_su" />
+			<field name="nomen_sub_1" ref="nomeno1_med_nonster" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_10">
+    	
+    		<field name="name">GLOVE, EXAMINATION, nitrile, s.u., non sterile, small</field>
+    		<field name="default_code">SMSUGLEN1S-</field>
+
+			<field name="nomen_manda_0" ref="nomen_med" />
+			<field name="nomen_manda_1" ref="nomen_med_medicalrenewablesup" />
+			<field name="nomen_manda_2" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
+			<field name="nomen_manda_3" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies_gloexa" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_med_su" />
+			<field name="nomen_sub_1" ref="nomeno1_med_nonster" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_11">
+    	
+    		<field name="name">GLOVES, heavy duty, with leather protection (pair)</field>
+    		<field name="default_code">ALIFGLOV1H-</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_administration" />
+			<field name="nomen_manda_2" ref="nomen_log_administration_teamlife" />
+			<field name="nomen_manda_3" ref="nomen_log_administration_teamlife_glo" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_log_leatpro" />
+
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_12">
+    	
+    		<field name="name">GLOVES, heavy duty (pair)</field>
+    		<field name="default_code">ALIFZYN1002</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_administration" />
+			<field name="nomen_manda_2" ref="nomen_log_administration_teamlife" />
+			<field name="nomen_manda_3" ref="nomen_log_administration_teamlife_glo" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_13">
+    	
+    		<field name="name">Nonreturn STRAINER, 2&apos;&apos;ND50</field>
+    		<field name="default_code">CWATSTAI2--</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_camps" />
+			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
+			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_stainer" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_log_2" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_14">
+    	
+    		<field name="name">STRAINER, 4&apos;&apos;ND100</field>
+    		<field name="default_code">CWATSTAI4W-</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_camps" />
+			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
+			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_stainer" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_log_4" />
+
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_15">
+    	
+    		<field name="name">STRAINER, 4&apos;&apos;ND130</field>
+    		<field name="default_code">CWATZYB0026</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_camps" />
+			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
+			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_stainer" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_log_4" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_16">
+    	
+    		<field name="name">TANK, WATER, 2 m3, flexible</field>
+    		<field name="default_code">CWATTANK02-</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_camps" />
+			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
+			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_tank" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_log_flexi" />
+
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_17">
+    	
+    		<field name="name">TANK, WATER, 32 m3, open, mesh frame</field>
+    		<field name="default_code">CWATTANK32M</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_camps" />
+			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
+			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_tank" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_18">
+    	
+    		<field name="name">MODULE, MSF IDENTIFICATION, 1 mission, 6 persons, arabic</field>
+    		<field name="default_code">KPROMIDE06A</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_kits" />
+			<field name="nomen_manda_2" ref="nomen_log_kits_progsuppkits" />
+			<field name="nomen_manda_3" ref="nomen_log_kits_progsuppkits_ident" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_log_module" />
+
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_19">
+    	
+    		<field name="name">MODULE, HARDWARE, nuts, screws &amp; nails</field>
+    		<field name="default_code">KPROMHDW01-</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_kits" />
+			<field name="nomen_manda_2" ref="nomen_log_kits_progsuppkits" />
+			<field name="nomen_manda_3" ref="nomen_log_kits_progsuppkits_hard" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_log_module" />
+
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_20">
+    	
+    		<field name="name">VACCINE CARRIER, 0.6 l, Electrolux RCW2 + 2 icepacks 0.3 l</field>
+    		<field name="default_code">PCOLBOXC01E</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_programsupport" />
+			<field name="nomen_manda_2" ref="nomen_log_programsupport_coldchain" />
+			<field name="nomen_manda_3" ref="nomen_log_programsupport_coldchain_box" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_log_programsupport_coldchain_electro" />
+
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_21">
+    	
+    		<field name="name">COLD BOX, 8.5 l (Electrolux RCW 12/CF) + 14 icepacks 0.6 l</field>
+    		<field name="default_code">PCOLBOXC08E</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_programsupport" />
+			<field name="nomen_manda_2" ref="nomen_log_programsupport_coldchain" />
+			<field name="nomen_manda_3" ref="nomen_log_programsupport_coldchain_box" />
+			
+			<field name="nomen_sub_0" ref="nomeno0_log_programsupport_coldchain_electro" />
+	
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_22">
+    	
+    		<field name="name">COLD BOX, 20 Lit, approx 42cm (l) x 22cm (w) x 24 cm(h)</field>
+    		<field name="default_code">PCOLZYB0001</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_programsupport" />
+			<field name="nomen_manda_2" ref="nomen_log_programsupport_coldchain" />
+			<field name="nomen_manda_3" ref="nomen_log_programsupport_coldchain_box" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_23">
+    	
+    		<field name="name">CARBURATOR, FLOAT SPINDLE</field>
+    		<field name="default_code">TXYACARB1S-</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_transport" />
+			<field name="nomen_manda_2" ref="nomen_log_transport_sparepartsyamaha" />
+			<field name="nomen_manda_3" ref="nomen_log_transport_sparepartsyamaha_carbu" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_24">
+    	
+    		<field name="name">SPRING, helicoidal</field>
+    		<field name="default_code">TXYASPRI1H-</field>
+
+			<field name="nomen_manda_0" ref="nomen_log" />
+			<field name="nomen_manda_1" ref="nomen_log_transport" />
+			<field name="nomen_manda_2" ref="nomen_log_transport_sparepartsyamaha" />
+			<field name="nomen_manda_3" ref="nomen_log_transport_sparepartsyamaha_spring" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+		
+		<record model="product.product" id="product_nomenclature_25">
+    	
+    		<field name="name">REPARATION service</field>
+    		<field name="default_code">XREPAAAA---</field>
+
+			<field name="nomen_manda_0" ref="nomen_service" />
+			<field name="nomen_manda_1" ref="nomen_service_camps" />
+			<field name="nomen_manda_2" ref="nomen_service_camps_reparing" />
+			<field name="nomen_manda_3" ref="nomen_service_camps_reparing_XXX" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record><!--
+		
+		
+		
+		<record model="product.product" id="product_nomenclature_XX">
+    	
+    		<field name="name">XXX</field>
+    		<field name="default_code">XXXX</field>
+
+			<field name="nomen_manda_0" ref="XXX" />
+			<field name="nomen_manda_1" ref="XXX" />
+			<field name="nomen_manda_2" ref="XXX" />
+			<field name="nomen_manda_3" ref="XXX" />
+			
+			<field name="nomen_sub_0" ref="XXX" />
+			<field name="nomen_sub_1" ref="XXX" />
+			<field name="nomen_sub_2" ref="XXX" />
+			<field name="nomen_sub_3" ref="XXX" />
+			<field name="nomen_sub_4" ref="XXX" />
+			<field name="nomen_sub_5" ref="XXX" />
+			
+			<field name="procure_method">make_to_order</field>
+			<field name="supply_method">buy</field>
+			<field name="type">consu</field>
+			<field name="uom_id" ref="product.product_uom_unit" />
+			<field name="uom_po_id" ref="product.product_uom_unit" />
+			
+		</record>
+		
+	--></data>
+</openerp>

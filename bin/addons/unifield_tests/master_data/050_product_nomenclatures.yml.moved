@@ -1,0 +1,72 @@
+-
+  Create LOG nomenclatures for tests
+-
+-
+  Create a Main Type LOG
+-
+  !record {model: product.nomenclature, id: nomen_log_main_type}:
+    name: Main Type LOG (Test)
+-
+  Create a Group LOG
+-
+  !record {model: product.nomenclature, id: nomen_log_group}:
+    name: Group LOG (Test)
+    level: 1
+    parent_id: nomen_log_main_type
+-
+  Create a Family LOG
+-
+  !record {model: product.nomenclature, id: nomen_log_family}:
+    name: Family LOG (Test)
+    level: 2
+    parent_id: nomen_log_group
+-
+  Create a Root LOG
+-
+  !record {model: product.nomenclature, id: nomen_log_root}:
+    name: Root LOG (Test)
+    level: 3
+    parent_id: nomen_log_family
+-
+  Create a chained option for LOG products
+-
+  !record {model: stock.location.chained.options, id: log_chained_option}:
+    location_id: stock.stock_location_stock
+    nomen_id: nomen_log_main_type
+    dest_location_id: stock_override.stock_location_logistic
+-
+  Create MED nomenclatures for tests
+-
+-
+  Create a Main Type MED
+-
+  !record {model: product.nomenclature, id: nomen_med_main_type}:
+    name: Main Type MED (Test)
+-
+  Create a Group MED
+-
+  !record {model: product.nomenclature, id: nomen_med_group}:
+    name: Group MED (Test)
+    level: 1
+    parent_id: nomen_med_main_type
+-
+  Create a Family MED
+-
+  !record {model: product.nomenclature, id: nomen_med_family}:
+    name: Family MED (Test)
+    level: 2
+    parent_id: nomen_med_group
+-
+  Create a Root MED
+-
+  !record {model: product.nomenclature, id: nomen_med_root}:
+    name: Root MED (Test)
+    level: 3
+    parent_id: nomen_med_family
+-
+  Create a chained option for MED products
+-
+  !record {model: stock.location.chained.options, id: med_chained_option}:
+    location_id: stock.stock_location_stock
+    nomen_id: nomen_med_main_type
+    dest_location_id: msf_config_locations.stock_location_medical

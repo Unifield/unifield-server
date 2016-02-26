@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!--
+        Display analytic lines from a journal item.
+        NB: context displays FP column and cost center + destination to the user (UTP-372).
+    -->
+        <record id="action_analytic_lines_from_account_ml_search" model="ir.actions.server">
+            <field name="name">Analytic Lines (FP)</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_analytic_move_lines(context=context)</field>
+        </record>
+
+        <record id="ir_open_analytic_lines_from_account_ml_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Analytic Lines (FP)</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_lines_from_account_ml_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="action_analytic_free1_lines_from_account_ml_search" model="ir.actions.server">
+            <field name="name">Analytic Lines (Free 1)</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_analytic_move_free1_lines(context=context)</field>
+        </record>
+
+        <record id="ir_open_analytic_free1_lines_from_account_ml_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Analytic Lines (Free 1)</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_free1_lines_from_account_ml_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="action_analytic_free2_lines_from_account_ml_search" model="ir.actions.server">
+            <field name="name">Analytic Lines (Free 2)</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_analytic_move_free2_lines(context=context)</field>
+        </record>
+
+        <record id="ir_open_analytic_free2_lines_from_account_ml_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Analytic Lines (Free 2)</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_free2_lines_from_account_ml_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="view_analytic_account_form" model="ir.ui.view">
+            <field name="name">analytic.account.form</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_analytic_account_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//field[@name='name']" position="replace">
+                        <field name="name" select="1"/>
+                    </xpath>    
+                    <xpath expr="//field[@name='type']" position="replace">
+                    </xpath>    
+                    <field name="code" position="replace">
+                        <field name="code" select="1" required="1"/>
+                        <field name="type"/>
+                    </field>
+                    <field name="parent_id" position="replace">
+                        <field name="category" select="1" required="1" on_change="on_change_category(category)"/>
+                        <field name="parent_id" on_change="on_change_parent(parent_id)" required="1" attrs="{'readonly': [('category', '=', 'FUNDING')], 'required': [('category', 'not in', ['FREE1', 'FREE2'])]}"/>
+                        <newline/>
+                        <field name="for_fx_gain_loss"/>
+                    </field>
+                    <page string="Account Data" position="replace">
+                        <page string="Activation period">
+                            <field name="date_start"/>
+                            <field name="date" select="2"/>
+                        </page>
+                        <page string="Cost centers" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
+                            <button name="button_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="1"/>
+                            <separator/>
+                            <field name="cost_center_ids" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
+                                <tree string="Cost Centers" >
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Destinations" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
+                            <button name="button_dest_clear" type="object" string="Remove all" icon="gtk-clear" colspan="1"/>
+                            <separator/>
+                            <field name="tuple_destination_account_ids" nolabel="1" context="{'dest_in_use':tuple_destination_account_ids}"/>
+                        </page>
+                        <page string="Destinations by accounts" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
+                            <field name="tuple_destination_summary" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Expense accounts" attrs="{'invisible': [('category', '!=', 'DEST')]}">
+                            <field name="destination_ids" nolabel="1" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]">
+                                <tree string="Expenses accounts list">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </page>
+                </data>
+            </field>
+        </record>
+
+        <record id="view_account_destination_summary_tree" model="ir.ui.view">
+            <field name="name">account.destination.summary.tree</field>
+            <field name="model">account.destination.summary</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Destinations by accounts">
+                    <field name="account_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_analytic_account_search" model="ir.ui.view">
+            <field name="name">analytic.account.search</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_analytic_account_search"/>
+            <field name="arch" type="xml">
+                <filter string="Pending" position="replace"></filter>
+                <filter string="Current" position="replace">
+                    <filter name="active" icon="terp-check" string="Active" domain="[('filter_active', '=', True)]" />
+                    <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('filter_active', '=', False)]"/>
+                </filter>
+                <filter string="Overdue Account" position="replace"></filter>
+                <field name="partner_id" position="replace">
+                </field>
+                <field name="user_id" position="replace">
+                    <field name="category" string="Account category"/>
+                    <field name="type" string="Account type"/>
+                </field>
+                <group string="Group By..." position="replace">
+                    <group expand="0" string="Group By...">
+                        <filter string="Parent" icon="terp-folder-orange" domain="[]" context="{'group_by':'parent_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Account Category" icon="terp-folder-violet" domain="[]" context="{'group_by': 'category'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Account Type" icon="terp-folder-blue" domain="[]" context="{'group_by': 'type'}"/>
+                    </group>
+                </group>
+            </field>
+        </record>
+
+
+    <!-- Tree view for Balance by analytic accounts -->
+        <record id="balance_analytic_tree" model="ir.ui.view">
+            <field name="name">balance.analytic.tree</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_complete_ids</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <tree string="Analytic account" toolbar="1" expand_button="1">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="type"/>
+                    <field name="balance"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Tree view for Default analytic account tree view -->
+        <record id="view_account_analytic_account_tree_inherit" model="ir.ui.view">
+            <field name="name">account.analytic.account.tree.inherit</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_complete_ids</field>
+            <field name="inherit_id" ref="account.view_account_analytic_account_tree"/>
+            <field name="priority" eval="4"/>
+            <field name="arch" type="xml">
+                <tree string="Analytic account" position="replace">
+                    <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic account" toolbar="1" expand_button="1" nolink="1">
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="description"/>
+                        <field name="category"/>
+                        <field name="type"/>
+                        <field name="date_start"/>
+                        <field name="date"/>
+                        <field name="parent_id" invisible="1"/>
+                    </tree>
+                </tree>
+            </field>
+        </record>
+
+
+    <!-- Tree view for Analytical chart of accounts -->
+        <record id="view_account_analytic_account_tree_coa" model="ir.ui.view">
+            <field name="name">account.analytic.account.tree.coa</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_complete_ids</field>
+            <field name="priority" eval="10"/>
+            <field name="arch" type="xml">
+                <tree string="Analytic account" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" toolbar="1" expand_button="1" nolink="1">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="description"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account.action_account_analytic_account_tree2" model="ir.actions.act_window">
+            <field name="name">Balance by analytic account</field>
+            <field name="res_model">account.analytic.account</field>
+            <field name="view_type">tree</field>
+            <field name="view_id" ref="view_account_analytic_account_tree_coa"/>
+            <field name="domain">[('parent_id','=',False)]</field>
+            <field name="help">The normal chart of accounts has a structure defined by the legal requirement of the country. The analytic chart of account structure should reflect your own business needs in term of costs/revenues reporting. They are usually structured by contracts, projects, products or departements. Most of the OpenERP operations (invoices, timesheets, expenses, etc) generate analytic entries on the related account.</field>
+        </record>
+
+        <record id="view_account_analytic_account_list_inherit" model="ir.ui.view">
+            <field name="name">account.analytic.account.list.inherit</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_account_list"/>
+            <field name="arch" type="xml">
+                <tree string="Analytic Accounts" position="replace">
+                    <tree toolbar="1" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts">
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="description"/>
+                        <field name="category"/>
+                        <field name="type"/>
+                        <field name="date_start"/>
+                        <field name="date"/>
+                        <field name="parent_id" invisible="1"/>
+                    </tree>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_account_analytic_account_form" model="ir.actions.act_window">
+            <field name="name">Analytic Accounts</field>
+            <field name="res_model">account.analytic.account</field>
+            <field name="inherit_id" ref="account.action_account_analytic_account_form"/>
+            <field name="search_view_id" ref="view_analytic_account_search"/>
+            <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
+            <field name="domain">[]</field>
+            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1, 'from_web': True}</field>
+        </record>
+
+        <menuitem action="action_account_analytic_account_form"
+                  id="account.account_analytic_def_account"
+                  parent="account.menu_analytic_accounting"
+                  />
+
+    </data>
+</openerp>

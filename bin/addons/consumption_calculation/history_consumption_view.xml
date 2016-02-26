@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="product_history_consumption_form" model="ir.ui.view">
+	    <field name="name">product.history.consumption.form</field>
+	    <field name="model">product.history.consumption</field>
+	    <field name="type">form</field>
+	    <field name="arch" type="xml">
+            <form string="Product historical consumption" hide_new_button="1" hide_duplicate_button="1">
+                <field name="status" invisible="1" />
+                <group colspan="2" col="2">
+	    		<separator colspan="2" string="Period parameters" />
+                <field name="date_from" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+   		        	<field name="date_to" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="month_ids" nolabel="1" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}">
+    			    <tree string="Months" hide_new_button="1" noteditable="True" editable="top">
+	    		        <field name="name" />
+		    	    </tree>
+		            </field>
+    		    </group>
+
+            <group colspan="2" col="2">
+			<separator colspan="2" string="Consumption parameters" />
+                <field name="consumption_type" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
+			<separator colspan="2" string="Product parameters" />
+            <field name="sublist_id" attrs="{'readonly': ['|', ('nomen_manda_0', '!=', False), ('status', '!=', 'draft')]}" />
+            <group colspan="2" col="4">
+                <field name="nomen_manda_0"
+                    domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                    widget="selection"
+                    on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                    attrs="{'readonly': [('status', '!=', 'draft')]}" 
+                />
+                <field name="nomen_manda_1"
+                    domain="[('id','=', 0)]"
+                    widget="selection"
+                    get_selection="get_nomen"
+                    on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                    attrs="{'readonly': [('status', '!=', 'draft')]}" 
+                />
+                <field name="nomen_manda_2"
+                    domain="[('id','=', 0)]"
+                    widget="selection"
+                    get_selection="get_nomen"
+                    on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                    attrs="{'readonly': [('status', '!=', 'draft')]}" 
+                />
+                <field name="nomen_manda_3"
+                    domain="[('id','=', 0)]"
+                    widget="selection"
+                    get_selection="get_nomen"
+                    on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                    attrs="{'readonly': [('status', '!=', 'draft')]}" 
+                />
+            </group>
+			<separator colspan="2" string="Actions" />
+			<button name="create_lines" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'readonly': [('status', '=', 'in_progress')], 'invisible': [('status', '=', 'ready')]}" />
+			<button name="open_report" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'invisible': [('status', '!=', 'ready')]}" />
+		    </group>
+		</form>
+	    </field>
+    </record>
+
+    <record id="history_consumption_waiting_view" model="ir.ui.view">
+        <field name="name">history.consumption.waiting.view</field>
+        <field name="model">product.history.consumption</field>
+        <field name="type">form</field>
+        <field name="priority" eval="99" />
+        <field name="arch" type="xml">
+            <form string="Status of the report" hide_new_button="1" hide_delete_button="1">
+                <label> </label>
+                <group colspan="2" col="2">
+                    <html>
+                        <div style="align: center">
+                            <p style="font-size:14px;align:center">
+                                Your historical consumption demand will be treated quickly.<br />
+                            </p>
+                            <p style="font-size:14px;align:center">
+                                Due to the volume of data, your history cannot be shown immediatly.<br />
+                            </p>
+                            <p style="font-size:14px;align:center">
+                                When the report will be ready, you can access to it by the menu Warehouse / Reporting / Consumption reports / Historical consumption.<br />
+                            </p>
+                        </div>
+                    </html>
+                </group>
+                <label> </label>
+                <!--
+                Remove the button because a click on this button waits the end of the thread to display the list of reports
+                <label> </label>
+                <button name="go_to_list" string="Return to the list of history consumption reports" icon="gtk-undo" type="object" colspan="2"/>
+                <label> </label>-->
+            </form>
+        </field>
+    </record>
+
+    <record id="history_consumption_search_view" model="ir.ui.view">
+        <field name="name">history.consumption.search.view</field>
+        <field name="model">product.history.consumption</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Historical consumptions">
+                <field name="requestor_id" />
+                <filter domain="[('requestor_id', '=', uid)]" icon="terp-personal" help="My requests" />
+                <field name="requestor_date" />
+            </search>
+        </field>
+    </record>
+
+    <record id="history_consumption_tree_view" model="ir.ui.view">
+        <field name="name">history.consumption.tree.view</field>
+        <field name="model">product.history.consumption</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Historical consumptions" noteditable="1" colors="grey:status=='in_progress';green:status=='ready'">
+                <field name="requestor_date" />
+                <field name="requestor_id" />
+                <field name="date_from" />
+                <field name="date_to" />
+                <field name="consumption_type" />
+                <field name="location_id" />
+                <field name="sublist_id" />
+                <field name="nomen_manda_0" />
+                <field name="nomen_manda_1" />
+                <field name="nomen_manda_2" />
+                <field name="nomen_manda_3" />
+                <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
+                <button name="open_report" type="object" icon="terp-check" string="Open report" attrs="{'invisible': [('status', '!=', 'ready')]}"/>
+                <field name="fake_status" />
+                <field name="status" invisible="1" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_history_consumption" model="ir.actions.act_window">
+        <field name="name">History consumptions</field>
+        <field name="res_model">product.history.consumption</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="target"></field>
+    </record>
+
+    <menuitem id="menu_product_history_consumption"
+          action="action_history_consumption"
+		  name="Historical consumption"
+		  parent="warehouse_consumption_menu" />
+
+    <!--
+	<record id="action_open_history_consumption_view" model="ir.actions.server">
+            <field name="name">History consumption</field>
+            <field name="model_id" ref="model_product_history_consumption"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_history_consumption(context=context)</field>
+        </record>
+
+        <record id="ir_open_history consumption_view" model="ir.values">
+            <field name="key2">tree_but_open</field>
+            <field name="model">ir.ui.menu</field>
+            <field name="name">Historical consumptions</field>
+	        <field name="res_id" ref="menu_product_history_consumption" />
+            <field eval="'ir.actions.server,%d'%action_open_history_consumption_view" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+    -->
+
+    </data>	
+</openerp>

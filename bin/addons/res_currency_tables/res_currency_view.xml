@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+        <record id="view_currency_table_tree" model="ir.ui.view">
+            <field name="name">res.currency.table.tree</field>
+            <field name="model">res.currency.table</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Currency Tables">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_currency_table_form" model="ir.ui.view">
+            <field name="name">res.currency.table.form</field>
+            <field name="model">res.currency.table</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Currency Table">
+                    <field name="name" attrs="{'readonly':[('state','=','closed')]}"/>
+                    <field name="code" attrs="{'readonly':[('state','=','closed')]}"/>
+                    <field colspan="4" name="currency_ids" nolabel="1" attrs="{'readonly':[('state','=','closed')]}">
+	                    <tree string="Currencies" colors="red:rate==0.0" hide_new_button="1">
+	                        <field name="name"/>
+	                        <field name="currency_name"/>
+	                        <field name="rate"/>
+	                        <field name="date"/>
+	                    </tree>
+                        <form string="Currency">
+		                    <group col="6" colspan="6">
+		                        <field name="name" select="1"/>
+		                        <field name="rate"/>
+		                        <field name="currency_name"/>
+		                        <field name="symbol"/>
+		                    </group>
+		                    <group col="2" colspan="2">
+		                        <separator string="Price Accuracy" colspan="2"/>
+		                        <field name="rounding"/>
+		                        <field name="accuracy"/>
+		                    </group>
+		                    <field colspan="4" mode="tree,form" name="rate_ids" nolabel="1" attrs="{'readonly':[('base','=',True)]}">
+		                        <form string="Rates">
+		                            <field name="name"/>
+		                            <field name="rate"/>
+		                        </form>
+		                        <tree string="Rates">
+		                            <field name="name"/>
+		                            <field name="rate"/>
+		                        </tree>
+		                    </field>
+		                </form>
+                    </field>
+                    <field name="state" readonly="1"/>
+                    <group col="4" colspan="2">
+                        <button string="Validate" name="valid" states="draft" type="workflow" icon="gtk-ok"/>
+                        <button string="Close" name="closed" states="valid" type="workflow" icon="gtk-jump-to" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_currency_table_form" model="ir.actions.act_window">
+            <field name="name">Currency Tables</field>
+            <field name="res_model">res.currency.table</field>
+            <field name="view_id" ref="view_currency_table_tree"/>
+        </record>
+        
+        <menuitem action="action_currency_table_form" id="menu_action_currency_table_form" parent="account.menu_finance_currency_mgmt" sequence="2"/>
+
+        <record id="import_main_currencies_view" model="ir.ui.view">
+            <field name="name">Import Currencies</field>
+            <field name="model">import.currencies</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Import Currencies">
+                <field name="rate_date"/>
+                <field name="import_file"/>
+                <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                <button icon="terp-camera_test" string="Import" name="import_rates" type="object" default_focus="1"/>
+            </form>
+            </field>
+        </record>
+        
+        <record id="action_import_main_currencies" model="ir.actions.act_window">
+            <field name="name">Import Currencies</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">import.currencies</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="import_main_currencies_view"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="account.menu_finance_currency_mgmt"
+            action="action_import_main_currencies"
+            id="menu_action_import_main_currencies"  sequence="1"/>
+        
+        <record id="import_table_currencies_view" model="ir.ui.view">
+            <field name="name">Import Currencies</field>
+            <field name="model">import.table.currencies</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Import Currencies">
+                <field name="rate_date"/>
+                <field name="import_file"/>
+                <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                <button icon="terp-camera_test" string="Import" name="import_table_rates" type="object" default_focus="1"/>
+            </form>
+            </field>
+        </record>
+        
+        <record id="action_import_table_currencies" model="ir.actions.act_window">
+            <field name="name">Import Currencies</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">import.table.currencies</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="import_table_currencies_view"/>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.values" id="import_table_currencies_values">
+            <field name="object" eval="1" />
+            <field name="name">Import Currencies</field>
+            <field name="key2">client_action_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' + str(ref('action_import_table_currencies'))" />
+            <field name="key">action</field>
+            <field name="model">res.currency.table</field>
+        </record>
+
+        <record id="warning_import_currency_view" model="ir.ui.view">
+            <field name="name">Undefined FX Rates</field>
+            <field name="model">warning.import.currencies</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Piece of information">
+                    <label string="You are trying to import FX rates already defined in the system at the date specified; do you want to proceed?" align="0.0" colspan="3"/>
+                    <field name="currency_list" colspan="4" nolabel="1" readonly="1"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" type="object" icon="gtk-cancel"/>
+                        <button name="button_ok" string="OK" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="confirm_import_currency_view" model="ir.ui.view">
+            <field name="name">Undefined FX Rates</field>
+            <field name="model">confirm.import.currencies</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Currencies Imported">
+                    <label string="The FX rates have been correctly uploaded." align="0.0" colspan="3"/>
+                    <separator colspan="4"/>
+                    <button name="button_ok" string="OK" type="object" icon="gtk-ok"/>
+                </form>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <record id="wizard_register_import_errors_tree" model="ir.ui.view">
+            <field name="name">wizard.register.import.errors.tree</field>
+            <field name="model">wizard.register.import.errors</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Information">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+    <!-- Import register lines wizard -->
+        <record model="ir.ui.view" id="wizard_register_import_form">
+            <field name='name'>wizard.register.import.form</field>
+            <field name='model'>wizard.register.import</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Import register lines">
+                    <label string="Select file to import" colspan="4" align="0.0"/>
+                    <newline/>
+                    <group col="4" colspan="4">
+                        <field name="file" filename="filename" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                        <field name="filename" invisible="1"/>
+                    </group>
+                    <newline />
+                    <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
+                    <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" widget="text"/>
+                    <newline/>
+                    <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
+                    <newline />
+                    <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
+                    <group col="4" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <label string="The import template is detailed below. Cheque number is considered only for the Cheque Register, and must left blank for Bank and Cash Registers."/>
+                        <newline />
+                        <html>
+                          <br />
+                          <table style="margin: 0 auto;">
+                            <thead>
+                              <tr>
+                                <th class='proprietary_instance' style="border: thin solid black;">Proprietary instance's code</th>
+                                <th style="border: thin solid black; border-left: none;"></th>
+                              </tr>
+                              <tr>
+                                <th class='journal' style="border: thin solid black; border-top: none;">Journal's code</th>
+                                <th style="border-bottom: thin solid black; border-right: thin solid black;"></th>
+                              </tr>
+                              <tr>
+                                <th class='currency' style="border-left: thin solid black; border-right: thin solid black;">Currency's code</th>
+                                <th style="border-right: thin solid black;"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr style='background-color: #ccc;'>
+                                <th class='document_date' style="border: thin solid black;">Document date</th>
+                                <th class='posting_date' style='border: thin solid black; border-left: none;'>Posting date</th>
+                                <th class='cheque_number' style='border: thin solid black; border-left: none;'>Cheque number</th>
+                                <th class='description' style='border: thin solid black; border-left: none;'>Description</th>
+                                <th class='reference' style='border: thin solid black; border-left: none;'>Reference</th>
+                                <th class='account' style='border: thin solid black; border-left: none;'>Account</th>
+                                <th class='third_party' style='border: thin solid black; border-left: none;'>Third party</th>
+                                <th class='amount_in' style='border: thin solid black; border-left: none;'>Amount IN</th>
+                                <th class='amount_out' style='border: thin solid black; border-left: none;'>Amount OUT</th>
+                                <th class='destination' style='border: thin solid black; border-left: none;'>Destination</th>
+                                <th class='cost_center' style='border: thin solid black; border-left: none;'>Cost Centre</th>
+                                <th class='funding_pool' style='border: thin solid black; border-left: none;'>Funding Pool</th>
+                                <th class='free1' style='border: thin solid black; border-left: none;'>Free 1</th>
+                                <th class='free2' style='border: thin solid black; border-left: none;'>Free 2</th>
+                              </tr>
+                              <tr>
+                                <th style="border: thin solid black; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <br />
+                        </html>
+                    </group>
+                    <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Import" icon="terp-camera_test"/>
+                    </group>
+                    <button name="button_return" type="object" icon="terp-camera_test" string="Ok" attrs="{'invisible': [('state', '!=', 'done')]}"/>
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <act_window id="action_register_import"
+          name="Import register lines"
+          res_model="wizard.register.import"
+          src_model="account.bank.statement"
+          key2="client_action_multi"
+          view_mode='form'
+          view_type='form'
+          target='new' />
+
+    </data>
+</openerp>

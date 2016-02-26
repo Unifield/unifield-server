@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_account_chart_inherit" model="ir.ui.view">
+            <field name="name">account.chart.inherit</field>
+            <field name="model">account.chart</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_chart"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='period_to']" position="after">
+                        <newline/>
+                        <separator string="Instance" colspan="4"/>
+                        <field name="instance_ids">
+                           <tree string="Proprietary Instances">
+                                <field name="name"/>
+                                <field name="code"/>
+                            </tree>
+                        </field>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>

@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    
+        <record id="view_partner_form" model="ir.ui.view">
+            <field name="name">res.partner.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']" position="after">
+                        <page string="Claims">
+                            <field name="claim_ids_res_partner" nolabel="1" colspan="4" mode="tree,form" readonly="True" />
+                                <!--<tree string="Claims" hide_new_button="1" editable="top" noteditable="1" />
+                                    <button name="edit_catalogue" type="object" string="Edit catalogue" icon="gtk-edit" />
+                                    <field name="name" />
+                                    <field name="period_from" />
+                                    <field name="period_to" />
+                                    <field name="currency_id" />
+                                    <button name="open_lines" type="object" string="Open catalogue" icon="terp-stock_zoom" />
+                                </tree>
+                            </field> -->
+                        </page>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    
+        <record id="view_return_claim_form" model="ir.ui.view">
+            <field name="name">return.claim.form</field>
+            <field name="model">return.claim</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Claim">
+                    <group col="6" colspan="4">
+                        <group col="4" colspan="4">
+                            <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="type_return_claim"
+                                attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                            <field name="category_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        </group>
+                        <group col="2" colspan="1">
+                                <field name="creation_date_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                <field name="contains_event_return_claim" />
+                            </group>
+                        </group>
+                        <notebook colspan="4">
+                            <page string="Description">
+                                <field name="picking_id_return_claim"
+                                    domain="[('state', '=', 'done'), '|', '&amp;', ('type', 'in', ['out', 'in']), ('subtype', '=', 'standard'), '&amp;', '&amp;', ('type', '=', 'out'), ('subtype', '=', 'picking'), ('backorder_id', '!=', False)]"
+                                    on_change="on_change_origin(picking_id_return_claim,context)"
+                                    attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                                <field name="po_so_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                <field name="partner_id_return_claim"
+                                    attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                                <field name="order_line_number_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                <field name="description_return_claim" colspan="4" />
+                            </page>
+                            <page string="Events">
+                                <field name="event_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}">
+                                    <form string="Event">
+                                        <group col="6" colspan="4">
+                                            <notebook colspan="4">
+                                                <page string="Event">
+                                                    <group colspan="4" col="4">
+                                                        <field name="creation_date_claim_event" />
+                                                        <field name="from_picking_wizard_claim_event" />
+                                                        <field name="location_id_claim_event" />
+                                                        <field name="return_claim_id_claim_event" invisible="True" />
+                                                        <field name="type_claim_event" />
+                                                    </group>
+                                                </page>
+                                                <page string="Notes">
+                                                    <field name="description_claim_event" nolabel="True" />
+                                                </page>
+                                            </notebook>
+                                            <group col="5" colspan="2">
+                                                <field name="state" colspan="3" />
+                                            </group>
+                                        </group>
+                                    </form>
+                                    <tree string="Events" editable="top" hide_new_button="True">
+                                        <field name="name" invisible="True" />
+                                        <field name="order_claim_event" invisible="True" />
+                                        <field name="type_claim_event" />
+                                        <field name="location_id_claim_event" />
+                                        <field name="description_claim_event" />
+                                        <field name="creation_date_claim_event" />
+                                        <field name="state" />
+                                        <field name="from_picking_wizard_claim_event" />
+                                        <field name="hidden_state" invisible="True" />
+                                        <button name="do_process_event" type="object" string="Process Event" icon="gtk-go-forward"
+                                            attrs="{'invisible': [('hidden_state', '=', 'done')]}" />
+                                    </tree>
+                                </field>
+                                <group colspan="3" col="3" />
+                                <button name="add_event" type="object" string="Add an Event" icon="gtk-add"
+                                    attrs="{'readonly': ['|', ('fake_state_return_claim', '=', 'done'), ('type_return_claim', '=', 'transport')]}" />
+                            </page>
+                            <page string="Products">
+                                <field name="default_src_location_id_return_claim" attrs="{'readonly': ['|', ('type_return_claim', 'not in', ['supplier', 'transport']), ('state', '!=', 'draft')]}" domain="[('usage', '!=', 'view')]" />
+                                <field name="product_line_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4"
+                                    attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'claim_type': type_return_claim, 'default_src': default_src_location_id_return_claim, 'claim_partner': partner_id_return_claim}">
+                                    <tree string="Products" editable="top" colors="red:integrity_status_claim_product_line != 'empty'">
+                                        <field name="name" invisible="True" />
+                                        <field name="product_id_claim_product_line" domain="[('picking_ids', '=', parent.picking_id_return_claim)]"
+                                            on_change="on_change_product_id(src_location_id_claim_product_line,product_id_claim_product_line,lot_id_claim_product_line,uom_id_claim_product_line,context)"
+                                            context="location=src_location_id_claim_product_line,uom=uom_id_claim_product_line" />
+                                        <field name="asset_id_claim_product_line"
+                                            attrs="{'readonly': [('hidden_asset_claim_product_line', '=', False)]}" />
+                                        <field name="composition_list_id_claim_product_line"
+                                            attrs="{'readonly': [('hidden_kit_claim_product_line', '=', False)]}" />
+                                        <field name="lot_id_claim_product_line"
+                                            on_change="change_lot(src_location_id_claim_product_line,product_id_claim_product_line,lot_id_claim_product_line,uom_id_claim_product_line,context)"
+                                            context="{'location_id':src_location_id_claim_product_line,'product_id':product_id_claim_product_line,'hidden_perishable_mandatory':hidden_perishable_mandatory_claim_product_line,'search_default_real':True}"
+                                            domain="[('check_type','=', True), ('product_id', '=?', product_id_claim_product_line)]"
+                                            attrs="{'required': [('hidden_batch_management_mandatory_claim_product_line', '=', True)], 'readonly': [('hidden_perishable_mandatory_claim_product_line', '=', False), ('hidden_batch_management_mandatory_claim_product_line', '=', False)]}" />
+                                        <field name="expiry_date_claim_product_line"
+                                            on_change="change_expiry(expiry_date_claim_product_line,product_id_claim_product_line,type_check,src_location_id_claim_product_line,lot_id_claim_product_line,uom_id_claim_product_line,context)"
+                                            attrs="{'required': [('hidden_perishable_mandatory_claim_product_line', '=', True)], 'readonly': ['|', ('hidden_perishable_mandatory_claim_product_line', '=', False), ('hidden_batch_management_mandatory_claim_product_line', '=', True)]}" />
+                                        <field name="claim_type_claim_product_line" invisible="True" />
+                                        <field name="src_location_id_claim_product_line"
+                                            attrs="{'readonly': [('claim_type_claim_product_line', 'not in', ['supplier', 'transport'])], 'required': [('claim_type_claim_product_line', '=', 'supplier')]}"
+                                            domain="[('usage', '=', 'internal')]"
+                                            on_change="on_change_location_id(src_location_id_claim_product_line,product_id_claim_product_line,lot_id_claim_product_line,uom_id_claim_product_line,context)"
+                                            context="{'product_id':product_id_claim_product_line,'prodlot_id':lot_id_claim_product_line,'specific_rules_tree_view':True,'compute_child':False}" />
+                                        <field name="qty_claim_product_line" on_change="onchange_uom_qty(uom_id_claim_product_line, qty_claim_product_line)" />
+                                        <field name="uom_id_claim_product_line" on_change="onchange_uom_qty(uom_id_claim_product_line, qty_claim_product_line)" />
+                                        <field name="hidden_stock_available_claim_product_line" invisible="False" />
+                                        <field name="stock_move_id_claim_product_line" invisible="True" />
+                                        
+                                        <field name="type_check" invisible="True" />
+                                        <field name="hidden_batch_management_mandatory_claim_product_line" string="Lot" />
+                                        <field name="hidden_perishable_mandatory_claim_product_line" string="Exp" />
+                                        <field name="hidden_kit_claim_product_line" invisible="True" string="Kit" />
+                                        <field name="hidden_asset_claim_product_line" invisible="True" string="Asset" />
+                                        <field name="integrity_status_claim_product_line" />
+                                    </tree>
+                                </field>
+                                <group colspan="2" col="2" />
+                                <button name="check_product_lines_integrity" type="object" string="Check Integrity" icon="gtk-apply"
+                                    attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                <button name="load_products" type="object" string="Load Products from IN/OUT" icon="gtk-add"
+                                    attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            </page>
+                            <page string="Follow Up">
+                                <field name="follow_up_return_claim" nolabel="True" />
+                            </page>
+                        </notebook>
+                        <group col="5" colspan="2">
+                            <field name="state" colspan="3" />
+                            <field name="fake_state_return_claim" invisible="True" />
+                        </group>
+                        <group col="7" colspan="2">
+                            <!-- <button name="process_next_event" string="Process Next Event" type="object" icon="gtk-go-forward" attrs="{'readonly': [('contains_event_return_claim', '=', False)]}" /> -->
+                            <button name="close_claim" string="Close Claim" type="object" icon="gtk-close" attrs="{'invisible': [('state', '=', 'done')]}" />
+                        </group>
+                    </form>
+                </field>
+            </record>
+            
+            <record id="view_return_claim_tree" model="ir.ui.view">
+                <field name="name">return.claim.tree</field>
+                <field name="model">return.claim</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Claim">
+                        <field name="name" />
+                        <field name="type_return_claim" />
+                        <field name="creation_date_return_claim" />
+                        <field name="state" />
+                    </tree>
+                </field>
+            </record>
+            
+            <record id="view_return_claim_filter" model="ir.ui.view">
+                <field name="name">return.claim.filter</field>
+                <field name="model">return.claim</field>
+                <field name="type">search</field>
+                <field name="arch" type="xml">
+                    <search string="Search Claim">
+                        <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
+                        <filter icon="terp-camera_test" name="completed" string="In Progress" domain="[('state','=', 'in_progress')]" separator="1" />
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                        <separator orientation="vertical" />
+                        <filter icon="terp-personal" name="supplier" string="Supplier" domain="[('type_return_claim','=','supplier')]" separator="1" />
+                        <filter icon="terp-personal" name="customer" string="Customer" domain="[('type_return_claim','=', 'customer')]" separator="1" />
+                        <filter icon="terp-personal" name="transport" string="Transport" domain="[('type_return_claim','=','transport')]" />
+                        <separator orientation="vertical" />
+                        <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
+                        <separator orientation="vertical" />
+                        <field name="state" select="1" />
+                        <newline />
+                        <group expand="0" string="Group By..." colspan="4" col="10">
+                            <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'creation_date_return_claim'}"/>
+                        </group>
+                    </search>
+                </field>
+            </record>
+            
+            <record id="return_claim_action_purchase" model="ir.actions.act_window">
+                <field name="name">Claim</field>
+                <field name="res_model">return.claim</field>
+                <field name="view_type">form</field>
+                <field name="view_mode">tree,form</field>
+                <field name="domain">[]</field>
+                <field name="context">{'search_default_supplier':True}</field>
+                <field name="search_view_id" ref="view_return_claim_filter" />
+            </record>
+            
+            <menuitem id="return_claim_purchase" name="Claim" parent="base.menu_purchase_root" sequence="2" />
+            <menuitem action="return_claim_action_purchase" id="return_claim_menu_purchase" parent="return_claim_purchase" sequence="1" />
+            
+            <record id="return_claim_action_sale" model="ir.actions.act_window">
+                <field name="name">Claim</field>
+                <field name="res_model">return.claim</field>
+                <field name="view_type">form</field>
+                <field name="view_mode">tree,form</field>
+                <field name="domain">[]</field>
+                <field name="context">{'search_default_customer':True}</field>
+                <field name="search_view_id" ref="view_return_claim_filter" />
+            </record>
+            
+            <menuitem id="return_claim_sale" name="Claim" parent="base.menu_base_partner" sequence="2" />
+            <menuitem action="return_claim_action_sale" id="return_claim_menu_sale" parent="return_claim_sale" sequence="1" />
+            
+            <record id="view_picking_in_form" model="ir.ui.view">
+                <field name="name">stock.picking.in.form</field>
+                <field name="model">stock.picking</field>
+                <field name="type">form</field>
+                <field name="inherit_id" ref="stock.view_picking_in_form" />
+                <field name="arch" type="xml">
+                    <data>
+                    
+                        <xpath expr="/form/notebook/page/group/group/button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
+                            <attribute name="invisible">True</attribute>
+                            <attribute name="states"></attribute>
+                        </xpath>
+                        
+                    </data>
+                </field>
+            </record>
+            
+            <record id="view_picking_out_form" model="ir.ui.view">
+                <field name="name">stock.picking.out.form</field>
+                <field name="model">stock.picking</field>
+                <field name="type">form</field>
+                <field name="inherit_id" ref="stock.view_picking_out_form" />
+                <field name="arch" type="xml">
+                    <data>
+                    
+                        <xpath expr="/form/notebook/page/group/button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
+                            <attribute name="invisible">True</attribute>
+                            <attribute name="states"></attribute>
+                        </xpath>
+                    
+                    </data>
+                </field>
+            </record>
+
+        </data>
+    </openerp>

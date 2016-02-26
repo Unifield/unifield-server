@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+
+        <!-- Sequence for picking ticket -->
+        <record id="seq_type_picking_ticket" model="ir.sequence.type">
+            <field name="name">Picking Ticket</field>
+            <field name="code">picking.ticket</field>
+        </record>
+
+        <record id="seq_picking_ticket" model="ir.sequence">
+            <field name="name">Picking Ticket</field>
+            <field name="code">picking.ticket</field>
+            <field name="prefix">PICK/</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+        
+        <!-- Sequence for ppl -->
+        <record id="seq_type_ppl" model="ir.sequence.type">
+            <field name="name">PPL</field>
+            <field name="code">ppl</field>
+        </record>
+
+        <record id="seq_ppl" model="ir.sequence">
+            <field name="name">PPL</field>
+            <field name="code">ppl</field>
+            <field name="prefix">PPLx/</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+
+        <!-- Sequence for shipment -->
+        <record id="seq_type_shipment" model="ir.sequence.type">
+            <field name="name">Shipment</field>
+            <field name="code">shipment</field>
+        </record>
+
+        <record id="seq_shipment" model="ir.sequence">
+            <field name="name">Shipment</field>
+            <field name="code">shipment</field>
+            <field name="prefix">SHIP/</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+
+	</data>
+</openerp>
+

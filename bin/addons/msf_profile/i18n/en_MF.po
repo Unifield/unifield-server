@@ -1,0 +1,801 @@
+# Translation of OpenERP Server.
+# This file contains the translation of the following modules:
+#	* analytic_distribution_supply
+#	* account_voucher
+#	* account_journal
+#	* procurement_cycle
+#	* res_currency_tables
+#	* analytic
+#	* order_line_number
+#	* board
+#	* vat_management
+#	* partner_modification
+#	* sales_followup
+#	* product_asset
+#	* res_currency_functional
+#	* threshold_value
+#	* register_accounting
+#	* resource
+#	* stock_move_tracking
+#	* purchase_msf
+#	* delivery_mechanism
+#	* tender_flow
+#	* product_nomenclature
+#	* stock_schedule
+#	* product_attributes
+#	* base_report_designer
+#	* account_chart
+#	* account_accountant
+#	* account_msf
+#	* stock_forecast
+#	* order_types
+#	* msf_order_date
+#	* account_payment
+#	* procurement_request
+#	* account_reconciliation
+#	* consumption_calculation
+#	* out_step
+#	* base
+#	* decimal_precision
+#	* msf_budget
+#	* procurement_auto
+#	* transport_mgmt
+#	* web_livechat
+#	* product_list
+#	* specific_locations
+#	* account_subscription
+#	* product_expiry
+#	* import_data
+#	* purchase_compare_rfq
+#	* analytic_distribution_invoice
+#	* account_activable
+#	* analytic_distribution
+#	* reason_types_moves
+#	* purchase
+#	* hr
+#	* purchase_double_validation
+#	* service_purchasing
+#	* purchase_override
+#	* sale_override
+#	* product_manufacturer
+#	* procurement_report
+#	* account_corrections
+#	* account
+#	* sourcing
+#	* msf_chart_of_account
+#	* msf_profile
+#	* process
+#	* financing_contract
+#	* account_override
+#	* msf_printed_documents
+#	* base_setup
+#	* account_mcdb
+#	* stock_batch_recall
+#	* msf_audittrail
+#	* stock
+#	* product
+#	* stock_override
+#	* specific_rules
+#	* account_period_closing_level
+#	* msf_tools
+#	* account_invoice_split
+#	* msf_outgoing
+#	* msf_partner
+#	* order_nomenclature
+#	* documents_done
+#	* sale
+#	* procurement
+#	* object_query
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: unifield-wm\n"
+"Report-Msgid-Bugs-To: duy.vo@geneva.msf.org\n"
+"POT-Creation-Date: 2012-03-09 14:11+0000\n"
+"PO-Revision-Date: 2012-05-23 11:57+0100\n"
+"Last-Translator: Duy VO duy.vo@geneva.msf.org\n"
+"Language-Team: Unifield duy.vo@geneva.msf.org\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Launchpad-Export-Date: 2012-03-12 08:23+0000\n"
+"X-Generator: Launchpad (build 14933)\n"
+
+#. module: sale
+#: view:board.board:0
+#: model:ir.actions.act_window,name:sale.action_sales_by_salesman
+msgid "Sales by Salesman in last 90 days"
+msgstr "Field Orders by Responsible in last 90 days"
+
+#. module: product
+#: view:res.partner:0
+msgid "Sales & Purchases"
+msgstr "Field orders & Purchases"
+
+#. module: product
+#: view:res.partner:0
+msgid "Sales Properties"
+msgstr "Field orders properties"
+
+#. module: sale
+#: model:ir.actions.act_window,name:sale.action_config_picking_policy
+msgid "Configure Picking Policy for Sales Order"
+msgstr "Configure Picking Policy for Field Order"
+
+#. module: sales_followup
+#: view:sale.order.followup.from.menu:0
+msgid "Choose a Sale Order"
+msgstr "Choose a Field Order"
+
+#. module: sale
+#: view:sale.report:0
+msgid "Sales by Salesman"
+msgstr "Field Orders by Responsible"
+
+#. module: sale
+#: model:ir.actions.act_window,name:sale.action_order_tree2
+msgid "Sales in Exception"
+msgstr "Field Order in Exception"
+
+#. modules: msf_order_date, tender_flow, procurement_request, order_nomenclature, service_purchasing, sale, specific_rules, order_line_number, res_currency_functional, sourcing
+#: model:ir.model,name:msf_order_date.model_sale_order_line
+#: model:ir.model,name:order_line_number.model_sale_order_line
+#: model:ir.model,name:order_nomenclature.model_sale_order_line
+#: model:ir.model,name:procurement_request.model_sale_order_line
+#: model:ir.model,name:res_currency_functional.model_sale_order_line
+#: model:ir.model,name:sale.model_sale_order_line
+#: field:stock.move,sale_line_id:0
+#: model:ir.model,name:service_purchasing.model_sale_order_line
+#: model:ir.model,name:sourcing.model_sale_order_line
+#: model:ir.model,name:specific_rules.model_sale_order_line
+#: model:ir.model,name:tender_flow.model_sale_order_line
+msgid "Sales Order Line"
+msgstr "Field Order Line"
+
+#. module: sale
+#: help:sale.installer,sale_layout:0
+msgid "Provides some features to improve the layout of the Sales Order reports."
+msgstr "Provides some features to improve the layout of the Field Order reports."
+
+#. module: sale
+#: view:sale.installer:0
+msgid "Configure Your Sales Management Application"
+msgstr "Configure Your Field Management Application"
+
+#. module: transport_mgmt
+#: model:ir.module.module,description:transport_mgmt.module_meta_information
+msgid ""
+"\n"
+"    This module aims at implementing the transport cost in Purchase and Sale orders.\n"
+"    "
+msgstr ""
+"\n"
+"    This module aims at implementing the transport cost in Purchase and Field orders.\n"
+"    "
+
+#. module: sale
+#: view:sale.config.picking_policy:0
+msgid "Configure Sales Order Logistics"
+msgstr "Configure Field Order Logistics"
+
+#. module: sale
+#: field:sale.installer,sale_order_dates:0
+msgid "Sales Order Dates"
+msgstr "Field Order Dates"
+
+#. module: sale
+#: view:sale.report:0
+msgid "Sales by Partner"
+msgstr "Field Order by Partner"
+
+#. module: sales_followup
+#: model:ir.model,name:sales_followup.model_sale_order_followup
+msgid "Sales Order Followup"
+msgstr "Field Order Followup"
+
+#. module: sale
+#: view:sale.order:0
+#: view:sale.order.line:0
+msgid "Sales Order Lines"
+msgstr "Field Order Lines"
+
+#. module: sale
+#: model:ir.model,name:sale.model_sale_order_line_make_invoice
+msgid "Sale OrderLine Make_invoice"
+msgstr "Field OrderLine Make_invoice"
+
+#. module: sale
+#: model:ir.actions.act_window,help:sale.action_order_form
+msgid "Sales Orders help you manage quotations and orders from your customers. OpenERP suggests that you start by creating a quotation. Once it is confirmed, the quotation will be converted into a Sales Order. OpenERP can handle several types of products so that a field order may trigger tasks, delivery orders, manufacturing orders, purchases and so on. Based on the configuration of the field order, a draft invoice will be generated so that you just have to confirm it when you want to bill your customer."
+msgstr "Field Orders help you manage quotations and orders from your customers. OpenERP suggests that you start by creating a quotation. Once it is confirmed, the quotation will be converted into a Field Order. OpenERP can handle several types of products so that a field order may trigger tasks, delivery orders, manufacturing orders, purchases and so on. Based on the configuration of the field order, a draft invoice will be generated so that you just have to confirm it when you want to bill your customer."
+
+#. module: sale
+#: model:ir.module.module,description:sale.module_meta_information
+msgid ""
+"\n"
+"    The base module to manage quotations and field orders.\n"
+"\n"
+"    * Workflow with validation steps:\n"
+"        - Quotation -> Sales order -> Invoice\n"
+"    * Invoicing methods:\n"
+"        - Invoice on order (before or after shipping)\n"
+"        - Invoice on delivery\n"
+"        - Invoice on timesheets\n"
+"        - Advance invoice\n"
+"    * Partners preferences (shipping, invoicing, incoterm, ...)\n"
+"    * Products stocks and prices\n"
+"    * Delivery methods:\n"
+"        - all at once, multi-parcel\n"
+"        - delivery costs\n"
+"    * Dashboard for salesman that includes:\n"
+"    * Your open quotations\n"
+"    * Top 10 sales of the month\n"
+"    * Cases statistics\n"
+"    * Graph of sales by product\n"
+"    * Graph of cases of the month\n"
+"    "
+msgstr ""
+"\n"
+"    The base module to manage quotations and field orders.\n"
+"\n"
+"    * Workflow with validation steps:\n"
+"        - Quotation -> Field order -> Invoice\n"
+"    * Invoicing methods:\n"
+"        - Invoice on order (before or after shipping)\n"
+"        - Invoice on delivery\n"
+"        - Invoice on timesheets\n"
+"        - Advance invoice\n"
+"    * Partners preferences (shipping, invoicing, incoterm, ...)\n"
+"    * Products stocks and prices\n"
+"    * Delivery methods:\n"
+"        - all at once, multi-parcel\n"
+"        - delivery costs\n"
+"    * Dashboard for salesman that includes:\n"
+"    * Your open quotations\n"
+"    * Top 10 sales of the month\n"
+"    * Cases statistics\n"
+"    * Graph of sales by product\n"
+"    * Graph of cases of the month\n"
+"    "
+
+#. module: sale
+#: view:sale.report:0
+msgid "Sales by Product Category"
+msgstr "Field Order by Product Category"
+
+#. module: sale_override
+#: model:ir.module.module,shortdesc:sale_override.module_meta_information
+msgid "Sale override"
+msgstr "Field order override"
+
+#. module: sourcing
+#: code:addons/sourcing/sourcing.py:77
+#, python-format
+msgid "Cannot delete Sale Order Line(s) from the sourcing tool !"
+msgstr "Cannot delete Field Order Line(s) from the sourcing tool !"
+
+#. module: purchase
+#: view:purchase.order.line_invoice:0
+msgid "Select an Open Sale Order"
+msgstr "Select an Open Field Order"
+
+#. module: sale
+#: model:ir.model,name:sale.model_sale_shop
+#: view:sale.shop:0
+msgid "Sales Shop"
+msgstr "Field Shop"
+
+#. module: sale
+#: model:process.node,name:sale.process_node_saleorderprocurement0
+msgid "Sales Order Requisition"
+msgstr "Field Order"
+
+#. module: sale
+#: view:sale.report:0
+msgid "Sales By Month"
+msgstr "Field Orders By Month"
+
+#. module: procurement_request
+#: code:addons/procurement_request/wizard/wizard_import_list.py:88
+#, python-format
+msgid "You cannot import lines in a Sale Order"
+msgstr "You cannot import lines in a Field Order"
+
+#. module: msf_outgoing
+#: field:stock.move,sale_order_line_number:0
+msgid "Sale Order Line Number"
+msgstr "Field Order Line Number"
+
+#. modules: account, product
+#: view:product.product:0
+#: view:product.template:0
+#: view:res.partner:0
+msgid "Sales Properties"
+msgstr "Field Orders Properties"
+
+#. module: sales_followup
+#: model:ir.actions.act_window,name:sales_followup.action_sale_order_followup_from_menu
+#: model:ir.ui.menu,name:sales_followup.menuitem_sale_order_followup_from_menu
+msgid "Sale Order Follow-Up"
+msgstr "Field Order Follow-Up"
+
+#. module: sale
+#: model:ir.actions.act_window,name:sale.action_order_report_all
+#: model:ir.ui.menu,name:sale.menu_report_product_all
+#: view:sale.report:0
+msgid "Sales Analysis"
+msgstr "Field Order Analysis"
+
+#. module: sale
+#: code:addons/sale/wizard/sale_line_invoice.py:111
+#, python-format
+msgid ""
+"Invoice cannot be created for this Sales Order Line due to one of the following reasons:\n"
+"1.The state of this field order line is either \"draft\" or \"cancel\"!\n"
+"2.The Sales Order Line is Invoiced!"
+msgstr ""
+"Invoice cannot be created for this Field Order Line due to one of the following reasons:\n"
+"1.The state of this field order line is either \"draft\" or \"cancel\"!\n"
+"2.The Field Order Line is Invoiced!"
+
+#. module: sales_followup
+#: view:sale.order.followup.from.menu:0
+msgid "Select Sale Order"
+msgstr "Select Field Order"
+
+#. module: sale
+#: view:sale.order:0
+#: view:sale.order.line:0
+msgid "Search Sales Order"
+msgstr "Search Field Order"
+
+#. modules: sourcing, tender_flow
+#: field:sourcing.line,sale_order_line_id:0
+#: field:tender.line,sale_order_line_id:0
+msgid "Sale Order Line"
+msgstr "Field Order Line"
+
+#. module: sale
+#: view:board.board:0
+#: model:ir.actions.act_window,name:sale.action_sales_by_partner
+msgid "Sales per Customer in last 90 days"
+msgstr "Fields Order per Customer in last 90 days"
+
+#. module: product
+#: field:product.template,list_price:0
+msgid "Sale Price"
+msgstr "Field Price"
+
+#. module: sale
+#: view:board.board:0
+#: model:ir.actions.act_window,name:sale.open_board_sales_manager
+#: model:ir.ui.menu,name:sale.menu_board_sales_manager
+msgid "Sales Manager Dashboard"
+msgstr "Field Manager Dashboard"
+
+#. module: sales_followup
+#: field:sale.order.line.followup,followup_id:0
+msgid "Sale Order Followup"
+msgstr "Field Order Followup"
+
+#. module: sale
+#: model:ir.actions.act_window,name:sale.action_sale_installer
+#: view:sale.config.picking_policy:0
+#: view:sale.installer:0
+msgid "Sales Application Configuration"
+msgstr "Field Application Configuration"
+
+#. modules: sourcing, documents_done, tender_flow
+#: selection:documents.done.wizard,model:0
+#: view:sourcing.line:0
+#: field:sourcing.line,sale_order_id:0
+#: view:tender:0
+#: field:tender,sale_order_id:0
+msgid "Sale Order"
+msgstr "Field Order"
+
+#. module: sales_followup
+#: model:ir.model,name:sales_followup.model_sale_order_followup_from_menu
+msgid "Sale order followup menu entry"
+msgstr "Field order followup menu entry"
+
+#. module: sale
+#: model:ir.model,name:sale.model_sale_open_invoice
+msgid "Sales Open Invoice"
+msgstr "Field Open Invoice"
+
+#. module: msf_outgoing
+#: field:pack.family.memory,sale_order_id:0
+#: report:pre.packing.list:0
+#: field:stock.move.memory.shipment.create,sale_order_id:0
+#: field:stock.move.memory.shipment.returnpacks,sale_order_id:0
+#: field:stock.move.memory.shipment.returnpacksfromshipment,sale_order_id:0
+msgid "Sale Order Ref"
+msgstr "Field Order Ref"
+
+#. module: sale
+#: field:sale.installer,sale_margin:0
+msgid "Margins in Sales Orders"
+msgstr "Margins in Field Orders"
+
+#. modules: msf_order_date, sales_followup, msf_outgoing, procurement_request, sale, specific_rules, transport_mgmt, sale_override, order_line_number, res_currency_functional, sourcing
+#: model:ir.model,name:msf_order_date.model_sale_order
+#: model:ir.model,name:msf_outgoing.model_sale_order
+#: model:ir.model,name:order_line_number.model_sale_order
+#: model:ir.model,name:procurement_request.model_sale_order
+#: model:ir.model,name:res_currency_functional.model_sale_order
+#: model:ir.model,name:sale.model_sale_order
+#: model:process.node,name:sale.process_node_order0
+#: model:res.request.link,name:sale.req_link_sale_order
+#: view:sale.order:0
+#: field:stock.picking,sale_id:0
+#: model:ir.model,name:sale_override.model_sale_order
+#: model:ir.model,name:sales_followup.model_sale_order
+#: model:ir.model,name:sourcing.model_sale_order
+#: model:ir.model,name:specific_rules.model_sale_order
+#: model:ir.model,name:transport_mgmt.model_sale_order
+msgid "Sales Order"
+msgstr "Field Order"
+
+#. module: sale
+#: view:board.board:0
+#: model:ir.actions.act_window,name:sale.action_sales_product_total_price
+msgid "Sales by Product's Category in last 90 days"
+msgstr "Field Orders by Product's Category in last 90 days"
+
+#. module: account_voucher
+#: view:account.voucher:0
+msgid "Sales Information"
+msgstr "Field Information"
+
+#. module: sale
+#: help:sale.installer,sale_order_dates:0
+msgid "Adds commitment, requested and effective dates on Sales Orders."
+msgstr "Adds commitment, requested and effective dates on Field Orders."
+
+#. module: sale
+#: code:addons/sale/sale.py:290
+#, python-format
+msgid "Cannot delete Sales Order(s) which are already confirmed !"
+msgstr "Cannot delete Field Order(s) which are already confirmed !"
+
+#. module: sale
+#: model:ir.actions.act_window,name:sale.action_order_tree4
+msgid "Sales Order in Progress"
+msgstr "Field Order in Progress"
+
+#. module: procurement
+#: model:ir.actions.act_window,help:procurement.procurement_exceptions
+msgid "Procurement Orders represent the need for a certain quantity of products, at a given time, in a given location. Sales Orders are one typical source of Procurement Orders (but these are distinct documents). Depending on the procurement parameters and the product configuration, the procurement engine will attempt to satisfy the need by reserving products from stock, ordering products from a supplier, or passing a manufacturing order, etc. A Procurement Exception occurs when the system cannot find a way to fulfill a procurement. Some exceptions will resolve themselves automatically, but others require manual intervention (those are identified by a specific error message)."
+msgstr "Procurement Orders represent the need for a certain quantity of products, at a given time, in a given location. Field Orders are one typical source of Procurement Orders (but these are distinct documents). Depending on the procurement parameters and the product configuration, the procurement engine will attempt to satisfy the need by reserving products from stock, ordering products from a supplier, or passing a manufacturing order, etc. A Procurement Exception occurs when the system cannot find a way to fulfill a procurement. Some exceptions will resolve themselves automatically, but others require manual intervention (those are identified by a specific error message)."
+
+#. module: product
+#: model:product.pricelist.type,name:product.pricelist_type_sale
+#: field:res.partner,property_product_pricelist:0
+msgid "Sale Pricelist"
+msgstr "Field orders default currency"
+
+#. module: sale
+#: model:ir.model,name:sale.model_sale_advance_payment_inv
+msgid "Sales Advance Payment Invoice"
+msgstr "Field Advance Payment Invoice"
+
+#. module: sale
+#: view:board.board:0
+#: model:ir.actions.act_window,name:sale.action_view_sales_by_month
+msgid "Sales by Month"
+msgstr "Field Orders by Month"
+
+#. module: sales_followup
+#: model:ir.model,name:sales_followup.model_sale_order_line_followup
+msgid "Sales Order Lines Followup"
+msgstr "Field Order Lines Followup"
+
+#. module: tender_flow
+#: field:procurement.order,sale_order_line_ids:0
+msgid "Sale Order Lines"
+msgstr "Field Order Lines"
+
+#. module: product
+#: view:product.product:0
+#: view:product.template:0
+#: field:product.template,description_sale:0
+msgid "Sale Description"
+msgstr "Field Description"
+
+#. module: sale
+#: field:sale.config.picking_policy,step:0
+msgid "Steps To Deliver a Sales Order"
+msgstr "Steps To Deliver a Field Order"
+
+#. module: sale
+#: selection:sale.config.picking_policy,order_policy:0
+msgid "Invoice Based on Sales Orders"
+msgstr "Invoice Based on Field Orders"
+
+#. module: sales_followup
+#: model:ir.module.module,shortdesc:sales_followup.module_meta_information
+msgid "Sales Follow-Up"
+msgstr "Field Order Follow-Up"
+
+#. module: sale
+#: field:sale.installer,sale_layout:0
+msgid "Sales Order Layout Improvement"
+msgstr "Field Order Layout Improvement"
+
+#. module: sale
+#: model:ir.model,name:sale.model_sale_make_invoice
+msgid "Sales Make Invoice"
+msgstr "Field Orders Make Invoice"
+
+#. module: base
+#: help:ir.actions.server,name:0
+msgid "Easy to Refer action by name e.g. One Sales Order -> Many Invoices"
+msgstr "Easy to Refer action by name e.g. One Field Order -> Many Invoices"
+
+#. module: sale
+#: view:sale.installer:0
+msgid "Enhance your core Sales Application with additional functionalities."
+msgstr "Enhance your core Field Application with additional functionalities."
+
+#. module: sale
+#: view:sale.report:0
+msgid "My Sales"
+msgstr "My Field Orders"
+
+#. modules: sale_override, sale
+#: model:ir.model,name:sale.model_sale_report
+#: model:ir.model,name:sale_override.model_sale_report
+msgid "Sales Orders Statistics"
+msgstr "Field Orders Statistics"
+
+#. module: sale
+#: model:ir.actions.act_window,name:sale.action_order_form
+#: model:ir.ui.menu,name:sale.menu_sale_order
+#: view:sale.order:0
+msgid "Sales Orders"
+msgstr "Field Orders"
+
+#. modules: account, base, register_accounting, account_voucher, sale
+#: view:account.invoice:0
+#: field:account.invoice,user_id:0
+#: view:account.invoice.report:0
+#: field:account.invoice.report,user_id:0
+#: view:sale.receipt.report:0
+#: field:sale.receipt.report,user_id:0
+#: view:res.partner:0
+#: field:res.partner,user_id:0
+#: field:wizard.account.invoice,user_id:0
+#: view:sale.order:0
+#: field:sale.order,user_id:0
+#: view:sale.order.line:0
+#: field:sale.order.line,salesman_id:0
+#: view:sale.report:0
+#: field:sale.report,user_id:0
+msgid "Salesman"
+msgstr "Responsible"
+
+#. module: sale
+#: report:msf.sale.order:0
+msgid "Our Salesman"
+msgstr "Our Responsible"
+
+#. modules: account, base, sale
+#: view:account.analytic.line:0
+#: model:ir.ui.menu,name:base.menu_base_partner
+#: model:ir.ui.menu,name:base.menu_sale_config_sales
+#: model:ir.ui.menu,name:base.menu_sales
+#: model:ir.actions.act_window,name:sale.act_res_partner_2_sale_order
+#: model:process.process,name:sale.process_process_salesprocess0
+#: view:sale.order:0
+#: view:sale.report:0
+msgid "Sales"
+msgstr "Orders"
+
+#. module: sale
+#: model:process.transition,note:sale.process_transition_invoice0
+msgid "The Salesman creates an invoice manually, if the field order shipping policy is 'Shipping and Manual in Progress'. The invoice is created automatically if the shipping policy is 'Payment before Delivery'."
+msgstr "The Responsible creates an invoice manually, if the field order shipping policy is 'Shipping and Manual in Progress'. The invoice is created automatically if the shipping policy is 'Payment before Delivery'."
+
+#. module: order_nomenclature
+#: model:ir.module.module,description:order_nomenclature.module_meta_information
+msgid ""
+"\n"
+"    Add nomenclature abilities to orders (sale and purchase).\n"
+"    "
+msgstr ""
+"\n"
+"    Add nomenclature abilities to orders (field and purchase).\n"
+"    "
+
+#. module: product
+#: model:ir.actions.act_window,help:product.product_normal_action
+msgid "You must define a Product for everything you buy or sell. Products can be raw materials, stockable products, consumables or services. The Product form contains detailed information about your products related to procurement logistics, sales price, product category, suppliers and so on."
+msgstr "You must define a Product for everything you buy or sell. Products can be raw materials, stockable products, consumables or services. The Product form contains detailed information about your products related to procurement logistics, field price, product category, suppliers and so on."
+
+#. module: sale
+#: model:ir.actions.act_window,help:sale.action_order_report_all
+msgid "This report performs analysis on your quotations and field orders. Analysis check your sales revenues and sort it by different group criteria (salesman, partner, product, etc.) Use this report to perform analysis on sales not having invoiced yet. If you want to analyse your turnover, you should use the Invoice Analysis report in the Accounting application."
+msgstr "This report performs analysis on your field orders. Analysis check your orders revenues and sort it by different group criteria (responsible, partner, product, etc.) Use this report to perform analysis on orders not having invoiced yet. If you want to analyse your turnover, you should use the Invoice Analysis report in the Accounting application."
+
+#. module: base
+#: help:res.partner.address,type:0
+msgid "Used to select automatically the right address according to the context in sales and purchases documents."
+msgstr "Used to select automatically the right address according to the context in field and purchases documents."
+
+#. module: sale
+#: model:process.transition,note:sale.process_transition_confirmquotation0
+msgid "The salesman confirms the quotation. The state of the field order becomes 'In progress' or 'Manual in progress'."
+msgstr "The responsible confirms the quotation. The state of the field order becomes 'In progress' or 'Manual in progress'."
+
+#. module: sale
+#: view:sale.config.picking_policy:0
+msgid "Setup your sales workflow and default values."
+msgstr "Setup your field orders workflow and default values."
+
+#. module: sale
+#: model:ir.actions.act_window,help:sale.action_order_line_tree2
+msgid "Here is a list of each field order line to be invoiced. You can invoice field orders partially, by lines of field order. You do not need this list if you invoice from the delivery orders or if you invoice sales totally."
+msgstr "Here is a list of each field order line to be invoiced. You can invoice field orders partially, by lines of field order. You do not need this list if you invoice from the delivery orders or if you invoice field orders totally."
+
+#. module: product
+#: model:ir.actions.act_window,help:product.product_normal_action_puchased
+msgid "Products can be purchased and/or sold. They can be raw materials, stockable products, consumables or services. The Product form contains detailed information about your products related to procurement logistics, sales price, product category, suppliers and so on."
+msgstr "Products can be purchased and/or sold. They can be raw materials, stockable products, consumables or services. The Product form contains detailed information about your products related to procurement logistics, field price, product category, suppliers and so on."
+
+#. module: sale
+#: model:process.transition,note:sale.process_transition_saleinvoice0
+msgid "Depending on the Invoicing control of the field order, the invoice can be based on delivered or on ordered quantities. Thus, a field order can generates an invoice or a delivery order as soon as it is confirmed by the salesman."
+msgstr "Depending on the Invoicing control of the field order, the invoice can be based on delivered or on ordered quantities. Thus, a field order can generates an invoice or a delivery order as soon as it is confirmed by the responsible."
+
+#. module: account
+#: help:product.template,property_account_income:0
+msgid "This account will be used for invoices instead of the default one to value sales for the current product"
+msgstr "This account will be used for invoices instead of the default one to value field orders for the current product"
+
+#. module: account
+#: help:product.category,property_account_income_categ:0
+msgid "This account will be used for invoices to value sales for the current product category"
+msgstr "This account will be used for invoices to value field orders for the current product category"
+
+#. module: account
+#: model:ir.actions.act_window,help:account.action_invoice_tree1
+msgid "With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers."
+msgstr "With Stock Transfer Vouchers you can create and manage field invoices issued to your customers. OpenERP can also generate draft invoices automatically from field orders or deliveries. You should only confirm them before sending them to your customers."
+
+#. module: sale
+#: code:addons/sale/sale.py:1099
+#, python-format
+msgid ""
+"You have to select a customer in the sales form !\n"
+"Please set one customer before choosing a product."
+msgstr ""
+"You have to select a customer in the field order form !\n"
+"Please set one customer before choosing a product."
+
+#. module: sale
+#: model:ir.actions.act_window,name:sale.action_order_line_product_tree
+msgid "Product sales"
+msgstr "Product orders"
+
+#. module: sale
+#: model:ir.actions.act_window,help:sale.action_shop_form
+msgid "If you have more than one shop reselling your company products, you can create and manage that from here. Whenever you will record a new quotation or field order, it has to be linked to a shop. The shop also defines the warehouse from which the products will be delivered for each particular sales."
+msgstr "If you have more than one shop reselling your company products, you can create and manage that from here. Whenever you will record a new quotation or field order, it has to be linked to a shop. The shop also defines the warehouse from which the products will be delivered for each particular field order."
+
+#. module: product
+#: help:res.partner,property_product_pricelist:0
+msgid "This pricelist will be used, instead of the default one, for sales to the current partner"
+msgstr "This currency will be used, instead of the default one, for field orders to the current partner"
+
+#. module: product
+#: model:ir.actions.act_window,help:product.product_pricelist_action2
+msgid "A price list contains rules to be evaluated in order to compute the purchase or sales price for all the partners assigned to a price list. Price lists have several versions (2010, 2011, Promotion of February 2010, etc.) and each version has several rules. Example: the customer price of a product category will be based on the supplier price multiplied by 1.80."
+msgstr "A price list contains rules to be evaluated in order to compute the purchase or field price for all the partners assigned to a price list. Price lists have several versions (2010, 2011, Promotion of February 2010, etc.) and each version has several rules. Example: the customer price of a product category will be based on the supplier price multiplied by 1.80."
+
+#. module: account
+#: model:ir.actions.act_window,help:account.action_account_moves_sale
+msgid "This view is used by accountants in order to record entries massively in OpenERP. If you want to record a customer invoice, select the journal and the period in the search toolbar. Then, start by recording the entry line of the income account. OpenERP will propose to you automatically the Tax related to this account and the counter-part \"Account receivable\"."
+msgstr "This view is used by accountants in order to record entries massively in OpenERP. If you want to record a stock transfer voucher, select the journal and the period in the search toolbar. Then, start by recording the entry line of the income account. OpenERP will propose to you automatically the Tax related to this account and the counter-part \"Account receivable\"."
+
+#. modules: account_msf, account
+#: view:board.board:0
+#: model:ir.actions.act_window,name:account.action_draft_customer_invoices_dashboard
+msgid "Customer Invoices to Approve"
+msgstr "Stock Transfer Vouchers to Approve"
+
+#. modules: account, register_accounting
+#: selection:account.invoice,type:0
+#: selection:account.invoice.report,type:0
+#: model:process.process,name:account.process_process_invoiceprocess0
+#: selection:report.invoice.created,type:0
+#: selection:wizard.account.invoice,type:0
+msgid "Customer Invoice"
+msgstr "Stock Transfer Voucher"
+
+#. module: account
+#: model:ir.actions.act_window,name:account.action_invoice_tree1
+#: model:ir.ui.menu,name:account.menu_action_invoice_tree1
+msgid "Customer Invoices"
+msgstr "Stock Transfer Vouchers"
+
+#. module: account
+#: model:process.transition,note:account.process_transition_invoiceimport0
+msgid "Import of the statement in the system from a supplier or customer invoice"
+msgstr "Import of the statement in the system from a supplier or stock transfer voucher"
+
+#. module: purchase
+#: model:product.pricelist,name:purchase.list0
+msgid "Default Purchase Pricelist"
+msgstr "Purchase default currency"
+
+#. module: purchase
+#: help:purchase.order,pricelist_id:0
+msgid "The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."
+msgstr "The currency used for this purchase order."
+
+#. module: product
+#: code:addons/product/pricelist.py:371
+#, python-format
+msgid "No active version for the selected pricelist !\n"
+"Please create or activate one."
+msgstr "The selected currency is not activated !\n"
+"Please activate it."
+
+#. module: purchase
+#: model:product.pricelist.type,name:purchase.pricelist_type_purchase
+#: field:res.partner,property_product_pricelist_purchase:0
+msgid "Purchase Pricelist"
+msgstr "Purchase default currency"
+
+#. module: purchase
+#: code:addons/purchase/purchase.py:700
+#, python-format
+msgid "No Pricelist !"
+msgstr "No Currency !"
+
+#. module: purchase
+#: help:res.partner,property_product_pricelist_purchase:0
+msgid "This pricelist will be used, instead of the default one, for purchases from the current partner"
+msgstr "This currency will be used, instead of the default one, for purchases from the current partner"
+
+#. module: product
+#: field:product.supplierinfo,pricelist_ids:0
+msgid "Supplier Pricelist"
+msgstr "Supplier Currency"
+
+#. module: purchase
+#: view:purchase.order.group:0
+msgid " Please note that: \n"
+" \n"
+" Orders will only be merged if: \n"
+" * Purchase Orders are in draft \n"
+" * Purchase Orders belong to the same supplier \n"
+" * Purchase Orders are have same stock location, same pricelist \n"
+" \n"
+" Lines will only be merged if: \n"
+" * Order lines are exactly the same except for the product,quantity and unit \n"
+" "
+msgstr " Please note that: \n"
+" \n"
+" Orders will only be merged if: \n"
+" * Purchase Orders are in draft \n"
+" * Purchase Orders belong to the same supplier \n"
+" * Purchase Orders are have same stock location, same currency \n"
+" \n"
+" Lines will only be merged if: \n"
+" * Order lines are exactly the same except for the product,quantity and unit \n"
+" "
+
+#. module: purchase
+#: code:addons/purchase/purchase.py:700
+#, python-format
+msgid "You have to select a pricelist or a supplier in the purchase form !\n"
+"Please set one before choosing a product."
+msgstr "You have to select a currency or a supplier in the purchase form !\n"
+"Please set one before choosing a product."
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "Delivery & Invoicing"
+msgstr "Delivery"

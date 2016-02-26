@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="export_report_stock_inventory_tree_view" model="ir.ui.view">
+            <field name="name">export.report.stock.inventory.tree.view</field>
+            <field name="model">export.report.stock.inventory</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Export Inventory Level">
+                    <field name="name" />
+                    <field name="location_id" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="export_report_stock_inventory_search_view" model="ir.ui.view">
+            <field name="name">export.report.stock.inventory.search.view</field>
+            <field name="model">export.report.stock.inventory</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Export Inventory Level">
+                    <field name="name" />
+                    <field name="location_id" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+        <record id="export_report_stock_inventory_form_view" model="ir.ui.view">
+            <field name="name">export.report.stock.inventory.form.view</field>
+            <field name="model">export.report.stock.inventory</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export Inventory Level">
+                    <separator colspan="4" string="Request information" />
+                    <field name="name" />
+                    <field name="company_id" />
+                    <separator colspan="4" string="Advanced filters" />
+                    <field name="product_id" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" domain="[('type', '=', 'product')]" />
+                    <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('usage', '=', 'internal')]" />
+                    <field name="prodlot_id" 
+                           on_change="onchange_prodlot(prodlot_id)"
+                           domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
+                    <separator colspan="4" string="Actions" />
+                    <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
+                    <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
+                    <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'ready')]}">
+                        <html>                                                      
+                            <div style="align: center">                             
+                                <p style="font-size:14px;align:center">             
+                                    Your file is now ready. You can download it on the right side bar (Attachments).
+                                </p>                                                
+                            </div>
+                        </html>
+                    </group>
+                    <field name="state" invisible="1" />
+                </form>
+            </field>
+        </record>
+
+        <record id="export_report_stock_inventory_info_view" model="ir.ui.view">
+            <field name="name">export.report.stock.inventory.info.view</field>
+            <field name="model">export.report.stock.inventory</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Status of the report" hide_new_button="1" hide_delete_button="1">
+                    <label> </label>                                                
+                    <group colspan="2" col="2">                                     
+                        <html>                                                      
+                            <div style="align: center">                             
+                                <p style="font-size:14px;align:center">             
+                                    Your export inventory level demand will be treated quickly.<br />
+                                </p>                                                
+                                <p style="font-size:14px;align:center">             
+                                    Due to the volume of data, your report cannot be shown immediatly.<br />
+                                </p>                                                
+                                <p style="font-size:14px;align:center">             
+                                    When the report will be ready, you can access to it by the menu Warehouse / Inventory Management / Export Inventory Level.<br />
+                                </p>                                                
+                            </div>                                                  
+                        </html>                                                     
+                    </group>                                                        
+                    <label> </label>                                                
+                </form>
+            </field>
+        </record>
+
+        <record id="export_report_stock_inventory_action" model="ir.actions.act_window">
+            <field name="name">Export Inventory Level</field>
+            <field name="res_model">export.report.stock.inventory</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="export_report_stock_inventory_menu"
+            action="export_report_stock_inventory_action"
+            parent="stock.menu_stock_inventory_control"
+            sequence="22" />
+
+        <report
+            id="report_stock_inventory_xls"
+            string="Export Inventory Level"
+            model="export.report.stock.inventory"
+            name="stock.inventory.xls"
+            file="specific_rules/report/report_stock_inventory_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+        <report
+            id="report_unconsistent_stock_xls"
+            string="Unconsistent stock"
+            model="unconsistent.stock.report"
+            name="unconsistent.stock.report_xls"
+            file="specific_rules/report/unconsistent_stock_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+    </data>
+</openerp>

@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+    <!-- Register creation Form -->
+        <record model="ir.ui.view" id="wizard_register_creation_form">
+            <field name='name'>wizard.register.creation.form</field>
+            <field name='model'>wizard.register.creation</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Register creation wizard">
+                    <label string="Choose a period then click on 'Confirm period' to display all register that could be created." colspan="4" align="0.0"/>
+                    <group col="6" colspan="4">
+                        <field name="period_id" colspan="2" domain="[('state', '=', 'draft'), ('special', '!=', True)]"/>
+                        <field name="instance_id" colspan="2" />
+                        <button name="button_confirm_period" type="object" string="Confirm period" icon="gtk-execute" colspan="1"/>
+                        <label string="" colspan="1"/>
+                    </group>
+                    <separator string=""/>
+                    <newline/>
+                    <label string="Delete or unselect those which shouldn't be created" colspan="4" align="0.0"/>
+                    <field name="new_register_ids" colspan="4" attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}" 
+                        nolabel="1">
+                        <tree editable="top" hide_new_button="1">
+                            <field name="period_id"/>
+                            <field name="register_type"/>
+                            <field name="currency_id"/>
+                            <field name="prev_reg_id"/>
+                            <field name="prev_instance_id"/>
+                        </tree>
+                    </field>
+                    <group col="6" colspan="4">
+                        <button name="button_clear" type="object" string="Clear" icon="gtk-clear"/>
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button name="button_create_registers" type="object" string="Create Registers" icon="gtk-ok" attrs="{'readonly': [('state', '=', 'draft')]}"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    <!-- Register creation action -->
+        <record id="action_register_creation_form" model="ir.actions.act_window">
+            <field name="name">Register Creation</field>
+            <field name="res_model">wizard.register.creation</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form,tree</field>
+            <field name="target">new</field>
+        </record>
+
+    <!-- Register Creation Menu -->
+        <menuitem string="Register Creation" action="action_register_creation_form" id="menu_register_creation" 
+            parent="account.menu_finance_bank_and_cash" sequence="11"/>
+
+    </data>
+</openerp>

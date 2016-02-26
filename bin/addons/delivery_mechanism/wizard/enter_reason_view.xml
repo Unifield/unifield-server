@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_enter_reason_form_wizard" model="ir.ui.view">
+            <field name="name">Enter Reason for Cancellation</field>
+            <field name="model">enter.reason</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Enter Reason for Cancellation">
+                <separator string="Select a reason for Incoming Shipment cancellation" colspan="4"/>
+                <field name="picking_id" colspan="4" />
+                <field name="change_reason" colspan="4" />
+                <group colspan="2" />
+                <button icon='gtk-cancel' special="cancel"
+                    string="_Close" />
+                <button name="do_cancel" string="Cancel Incoming"
+                    type="object" icon="gtk-ok" />
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

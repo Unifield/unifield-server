@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+	
+		<report auto="False" 
+	            id="report_expiry_report" 
+	            model="expiry.quantity.report" 
+	            name="expiry.report"
+	            header="False"
+	            rml="addons/consumption_calculation/report/expiry_report.rml"
+	            string="Expiry Report" />
+                
+		<report auto="False" 
+	            id="report_expiry_report_xls" 
+	            model="expiry.quantity.report" 
+	            name="expiry.report_xls"
+	            header="False"
+                report_type="webkit"
+	            file="addons/consumption_calculation/report/expiry_report.mako"
+	            string="Expiry Report Excel" />
+	            
+	</data>
+	
+</openerp>

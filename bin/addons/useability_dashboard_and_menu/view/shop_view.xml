@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_shop_search" model="ir.ui.view">
+            <field name="name">sale.shop</field>
+            <field name="model">sale.shop</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Sales Shop">
+                    <field name="name"/>
+                    <field name="warehouse_id"/>
+                </search>
+            </field>
+        </record>
+        
+        <!-- WE rename the String="Sales Shop" by Warehouse  -->
+        <record id="sale.view_shop_tree" model="ir.ui.view">
+            <field name="name">sale.shop</field>
+            <field name="model">sale.shop</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Warehouse">
+                    <field name="name"/>
+                    <field name="warehouse_id"/>
+                    <field name="pricelist_id"/>
+                    <field name="project_id" />
+                </tree>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

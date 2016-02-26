@@ -1,0 +1,49 @@
+<openerp>
+  <data>
+    <record id="view_lang_setup" model="ir.ui.view">
+      <field name="name">Language Configuration</field>
+      <field name="model">lang.setup</field>
+      <field name="type">form</field>
+      <field name="inherit_id" ref="base.res_config_view_base"/>
+      <field name="arch" type="xml">
+        <data>
+          <form position="attributes">
+            <attribute name="string">Language Configuration</attribute>
+          </form>
+          <xpath expr="//label[@string='description']" position="attributes">
+                <attribute name="string">Determines the default language of the system.</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="title"]' position='attributes'>
+                    <attribute name='string'>Configure The System Language</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="vsep"]' position='attributes'>
+                    <attribute name='rowspan'>25</attribute>
+                    <attribute name='string'></attribute>
+          </xpath>
+          <group string="res_config_contents" position="replace">
+              <group colspan="5">
+              	<field name="lang_id" colspan="5" />
+              	<label colspan="5" string="If you change the default language, you should disconect you and re-login to activate the new language." />
+              </group>
+           </group>
+        </data>
+      </field>
+    </record>
+
+    <record id="action_lang_setup" model="ir.actions.act_window">
+      <field name="name">Language Setup Configuration</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">lang.setup</field>
+      <field name="view_id" ref="view_lang_setup"/>
+      <field name="view_type">form</field>
+      <field name="view_mode">form</field>
+      <field name="target">new</field>
+    </record>
+
+    <record id="lang_setup_todo" model="ir.actions.todo">
+        <field name="action_id" ref="action_lang_setup"/>
+        <field name="sequence">19</field>
+        <field name="restart">always</field>
+    </record>
+  </data>
+</openerp>

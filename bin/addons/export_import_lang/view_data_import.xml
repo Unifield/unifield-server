@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_msf_import_language" model="ir.ui.view">
+            <field name="name">Import Data Translation</field>
+            <field name="model">msf.language.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Data Translation">
+                    <group col="8">
+                        <group colspan="3">
+                            <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
+                            <newline/>
+                            <label colspan="4" width="220" string="Supported file formats: *.csv (Comma-separated values) or *.xml (XML SpreadSheet 2003"/>
+                            <label colspan="4" width="220" string="When using CSV format, please double-check that the file encoding is set to UTF-8 (sometimes called Unicode) when the translator exports it."/>
+                            <label colspan="4" width="220"/>
+                            <label colspan="4" width="220" string="Please check that the first line of your file must at least contain:"/>
+                            <label colspan="4" width="220" string="name,src,value"/>
+                        </group>
+                        <separator orientation="vertical" rowspan="15"/>
+                        <group colspan="4" col="4">
+                            <separator string="Import Translation" colspan="4"/>
+                            <newline/>
+                            <field name="name" width="200"/>
+                            <separator colspan="4" string="To avoid server timeout when trying to upload large file, please zip the file." />
+                            <field name="data" colspan="4"/>
+                        </group>
+                        <group colspan="8" col="8">
+                            <separator string="" colspan="8"/>
+                            <label colspan="6" width="220"/>
+                                <button special="cancel" string="_Close" icon="gtk-cancel"/>
+                                <button name="import_data_lang" string="Import Data Translation" type="object" icon="gtk-ok"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_msf_import_language_2" model="ir.ui.view">
+            <field name="name">Import Data Translation</field>
+            <field name="model">msf.language.import</field>
+            <field name="type">form</field>
+            <field name="priority" eval="200" />
+            <field name="arch" type="xml">
+                <form string="Import Data Translation">
+                    <separator string="The import process could take quite a long time, when finished a new request will be created, please check the menu Administration > Translations > Import / Export > Translations Requests" colspan="4" />
+                    <group colspan="2">
+                            <button icon="gtk-ok" name="open_requests"  string="OK" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_view_msf_import_language" model="ir.actions.act_window">
+            <field name="name">Import Data Translation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">msf.language.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            action="action_view_msf_import_language"
+            id="menu_view_msf_import_language"
+            parent="base.menu_translation_export"/>
+
+    </data>
+</openerp>

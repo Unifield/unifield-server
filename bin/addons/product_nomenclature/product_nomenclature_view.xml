@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+		<record id="product_search_form_view" model="ir.ui.view">
+			<field name="name">product.search.form</field>
+			<field name="model">product.product</field>
+			<field name="type">search</field>
+			<field name="inherit_id" ref="product.product_search_form_view" />
+			<field name="arch" type="xml">
+				<data>
+					<group string="Extended Filters..." position="after">
+						<newline />
+						<group expand="1" string="Nomenclature Filters...">
+							<field name="nomen_manda_0_s"
+								domain="[('parent_id', '=', -1)]"
+								 widget="selection"
+								on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+							<field name="nomen_manda_1_s"
+								domain="[('parent_id', '=', -1)]"
+								 widget="selection"
+								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+							<field name="nomen_manda_2_s"
+								domain="[('parent_id', '=', -1), ('category_id', '!=', False)]"
+								 widget="selection"
+								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+							<field name="nomen_manda_3_s"
+								domain="[('parent_id', '=', -1)]"
+								 widget="selection"
+								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						</group>
+						<newline />
+						<group expand="0" string="Optional Nomenclature Filters...">
+							<field name="nomen_sub_0_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_1_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_2_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_3_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_4_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_5_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+						</group>
+
+					</group>
+				</data>
+			</field>
+		</record>
+
+		<!-- Product new nomenclature tab -->
+		<record id="product_normal_form_view" model="ir.ui.view">
+			<field name="name">product.normal.form</field>
+			<field name="model">product.product</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="product.product_normal_form_view" />
+			<field name="arch" type="xml">
+				<data>
+					<page string="Information" position="after">
+
+						<!-- COPIED TO order_nomenclature_view.xml -->
+						<page string="Nomenclature">
+
+							<group colspan="2" col="5">
+								<separator string="Mandatory Levels" colspan="10" />
+
+								<group colspan="4" col="2">
+									<field name="nomen_manda_0"
+										domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+										widget="selection"
+										on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+									<field name="nomen_manda_1"
+										domain="[('level', '=', '1'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+										on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)">
+									</field>
+									<field name="nomen_manda_2"
+										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+										on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+									<field name="nomen_manda_3"
+										domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"										
+										widget="selection"
+                                        get_selection="get_nomen"
+										on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+								</group>
+								<!--  uf-1544
+								<separator string="Library" colspan="10" />
+                                <field name="library" colspan="4"/>
+                                 -->
+							</group>
+							
+							<group colspan="2" col="5">
+								<separator string="Optional Levels" colspan="4" />
+
+
+								<group colspan="4" col="2">
+									<!--
+										Added False as parent_id clause to enable global optional levels (for med, log,...)
+									-->
+									<field name="nomen_sub_0"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                    />
+									<field name="nomen_sub_1"
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
+									<field name="nomen_sub_2"
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
+									<field name="nomen_sub_3"
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
+									<field name="nomen_sub_4"
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
+									<field name="nomen_sub_5"
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
+
+								</group>
+
+							</group>
+						</page>
+						<!-- END COPY TO order_nomenclature_view.xml -->
+
+					</page>
+				</data>
+			</field>
+		</record>
+
+
+		<!-- Product nomenclature screens -->
+		<record id="product_nomenclature_form_view" model="ir.ui.view">
+			<field name="name">product.nomenclature.form</field>
+			<field name="model">product.nomenclature</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Product Nomenclature">
+					<field name="name" select="1" />
+					<field name="type" />
+					<field name="msfid" />
+					<field name="sub_level"
+						attrs="{'invisible': [('type', '!=', 'optional')], 'required': [('type', '=', 'optional')]}" />
+					<field name="parent_id" domain="[('type', '=', 'mandatory')]"
+						on_change="onChangeParentId(type, parent_id)" />
+					<field name="level" invisible="1" />
+					<field name="category_id" 
+					    attrs="{'invisible': ['|', ('level', '!=', '2'), ('type', '!=', 'mandatory')]}"/>
+					<field name="sequence" invisible="1" />
+					<newline />
+				</form>
+			</field>
+		</record>
+		<record id="product_nomenclature_list_view" model="ir.ui.view">
+			<field name="name">product.nomenclature.list</field>
+			<field name="model">product.nomenclature</field>
+			<field name="type">tree</field>
+			<field name="priority">1</field>
+			<field name="arch" type="xml">
+				<tree string="Product Nomenclature">
+					<field name="complete_name" invisible="1"/>
+                    <field name="msfid" />
+                    <field name="nomen_manda_0_s" />
+                    <field name="nomen_manda_1_s" />
+                    <field name="nomen_manda_2_s" />
+                    <field name="nomen_manda_3_s" />
+					<field name="type" />
+					<field name="sub_level" />
+				</tree>
+			</field>
+		</record>
+
+		<!-- improvement : filter against nomenclature's type -->
+		<record id="product_nomenclature_tree_view" model="ir.ui.view">
+			<field name="name">product.nomenclature.tree</field>
+			<field name="model">product.nomenclature</field>
+			<field name="type">tree</field>
+			<field name="field_parent">child_id</field>
+			<field name="arch" type="xml">
+				<tree string="Product Nomenclature">
+					<field name="name" colspan="4" />
+					<field name="number_of_products" />
+				</tree>
+			</field>
+		</record>
+
+		<!--<record id="product_nomenclature_action" model="ir.actions.act_window">
+			<field name="name">Products by Nomenclature</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">product.nomenclature</field>
+			<field name="domain">[('parent_id','=',False)]</field>
+			<field name="view_type">tree</field>
+			<field name="view_id" ref="product_nomenclature_tree_view" />
+			<field name="help">Here is a list of all your products classified by
+				nomenclature.</field>
+		</record>
+		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_sales"
+			parent="base.menu_product" sequence="4" />-->
+		
+		<record id="product_nomenclature_action_form" model="ir.actions.act_window">
+			<field name="name">Products Nomenclature</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">product.nomenclature</field>
+			<field name="view_type">form</field>
+			<field name="view_id" ref="product_nomenclature_list_view" />
+		</record>
+
+		<menuitem action="product_nomenclature_action_form"
+			id="menu_product_nomenclature_action_form"
+			parent="purchase.menu_product_in_config_purchase"
+			sequence="5" />
+
+
+		<record id="product_nomenclature_normal_action_tree" model="ir.actions.act_window">
+			<field name="name">Products</field> <!-- TODO what effect on screen ? -->
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">product.product</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="context">{}</field>
+			<field name="domain">['|', ('nomen_manda_0', '=', active_id), '|', ('nomen_manda_1', '=', active_id), '|', ('nomen_manda_2', '=', active_id), '|', ('nomen_manda_3', '=', active_id), '|', ('nomen_sub_0', '=', active_id), '|', ('nomen_sub_1', '=', active_id), '|', ('nomen_sub_2', '=', active_id),	'|', ('nomen_sub_3', '=', active_id), '|', ('nomen_sub_4', '=', active_id),	('nomen_sub_5', '=', active_id)]</field>
+			<!-- <field name="context"></field> -->
+			<field name ="help">This is the nomenclature tree view</field>
+		</record>
+		<record id="ir_product_nomenclature_open" model="ir.values">
+			<field eval="'tree_but_open'" name="key2" />
+			<field eval="'product.nomenclature'" name="model" />
+			<field name="name">Products by Nomenclatures</field>
+			<field
+				eval="'ir.actions.act_window,%d'%product_nomenclature_normal_action_tree"
+				name="value" />
+			<field eval="True" name="object" />
+		</record>
+		
+		<record id="product_nomenclature_link_category_search" model="ir.ui.view">
+		    <field name="name">product.nomenclature.link.category.search</field>
+		    <field name="model">product.nomenclature</field>
+		    <field name="type">search</field>
+		    <field name="priority" eval="99" />
+		    <field name="arch" type="xml">
+		        <search string="Link nomenclature/category">
+		            <field name="msfid" string="Nomenclature MSFID" />
+		            <field name="custom_name" />
+		            <field name="category_id" />
+					<field name="nomen_type_s"  />
+
+					<newline />
+					<group expand="1" string="Nomenclature Filters...">
+						<field name="nomen_manda_0_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_1_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_2_s"
+							domain="[('parent_id', '=', -1), ('category_id', '!=', False)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_3_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+					</group>
+					<newline />
+		        </search>
+		    </field>
+		</record>
+		<record id="product_nomenclature_link_category" model="ir.ui.view">
+		    <field name="name">product.nomenclature.link.category</field>
+		    <field name="model">product.nomenclature</field>
+		    <field name="type">tree</field>
+		    <field name="priority" eval="99" />
+		    <field name="arch" type="xml">
+		        <tree string="Link nomenclature/category" editable="top" hide_delete_button="True" noteditable="True">
+		            <field name="msfid" string="Nomenclature MSFID" readonly="1" />
+		            <field name="name" readonly="1" string="Nomenclature" />
+		            <field name="category_id" required="1" />
+		        </tree>
+		    </field>
+		</record>
+		<record id="product_nomenclature_link_category_action" model="ir.actions.act_window">
+            <field name="name">Link nomenclature/category</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.nomenclature</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type', '=', 'mandatory'), ('level', '=', '2')]</field>
+            <field name="search_view_id" ref="product_nomenclature_link_category_search" />
+        </record>
+        <record id="product_nomenclature_link_category_view_tree" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="product_nomenclature_link_category_action" />
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="product_nomenclature_link_category" />
+        </record>
+        <menuitem id="menu_link_nomenclature_category"
+                  action="product_nomenclature_link_category_action"
+                  parent="purchase.menu_product_in_config_purchase"
+                  sequence="4" />
+                  
+        <!-- Add family in product category view -->
+        <record id="product_category_family_form_view" model="ir.ui.view">
+            <field name="name">product.category.family.form.view</field>
+            <field name="model">product.category</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_category_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='type']" position="after">
+                    <field name="family_id" required="1" />
+                    <field name="msfid" required="1" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="product_category_tree_view2" model="ir.ui.view">
+            <field name="name">product.category.tree2</field>
+            <field name="model">product.category</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="product.product_category_list_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree//field[@name='complete_name']" position="after">
+                    <field name="msfid" />
+                </xpath>
+            </field>
+        </record>
+
+	</data>
+</openerp>

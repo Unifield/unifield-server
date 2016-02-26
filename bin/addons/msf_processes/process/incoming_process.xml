@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<openerp>
+    <data>
+
+		<!-- Process process -->
+        
+        <record id="stock.process_process_incoming0" model="process.process">
+            <field eval="&quot;&quot;&quot;Incoming&quot;&quot;&quot;" name="name"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field eval="1" name="active"/>
+        </record>
+        
+        <!-- Process Node -->
+        
+        <record id="stock.process_node_in_draft" model="process.node">
+            <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;In - draft&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Draft state of incoming product.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="stock.process_process_incoming0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('draft', 'auto', 'confirmed', 'assigned', 'done')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="1" name="flow_start"/>
+        </record>
+        
+        <record id="stock.process_node_in_confirmed" model="process.node">
+            <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;In - not available&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Not available state of incoming product.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="stock.process_process_incoming0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('auto', 'confirmed', 'assigned', 'done')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="stock.process_node_in_assigned" model="process.node">
+            <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;In - available&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Available state of incoming product.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="stock.process_process_incoming0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('assigned', 'done')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="stock.process_node_in_done" model="process.node">
+            <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;In - closed&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Closed state of incoming product.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="stock.process_process_incoming0"/>
+            <field eval="&quot;&quot;&quot;object.state == 'done'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="stock.process_node_in_backorder" model="process.node">
+        	<field name="menu_id" ref="stock.menu_action_picking_tree4"/>
+            <!-- <field name="model_id" ref="stock.model_stock_picking"/> -->
+            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Backorder&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Backorder of incoming products subflow.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="stock.process_process_incoming0"/>
+            <field name="subflow_id" ref="stock.process_process_incoming0"/>
+            <!-- <field eval="&quot;&quot;&quot;object.state in ('assigned', 'confirmed')&quot;&quot;&quot;" name="model_states"/> -->
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <!-- Transition Node -->
+        
+        <record id="stock.process_transition_in_draft_confirmed" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From draft to confirmed.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From draft to confirmed.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="stock.process_node_in_draft"/>
+            <field model="process.node" name="target_node_id" ref="stock.process_node_in_confirmed"/>
+        </record>
+        
+        <record id="stock.process_transition_in_confirmed_assigned" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From confirmed to assigned.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From confirmed to assigned.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="stock.process_node_in_confirmed"/>
+            <field model="process.node" name="target_node_id" ref="stock.process_node_in_assigned"/>
+        </record>
+        
+        <record id="stock.process_transition_in_assigned_done" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From assigned to closed.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From assigned to closed.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="stock.process_node_in_assigned"/>
+            <field model="process.node" name="target_node_id" ref="stock.process_node_in_done"/>
+        </record>
+        
+        <record id="stock.process_transition_in_assigned_backorder" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From assigned to backorder.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From assigned to backorder.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="stock.process_node_in_assigned"/>
+            <field model="process.node" name="target_node_id" ref="stock.process_node_in_backorder"/>
+        </record>
+        
+    </data>
+</openerp>

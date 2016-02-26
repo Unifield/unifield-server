@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="wizard_cash_return_form1">
+            <field name='name'>wizard.cash.return.form1</field>
+            <field name='model'>wizard.cash.return</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Cash Return- Wizard">
+                    <label string="Cash Return Wizard will help you book advances return." colspan="4"/>
+                    <separator string="Necessary Information" colspan="4"/>
+                    <field name="initial_amount"/>
+                    <field name="additional_amount" on_change="onchange_addl_amount(returned_amount)"/>
+                    <field name='returned_amount'
+                        on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, display_invoice, initial_amount, advance_linked_po_auto_invoice, additional_amount)"/>
+                    <newline />
+                    <field name='date'/>
+                    <field name='reference' />
+                    <newline/>
+                    <group colspan="6" col="3">
+                        <button name="button_analytic_distribution" type="object"
+                            string="Analytical Distribution" icon="terp-check"
+                            context="context" colspan="2"
+                            attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_analytic_distribution" type="object"
+                            string="Analytical Distribution" icon="terp-emblem-important"
+                            context="context" colspan="2"
+                            attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                    </group>
+                    <group colspan="4">
+                        <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), 
+                            ('currency_id', '=', currency_id)]"/>
+                        <button string='Add invoice' name='action_add_invoice' type='object' icon='gtk-add' />
+                    </group>
+                    <newline />
+                    <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4" />
+                    <newline />
+                    <group colspan="4">
+                        <label colspan="3"/>
+                        <button string="Clean invoices" name="clean_invoices" type="object" icon="gtk-clear" attrs="{'invisible':[('display_invoice', '!=', True)]}" />
+                    </group>
+                    <newline />
+                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, date, reference, additional_amount)"/>
+                    <newline />
+                    <field name="total_amount"/>
+                    <newline />
+                    <group colspan="4">
+                        <button string='Cancel' special='cancel' icon='gtk-cancel' />
+                        <button string="Compute" name="compute_total_amount" type="object" icon='gtk-execute'/>
+                        <button string='Ok' name='action_confirm_cash_return' type='object' icon='gtk-apply'
+                            attrs="{'invisible': [('ok_with_confirm', '=', True)]}" />
+                        <button string='Ok' name='action_confirm_cash_return2' type='object' icon='gtk-apply' confirm="Proceed ?"
+                            attrs="{'invisible': [('ok_with_confirm', '=', False)]}" />
+                    </group>
+                    <field name='currency_id' invisible="1" />
+                    <field name='display_invoice' invisible="1"/>
+                    <field name="advance_linked_po_auto_invoice" invisible="1" />
+                    <field name="ok_with_confirm" invisible="1" />
+                    <field name="comment" colspan="4" nolabel="1" readonly="1" attrs="{'invisible':[('advance_linked_po_auto_invoice', '=', False)]}" />
+                </form>
+            </field>
+          </record>
+
+        <record model="ir.ui.view" id="wizard_invoice_line_tree">
+            <field name='name'>wizard.invoice.line.tree</field>
+            <field name='model'>wizard.invoice.line</field>
+            <field name='type'>tree</field>
+            <field name='arch' type='xml'>
+                <tree string="Invoice Lines">
+                    <field name="document_date" />
+                    <field name="reference" />
+                    <field name="communication" />
+                    <field name="account_id" />
+                    <field name="partner_id" />
+                    <field name="amount" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="wizard_invoice_line_form">
+            <field name='name'>wizard.invoice.line.form</field>
+            <field name='model'>wizard.invoice.line</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Invoice Lines">
+                    <field name="document_date" />
+                    <field name="reference" />
+                    <field name="communication" />
+                    <field name="account_id" />
+                    <field name="partner_id" />
+                    <field name="amount" />
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="wizard_advance_line_tree">
+            <field name='name'>wizard.advance.line.tree</field>
+            <field name='model'>wizard.advance.line</field>
+            <field name='type'>tree</field>
+            <field name='arch' type='xml'>
+                <tree editable="bottom" string="Advance Lines"
+                    colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
+                    <field name="document_date" />
+                    <field name="description" />
+                    <field name="reference" />
+                    <field name="account_id" domain="[('restricted_area', '=', 'cash_return')]"/> 
+                    <field name="partner_type" domain="[('filter_for_third_party_in_advance_return', '=', 'anything')]"/>
+                    <field name="analytic_distribution_id" invisible="1"/>
+                    <field name="display_analytic_button" invisible="1"/>
+
+                    <button name="button_analytic_distribution" type="object"
+                        string="Analytical Distribution"
+                        icon="terp-stock_symbol-selection" context="context"
+                        attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
+                    <field name="analytic_distribution_state_recap"/>
+                    <field name="have_analytic_distribution_from_header" invisible="1"/>
+                    <field name="analytic_distribution_state" invisible="1"/>
+
+                    <field name="amount" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="wizard_advance_line_form">
+            <field name='name'>wizard.advance.line.form</field>
+            <field name='model'>wizard.advance.line</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Advance Lines">
+                    <field name="document_date" />
+                    <field name="description" />
+                    <field name="reference" />
+                    <field name="account_id" />
+                    <field name="partner_type"/>
+                    <field name="amount" />
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

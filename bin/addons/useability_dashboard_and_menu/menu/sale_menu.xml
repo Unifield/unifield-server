@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+     <menuitem 
+          name="Field Order Follow-Up"
+          id="sales_followup.menuitem_sale_order_followup_from_menu"
+          parent="base.menu_sales"
+          sequence="2"/>
+          
+     <menuitem 
+          action="procurement_request.action_procurement_request"
+          id="procurement_request.menu_procurement_request"
+          sequence="3"
+          parent="base.menu_sales" />
+          
+     <menuitem 
+          id="sourcing.menu_sourcing_line"
+          icon="STOCK_INDENT" 
+          action="sourcing.sourcing_line_action" 
+          parent="base.menu_sales" 
+          sequence="4" />
+          
+    
+    </data>
+</openerp>

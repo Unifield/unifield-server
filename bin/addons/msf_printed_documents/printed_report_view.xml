@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="xml_report_target_filename_form_view" model="ir.ui.view">
+            <field name="name">xml.report.target.filename.form.view</field>
+            <field name="model">ir.actions.report.xml</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.act_report_xml_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='report_file']" position="after">
+                    <field name="target_filename" colspan="4" />
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

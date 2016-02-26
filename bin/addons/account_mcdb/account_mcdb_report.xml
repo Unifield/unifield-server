@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+    <!-- Account Move Line Report -->
+        <report
+            id="report_account_move_line"
+            string="Journal Items"
+            model="account.move.line"
+            name="account.move.line"
+            rml="account_mcdb/report/report_account_move_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+        <report
+            id="report_account_move_line_csv"
+            string="Journal Items"
+            model="account.move.line"
+            name="account.move.line_csv"
+            rml="account_mcdb/report/report_account_move_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+        <report
+            id="report_account_move_line_xls"
+            string="Journal Items"
+            model="account.move.line"
+            name="account.move.line_xls"
+            file="account_mcdb/report/report_account_move_line_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
+
+    <!-- Account Analytic Line Report -->
+        <report
+            id="report_account_analytic_line"
+            string="Analytic Journal Items"
+            model="account.analytic.line"
+            name="account.analytic.line"
+            rml="account_mcdb/report/report_account_analytic_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+        <report
+            id="report_account_analytic_line_csv"
+            string="Analytic Journal Items"
+            model="account.analytic.line"
+            name="account.analytic.line_csv"
+            rml="account_mcdb/report/report_account_analytic_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+        <report
+            id="report_account_analytic_line_xls"
+            string="Analytic Journal Items"
+            model="account.analytic.line"
+            name="account.analytic.line_xls"
+            file="account_mcdb/report/report_account_analytic_line_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
+    <!-- Free 1 / Free 2 Analytic Journal Items Report -->
+        <report
+            id="report_account_analytic_line_free_xls"
+            string="Analytic Journal Items"
+            model="account.analytic.line"
+            name="account.analytic.line.free_xls"
+            file="account_mcdb/report/report_account_analytic_line_free_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
+    <!-- Account Bank Statement Line Report (register lines) -->
+        <report
+            id="report_account_bank_statement_line"
+            string="Register Lines"
+            model="account.bank.statement.line"
+            name="account.bank.statement.line"
+            rml="account_mcdb/report/report_account_bank_statement_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+        <report
+            id="report_account_bank_statement_line_csv"
+            string="Register Lines"
+            model="account.bank.statement.line"
+            name="account.bank.statement.line_csv"
+            rml="account_mcdb/report/report_account_bank_statement_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+        <report
+            id="report_account_bank_statement_line_xls"
+            string="Register Lines"
+            model="account.bank.statement.line"
+            name="account.bank.statement.line_xls"
+            file="account_mcdb/report/report_account_bank_statement_line_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
+    </data>
+</openerp>

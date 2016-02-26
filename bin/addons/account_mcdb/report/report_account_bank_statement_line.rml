@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<document filename="test.pdf">
+  <template pageSize="(1191.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="14.0" y1="14.0" width="1163" height="814"/>
+      <pageGraphics>
+          <setFont name="Helvetica" size="8"/>
+          <fill color="black"/>
+          <drawString x="1100" y="5">Page <pageNumber /> / </drawString><drawString x="1160" y="5"><pageCount /></drawString>
+      </pageGraphics>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+    <blockTableStyle id="Standard_Outline">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+    <blockTableStyle id="Tableau1">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,0" stop="0,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#000000" start="0,0" stop="0,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="0,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
+    </blockTableStyle>
+    <blockTableStyle id="Tableau3">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="14,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="14,-1" thickness="0.5"/>
+      <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="16.0" leading="20" alignment="CENTER" backColor="#e6e6e6"/>
+    <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="Standard" fontName="Helvetica"/>
+    <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
+    <paraStyle name="List" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
+    <paraStyle name="Caption" fontName="Helvetica" fontSize="12.0" leading="15" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="Index" fontName="Helvetica"/>
+    <paraStyle name="Table Contents" fontName="Helvetica"/>
+    <paraStyle name="Table Heading" fontName="Helvetica" alignment="CENTER"/>
+    <images/>
+  </stylesheet>
+  <story>
+    <blockTable colWidths="1162.0" style="Tableau1">
+      <tr>
+        <td>
+          <para style="P1">Register Lines</para>
+        </td>
+      </tr>
+    </blockTable>
+    <para style="P2">
+      <font color="white"> </font>
+    </para>
+    <blockTable style="Tableau3">
+      <tr>
+        <td>
+          <para style="P3">Document Date</para>
+        </td>
+        <td>
+          <para style="P3">Posting Date</para>
+        </td>
+        <td>
+          <para style="P3">Sequence</para>
+        </td>
+        <td>
+          <para style="P3">Description</para>
+        </td>
+        <td>
+          <para style="P3">Reference</para>
+        </td>
+        <td>
+          <para style="P3">Account</para>
+        </td>
+        <td>
+          <para style="P3">Third Party</para>
+        </td>
+        <td>
+          <para style="P3">Amount In</para>
+        </td>
+        <td>
+          <para style="P3">Amount Out</para>
+        </td>
+        <td>
+          <para style="P3">Currency</para>
+        </td>
+        <td>
+          <para style="P3">Output In</para>
+        </td>
+        <td>
+          <para style="P3">Output Out</para>
+        </td>
+        <td>
+          <para style="P3">Output Currency</para>
+        </td>
+        <td>
+          <para style="P3">State</para>
+        </td>
+        <td>
+          <para style="P3">Register Name</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
+          <para style="P3">[[ formatLang(o.document_date, date=True) or '']]</para>
+        </td>
+        <td>
+          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
+        </td>
+        <td>
+          <parawrap style="P3">[[ o.sequence_for_reference or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ o.name or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ o.ref or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ o.account_id and o.account_id.code or '' ]] - [[ o.account_id and o.account_id.name and o.account_id.name or '']]</parawrap>
+        </td>
+        <td>
+          <para style="P3">[[ o.partner_id and o.partner_id.name or o.employee_id and o.employee_id.name or o.transfer_journal_id and o.transfer_journal_id.code or '' ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ o.amount_in or 0.0 ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ o.amount_out or 0.0 ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ o.statement_id and o.statement_id.currency and o.statement_id.currency.name or '' ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ o.output_amount_debit or 0.0 ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ o.output_amount_credit or 0.0 ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[getSel(o, 'state')]]</para>
+        </td>
+        <td>
+          <parawrap style="P3">[[ o.statement_id and o.statement_id.name or '' ]]</parawrap>
+        </td>
+      </tr>
+    </blockTable>
+    <section>
+      <para style="P2">
+        <font color="white"> </font>
+      </para>
+    </section>
+  </story>
+</document>
+

@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Analytic distribution wizard -->
+        <record model="ir.ui.view" id="analytic_distribution_wizard_lines_tree">
+            <field name="name">analytic.distribution.wizard.lines.tree"</field>
+            <field name="model">analytic.distribution.wizard.lines</field>
+            <field name="type">tree</field>
+            <field name="arch" type='xml'>
+                <tree string="" editable="top">
+                    <field name="is_percentage_amount_touched" invisible="1" />
+                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC'), ('state', '=', 'open')]" string="Cost Center" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
+                    <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
+                    <field name="amount" sum="Total Amount"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="analytic_distribution_wizard_lines_fp_tree">
+            <field name="name">analytic.distribution.wizard.lines.fp.tree"</field>
+            <field name="model">analytic.distribution.wizard.fp.lines</field>
+            <field name="type">tree</field>
+            <field name="arch" type='xml'>
+                <tree string="" editable="top">
+                    <field name="is_percentage_amount_touched" invisible="1" />
+                    <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, parent.account_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
+                    <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]" string="Funding Pool" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('document_date')}"/>
+                    <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
+                    <field name="amount" sum="Total Amount"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="analytic_distribution_wizard_lines_f1_tree">
+            <field name="name">analytic.distribution.wizard.lines.f1.tree"</field>
+            <field name="model">analytic.distribution.wizard.f1.lines</field>
+            <field name="type">tree</field>
+            <field name="arch" type='xml'>
+                <tree string="" editable="top">
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
+                    <field name="amount" sum="Total Amount"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="analytic_distribution_wizard_lines_f2_tree">
+            <field name="name">analytic.distribution.wizard.lines.f2.tree"</field>
+            <field name="model">analytic.distribution.wizard.f2.lines</field>
+            <field name="type">tree</field>
+            <field name="arch" type='xml'>
+                <tree string="" editable="top">
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
+                    <field name="amount" sum="Total Amount"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="analytic_distribution_wizard_view" model="ir.ui.view">
+            <field name="name">analytic.distribution.wizard.view</field>
+            <field name="model">analytic.distribution.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Wizard Distribution">
+                    <field colspan="2" name="amount" readonly="1"/>
+                    <field name="move_id" invisible="1"/>
+                    <field name="invoice_id" invisible="1"/>
+                    <field name="direct_invoice_id" invisible="1"/>
+                    <field name="commitment_id" invisible="1"/>
+                    <field name="purchase_id" invisible="1"/>
+                    <field name="purchase_line_id" invisible="1"/>
+                    <field name="model_id" invisible="1"/>
+                    <field name="sale_order_id" invisible="1"/>
+                    <field name="sale_order_line_id" invisible="1"/>
+                    <field name="posting_date" invisible="1"/>
+                    <field name="document_date" invisible="1"/>
+                    <field name="partner_type" invisible="1"/>
+                    <field name="register_line_id" invisible="1"/>
+                    <field name="register_line_state" invisible="1"/>
+                    <field name="commitment_line_id" invisible="1"/>
+                    <field name="account_id" attrs="{'invisible': ['|', ('register_line_id', '=', False), ('register_line_state', 'in', ['draft', 'hard'])], 'required': [('register_line_state', '=', 'temp')]}" readonly="0" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]"/>
+                    <field name="cash_return_id" invisible="1"/>
+                    <group colspan="2" col="3">
+                        <field colspan="2" name="entry_mode" readonly="1"/>
+                        <button name="dummy" type="object" string="Switch entry mode" icon='gtk-jump-to' colspan="1" attrs="{'invisible': [('is_writable', '=', False)]}"/>
+                    </group>
+                    <group colspan="4">
+                        <field name="have_header" invisible="1"/>
+                        <button name="button_get_header_distribution" type="object" string="Populate line analytic distribution from header*" icon='gtk-convert' colspan="1" attrs="{'invisible': ['|', ('have_header', '=', False), ('is_writable', '=', False)]}" />
+                        <group colspan="3" col="3" attrs="{'invisible': ['|', ('have_header', '=', False), ('is_writable', '=', False)]}">
+                            <label string="*: this action will copy the analytic distribution from the header to the line allowing then the user to make changes starting from the copied distribution." colspan="3" />
+                        </group>
+                    </group>
+                    <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'cc')]}">
+                        <separator string="Cost Center"/>
+                        <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_purchase': purchase_id, 'from_sale_order': sale_order_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                    </group>
+                    <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
+                        <separator colspan="4" string="Cost Center and Funding Pool allocation"/>
+                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_invoice': invoice_id, 'from_commitment': commitment_id, 'from_model': model_id, 'direct_invoice_id': direct_invoice_id, 'from_move': move_id, 'parent_id':active_id, 'posting_date': posting_date, 'document_date': document_date, 'from_cash_return': cash_return_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                    </group>
+                    <group colspan="6" attrs="{'invisible': ['|', '|', ('state', 'in', ['draft', 'cc']), ('commitment_id', '!=', False), ('commitment_line_id', '!=', False)]}">
+                        <group colspan="2">
+                            <separator string="Free 1"/>
+                            <field colspan="4" name="f1_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                        </group>
+                        <group colspan="2">
+                            <separator string="Free 2"/>
+                            <field colspan="4" name="f2_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                        </group>
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'correction')]}">
+                        <label string="" colspan="2"/>
+                        <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
+                        <button name="button_confirm" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                    <field name="is_writable" invisible="1"/>
+                    <field name="total_amount" invisible="1" readonly="1" />
+                </form>
+            </field>
+        </record>
+
+    <!-- Actions -->
+        <act_window id="action_mass_reallocation"
+            name="Mass reallocation"
+            res_model="mass.reallocation.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="{'analytic_account_from': context.get('analytic_account_from', False) }"
+            target="new"/>
+
+        <act_window id="action_mass_reallocation_search"
+            name="Mass reallocation - All search results"
+            res_model="mass.reallocation.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="{'all_search': True, 'search_domain': search_domain, 'analytic_account_from': context.get('analytic_account_from', False) }"
+            target="new"/>
+
+    <!-- Mass reallocation wizard -->
+        <record id="mass_reallocation_wizard_view" model="ir.ui.view">
+            <field name="name">Mass Reallocation Wizard</field>
+            <field name="model">mass.reallocation.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/>
+                    <label string="" colspan="2"/>
+                    <newline/>
+                    <field name="date" colspan="2" /><label string="" colspan="2"/>
+                    <newline/>
+                    <field name="display_fp" invisible="1"/>
+                    <field name="is_process_in_progress" invisible="1" />
+                    <group col="2" colspan="2">
+                        <html>
+                            <p id="is_process_in_progress_p"
+                                style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                                Mass reallocation is already running ...
+                            </p>
+                            <script language="javascript">
+                                var is_displayed = $('#is_process_in_progress').val();
+                                if (is_displayed == "1") {
+                                    msg_dom = $('#is_process_in_progress_p')
+                                    msg_dom.show();
+                                }
+                            </script>
+                        </html>
+                    </group>
+                    <separator string="Items to check"/>
+                    <newline/>
+                    <field name="line_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}"/>
+                    <newline/>
+                    <separator string="Items not considered in reallocation"/>
+                    <newline/>
+                    <label string="Criteria used to exclude specific types of items from the reallocation perimeter." align="0.0" colspan="2"/>
+                    <newline/>
+                    <label string="- Commitments" align="0.0"/>
+                    <newline/>
+                    <label string="- Items already reallocated" align="0.0"/>
+                    <newline/>
+                    <label string="- Reversals" align="0.0"/>
+                    <newline/>
+                    <label string="- Items from engagement journal" align="0.0"/>
+                    <newline/>
+                    <label string="- Write-off" align="0.0"/>
+                    <newline/>
+                    <label string="- Unposted items" align="0.0"/>
+                    <newline/>
+                    <label string="- Free 1 / Free 2 items" align="0.0"/>
+                    <newline/>
+                    <html>
+                        <br />
+                    </html>
+                    <field name="other_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}">
+                        <tree string="Analytic journal items">
+                            <field name="instance_id"/>
+                            <field name="journal_id"/>
+                            <field name="entry_sequence"/>
+                            <field name="name"/>
+                            <field name="ref"/>
+                            <field name="from_commitment_line"/>
+                            <field name="is_reallocated"/>
+                            <field name="is_reversal"/>
+                            <field name="from_write_off"/>
+                            <field name="is_unposted"/>
+                            <field name="free_account"/>
+                        </tree>
+                    </field>
+                    <separator string=""/>
+                    <group col="6" colspan="4">
+                        <label string="" colspan="2"/>
+                        <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Verify" icon="terp-camera_test" colspan="1"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    <!-- Mass reallocation verification wizard -->
+        <record id="mass_reallocation_verification_wizard_view" model="ir.ui.view">
+            <field name="name">Mass Reallocation Verification Wizard</field>
+            <field name="model">mass.reallocation.verification.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group col="6" colspan="4">
+                        <field name="nb_process" colspan="2"/>
+                        <field name="nb_error" colspan="2"/>
+                        <field name="nb_other" colspan="2"/>
+                    </group>
+                    <field name="display_fp" invisible="1"/>
+                    <field name="account_id" colspan="2"/>
+                    <newline/>
+                    <field name="date"/>
+                    <newline/>
+                    <separator string="Allocatable items"/>
+                    <newline/>
+                    <field name="process_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
+                    <newline/>
+                    <separator string="Items excluded from reallocation"/>
+                    <newline/>
+                    <field name="error_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
+                    <newline />
+                    <separator string="Excluded lines"/>
+                    <newline/>
+                    <field name="other_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
+                    <newline/>
+                    <group col="6" colspan="4"/>
+                        <label string="" colspan="2"/>
+                        <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Process" icon="gtk-ok" colspan="1"/>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

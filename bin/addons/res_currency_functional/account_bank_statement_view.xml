@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Bank Statement Form -->
+        <record id="view_account_bank_statement_compute_currency_form" model="ir.ui.view">
+            <field name="name">account.bank.statement.compute.currency.form</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form"/>
+            <field name="priority" eval="50"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='line_ids']/tree/field[@name='amount_out']" position="after">
+                    <field name="currency_id" readonly="1" invisible="1"/>
+                    <field name="functional_in" invisible="1"/>
+                    <field name="functional_out" invisible="1"/>
+                    <field name="functional_currency_id" readonly="1" invisible="1"/>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Cash Register Form -->
+        <record id="view_account_bank_statement_compute_currency_form2" model="ir.ui.view">
+            <field name="name">account.bank.statement.compute.currency.form2</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form2"/>
+            <field name="priority" eval="51"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='line_ids']/tree/field[@name='amount_out']" position="after">
+                    <field name="currency_id" readonly="1" invisible="1"/>
+                    <field name="functional_in" invisible="1"/>
+                    <field name="functional_out" invisible="1"/>
+                    <field name="functional_currency_id" readonly="1" invisible="1"/>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Cheque Register Form -->
+        <record id="view_account_bank_statement_compute_currency_form3" model="ir.ui.view">
+            <field name="name">account.bank.statement.compute.currency.form3</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="register_accounting.view_cheque_register_form"/>
+            <field name="priority" eval="53"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='line_ids']/tree/field[@name='amount_out']" position="after">
+                    <field name="currency_id" readonly="1" invisible="1"/>
+                    <field name="functional_in" invisible="1"/>
+                    <field name="functional_out" invisible="1"/>
+                    <field name="functional_currency_id" readonly="1" invisible="1"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

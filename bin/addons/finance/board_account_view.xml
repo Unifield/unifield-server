@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Tree for purchase displayed on the accounting board -->
+        <record id="account_purchase_order_tree" model="ir.ui.view">
+            <field name="name">account.purchase.order.tree</field>
+            <field name="model">purchase.order</field>
+            <field name="priority" eval="20"/>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree colors="grey:state=='cancel';blue:state in ('wait','confirmed');red:state in ('except_invoice','except_picking')" string="Purchase Order">
+                    <field name="name" string="Reference"/>
+                    <field name="date_order" string="Order Date"/>
+                    <field name="partner_id"/>
+                    <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                    <field name="location_id"/>
+                    <field name="minimum_planned_date"/>
+                    <field name="origin"/>
+                    <field name="invoiced_rate" widget="progressbar"/>
+                    <field name="shipped_rate" widget="progressbar"/>
+                    <field name="amount_untaxed" sum="Total Untaxed amount"/>
+                    <field name="amount_total" sum="Total amount"/>
+                    <field name="state"/>
+                    <button name="purchase_confirmed_wait" states="confirmed" string="Confirm" icon="gtk-go-forward"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Action that give a link to the purchase_order_tree only for accounting (priority superior to the mainly purchase_order_tree -->
+        <record id="purchase_waiting_msf" model="ir.actions.act_window">
+            <field name="name">Purchase Order Waiting Approval</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_purchase_order_tree"/>
+            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','in',('wait','confirmed'))]</field>
+            <field name="search_view_id" eval="False"/>
+        </record>
+
+    <!-- Custom Accounting Board -->
+        <record id="inherit_board_account_form" model="ir.ui.view">
+            <field name="name">inherit.board.account.form</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.board_account_form' />
+            <field name="priority" eval="15"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form" position="replace">
+                  <form string="Account Board">
+                  </form>
+                  <!-- DASHBOARD FALSE DELETION UTP-398
+                        <hpaned>
+                            <child1>
+                                <action colspan="4" height="160" width="400" name="%(account.action_draft_customer_invoices_dashboard)d" string="Customer Invoices to Approve" />
+                                <action colspan="4" height="220" name="%(purchase_waiting_msf)d" string="Purchase Order Waiting Approval" width="400"/>
+                                <action colspan="4" height="160" width="400" name="%(account.action_company_analysis_tree)d" string="Company Analysis" />
+                            </child1>
+                            <child2>
+                                <action colspan="4" height="220" name="%(account.action_treasory_graph)d" string="Treasury" />
+                                <action colspan="4" height="220" name="%(account.action_aged_receivable)d" string="Aged Receivables" />
+                            </child2>
+                        </hpaned>
+                      </form>
+                      END OF DASHBOARD FALSE DELETION UTP-398 -->
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

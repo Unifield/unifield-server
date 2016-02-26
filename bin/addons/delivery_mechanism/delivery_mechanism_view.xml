@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+		
+		<record id="view_picking_ticket_form" model="ir.ui.view">
+            <field name="name">picking.ticket.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//tree[@string='Stock Moves']//field[@name='product_id']" position="before">
+						<field name="line_number" />
+					</xpath>
+            	
+            	</data>
+            </field>
+        </record>
+        
+        <record id="view_ppl_form" model="ir.ui.view">
+            <field name="name">ppl.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="msf_outgoing.view_ppl_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//tree[@string='Stock Moves']//field[@name='product_id']" position="before">
+						<field name="line_number" />
+					</xpath>
+            	
+            	</data>
+            </field>
+        </record>
+
+        <record id="stock_picking_processing_info_form_view" model="ir.ui.view">
+            <field name="name">stock.picking.processing.info.form.view</field>
+            <field name="model">stock.picking.processing.info</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Picking processing info">
+                    <field name="picking_id" colspan="4" />
+                    <separator colspan="4" string="Processing status" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="progress_line" />
+                    <field name="create_bo" />
+                    <field name="close_in" />
+                    <field name="prepare_pick" />
+                    <group colspan="4" attrs="{'invisible': [('error_msg', '=', False)]}">
+                        <separator colspan="4" string="Error" />
+                        <field name="error_msg" widget="text" nolabel="1" colspan="4" />
+                    </group>
+                    <separator colspan="4" string="Actions" />
+                    <group colspan="4" col="6">
+                        <button
+                            name="refresh"
+                            type="object"
+                            attrs="{'invisible': [('error_msg', '!=', False)]}"
+                            string="Refresh"
+                            icon="gtk-refresh"
+                            colspan="2" />
+                        <button
+                            name="reset_incoming"
+                            type="object"
+                            attrs="{'invisible': [('error_msg', '=', False)]}"
+                            string="Reset processing"
+                            icon="terp-gtk-jump-to-rtl"
+                            colspan="2" />
+                        <button
+                            name="close"
+                            type="object"
+                            string="Close"
+                            icon="gtk-close"
+                            colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+            
+    </data>
+</openerp>

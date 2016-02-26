@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="action_financing_currency_export_menu" model="ir.actions.act_window">
+            <field name="name">Financing Contracts Budget vs Actuals</field>
+            <field name="res_model">wizard.financing.currency.export</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.values" id="action_financing_currency_export_values">
+            <field name="object" eval="1" />
+            <field name="name">Select Output Currency</field>
+            <field name="key2">client_print_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' +str(ref('action_financing_currency_export_menu'))" />
+            <field name="key">action</field>
+            <field name="model">financing.contract.contract</field>
+        </record>
+
+    </data>
+</openerp>

@@ -1,0 +1,56 @@
+-
+  I create a Journal View with some columns
+-
+  !record {model: account.journal.view, id: account_journal_view0}:
+    name: Bank/Cash/Cheque Journal (Multi-Currency) View
+    columns_id:
+        - name: Date
+          field: date
+          required: 1
+          sequence: 3
+        - name: Journal Entry
+          field: move_id
+          required: False
+          sequence: 1
+        - name: Name
+          field: name
+          required: 1
+          sequence: 7
+        - name: Statement
+          field: statement_id
+          sequence: 7
+        - name: Partner
+          field: partner_id
+          sequence: 5
+        - name: Account
+          field: account_id
+          required: 1
+          sequence: 6
+        - name: Currency Amt.
+          field: amount_currency
+          sequence: 9
+        - name: Currency
+          field: currency_id
+          sequence: 10
+        - name: Debit
+          field: debit
+          sequence: 11
+        - name: Credit
+          field: credit
+          sequence: 12
+        - name: Ref
+          field: ref
+          sequence: 2
+        - name: State
+          field: state
+          sequence: 19
+        - name: Reconcile
+          field: reconcile_id
+          sequence: 20
+-
+  I create an analytic journal for Cash
+-
+  !record {model: account.analytic.journal, id: analytic_journal_cash0}:
+    code: acsh
+    name: Analytic Cash Journal
+    type: cash

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_account_currency_revaluation_wizard" model="ir.ui.view">
+            <field name="name">Revaluation</field>
+            <field name="model">wizard.currency.revaluation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Revaluation" col="4">
+                    <field name="revaluation_method"
+                        on_change="on_change_revaluation_method(revaluation_method, fiscalyear_id, period_id)"/>
+                    <newline/>
+                    <newline/>
+                    <field name="fiscalyear_id"
+                        on_change="on_change_fiscalyear_id(revaluation_method, fiscalyear_id)"/>
+                    <newline/>
+                    <field name="period_id"
+                        attrs="{'invisible': ['|', ('revaluation_method', '=', 'other_bs'), ('revaluation_method', '=', 'liquidity_year')],
+                                'required': [('revaluation_method', '=', 'liquidity_month')]}"
+                        on_change="on_change_revaluation_method(revaluation_method, fiscalyear_id, period_id)"/>
+                    <newline/>
+                    <field name="currency_table_id"
+                        attrs="{'invisible': [('revaluation_method', '=', 'liquidity_month')],
+                                'required': [('revaluation_method', 'in', ['liquidity_year', 'other_bs'])]}"/>
+                    <newline/>
+                    <separator string="" colspan="6"/>
+                    <field name="result_period_id"
+                        on_change="on_change_result_period_id(result_period_id)"/>
+                    <newline/>
+                    <field name="posting_date"/>
+                    <newline/>
+                    <field name="journal_id"/>
+                    <newline/>
+                    <field name="label" invisible="1"/>
+                    <newline/>
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                    <button name="revaluate_currency" string="Validate" type="object" icon="gtk-execute"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_view_account_currency_revaluation_wizard" model="ir.actions.act_window">
+            <field name="name">Revaluation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.currency.revaluation</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            action="action_view_account_currency_revaluation_wizard"
+            id="menu_view_account_currency_revaluation_wizard"
+            parent="account.menu_finance_periodical_processing"/>
+
+    </data>
+</openerp>
+

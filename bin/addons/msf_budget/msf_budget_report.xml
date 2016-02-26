@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <!-- see msf_budget/wizard/wizard_budget_criteria_export.py for real filename -->
+        <report id="budget_criteria_2"
+        string="Budget vs. Actuals"
+        model="msf.budget"
+        name="budget.criteria.2"
+        target_filename="Budget vs. Actual_${code}_%(year)s%(month)s%(day)s"
+        file="msf_budget/report/budget_criteria_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"/>
+
+        <report id="xls_budget_monthly"
+        string="Monthly Budget (XLS)"
+        model="msf.budget"
+        name="xls.budget.monthly"
+        target_filename="Monthly_Budget_${code}_${decision_moment_id}_${version}"
+        file="msf_budget/report/monthly_budget.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"/>
+
+        <report id="pdf_budget_monthly"
+        string="Monthly Budget (PDF)"
+        model="msf.budget"
+        name="msf.pdf.budget.monthly"
+        target_filename="Monthly_Budget_${code}_${decision_moment_id}_${version}"
+        rml="msf_budget/report/monthly_budget.rml"
+        auto="False"
+        menu="False"/>
+
+        <!-- see 'report/report_pdf_budget_summary.py' for real filename -->
+        <report id="pdf_budget_summary"
+        string="Budget Summary"
+        model="msf.budget"
+        name="msf.pdf.budget.summary"
+        target_filename="Budget_Summary_${code}_%(year)s%(month)s%(day)s"
+        rml="msf_budget/report/budget_summary.rml"
+        auto="False"
+        menu="False"/>
+
+        <report id="report_local_expenses_xls"
+        string="Local Expenses"
+        model="account.analytic.line"
+        name="local.expenses"
+        target_filename="Local Expenses_%(instance_code)s_%(year)s%(month)s%(day)s"
+        file="msf_budget/report/report_local_expenses_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"/>
+
+        <report id="pdf_engagement"
+        string="Order impact vs. Budget"
+        model="purchase.order"
+        name="msf.pdf.engagement"
+        target_filename="Order Impact vs. Budget_${name}_%(year)s%(month)s%(day)s"
+        rml="msf_budget/report/engagement.rml"
+        auto="False"
+        menu="True"/>
+
+        <report id="budget_actual"
+        string="Actuals by CC"
+        model="msf.budget"
+        name="msf.budget.actual"
+        target_filename="Actuals by CC_${code}_%(year)s%(month)s%(day)s"
+        report_type="txt"
+        auto="False"
+        menu="False"/>
+
+    </data>
+</openerp>
+

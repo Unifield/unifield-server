@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <report id="hq_ocg"
+        string="Export to HQ system"
+        model="account.move.line"
+        name="hq.ocg"
+        target_filename="Export to HQ System_${instance_id.code}_%(year)s%(month)s%(day)s"
+        report_type="txt"
+        auto="False"
+        menu="False"/>
+
+        <report id="hq_oca"
+        string="Export to HQ system"
+        model="account.move.line"
+        name="hq.oca"
+        target_filename="Export to HQ System_${instance_id.code}_%(year)s%(month)s%(day)s"
+        report_type="txt"
+        auto="False"
+        menu="False"/>
+
+        <report id="hq_ocba"
+        string="Export to HQ system"
+        model="account.move.line"
+        name="hq.ocba"
+        target_filename="Export to HQ System_${instance_id.code}_%(year)s%(month)s%(day)s"
+        report_type="txt"
+        auto="False"
+        menu="False"/>
+
+    <!-- Sequence for Finance export -->
+
+        <record id="seq_type_finance_export" model="ir.sequence.type">
+            <field name="name">Finance export - OCB</field>
+            <field name="code">finance.ocb.export</field>
+        </record>
+
+        <record id="seq_finance_export" model="ir.sequence">
+            <field name="name">Cash Register</field>
+            <field name="code">finance.ocb.export</field>
+            <field name="prefix"></field>
+            <field name="padding">3</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+    </data>
+</openerp>

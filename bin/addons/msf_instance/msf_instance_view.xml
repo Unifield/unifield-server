@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_msf_instance_form" model="ir.ui.view">
+            <field name="name">msf.instance.form</field>
+            <field name="model">msf.instance</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"
+                    hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"
+                    hide_new_button="PROP_INSTANCE_HIDE_BUTTON" string="Proprietary Instance">
+                    <field
+                        attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="code"/>
+                    <field
+                        attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="name"/>
+                    <field
+                        attrs="{'readonly': [('current_instance_level', '!=', 'section')]}"
+                        context="{'level':level}" name="level"/>
+                    <field invisible="1" name="current_instance_level"/>
+                    <notebook colspan="4">
+                        <page string="General Information">
+                            <field
+                                attrs="{'required': [('level', '!=', 'section')], 'readonly': ['|',('level', '=', 'section'), ('current_instance_level', '!=', 'section')]}" name="mission"/>
+                            <field name="instance" readonly="1"/>
+                            <field
+                                attrs="{'required': [('level', '!=', 'section')], 'readonly': ['|',('level', '=', 'section'), ('current_instance_level', '!=', 'section')]}"
+                                name="parent_id" on_change="onchange_parent_id(parent_id, level)"/>
+                            <field
+                                attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="note"/>
+                            <field
+                                attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="move_prefix"/>
+                            <field
+                                attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="reconcile_prefix"/>
+                            <field
+                                attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="top_cost_center_id"/>
+                            <field
+                                attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="po_fo_cost_center_id"/>
+                        </page>
+                        <page string="Cost Centers">
+                            <button
+                                attrs="{'invisible': ['|', '|', ('level', '=', 'section'), ('level', '=', 'project'), ('current_instance_level', '!=', 'section')]}"
+                                icon="terp-document-new"
+                                name="button_cost_center_wizard"
+                                string="Add Cost Centers" type="object"/>
+                            <group colspan="4">
+                                <field
+                                    attrs="{'invisible': [('level', '=', 'section')]}"
+                                    colspan="4"
+                                    context="{'level':level}"
+                                    name="target_cost_center_ids"
+                                    nolabel="1" widget="one2many_list">
+                                    <tree editable="top"
+                                    hide_delete_button="PROP_INSTANCE_HIDE_BUTTON or context.get('level')=='project'"
+                                    hide_new_button="1" string="Cost Centers">
+                                    <field name="cost_center_id" readonly="1"/>
+                                    <field name="cost_center_name"/>
+                                    <field name="is_target"/>
+                                    <field name="is_top_cost_center"/>
+                                    <field name="is_po_fo_cost_center"/>
+                                    </tree>
+                                    <form string="Cost Centers">
+                                    <field name="cost_center_id" readonly="1"/>
+                                    <field name="cost_center_name"/>
+                                    <field name="is_target"/>
+                                    <field name="is_top_cost_center"/>
+                                    <field name="is_po_fo_cost_center"/>
+                                    </form>
+                                </field>
+                            </group>
+                        </page>
+                    </notebook>
+                    <field name="state" readonly="1"/>
+                    <button
+                        attrs="{'invisible': ['|', ('state', '!=', 'active'), ('current_instance_level', '!=', 'section')]}"
+                        confirm="You are about to deactivate this proprietary instance. This action can not be undone, do you want to proceed?"
+                        icon="gtk-cancel" name="button_deactivate"
+                        string="Deactivate" type="object"/>
+                </form>
+            </field>
+        </record>
+        <record id="view_msf_instance_tree" model="ir.ui.view">
+            <field name="name">msf.instance.tree</field>
+            <field name="model">msf.instance</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"
+                    hide_new_button="PROP_INSTANCE_HIDE_BUTTON" string="Proprietary Instances">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="level"/>
+                    <field name="mission"/>
+                    <field name="instance"/>
+                    <field name="parent_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+        <record id="action_msf_instance_tree" model="ir.actions.act_window">
+            <field name="name">Proprietary Instances</field>
+            <field name="res_model">msf.instance</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem action="action_msf_instance_tree"
+            id="menu_action_msf_instance_tree" parent="base.menu_config"/>
+
+        <record id="msf_instance_view_company_tree" model="ir.ui.view">
+            <field name="name">msf.instance.res.company.tree</field>
+            <field name="model">res.company</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.view_company_tree"/>
+            <field name="arch" type="xml">
+                <tree position="replace" string="Companies">
+                    <tree hide_delete_button="1" hide_new_button="1"
+                        position="replace" string="Companies">
+                        <field name="name"/>
+                        <field name="partner_id"/>
+                    </tree>
+                </tree>
+            </field>
+        </record>
+        <!-- Redefine analytic line tree -->
+        <record id="view_account_analytic_line_instance_tree" model="ir.ui.view">
+            <field name="name">account.analytic.line.instance.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field eval="18" name="priority"/>
+            <field name="arch" type="xml">
+                <field name="journal_id" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </field>
+            </field>
+        </record>
+        <record id="view_account_analytic_line_filter_instance_inherit" model="ir.ui.view">
+            <field name="name">account.analytic.line.filter.instance.inherit</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
+            <field eval="30" name="priority"/>
+            <field name="arch" type="xml">
+                <field name="journal_id" position="replace">
+                    <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                    <field name="journal_id_fake"/>
+                </field>
+            </field>
+        </record>
+        <!-- Redefine analytic journal -->
+        <record id="view_account_analytic_journal_instance_tree" model="ir.ui.view">
+            <field name="name">account.analytic.journal.instance.tree</field>
+            <field name="model">account.analytic.journal</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_journal_tree"/>
+            <field name="arch" type="xml">
+                <field name="code" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </field>
+            </field>
+        </record>
+        <record id="view_account_analytic_journal_instance_form" model="ir.ui.view">
+            <field name="name">account.analytic.journal.instance.form</field>
+            <field name="model">account.analytic.journal</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_analytic_journal_form"/>
+            <field name="arch" type="xml">
+                <field name="code" position="after">
+                    <field name="instance_id" readonly="1"/>
+                </field>
+            </field>
+        </record>
+        <record id="view_analytic_journal_search_instance_inherit" model="ir.ui.view">
+            <field name="name">account.analytic.journal.search.instance.inherit</field>
+            <field name="model">account.analytic.journal</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_analytic_journal_search"/>
+            <field name="arch" type="xml">
+                <field name="code" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </field>
+            </field>
+        </record>
+        <!-- Redefine G/L journal -->
+        <record id="view_account_journal_form_instance_inherit" model="ir.ui.view">
+            <field name="name">account.journal.form.instance.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">form</field>
+            <field eval="250" name="priority"/>
+            <field name="inherit_id" ref="account_journal.view_account_journal_form_inherit"/>
+            <field name="arch" type="xml">
+                <separator position="after" string="Company">
+                    <field name="instance_id" readonly="1"/>
+                </separator>
+            </field>
+        </record>
+        <record id="view_account_journal_tree_instance_inherit" model="ir.ui.view">
+            <field name="name">account.journal.tree.instance.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_journal_tree"/>
+            <field name="arch" type="xml">
+                <field name="code" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </field>
+            </field>
+        </record>
+        <record id="view_account_journal_view_search_instance_inherit" model="ir.ui.view">
+            <field name="name">account.journal.view.search.instance.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_journal_search"/>
+            <field eval="20" name="priority"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search//field[@name='code']" position="before">
+                        <field name="instance_id"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        <!-- Redefine Journal Entries -->
+        <record id="view_move_form_instance_inherit" model="ir.ui.view">
+            <field name="name">account.move.form.instance.inherit</field>
+            <field name="model">account.move</field>
+            <field name="type">form</field>
+            <field eval="30" name="priority"/>
+            <field name="inherit_id" ref="finance.view_move_form_2"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='journal_id']" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="view_move_tree_instance_inherit" model="ir.ui.view">
+            <field name="name">account.move.tree.instance.inherit</field>
+            <field name="model">account.move</field>
+            <field name="type">tree</field>
+            <field eval="30" name="priority"/>
+            <field name="inherit_id" ref="account.view_move_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree//field[@name='name']" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+        <!-- Redefine G/L account move line -->
+        <record id="view_move_line_tree_instance_inherit" model="ir.ui.view">
+            <field name="name">account.move.line.tree.instance.inherit</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="res_currency_functional.view_move_line_tree"/>
+            <field name="arch" type="xml">
+                <field name="journal_id" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </field>
+            </field>
+        </record>
+        <record id="view_move_line_tree_editable_instance_inherit" model="ir.ui.view">
+            <field name="name">account.move.line.tree.editable.instance.inherit</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="res_currency_functional.view_move_line_tree_editable"/>
+            <field name="arch" type="xml">
+                <field name="journal_id" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Redefine register -->
+        <record id="inherit_view_bank_statement_instance_form" model="ir.ui.view">
+            <field name="name">inherit.view.bank.statement.instance.form</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form"/>
+            <field eval="60" name="priority"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='journal_id']" position="before">
+                        <field name="instance_id" readonly="1"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        <record id="inherit_view_bank_statement_instance_form2" model="ir.ui.view">
+            <field name="name">inherit.view.bank.statement.instance.form2</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form2"/>
+            <field eval="61" name="priority"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='journal_id']" position="before">
+                        <field name="instance_id" readonly="1"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        <record id="view_cheque_register_form" model="ir.ui.view">
+            <field name="name">view.cheque.register.instance.form</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="register_accounting.view_cheque_register_form"/>
+            <field eval="62" name="priority"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='journal_id']" position="before">
+                        <field name="instance_id" readonly="1"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        <record id="view_bank_statement_instance_tree" model="ir.ui.view">
+            <field name="name">account.bank.statement.instance.tree</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field eval="35" name="priority"/>
+            <field name="inherit_id" ref="account.view_bank_statement_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='name']" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="view_cash_statement_instance_tree" model="ir.ui.view">
+            <field name="name">account.cash.statement.instance.tree</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field eval="36" name="priority"/>
+            <field name="inherit_id" ref="register_accounting.view_cash_statement_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='name']" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="view_cheque_register_instance_tree" model="ir.ui.view">
+            <field name="name">account.cheque.register.instance.tree</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field eval="37" name="priority"/>
+            <field name="inherit_id" ref="register_accounting.view_cheque_register_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='name']" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+        <!--
+      MSF Instance search view
+    -->
+        <record id="view_msf_instance_filter" model="ir.ui.view">
+            <field name="name">msf.instance.filter</field>
+            <field name="model">msf.instance</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Proprietary Instances List">
+                    <filter domain="[('state', '=', 'active')]"
+                        icon="terp-check" name="active" string="Active"/>
+                    <filter domain="[('state', '=', 'inactive')]"
+                        icon="gtk-dialog-error" name="inactive" string="Inactive"/>
+                    <separator orientation="vertical"/>
+                    <field name="code" select="1"/>
+                    <field name="level" select="1"/>
+                </search>
+            </field>
+        </record>
+
+    <!-- Analytic accounts -->
+        <record id="view_analytic_account_form2" model="ir.ui.view">
+            <field name="name">analytic.account.form.2</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_analytic_account_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="parent_id" position="before">
+                        <field name="current_instance_type" invisible="1"/>
+                        <field name="instance_id" domain="[('level', '=', 'coordo')]" attrs="{'required': [('category', '=', 'FUNDING')], 'invisible': [('category', '!=', 'FUNDING')], 'readonly': [('current_instance_type', '!=', 'section')]}"/>
+                    </field>
+                </data>
+            </field>
+        </record>
+
+
+    </data>
+</openerp>

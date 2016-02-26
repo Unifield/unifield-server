@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+
+        
+            
+        <record id="stock_move_memory_tree_in" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.in</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_in" />
+			<field name="arch" type="xml">
+				<data>
+				
+					<field name="product_id" position="after">
+						<field name="location_supplier_customer_mem_out" invisible="True" />
+						<field name="asset_id" domain="[('product_id', '=', product_id)]"
+							attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}" />
+						<field name="asset_check" invisible="True" />
+					</field>
+				
+				</data>
+			</field>
+		</record>
+
+        <record id="stock_move_memory_tree_out" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.out</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_out" />
+			<field name="arch" type="xml">
+				<data>
+				
+					<field name="product_id" position="after">
+						<field name="location_supplier_customer_mem_out" invisible="True" />
+						<field name="asset_id" domain="[('product_id', '=', product_id)]"
+							attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}" />
+						<field name="asset_check" invisible="True" />
+					</field>
+				
+				</data>
+			</field>
+		</record>
+
+    </data>
+</openerp>

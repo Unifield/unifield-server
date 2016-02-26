@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="product_list_tree_view" model="ir.ui.view">
+            <field name="name">product.list.tree.view</field>
+            <field name="model">product.list</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Products lists">
+                    <field name="name" />
+                    <field name="ref" />
+                    <field name="type" />
+                    <field name="standard_list_ok" />
+                    <field name="order_list_print_ok" />
+                    <field name="nb_products" />
+                    <field name="parent_id" invisible="1" />
+                    <field name="creation_date" invisible="1" />
+                    <field name="warehouse_id" invisible="1" />
+                    <field name="location_id" invisible="1" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="product_list_search_view" model="ir.ui.view">
+            <field name="name">product.list.search.view</field>
+            <field name="model">product.list</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Products Lists">
+                    <filter string="List" name="only_list" domain="[('type', '=', 'list')]" icon="terp-stock_align_left_24" />
+                    <filter string="Sublist" name="only_sublist" domain="[('type', '=', 'sublist')]" icon="gtk-copy" />
+                    <separator orientation="vertical" />
+                    <filter string="Standard" name="standard" domain="[('standard_list_ok', '=', True)]" icon="terp-rating-rated" />
+                    <filter string="Order list print" name="print_list" domain="[('order_list_print_ok', '=', True)]" icon="gtk-print" />
+                    <field name="ref" />
+                    <field name="name" />
+                    <field name="creation_date" />
+                    <newline />
+                    <field name="reviewer_id" />
+                    <field name="parent_id" />
+                    <field name="warehouse_id" />
+                    <field name="location_id" />
+                    <field name="product_ids" widget="many2one"/>
+                    <newline />
+                    <group string="Group by…" expand="0" >
+                        <filter name="group_parent" string="Parent list" icon="gtk-undo" domain="[]" context="{'group_by' : 'parent_id'}" />
+                        <filter name="group_creation" string="Creation date" icon="terp-go-today" domain="[]" context="{'group_by' : 'creation_date'}" />
+                        <filter name="group_warehouse" string="Warehouse" icon="gtk-home" domain="[]" context="{'group_by' : 'warehouse_id'}" />
+                        <filter name="group_location" string="Stock Location" icon="terp-accessories-archiver+" domain="[]" context="{'group_by' : 'location_id'}" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="product_list_form_view" model="ir.ui.view">
+            <field name="name">product.list.form.view</field>
+            <field name="model">product.list</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Product list">
+                    <separator colspan="4" string="General Information" />
+                    <field name="type" />
+                    <field name="ref" />
+                    <field name="name" />
+                    <field name="creation_date" />
+                    <field name="creator" />
+                    <field name="last_update_date" />
+                    <field name="description" colspan="4" />
+                    <group colspan="2" col="5">
+                        <label string="" />
+                        <field name="standard_list_ok" />
+                        <field name="order_list_print_ok" />
+                    </group>
+                    <field name="reviewer_id" />
+                    <field name="nb_products" invisible="1" />
+                    <field name="parent_id" attrs="{'invisible': [('type', '!=', 'sublist')]}" on_change="change_parent_list(parent_id, product_ids)" />
+                    <newline />
+                    <field name="warehouse_id" attrs="{'required': [('type', '=', 'sublist'), ('location_id', '=', False)]}" />
+                    <field name="location_id" attrs="{'required': [('type', '=', 'sublist'), ('warehouse_id', '=', False)]}" />
+                    <notebook colspan="4">
+                        <page string='Products'>
+                            <separator colspan="4" string="Products" />
+                            <group colspan="4" name="import" string="Import Lines" >
+                                <button name="%(action_add_product_in_list)d" type="action" string="Add multiple products" colspan="4" />
+                            </group>
+                            <field name="product_ids" mode="tree" colspan="4" nolabel="1" on_change="change_product_line(product_ids)">
+                                <tree string="Products" editable="top">
+                                    <field name="name" domain="[('list_ids', '=', parent.parent_id)]" />
+                                    <field name="comment" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string='Old Products'>
+                            <separator colspan="4" string="Old Products" />
+                            <field name="old_product_ids" mode="tree" colspan="4" nolabel="1" readonly="1">
+                                <tree string="Old Products">
+                                    <field name="removal_date" />
+                                    <field name="name" domain="[('list_ids', '=', parent.parent_id)]" />
+                                    <field name="comment" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_product_list" model="ir.actions.act_window">
+            <field name="name">Products lists</field>
+            <field name="res_model">product.list</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_type">form</field>
+            <field name="view_search_id" ref="product_list_search_view" />
+        </record>
+        
+        <menuitem id="menu_sale_product_list"
+                  sequence="2"
+                  action="action_product_list"
+                  parent="base.menu_product" />
+                  
+    </data>
+</openerp>

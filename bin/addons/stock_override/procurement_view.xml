@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="procurement_order_form_view" model="ir.ui.view">
+			<field name="name">procurement.order.form.view</field>
+			<field name="model">procurement.order</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="procurement.procurement_form_view" />
+			<field name="arch" type="xml">
+				<data>
+					 <xpath expr="/form/group[1]" position="attributes">
+					 	<attribute name="attrs">{'readonly': [('state', '!=', 'draft')]}</attribute>
+					 </xpath>
+					 <xpath expr="/form/group[2]" position="attributes">
+					 	<attribute name="attrs">{'readonly': [('state', '!=', 'draft')]}</attribute>
+					 </xpath>
+					 <xpath expr="/form/notebook/page[@string='Extra Information']/field[@name='move_id']" position="attributes">
+					 	<attribute name="attrs">{'readonly': [('state', '!=', 'draft')]}</attribute>
+					 </xpath>
+					 <xpath expr="/form/notebook/page[@string='Extra Information']/field[@name='date_close']" position="attributes">
+					 	<attribute name="attrs">{'readonly': [('state', '!=', 'draft')]}</attribute>
+					 </xpath>
+					 <xpath expr="/form/notebook/page[@string='Extra Information']/field[@name='close_move']" position="attributes">
+					 	<attribute name="attrs">{'readonly': [('state', '!=', 'draft')]}</attribute>
+					 </xpath>
+				</data>
+			</field>
+		</record>
+		
+		<record id="purchase_procurement_order_form_view" model="ir.ui.view">
+			<field name="name">purchase.procurement.order.form.view</field>
+			<field name="model">procurement.order</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="purchase.view_procurement_form_inherit" />
+			<field name="arch" type="xml">
+				<data>
+					 <xpath expr="/form/notebook/page[@string='Extra Information']/field[@name='purchase_id']" position="attributes">
+					 	<attribute name="attrs">{'readonly': [('state', '!=', 'draft')]}</attribute>
+					 </xpath>
+				</data>
+			</field>
+		</record>
+		
+	</data>
+</openerp>

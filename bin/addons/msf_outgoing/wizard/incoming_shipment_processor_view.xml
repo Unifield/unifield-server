@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="stock_incoming_processor_form_view" model="ir.ui.view">
+            <field name="name">stock.incoming.processor.form.view</field>
+            <field name="model">stock.incoming.processor</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Products to Process">
+                    <field name="date" invisible="1" />
+                    <field name="picking_id" invisible="1" />
+                    <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
+                    <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
+                    <group name="import_file_lines" string="Import Lines" colspan="4">
+                        <button name="launch_simulation" string="Import IN" icon="gtk-execute" colspan="1" type="object" />
+                    </group>
+                    <field name="contains_dg" invisible="1" />
+                    <field name="contains_kc" invisible="1" />
+                    <field name="draft" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), ('contains_kc', '=', False)]}">
+                        <html>
+                            <p style="text-align: center; v-align: middle;">
+                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.
+                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                            </p>
+                        </html>
+                    </group>
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_kc', '=', False), '&amp;', ('contains_kc', '=', True), ('contains_dg', '=', True)]}">
+                        <html>
+                            <p style="text-align: center; v-align: middle;">
+                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.
+                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                            </p>
+                        </html>
+                    </group>
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), '&amp;', ('contains_dg', '=', True), ('contains_kc', '=', True)]}">
+                        <html>
+                            <p style="text-align: center; v-align: middle;">
+                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.
+                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                            </p>
+                        </html>
+                    </group>
+                    <separator colspan="4" string="Move lines" />
+                    <field name="move_ids" mode="tree"
+                        colspan="4" nolabel="1" />
+                    <group colspan="8" col="8" name="actions">
+                        <separator string="Actions" colspan="8" />
+                        <field name="dest_type"
+                            on_change="onchange_dest_type(dest_type, picking_id)"
+                            />
+                        <field name="direct_incoming"
+                            attrs="{'invisible': [('dest_type', 'not in', ['default', 'to_stock'])]}"
+                            />
+                        <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
+                        <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="stock_incoming_processor_internal_warning_form_view" model="ir.ui.view">
+            <field name="name">stock.incoming.processor.internal.warning.form.view</field>
+            <field name="model">stock.incoming.processor</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Warning !">
+                    <label> </label>
+                    <group colspan="2" col="2">
+                        <html>
+                            <div style="align: center">
+                                <p style="font-size:14px;align:center">
+                                    Warning! Are you sure want to process this Incoming Shipment before it receives the synched delivery details and has the status "Available Shipped ?
+                                </p>
+                            </div>
+                        </html>
+                    </group>
+                    <label> </label>
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Close Window" icon="gtk-cancel" colspan="2" />
+                    <button name="force_process" string="Process anyway" icon="gtk-go-forward" colspan="2" type="object" />
+                </form>
+            </field>
+        </record>
+
+        <record id="stock_move_in_processor_tree_view" model="ir.ui.view">
+            <field name="name">stock.move.in.processor.tree.view</field>
+            <field name="model">stock.move.in.processor</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Moves"
+                    editable="top"
+                    hide_delete_button="1"
+                    hide_new_button="1"
+                    colors="red:integrity_status!='empty'"
+                    >
+                    <!-- Invisible fields -->
+                    <field name="type_check" invisible="1" />
+                    <field name="ordered_uom_category" invisible="1" />
+                    <field name="kit_check" invisible="1" />
+                    <field name="asset_check" invisible="1" />
+                    <field name="location_id" invisible="1" />
+                    <field name="ssl_check" invisible="1" />
+                    <!-- Visible fields -->
+                    <field name="line_number" string="Line" />
+                    <field name="product_id" string="Product" />
+                    <field name="batch_location_ids" invisible="1" />
+                    <button name="open_change_product_wizard"
+                        type="object"
+                        icon="gtk-convert"
+                        string="Change Product"
+                        attrs="{'invisible': [('type_check', '!=', 'in')]}"
+                        />
+                    <field name="asset_id"
+                        domain="[('product_id', '=', product_id)]"
+                        attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}"
+                        />
+                    <field name="composition_list_id"
+                        domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
+                        attrs="{'readonly': [('kit_check', '=', False)]}"
+                        />
+                    <field name="ordered_quantity" />
+                    <field name="ordered_uom_id" />
+                    <field name="quantity"
+                        string="Quantity to process"
+                        on_change="onchange_uom_qty(uom_id, quantity)"
+                        />
+                    <field name="uom_id"
+                        domain="[('category_id', '=', ordered_uom_category)]"
+                        on_change="onchange_uom_qty(uom_id, quantity)"
+                        />
+                    <button name="open_split_wizard"
+                        type="object"
+                        icon="terp-stock_effects-object-colorize"
+                        string="Split"
+                        attrs="{'invisible': [('type_check', 'not in', ['in', 'internal', 'out'])]}"
+                        />
+                    <field name="prodlot_id"
+                        domain="[('product_id', '=', product_id), ('check_type', '=', True)]"
+                        context="{'location_id': batch_location_ids, 'location_dive': True, 'product_id': product_id, 'expiry_date_check': exp_check, 'batch_number_check': lot_check}"
+                        attrs="{'readonly': [('lot_check', '=', False), ('exp_check', '=', False)]}"
+                        on_change="change_lot(prodlot_id)"
+                        />
+                    <field name="expiry_date"
+                        attrs="{'readonly': ['|', '&amp;', ('lot_check', '=', False), ('exp_check', '=', False), '&amp;', ('lot_check', '=', True), ('exp_check', '=', True)]}"
+                        on_change="change_expiry(expiry_date, product_id, type_check)" />
+                    <field name="lot_check" />
+                    <field name="exp_check" />
+                    <field name="kc_check" />
+                    <field name="dg_check" />
+                    <field name="np_check" />
+                    <field name="cost" />
+                    <field name="currency" />
+                    <field name="integrity_status" string="" />
+                </tree>
+            </field>
+        </record>
+
+    </data>
+</openerp>

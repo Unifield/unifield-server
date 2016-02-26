@@ -1,0 +1,648 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="tender_form" model="ir.ui.view">
+            <field name="name">tender.form</field>
+            <field name="model">tender</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Tender">
+                    <group col="6" colspan="4">
+                        <field name="creator" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="creation_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="name" />
+                        <field name="sale_order_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="company_id" invisible="True" />
+                        <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}"
+                            on_change="onchange_categ(categ)"/>
+                        <field name="priority" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="delivery_address" colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('dest_address', '=', company_id)]"/>
+                        <field name="details" />
+                    </group>
+                    <notebook colspan="5">
+                        <page string="Tender Lines">
+                            <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
+                                <tree string="Tender Lines" editable="top" hide_delete_button="1" noteditable="line_state in ['cancel', 'done']" colors="blue: line_state=='cancel'">
+                                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty)" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('purchase_type', '=', parent.categ)]" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
+                                    <field name="comment" />
+                                    <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" 
+                                        on_change="onchange_uom_qty(product_uom, qty)" />
+                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('uom_by_product', '=', product_id)]"/>
+                                    <field name="supplier_id" />
+                                    <field name="price_unit" />
+                                    <field name="total_price" />
+                                    <field name="currency_id" />
+                                    <field name="purchase_order_id" />
+                                    <field name="purchase_order_line_number" />
+                                    <field name="created_by_rfq" invisible="0" readonly="1" />
+                                    <field name="state" invisible="1" />
+                                    <field name="line_state" invisible="1" />
+                                    <button name="ask_unlink" type="object" string="Delete" icon="gtk-del" attrs="{'invisible': ['|', ('state', '=', 'done'), ('line_state', 'in', ['done', 'cancel'])]}" />
+                                </tree>
+                            </field>
+                            <newline/>
+                            <group col="13" colspan="10">
+                            </group>
+                        </page>
+                        <page string="Suppliers">
+                            <field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('check_partner_rfq', '=', active_id),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]">
+                                <tree string="Suppliers">
+                                    <field name="name" />
+                                    <field name="partner_type" />
+                                    <field name="city" />
+                                    <field name="country" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="RfQs">
+                            <field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}"
+                                context="{'rfq_ok': True}" >
+                                <tree string="RfQs">
+                                    <field name="name" />
+                                    <field name="partner_id" />
+                                    <field name="notes" />
+                                    <field name="amount_total" />
+                                    <field name="currency_id" />
+                                    <field name="state" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" nolabel="1" />
+                        </page>
+                    </notebook>
+                    <group col="13" colspan="4">
+                        <field name="state" />
+                        <field name="internal_state" invisible="True"/>
+                        <button name="cancel_tender" type="object" string="Cancel" icon="gtk-cancel" attrs="{'invisible':[('state', 'in', ['cancel', 'done'])]}" />
+                        <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-convert" />
+                        <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-find" />
+                        <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit"
+                            attrs="{'invisible':['|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison')]}" />
+                        <button name="button_done" states="comparison" string="Continue Sourcing Process" icon="gtk-go-forward"
+                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False)]}" />
+                        <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add"
+                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
+                        <button name="done" string="Closed" type="object" icon="gtk-go-forward"
+                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="tender_tree" model="ir.ui.view">
+            <field name="name">tender.tree</field>
+            <field name="model">tender</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Tender">
+                    <field name="name" />
+                    <field name="priority" />
+                    <field name="categ" />
+                    <field name="creation_date" />
+                    <field name="requested_date" />
+                    <field name="sale_order_id" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="tender_search_form_view" model="ir.ui.view">
+            <field name="name">tender.search.form</field>
+            <field name="model">tender</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Tender">
+                    <filter name="draft" icon="gtk-file" string="Draft"
+                            domain="[('state', '=', 'draft')]" />
+                    <filter name="comparison" icon="gtk-sort-descending" string="Comparison"
+                            domain="[('state', '=', 'comparison')]" />
+                    <filter name="done" icon="gtk-apply" string="Closed"
+                            domain="[('state', '=', 'done')]" />
+                    <filter name="cancel" icon="gtk-cancel" string="Cancelled"
+                            domain="[('state', '=', 'cancel')]" />
+                    <field name="name" />
+                    <field name="supplier_ids" string="Supplier" widget="many2one" />
+                    <field name="product_id" string="Product" widget="many2one" />
+                    <field name="sale_order_id" string="Sale Order" />
+                    <field name="creator" />
+                    <field name="creation_date" />
+                    <newline />
+                    <group string="Priority" expand="0">
+                      <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
+                      <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
+                      <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
+                    </group>
+
+                    <newline />
+
+                    <group string="Category" expand="0">
+                      <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
+                      <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
+                      <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                      <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>
+                    </group> 
+
+                    <newline />
+
+                    <group expand="0" string="Group By..." colspan="11" col="11">
+                        <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by': 'priority'}" />
+                        <separator orientation="vertical" />
+                        <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Sale Order" icon="terp-accessories-archiver" domain="[]" context="{'group_by':'sale_order_id'}"/>
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'creation_date'}"/>
+                        <filter string="Expected Date" icon="terp-go-month" domain="[]" context="{'group_by':'requested_date'}" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="tender_line_tree_view" model="ir.ui.view">
+            <field name="name">tender.line.tree.view</field>
+            <field name="model">tender.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Tender Lines" editable="top">
+                    <!-- <field name="date_planned" /> -->
+                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty)" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('purchase_type', '=', parent.categ)]" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
+                    <field name="comment" />
+                    <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" 
+                           on_change="onchange_uom_qty(product_uom, qty)" />
+                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('uom_by_product', '=', product_id)]"/>
+                    <field name="supplier_id" />
+                    <field name="price_unit" />
+                    <field name="total_price" />
+                    <field name="currency_id" />
+                    <field name="purchase_order_id" />
+                    <field name="purchase_order_line_number" />
+                    <field name="state" invisible="1" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="tender_action" model="ir.actions.act_window">
+            <field name="name">Tenders</field>
+            <field name="res_model">tender</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="search_view_id" ref="tender_search_form_view" />
+        </record>
+
+        <menuitem icon="STOCK_INDENT" action="tender_action"
+            id="menu_tender" parent="purchase.menu_procurement_management" sequence="3" />
+
+        <record id="purchase_order_form" model="ir.ui.view">
+            <field name="name">purchase.order.form</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="priority">300</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <field name="details" position="after">
+                        <newline />
+                        <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <field name="rfq_ok" invisible="1" />
+                        <field
+                            name="rfq_delivery_address"
+                            colspan="4"
+                            domain="[('dest_address', '=', company_id)]"
+                            attrs="{'invisible': [('rfq_ok', '=', False)], 'readonly': ['|', ('tender_id', '!=', False), ('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                    </field>
+
+                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('rfq_ok', '=', True)]}</attribute>
+                    </xpath>
+
+                    <xpath expr="/form/notebook//page[@string='Invoices']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('rfq_ok', '=', True)]}</attribute>
+                    </xpath>
+
+                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes">
+                        <attribute name="string">Lines</attribute>
+                    </xpath>
+
+                    <xpath expr="/form//field[@name='date_order']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='warehouse_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='order_type']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='priority']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='categ']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='invoiced']" position="attributes">
+                        <attribute name="readonly">True</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='shipped']" position="attributes">
+                        <attribute name="readonly">True</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='partner_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])],}</attribute>
+                        <attribute name="domain">[('check_partner_rfq', '=', tender_id)]</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='partner_address_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='pricelist_id']" position="attributes">
+                        <attribute name="string">Currency</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='origin']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='fiscal_position']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])], 'invisible': [('vat_ok', '=', False)]}</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+
+       <record id="product_supplierinfo_form_view" model="ir.ui.view">
+            <field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="supplier_catalogue.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+                <data>
+
+                    <xpath expr="//field[@name='pricelist_ids']" position="attributes">
+                        <attribute name="context">{'partner_id': name}</attribute>
+                    </xpath>
+
+                    <xpath expr="//tree[@string='Pricelist']/field[@name='rounding']" position="after">
+                        <field name="partner_id" />
+                        <field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
+                    </xpath>
+
+                    <xpath expr="//tree[@string='Pricelist']/field[@name='valid_from']" position="after">
+                        <field name="valid_till" />
+                        <field name="comment" />
+                        <field name="purchase_order_id" />
+                        <field name="purchase_order_line_number" />
+                        <field name="purchase_order_line_id" />
+                    </xpath>
+                 </data>
+            </field>
+        </record>
+
+        <record id="product_supplierinfo_form_view2" model="ir.ui.view">
+            <field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <!-- Modificaiton of lines -->
+                    <xpath expr="//form/field[@name='price']" position="after">
+                        <field name="partner_id" />
+                        <field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
+                        <field name="valid_till" />
+                        <field name="purchase_order_id" />
+                        <field name="purchase_order_line_number" />
+                        <field name="purchase_order_line_id" />
+                    </xpath>
+
+                </data>
+            </field>
+        </record>
+
+        <record id="view_rfq_filter" model="ir.ui.view">
+            <field name="name">purchase.order.rfq.list.select</field>
+            <field name="model">purchase.order</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Purchase Order">
+                  <group col='10' colspan='4'>
+                    <filter icon="terp-document-new" name="draft_rfq" string="Draft" domain="[('state','=','draft')]" separator="1" help="Requests for Quotation which are in draft state"/>
+                    <filter icon="gtk-apply" name="sent" string="Sent" domain="[('state','=','rfq_sent')]" separator="1" />
+                    <filter icon="terp-camera_test" name="updated" string="Updated" domain="[('state','=','rfq_updated')]" separator="1" />
+                    <filter icon="gtk-yes" name="done" string="Closed" domain="[('state','=','done')]" separator="1" />
+                    <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state','=','cancel')]" separator="1" />
+                    <field name="partner_id" select="1" string="Supplier" />
+                    <field name="product_id" select="1" />
+                    <field name="origin" />
+                    <field name="create_uid" select="1"/>
+                    <field name="date_order" string="Creation date"/>
+                    <newline />
+                    <group string="Type" expand="0">
+                            <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]" />
+                            <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]" />
+                            <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]" />
+                            <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]" />
+                            <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]" />
+                            <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]" />
+                            <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]" />
+                        </group>
+                        <newline />
+                        <group string="Priority" expand="0">
+                            <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
+                            <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
+                            <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
+                        </group>
+                        <newline />
+                        <group string="Category" expand="0">
+                            <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
+                            <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
+                            <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                            <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>
+                        </group>
+                        <newline />
+                </group>
+                <newline/>
+                <group expand="0" string="Group By..." colspan="4" col="10">
+                  <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by':'priority'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Supplier" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Origin" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>
+                  <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
+                  <filter string="Expected Date" icon="terp-go-month" domain="[]" context="{'group_by':'delivery_requested_date'}"/>
+                </group>
+              </search>
+            </field>
+        </record>
+
+        <record id="view_rfq_tree" model="ir.ui.view">
+            <field name="name">view.rfq.tree</field>
+            <field name="model">purchase.order</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="300" />
+            <field name="arch" type="xml">
+                <tree string="Requests for Quotation">
+                    <field name="name" />
+                    <field name="order_type" />
+                    <field name="priority" />
+                    <field name="categ" />
+                    <field name="date_order" string="Creation date"/>
+                    <field name="partner_id" />
+                    <field name="delivery_requested_date" />
+                    <field name="origin" />
+                    <field name="amount_total" sum="Total amount" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="purchase.purchase_rfq" model="ir.actions.act_window">
+            <field name="name">Requests for Quotation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="view_type">form</field>
+            <field name="context">{'rfq_ok': True, 'search_default_draft_rfq': 1, 'request_for_quotation': True}</field>
+            <field name="domain">[('rfq_ok', '=', True)]</field>
+            <field name="view_mode">tree,form,graph,calendar</field>
+            <field name="search_view_id" ref="view_rfq_filter"/>
+            <field name="help">You can create a request for quotation when you want to buy products to a supplier but the purchase is not confirmed yet. Use also this menu to review requests for quotation created automatically based on your logistic rules (minimum stock, MTO, etc). You can convert the request for quotation into a purchase order once the order is confirmed. If you use the extended interface (from user's preferences), you can select the way to control your supplier invoices: based on the order, based on the receptions or manual encoding.</field>
+        </record>
+
+        <record id="purchase_rfq_tree_view_action" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="purchase.purchase_rfq" />
+            <field name="sequence">1</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_rfq_tree" />
+        </record>
+
+        <record id="purchase.purchase_form_action" model="ir.actions.act_window">
+            <field name="name">Purchase Orders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="view_mode">tree,form,graph,calendar</field>
+            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
+            <field name="domain">[('rfq_ok', '=', False)]</field>
+            <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
+            <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
+        </record>
+
+        <record id="act_relate_tender_rfq" model="ir.actions.act_window">
+            <field name="name">Requests for Quotation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="src_model">tender</field>
+            <field name="key2">client_action_relate</field>
+            <field name="view_type">form</field>
+            <field name="context">{'rfq_ok': True, 'search_default_draft_rfq': 1, 'request_for_quotation': True}</field>
+            <field name="domain">[('rfq_ok', '=', True), ('tender_id', '=', active_id)]</field>
+            <field name="view_mode">tree,form,graph,calendar</field>
+            <field name="search_view_id" ref="view_rfq_filter"/>
+        </record>
+        <record model="ir.values" id="relate_tender_rfq_values">
+            <field name="object" eval="1" />
+            <field name="name">Requests for Quotations</field>
+            <field name="key2">client_action_relate</field>
+            <field name="value" eval="'ir.actions.act_window,' + str(ref('act_relate_tender_rfq'))" />
+            <field name="key">action</field>
+            <field name="model">tender</field>
+        </record>
+
+        <record id="act_relate_tender_purchase_order" model="ir.actions.act_window">
+            <field name="name">Purchase Orders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="src_model">tender</field>
+            <field name="key2">client_action_relate</field>
+            <field name="view_mode">tree,form,graph,calendar</field>
+            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
+            <field name="domain">[('rfq_ok', '=', False), ('origin_tender_id', '=', active_id)]</field>
+            <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
+        </record>
+        <record model="ir.values" id="relate_tender_purchase_order_values">
+            <field name="object" eval="1" />
+            <field name="name">Purchase Orders</field>
+            <field name="key2">client_action_relate</field>
+            <field name="value" eval="'ir.actions.act_window,' + str(ref('act_relate_tender_purchase_order'))" />
+            <field name="key">action</field>
+            <field name="model">tender</field>
+        </record>
+
+        <record id="tender_line_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">tender.line.cancel.wizard.form.view</field>
+            <field name="model">tender.line.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Tender line cancelation">
+                    <field name="last_line" invisible="1" />
+                    <field name="only_exp" invisible="1" />
+                    <group colspan="4" col="1" attrs="{'invisible': [('only_exp', '=', True)]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">Would you re-source the needs sourced by this tender line ?</h4>
+                        </html>
+                    </group>
+                    <group colspan="6" attrs="{'invisible': [('last_line', '=', False)]}">
+                        <html>
+                            <p id="view_last_line_message"
+                               style="text-align:center; color: red; font-weight: bold; font-size: 1.2em">
+                               WARNING! You are about to cancel/delete a line. This action once done cannot be changed, and it will mean all related POs will be confirmed. Therefore if you wish to add another product to this tender you should do this BEFORE deleting this line. To add another product click "Close window".
+
+                           </p>
+                        </html>
+                    </group>
+                    <newline />
+                    <group colspan="4" col="6" attrs="{'invisible': [('only_exp', '=', True)]}">
+                        <separator string="Actions" colspan="6" />
+                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
+                        <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" />
+                        <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                    </group>
+                    <group colspan="4" col="4" attrs="{'invisible': [('only_exp', '=', False)]}">
+                        <separator string="Actions" colspan="4" />
+                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
+                        <button name="just_cancel" string="Confirm cancelation" type="object" icon="gtk-execute" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="ask_tender_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">ask.tender.cancel.wizard.form.view</field>
+            <field name="model">tender.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Tender cancelation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">All lines of this tender have been canceled. Would you also cancel this tender ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
+                    <button name="close_window" string="No" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="just_cancel" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="tender_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">tender.cancel.wizard.form.view</field>
+            <field name="model">tender.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Tender cancelation">
+                    <field name="not_draft" invisible="1" />
+                    <group colspan="4" col="1" attrs="{'invisible': [('not_draft', '=', False)]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">Some Requests for Quotation have been generated by this tender. All these RfQs will be canceled if you cancel the tender.</h4>
+                        </html>
+                    </group>
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines attached to this tender will be re-sourced.</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="rfq_line_unlink_wizard_form_view" model="ir.ui.view">
+            <field name="name">rfq.line.unlink.wizard.form.view</field>
+            <field name="model">purchase.order.line.unlink.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Request for quotation line cancelation">
+                    <field name="last_line" invisible="1" />
+                    <field name="only_exp" invisible="1" />
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">Would you re-source the needs sourced by this request for quotation line ?</h4>
+                        </html>
+                    </group>
+                    <group colspan="6">
+                        <html>
+                            <p id="view_last_line_message"
+                               style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                               WARNING! You are about to cancel/delete a line. This action once done cannot be changed, and it will mean all other related POs will be confirmed. Therefore if you wish to add another product to this RfQ you should do this BEFORE deleting this line. To add another product click "Close window".                              
+                           </p>
+                           <script language="javascript">
+                               var is_displayed = $('#last_line').val();
+                               if (is_displayed == "1") {
+                                   msg_dom = $('#view_last_line_message')
+                                   msg_dom.show();
+                               }
+                           </script>
+                        </html>
+                    </group>
+                    <newline />
+                    <group colspan="4" col="6" attrs="{'invisible': [('only_exp', '=', True)]}">
+                        <separator string="Actions" colspan="6" />
+                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
+                        <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" />
+                        <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                    </group>
+                    <group colspan="4" col="4" attrs="{'invisible': [('only_exp', '=', False)]}">
+                        <separator string="Actions" colspan="4" />
+                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
+                        <button name="just_cancel" string="Confirm deletion" type="object" icon="gtk-execute" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="rfq_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">rfq.cancel.wizard.form.view</field>
+            <field name="model">purchase.order.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Cancel Request for Quotation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Request for Quotation will be re-sourced.</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="cancel_po" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="ask_rfq_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">ask.rfq.cancel.wizard.form.view</field>
+            <field name="model">purchase.order.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Cancel Request for Quotation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">You removed all lines of this request for quotation, would you cancel it ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
+                    <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="Close window" />
+                    <button colspan="2" type="object" icon="gtk-execute" name="cancel_po" string="Cancel RfQ" />
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

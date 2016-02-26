@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="stock_move_memory_tree_picking" model="ir.ui.view">
+            <field name="name">stock.move.memory.picking.tree</field>
+            <field name="model">stock.move.memory.picking</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+					<field name="line_number" readonly="True" />
+                    <field name="product_id" readonly="True" />
+                    <field name="location_supplier_customer_mem_out" invisible="True" />
+                    <field name="asset_id" domain="[('product_id', '=', product_id)]"
+							attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}" />
+					<field name="asset_check" invisible="True" />
+					<field name="composition_list_id" domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
+							attrs="{'readonly': [('kit_mem_check', '=', False)]}" />
+					<field name="kit_mem_check" invisible="True" />
+                    <field name="quantity_ordered"  readonly="True" />
+                    <field name="uom_ordered" readonly="True" />
+                    <field name="quantity" on_change="change_lot(prodlot_id, quantity, location_id, product_uom)" />
+                    <field name="uom_category" invisible="1" />
+                    <field name="product_uom" readonly="False" string="UOM" 
+                        domain="[('category_id', '=', uom_category)]" 
+                        on_change="onchange_uom_qty(product_uom, quantity)" />
+                    <field name="prodlot_id" string="Batch Number"
+                        domain="[('product_id', '=', product_id), ('check_type','=', True), ('stock_available', '>', 0.00)]"
+                    		context="{'location_id': location_id, 'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
+                    		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False)]}"
+                    		on_change="change_lot(prodlot_id, quantity, location_id)" />
+                    		
+                   	<field name="expiry_date" attrs="{'readonly': ['|', '&amp;', ('batch_number_check', '=', False), ('expiry_date_check', '=', False), '&amp;', ('batch_number_check', '=', True), ('expiry_date_check', '=', True)]}"
+                   		on_change="change_expiry(expiry_date, product_id, type_check)" />
+                   	<field name="batch_number_check" invisible="True" />
+                   	<field name="expiry_date_check" invisible="True" />
+                   	<field name="type_check" invisible="True" />
+					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
+                   	<field name="lot_check" />
+                   	<field name="exp_check" />
+                   	<field name="kc_check" />
+           			<field name="ssl_check" invisible="True" />
+           			<field name="dg_check" />
+           			<field name="np_check" />
+					<field name="integrity_status" />
+					<field name="location_id" invisible="1" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="stock_move_memory_tree_returnproducts" model="ir.ui.view">
+            <field name="name">stock.move.memory.returnproducts.tree</field>
+            <field name="model">stock.move.memory.returnproducts</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                	<field name="line_number" readonly="True" />
+                    <field name="product_id" readonly="True" />
+                    <field name="asset_id" readonly="True" />
+                    <field name="composition_list_id" readonly="True" />
+                    <field name="quantity_ordered" readonly="True" />
+                    <field name="uom_category" invisible="1" />
+                    <field name="product_uom" readonly="False" string="UOM" domain="[('category_id', '=', uom_category)]" />
+                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]" />
+                    <field name="qty_to_return" on_change="onchange_uom_qty(product_uom, qty_to_return)" />
+                    <field name="lot_check" />
+                   	<field name="exp_check" />
+                   	<field name="kc_check" />
+           			<field name="ssl_check" invisible="True" />
+           			<field name="dg_check" />
+           			<field name="np_check" />
+           			<field name="integrity_status" />
+                </tree>
+            </field>
+        </record>
+		
+        <record id="stock_move_memory_tree_ppl" model="ir.ui.view">
+            <field name="name">stock.move.memory.ppl.tree</field>
+            <field name="model">stock.move.memory.ppl</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                	<field name="line_number" readonly="True" />
+                    <field name="product_id" readonly="True" />
+                    <field name="asset_id" readonly="True" />
+                    <field name="composition_list_id" readonly="True" />
+                    <field name="quantity" string="Quantity" readonly="1" />
+                    <field name="product_uom" readonly="True" string="UOM" />
+                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]" />
+                    <field name="qty_per_pack" />
+					<field name="from_pack" />
+					<field name="to_pack" />
+					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
+					<field name="lot_check" />
+                   	<field name="exp_check" />
+                   	<field name="kc_check" />
+           			<field name="ssl_check" invisible="True" />
+           			<field name="dg_check" />
+           			<field name="np_check" />
+           			<field name="integrity_status" />
+                </tree>
+            </field>
+        </record>
+        
+		<record id="stock_move_memory_tree_families" model="ir.ui.view">
+            <field name="name">stock.move.memory.families.tree</field>
+            <field name="model">stock.move.memory.families</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                    <field name="from_pack" readonly="True" />
+                    <field name="to_pack" readonly="True" />
+                    <field name="pack_type" on_change="onchange_pack_type(pack_type)" />
+                    <field name="length" />
+                    <field name="width" />
+                    <field name="height" />
+					<field name="weight" required="1"/>
+					<field name="integrity_status" />
+                </tree>
+            </field>
+        </record>
+        
+		<record id="stock_move_memory_tree_shipment_create" model="ir.ui.view">
+            <field name="name">stock.move.memory.shipment.create.tree</field>
+            <field name="model">stock.move.memory.shipment.create</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                	<field name="sale_order_id" readonly="True" />
+                	<field name="ppl_id" readonly="True" />
+                    <field name="from_pack" readonly="True" />
+                    <field name="to_pack" readonly="True" />
+                    <field name="num_of_packs" readonly="True" />
+                    <field name="pack_type" readonly="True" />
+                    <field name="volume" readonly="True" />
+					<field name="weight" readonly="True" />
+					<field name="selected_number" string="Number to Ship" />
+					<field name="selected_weight" string="Weight to Ship [kg]" readonly="True" />
+					<field name="integrity_status" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="stock_move_memory_shipment_additionalitems_tree" model="ir.ui.view">
+            <field name="name">stock.move.memory.shipment.additionalitems.tree</field>
+            <field name="model">stock.move.memory.shipment.additionalitems</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                    <tree string="Additional Items" editable="bottom">
+                        <field name="name"/>
+                        <field name="quantity" />
+                        <field name="uom" />
+                        <field name="comment"/>
+                        <field name="volume"/>
+                        <field name="weight" />
+                    </tree>
+            </field>
+        </record>
+
+   		<record id="stock_move_memory_tree_shipment_returnpacks" model="ir.ui.view">
+            <field name="name">stock.move.memory.shipment.returnpacks.tree</field>
+            <field name="model">stock.move.memory.shipment.returnpacks</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                	<field name="sale_order_id" readonly="True" />
+                	<field name="ppl_id" readonly="True" />
+                    <field name="from_pack" readonly="True" />
+                    <field name="to_pack" readonly="True" />
+                    <field name="num_of_packs" readonly="True" />
+                    <field name="pack_type" readonly="True" />
+					<field name="weight" readonly="True" />
+					<field name="selected_number" string="Number to Return" />
+					<field name="selected_weight" string="Weight to Return" readonly="True" />
+					<field name="integrity_status" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="stock_move_memory_tree_shipment_returnpacksfromshipment" model="ir.ui.view">
+            <field name="name">stock.move.memory.shipment.returnpacksfromshipment.tree</field>
+            <field name="model">stock.move.memory.shipment.returnpacksfromshipment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                	<field name="sale_order_id" readonly="True" />
+                	<field name="ppl_id" readonly="True" />
+                    <field name="from_pack" readonly="True" />
+                    <field name="to_pack" readonly="True" />
+                    <field name="pack_type" readonly="True" />
+					<field name="weight" readonly="True" />
+					<field name="return_from" />
+					<field name="return_to" />
+					<field name="selected_weight" string="Weight to Return" readonly="True" />
+					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
+					<field name="integrity_status" />
+                </tree>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

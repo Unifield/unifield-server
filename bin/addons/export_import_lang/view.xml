@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    <record id="base.wizard_lang_export" model="ir.ui.view">
+        <field name="name">Export Translations</field>
+        <field name="model">base.language.export</field>
+        <field name="type">form</field>
+        <field name="priority" eval="16" />
+        <field name="arch" type="xml">
+            <form string="Export Translations">
+                <group col="8">
+                    <group colspan="3">
+                        <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
+                        <newline/>
+                    </group>
+                    <separator orientation="vertical" rowspan="15"/>
+                    <group colspan="4">
+                        <field name="lang" required="1"/>
+                        <field name="format" />
+                        <field name="advanced" />
+                        <field name="modules" colspan="4" attrs="{'invisible': [('advanced', '=', False)]}" />
+                        <newline />
+                        <group colspan="4">
+                            <button icon="gtk-cancel" name="act_cancel" special="cancel" string="_Close" type="object"/>
+                            <button icon="gtk-ok" name="act_getfile_background" string="_Export" type="object"/>
+                        </group>
+                    </group>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="export_lang_background_result" model="ir.ui.view">
+        <field name="name">Export Lang step 2</field>
+        <field name="model">base.language.export</field>
+        <field name="priority" eval="200" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Export Translation">
+                <separator string="The export process could take quite a long time. The file will be attached to a new request, please check the menu Administration > Translations > Import / Export > Translations Requests" colspan="4"/>
+                <group colspan="2">
+                    <button icon="gtk-ok" name="open_requests"  string="OK" type="object"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="base.view_base_import_language" model="ir.ui.view">
+        <field name="name">Import Lang</field>
+        <field name="model">base.language.import</field>
+        <field name="priority" eval="16" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Import Translation">
+                <group col="8">
+                    <group colspan="3">
+                        <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
+                        <newline/>
+                        <label colspan="4" string="Supported file formats: *.csv (Comma-separated values), *.po (GetText Portable Objects) or *.xml (XML SpreadSheet 2003" align="1.0"/>
+                        <label colspan="4" string="When using CSV format or PO format, please double-check that the file encoding is set to UTF-8 (sometimes called Unicode) when the translator exports it." align="1.0"/>
+                        <label colspan="4" string="When using CSV format or XML SpreadSheet 2003 format, please check that the first line of your file is one of the following:" align="1.0"/>
+                        <label colspan="4" string="- type,name,res_id,src,value"/>
+                        <label colspan="4" string="- module,type,name,res_id,src,value"/>
+                        <newline />
+                    </group>
+                    <separator orientation="vertical" rowspan="15"/>
+                    <group colspan="4">
+                        <field name="name" required="1"/>
+                        <field name="code" />
+                        <separator colspan="4" string="To avoid server timeout when trying to upload large file, please zip the file." />
+                        <field name="data" />
+                        <group colspan="4">
+                            <button icon="gtk-cancel" name="act_cancel" special="cancel" string="_Close" type="object"/>
+                            <button icon="gtk-ok" name="import_lang_background" string="_Import" type="object"/>
+                        </group>
+                    </group>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="import_lang_background_result" model="ir.ui.view">
+        <field name="name">Import Lang step 2</field>
+        <field name="model">base.language.import</field>
+        <field name="priority" eval="200" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Import Translation">
+                <separator string="The import process could take quite a long time, when finished a new request will be created, please check the menu Administration > Translations > Import / Export > Translations Requests" colspan="4"/>
+                <group colspan="2">
+                    <button icon="gtk-ok" name="open_requests"  string="OK" type="object"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="res_request_trans_search_view" model="ir.ui.view">
+        <field name="name">res.request.search</field>
+        <field name="model">res.request</field>
+        <field name="type">search</field>
+        <field name="priority" eval="300" />
+        <field name="arch" type="xml">
+            <search string="Requests">
+                <filter string="Current" icon="terp-camera_test" domain="['|',('state','=','draft'),('state','=','active')]" help="Draft and Active"/>
+                <separator orientation="vertical"/>
+                <filter string="Waiting" icon="terp-gtk-media-pause" domain="[('state','=','waiting')]"/>
+                <separator orientation="vertical"/>
+                <filter string="Export Translations" name="export" icon="gtk-goto-top" domain="[('export_trans', '=', True)]"/>
+                <filter string="Import Translations" name="import" icon="gtk-goto-bottom" domain="[('import_trans', '=', True)]"/>
+                <field name="act_from"/>
+                <field name="act_to" select="1"/>
+                <field name="name"/>
+                <field name="state"/>
+                <newline/>
+                <group expand="0" string="Group By" colspan="4">
+                    <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="res_request_trans-act" model="ir.actions.act_window">
+        <field name="name">Translations Requests</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.request</field>
+        <field name="view_id" eval="False"/>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="res_request_trans_search_view"/>
+        <field name="context">{"search_default_act_to":uid}</field>
+        <field name="domain">['|', ('import_trans', '=', True), ('export_trans', '=', True)]</field>
+    </record>
+    <menuitem action="res_request_trans-act" id="menu_res_request_trans" parent="base.menu_translation_export" sequence="1000"/>
+
+    <record id="res_lang_tree_install" model="ir.ui.view">
+        <field name="name">res.lang.tree.button_install</field>
+        <field name="model">res.lang</field>
+        <field name="type">tree</field>
+        <field name="inherit_id" ref="base.res_lang_tree" />
+        <field name="arch" type="xml">
+            <data>
+                <button name="%(base.action_wizard_update_translations)d" position="replace">
+                    <button name="install_new_lang" icon="gtk-ok" string="Install Terms" type="object" help="Install Language Terms" confirm="This action will load the terms for this language. The process could take quite a long time, when finished a new request will be created, please check the menu Administration > Translations > Import / Export > Translations Requests"/>
+                </button>
+            </data>
+        </field>
+    </record>
+</data>
+</openerp>

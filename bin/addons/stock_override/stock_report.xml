@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            auto="False"
+            id="stock_card_report"
+            model="stock.card.wizard"
+            name="stock.card.report"
+            header="False"
+            rml="addons/stock_override/report/stock_card_report.rml"
+            string="Stock card" />
+            
+        <!-- STOCK CARD -->
+		<report
+            id="stock_card_report_xls"
+            string="Stock card Excel Export"
+            model="stock.card.wizard"
+            name="stock.card.report.xls"
+            file="stock_override/report/stock_card_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True" />
+
+        <report auto="False"
+                id="delivery_order"
+                model="stock.picking"
+                name="delivery.order"
+                header="True"
+                rml="addons/stock_override/report/delivery_order.rml"
+                string="Delivery Order" />
+
+    </data>
+</openerp>
