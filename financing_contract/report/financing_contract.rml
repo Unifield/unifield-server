@@ -331,7 +331,8 @@
             <para style="P121" alignment="LEFT"> [[ (line['line_type'] != 'View' and "Accounts: ") or removeParentNode('blockTable') ]]</para>
           </td>
           <td>
-            <para style="P121" alignment="LEFT">[[ line['account_list'] ]]</para>
+            <para style="P21">[[ repeatIn(line['account_list'], 'ali') ]]</para>
+            <para style="P121" alignment="LEFT">[[ ali ]]</para>
           </td>
         </tr>
       </blockTable>

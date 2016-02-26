@@ -46,29 +46,50 @@ class contract(report_sxw.rml_parse):
         return result
     
     def process(self, reporting_lines):
+        def add_account_list_block_item(account_str, data_list, data_list_index):
+            if len(data_list[data_list_index]) + len(account_str) > account_list_block_size:
+                data_list.append('')
+                data_list_index += 1
+
+            if data_list[data_list_index]:
+                data_list[data_list_index] += ', '
+            data_list[data_list_index] += account_str
+            return data_list_index
+
         register_states = dict(self.pool.get('financing.contract.format.line')._columns['line_type'].selection)
         result = []
+        # US-678 cut account list in para blocks (rml crashes with oversized para)
+        account_list_block_size = 4096
+
         # Parse each contract line
         for line in reporting_lines:
-            account_list = ''
+            account_list = ['']
+            account_list_index = 0
+
             if line.account_quadruplet_ids:
                 # Case of quadruplet
                 for quad in line.account_quadruplet_ids:
-                    account_list += " ".join([str(quad.account_destination_name), str(quad.funding_pool_id.code), str(quad.cost_center_id.code)])
-                    account_list += ', '
+                    account_list_index = add_account_list_block_item(
+                        " ".join([str(quad.account_destination_name),
+                            str(quad.funding_pool_id.code),
+                            str(quad.cost_center_id.code)]),
+                        account_list, account_list_index)
             else:
                 # Case where we have some destination_ids
                 for account_destination in line.account_destination_ids:
-                    account_list += str(account_destination.account_id.code) + " " + str(account_destination.destination_id.code)
-                    account_list += ', '
-            if len(account_list) > 2:
-                account_list = account_list[:-2]
-            values = {'code': line.code,
-                      'name': line.name,
-                      'allocated_budget': line.allocated_budget,
-                      'project_budget': line.project_budget,
-                      'line_type': register_states[line.line_type],
-                      'account_list': account_list}
+                    account_list_index = add_account_list_block_item(
+                        str(account_destination.account_id.code) \
+                            + " " + str(account_destination.destination_id.code),
+                    account_list, account_list_index)
+
+            values = {
+                'code': line.code,
+                'name': line.name,
+                'allocated_budget': line.allocated_budget,
+                'project_budget': line.project_budget,
+                'line_type': register_states[line.line_type],
+                'account_list': account_list
+            }
             result.append(values)
 
         return result
