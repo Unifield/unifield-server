@@ -1222,7 +1222,8 @@
 							<field name="address_id" context="{'contact_display':'partner'}"
 								   domain="[('partner_id', '=', partner_id2)]"
 								   attrs="{'readonly': ['|', ('partner_id2', '=', False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
-							<field name="in_ref" readonly="True" />
+                            <field name="in_ref" readonly="True" />
+                            <field name="partner_type" invisible="True" readonly="True" />
 						</group>
 					</group>
 
@@ -1292,7 +1293,10 @@
 								<button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo" />
                                 <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                                 <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
-								<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': [('state', '!=', 'done')]}"
+                                <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
+                                        attrs="{'invisible': ['|', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}" />
+                                <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
+                                        attrs="{'invisible': ['|', ('partner_type', 'not in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}" 
 								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
 							</group>
 						</page>
