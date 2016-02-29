@@ -22,6 +22,7 @@ import time
 import pooler
 from report import report_sxw
 from common_report_header import common_report_header
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
@@ -56,6 +57,10 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             'is_filtered': self._is_filtered,
             'is_filtered_by_period': self._is_filtered_by_period,
             'is_filtered_by_date': self._is_filtered_by_date,
+            'get_display_info': self.get_display_info,
+            'get_filter_name': self._get_filter,
+            'get_filter_info': self.get_filter_info,
+            'get_prop_instances': self.get_prop_instances,
         })
         self.context = context
 
@@ -70,16 +75,22 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         common_report_header._set_context(self, data)
         return res
 
-
     def final_result(self):
         return self.res_pl
 
     def sum_dr(self):
-        # UFTP-312: If this fucking method is "sum_dr", we except it returns the sum of debit. That's all
+        # UFTP-312: If this method is "sum_dr", we except it returns the sum of debit. That's all
+        '''if self._deduce_accounts_data and self._deduce_accounts_data['debit']:
+            if self.result_sum_dr < 0:
+                self.result_sum_dr += self._deduce_accounts_data['debit']
+            else:
+                self.result_sum_dr -= self._deduce_accounts_data['debit']'''
         return self.result_sum_dr
 
     def sum_cr(self):
-        # UFTP-312: If this fucking method is "sum_cr", we except it returns the sum of credit. That's all
+        # UFTP-312: If thismethod is "sum_cr", we except it returns the sum of credit. That's all
+        '''if self._deduce_accounts_data and self._deduce_accounts_data['credit']:
+            self.result_sum_cr -= self._deduce_accounts_data['credit']'''
         return self.result_sum_cr
 
     def get_data(self, data):
@@ -94,10 +105,10 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             'income'
         ]
 
+        # set context
         ctx = self.context.copy()
         ctx['fiscalyear'] = data['form'].get('fiscalyear_id', False)
         ctx['state'] = data['form']['target_move']
-
         if data['form']['filter'] == 'filter_period':
             if data['form'].get('period_from', False) and data['form'].get('period_to', False):
                 period_obj = self.pool.get('account.period')
@@ -105,6 +116,11 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         elif data['form']['filter'] == 'filter_date':
             ctx['date_from'] = data['form'].get('date_from', False)
             ctx['date_to'] = data['form'].get('date_to', False)
+        if 'instance_ids' in data['form']:
+            ctx['instance_ids'] = data['form']['instance_ids']
+            
+        # US-227/6: accounts 8*, 9* are not displayed:
+        '''self._deduce_accounts_data = { 'debit': 0., 'credit': 0., }'''            
 
         cal_list = {}
         account_id = data['form'].get('chart_account_id', False)
@@ -114,6 +130,13 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         for typ in types:
             accounts_temp = []
             for account in accounts:
+                '''if account.code.startswith('8') or account.code.startswith('9'):
+                    # US-227/6: accounts 8*, 9* are not displayed
+                    if typ == 'expense' and account.type <> 'view' and (account.debit <> account.credit):
+                        self._deduce_accounts_data['debit'] += abs(account.debit - account.credit)
+                    if typ == 'income' and account.type <> 'view' and (account.debit <> account.credit):
+                        self._deduce_accounts_data['credit'] += abs(account.debit - account.credit)
+                    continue'''
                 if (account.user_type.report_type) and (account.user_type.report_type == typ):
                     currency = account.currency_id and account.currency_id or account.company_id.currency_id
                     if typ == 'expense' and account.type <> 'view' and (account.debit <> account.credit):
@@ -184,10 +207,79 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
     def get_lines_another(self, group):
         return self.result.get(group, [])
 
+    def get_display_info(self, data):
+        info_data = []
+        yes_str = _('Yes')
+        no_str = _('No')
+        all_str = _('All')
+
+        display_account = all_str
+        if 'display_account' in data['form']:
+            if data['form']['display_account'] == 'bal_all':
+                display_account = _('All')
+            elif data['form']['display_account'] == 'bal_movement':
+                display_account = _('With movements')
+            else:
+                display_account = _('With balance is not equal to 0')
+        info_data.append((_('Accounts'), display_account, ))
+
+        res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
+        return ', \n'.join(res)
+
+    def get_filter_info(self, data):
+        """ get filter info
+        _get_filter, _get_start_date, _get_end_date,
+        get_start_period, get_end_period
+        are from common_report_header
+        """
+        if not data.get('form', False):
+            return ''
+        infos = []
+
+        # date/period
+        if data.get('form', False) and data['form'].get('filter', False):
+            line = ''
+            if data['form']['filter'] in ('filter_date', ):
+                line = _('Posting')
+                line += " %s " % (_('Date'), )
+                line += self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
+            elif data['form']['filter'] == 'filter_period':
+                line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
+            if line:
+                infos.append(line)
+        return infos and ", \n".join(infos) or _('No Filter')
+
+    def get_prop_instances(self, data):
+        instances = []
+        if data.get('form', False):
+            if data['form'].get('instance_ids', False):
+                self.cr.execute('select code from msf_instance where id IN %s',
+                    (tuple(data['form']['instance_ids']),))
+            else:
+                self.cr.execute('select code from msf_instance')
+            instances = [x for x, in self.cr.fetchall()]
+        return ', '.join(instances)
+
 report_sxw.report_sxw('report.pl.account.horizontal', 'account.account',
     'addons/account/report/account_profit_horizontal.rml',parser=report_pl_account_horizontal, header='internal landscape')
 
 report_sxw.report_sxw('report.pl.account', 'account.account',
     'addons/account/report/account_profit_loss.rml',parser=report_pl_account_horizontal, header='internal')
+
+
+class profit_loss_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
+        header='external', store=False):
+        super(profit_loss_xls, self).__init__(name, table, rml=rml,
+            parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        #ids = getIds(self, cr, uid, ids, context)
+        a = super(profit_loss_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+profit_loss_xls('report.account.profit.loss_xls', 'account.account',
+    'addons/account/report/account_profit_loss_xls.mako',
+    parser=report_pl_account_horizontal, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
