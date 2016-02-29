@@ -30,8 +30,7 @@ pp = pprint.PrettyPrinter(indent=4)
 import logging
 from tools.safe_eval import safe_eval as eval
 import threading
-import time
-from sync_common import add_sdref_column, translate_column, fancy_integer
+from sync_common import add_sdref_column, fancy_integer
 
 class SavePullerCache(object):
     def __init__(self, model):
@@ -51,7 +50,7 @@ class SavePullerCache(object):
         else:
             entity_id = entity
         with self.__lock__:
-            self.__cache__.append( (entity_id, update_ids) )
+            self.__cache__.append((entity_id, update_ids))
 
     def merge(self, cr, uid, context=None):
         if not self.__cache__:
@@ -82,11 +81,11 @@ class puller_ids_rel(osv.osv):
     _logger = logging.getLogger('sync.server')
 
     _columns = {
-        'update_id' : fields.many2one('sync.server.update',
-            required=True, string="Update", select=1),
-        'entity_id' : fields.many2one('sync.server.entity',
-            required=True, string="Instance"),
-        'create_date' : fields.datetime('Pull Date'),
+        'update_id': fields.many2one('sync.server.update',
+                                     required=True, string="Update", select=1),
+        'entity_id': fields.many2one('sync.server.entity',
+                                     required=True, string="Instance"),
+        'create_date': fields.datetime('Pull Date'),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -144,39 +143,37 @@ class update(osv.osv):
     """
     _name = "sync.server.update"
     _rec_name = 'source'
-    
     _logger = logging.getLogger('sync.server')
-
     _columns = {
-        'source': fields.many2one('sync.server.entity', string="Source Instance", select=True), 
-        'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True), 
+        'source': fields.many2one('sync.server.entity', string="Source Instance", select=True),
+        'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True),
         'model': fields.char('Model', size=128, readonly=True),
         'sdref': fields.char('SD ref', size=128, readonly=True),
         'session_id': fields.char('Session Id', size=128),
         'sequence': fields.integer('Sequence', select=True),
-        'fancy_sequence' : fields.function(fancy_integer, method=True, string="Sequence", type='char', readonly=True),
+        'fancy_sequence': fields.function(fancy_integer, method=True, string="Sequence", type='char', readonly=True),
         'version': fields.integer('Record Version'),
-        'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
-        'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete='restrict', select=True),
+        'fancy_version': fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
+        'rule_id': fields.many2one('sync_server.sync_rule', 'Generating Rule', readonly=True, ondelete='restrict', select=True),
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
         'create_date': fields.datetime('Synchro Date/Time', readonly=True),
         'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
-        'is_deleted' : fields.boolean('Is deleted?', select=True),
-        'force_recreation' : fields.boolean('Force record recreation'),
+        'is_deleted': fields.boolean('Is deleted?', select=True),
+        'force_recreation': fields.boolean('Force record recreation'),
         'handle_priority': fields.boolean('Handle Priority'),
     }
 
     _order = 'sequence, create_date desc'
 
     _sql_constraints = [
-        ('detect_duplicated_updates','UNIQUE (session_id, rule_id, sdref, owner)','This update is duplicated and has been ignored!'),
+        ('detect_duplicated_updates', 'UNIQUE (session_id, rule_id, sdref, owner)', 'This update is duplicated and has been ignored!'),
     ]
 
     @add_sdref_column
     def _auto_init(self, cr, context=None):
         cr.execute("""SELECT table_name FROM information_schema.tables WHERE table_name IN %s""",
-                   [(puller_ids_rel._table, self._table)]);
+                   [(puller_ids_rel._table, self._table)])
         existing_tables = [row[0] for row in cr.fetchall()]
         if puller_ids_rel._table in existing_tables:
             cr.execute("""DELETE FROM %s WHERE update_id IN (SELECT id FROM %s WHERE rule_id IS NULL)""" \
@@ -211,6 +208,7 @@ class update(osv.osv):
             @return : True or raise an error
         """
         self._logger.info("::::::::[%s] is pushing %s updates + %s delete" % (entity.name, len(packet['load']), len(packet['unload'])))
+
         def safe_create(data):
             cr.execute("SAVEPOINT update_creation")
             try:
@@ -229,34 +227,34 @@ class update(osv.osv):
             assert 'owner' in update, "Packet field 'owner' absent"
             # Get the id of the owner or 0 if absent from sync.server.entity list
             owner = self.pool.get('sync.server.entity').search(cr, uid,
-                    [('name','=',update['owner'])])
+                    [('name', '=', update['owner'])])
             owner = owner[0] if owner else False
 
             if safe_create({
-                        'session_id': packet['session_id'],
-                        'rule_id': packet['rule_id'],
-                        'source': entity.id,
-                        'model': packet['model'],
-                        'sdref' : update['sdref'],
-                        'version': update['version'],
-                        'fields': packet['fields'],
-                        'values': update['values'],
-                        'owner': owner,
-                        'handle_priority': update['handle_priority'],
-                        'force_recreation' : update['force_recreation'],
-                    }):
+                'session_id': packet['session_id'],
+                'rule_id': packet['rule_id'],
+                'source': entity.id,
+                'model': packet['model'],
+                'sdref': update['sdref'],
+                'version': update['version'],
+                'fields': packet['fields'],
+                'values': update['values'],
+                'owner': owner,
+                'handle_priority': update['handle_priority'],
+                'force_recreation': update['force_recreation'],
+            }):
                 normal_updates_count += 1
 
         delete_updates_count = 0
         for sdref in packet['unload']:
             if safe_create({
-                        'source': entity.id,
-                        'model': packet['model'],
-                        'session_id': packet['session_id'],
-                        'rule_id': packet['rule_id'],
-                        'sdref' : sdref,
-                        'is_deleted' : True,
-                    }):
+                'source': entity.id,
+                'model': packet['model'],
+                'session_id': packet['session_id'],
+                'rule_id': packet['rule_id'],
+                'sdref': sdref,
+                'is_deleted': True,
+            }):
                 delete_updates_count += 1
 
         self._logger.info("::::::::[%s] Inserted %d new updates: %d normal(s) and %d delete(s)"
@@ -474,6 +472,7 @@ class update(osv.osv):
                     updates_master[-1].rule_id.id != update.rule_id.id or \
                     updates_master[-1].source.id != update.source.id or \
                     updates_master[-1].sequence != update.sequence or \
+                    updates_master[-1].fields != update.fields or \
                     updates_master[-1].is_deleted != update.is_deleted:
                     updates_master.append(update)
                     updates_to_send.append([update])
@@ -544,7 +543,6 @@ class update(osv.osv):
         self._logger.info("::::::::[%s] Data pull :: %s updates" % (entity.name, sum(map(lambda x : len(x.get('unload', [])) + len(x.get('load', [])), data_packages))))
         return data_packages
 
-    
     def get_additional_forced_field(self, update): 
         fields = eval(update.fields)
         forced_values = eval(update.rule_id.forced_values or '{}')
