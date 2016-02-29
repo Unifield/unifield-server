@@ -484,23 +484,31 @@ class update_received(osv.osv):
             for update in updates:
 
                 row = eval(update.values)
-
+                
                 #4 check for fallback value : report missing fallback_value
-                self._check_and_replace_missing_id(cr, uid, import_fields, row, fallback, message, context=context)
+                #US-852: in case the account_move_line is given but not exist, then do not let the import of the current entry
+                ret_fb = self._check_and_replace_missing_id(cr, uid, import_fields, row, fallback, message, context=context)
 
                 if bad_fields :
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
-                values.append(row)
-                update_ids.append(update.id)
-                versions.append( (update.sdref, update.version) )
-
-                #1 conflict detection
-                if self._conflict(cr, uid, update.sdref, update.version, context=context):
-                    #2 if conflict => manage conflict according rules : report conflict and how it's solve
-                    index_id = eval(update.fields).index('id')
-                    sd_ref = eval(update.values)[index_id]
-                    logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
+                if ret_fb: #US-852: if everything is Ok, then do import as normal
+                    values.append(row)
+                    update_ids.append(update.id)
+                    versions.append( (update.sdref, update.version) )
+    
+                    #1 conflict detection
+                    if self._conflict(cr, uid, update.sdref, update.version, context=context):
+                        #2 if conflict => manage conflict according rules : report conflict and how it's solve
+                        index_id = eval(update.fields).index('id')
+                        sd_ref = eval(update.values)[index_id]
+                        logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
+                else: #US-852: if account_move_line is missing then ignore the import, and set it as not run
+                    self.write(cr, uid, [update.id], {
+                        'execution_date': datetime.now(),
+                        'run' : False,
+                        'log' : "Cannot execute due to missing the account_move_line"
+                    }, context=context)                    
 
             if bad_fields:
                 import_fields = [import_fields[i] for i in range(len(import_fields)) if i not in bad_fields]
@@ -787,6 +795,9 @@ class update_received(osv.osv):
             for xmlid in map(normalize_xmlid, split_xml_ids_list(value)):
                 try:
                     if not check_xmlid(xmlid):
+                        #US-852: if account_move_line is given, then cannot use the fallback value, but exit the import!
+                        if 'account_move_line' in xmlid:
+                            return False
                         raise ValueError
                 except ValueError:
                     try:
@@ -806,7 +817,8 @@ class update_received(osv.osv):
                 else:
                     res_val.append(xmlid)
             values[i] = ','.join(res_val) if res_val else False
-
+        return True
+        
     _order = 'create_date desc, id desc'
 
 update_received()
