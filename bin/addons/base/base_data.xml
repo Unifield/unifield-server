@@ -1030,6 +1030,11 @@
             <!-- Company ID will be set later -->
             <field name="company_id" eval="None"/>
         </record>
+        <record id="rateEUR" model="res.currency.rate" forcecreate="0">
+            <field name="rate">1.0</field>
+            <field name="currency_id" ref="EUR"/>
+            <field name="name">2014-01-01</field>
+        </record>
         <!-- Basic Company  -->
         <record id="main_company" model="res.company">
             <field name="name">OpenERP S.A.</field>
@@ -1087,6 +1092,11 @@
             <field name="active" eval="True"/>
             <field name="currency_name">SWISS FRANC</field>
             <field name="company_id" ref="main_company"/>
+        </record>
+        <record id="rateCHF" model="res.currency.rate" forcecreate="0">
+            <field name="rate">1.3086</field>
+            <field name="currency_id" ref="CHF"/>
+            <field name="name">2014-01-01</field>
         </record>
         <record id="BRL" model="res.currency" forcecreate="0">
             <field name="name">BRL</field>
