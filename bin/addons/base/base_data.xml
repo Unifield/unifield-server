@@ -1075,6 +1075,11 @@
             <field name="currency_name">UNITED STATES DOLLAR</field>
             <field name="active" eval="False"/>
         </record>
+        <record id="rateUSD" model="res.currency.rate" forcecreate="0">
+            <field name="rate">1.2834</field>
+            <field name="currency_id" ref="USD"/>
+            <field name="name">2014-01-01</field>
+        </record>
         <record id="CAD" model="res.currency" forcecreate="0">
             <field name="name">CAD</field>
             <field name="symbol">$</field>
