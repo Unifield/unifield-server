@@ -977,7 +977,7 @@ class initial_stock_inventory_line(osv.osv):
         p_obj = self.pool.get('product.product')
 
         location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-        reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+        reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_stock_initialization')[1]
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'perishable', 'batch_management', 'import_product_qty'], context=context):
             values = {'product_id': p_data['id'],
