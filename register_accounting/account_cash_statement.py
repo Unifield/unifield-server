@@ -52,7 +52,11 @@ class account_cash_statement(osv.osv):
                 for line in statement.starting_details_ids:
                     amount_total+= line.pieces * line.number
             else:
-                amount_total = statement.prev_reg_id.msf_calculated_balance
+                if context and context.get('from_open'):
+                    # US-948 carry other cashbox balance at open register
+                    amount_total = statement.prev_reg_id.balance_end_cash
+                else:
+                    amount_total = statement.prev_reg_id.msf_calculated_balance
 
             res[statement.id] = {
                 'balance_start': amount_total
@@ -146,12 +150,14 @@ class account_cash_statement(osv.osv):
         return res
 
     def button_open_cash(self, cr, uid, ids, context=None):
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids] # Calculate the starting balance
 
-        res = self._get_starting_balance(cr, uid, ids)
+        context['from_open'] = True
+        res = self._get_starting_balance(cr, uid, ids, context=context)
+        del context['from_open']
         for rs in res:
             self.write(cr, uid, [rs], res.get(rs)) # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
             register = self.browse(cr, uid, [rs], context=context)[0]
