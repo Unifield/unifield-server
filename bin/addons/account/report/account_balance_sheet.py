@@ -167,7 +167,22 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                         'balance':account.balance,
                     }"""
                 # US-227/1 starts from here
+                """
+                B/S report : display account Internal Type
+                 - Liquidity, Receivable under Assets (left side)
+                 - and account Internal type Payable under Liabilities (right side)
+                For the Regular internal type, some will be under Asset and some others under Liabilities
+                    - Regular/Cash, Regular/Asset, Regular/Stock are under Assets
+                    - Regular/Debt, Regular Equity are under Liabilities
+
+                Note US-227/7.1
+                - if account is linked to account type tax and is a Receivable internal type, display it in the Assets column
+                - if account is linked to account type tax and is a Payable internal type, display it in the Liability column
+                is already included in the following US-227/1 1st condition:
+                    display account Internal Type Liquidity, Receivable under Assets (left side)and account Internal type Payable under Liabilities (right side)
+                """
                 register_account = False
+
                 if typ == 'asset':
                     # US-227/1, breakdown in asset:
                     # - Internal Type Liquidity,
