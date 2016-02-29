@@ -51,6 +51,53 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_918_patch(self, cr, uid, *a, **b):
+        update_module = self.pool.get('sync.server.update')
+        if update_module:  # if we are on a server instance
+            # if this script is exucuted on server side, update the first delete
+            # update of ZMK to be executed before the creation of ZMW (sequence
+            # 4875). Then if ZMK is correctly deleted, ZMW can be added and
+            # this will solve the problem on all new instances (init sync)
+            cr.execute("UPDATE sync_server_update "
+                       "SET sequence=4874 "
+                       "WHERE id=2222677")
+
+            # change sdref ZMW to base_ZMW
+            cr.execute("UPDATE sync_server_update "
+                       "SET sdref='base_ZMW' "
+                       "WHERE model='res.currency' AND sdref='ZMW'")
+        else:  # we are on a client instance
+            update_module = self.pool.get('sync.client.update_received')
+            if not update_module:
+                return True  # this is a client without sync module installed
+            # update the local currency
+            currency_module = self.pool.get('res.currency')
+            currency_ids = currency_module.search(cr, uid, [('name', '=', 'ZMK')])
+            values = {
+                'name': 'ZMW',
+            }
+            currency_module.write(cr, uid, currency_ids, values)
+
+            # update the sdref
+            cr.execute("UPDATE ir_model_data "
+                       "SET name='base_ZMW' "
+                       "WHERE model='res.currency' AND name='ZMW'")
+        # some update where refering to the old currency with sdref=sd.ZMW
+        # as the reference changed, we need to modify all of this updates
+        # pointing to a wrong reference
+        updates_to_modify = update_module.search(
+            cr, uid, [('values', 'like', '%sd.ZMW%')],)
+        for update in update_module.browse(cr, uid, updates_to_modify,
+                                           context={}):
+            update_values = eval(update.values)
+            if 'sd.ZMW' in update_values:
+                index = update_values.index('sd.ZMW')
+                update_values[index] = 'sd.base_ZMW'
+            vals = {
+                'values': update_values,
+            }
+            update_module.write(cr, uid, update.id, vals)
+
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
         # remove period state from upper levels as an instance should be able
@@ -298,6 +345,36 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
+   # def update_sp_222(self, cr, uid, *a, **b):
+   #     update_module = self.pool.get('sync.server.update')
+   #     if not update_module:
+   #         return True
+   #     logger = logging.getLogger('update')
+
+   #     # get all the updates with same sdref, rule_id and source that are
+   #     # present multiple times
+   #     cr.execute("""SELECT sdref, rule_id, source FROM
+   #     sync_server_update GROUP BY sdref, rule_id, source
+   #           HAVING COUNT(*)>1;""")
+   #     multiple_updates = cr.fetchall()
+   #     logger.warn('SP_222: %d udaptes have duplicate entries.' %
+   #                 len(multiple_updates))
+   #     delted_count = 0
+   #     for sdref, rule_id, source in multiple_updates:
+   #         # get all the updates with this parameters
+   #         similar_update_ids = update_module.search(cr, uid,
+   #                 [('sdref', '=', sdref),
+   #                  ('rule_id', '=', rule_id),
+   #                  ('source', '=', source)],
+   #                 order='write_date asc, id')
+   #         # keep the last update
+   #         update_to_delete_ids = similar_update_ids[:-1]
+   #         delted_count += len(update_to_delete_ids)
+   #         update_module.unlink(cr, uid, update_to_delete_ids)
+   #         cr.commit()
+   #         logger.warn('SP_222: %d udaptes deleted.' % len(update_to_delete_ids))
+   #     logger.warn('SP_222: ------ %d udaptes deleted in total. ------' % delted_count)
+   #     return True
 
     def update_us_963_negative_rule_seq(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):

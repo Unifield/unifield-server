@@ -8,6 +8,9 @@
         <record id="us_133_patch" model="patch.scripts">
             <field name="method">update_us_133</field>
         </record>
+        <record id="us_918_patch" model="patch.scripts">
+            <field name="method">us_918_patch</field>
+        </record>
         <record id="us_489_patch" model="patch.scripts">
             <field name="method">update_parent_budget_us_489</field>
         </record>
@@ -46,6 +49,5 @@
         <record id="bar_action_patch" model="patch.scripts">
             <field name="method">bar_action_patch</field>
         </record>
-
     </data>
 </openerp>
