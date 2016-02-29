@@ -32,51 +32,25 @@ class account_bs_report(osv.osv_memory):
     _inherit = "account.common.account.report"
     _description = 'Account Balance Sheet Report'
 
-    def _get_def_reserve_account(self, cr, uid, context=None):
-        chart_id = self._get_account(cr, uid, context=context)
-        res = self.onchange_chart_id(cr, uid, [], chart_id, context=context)
-        if not res:
-            return False
-        return res['value']['reserve_account_id']
-
     _columns = {
         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
-        'reserve_account_id': fields.many2one('account.account', 'Reserve & Profit/Loss Account',
-                                      required=True,
-                                      help='This Account is used for transfering Profit/Loss ' \
-                                           '(Profit: Amount will be added, Loss: Amount will be duducted), ' \
-                                           'which is calculated from Profilt & Loss Report',
-                                      #domain = [('type','=','payable')]),
-                                      domain = ['|',('type','=','payable'),'&',('type','=','other'),('user_type_code','=','equity')]),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
     }
 
     _defaults={
         'export_format': 'pdf',
         'journal_ids': [],
-        'reserve_account_id': _get_def_reserve_account,
     }
-
-    def onchange_chart_id(self, cr, uid, ids, chart_id, context=None):
-        if not chart_id:
-            return {}
-        account = self.pool.get('account.account').browse(cr, uid, chart_id , context=context)
-        if not account.company_id.property_reserve_and_surplus_account:
-            return {'value': {'reserve_account_id': False}}
-        return {'value': {'reserve_account_id': account.company_id.property_reserve_and_surplus_account.id}}
-
 
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
         update_fields = [
             'export_format',
-            'reserve_account_id',
             'instance_ids',
         ]
+
         data['form'].update(self.read(cr, uid, ids, update_fields)[0])
-        if not data['form']['reserve_account_id']:
-            raise osv.except_osv(_('Warning'),_('Please define the Reserve and Profit/Loss account for current user company !'))
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         instance = self.pool.get('ir.sequence')._get_instance(cr, uid)
         data['target_filename'] = _('Balance Sheet_%s_%s') % (instance, time.strftime('%Y%m%d'))

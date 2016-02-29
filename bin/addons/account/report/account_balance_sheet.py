@@ -242,9 +242,11 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                             accounts_temp.append(account_dict)
                     else:
                         accounts_temp.append(account_dict)
+                    """
+                    TODO: Account to be picked in company configuration "Debit Account for P&L>0 (B/S account)" or "Credit Account P&L<0 (B/S account)"
                     if account.id == data['form']['reserve_account_id']:
                         pl_dict['level'] = account['level'] + 1
-                        accounts_temp.append(pl_dict)
+                        accounts_temp.append(pl_dict)"""
 
             self.result[typ] = accounts_temp
             cal_list[typ]=self.result[typ]
