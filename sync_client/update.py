@@ -795,12 +795,12 @@ class update_received(osv.osv):
             for xmlid in map(normalize_xmlid, split_xml_ids_list(value)):
                 try:
                     if not check_xmlid(xmlid):
-                        #US-852: if account_move_line is given, then cannot use the fallback value, but exit the import!
-                        if 'account_move_line' in xmlid:
-                            return False
                         raise ValueError
                 except ValueError:
                     try:
+                        #US-852: if account_move_line is given, then cannot use the fallback value, but exit the import!
+                        if 'account_move_line' in xmlid:
+                            return False
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")
