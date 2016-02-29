@@ -48,8 +48,11 @@
             <separator string="Synchronization" colspan="2"/>
             <field name="create_date" string="Fetched on"/>
             <field name="source"/>
-            <field name="sequence_number"/>
-            <field name="owner"/>
+            <group col="6" colspan="3">
+                <field name="sequence_number"/>
+                <field name="rule_sequence"/>
+                <field name="owner"/>
+            </group>
             <group col="6" colspan="2">
               <field name="handle_priority"
                      attrs="{'invisible':[('is_deleted','=',True)]}"/>
