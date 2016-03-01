@@ -368,6 +368,7 @@ class sale_order_sync(osv.osv):
             }
             return msg_to_send_obj.create(cr, uid, data, context=context)
 
+        solccl_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'sale.order.line.cancel.create_line', context=context)
         nfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.normal_fo_create_po', context=context)
         vfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.validated_fo_update_original_po', context=context)
         csp_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.create_split_po', context=context)
@@ -375,6 +376,8 @@ class sale_order_sync(osv.osv):
         nfo_model_obj = nfo_rule and self.pool.get(nfo_rule.model) or None
         vfo_model_obj = vfo_rule and self.pool.get(vfo_rule.model) or None
         csp_model_obj = csp_rule and self.pool.get(csp_rule.model) or None
+
+        msg_to_send_obj.create_from_rule(cr, uid, solccl_rule, context=context)
 
         if original_id:
             orig_partner_name = self.browse(cr, uid, original_id, context=context).partner_id.name
@@ -392,6 +395,5 @@ class sale_order_sync(osv.osv):
                     generate_msg_to_send(csp_rule, csp_model_obj, fo.id, fo.partner_id.name)
 
         return
-
 
 sale_order_sync()
