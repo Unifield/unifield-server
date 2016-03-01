@@ -26,6 +26,21 @@
             <field name="name">English</field>
             <field name="translatable">True</field>
         </record>
+        <record id="lang_msf_en" model="res.lang">
+            <field name="code">en_MF</field>
+            <field name="name">MSF English</field>
+            <field name="translatable">True</field>
+        </record>
+        <record id="lang_msf_fr" model="res.lang">
+            <field name="code">fr_MF</field>
+            <field name="name">MSF French</field>
+            <field name="translatable" eval="False" />
+        </record>
+        <record id="lang_msf_es" model="res.lang">
+            <field name="code">es_MF</field>
+            <field name="name">MSF Spanish</field>
+            <field name="translatable" eval="False" />
+        </record>
         <function name="install_lang" model="res.lang"/>
         <record id="ad" model="res.country">
             <field name="name">Andorra, Principality of</field>
