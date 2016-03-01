@@ -1812,7 +1812,11 @@ stock moves which are already processed : '''
             if (order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission') or (order.invoice_method == 'manual' and order.order_type == 'direct' and order.partner_id.partner_type == 'esc'):
                 # UTP-827: no commitment if they are imported for ESC partners
                 if not (order.partner_id.partner_type == 'esc' and setup.import_commitments):
-                    self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
+                    # US-917: Check if any CV exists for the given PO
+                    commit_obj = self.pool.get('account.commitment')
+                    existingCV = commit_obj.search(cr, uid, [('purchase_id', 'in', [order.id])], context=context)
+                    if not existingCV:
+                        self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             todo = []
             todo2 = []
             todo3 = []
@@ -2045,6 +2049,12 @@ stock moves which are already processed : '''
 
             if reason_type_id:
                 picking_values.update({'reason_type_id': reason_type_id})
+
+            # US-917: Check if any IN exists for the given PO
+            commit_obj = self.pool.get('stock.picking')
+            existingIN = commit_obj.search(cr, uid, [('purchase_id', 'in', [order.id])], context=context)
+            if existingIN:
+                return
 
             picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
             todo_moves = []
