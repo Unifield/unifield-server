@@ -449,7 +449,7 @@ class update_received(osv.osv):
                         'execution_date': execution_date,
                         'editable' : False,
                         'run' : True,
-                        'log' : '',
+                        #'log' : '', #SP-228: Do not reset the log message even the update got run.
                     }, context=context)
                 for update_id, log in logs.items():
                     self.write(cr, uid, [update_id], {
@@ -799,6 +799,7 @@ class update_received(osv.osv):
                 except ValueError:
                     try:
                         #US-852: if account_move_line is given, then cannot use the fallback value, but exit the import!
+                        # THIS FIX COULD ALSO OPEN FOR OTHER BUG, BUT CHECK IF THE RULES THAT CONTAIN THE OBJECT (HERE account_move_line) 
                         if 'account_move_line' in xmlid:
                             return False
                         fb = fallback.get(field, False)
