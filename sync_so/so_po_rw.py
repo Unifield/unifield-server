@@ -177,6 +177,12 @@ class return_claim_rw(osv.osv):
     _logger = logging.getLogger('------sync.return.claim')
     
     def usb_replicate_claim(self, cr, uid, source, sync_values, context=None):
-        return
+        so_dict = sync_values.to_dict()
+        claim_name = so_dict.get('name', False)
+        self._logger.info("+++ RW: Replicate the claim: %s from %s to %s" % (claim_name, source, cr.dbname))
+        if not context:
+            context = {}
+        
+        raise Exception, "Test"
             
 return_claim_rw()

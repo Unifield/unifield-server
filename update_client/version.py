@@ -205,9 +205,13 @@ class entity(osv.osv):
             return (False, "Need restart")
         current_revision = revisions._get_last_revision(cr, uid, context=context)
         if current_revision: current_revision = current_revision.sum
-        if not (current_revision == server_version[-1]['md5sum'] or\
-                (current_revision is False and server_version[-1]['md5sum'] == base_version)):
-            return (False, (_("Cannot continue while OpenERP Server version is different than database %s version! Try to login/logout again and restart OpenERP Server.") % cr.dbname))
+        
+        ################ DUY TEMP FIX: Add the condition to avoid having the exception when the local database has no revision list.
+        
+        if current_revision:
+            if not (current_revision == server_version[-1]['md5sum'] or\
+                    (current_revision is False and server_version[-1]['md5sum'] == base_version)):
+                return (False, (_("Cannot continue while OpenERP Server version is different than database %s version! Try to login/logout again and restart OpenERP Server.") % cr.dbname))
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         try:
             res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), self._hardware_id, current_revision)

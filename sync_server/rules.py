@@ -738,12 +738,6 @@ class message_rule(osv.osv):
                 message.append('Filter Method %s does not exist on object %s\n' % (rec.filter_method, rec.model_id))
                 error = True
 
-            message.append(_("* Valid status... "))
-            if rec.status == 'invalid':
-                message.append('failed! Rule has status=invalid\n')
-                error = True
-            else:
-                message.append('pass.\n')
 
             # Remote Call Possible
             call_tree = rec.remote_call.split('.')

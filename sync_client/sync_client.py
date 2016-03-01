@@ -67,6 +67,8 @@ class BackgroundProcess(Thread):
             if not pool.get('sync.client.sync_server_connection').is_connected:
                 raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
             # Check for update
+            
+            ##### DO NOT MERGE THIS!!!!! DUY!!!!
             if hasattr(entity, 'upgrade'):
                 up_to_date = entity.upgrade(cr, uid, context=context)
                 if not up_to_date[0]:
