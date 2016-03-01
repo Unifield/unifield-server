@@ -21,20 +21,20 @@
                                on_change="change_type(type)"/>
                         <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
                                on_change="change_po_cft(po_cft)"/>
+                        <field name="run_scheduler" />
                         <separator colspan="4" string="Supplier selection" />
                         <field name="supplier_id"
                                domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids)]"
                                attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')]}"
                                on_change="change_supplier(supplier_id)"
                         />
-
-
-                   <field name="location_id"  domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), 
-                                                      ('scrap_location', '=', False), ('destruction_location', '=', False), 
-                                                      ('output_ok', '=', False), ('input_ok', '=', False)]" 
-                                                      attrs="{'readonly': [('type', '!=', 'make_to_stock')]}" 
-                              on_change="change_location(location_id, line_ids)" />
-
+                        <field name="location_id"
+                               domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False),
+                                        ('scrap_location', '=', False), ('destruction_location', '=', False),
+                                        ('output_ok', '=', False), ('input_ok', '=', False)]"
+                               attrs="{'readonly': [('type', '!=', 'make_to_stock')]}"
+                               on_change="change_location(location_id, line_ids)"
+                        />
                     </group>
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel" help="Close the wizard" />

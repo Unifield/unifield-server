@@ -40,6 +40,9 @@ class multiple_sourcing_wizard(osv.osv_memory):
             'wizard_id',
             string='Sourcing lines',
         ),
+        'run_scheduler': fields.boolean(
+            string='Run scheduler ?',
+        ),
         'type': fields.selection(
             _SELECTION_TYPE,
             string='Procurement Method',
@@ -83,6 +86,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         res['line_ids'] = []
         res['error_on_lines'] = False
+        res['run_scheduler'] = True
 
         # Check if all lines are with the same type, then set that type, otherwise set make_to_order
 
@@ -197,14 +201,17 @@ class multiple_sourcing_wizard(osv.osv_memory):
             ids = [ids]
 
         lines_to_confirm = []
+        run_scheduler = False
 
         for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.run_scheduler:
+                run_scheduler = True
             for line in wiz.line_ids:
                 if line.order_id.procurement_request and wiz.po_cft == 'dpo':
                     raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
                 lines_to_confirm.append(line.id)
 
-        line_obj.confirmLine(cr, uid, lines_to_confirm, context=context)
+        line_obj.confirmLine(cr, uid, lines_to_confirm, run_scheduler=run_scheduler, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
