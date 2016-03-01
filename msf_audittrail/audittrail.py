@@ -859,34 +859,37 @@ class audittrail_log_line(osv.osv):
         if context is None:
             context = {}
 
-        search_ids = super(audittrail_log_line, self).search(cr, uid, args, offset=0,
-                                                             limit=None, order=order,
-                                                             context=context, count=count)
-        # US-313: check if the context provides active_model in order to search for inherited models for other fields, if not just return 
-        if 'active_model' not in context:
-            return search_ids
+        if context.get('active_model') and context.get('active_id'):
+            id_model_obj = self.pool.get('ir.model')
+            current_obj = self.pool.get(context['active_model'])
+            add_obj = []
+            num = 0
+            for obj_class in current_obj._inherits:
+                # get inherits object and inherits id
+                obj_inherit = id_model_obj.search(cr, uid, [('model', '=', obj_class)], context=context)
 
-        id_model_obj = self.pool.get('ir.model')
-        model_id = context['active_model']
-        current_obj = self.pool.get(model_id)
-        inherit = False
-        for obj_class in current_obj._inherits:
-            inherit = True
-            args_inherit = [('model', '=', obj_class)]
-            obj_inherit = id_model_obj.search(cr, uid, args_inherit, context=context)
-            new_args = [('object_id', '=', obj_inherit[0]),
-                        ('res_id', '=', context['active_id'])]
-            ids = super(audittrail_log_line, self).search(cr, uid, new_args, offset=0,
-                                                          limit=None, order=order,
-                                                          context=context, count=count)
-            search_ids = search_ids + ids
+                inherit_field = current_obj._inherits[obj_class]
+                rel_obj = current_obj.read(cr, uid, [context['active_id']], [inherit_field], context=context)[0]
+                if rel_obj[inherit_field]:
+                    add_obj += ['&', ('object_id', '=', obj_inherit[0]), ('res_id', '=', rel_obj[inherit_field][0])]
+                    num += 1
 
-        if inherit and not isinstance(search_ids, (int, long)):
-            args_final = [('id', 'in', search_ids)]
-            search_ids = super(audittrail_log_line, self).search(cr, uid, args_final, offset=offset,
-                                                                 limit=limit, order=order,
-                                                                 context=context, count=count)
-        return search_ids
+            if add_obj:
+                # build the new domain
+                new_args = []
+                target_model = id_model_obj.search(cr, uid, [('model', '=', context['active_model'])], context=context)
+                current_filter = ['&', ('res_id', '=', context['active_id']), ('object_id', '=', target_model[0])]
+                for arg in args:
+                    if arg[0] == 'object_id':
+                        new_args += ['|' * num] + current_filter + add_obj
+                    elif arg[0] == 'res_id':
+                        pass
+                    else:
+                        new_args += [arg]
+                args = new_args
+
+
+        return super(audittrail_log_line, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
 
     _columns = {
