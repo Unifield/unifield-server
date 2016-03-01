@@ -42,9 +42,25 @@ class account_bs_report(osv.osv_memory):
         'journal_ids': [],
     }
 
+    def _check(self, cr, uid, context=None):
+        # US-227/2bis: check cpy year closing B/S account are set
+        cpy_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id
+        bs_accounts_ko = []
+        if not cpy_rec.ye_pl_pos_debit_account:
+            bs_accounts_ko.append(_('Debit Account for P&L>0 (B/S account)'))
+        if not cpy_rec.ye_pl_ne_credit_account:
+            bs_accounts_ko.append(_('Credit Account P&L<0 (B/S account)'))
+        if bs_accounts_ko:
+            raise osv.except_osv(_('Warning'),
+                _('You must set following company account(s)'
+                    ' to use this report: %s') % (', '.join(bs_accounts_ko), ))
+
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
+        self._check(cr, uid, context=context)
+
         update_fields = [
             'export_format',
             'instance_ids',
