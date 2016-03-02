@@ -130,8 +130,9 @@ class shipment(osv.osv):
         multi function for global shipment values
         '''
         picking_obj = self.pool.get('stock.picking')
-
         result = {}
+        pack_to_read = []
+        reverse_pack_to_read = {}
         for shipment in self.browse(cr, uid, ids, context=context):
             values = {'total_amount': 0.0,
                       'currency_id': False,
@@ -191,26 +192,29 @@ class shipment(osv.osv):
             values['backshipment_id'] = backshipment_id
 
             pack_fam_ids = [x.id for x in shipment.pack_family_memory_ids]
-            for memory_family in self.pool.get('pack.family.memory').read(cr, uid, pack_fam_ids, ['not_shipped', 'state', 'num_of_packs', 'total_weight', 'total_volume', 'total_amount', 'currency_id']):
+            pack_to_read += pack_fam_ids
+            for p in pack_fam_ids:
+                reverse_pack_to_read[p] = (shipment.id, shipment.state)
+            for item in shipment.additional_items_ids:
+                values['total_weight'] += item.weight
+        if pack_to_read:
+            for memory_family in self.pool.get('pack.family.memory').read(cr, uid, pack_to_read, ['not_shipped', 'state', 'num_of_packs', 'weight', 'volume', 'total_amount', 'currency_id', 'length', 'width', 'height']):
                 # taken only into account if not done (done means returned packs)
-                if not memory_family['not_shipped'] and (shipment.state in ('delivered', 'done') or memory_family['state'] not in ('done',)):
+                if not memory_family['not_shipped'] and (reverse_pack_to_read[memory_family['id']][1] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
+                    values = result[reverse_pack_to_read[memory_family['id']][0]]
                     # num of packs
                     num_of_packs = memory_family['num_of_packs']
                     values['num_of_packs'] += int(num_of_packs)
                     # total weight
-                    total_weight = memory_family['total_weight']
-                    values['total_weight'] += int(total_weight)
+                    values['total_weight'] += memory_family['weight'] * num_of_packs
                     # total volume
-                    total_volume = memory_family['total_volume']
+                    total_volume = (memory_family['length'] * memory_family['width'] * memory_family['height'] * num_of_packs) / 1000.0
                     values['total_volume'] += float(total_volume)
                     # total amount
-                    total_amount = memory_family['total_amount']
-                    values['total_amount'] += total_amount
+                    values['total_amount'] += memory_family['total_amount']
                     # currency
                     currency_id = memory_family['currency_id'] or False
                     values['currency_id'] = currency_id
-            for item in shipment.additional_items_ids:
-                values['total_weight'] += item.weight
         return result
 
     def _get_shipment_ids(self, cr, uid, ids, context=None):

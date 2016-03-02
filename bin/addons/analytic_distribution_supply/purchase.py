@@ -419,7 +419,7 @@ class purchase_order_line(osv.osv):
         return res
 
     _columns = {
-        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select=1),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id',
             string="Commitment Voucher Lines", readonly=True),

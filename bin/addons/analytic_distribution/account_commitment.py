@@ -79,7 +79,7 @@ class account_commitment(osv.osv):
             store={
                 'account.commitment.line': (_get_cv, ['amount'],10),
         }),
-        'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution", select=1),
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'notes': fields.text(string="Comment"),
@@ -452,7 +452,7 @@ class account_commitment_line(osv.osv):
         'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=False),
         'initial_amount': fields.float(string="Initial amount", digits_compute=dp.get_precision('Account'), required=True),
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher", on_delete="cascade"),
-        'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution", select=1),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),

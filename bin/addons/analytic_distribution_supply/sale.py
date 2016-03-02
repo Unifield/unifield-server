@@ -31,7 +31,7 @@ class sale_order(osv.osv):
     _inherit = 'sale.order'
 
     _columns = {
-        'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution", select=1),
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
@@ -309,7 +309,7 @@ class sale_order_line(osv.osv):
         return res
 
     _columns = {
-        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select=1),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
             string='Header Distrib.?'),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',

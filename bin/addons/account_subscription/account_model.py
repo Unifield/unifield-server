@@ -124,7 +124,7 @@ class account_model_line(osv.osv):
             string="Distribution",
             help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
         'sequence': fields.integer('Sequence', readonly=True, help="The sequence field is used to order the resources from lower sequences to higher ones"),
-        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select=1),
         'exp_in_ad_state': fields.function(_get_exp_in_line_state, method=True, type='selection',
              selection=[('no_exp_in', 'Not expense/income'), ('no_header', 'No header'), ('valid', 'Valid'), ('invalid', 'Invalid')],
              string='Expense/income line status'),  # UFTP-103
@@ -228,7 +228,7 @@ class account_model(osv.osv):
 
     _columns = {
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
-        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select=1),
         'has_any_bad_ad_line_exp_in': fields.function(_has_any_bad_ad_line_exp_in,
              method=True, type='boolean',
              string='Has bad analytic distribution on expense/income lines',

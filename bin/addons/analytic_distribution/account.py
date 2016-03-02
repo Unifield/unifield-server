@@ -277,7 +277,7 @@ class account_move(osv.osv):
     _inherit = 'account.move'
 
     _columns = {
-        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', readonly=True),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', readonly=True, select=1),
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
