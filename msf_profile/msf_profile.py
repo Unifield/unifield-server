@@ -305,16 +305,17 @@ class patch_scripts(osv.osv):
 
 
     def another_translation_fix(self, cr, uid, *a, **b):
-        ir_trans = self.pool.get('ir.translation')
-        cr.execute('''select id, xml_id, name from ir_translation where
-            xml_id is not null and
-            res_id is null and
-            type='model'
-        ''')
-        for x in cr.fetchall():
-            res_id = ir_trans._get_res_id(cr, uid, name=x[2], sdref=x[1])
-            if res_id:
-                cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
+        if self.pool.get('sync.client.update_received'):
+            ir_trans = self.pool.get('ir.translation')
+            cr.execute('''select id, xml_id, name from ir_translation where
+                xml_id is not null and
+                res_id is null and
+                type='model'
+            ''')
+            for x in cr.fetchall():
+                res_id = ir_trans._get_res_id(cr, uid, name=x[2], sdref=x[1])
+                if res_id:
+                    cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
         return True
 patch_scripts()
 
