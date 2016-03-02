@@ -8,7 +8,7 @@ import functools
 import types
 from datetime import date, datetime
 
-from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
+from sync_common import MODELS_TO_IGNORE, TOUCH_FIELDS_TO_IGNORE, xmlid_to_sdref
 
 #import cProfile
 ## Helpers ###################################################################
@@ -332,6 +332,12 @@ sql_params)
         except ValueError:
             pass
 
+        for removed_field in TOUCH_FIELDS_TO_IGNORE.get(self._name, []):
+            try:
+                whole_fields.remove(removed_field)
+            except ValueError:
+                pass
+
         if not current_values:
             current_values = dict(
                 (d['id'], d)
@@ -491,7 +497,14 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
              not context.get('sync_update_creation')))
 
         if audit_rule_ids or to_be_synchronized or hasattr(self, 'on_create'):
-            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], values.keys()+funct_field, context=context))
+            values_keys = values.keys()
+            for removed_field in TOUCH_FIELDS_TO_IGNORE.get(self._name, []):
+                try:
+                    values_keys.remove(removed_field)
+                except ValueError:
+                    pass
+
+            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], values_keys+funct_field, context=context))
 
         if audit_rule_ids:
             audit_obj.audit_log(cr, uid, audit_rule_ids, self, [id], 'create', current=current_values, context=context)

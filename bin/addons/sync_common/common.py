@@ -71,6 +71,8 @@ MODELS_TO_IGNORE = [
                     'res.widget',
                     'product.likely.expire.report',
                     'product.likely.expire.report.line',
+                    'internal.move.processor',
+                    'internal.picking.processor',
                   ]
 
 MODELS_TO_IGNORE_DOMAIN = [
@@ -83,6 +85,9 @@ MODELS_TO_IGNORE_DOMAIN = [
         'workflow%',
     ]
 
+TOUCH_FIELDS_TO_IGNORE = {
+    'purchase.order': ['allocation_report_lines'],
+}
 def __compile_models_to_ignore():
     global MODELS_TO_IGNORE_DOMAIN
     simple_patterns = []
