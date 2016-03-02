@@ -766,7 +766,7 @@ class function(_column):
             self.selectable = False
 
         if store:
-            if self._type != 'many2one':
+            if self._type != 'many2one' or not isinstance(self, related):
                 # m2o fields need to return tuples with name_get, not just foreign keys
                 self._classic_read = True
             self._classic_write = True
