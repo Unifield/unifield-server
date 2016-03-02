@@ -620,10 +620,22 @@ class ir_translation(osv.osv):
                         res = target.get_sd_ref(cr, uid, target_ids).values()[0]
         return res
 
+    def _get_res_id(self, cr, uid, name, sdref, context=None):
+        tr_split = name.split(',')
+        res_id = self.pool.get('ir.model.data').find_sd_ref(cr, 1, sdref, field='res_id', context=context)
+        if tr_split[0] == 'product.template':
+            prod = self.pool.get('product.product').read(cr, 1, [res_id], ['product_tmpl_id'], context=context)[0]
+            if prod['product_tmpl_id']:
+                return prod['product_tmpl_id'][0]
+        return res_id
+
     # US_394: Remove duplicate lines for ir.translation
     def create(self, cr, uid, vals, clear=True, context=None):
         domain = []
         # Search xml_id
+        if vals.get('xml_id') and vals.get('name') and not vals.get('res_id'):
+            vals['res_id'] = self._get_res_id(cr, uid, vals['name'], vals['xml_id'], context=context)
+
         if not vals.get('xml_id', False):
             vals['xml_id'] = self.get_xml_id(cr, uid, vals, context=context)
 
