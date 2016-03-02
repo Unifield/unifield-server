@@ -71,7 +71,7 @@ class procurement_order(osv.osv):
 
             procurement_obj = self.pool.get('procurement.order')
             if not ids:
-                ids = procurement_obj.search(cr, uid, [], order="date_planned")
+                ids = procurement_obj.search(cr, uid, [('state', '=', 'exception')], order="date_planned")
             for id in ids:
                 wf_service.trg_validate(uid, 'procurement.order', id, 'button_restart', cr)
             if use_new_cursor:
