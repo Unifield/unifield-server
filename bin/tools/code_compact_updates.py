@@ -57,12 +57,20 @@ while to_continue:
         else:
             if row['is_deleted']:
                 if rows_already_seen[key] < 0:  # the previous update was also a delete
-                    # delete the previous
+                    # so delete the previous update to keep only the last one
                     cr2.execute('DELETE FROM sync_server_update WHERE id = %s',
                                 (-1 * rows_already_seen[key],))
                     deleted_update_ids.append(-1 * rows_already_seen[key])
                     # and keep the current
                     rows_already_seen[key] = row['id'] * -1
+                else:   # the previous was not a delete, the current and the
+                        # previous should be deleted
+                    cr2.execute('DELETE FROM sync_server_update WHERE id in %s',
+                                ((rows_already_seen[key], row['id']),))
+                    deleted_update_ids.append(rows_already_seen[key])
+                    deleted_update_ids.append(row['id'])
+                    # remove the already seen key
+                    rows_already_seen.pop(key)
             else:
                 # replace the content of the previous update with the current
                 items = filter(lambda x: x[0] not in ['session_id', 'id', 'sdref',
