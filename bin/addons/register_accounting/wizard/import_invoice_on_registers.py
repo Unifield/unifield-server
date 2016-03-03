@@ -67,13 +67,21 @@ class wizard_import_invoice_lines(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
-        res = super(wizard_import_invoice_lines, self).write(cr,uid, ids, vals, context=context)
+        msg = False
+
         # Amount check
-        for l in self.read(cr, uid, ids, ['amount', 'amount_to_pay']):
-            if l['amount'] < 0:
-                raise osv.except_osv(_('Warning'), _('Negative amount are forbidden!'))
-            if l['amount'] > abs(l['amount_to_pay']):
-                raise osv.except_osv(_('Warning'), _("Amount %.2f can't be greater than 'Amount to pay': %.2f")%(vals['amount'], abs(l['amount_to_pay'])))
+        for l in self.read(cr, uid, ids, ['amount_to_pay']):
+            if vals['amount'] < 0:
+                msg = _('Negative amount are forbidden!')
+            elif vals['amount'] > abs(l['amount_to_pay']):
+                msg = _("Amount %.2f can't be greater than 'Amount to pay': %.2f") % (vals['amount'], abs(l['amount_to_pay']))
+            if msg:
+                # reset wrong amount
+                vals = { 'amount': abs(l['amount_to_pay']) }
+
+        res = super(wizard_import_invoice_lines, self).write(cr,uid, ids, vals, context=context)
+        if msg:
+            raise osv.except_osv(_('Warning'), msg)
         return res
 
 wizard_import_invoice_lines()
