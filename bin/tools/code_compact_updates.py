@@ -3,6 +3,21 @@ import psycopg2
 import locale
 import psycopg2.extras
 
+
+UPDATE_TO_FETCH = 1000
+
+# we will delete all the pulled update which are not master data and use active rule
+# but it is safer to keep some safety margin by keeping some more updates
+SEQUENCE_MORE_TO_KEEP = 2000
+
+# the objects with the folowing sdref will be ignored
+SDREF_TO_EXCLUDE = [
+]
+
+# the objects with the folowing model will be ignored
+MODEL_TO_EXCLUDE = [
+]
+
 locale.setlocale(locale.LC_ALL, '')
 conn = psycopg2.connect("dbname=DAILY_SYNC_SERVER-COMPRESSED-2-20160303-073301")   # replace with your own DB
 
@@ -18,22 +33,10 @@ to_continue = True
 print '1/4 Start compressing the updates, this may take a while ...'
 rows_already_seen = {}
 
-# we will delete all the pulled update which are not master data and use active rule
-# but it is safer to keep some safety margin by keeping some more updates
-SEQUENCE_MORE_TO_KEEP = 2000
-
-# the objects with the folowing sdref will be ignored
-SDREF_TO_EXCLUDE = [
-]
-
-# the objects with the folowing model will be ignored
-MODEL_TO_EXCLUDE = [
-]
-
 deleted_update_ids = []
 
 while to_continue:
-    multiple_updates = cr.fetchmany(1000)
+    multiple_updates = cr.fetchmany(UPDATE_TO_FETCH)
     if not multiple_updates:
         to_continue = False
         break
@@ -99,7 +102,8 @@ del rows_already_seen
 total_update_ids = set()
 
 print '1/4 Compression finished. %s update deleted.' % locale.format('%d', len(deleted_update_ids), 1)
-cr2.execute('SELECT MIN(last_sequence) FROM sync_server_entity WHERE last_sequence !=0', ())
+cr2.execute("""SELECT MIN(last_sequence) FROM sync_server_entity
+            WHERE last_sequence !=0""", ())
 smallest_last_sequence = cr2.fetchone()[0]
 smallest_last_sequence -= SEQUENCE_MORE_TO_KEEP
 total_update_ids = total_update_ids.union(deleted_update_ids)
@@ -108,11 +112,14 @@ del deleted_update_ids
 cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='t' AND master_data='f'", ())
 no_master_data_active_rules = [x[0] for x in cr2.fetchall()]
 
-print '2/4 Start deleting updates with active rules and not master_data where sequence is < %s ...' % smallest_last_sequence
-cr2.execute('SELECT id FROM sync_server_update WHERE sequence < %s and rule_id IN %s', (smallest_last_sequence, tuple(no_master_data_active_rules),))
+print '2/4 Start deleting updates with active rules and not master_data'\
+      ' where sequence is < %s ...' % smallest_last_sequence
+cr2.execute("""SELECT id FROM sync_server_update
+            WHERE sequence < %s and rule_id IN %s""",
+            (smallest_last_sequence, tuple(no_master_data_active_rules),))
 to_continue = True
 while to_continue:
-    multiple_updates = cr2.fetchmany(1000)
+    multiple_updates = cr2.fetchmany(UPDATE_TO_FETCH)
     if not multiple_updates:
         to_continue = False
         break
@@ -131,7 +138,7 @@ cr2.execute("""SELECT id FROM sync_server_update
 update_inactive_rules_count = cr2.rowcount
 to_continue = True
 while to_continue:
-    multiple_updates = cr2.fetchmany(1000)
+    multiple_updates = cr2.fetchmany(UPDATE_TO_FETCH)
     if not multiple_updates:
         to_continue = False
         break
@@ -154,7 +161,7 @@ if total_update_ids:
     entity_count = cr2.rowcount
     # split the list has it may be huge
     while to_continue:
-        multiple_updates = cr2.fetchmany(1000)
+        multiple_updates = cr2.fetchmany(UPDATE_TO_FETCH)
         if not multiple_updates:
             to_continue = False
             break
