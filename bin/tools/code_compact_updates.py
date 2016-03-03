@@ -83,12 +83,6 @@ while to_continue:
             conn.commit()
 
 print 'Compression finished. Update deleted : %s' % locale.format('%d', len(deleted_update_ids), 1)
-print 'Starting delete of the related sync_server_entity_rel...'
-cr.execute('SELECT COUNT(*) FROM sync_server_entity_rel WHERE update_id IN %s', (tuple(deleted_update_ids),))
-entity_count = cr.fetchone()[0]
-cr2.execute('DELETE FROM sync_server_entity_rel WHERE update_id IN %s', (tuple(deleted_update_ids),))
-print 'sync_server_entity_rel deleted : %s' % locale.format('%d', entity_count, 1)
-
 cr.execute('SELECT MIN(last_sequence) FROM sync_server_entity WHERE last_sequence !=0', ())
 smallest_last_sequence = cr.fetchone()[0]
 smallest_last_sequence -= SEQUENCE_TO_REMOVE
@@ -97,10 +91,20 @@ cr.execute("SELECT id FROM sync_server_sync_rule WHERE active='t' AND master_dat
 no_master_data_active_rules = [x[0] for x in cr.fetchall()]
 
 print 'Start deleting updates with active rules and not master_data where sequence is < %s ...' % smallest_last_sequence
-cr.execute('SELECT COUNT(*) FROM sync_server_update WHERE sequence < %s and rule_id IN %s', (smallest_last_sequence, tuple(no_master_data_active_rules),))
-update_no_master_count = cr.fetchone()[0]
-print '%s update to delete' % locale.format('%d', update_no_master_count, 1)
+cr.execute('SELECT id FROM sync_server_update WHERE sequence < %s and rule_id IN %s', (smallest_last_sequence, tuple(no_master_data_active_rules),))
+update_no_master_ids = [x[0] for x in cr.fetchall()]
+cr2.execute('DELETE FROM sync_server_update WHERE id IN %s',
+        (tuple(update_no_master_ids),))
+print '%s updates to delete' % locale.format('%d', len(update_no_master_ids), 1)
 
-
-total_update_count = len(deleted_update_ids) + update_no_master_count
+total_update_count = len(deleted_update_ids) + len(update_no_master_ids)
 print '\n\nTotal updates deleted = %s' % locale.format('%d', total_update_count, 1)
+
+print 'Starting delete of the related sync_server_entity_rel...'
+cr.execute('SELECT COUNT(*) FROM sync_server_entity_rel WHERE update_id IN %s',
+        (tuple(deleted_update_ids+update_no_master_ids),))
+entity_count = cr.fetchone()[0]
+cr2.execute('DELETE FROM sync_server_entity_rel WHERE update_id IN %s',
+        (tuple(deleted_update_ids+update_no_master_ids),))
+print 'sync_server_entity_rel deleted : %s' % locale.format('%d', entity_count, 1)
+
