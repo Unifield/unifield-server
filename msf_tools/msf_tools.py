@@ -631,9 +631,11 @@ class ir_translation(osv.osv):
 
     # US_394: Remove duplicate lines for ir.translation
     def create(self, cr, uid, vals, clear=True, context=None):
+        if context is None:
+            context = {}
         domain = []
         # Search xml_id
-        if vals.get('xml_id') and vals.get('name') and not vals.get('res_id'):
+        if context.get('sync_update_execution') and vals.get('xml_id') and vals.get('name') and not vals.get('res_id'):
             vals['res_id'] = self._get_res_id(cr, uid, vals['name'], vals['xml_id'], context=context)
 
         if not vals.get('xml_id', False):
