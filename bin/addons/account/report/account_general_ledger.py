@@ -309,10 +309,17 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if self.account_report_types:
                 # filter by B/S P&L report type
                 if child_account.user_type \
-                    and child_account.user_type.report_type \
-                    and child_account.user_type.report_type \
+                    and child_account.user_type.report_type:
+                    do_filtering = True
+                    if self.account_report_types == 'bl':
+                        if child_account.user_type \
+                            and child_account.user_type.code == 'tax':
+                            # since US-227/7.1 we display tax account when
+                            # BS acccounts are asked
+                            do_filtering = False
+                    if do_filtering and child_account.user_type.report_type \
                         not in self.account_report_types:
-                    continue
+                        continue
             if self.unreconciled_filter:
                 if child_account.id in self.unreconciliable_accounts:
                     # unreconciliable filter:
