@@ -12,7 +12,7 @@ cr2 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 # here it takes already a lot of time...
 cr.execute("""
 SELECT * FROM
-sync_server_update ORDER BY sequence, id limit 50000
+sync_server_update ORDER BY sequence, id
 """)
 to_continue = True
 print '1/4 Start compressing the updates, this may take a while ...'
@@ -56,7 +56,7 @@ while to_continue:
         # this row has already been seen, replace the last value with the new one
         else:
             if row['is_deleted']:
-                if rows_already_seen[key] < 0: # the previous update was also a delete
+                if rows_already_seen[key] < 0:  # the previous update was also a delete
                     # delete the previous
                     cr2.execute('DELETE FROM sync_server_update WHERE id = %s',
                                 (-1 * rows_already_seen[key],))
@@ -120,7 +120,7 @@ print '\n\nTotal updates deleted = %s\n\n' % locale.format('%d', total_update_co
 if total_update_ids:
     print '4/4 Start deleting of the related sync_server_entity_rel...'
     cr2.execute('SELECT id FROM sync_server_entity_rel WHERE update_id IN %s',
-               (tuple(total_update_ids),))
+                (tuple(total_update_ids),))
     entity_ids = [x[0] for x in cr2.fetchall()]
     entity_count = len(entity_ids)
     # split the list has it may be huge
