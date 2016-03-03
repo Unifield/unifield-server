@@ -109,42 +109,57 @@ no_master_data_active_rules = [x[0] for x in cr2.fetchall()]
 
 print '2/4 Start deleting updates with active rules and not master_data where sequence is < %s ...' % smallest_last_sequence
 cr2.execute('SELECT id FROM sync_server_update WHERE sequence < %s and rule_id IN %s', (smallest_last_sequence, tuple(no_master_data_active_rules),))
-update_no_master_ids = [x[0] for x in cr2.fetchall()]
-# split the list has it may be huge
-for chunk in [update_no_master_ids[x:x+1000] for x in xrange(0, len(update_no_master_ids), 1000)]:
+to_continue = True
+while to_continue:
+    multiple_updates = cr2.fetchmany(1000)
+    if not multiple_updates:
+        to_continue = False
+        break
+    update_no_master_ids = [x[0] for x in multiple_updates]
     cr2.execute('DELETE FROM sync_server_update WHERE id IN %s',
-                (tuple(chunk),))
+                (tuple(update_no_master_ids),))
     conn.commit()
-print '2/4 %s updates deleted.' % locale.format('%d', len(update_no_master_ids), 1)
-total_update_ids = total_update_ids.union(update_no_master_ids)
+    total_update_ids = total_update_ids.union(update_no_master_ids)
+print '2/4 %s updates deleted.' % locale.format('%d', cr2.rowcount, 1)
 del update_no_master_ids
 
 print '3/4 Start deleting the updates related to inactive rules...'
-cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='f'", ())
-inactive_rules = [x[0] for x in cr2.fetchall()]
-cr2.execute('SELECT id FROM sync_server_update WHERE rule_id IN %s', (tuple(inactive_rules),))
-update_inactive_rules = [x[0] for x in cr2.fetchall()]
-# split the list has it may be huge
-for chunk in [update_inactive_rules[x:x+1000] for x in xrange(0, len(update_inactive_rules), 1000)]:
+cr2.execute("""SELECT id FROM sync_server_update
+            WHERE rule_id IN
+            (SELECT id FROM sync_server_sync_rule WHERE active='f')""")
+update_inactive_rules_count = cr2.rowcount
+to_continue = True
+while to_continue:
+    multiple_updates = cr2.fetchmany(1000)
+    if not multiple_updates:
+        to_continue = False
+        break
+    update_inactive_rules = [x[0] for x in multiple_updates]
     cr2.execute('DELETE FROM sync_server_update WHERE id IN %s',
-                (tuple(chunk),))
+                (tuple(update_inactive_rules),))
     conn.commit()
-print '3/4 %s updates related to inactive rules deleted.' % len(update_inactive_rules)
-total_update_ids = total_update_ids.union(update_inactive_rules)
+    total_update_ids = total_update_ids.union(update_inactive_rules)
+print '3/4 %s updates related to inactive rules deleted.' % locale.format('%d', update_inactive_rules_count, 1)
 del update_inactive_rules
 
 total_update_count = len(total_update_ids)
 print '\n\nTotal updates deleted = %s\n\n' % locale.format('%d', total_update_count, 1)
 
+to_continue = True
 if total_update_ids:
     print '4/4 Start deleting of the related sync_server_entity_rel...'
     cr2.execute('SELECT id FROM sync_server_entity_rel WHERE update_id IN %s',
                 (tuple(total_update_ids),))
-    entity_ids = [x[0] for x in cr2.fetchall()]
-    entity_count = len(entity_ids)
+    entity_count = cr2.rowcount
     # split the list has it may be huge
-    for chunk in [entity_ids[x:x+1000] for x in xrange(0, len(entity_ids), 1000)]:
+    while to_continue:
+        multiple_updates = cr2.fetchmany(1000)
+        if not multiple_updates:
+            to_continue = False
+            break
+
+        entity_ids = [x[0] for x in multiple_updates]
         cr2.execute('DELETE FROM sync_server_entity_rel WHERE id IN %s',
-                    (tuple(chunk),))
+                    (tuple(entity_ids),))
         conn.commit()
     print '4/4 sync_server_entity_rel deleted : %s' % locale.format('%d', entity_count, 1)
