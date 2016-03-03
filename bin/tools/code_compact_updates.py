@@ -92,6 +92,7 @@ while to_continue:
             conn.commit()
 
 # free memory
+cr.close()
 del multiple_updates
 del rows_already_seen
 
@@ -163,3 +164,5 @@ if total_update_ids:
                     (tuple(entity_ids),))
         conn.commit()
     print '4/4 sync_server_entity_rel deleted : %s' % locale.format('%d', entity_count, 1)
+
+cr2.close()
