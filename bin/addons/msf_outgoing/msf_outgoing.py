@@ -4235,8 +4235,6 @@ class stock_picking(osv.osv):
         rule_obj = self.pool.get('sync.client.message_rule')
         msg_to_send_obj = self.pool.get('sync.client.message_to_send')
         if picking.sale_id:
-            solccl_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'sale.order.line.cancel.create_line', context=context)
-            msg_to_send_obj.create_from_rule(cr, uid, solccl_rule, context=context)
             return_info = {}
             if picking.sale_id.original_so_id_sale_order:
                 fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.original_so_id_sale_order.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
