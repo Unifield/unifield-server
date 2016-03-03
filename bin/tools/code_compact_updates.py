@@ -47,8 +47,7 @@ while to_continue:
             if row['is_deleted']:
                 # it is better to always keep the last deleted update
                 rows_already_seen[key] = row['id'] * -1  # if the updated
-                                     # should be deleted, store the id as
-                                     # negative value
+                # should be deleted, store the id as negative value
             else:
                 rows_already_seen[key] = row['id']
 
@@ -94,7 +93,7 @@ print 'Start deleting updates with active rules and not master_data where sequen
 cr.execute('SELECT id FROM sync_server_update WHERE sequence < %s and rule_id IN %s', (smallest_last_sequence, tuple(no_master_data_active_rules),))
 update_no_master_ids = [x[0] for x in cr.fetchall()]
 cr2.execute('DELETE FROM sync_server_update WHERE id IN %s',
-        (tuple(update_no_master_ids),))
+            (tuple(update_no_master_ids),))
 print '%s updates to delete' % locale.format('%d', len(update_no_master_ids), 1)
 
 total_update_count = len(deleted_update_ids) + len(update_no_master_ids)
@@ -102,9 +101,8 @@ print '\n\nTotal updates deleted = %s' % locale.format('%d', total_update_count,
 
 print 'Starting delete of the related sync_server_entity_rel...'
 cr.execute('SELECT COUNT(*) FROM sync_server_entity_rel WHERE update_id IN %s',
-        (tuple(deleted_update_ids+update_no_master_ids),))
+           (tuple(deleted_update_ids+update_no_master_ids),))
 entity_count = cr.fetchone()[0]
 cr2.execute('DELETE FROM sync_server_entity_rel WHERE update_id IN %s',
-        (tuple(deleted_update_ids+update_no_master_ids),))
+            (tuple(deleted_update_ids+update_no_master_ids),))
 print 'sync_server_entity_rel deleted : %s' % locale.format('%d', entity_count, 1)
-
