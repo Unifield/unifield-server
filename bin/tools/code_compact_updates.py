@@ -70,7 +70,7 @@ while to_continue:
                     deleted_update_ids.append(rows_already_seen[key])
                     deleted_update_ids.append(row['id'])
                     # remove the already seen key
-                    rows_already_seen.pop(key)
+                    del rows_already_seen[key]
             else:
                 # replace the content of the previous update with the current
                 items = filter(lambda x: x[0] not in ['session_id', 'id', 'sdref',
@@ -90,6 +90,10 @@ while to_continue:
                 cr2.execute(sql_query, values_to_set + [rows_already_seen[key]])
 
             conn.commit()
+
+# free memory
+del multiple_updates
+del rows_already_seen
 
 print '1/4 Compression finished. %s update deleted.' % locale.format('%d', len(deleted_update_ids), 1)
 cr2.execute('SELECT MIN(last_sequence) FROM sync_server_entity WHERE last_sequence !=0', ())
