@@ -95,10 +95,14 @@ while to_continue:
 del multiple_updates
 del rows_already_seen
 
+total_update_ids = set()
+
 print '1/4 Compression finished. %s update deleted.' % locale.format('%d', len(deleted_update_ids), 1)
 cr2.execute('SELECT MIN(last_sequence) FROM sync_server_entity WHERE last_sequence !=0', ())
 smallest_last_sequence = cr2.fetchone()[0]
 smallest_last_sequence -= SEQUENCE_MORE_TO_KEEP
+total_update_ids = total_update_ids.union(deleted_update_ids)
+del deleted_update_ids
 
 cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='t' AND master_data='f'", ())
 no_master_data_active_rules = [x[0] for x in cr2.fetchall()]
@@ -112,6 +116,8 @@ for chunk in [update_no_master_ids[x:x+1000] for x in xrange(0, len(update_no_ma
                 (tuple(chunk),))
     conn.commit()
 print '2/4 %s updates deleted.' % locale.format('%d', len(update_no_master_ids), 1)
+total_update_ids = total_update_ids.union(update_no_master_ids)
+del update_no_master_ids
 
 print '3/4 Start deleting the updates related to inactive rules...'
 cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='f'", ())
@@ -124,8 +130,9 @@ for chunk in [update_inactive_rules[x:x+1000] for x in xrange(0, len(update_inac
                 (tuple(chunk),))
     conn.commit()
 print '3/4 %s updates related to inactive rules deleted.' % len(update_inactive_rules)
+total_update_ids = total_update_ids.union(update_inactive_rules)
+del update_inactive_rules
 
-total_update_ids = deleted_update_ids + update_no_master_ids + update_inactive_rules
 total_update_count = len(total_update_ids)
 print '\n\nTotal updates deleted = %s\n\n' % locale.format('%d', total_update_count, 1)
 
