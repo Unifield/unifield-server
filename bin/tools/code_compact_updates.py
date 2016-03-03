@@ -2,7 +2,9 @@
 import psycopg2
 import locale
 import psycopg2.extras
+import time
 
+start_time = time.time()
 
 UPDATE_TO_FETCH = 1000
 
@@ -173,3 +175,7 @@ if total_update_ids:
     print '4/4 sync_server_entity_rel deleted : %s' % locale.format('%d', entity_count, 1)
 
 cr2.close()
+elapsed_time = time.time() - start_time
+minute, second = divmod(elapsed_time, 60)
+hour, mminute = divmod(minute, 60)
+print "Elapsed time : %d:%02d:%02d" % (hour, minute, second)
