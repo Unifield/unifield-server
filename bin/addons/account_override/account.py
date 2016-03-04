@@ -329,12 +329,27 @@ class account_account(osv.osv):
         'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
         'is_intermission_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
         'is_intersection_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intersection counterpart account?'),
+
+        # US-672/1
+        'has_partner_type_internal': fields.boolean('Internal'),
+        'has_partner_type_section': fields.boolean('Inter-section'),
+        'has_partner_type_external': fields.boolean('External'),
+        'has_partner_type_esc': fields.boolean('ESC'),
+        'has_partner_type_intermission': fields.boolean('Intermission'),
     }
 
     _defaults = {
         'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
+
+        # US-672/1: allow all partner types:
+        # => master data retro-compat before ticket
+        'has_partner_type_internal': True,
+        'has_partner_type_section': True,
+        'has_partner_type_external': True,
+        'has_partner_type_esc': True,
+        'has_partner_type_intermission': True,
     }
 
     # UTP-493: Add a dash between code and account name
@@ -432,6 +447,25 @@ class account_account(osv.osv):
             args_append(('inactivation_date', '=', False))
         return super(account_account, self).search(cr, uid, args, offset,
                 limit, order, context=context, count=count)
+
+    def _get_partner_types_list(self, cr, uid, ids, context=None):
+        """
+        get list of allowed partner types
+        :return: {'id': ['internal', ...], ... }
+        :rtype dict
+        """
+        types = ( 'internal', 'section', 'external', 'esc', 'intermission', )
+        res = {}
+
+        for r in self.browse(cr, uid, ids, context=context):
+            l = []
+            for t in types:
+                field = 'has_partner_type_%s' % (t, )
+                if hasattr(r, field) and getattr(r, field):
+                    l.append(t)
+            res[r.id] = l
+
+        return res
 
 account_account()
 
