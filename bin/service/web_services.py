@@ -349,7 +349,7 @@ class db(netsvc.ExportService):
     def exp_server_version(self, dbname=False):
         """ Return the version of the server from the sql table
         sync_client_version. If it's not found return the version found from
-        the unified-version.txt (old base)
+        the release.py file (old base)
             Used by the client to verify the compatibility with its own version
         """
         if not dbname:
