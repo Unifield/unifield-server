@@ -175,25 +175,36 @@ class wizard_common_import_line(osv.osv_memory):
     }
 
     def add_products(self, cr, uid, ids, product_ids, context=None):
+        product_obj = self.pool.get('product.product')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         if not product_ids:
             return {}
 
         res = {}
-        for wl in self.browse(cr, uid, ids, context=context):
-            if wl.parent_model in ('tender', 'sale.order', 'purchase.order'):
-                categ = self.pool.get(wl.parent_model).read(cr, uid, wl.parent_id, ['categ'], context=context)['categ']
-                if categ:
-                    not_ok_product_ids = self.pool.get('product.product').search(cr, uid, [
-                        ('id', 'in', product_ids),
-                        ('purchase_type', '=', categ),
-                    ], context=context)
-                    if not_ok_product_ids:
-                        res.update({
-                            'warning': {
-                                'title': _('Warning'),
-                                'message': _('Warning you are about to add a product which does not conform to this PO’s order category, do you wish to proceed ?'),
-                            },
-                        })
+        try:
+            for wl in self.browse(cr, uid, ids, context=context):
+                if wl.parent_model in ('tender', 'sale.order', 'purchase.order'):
+                    categ = self.pool.get(wl.parent_model).read(cr, uid, wl.parent_id, ['categ'], context=context)['categ']
+                    if categ:
+                        for product_id in product_ids[0][2]:
+                            c_msg = product_obj.check_consistency(cr, uid, product_id, categ, context=context)
+                            if c_msg:
+                                res.setdefault('warning', {})
+                                res['warning'].setdefault('title', _('Warning'))
+                                res['warning'].setdefault('message', '')
+                                res['warning']['message'] = '%s \n %s' % (
+                                    res.get('warning', {}).get('message', ''),
+                                    c_msg,
+                                )
+                                return res
+        except IndexError:
+            return {}
 
         return res
 
