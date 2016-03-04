@@ -411,6 +411,13 @@ class product_attributes(osv.osv):
             string='Closed Article',
             required=True,
         ),
+        'manufacturer_txt': fields.text(
+            string='Manufacturer',
+        ),
+        'manufacturer_ref': fields.char(
+            size=1024,
+            string='Manufacturer Ref.'
+        ),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
         'restricted_country': fields.boolean('Restricted in the Country'),
         'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),

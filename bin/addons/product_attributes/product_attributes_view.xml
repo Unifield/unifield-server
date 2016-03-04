@@ -133,6 +133,12 @@
                                 <field name="single_use" colspan="2"/>
                                 <field name="narcotic" colspan="2"/>
                                 <field name="controlled_substance" colspan="2"/>
+                                <separator string="Transport" colspan="2"/>
+                                <field name="dangerous_goods" colspan="2"/>
+                                <field name="un_code" colspan="2"/>
+                                <separator string="Import restrictions" colspan="4"/>
+                                <field name="restricted_country" colspan="2"/>
+                                <field name="country_restriction" colspan="2" widget="selection" attrs="{'readonly':[('restricted_country','=',False)]}"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
@@ -144,14 +150,8 @@
                                 <field name="gmdn_description" colspan="2" />
                                  -->
                                 <field name="closed_article" colspan="2"/>
-                                <separator string="Import restrictions" colspan="4"/>
-                                <field name="restricted_country" colspan="2"/>
-                                <field name="country_restriction" colspan="2" widget="selection" attrs="{'readonly':[('restricted_country','=',False)]}"/>
-                            </group>
-                            <group colspan="2" col="2">
-                                <separator string="Transport" colspan="2"/>
-                                <field name="dangerous_goods" colspan="2"/>
-                                <field name="un_code" colspan="2"/>
+                                <field name="manufacturer_ref" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
+                                <field name="manufacturer_txt" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Form" colspan="2" />
