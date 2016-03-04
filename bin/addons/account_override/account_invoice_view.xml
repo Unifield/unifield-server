@@ -33,7 +33,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='account_id']" position="attributes">
-                        <attribute name="domain">[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]</attribute>
+                        <attribute name="domain">[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice'), ('is_partner_type_allowed', '=', 'external')]</attribute>
                     </xpath>
                     <xpath expr="/form/group[1]/field[@name='partner_id']" position="attributes">
                         <attribute name="on_change">onchange_partner_id(type,partner_id,date_invoice,payment_term,partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)</attribute>
