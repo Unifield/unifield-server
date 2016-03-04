@@ -1215,7 +1215,8 @@ class orm_template(object):
                 for arg in ('digits', 'invisible', 'filters', 'computation'):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
-
+                if field_col._type == 'float' and self.is_supply:
+                    res[f]['truncate'] = True
                 if field_col.string:
                     res_trans = translation_obj._get_source(cr, user, self._name + ',' + f, 'field', context.get('lang', False) or 'en_US')
                     if res_trans:

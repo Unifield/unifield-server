@@ -33,6 +33,7 @@ from tools.func import wraps
 from tools.translate import translate
 import time
 import random
+import objects_categories
 
 module_list = []
 module_class_list = {}
@@ -283,6 +284,9 @@ class osv_base(object):
     def __init__(self, pool, cr):
         pool.add(self._name, self)
         self.pool = pool
+        self.is_supply = False
+        if self._name in objects_categories.SUPPLY_OBJECTS:
+            self.is_supply = True
         super(osv_base, self).__init__(cr)
 
     def __new__(cls):
