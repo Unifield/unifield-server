@@ -1075,8 +1075,10 @@ class claim_event(osv.osv):
 
         claim_ids = set()
         log_msgs = []
+        base_func = '_do_process_'
         # Reload browse_record values to get last updated values
         for event in self.browse(cr, uid, ids, context=context):
+            getattr(self, base_func + event.type_claim_event)(cr, uid, event, context=context)
             # Log process message
             event_type_name = fields_tools.get_selection_name(cr, uid,
                                                               object=self,
