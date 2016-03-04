@@ -25,6 +25,7 @@ conn = psycopg2.connect("dbname=DAILY_SYNC_SERVER-COMPRESSED-2-20160303-073301")
 
 cr = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cr2 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+cr3 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 # here it takes already a lot of time...
 cr.execute("""
@@ -126,7 +127,7 @@ while to_continue:
         to_continue = False
         break
     update_no_master_ids = [x[0] for x in multiple_updates]
-    cr2.execute('DELETE FROM sync_server_update WHERE id IN %s',
+    cr3.execute('DELETE FROM sync_server_update WHERE id IN %s',
                 (tuple(update_no_master_ids),))
     conn.commit()
     total_update_ids = total_update_ids.union(update_no_master_ids)
@@ -145,7 +146,7 @@ while to_continue:
         to_continue = False
         break
     update_inactive_rules = [x[0] for x in multiple_updates]
-    cr2.execute('DELETE FROM sync_server_update WHERE id IN %s',
+    cr3.execute('DELETE FROM sync_server_update WHERE id IN %s',
                 (tuple(update_inactive_rules),))
     conn.commit()
     total_update_ids = total_update_ids.union(update_inactive_rules)
@@ -169,12 +170,13 @@ if total_update_ids:
             break
 
         entity_ids = [x[0] for x in multiple_updates]
-        cr2.execute('DELETE FROM sync_server_entity_rel WHERE id IN %s',
+        cr3.execute('DELETE FROM sync_server_entity_rel WHERE id IN %s',
                     (tuple(entity_ids),))
         conn.commit()
     print '4/4 sync_server_entity_rel deleted : %s' % locale.format('%d', entity_count, 1)
 
 cr2.close()
+cr3.close()
 elapsed_time = time.time() - start_time
 minute, second = divmod(elapsed_time, 60)
 hour, mminute = divmod(minute, 60)
