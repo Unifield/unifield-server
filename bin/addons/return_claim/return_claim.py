@@ -1129,26 +1129,82 @@ class claim_event(osv.osv):
 
         return result
 
-    _columns = {'return_claim_id_claim_event': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade', readonly=True),
-                'creation_date_claim_event': fields.date(string='Creation Date', required=True, readonly=True),  # default value
-                'type_claim_event': fields.selection(CLAIM_EVENT_TYPE, string='Type', required=True, readonly=True),
-                'replacement_picking_expected_claim_event': fields.boolean(string='Replacement expected for Return Claim?', help="An Incoming Shipment will be automatically created corresponding to returned products."),
-                'description_claim_event': fields.char(size=1024, string='Comment'),
-                'state': fields.selection(CLAIM_EVENT_STATE, string='State', readonly=True),  # default value
-                'from_picking_wizard_claim_event': fields.boolean(string='From Picking Wizard', readonly=True),
-                'event_picking_id_claim_event': fields.many2one('stock.picking', string='Event Picking'),
-                # auto fields from create function
-                'name': fields.char(string='Reference', size=1024, readonly=True),  # from create function
-                'order_claim_event': fields.integer(string='Creation Order', readonly=True),  # from create function
-                # functions
-                'location_id_claim_event': fields.function(_vals_get_claim, method=True, string='Associated Location', type='many2one', relation='stock.location', readonly=True, multi='get_vals_claim'),
-                'hidden_state': fields.function(_vals_get_claim, method=True, string='Hidden State', type='selection', selection=CLAIM_EVENT_STATE, readonly=True, multi='get_vals_claim'),
-                }
+    _columns = {
+        'return_claim_id_claim_event': fields.many2one(
+            'return.claim',
+            string='Claim',
+            required=True,
+            ondelete='cascade',
+            readonly=True,
+        ),
+        'creation_date_claim_event': fields.date(
+            string='Creation Date',
+            required=True,
+            readonly=True,
+        ),  # default value
+        'type_claim_event': fields.selection(
+            selection=CLAIM_EVENT_TYPE,
+            string='Type',
+            required=True,
+            readonly=True,
+        ),
+        'replacement_picking_expected_claim_event': fields.boolean(
+            string='Replacement expected for Return Claim?',
+            help="An Incoming Shipment will be automatically created corresponding to returned products.",
+        ),
+        'description_claim_event': fields.char(
+            size=1024,
+            string='Comment',
+        ),
+        'state': fields.selection(
+            selection=CLAIM_EVENT_STATE,
+            string='State',
+            readonly=True,
+        ),  # default value
+        'from_picking_wizard_claim_event': fields.boolean(
+            string='From Picking Wizard',
+            readonly=True,
+        ),
+        'event_picking_id_claim_event': fields.many2one(
+            'stock.picking',
+            string='Event Picking',
+        ),
+        # Auto fields from create function
+        'name': fields.char(
+            string='Reference',
+            size=1024,
+            readonly=True,
+        ),
+        'order_claim_event': fields.integer(
+            string='Creation Order',
+            readonly=True,
+        ),
+        # Functions
+        'location_id_claim_event': fields.function(
+            _vals_get_claim,
+            method=True,
+            string='Associated Location',
+            type='many2one',
+            relation='stock.location',
+            readonly=True,
+            multi='get_vals_claim',
+        ),
+        'hidden_state': fields.function(
+            _vals_get_claim,
+            method=True,
+            string='Hidden State',
+            type='selection',
+            selection=CLAIM_EVENT_STATE,
+            readonly=True,
+            multi='get_vals_claim',
+        ),
+    }
 
-    _defaults = {'creation_date_claim_event': lambda *a: time.strftime('%Y-%m-%d'),
-                 'state': 'draft',
-                 'from_picking_wizard_claim_event': False,
-                 }
+    _defaults = {
+        'creation_date_claim_event': lambda *a: time.strftime('%Y-%m-%d'),
+        'state': 'draft',
+        'from_picking_wizard_claim_event': False,
+    }
 
 claim_event()
 
