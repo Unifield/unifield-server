@@ -19,6 +19,18 @@
                         </group>
                     </page>
                 </page>
+
+                <page string="Notes" position="before">
+                    <page string="Allowed Partner types">
+                        <group col="4" colspan="4">
+                            <field name="has_partner_type_internal" />
+                            <field name="has_partner_type_intermission" />
+                            <field name="has_partner_type_external" />
+                            <field name="has_partner_type_section" />
+                            <field name="has_partner_type_esc" />
+                        </group>
+                    </page>
+                </page>
             </field>
         </record>
 
