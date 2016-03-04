@@ -308,6 +308,51 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('Filter on field %s not implemented! %s') % (field_names, x,))
         return arg
 
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _get_search_is_partner_type_allowed(self, cr, uid, obj, name, args,
+        context=None):
+        """
+        US-672
+        search between following partner types operand:
+        'internal'
+        'section'
+        'external'
+        'esc'
+        'intermission'
+        'local'  # NAT employee
+        'ex':  # Expat
+        'book':  # transfer journal
+
+        domain example:
+        [('is_partner_type_allowed', '=', 'external')]
+        [('is_partner_type_allowed', 'in', ['external', 'internal'])]
+        """
+        res = []
+        if not len(args):
+            return res
+        if len(args) != 1:
+            msg = _("Domain %s not suported") % (str(args), )
+            raise osv.except_osv(_('Error'), msg)
+        if args[0][1] not in ('=', 'in', ):
+            msg = _("Operator '%s' not suported") % (args[0][1], )
+            raise osv.except_osv(_('Error'), msg)
+
+        partner_types = args[0][2]
+        if not isinstance(partner_types, (list, tuple, )):
+            partner_types = [ partner_types, ]
+        for t in partner_types:
+            res.append(('has_partner_type_%s' % (t, ), '=', True))
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'activation_date': fields.date('Active from', required=True),
@@ -339,6 +384,9 @@ class account_account(osv.osv):
         'has_partner_type_local': fields.boolean('NAT'),  # NAT employee
         'has_partner_type_ex': fields.boolean('Expat'),  # Expat
         'has_partner_type_book': fields.boolean('Book'),  # transfer journal
+        'is_partner_type_allowed': fields.function(_get_fake,
+            fnct_search=_get_search_is_partner_type_allowed, method=True,
+            type='boolean', string="Parner type allowed ?", readonly=True),
     }
 
     _defaults = {
