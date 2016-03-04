@@ -394,12 +394,15 @@ class return_claim(osv.osv):
                 else:
                     src_location_id = obj.default_src_location_id_return_claim.id
                 product_line_values = {'qty_claim_product_line': move.product_qty,
+                                       'price_unit_claim_product_line': move.price_unit,
+                                       'price_currency_claim_product_line': move.price_currency_id.id,
                                        'claim_id_claim_product_line': obj.id,
                                        'product_id_claim_product_line': move.product_id.id,
                                        'uom_id_claim_product_line': move.product_uom.id,
                                        'lot_id_claim_product_line': move.prodlot_id.id,
                                        'expiry_date_claim_product_line': move.expired_date,
                                        'asset_id_claim_product_line' : move.asset_id.id,
+                                       'stock_move_id_claim_product_line': move.id,
                                        'composition_list_id_claim_product_line': move.composition_list_id.id,
                                        'src_location_id_claim_product_line': src_location_id}
 
@@ -879,6 +882,7 @@ class claim_event(osv.osv):
                                         'partner_id2': claim.partner_id_return_claim.id,
                                         'origin': claim.po_so_return_claim,
                                         'order_category': claim.category_return_claim,
+                                        'purchase_id': claim.picking_id_return_claim.purchase_id.id,
                                         'reason_type_id': context['common']['rt_internal_supply'],
                                         }
                 # create picking
@@ -901,12 +905,14 @@ class claim_event(osv.osv):
                                            'product_uom': x.product_uom.id,
                                            'product_uos_qty': x.product_uos_qty,
                                            'product_uos': x.product_uos.id,
+                                           'price_unit': x.price_unit,
+                                           'price_currency_id': x.price_currency_id.id,
                                            'location_id': x.location_dest_id.id,
                                            'location_dest_id': context['common']['stock_id'],
+                                           'purchase_line_id': x.purchase_line_id and x.purchase_line_id.id or False,
                                            'company_id': context['common']['company_id'],
                                            'reason_type_id': context['common']['rt_internal_supply']}) for x in previous.event_picking_id_claim_event.move_lines]
                 else:
-                    # no previous event, we generate the moves based on the claim's product lines
                     moves_lines = [(0, 0, {'name': x.name,
                                            'product_id': x.product_id_claim_product_line.id,
                                            'asset_id': x.asset_id_claim_product_line.id,
@@ -918,6 +924,9 @@ class claim_event(osv.osv):
                                            'product_uom': x.uom_id_claim_product_line.id,
                                            'product_uos_qty': x.qty_claim_product_line,
                                            'product_uos': x.uom_id_claim_product_line.id,
+                                           'price_unit': x.price_unit_claim_product_line,
+                                           'price_currency_id': x.price_currency_claim_product_line.id,
+                                           'purchase_line_id': x.stock_move_id_claim_product_line.purchase_line_id and x.stock_move_id_claim_product_line.purchase_line_id.id or False,
                                            'location_id': x.src_location_id_claim_product_line.id,
                                            'location_dest_id': context['common']['stock_id'],
                                            'company_id': context['common']['company_id'],
@@ -1257,6 +1266,7 @@ class claim_product_line(osv.osv):
     _columns = {'integrity_status_claim_product_line': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
                 'name': fields.char(string='Name', size=1024),  # auto data from create/write
                 'qty_claim_product_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'price_unit_claim_product_line': fields.float(string='Currency', digits_compute=dp.get_precision('Account'), required=True),
                 # many2one
                 'claim_id_claim_product_line': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
                 'product_id_claim_product_line': fields.many2one('product.product', string='Product', required=True),
@@ -1266,6 +1276,7 @@ class claim_product_line(osv.osv):
                 'asset_id_claim_product_line' : fields.many2one('product.asset', string='Asset'),
                 'composition_list_id_claim_product_line': fields.many2one('composition.kit', string='Kit'),
                 'src_location_id_claim_product_line': fields.many2one('stock.location', string='Src Location'),
+                'price_currency_claim_product_line': fields.many2one('res.currency', string='Currency'),
                 'stock_move_id_claim_product_line': fields.many2one('stock.move', string='Corresponding IN stock move'),  # value from wizard process
                 'type_check': fields.char(string='Type Check', size=1024,),  # default value
                 # functions
@@ -1496,6 +1507,8 @@ class stock_picking(osv.osv):
                     'picking_id_return_claim': picking_id,
                     'product_line_ids_return_claim': [(0, 0, {
                                   'qty_claim_product_line': x.product_qty,
+                                  'price_unit_claim_product_line': x.price_unit,
+                                  'price_currency_claim_product_line': x.price_currency_id.id,
                                   'product_id_claim_product_line': x.product_id.id,
                                   'uom_id_claim_product_line': x.product_uom.id,
                                   'lot_id_claim_product_line': x.prodlot_id.id,
