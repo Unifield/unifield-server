@@ -743,6 +743,15 @@ img.m2o_open {
 }
 
 /* LOGIN AJAX FORM*/
+table#logintable #vision p{
+    padding:115px 35px 5px 10px;
+    min-width: 200px;
+}
+
+table#logintable #vision p{
+    max-width: 500px;
+} 
+
 input.user_pass {
     width: 150px;
 }

@@ -20,7 +20,7 @@
         <tr><%include file="header.mako"/></tr>
     </table>
 
-    <table class="view" cellpadding="0" cellspacing="0" style="padding-top: 25px; border:none;">
+    <table id="logintable" class="view" cellpadding="0" cellspacing="0" style="padding-top: 25px; border:none;">
         <tr>
             <td style="padding:35px 10px 5px 35px; min-width:100px;" valign="top" width="450">
                 <form action="${py.url(target)}" method="post" name="loginform" id="loginform" style="padding-bottom: 5px; min-width: 100px;">
@@ -90,7 +90,7 @@
                 </div>
             </td>
 
-            <td style="padding:55px 35px 5px 10px; min-width: 200px;" valign="top">
+            <td id="vision" valign="top">
                 <p>${_("All MSF missions will share UniField, integrating finance and supply, enhancing functional and technical capacities, improving visibility and transparency in the management of our operations.")}</p>
             </td>
         </tr>
