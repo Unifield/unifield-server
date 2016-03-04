@@ -416,7 +416,7 @@ class tender(osv.osv):
 
         tender = self.browse(cr, uid, ids[0], context=context)
         context.update({
-            'product_ids_domain': [('purchase_type', '=', tender.categ)],
+            'product_ids_domain': [],
             # UFTP-15: we active 'only not forbidden' filter as default
             'available_for_restriction': 'tender',
             'search_default_not_restricted': 1,
@@ -498,7 +498,7 @@ class sale_order(osv.osv):
         if order.procurement_request:
             # UFTP-15: IR context available_for_restriction = 'consumption' (3.1.3.4 case (d))
             context_update = {
-                'product_ids_domain': [('purchase_type', '=', order.categ)],
+                'product_ids_domain': [],
                 # UFTP-15: we active 'only not forbidden' filter as default
                 'available_for_restriction': 'consumption',
                 'search_default_not_restricted': 1,
@@ -507,7 +507,7 @@ class sale_order(osv.osv):
         else:
             # UFTP-15: FO context available_for_restriction = 'partner type'
             context_update = {
-                'product_ids_domain': [('purchase_type', '=', order.categ)],
+                'product_ids_domain': [],
                 # UFTP-15: we active 'only not forbidden' filter as default
                 'available_for_restriction': order.partner_type,
                 'search_default_not_restricted': 1,
