@@ -119,6 +119,7 @@
                                 <field name="perishable"/>
                                 <field name="batch_management" on_change="onchange_batch_management(batch_management)" />
                                 <separator string="UOM" colspan="2"/>
+                                <field name="soq_quantity" />
                                 <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" />
                                 <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" />
                             </group>
