@@ -181,7 +181,7 @@ class wizard_common_import_line(osv.osv_memory):
         res = {}
         for wl in self.browse(cr, uid, ids, context=context):
             if wl.parent_model in ('tender', 'sale.order', 'purchase.order'):
-                categ = self.pool.get(wl.parent_model).read(cr, uid, wl.parent_id.id, ['categ'], context=context)['categ']
+                categ = self.pool.get(wl.parent_model).read(cr, uid, wl.parent_id, ['categ'], context=context)['categ']
                 if categ:
                     not_ok_product_ids = self.pool.get('product.product').search(cr, uid, [
                         ('id', 'in', product_ids),
