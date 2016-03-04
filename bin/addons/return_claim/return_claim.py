@@ -371,54 +371,60 @@ class return_claim(osv.osv):
         return result
 
     def load_products(self, cr, uid, ids, context=None):
-        '''
-        load products data from selected origin
-        '''
+        """
+        Load claim.product.line into the return.claim from the stock.picking linked to the claim
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of return.claim on which claim.product.line must be created
+        :param context: Context of the call
+        :return: True
+        """
+        # Objects
+        pl_obj = self.pool.get('claim.product.line')
+        
         # Some verifications
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        for claim in self.browse(cr, uid, ids, context=context):
+            # Clear existing products
+            line_ids = pl_obj.search(cr, uid, [
+                ('claim_id_claim_product_line', '=', claim.id),
+            ], context=context)
+            pl_obj.unlink(cr, uid, line_ids, context=context)
 
-        # objects
-        product_line_obj = self.pool.get('claim.product.line')
-        for obj in self.browse(cr, uid, ids, context=context):
-            # clear existing products
-            line_ids = product_line_obj.search(cr, uid, [('claim_id_claim_product_line', '=', obj.id)], context=context)
-            product_line_obj.unlink(cr, uid, line_ids, context=context)
-            # create new ones
-            for move in obj.picking_id_return_claim.move_lines:
-                # create corresponding product line
-                if obj.type_return_claim not in TYPES_FOR_SRC_LOCATION:
-                    src_location_id = False
-                else:
-                    src_location_id = obj.default_src_location_id_return_claim.id
-                product_line_values = {'qty_claim_product_line': move.product_qty,
-                                       'price_unit_claim_product_line': move.price_unit,
-                                       'price_currency_claim_product_line': move.price_currency_id.id,
-                                       'claim_id_claim_product_line': obj.id,
-                                       'product_id_claim_product_line': move.product_id.id,
-                                       'uom_id_claim_product_line': move.product_uom.id,
-                                       'lot_id_claim_product_line': move.prodlot_id.id,
-                                       'expiry_date_claim_product_line': move.expired_date,
-                                       'asset_id_claim_product_line' : move.asset_id.id,
-                                       'stock_move_id_claim_product_line': move.id,
-                                       'composition_list_id_claim_product_line': move.composition_list_id.id,
-                                       'src_location_id_claim_product_line': src_location_id}
+            if not claim.picking_id_return_claim:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('No Reception/Shipment reference selected on the %s claim.') % claim.name,
+                )
 
-                new_prod_id = product_line_obj.create(cr, uid, product_line_values, context=context)
+            src_location_id = False
+            if claim.type_return_claim in TYPES_FOR_SRC_LOCATION and claim.default_src_location_id_return_claim:
+                src_location_id = claim.default_src_location_id_return_claim.id
 
-            return True
-            return {'name': _('Claim'),
-                    'view_mode': 'form,tree',
-                    'view_id': False,
-                    'view_type': 'form',
-                    'res_model': 'return.claim',
-                    'res_id': [obj.id],
-                    'type': 'ir.actions.act_window',
-                    'target': 'crash',
-                    'domain': '[]',
-                    'context': context}
+            # Create new claim.product.line on the return.claim from stock.move of the linked stock.picking
+            for move in claim.picking_id_return_claim.move_lines:
+                # Create corresponding product line
+                product_line_values = {
+                    'qty_claim_product_line': move.product_qty,
+                    'price_unit_claim_product_line': move.price_unit,
+                    'price_currency_claim_product_line': move.price_currency_id.id,
+                    'claim_id_claim_product_line': claim.id,
+                    'product_id_claim_product_line': move.product_id.id,
+                    'uom_id_claim_product_line': move.product_uom.id,
+                    'lot_id_claim_product_line': move.prodlot_id.id,
+                    'expiry_date_claim_product_line': move.expired_date,
+                    'asset_id_claim_product_line': move.asset_id.id,
+                    'stock_move_id_claim_product_line': move.id,
+                    'composition_list_id_claim_product_line': move.composition_list_id.id,
+                    'src_location_id_claim_product_line': src_location_id,
+                }
+                pl_obj.create(cr, uid, product_line_values, context=context)
+
+        return True
 
     def on_change_origin(self, cr, uid, ids, picking_id, context=None):
         '''
@@ -468,38 +474,130 @@ class return_claim(osv.osv):
 
         return result
 
-    _columns = {'name': fields.char(string='Reference', size=1024, required=True),  # default value
-                'creation_date_return_claim': fields.date(string='Creation Date', required=True),  # default value
-                'po_so_return_claim': fields.char(string='Order reference', size=1024),
-                'order_line_number_return_claim': fields.char(string='Order line number', size=1024),
-                'type_return_claim': fields.selection(CLAIM_TYPE, string='Type', required=True),
-                'category_return_claim': fields.selection(ORDER_CATEGORY, string='Category'),
-                'description_return_claim': fields.text(string='Description'),
-                'follow_up_return_claim': fields.text(string='Follow Up'),
-                'state': fields.selection(CLAIM_STATE, string='State', readonly=True),  # default value
-                # many2one
-                'sequence_id_return_claim': fields.many2one('ir.sequence', 'Events Sequence', required=True, ondelete='cascade'),  # from create function
-                'partner_id_return_claim': fields.many2one('res.partner', string='Partner', required=True),
-                'po_id_return_claim': fields.many2one('purchase.order', string='Purchase Order'),
-                'so_id_return_claim': fields.many2one('sale.order', string='Sale Order'),
-                'picking_id_return_claim': fields.many2one('stock.picking', string='Reception/Shipment reference', required=True),  # origin
-                'default_src_location_id_return_claim': fields.many2one('stock.location', string='Default Source Location', required=True),  # default value
-                # one2many
-                'event_ids_return_claim': fields.one2many('claim.event', 'return_claim_id_claim_event', string='Events'),
-                'product_line_ids_return_claim': fields.one2many('claim.product.line', 'claim_id_claim_product_line', string='Products'),
-                # functions
-                'contains_event_return_claim': fields.function(_vals_get_claim, method=True, string='Contains Events', type='boolean', readonly=True, multi='get_vals_claim'),
-                'fake_state_return_claim': fields.function(_vals_get_claim, method=True, string='Fake State', type='selection', selection=CLAIM_STATE, readonly=True, multi='get_vals_claim'),
-                }
+    _columns = {
+        'name': fields.char(
+            string='Reference',
+            size=1024,
+            required=True,
+        ),
+        'creation_date_return_claim': fields.date(
+            string='Creation Date',
+            required=True,
+        ),
+        'po_so_return_claim': fields.char(
+            string='Order reference',
+            size=1024,
+        ),
+        'order_line_number_return_claim': fields.char(
+            string='Order line number',
+            size=1024,
+        ),
+        'type_return_claim': fields.selection(
+            selection=CLAIM_TYPE,
+            string='Type',
+            required=True,
+        ),
+        'category_return_claim': fields.selection(
+            selection=ORDER_CATEGORY,
+            string='Category',
+        ),
+        'description_return_claim': fields.text(
+            string='Description',
+        ),
+        'follow_up_return_claim': fields.text(
+            string='Follow Up',
+        ),
+        'state': fields.selection(
+            selection=CLAIM_STATE,
+            string='State',
+            readonly=True,
+        ),
+        # Many2one
+        'sequence_id_return_claim': fields.many2one(
+            'ir.sequence',
+            string='Events Sequence',
+            required=True,
+            ondelete='cascade',
+        ),  # from create function
+        'partner_id_return_claim': fields.many2one(
+            'res.partner',
+            string='Partner',
+            required=True,
+        ),
+        'po_id_return_claim': fields.many2one(
+            'purchase.order',
+            string='Purchase Order',
+        ),
+        'so_id_return_claim': fields.many2one(
+            'sale.order',
+            string='Sale Order',
+        ),
+        'picking_id_return_claim': fields.many2one(
+            'stock.picking',
+            string='Reception/Shipment reference',
+            required=True,
+        ),  # origin
+        'default_src_location_id_return_claim': fields.many2one(
+            'stock.location',
+            string='Default Source Location',
+            required=True,
+        ),  # default value
+        # One2many
+        'event_ids_return_claim': fields.one2many(
+            'claim.event',
+            'return_claim_id_claim_event',
+            string='Events',
+        ),
+        'product_line_ids_return_claim': fields.one2many(
+            'claim.product.line',
+            'claim_id_claim_product_line',
+            string='Products',
+        ),
+        # Functions
+        'contains_event_return_claim': fields.function(
+            _vals_get_claim,
+            method=True,
+            string='Contains Events',
+            type='boolean',
+            readonly=True,
+            multi='get_vals_claim',
+        ),
+        'fake_state_return_claim': fields.function(
+            _vals_get_claim,
+            method=True,
+            string='Fake State',
+            type='selection',
+            selection=CLAIM_STATE,
+            readonly=True,
+            multi='get_vals_claim',
+        ),
+    }
 
-    _defaults = {'creation_date_return_claim': lambda *a: time.strftime('%Y-%m-%d'),
-                 'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'return.claim'),
-                 'default_src_location_id_return_claim': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
-                 'state': 'draft',
-                 'fake_state_return_claim': 'draft',
-                 'po_id_return_claim': False,
-                 'so_id_return_claim': False,
-                 }
+    def _get_default_src_loc_id(self, cr, uid, context=None):
+        """
+        Return the stock.location Stock as default source location
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param context: Context of the call
+        :return: The ID of the stock.location named Stock
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        data_ids = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')
+        if data_ids:
+            return data_ids[1]
+
+        return False
+
+    _defaults = {
+        'creation_date_return_claim': lambda *a: time.strftime('%Y-%m-%d'),
+        'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'return.claim'),
+        'default_src_location_id_return_claim': _get_default_src_loc_id,
+        'state': 'draft',
+        'fake_state_return_claim': 'draft',
+        'po_id_return_claim': False,
+        'so_id_return_claim': False,
+    }
 
     def _check_claim(self, cr, uid, ids, context=None):
         """
@@ -838,114 +936,170 @@ class claim_event(osv.osv):
                 'context': context}
 
     def _do_process_event(self, cr, uid, ids, context=None):
-        '''
-        process the events
-
-        - create a picking if not coming from chained picking processing
-        '''
-        # Some verifications
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # objects
+        """
+        Process the claim.event of the return.claim.
+        If the return.claim not coming from a chained picking processing, create a stock.picking
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of the claim.event to process
+        :param context: Context of the call
+        :return: True
+        """
+        # Objects
         claim_obj = self.pool.get('return.claim')
         fields_tools = self.pool.get('fields.tools')
         data_tools = self.pool.get('data.tools')
         pick_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
-        # load common data
+
+        # Some verifications
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # Load common data
         data_tools.load_common_data(cr, uid, ids, context=context)
-        # base of function names
-        base_func = '_do_process_'
-        for obj in self.browse(cr, uid, ids, context=context):
-            # event must be draft
-            if obj.state != 'draft':
-                raise osv.except_osv(_('Warning !'), _('Only events in state draft can be processed.'))
-            # integrity check on product lines for corresponding claim - only for first event - only if from scratch - if from wizard, the checks must be done from the wizard logic
-            # we do not check integrity from wizard because of force availability option at picking level -> processing even if no stock available
-            events = obj.return_claim_id_claim_event.event_ids_return_claim
+
+        no_draft_event_ids = self.search(cr, uid, [
+            ('state', '!=', 'draft'),
+            ('id', 'in', ids)
+        ], limit=1, order='NO_ORDER', context=context)
+        if no_draft_event_ids:
+            raise osv.except_osv(
+                _('Warning !'),
+                _('Only events in Draft state can be processed'),
+            )
+
+        def _get_po_line_id(x):
+            """
+            Return the ID of the purchase.order.line associated to the stock.move
+            :param x: The browse_record of a stock.move
+            :return: The ID of the purchase.order.line associated to the stock.move
+            """
+            if x.stock_move_id_claim_product_line.purchase_line_id:
+                return x.stock_move_id_claim_product_line.purchase_line_id.id
+            return False
+
+        for event in self.browse(cr, uid, ids, context=context):
+            """
+            Integrity check on product lines for corresponding claim:
+                - only for first event
+                - only if from scratch
+                - if from wizard, the check must be done from the wizard logic
+            We do not check integrity from wizard because of force_availability option at picking level
+              -> processing even if no stock available
+            """
+            events = event.return_claim_id_claim_event.event_ids_return_claim
             integrity_check = True
-            if len(events) == 1 and not events[0].from_picking_wizard_claim_event and obj.return_claim_id_claim_event.type_return_claim in TYPES_FOR_INTEGRITY:
-                integrity_check = claim_obj.check_product_lines_integrity(cr, uid, obj.return_claim_id_claim_event.id, context=context)
+            if event.return_claim_id_claim_event.type_return_claim in TYPES_FOR_INTEGRITY:
+                if len(events) == 1 and not events[0].from_picking_wizard_claim_event:
+                    integrity_check = claim_obj.\
+                        check_product_lines_integrity(cr, uid, event.return_claim_id_claim_event.id, context=context)
+
             if not integrity_check:
-                # return False
                 return False
-            # create picking object if not coming from chained IN picking process
-            if not obj.from_picking_wizard_claim_event:
-                # claim
-                claim = obj.return_claim_id_claim_event
+
+            # Create picking object if not coming from chained IN picking process
+            if not event.from_picking_wizard_claim_event:
+                claim = event.return_claim_id_claim_event
                 # we use default values as if the picking was from chained creation (so type is 'internal')
                 # different values need according to event type is then replaced during specific do_process functions
-                event_picking_values = {'type': 'internal',
-                                        'partner_id2': claim.partner_id_return_claim.id,
-                                        'origin': claim.po_so_return_claim,
-                                        'order_category': claim.category_return_claim,
-                                        'purchase_id': claim.picking_id_return_claim.purchase_id.id,
-                                        'reason_type_id': context['common']['rt_internal_supply'],
-                                        }
-                # create picking
+                event_picking_values = {
+                    'type': 'internal',
+                    'partner_id2': claim.partner_id_return_claim.id,
+                    'origin': claim.po_so_return_claim,
+                    'order_category': claim.category_return_claim,
+                    'purchase_id': claim.picking_id_return_claim.purchase_id.id,
+                    'reason_type_id': context['common']['rt_internal_supply'],
+                }
+
                 new_event_picking_id = pick_obj.create(cr, uid, event_picking_values, context=context)
-                # we are interested in the previous value, as we are processing the last one, we must seek for -2 index
+
+                # We are interested in the previous value, as we are processing the last one, we must seek for -2 index
                 previous_id = claim_obj.get_last_event(cr, uid, claim.id, pos=-2, context=context)[claim.id]
                 if previous_id:
-                    # previous event
                     previous = self.browse(cr, uid, previous_id, context=context)
                     # we've got a previous event, so we copy the moves from the previous event picking
                     # with destination as source for the new picking event
-                    moves_lines = [(0, 0, {'name': x.name,
-                                           'product_id': x.product_id.id,
-                                           'asset_id': x.asset_id.id,
-                                           'composition_list_id': x.composition_list_id.id,
-                                           'prodlot_id': x.prodlot_id.id,
-                                           'date': context['common']['date'],
-                                           'date_expected': context['common']['date'],
-                                           'product_qty': x.product_qty,
-                                           'product_uom': x.product_uom.id,
-                                           'product_uos_qty': x.product_uos_qty,
-                                           'product_uos': x.product_uos.id,
-                                           'price_unit': x.price_unit,
-                                           'price_currency_id': x.price_currency_id.id,
-                                           'location_id': x.location_dest_id.id,
-                                           'location_dest_id': context['common']['stock_id'],
-                                           'purchase_line_id': x.purchase_line_id and x.purchase_line_id.id or False,
-                                           'company_id': context['common']['company_id'],
-                                           'reason_type_id': context['common']['rt_internal_supply']}) for x in previous.event_picking_id_claim_event.move_lines]
+                    moves_lines = [(0, 0, {
+                        'name': x.name,
+                        'product_id': x.product_id.id,
+                        'asset_id': x.asset_id.id,
+                        'composition_list_id': x.composition_list_id.id,
+                        'prodlot_id': x.prodlot_id.id,
+                        'date': context['common']['date'],
+                        'date_expected': context['common']['date'],
+                        'product_qty': x.product_qty,
+                        'product_uom': x.product_uom.id,
+                        'product_uos_qty': x.product_uos_qty,
+                        'product_uos': x.product_uos.id,
+                        'price_unit': x.price_unit,
+                        'price_currency_id': x.price_currency_id.id,
+                        'location_id': x.location_dest_id.id,
+                        'location_dest_id': context['common']['stock_id'],
+                        'purchase_line_id': x.purchase_line_id and x.purchase_line_id.id or False,
+                        'company_id': context['common']['company_id'],
+                        'reason_type_id': context['common']['rt_internal_supply'],
+                    }) for x in previous.event_picking_id_claim_event.move_lines]
                 else:
-                    moves_lines = [(0, 0, {'name': x.name,
-                                           'product_id': x.product_id_claim_product_line.id,
-                                           'asset_id': x.asset_id_claim_product_line.id,
-                                           'composition_list_id': x.composition_list_id_claim_product_line.id,
-                                           'prodlot_id': x.lot_id_claim_product_line.id,
-                                           'date': context['common']['date'],
-                                           'date_expected': context['common']['date'],
-                                           'product_qty': x.qty_claim_product_line,
-                                           'product_uom': x.uom_id_claim_product_line.id,
-                                           'product_uos_qty': x.qty_claim_product_line,
-                                           'product_uos': x.uom_id_claim_product_line.id,
-                                           'price_unit': x.price_unit_claim_product_line,
-                                           'price_currency_id': x.price_currency_claim_product_line.id,
-                                           'purchase_line_id': x.stock_move_id_claim_product_line.purchase_line_id and x.stock_move_id_claim_product_line.purchase_line_id.id or False,
-                                           'location_id': x.src_location_id_claim_product_line.id,
-                                           'location_dest_id': context['common']['stock_id'],
-                                           'company_id': context['common']['company_id'],
-                                           'reason_type_id': context['common']['rt_internal_supply']}) for x in claim.product_line_ids_return_claim]
-                # update the created picking with stock moves
-                pick_obj.write(cr, uid, [new_event_picking_id], {'move_lines': moves_lines}, context=context)
-                # update the claim setting the link to created event picking
-                self.write(cr, uid, [obj.id], {'event_picking_id_claim_event': new_event_picking_id}, context=context)
+                    moves_lines = [(0, 0, {
+                        'name': x.name,
+                        'product_id': x.product_id_claim_product_line.id,
+                        'asset_id': x.asset_id_claim_product_line.id,
+                        'composition_list_id': x.composition_list_id_claim_product_line.id,
+                        'prodlot_id': x.lot_id_claim_product_line.id,
+                        'date': context['common']['date'],
+                        'date_expected': context['common']['date'],
+                        'product_qty': x.qty_claim_product_line,
+                        'product_uom': x.uom_id_claim_product_line.id,
+                        'product_uos_qty': x.qty_claim_product_line,
+                        'product_uos': x.uom_id_claim_product_line.id,
+                        'price_unit': x.price_unit_claim_product_line,
+                        'price_currency_id': x.price_currency_claim_product_line.id,
+                        'purchase_line_id': _get_po_line_id(x),
+                        'location_id': x.src_location_id_claim_product_line.id,
+                        'location_dest_id': context['common']['stock_id'],
+                        'company_id': context['common']['company_id'],
+                        'reason_type_id': context['common']['rt_internal_supply'],
+                    }) for x in claim.product_line_ids_return_claim]
 
-        for obj in self.browse(cr, uid, ids, context=context):
-            # we start a new loop in order to have browse object reloaded, taking into account possible previous modification to claim object
-            result = getattr(self, base_func + obj.type_claim_event)(cr, uid, obj, context=context)
-            # event is done
-            obj.write({'state': 'done'}, context=context)
-            # log process message
-            event_type_name = fields_tools.get_selection_name(cr, uid, object=self, field='type_claim_event', key=obj.type_claim_event, context=context)
-            self.log(cr, uid, obj.id, _('%s Event %s has been processed.') % (event_type_name, obj.name))
-            # we force the state of claim to in_progress
-            obj.return_claim_id_claim_event.write({'state': 'in_progress'}, context=context)
+                # Update the created picking with stock moves
+                pick_obj.write(cr, uid, [new_event_picking_id], {
+                    'move_lines': moves_lines,
+                }, context=context)
+                # Update the claim setting the link to created event picking
+                self.write(cr, uid, [event.id], {
+                    'event_picking_id_claim_event': new_event_picking_id,
+                }, context=context)
+
+        claim_ids = set()
+        log_msgs = []
+        # Reload browse_record values to get last updated values
+        for event in self.browse(cr, uid, ids, context=context):
+            # Log process message
+            event_type_name = fields_tools.get_selection_name(cr, uid,
+                                                              object=self,
+                                                              field='type_claim_event',
+                                                              key=event.type_claim_event,
+                                                              context=context)
+            log_msgs.append((event.id, _('%s Event %s has been processed.') % (event_type_name, event.name)))
+            claim_ids.add(event.return_claim_id_claim_event.id)
+
+        # Update events
+        self.write(cr, uid, ids, {
+            'state': 'done',
+        }, context=context)
+
+        # Create res.log
+        for log_msg in log_msgs:
+            self.log(cr, uid, log_msg[0], log_msg[1])
+
+        # Update claims
+        claim_obj.write(cr, uid, list(claim_ids), {
+            'state': 'in_progress',
+        })
+
         return True
 
     def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
