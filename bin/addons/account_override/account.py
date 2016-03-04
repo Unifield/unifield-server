@@ -351,6 +351,10 @@ class account_account(osv.osv):
             partner_types = [ partner_types, ]
         for t in partner_types:
             res.append(('has_partner_type_%s' % (t, ), '=', True))
+        count = len(res)
+        if count > 1:
+            for x in xrange(0, count-1):
+                res.append('|')
         return res
 
     _columns = {
