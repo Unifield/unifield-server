@@ -29,6 +29,17 @@
                             <field name="has_partner_type_section" />
                             <field name="has_partner_type_esc" />
                         </group>
+
+                        <newline />
+                        <group col="4" colspan="4">
+                            <field name="has_partner_type_local" />
+                            <field name="has_partner_type_ex" />
+                        </group>
+
+                        <newline />
+                        <group col="4" colspan="4">
+                            <field name="has_partner_type_book" />
+                        </group>
                     </page>
                 </page>
             </field>

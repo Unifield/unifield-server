@@ -336,6 +336,9 @@ class account_account(osv.osv):
         'has_partner_type_external': fields.boolean('External'),
         'has_partner_type_esc': fields.boolean('ESC'),
         'has_partner_type_intermission': fields.boolean('Intermission'),
+        'has_partner_type_local': fields.boolean('NAT'),  # NAT employee
+        'has_partner_type_ex': fields.boolean('Expat'),  # Expat
+        'has_partner_type_book': fields.boolean('Book'),  # transfer journal
     }
 
     _defaults = {
@@ -343,13 +346,16 @@ class account_account(osv.osv):
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
 
-        # US-672/1: allow all partner types:
+        # US-672/1: allow all partner types by default:
         # => master data retro-compat before ticket
         'has_partner_type_internal': True,
         'has_partner_type_section': True,
         'has_partner_type_external': True,
         'has_partner_type_esc': True,
         'has_partner_type_intermission': True,
+        'has_partner_type_local': True,
+        'has_partner_type_ex': True,
+        'has_partner_type_book': True,
     }
 
     # UTP-493: Add a dash between code and account name
@@ -454,7 +460,18 @@ class account_account(osv.osv):
         :return: {'id': ['internal', ...], ... }
         :rtype dict
         """
-        types = ( 'internal', 'section', 'external', 'esc', 'intermission', )
+        types = (
+            'internal',
+            'section',
+            'external',
+            'esc',
+            'intermission',
+
+            'local',
+            'ex',
+
+            'book',
+        )
         res = {}
 
         for r in self.browse(cr, uid, ids, context=context):
