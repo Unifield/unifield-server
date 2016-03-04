@@ -19,8 +19,27 @@
 #
 ##############################################################################
 
-import sale_order
-import sale_report
-import sale_order_allocation
+import time
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+from report import report_sxw
+
+class sale_order_allocation_report(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(sale_order_allocation_report, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'get_distrib_lines': self.get_distrib_lines,
+        })
+
+    def get_distrib_lines(self, line):
+        '''
+        Return the analytic distribution lines for the order line in parameter
+        '''
+        distrib = line.analytic_distribution_id or line.order_id.analytic_distribution_id
+        return distrib.cost_center_lines or [False]
+
+
+report_sxw.report_sxw('report.sale.order.allocation.report',
+                      'sale.order',
+                      'addons/sale/report/sale_order_allocation_report.rml',
+                      parser=sale_order_allocation_report, header="landscape")
