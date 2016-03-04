@@ -25,7 +25,7 @@
 
     <blockTableStyle id="ProductList">
         <blockValign value="MIDDLE" />
-        <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" />
+        <lineStyle kind="LINEBELOW" colorName="#000000" />
         <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
         <lineStyle kind="LINEBEFORE" colorName="#0b0b0b" />
         <lineStyle kind="LINEAFTER" colorName="#000000" />
@@ -139,7 +139,7 @@
 
 
     <!-- LINES LIST -->
-    <blockTable colWidths="33.0,128.0,49.0,41.0,41.0,41.0,49.0,49.0,112.0,65.0,65.0,49.0" style="ProductList">
+    <blockTable colWidths="33.0,148.0,49.0,41.0,71.0,41.0,59.0,49.0,130.0,65.0,75.0,59.0" style="ProductList">
         <tr>
             <td>
                 <para style="InformationHeader">O. l.</para>
@@ -185,7 +185,7 @@
 
    <section>
    [[ repeatIn(o.order_line, 'line') ]]
-   <blockTable colWidths="33.0,128.0,49.0,41.0,41.0,41.0,49.0,49.0,112.0,65.0,65.0,49.0" style="ProductList">
+   <blockTable colWidths="33.0,148.0,49.0,41.0,71.0,41.0,59.0,49.0,130.0,65.0,75.0,59.0" style="ProductList">
        <tr>
        [[ repeatIn(get_distrib_lines(line), 'dline') ]]
                 <td>
