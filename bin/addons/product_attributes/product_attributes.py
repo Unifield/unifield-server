@@ -402,7 +402,15 @@ class product_attributes(osv.osv):
             ('I','Class I (General controls)'),
             ('II','Class II (General control with special controls)'),
             ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
-        'closed_article': fields.selection([('yes', 'Yes'), ('no', 'No'),],string='Closed Article'),
+        'closed_article': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+                ('recommanded', 'Recommanded'),
+            ],
+            string='Closed Article',
+            required=True,
+        ),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
         'restricted_country': fields.boolean('Restricted in the Country'),
         'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
@@ -464,6 +472,7 @@ class product_attributes(osv.osv):
     #    return res
 
     _defaults = {
+        'closed_article': 'no',
         'duplicate_ok': True,
         'perishable': False,
         'batch_management': False,
