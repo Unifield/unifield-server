@@ -86,8 +86,6 @@
                 % if info:
                     <div class="information">${info|n}</div>
                 % endif
-                <div style="margin-top: 10px; height: 150px">
-                </div>
             </td>
 
             <td class="vision">
@@ -99,6 +97,8 @@
             </td>
         </tr>
     </table>
+                <div style="margin-top: 10px; height: 150px">
+                </div>
     
     <%include file="footer.mako"/>
 </%def>

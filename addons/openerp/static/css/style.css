@@ -746,12 +746,16 @@ img.m2o_open {
 
 #logintable .loginbox,
 #logintable .vision{
+   float: left;
    padding: 35px 10px 5px 35px;
-   min-width:100px;
+   min-width:450px;
    vertical-align: top;
-   width: 450px;
 }
 
+#logintable .loginbox td,
+#logintable .vision td{
+    max-width: 200px;
+}
 #logintable .vision .box {
     min-height: 145px;
 }
@@ -770,7 +774,6 @@ table#logintable .vision p{
     min-width: 100px;
     min-height: 70px;
     margin: 35px;
-    padding-left: 110px;
     font-size: 1.5em;
 }
 
