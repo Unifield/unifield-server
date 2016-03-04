@@ -354,7 +354,7 @@ class account_account(osv.osv):
         count = len(res)
         if count > 1:
             for x in xrange(0, count-1):
-                res.append('|')
+                res.insert(0, '|')
         return res
 
     _columns = {
