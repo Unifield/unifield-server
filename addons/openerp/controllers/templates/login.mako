@@ -22,7 +22,7 @@
 
     <table id="logintable" class="view" cellpadding="0" cellspacing="0" style="padding-top: 25px; border:none;">
         <tr>
-            <td style="padding:35px 10px 5px 35px; min-width:100px;" valign="top" width="450">
+            <td class="loginbox">
                 <form action="${py.url(target)}" method="post" name="loginform" id="loginform" style="padding-bottom: 5px; min-width: 100px;">
                     % for key, value in origArgs.items():
                         <input type="hidden" name="${key}" value="${value}"/>
@@ -90,8 +90,12 @@
                 </div>
             </td>
 
-            <td id="vision" valign="top">
-                <p>${_("All MSF missions will share UniField, integrating finance and supply, enhancing functional and technical capacities, improving visibility and transparency in the management of our operations.")}</p>
+            <td class="vision">
+                <fieldset class="box">
+                    <img src="/openerp/static/images/stock/logo.png" alt=""/>
+                    <p>
+                    ${_("All MSF missions will share UniField, integrating finance and supply, enhancing functional and technical capacities, improving visibility and transparency in the management of our operations.")}</p>
+                </fieldset>
             </td>
         </tr>
     </table>
