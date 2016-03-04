@@ -342,19 +342,26 @@ class account_account(osv.osv):
         if len(args) != 1:
             msg = _("Domain %s not suported") % (str(args), )
             raise osv.except_osv(_('Error'), msg)
-        if args[0][1] not in ('=', 'in', ):
+        if args[0][1] not in ('=', '!=', 'in', 'not in', ):
             msg = _("Operator '%s' not suported") % (args[0][1], )
             raise osv.except_osv(_('Error'), msg)
 
+        reverse = args[0][1] in ('!=', 'not in', )
+        operand = False if reverse else True
         partner_types = args[0][2]
         if not isinstance(partner_types, (list, tuple, )):
             partner_types = [ partner_types, ]
+
+        # build domain
+        # not reversed: a=True or b=True...
+        # reversed: a=False and b=False...
         for t in partner_types:
-            res.append(('has_partner_type_%s' % (t, ), '=', True))
-        count = len(res)
-        if count > 1:
-            for x in xrange(0, count-1):
-                res.insert(0, '|')
+            res.append(('has_partner_type_%s' % (t, ), '=', operand))
+        if not reverse:
+            count = len(res)
+            if count > 1:
+                for x in xrange(0, count-1):
+                    res.insert(0, '|')
         return res
 
     _columns = {
