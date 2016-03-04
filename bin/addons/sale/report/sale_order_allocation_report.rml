@@ -44,7 +44,7 @@
   </stylesheet>
   <story>
     <para style="Standard">[[repeatIn(objects,'o')]]</para>
-    <para style="Standard">[[ setLang(o.partner_id.lang) ]]</para>
+    <para style="Standard">[[ setLang() ]]</para>
 
     <!-- HEADER TABLE OF THE PRINTED FILE -->
     <blockTable colWidths="565" style="HeaderTable">
@@ -65,7 +65,7 @@
    <blockTable colWidths="162.0,162.0,162.0,162.0,162.0" style="InformationTable">
         <tr>
             <td>
-                <para style="InformationHeader">Purchase Order</para>
+                <para style="InformationHeader">Field Order</para>
             </td>
             <td>
                 <para style="InformationHeader">Customer</para>
