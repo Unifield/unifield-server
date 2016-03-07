@@ -43,6 +43,7 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Supplier refund
    'in_invoice': [
         ('type', '!=', 'view'),
+        ('has_partner_type_external', '=', True),
         # Either Payable/Payables accounts or Regular / Debt accounts
         '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash']),
         ('type_for_register', '!=', 'donation'),
