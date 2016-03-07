@@ -4422,34 +4422,6 @@ class wizard(osv.osv):
 wizard()
 
 
-class product_product(osv.osv):
-    '''
-    add a getter for keep cool notion
-    '''
-    _inherit = 'product.product'
-
-    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
-        '''
-        get functional values
-        '''
-        result = {}
-        for product in self.browse(cr, uid, ids, context=context):
-            values = {'is_keep_cool': False,
-                      }
-            result[product.id] = values
-            # keep cool
-            is_keep_cool = bool(product.heat_sensitive_item)  # in ('*', '**', '***',)
-            values['is_keep_cool'] = is_keep_cool
-
-        return result
-
-    _columns = {'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
-                'prodlot_ids': fields.one2many('stock.production.lot', 'product_id', string='Batch Numbers',),
-                }
-
-product_product()
-
-
 class stock_move(osv.osv):
     '''
     stock move

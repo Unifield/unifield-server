@@ -206,6 +206,7 @@ class product_template(osv.osv):
 
 product_template()
 
+
 class product_attributes(osv.osv):
     _inherit = "product.product"
 
@@ -352,6 +353,100 @@ class product_attributes(osv.osv):
 
         return []
 
+    def _compute_is_kc(self, cr, uid, product, context=None):
+        """
+        Return True if the product is considered as a Keep Cool product
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: True or False
+        """
+        return product.heat_sensitive_item
+
+    def _compute_kc_txt(self, cr, uid, product, context=None):
+        """
+        Return the character to display on views or reports ('X' or '?' or '') for Keep Cool
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: 'X' or '?' or ''
+        """
+        return product.heat_sensitive_item and 'X' or ''
+
+    def _compute_is_dg(self, cr, uid, product, context=None):
+        """
+        Return True if the product is considered as a Dangerous Goods product
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: True or False
+        """
+        return product.dangerous_goods
+
+    def _compute_dg_txt(self, cr, uid, product, context=None):
+        """
+        Return the character to display on views or reports ('X' or '?' or '') for Dangerous Goods
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: 'X' or '?' or ''
+        """
+        return product.dangerous_goods and 'X' or ''
+
+    def _compute_is_cs(self, cr, uid, product, context=None):
+        """
+        Return True if the product is considered as a Controlled Substance product
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: True or False
+        """
+        return product.controlled_substance
+
+    def _compute_kc_txt(self, cr, uid, product, context=None):
+        """
+        Return the character to display on views or reports ('X' or '?' or '') for Controlled Substance
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: 'X' or '?' or ''
+        """
+        return product.controlled_substance and 'X' or ''
+
+    def _compute_kc_dg_cs_values(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Compute the character to display ('X' or '?' or '') according to product values
+        for Keep Cool, Dangerous Goods and Controlled Substance.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of product.product to compute values
+        :param field_names: Name of the fields to compute
+        :param args: Additionnal arguments
+        :param context: Conetxt of the call
+        :return: A dictionary with the ID of product.product as keys and
+                 a dictionary with computed field values for each ID in ids.
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for product in self.browse(cr, uid, ids, context=context):
+            res[product.id] = {}
+            for fld in field_names:
+                method_name = '_compute_%s' % fld
+                res[product.id][fld] = getattr(method_name, self)(cr, uid, product, context=context)
+
+        return res
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -391,6 +486,21 @@ class product_attributes(osv.osv):
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
 
         'heat_sensitive_item': fields.many2one('product.heat_sensitive', 'Temperature sensitive item',),
+        'is_kc': fields.function(
+            _compute_kc_dg_cs_values,
+            method=True,
+            type='boolean',
+            string='Keep Cool bool',
+            multi='kc',
+        ),
+        'kc_txt': fields.function(
+            _compute_kc_dg_cs_values,
+            method=True,
+            type='char',
+            size=8,
+            string='Keep Cool icon',
+            multi='kc',
+        ),
         'cold_chain': fields.many2one('product.cold_chain', 'Cold Chain',),
         'show_cold_chain': fields.boolean('Show cold chain'),
         # Inverse of m2m options_ids
@@ -404,6 +514,21 @@ class product_attributes(osv.osv):
             ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
         'closed_article': fields.selection([('yes', 'Yes'), ('no', 'No'),],string='Closed Article'),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
+        'is_dg': fields.function(
+            _compute_kc_dg_cs_values,
+            method=True,
+            type='boolean',
+            string='Dangerous Goods bool',
+            multi='dg',
+        ),
+        'dg_txt': fields.function(
+            _compute_kc_dg_cs_values,
+            method=True,
+            type='char',
+            size=8,
+            string='Dangerous Goods icon',
+            multi='dg',
+        ),
         'restricted_country': fields.boolean('Restricted in the Country'),
         'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
         # TODO: validation on 'un_code' field
@@ -422,6 +547,21 @@ class product_attributes(osv.osv):
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.boolean(string='Controlled substance'),
+        'is_cs': fields.function(
+            _compute_kc_dg_cs_values,
+            method=True,
+            type='boolean',
+            string='Controlled subst. bool',
+            multi='cs',
+        ),
+        'cs_txt': fields.function(
+            _compute_kc_dg_cs_values,
+            method=True,
+            type='char',
+            size=8,
+            string='Controlled subst. icon',
+            multi='cs',
+        ),
         'uom_category_id': fields.related('uom_id', 'category_id', string='Uom Category', type='many2one', relation='product.uom.categ'),
         'no_external': fields.function(_get_restriction, method=True, type='boolean', string='External partners orders', readonly=True, multi='restriction',
                                        store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
@@ -452,6 +592,11 @@ class product_attributes(osv.osv):
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'prodlot_ids': fields.one2many(
+            'stock.production.lot',
+            'product_id',
+            string='Batch Numbers',
+        ),
     }
 
     # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
