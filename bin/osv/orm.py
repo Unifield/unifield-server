@@ -2663,6 +2663,12 @@ class orm(orm_template):
                 self.__schema.debug("Table '%s': column '%s': dropped NOT NULL constraint",
                                     self._table, column['attname'])
 
+    def execute_migration(self, cr, moved_column, new_column):
+        """
+        Execution migration in case of column type change
+        """
+        pass
+
     def _auto_init(self, cr, context=None):
         if context is None:
             context = {}
@@ -2867,6 +2873,7 @@ class orm(orm_template):
                                     cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))
                                     self.__schema.debug("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
                                         self._table, k, f_pg_type, f._type, newname)
+                                    self.execute_migration(cr, newname, k)
 
                             # if the field is required and hasn't got a NOT NULL constraint
                             if f.required and f_pg_notnull == 0:

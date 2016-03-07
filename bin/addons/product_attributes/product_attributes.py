@@ -219,6 +219,16 @@ class product_attributes(osv.osv):
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
 
+    def execute_migration(self, cr, moved_column, new_column):
+        super(product_attributes, self).execute_migration(cr, moved_column, new_column)
+        if new_column == 'dangerous_goods':
+            request = 'SELECT id FROM product_product WHERE %s = True' % moved_column
+            cr.execute(request)
+            prd_to_update = cr.fetchall()
+            cr.execute('UPDATE product_product SET dangerous_goods = \'yes\' WHERE id IN %s', (tuple(prd_to_update),))
+
+        return
+
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -403,7 +413,15 @@ class product_attributes(osv.osv):
             ('II','Class II (General control with special controls)'),
             ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
         'closed_article': fields.selection([('yes', 'Yes'), ('no', 'No'),],string='Closed Article'),
-        'dangerous_goods': fields.boolean('Dangerous Goods'),
+        'dangerous_goods': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+                ('no_know', 'Don\'t know'),
+            ],
+            string='Dangerous Goods',
+            required=True,
+        ),
         'restricted_country': fields.boolean('Restricted in the Country'),
         'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
         # TODO: validation on 'un_code' field
@@ -470,7 +488,7 @@ class product_attributes(osv.osv):
         'short_shelf_life': False,
         'narcotic': False,
         'composed_kit': False,
-        'dangerous_goods': False,
+        'dangerous_goods': 'no',
         'restricted_country': False,
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
@@ -698,6 +716,12 @@ class product_attributes(osv.osv):
                 category_id = product.uom_id.category_id.id
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)
+
+        if 'dangerous_goods' in vals:
+            if vals.get('dangerous_goods') is True:
+                vals['dangerous_goods'] = 'yes'
+            elif vals.get('dangerous_goods') is False:
+                vals['dangerous_goods'] = 'no'
 
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
@@ -1073,6 +1097,13 @@ class product_attributes(osv.osv):
         :return: The ID of the new product.template record
         """
         sptc_obj = self.pool.get('standard.price.track.changes')
+
+        # US-752 changed the boolean to selection field, so take account of in-pipe synch. products
+        if 'dangerous_goods' in vals:
+            if vals.get('dangerous_goods') is False:
+                vals['dangerous_goods'] = 'no'
+            elif vals.get('dangerous_goods') is True:
+                vals['dangerous_goods'] = 'yes'
 
         res = super(product_attributes, self).create(cr, user, vals,
                                                      context=context)
