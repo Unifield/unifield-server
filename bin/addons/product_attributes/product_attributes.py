@@ -220,6 +220,17 @@ class product_attributes(osv.osv):
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
 
+    def execute_migration(self, cr, moved_column, new_column):
+        super(product_attributes, self).execute_migration(cr, moved_column, new_column)
+        if new_column == 'dangerous_goods':
+            request = 'SELECT id FROM product_product WHERE %s = True' % moved_column
+            cr.execute(request)
+            prd_to_update = cr.fetchall()
+            if prd_to_update:
+                cr.execute('UPDATE product_product SET dangerous_goods = \'True\' WHERE id IN %s', (tuple(prd_to_update),))
+
+        return
+
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
