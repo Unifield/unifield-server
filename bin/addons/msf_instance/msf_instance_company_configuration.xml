@@ -59,7 +59,7 @@
                         </group>
                         <group col="2" colspan="2">
                             <separator string="Intermission configuration" colspan="2"/>
-                            <field name="intermission_default_counterpart" domain="[('type', '!=', 'view')]" colspan="2"/>
+                            <field name="intermission_default_counterpart" domain="[('type', '!=', 'view'), ('has_partner_type_external', '=', True)]" colspan="2"/>
                         </group>
                         <group col="2" colspan="2">
                             <separator string="Income accounts specific configuration" colspan="2"/>

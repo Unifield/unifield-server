@@ -95,6 +95,7 @@ ACCOUNT_RESTRICTED_AREA = {
     # HEADER OF Intermission Voucher IN/OUT
     'intermission_header': [
         ('is_intermission_counterpart', '=', True),
+        ('has_partner_type_external', '=', True),
     ],
     # LINES OF intermission vouchers
     'intermission_lines': [
