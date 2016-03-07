@@ -454,7 +454,42 @@ class account_account(osv.osv):
         return super(account_account, self).search(cr, uid, args, offset,
                 limit, order, context=context, count=count)
 
+    def is_allowed_for_thirdparty(self, cr, uid, ids,
+        employee_id=False, transfer_journal_id=False, partner_id=False,
+        context=None):
+        """
+        US-672/2 is allowed regarding to thirdparty
+        :return: {id: True/False, }
+        :rtype: dict
+        """
+        res = {}
+        for id in res:
+            res[id] = True  # allowed by default
+        if not employee_id and not transfer_journal_id and not partner_id:
+            return res
+
+        should_have_field_suffix = False
+        if employee_id:
+            tp_rec = self.pool.get('hr.employee').browse(cr, uid, employee_id,
+                context=context)
+            # note: allowed for employees with no type
+            should_have_field_suffix = tp_rec.employee_type or False
+        elif transfer_journal_id:
+            should_have_field_suffix = 'book'
+        else:
+            tp_rec = self.pool.get('res.partner').browse(cr, uid, partner_id,
+                context=context)
+            should_have_field_suffix = tp_rec.partner_type or False
+        if not should_have_field_suffix:
+            return res  # allowed with no specific field suffix
+
+        field = 'has_partner_type_%s' % (should_have_field_suffix, )
+        for r in self.browse(cr, uid, ids, context=context):
+            res[r.id] = hasattr(r, field) and getattr(r, field) or False
+        return res
+
 account_account()
+
 
 class account_journal(osv.osv):
     _name = 'account.journal'
