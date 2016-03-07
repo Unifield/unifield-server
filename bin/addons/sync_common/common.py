@@ -71,6 +71,8 @@ MODELS_TO_IGNORE = [
                     'res.widget',
                     'product.likely.expire.report',
                     'product.likely.expire.report.line',
+
+                    'deleted.object',
                   ]
 
 MODELS_TO_IGNORE_DOMAIN = [
