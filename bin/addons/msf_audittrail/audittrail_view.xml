@@ -148,7 +148,7 @@
         <record model="ir.actions.act_window" id="action_audittrail_log_line_tree">
             <field name="name">Audit Logs</field>
             <field name="res_model">audittrail.log.line</field>
-            <field name="view_type">tree</field>
+            <field name="view_type">form</field>
             <field name="search_view_id" ref="view_audittrail_log_line_search"/>
         </record>
         <menuitem name="Audit Logs" id="menu_action_audittrail_log_line_tree"
