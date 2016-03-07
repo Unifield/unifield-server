@@ -225,7 +225,8 @@ class product_attributes(osv.osv):
             request = 'SELECT id FROM product_product WHERE %s = True' % moved_column
             cr.execute(request)
             prd_to_update = cr.fetchall()
-            cr.execute('UPDATE product_product SET dangerous_goods = \'yes\' WHERE id IN %s', (tuple(prd_to_update),))
+            if prd_to_update:
+                cr.execute('UPDATE product_product SET dangerous_goods = \'True\' WHERE id IN %s', (tuple(prd_to_update),))
 
         return
 
@@ -415,8 +416,8 @@ class product_attributes(osv.osv):
         'closed_article': fields.selection([('yes', 'Yes'), ('no', 'No'),],string='Closed Article'),
         'dangerous_goods': fields.selection(
             selection=[
-                ('yes', 'Yes'),
-                ('no', 'No'),
+                ('True', 'Yes'),
+                ('False', 'No'),
                 ('no_know', 'Don\'t know'),
             ],
             string='Dangerous Goods',
@@ -488,7 +489,7 @@ class product_attributes(osv.osv):
         'short_shelf_life': False,
         'narcotic': False,
         'composed_kit': False,
-        'dangerous_goods': 'no',
+        'dangerous_goods': 'False',
         'restricted_country': False,
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
@@ -719,9 +720,9 @@ class product_attributes(osv.osv):
 
         if 'dangerous_goods' in vals:
             if vals.get('dangerous_goods') is True:
-                vals['dangerous_goods'] = 'yes'
+                vals['dangerous_goods'] = 'True'
             elif vals.get('dangerous_goods') is False:
-                vals['dangerous_goods'] = 'no'
+                vals['dangerous_goods'] = 'False'
 
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
@@ -1101,9 +1102,9 @@ class product_attributes(osv.osv):
         # US-752 changed the boolean to selection field, so take account of in-pipe synch. products
         if 'dangerous_goods' in vals:
             if vals.get('dangerous_goods') is False:
-                vals['dangerous_goods'] = 'no'
+                vals['dangerous_goods'] = 'False'
             elif vals.get('dangerous_goods') is True:
-                vals['dangerous_goods'] = 'yes'
+                vals['dangerous_goods'] = 'True'
 
         res = super(product_attributes, self).create(cr, user, vals,
                                                      context=context)
