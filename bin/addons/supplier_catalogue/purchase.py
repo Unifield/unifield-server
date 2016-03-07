@@ -22,7 +22,6 @@
 from osv import osv
 
 from tools.translate import _
-
 class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
@@ -46,15 +45,12 @@ class purchase_order_line(osv.osv):
         suppinfo_obj = self.pool.get('product.supplierinfo')
         prod_obj = self.pool.get('product.product')
         catalogue_obj = self.pool.get('supplier.catalogue')
-        
         currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist, context=context).currency_id.id
-        
         info_prices = []
-        
+        suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), ('product_id', '=', product_id.product_tmpl_id.id)], context=context)
         domain = [('min_quantity', '<=', product_qty),
                   ('uom_id', '=', product_uom_id),
-                  ('partner_id', '=', partner_id),
-                  ('product_id', '=', product_id.product_tmpl_id.id),
+                  ('suppinfo_id', 'in', suppinfo_ids),
                   '|', ('valid_from', '<=', order_date),
                   ('valid_from', '=', False),
                   '|', ('valid_till', '>=', order_date),
@@ -62,7 +58,6 @@ class purchase_order_line(osv.osv):
             
         domain_cur = [('currency_id', '=', currency_id)]
         domain_cur.extend(domain)
-
         info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
         if not info_prices:
             info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)

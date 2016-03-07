@@ -3536,9 +3536,9 @@ class purchase_order_line(osv.osv):
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
             info_prices = []
+            suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), ('product_id', '=', tmpl_id)], context=context)
             domain = [('uom_id', '=', uom),
-                      ('partner_id', '=', partner_id),
-                      ('product_id', '=', tmpl_id),
+                      ('suppinfo_id', 'in', suppinfo_ids),
                       '|', ('valid_from', '<=', date_order),
                       ('valid_from', '=', False),
                       '|', ('valid_till', '>=', date_order),
