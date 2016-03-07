@@ -912,7 +912,8 @@ class orm_template(object):
                     res = value and float(value.replace(',','.')) or 0.0
                 elif field_type == 'selection':
                     for key, val in fields_def[field[len(prefix)]]['selection']:
-                        if value in [tools.ustr(key), tools.ustr(val)]:
+                        if value in [tools.ustr(key), tools.ustr(val)] or \
+                           tools.ustr(value) in [tools.ustr(key), tools.ustr(val)]:
                             res = key
                             break
                     if not value:
