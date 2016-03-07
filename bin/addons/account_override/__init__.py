@@ -54,6 +54,7 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Debit Notes
     'out_invoice': [
         ('type', '!=', 'view'),
+        ('has_partner_type_external', '=', True),
         # Either Receivable/Receivables accounts or Regular / Cash accounts
         '|', '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables','cash']), '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'),
     ],
