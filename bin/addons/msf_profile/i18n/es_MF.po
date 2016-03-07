@@ -1285,8 +1285,8 @@ msgstr "Mostrar FP"
 #. module: base
 #: code:addons/orm.py:156
 #, python-format
-msgid "Wrong ID for the browse record, got %r, expected an integer."
-msgstr "Wrong ID for the browse record, got %r, expected an integer."
+msgid "Wrong ID for the browse record %s, got %r, expected an integer."
+msgstr "Wrong ID for the browse record %s, got %r, expected an integer."
 
 #. module: financing_contract
 #: model:ir.model,name:financing_contract.model_financing_contract_format

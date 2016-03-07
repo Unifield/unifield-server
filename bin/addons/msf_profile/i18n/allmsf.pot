@@ -4512,7 +4512,7 @@ msgstr ""
 #. module: base
 #: code:addons/orm.py:156
 #, python-format
-msgid "Wrong ID for the browse record, got %r, expected an integer."
+msgid "Wrong ID for the browse record %s, got %r, expected an integer."
 msgstr ""
 
 #. module: register_accounting

@@ -55445,8 +55445,8 @@ msgstr "Démarrer la Configuration"
 #. module: base
 #: code:addons/orm.py:156
 #, python-format
-msgid "Wrong ID for the browse record, got %r, expected an integer."
-msgstr "Mauvaise Identité pour le parcours de l'enregistrement : %r reçu alors qu'on attend un entier."
+msgid "Wrong ID for the browse record %s, got %r, expected an integer."
+msgstr "Mauvaise Identité pour le parcours de l'enregistrement %s : %r reçu alors qu'on attend un entier."
 
 #. modules: product_attributes, account
 #: view:product.product:0
