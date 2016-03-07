@@ -329,12 +329,33 @@ class account_account(osv.osv):
         'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
         'is_intermission_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
         'is_intersection_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intersection counterpart account?'),
+
+        # US-672/1
+        'has_partner_type_internal': fields.boolean('Internal'),
+        'has_partner_type_section': fields.boolean('Inter-section'),
+        'has_partner_type_external': fields.boolean('External'),
+        'has_partner_type_esc': fields.boolean('ESC'),
+        'has_partner_type_intermission': fields.boolean('Intermission'),
+        'has_partner_type_local': fields.boolean('NAT'),  # NAT employee
+        'has_partner_type_ex': fields.boolean('Expat'),  # Expat
+        'has_partner_type_book': fields.boolean('Book'),  # transfer journal
     }
 
     _defaults = {
         'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
+
+        # US-672/1: allow all partner types by default:
+        # => master data retro-compat before ticket
+        'has_partner_type_internal': True,
+        'has_partner_type_section': True,
+        'has_partner_type_external': True,
+        'has_partner_type_esc': True,
+        'has_partner_type_intermission': True,
+        'has_partner_type_local': True,
+        'has_partner_type_ex': True,
+        'has_partner_type_book': True,
     }
 
     # UTP-493: Add a dash between code and account name
