@@ -1985,16 +1985,17 @@ class stock_picking(osv.osv):
         result = {}
 
         for stock_picking in self.read(cr, uid, ids, ['pack_family_memory_ids', 'move_lines'], context=context):
-            values = {'total_amount': 0.0,
-                      'currency_id': False,
-                      'is_dangerous_good': False,
-                      'is_keep_cool': False,
-                      'is_narcotic': False,
-                      'num_of_packs': 0,
-                      'total_volume': 0.0,
-                      'total_weight': 0.0,
-                      # 'is_completed': False,
-                      }
+            values = {
+                'total_amount': 0.0,
+                'currency_id': False,
+                'is_dangerous_good': False,
+                'is_keep_cool': False,
+                'is_narcotic': False,
+                'num_of_packs': 0,
+                'total_volume': 0.0,
+                'total_weight': 0.0,
+                # 'is_completed': False,
+            }
             result[stock_picking['id']] = values
 
             if stock_picking['pack_family_memory_ids']:

@@ -48,13 +48,13 @@ class stock_partial_picking(osv.osv_memory):
         type = False
         contains_kc = False
         contains_dg = False
-        
+
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
             type = pick.type
             for m in pick.move_lines:
-                if m.product_id.heat_sensitive_item:
+                if m.product_id.is_kc:
                     contains_kc = True
-                if m.product_id.dangerous_goods:
+                if m.product_id.is_dg:
                     contains_dg = True
             
         if contains_kc and contains_dg:

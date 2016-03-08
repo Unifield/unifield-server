@@ -58,11 +58,17 @@ class stock_picking_processor(osv.osv):
                 'contains_dg': False,
             }
             # KC
-            kc_lines = line_obj.search(cr, uid, [('wizard_id', '=', wizard_id), ('kc_check', '=', True)], context=context)
+            kc_lines = line_obj.search(cr, uid, [
+                ('wizard_id', '=', wizard_id),
+                ('kc_check', '=', True),
+            ], limit=1, order='NO_ORDER', context=context)
             if kc_lines:
                 res[wizard_id]['contains_kc'] = True
             # DG
-            dg_lines = line_obj.search(cr, uid, [('wizard_id', '=', wizard_id), ('dg_check', '=', True)], context=context)
+            dg_lines = line_obj.search(cr, uid, [
+                ('wizard_id', '=', wizard_id),
+                ('dg_check', '=', True),
+            ], limit=1, order='NO_ORDER', context=context)
             if dg_lines:
                 res[wizard_id]['contains_dg'] = True
 
