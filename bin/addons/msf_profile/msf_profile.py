@@ -298,6 +298,27 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
+    def us_750_patch(self, cr, uid, *a, **b):
+        """
+        Update the heat_sensitive_item field of product.product
+        to 'Yes' if there is a value already defined by de-activated.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param a: Non-named parameters
+        :param b: Named parameters
+        :return: True
+        """
+        prd_obj = self.pool.get('product.product')
+        phs_obj = self.pool.get('product.heat_sensitive')
+        data_obj = self.pool.get('ir.model.data')
+
+        heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
+
+        phs_ids = phs_obj.search(cr, uid, [('active', '=', False)])
+        prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', 'in', phs_ids)])
+        prd_obj.write(cr, uid, prd_ids, [('heat_sensitive_item', '=', heat_id)])
+
+        return True
 
     def update_us_963_negative_rule_seq(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):

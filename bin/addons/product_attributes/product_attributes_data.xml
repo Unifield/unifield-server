@@ -93,18 +93,22 @@
 		<record model="product.heat_sensitive" id="heat_1">
 			<field name="code">KR</field>
 			<field name="name">Keep refrigerated but not cold chain (+2 to +8°C) for transport')</field>
+			<field name="active" eval="False" />
 		</record>
 		<record model="product.heat_sensitive" id="heat_2">
 			<field name="code">*</field>
 			<field name="name">Keep Cool</field>
+			<field name="active" eval="False" />
 		</record>
 		<record model="product.heat_sensitive" id="heat_3">
 			<field name="code">**</field>
 			<field name="name">Keep Cool, airfreight</field>
+			<field name="active" eval="False" />
 		</record>
 		<record model="product.heat_sensitive" id="heat_4">
 			<field name="code">***</field>
 			<field name="name">Cold chain, 0° to 8°C strict</field>
+			<field name="active" eval="False" />
 		</record>
 
 		<record model="product.cold_chain" id="cold_1">

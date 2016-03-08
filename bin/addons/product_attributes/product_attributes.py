@@ -105,8 +105,22 @@ class product_heat_sensitive(osv.osv):
     _name = "product.heat_sensitive"
     _order = 'code desc'
     _columns = {
-        'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256, required=True),
+        'code': fields.char(
+            string='Code',
+            size=256,
+        ),
+        'name': fields.char(
+            string='Name',
+            size=256,
+            required=True,
+        ),
+        'active': fields.boolean(
+            string='Active',
+        )
+    }
+
+    _defaults = {
+        'active': True,
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -379,7 +393,7 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: True or False
         """
-        return product.heat_sensitive_item.code not in ('no', 'no_know', 'KR')
+        return product.heat_sensitive_item.code == 'yes'
 
     def _compute_kc_txt(self, cr, uid, product, context=None):
         """
@@ -392,7 +406,7 @@ class product_attributes(osv.osv):
         """
         if product.heat_sensitive_item.code == 'no_know':
             return '?'
-        elif product.heat_sensitive_item.code in ('no', 'KR'):
+        elif product.heat_sensitive_item.code == 'no':
             return ''
         else:
             return 'X'
