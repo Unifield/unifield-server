@@ -172,6 +172,8 @@ class purchase_order_rw(osv.osv):
     
 purchase_order_rw()
 
+'''
+ THIS BLOCK OF CODE IS FOR THE CLAIM, WORK IN PROGRESS.
 class return_claim_rw(osv.osv):
     _inherit = "return.claim"
     _logger = logging.getLogger('------sync.return.claim')
@@ -183,6 +185,11 @@ class return_claim_rw(osv.osv):
         if not context:
             context = {}
         
-        raise Exception, "Test"
-            
+        raise Exception, "Work in progress"
+# Rule for Claim, work in progress    
+USB_replicate_claim_return,TRUE,TRUE,['name','state'],"[]",partner_id_return_claim,USB,return.claim.usb_replicate_claim,claim.return,USB_Replicate_Claim_Return,2060,Valid
+    
 return_claim_rw()
+'''
+
+
