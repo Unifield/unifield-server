@@ -671,7 +671,7 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
-        self._check_accounts_for_partner(cr, uid, ids, context=context)
+        self.check_accounts_for_partner(cr, uid, ids, context=context)
 
         # Prepare workflow object
         wf_service = netsvc.LocalService("workflow")
@@ -1155,12 +1155,14 @@ class account_invoice(osv.osv):
 
         return res
 
-    def _check_accounts_for_partner(self, cr, uid, ids, context=None):
+    def check_accounts_for_partner(self, cr, uid, ids, context=None,
+        header_obj=False, lines_field='invoice_line'):
+        header_obj = header_obj or self
         account_obj = self.pool.get('account.account')
         header_errors = []
         lines_errors = []
 
-        for r in self.browse(cr, uid, ids, context=context):
+        for r in header_obj.browse(cr, uid, ids, context=context):
             # header check
             if r.account_id and r.partner_id:
                 if not account_obj.is_allowed_for_thirdparty(cr, uid,
@@ -1170,18 +1172,22 @@ class account_invoice(osv.osv):
                         _('invoice header account and partner not compatible.'))
 
             # lines check
-            for l in r.invoice_line:
-                if l.account_id:
-                    if not account_obj.is_allowed_for_thirdparty(cr, uid,
-                        [l.account_id.id], partner_id=r.partner_id.id,
-                        context=context)[l.account_id.id]:
-                        if not lines_errors:
-                            header_errors.append(
-                                _('following # lines with account/partner' \
-                                    ' are not compatible:'))
-                        lines_errors.append(_('#%d account %s %s') % (
-                            l.line_number,
-                            l.account_id.code, l.account_id.name, ))
+            if lines_field and hasattr(r, lines_field):
+                line_index = 1
+                for l in getattr(r, lines_field):
+                    if l.account_id:
+                        if not account_obj.is_allowed_for_thirdparty(cr, uid,
+                            [l.account_id.id], partner_id=r.partner_id.id,
+                            context=context)[l.account_id.id]:
+                            num = hasattr(l, 'line_number') and l.line_number \
+                                or line_index
+                            if not lines_errors:
+                                header_errors.append(
+                                    _('following # lines with account/partner' \
+                                        ' are not compatible:'))
+                            lines_errors.append(_('#%d account %s - %s') % (num,
+                                l.account_id.code, l.account_id.name, ))
+                    line_index += 1
 
         if header_errors or lines_errors:
             if header_errors:
