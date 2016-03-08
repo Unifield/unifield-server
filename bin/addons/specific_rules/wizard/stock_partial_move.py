@@ -86,8 +86,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
             # keep cool
             result[obj.id]['kc_check'] = obj.product_id.kc_txt
             # ssl
-            if obj.product_id.short_shelf_life:
-                result[obj.id]['ssl_check'] = True
+            result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
             # dangerous goods
             result[obj.id]['dg_check'] = obj.product_id.dg_txt
             # narcotic
@@ -189,7 +188,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
             _get_checks_all,
             method=True,
             string='KC',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -197,7 +197,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
             _get_checks_all,
             method=True,
             string='SSL',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -205,7 +206,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
             _get_checks_all,
             method=True,
             string='DG',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -213,7 +215,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
             _get_checks_all,
             method=True,
             string='CS',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),

@@ -244,6 +244,10 @@ class product_attributes(osv.osv):
             request = 'UPDATE product_product SET dangerous_goods = \'True\' WHERE %s = True' % moved_column
             cr.execute(request)
 
+        if new_column == 'short_shelf_life':
+            request = 'UPDATE product_product SET short_shelf_life = \'True\' WHERE %s = True' % moved_column
+            cr.execute(request)
+
         if new_column == 'controlled_substance':
             # Update old ticked controlled substance but not narcotic
             request = '''UPDATE product_product SET
@@ -463,10 +467,37 @@ class product_attributes(osv.osv):
         """
         return product.controlled_substance and 'X' or ''
 
-    def _compute_kc_dg_cs_values(self, cr, uid, ids, field_names, args, context=None):
+    def _compute_is_ssl(self, cr, uid, product, context=None):
+        """
+        Return True if the product is considered as a Short Shelf Life product
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: True or False
+        """
+        return product.short_shelf_life == 'True'
+
+    def _compute_ssl_txt(self, cr, uid, product, context=None):
+        """
+        Return the character to display on views or reports ('X' or '?' or '') for Short Shelf Life
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: 'X' or '?' or ''
+        """
+        if product.short_shelf_life == 'True':
+            return 'X'
+        elif product.short_shelf_life == 'no_know':
+            return '?'
+
+        return ''
+
+    def _compute_kc_dg_cs_ssl_values(self, cr, uid, ids, field_names, args, context=None):
         """
         Compute the character to display ('X' or '?' or '') according to product values
-        for Keep Cool, Dangerous Goods and Controlled Substance.
+        for Keep Cool, Dangerous Goods, Controlled Substance and Short Shelf Life.
         :param cr: Cursor to the database
         :param uid: ID of the res.users that calls this method
         :param ids: List of ID of product.product to compute values
@@ -503,7 +534,38 @@ class product_attributes(osv.osv):
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
         'product_catalog_path' : fields.char('Product Catalog Path', size=64),
-        'short_shelf_life': fields.boolean('Short Shelf Life'),
+        'short_shelf_life': fields.selection(
+            selection=[
+                ('False', 'No'),
+                ('True', 'Yes'),
+                ('no_know', 'Don\'t know'),
+            ],
+            string='Short Shelf Life',
+            required=True,
+        ),
+        'is_ssl': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='boolean',
+            string='Is Short Shelf Life ?',
+            multi='ssl',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['short_shelf_life'], 10),
+            }
+        ),
+        'ssl_txt': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='char',
+            size=8,
+            string='Short Shelf Life icon',
+            multi='ssl',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['short_shelf_life'], 10),
+            }
+        ),
         'criticism': fields.selection([('',''),
             ('exceptional','1-Exceptional'),
             ('specific','2-Specific'),
@@ -535,7 +597,7 @@ class product_attributes(osv.osv):
             required=True,
         ),
         'is_kc': fields.function(
-            _compute_kc_dg_cs_values,
+            _compute_kc_dg_cs_ssl_values,
             method=True,
             type='boolean',
             string='Is Keep Cool ?',
@@ -546,7 +608,7 @@ class product_attributes(osv.osv):
             }
         ),
         'kc_txt': fields.function(
-            _compute_kc_dg_cs_values,
+            _compute_kc_dg_cs_ssl_values,
             method=True,
             type='char',
             size=8,
@@ -579,7 +641,7 @@ class product_attributes(osv.osv):
             required=True,
         ),
         'is_dg': fields.function(
-            _compute_kc_dg_cs_values,
+            _compute_kc_dg_cs_ssl_values,
             method=True,
             type='boolean',
             string='Is a Dangerous Goods ?',
@@ -590,7 +652,7 @@ class product_attributes(osv.osv):
             }
         ),
         'dg_txt': fields.function(
-            _compute_kc_dg_cs_values,
+            _compute_kc_dg_cs_ssl_values,
             method=True,
             type='char',
             size=8,
@@ -632,7 +694,7 @@ class product_attributes(osv.osv):
             string='Controlled substance',
         ),
         'is_cs': fields.function(
-            _compute_kc_dg_cs_values,
+            _compute_kc_dg_cs_ssl_values,
             method=True,
             type='boolean',
             string='Is Controlled subst.',
@@ -643,7 +705,7 @@ class product_attributes(osv.osv):
             }
         ),
         'cs_txt': fields.function(
-            _compute_kc_dg_cs_values,
+            _compute_kc_dg_cs_ssl_values,
             method=True,
             type='char',
             size=8,
@@ -714,7 +776,7 @@ class product_attributes(osv.osv):
         'duplicate_ok': True,
         'perishable': False,
         'batch_management': False,
-        'short_shelf_life': False,
+        'short_shelf_life': 'False',
         'narcotic': False,
         'composed_kit': False,
         'dangerous_goods': 'False',

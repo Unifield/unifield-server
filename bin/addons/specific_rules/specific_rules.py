@@ -77,7 +77,7 @@ class sale_order_line(osv.osv):
         # if the product is short shelf life, display a warning
         if product:
             prod_obj = self.pool.get('product.product')
-            if prod_obj.browse(cr, uid, product).short_shelf_life:
+            if prod_obj.browse(cr, uid, product).is_ssl:
                 warning = {
                             'title': 'Short Shelf Life product',
                             'message': _(SHORT_SHELF_LIFE_MESS)
@@ -105,7 +105,7 @@ class sale_order(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.order_line:
                 # log the message
-                if line.product_id.short_shelf_life:
+                if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -153,7 +153,7 @@ class purchase_order_line(osv.osv):
         # if the product is short shelf life, display a warning
         if product:
             prod_obj = self.pool.get('product.product')
-            if prod_obj.browse(cr, uid, product).short_shelf_life:
+            if prod_obj.browse(cr, uid, product).is_ssl:
                 warning = {
                             'title': 'Short Shelf Life product',
                             'message': _(SHORT_SHELF_LIFE_MESS)
@@ -183,7 +183,7 @@ class purchase_order(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.order_line:
                 # log the message
-                if line.product_id.short_shelf_life:
+                if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -276,7 +276,7 @@ class stock_warehouse_orderpoint(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 self.log(cr, uid, new_id, _(SHORT_SHELF_LIFE_MESS))
 
         return new_id
@@ -293,7 +293,7 @@ class stock_warehouse_orderpoint(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 for obj in self.browse(cr, uid, ids, context=context):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -525,7 +525,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 self.log(cr, uid, new_id, _(SHORT_SHELF_LIFE_MESS))
 
         return new_id
@@ -542,7 +542,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 for obj in self.browse(cr, uid, ids, context=context):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -566,7 +566,7 @@ class stock_warehouse_order_cycle(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 self.log(cr, uid, new_id, _(SHORT_SHELF_LIFE_MESS))
 
         return new_id
@@ -586,7 +586,7 @@ class stock_warehouse_order_cycle(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 for obj in self.browse(cr, uid, ids, context=context):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -753,8 +753,7 @@ class stock_move(osv.osv):
             # keep cool
             result[obj.id]['kc_check'] = obj.product_id.kc_txt
             # ssl
-            if obj.product_id.short_shelf_life:
-                result[obj.id]['ssl_check'] = True
+            result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
             # dangerous goods
             result[obj.id]['dg_check'] = obj.product_id.dg_txt
             # narcotic
@@ -798,7 +797,8 @@ class stock_move(osv.osv):
             _get_checks_all,
             method=True,
             string='SSL',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -1133,8 +1133,7 @@ class stock_production_lot(osv.osv):
             # keep cool
             result[obj.id]['kc_check'] = obj.product_id.kc_txt
             # ssl
-            if obj.product_id.short_shelf_life:
-                result[obj.id]['ssl_check'] = True
+            result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
             # dangerous goods
             result[obj.id]['dg_check'] = obj.product_id.dg_txt
             # narcotic
@@ -1237,7 +1236,8 @@ class stock_production_lot(osv.osv):
             _get_checks_all,
             method=True,
             string='KC',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -1245,7 +1245,8 @@ class stock_production_lot(osv.osv):
             _get_checks_all,
             method=True,
             string='SSL',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -1253,7 +1254,8 @@ class stock_production_lot(osv.osv):
             _get_checks_all,
             method=True,
             string='DG',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -1261,7 +1263,8 @@ class stock_production_lot(osv.osv):
             _get_checks_all,
             method=True,
             string='CS',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -1837,8 +1840,7 @@ class stock_inventory_line(osv.osv):
             # keep cool
             result.setdefault('value', {})['kc_check'] = product_obj.kc_txt
             # ssl
-            if product_obj.short_shelf_life:
-                result.setdefault('value', {})['ssl_check'] = True
+            result.setdefault('value', {})['ssl_check'] = product_obj.ssl_txt
             # dangerous goods
             result.setdefault('value', {})['dg_check'] = product_obj.dg_txt
             # narcotic
@@ -1911,8 +1913,7 @@ class stock_inventory_line(osv.osv):
             # keep cool
             result[obj.id]['kc_check'] = obj.product_id.kc_txt
             # ssl
-            if obj.product_id.short_shelf_life:
-                result[obj.id]['ssl_check'] = True
+            result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
             # dangerous goods
             result[obj.id]['dg_check'] = obj.product_id.dg_txt
             # narcotic
@@ -2032,7 +2033,8 @@ class stock_inventory_line(osv.osv):
             _get_checks_all,
             method=True,
             string='KC',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -2040,7 +2042,8 @@ class stock_inventory_line(osv.osv):
             _get_checks_all,
             method=True,
             string='SSL',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -2048,7 +2051,8 @@ class stock_inventory_line(osv.osv):
             _get_checks_all,
             method=True,
             string='DG',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),
@@ -2056,7 +2060,8 @@ class stock_inventory_line(osv.osv):
             _get_checks_all,
             method=True,
             string='CS',
-            type='boolean',
+            type='char',
+            size=8,
             readonly=True,
             multi="m",
         ),

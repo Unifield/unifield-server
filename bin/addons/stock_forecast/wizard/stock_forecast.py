@@ -131,7 +131,7 @@ class stock_forecast(osv.osv_memory):
                 values['procurement_method'] = wiz.product_id.procure_method
                 values['supply_method'] = wiz.product_id.supply_method
                 values['keep_cool'] = wiz.product_id.is_kc
-                values['short_shelf_life'] = wiz.product_id.short_shelf_life
+                values['short_shelf_life'] = wiz.product_id.is_ssl
                 values['dangerous_goods'] = wiz.product_id.is_dg
                 values['justification_code_id'] = wiz.product_id.justification_code_id.id
         return result

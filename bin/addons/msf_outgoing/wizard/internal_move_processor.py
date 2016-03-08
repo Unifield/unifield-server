@@ -547,7 +547,8 @@ class internal_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='SSL',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
@@ -559,7 +560,8 @@ class internal_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='DG',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },

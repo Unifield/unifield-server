@@ -55,7 +55,7 @@
                 <data>
 
                 <field name="life_time" position="replace">
-                    <field name="life_time" attrs="{'required':[('short_shelf_life', '=', True)]}" />
+                    <field name="life_time" attrs="{'required':[('short_shelf_life', '=', 'True')]}" />
                 </field>
             </data>
             </field>

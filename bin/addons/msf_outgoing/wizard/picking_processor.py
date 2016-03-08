@@ -291,7 +291,7 @@ class stock_move_processor(osv.osv):
                 'asset_check': False,
                 'kit_check': False,
                 'kc_check': '',
-                'ssl_check': False,
+                'ssl_check': '',
                 'dg_check': '',
                 'np_check': '',
             }
@@ -303,7 +303,7 @@ class stock_move_processor(osv.osv):
                     'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
                     'kit_check': line.product_id.type == 'product' and line.product_id.subtype == 'kit' and not line.product_id.perishable,
                     'kc_check': line.product_id.kc_txt,
-                    'ssl_check': line.product_id.short_shelf_life,
+                    'ssl_check': line.product_id.ssl_txt,
                     'dg_check': line.product_id.dg_txt,
                     'np_check': line.product_id.cs_txt,
                 }
@@ -595,7 +595,8 @@ class stock_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='SSL',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
@@ -607,7 +608,8 @@ class stock_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='DG',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },

@@ -669,7 +669,8 @@ class stock_move_in_processor(osv.osv):
             _get_product_info,
             method=True,
             string='SSL',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
@@ -681,7 +682,8 @@ class stock_move_in_processor(osv.osv):
             _get_product_info,
             method=True,
             string='DG',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
