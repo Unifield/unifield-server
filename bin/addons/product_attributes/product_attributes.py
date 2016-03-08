@@ -373,7 +373,7 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: True or False
         """
-        return product.heat_sensitive_item
+        return product.heat_sensitive_item.code not in ('no', 'no_know', 'KR')
 
     def _compute_kc_txt(self, cr, uid, product, context=None):
         """
@@ -384,7 +384,12 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: 'X' or '?' or ''
         """
-        return product.heat_sensitive_item and 'X' or ''
+        if product.heat_sensitive_item.code == 'no_know':
+            return '?'
+        elif product.heat_sensitive_item.code in ('no', 'KR'):
+            return ''
+        else:
+            return 'X'
 
     def _compute_is_dg(self, cr, uid, product, context=None):
         """
@@ -503,6 +508,9 @@ class product_attributes(osv.osv):
             type='boolean',
             string='Keep Cool bool',
             multi='kc',
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
+            }
         ),
         'kc_txt': fields.function(
             _compute_kc_dg_cs_values,
@@ -511,6 +519,9 @@ class product_attributes(osv.osv):
             size=8,
             string='Keep Cool icon',
             multi='kc',
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
+            }
         ),
         'cold_chain': fields.many2one('product.cold_chain', 'Cold Chain',),
         'show_cold_chain': fields.boolean('Show cold chain'),
@@ -531,6 +542,9 @@ class product_attributes(osv.osv):
             type='boolean',
             string='Dangerous Goods bool',
             multi='dg',
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
+            }
         ),
         'dg_txt': fields.function(
             _compute_kc_dg_cs_values,
@@ -539,6 +553,9 @@ class product_attributes(osv.osv):
             size=8,
             string='Dangerous Goods icon',
             multi='dg',
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
+            }
         ),
         'restricted_country': fields.boolean('Restricted in the Country'),
         'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
@@ -564,6 +581,9 @@ class product_attributes(osv.osv):
             type='boolean',
             string='Controlled subst. bool',
             multi='cs',
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
+            }
         ),
         'cs_txt': fields.function(
             _compute_kc_dg_cs_values,
@@ -572,6 +592,9 @@ class product_attributes(osv.osv):
             size=8,
             string='Controlled subst. icon',
             multi='cs',
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
+            }
         ),
         'uom_category_id': fields.related('uom_id', 'category_id', string='Uom Category', type='many2one', relation='product.uom.categ'),
         'no_external': fields.function(_get_restriction, method=True, type='boolean', string='External partners orders', readonly=True, multi='restriction',
@@ -817,12 +840,26 @@ class product_attributes(osv.osv):
 
         return result, res
 
-
     def onchange_heat(self, cr, uid, ids, heat, context=None):
-        heat_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_1')[1]
-        if not heat or heat == heat_id:
-            return {'value': {'show_cold_chain':False}}
-        return {'value': {'show_cold_chain':True}}
+        """
+        Set the value for the field 'show_cold_chain' according to
+        selection Temperature sensitive value.
+        If the returned value is True, the field Cold Chain will be displayed
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of product.product on which the field is computed
+        :param heat: ID of the selected product.heat_sensitive
+        :param context: Context of the call
+        :return: True of False in the 'show_cold_chain' field
+        """
+        heat1_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_1')[1]
+        heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+        heat3_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no_know')[1]
+        return {
+            'value': {
+                'show_cold_chain': heat and heat not in [heat1_id, heat2_id, heat3_id]
+            }
+        }
 
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
