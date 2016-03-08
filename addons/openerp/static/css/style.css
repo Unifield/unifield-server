@@ -757,7 +757,7 @@ img.m2o_open {
     max-width: 200px;
 }
 #logintable .vision .box {
-    min-height: 145px;
+    min-height: 144px;
 }
 
 #logintable .vision .box img {
@@ -773,7 +773,7 @@ table#logintable .vision p{
     max-width: 500px;
     min-width: 100px;
     min-height: 70px;
-    margin: 35px;
+    margin: 25px;
     font-size: 1.5em;
 }
 
