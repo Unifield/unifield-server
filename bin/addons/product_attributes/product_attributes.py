@@ -103,6 +103,7 @@ product_international_status()
 
 class product_heat_sensitive(osv.osv):
     _name = "product.heat_sensitive"
+    _order = 'code desc'
     _columns = {
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True),
@@ -424,7 +425,7 @@ class product_attributes(osv.osv):
         """
         return product.controlled_substance
 
-    def _compute_kc_txt(self, cr, uid, product, context=None):
+    def _compute_cs_txt(self, cr, uid, product, context=None):
         """
         Return the character to display on views or reports ('X' or '?' or '') for Controlled Substance
         :param cr: Cursor to the database
@@ -459,7 +460,7 @@ class product_attributes(osv.osv):
             res[product.id] = {}
             for fld in field_names:
                 method_name = '_compute_%s' % fld
-                res[product.id][fld] = getattr(method_name, self)(cr, uid, product, context=context)
+                res[product.id][fld] = getattr(self, method_name)(cr, uid, product, context=context)
 
         return res
 
@@ -501,13 +502,18 @@ class product_attributes(osv.osv):
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
 
-        'heat_sensitive_item': fields.many2one('product.heat_sensitive', 'Temperature sensitive item',),
+        'heat_sensitive_item': fields.many2one(
+            'product.heat_sensitive',
+            string='Temperature sensitive item',
+            required=True,
+        ),
         'is_kc': fields.function(
             _compute_kc_dg_cs_values,
             method=True,
             type='boolean',
-            string='Keep Cool bool',
+            string='Is Keep Cool ?',
             multi='kc',
+            readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
             }
@@ -519,6 +525,7 @@ class product_attributes(osv.osv):
             size=8,
             string='Keep Cool icon',
             multi='kc',
+            readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
             }
@@ -535,13 +542,22 @@ class product_attributes(osv.osv):
             ('II','Class II (General control with special controls)'),
             ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
         'closed_article': fields.selection([('yes', 'Yes'), ('no', 'No'),],string='Closed Article'),
-        'dangerous_goods': fields.boolean('Dangerous Goods'),
+        'dangerous_goods': fields.selection(
+            selection=[
+                ('False', 'No'),
+                ('True', 'Yes'),
+                ('no_know', 'Don\'t know'),
+            ],
+            string='Dangerous goods',
+            required=True,
+        ),
         'is_dg': fields.function(
             _compute_kc_dg_cs_values,
             method=True,
             type='boolean',
-            string='Dangerous Goods bool',
+            string='Is a Dangerous Goods ?',
             multi='dg',
+            readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
             }
@@ -553,6 +569,7 @@ class product_attributes(osv.osv):
             size=8,
             string='Dangerous Goods icon',
             multi='dg',
+            readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
             }
@@ -579,8 +596,9 @@ class product_attributes(osv.osv):
             _compute_kc_dg_cs_values,
             method=True,
             type='boolean',
-            string='Controlled subst. bool',
+            string='Is Controlled subst.',
             multi='cs',
+            readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
             }
@@ -592,6 +610,7 @@ class product_attributes(osv.osv):
             size=8,
             string='Controlled subst. icon',
             multi='cs',
+            readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
             }
@@ -642,6 +661,16 @@ class product_attributes(osv.osv):
     #    res.update({'international_status': id })
     #    return res
 
+    def _get_default_sensitive_item(self, cr, uid, context=None):
+        """
+        Return the ID of the product.heat_sensitive item with 'No' value.
+        :param cr: Cursor to the datase
+        :param uid: ID of the res.users that calls the method
+        :param context: Context of the call
+        :return: The ID of the product.heat_sensitive item with 'No' value.
+        """
+        return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+
     _defaults = {
         'duplicate_ok': True,
         'perishable': False,
@@ -649,8 +678,9 @@ class product_attributes(osv.osv):
         'short_shelf_life': False,
         'narcotic': False,
         'composed_kit': False,
-        'dangerous_goods': False,
+        'dangerous_goods': 'False',
         'restricted_country': False,
+        'heat_sensitive_item': _get_default_sensitive_item,
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
