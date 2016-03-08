@@ -455,10 +455,12 @@ class account_account(osv.osv):
                 limit, order, context=context, count=count)
 
     def is_allowed_for_thirdparty(self, cr, uid, ids,
+        partner_type=False,
         employee_id=False, transfer_journal_id=False, partner_id=False,
         context=None):
         """
         US-672/2 is allowed regarding to thirdparty
+        partner_type fields prevails employee_id/transfer_journal_id/partner_id
         :return: {id: True/False, }
         :rtype: dict
         """
@@ -466,12 +468,21 @@ class account_account(osv.osv):
             ids = [ ids, ]
 
         res = {}
-        for id in res:
+        for id in ids:
             res[id] = True  # allowed by default
-        if not employee_id and not transfer_journal_id and not partner_id:
+        if not partner_type \
+            and not employee_id and not transfer_journal_id and not partner_id:
             return res
 
         should_have_field_suffix = False
+        if partner_type:
+            employee_id = transfer_journal_id = partner_id = False
+            if partner_type._name == 'hr.employee':
+                employee_id = partner_type.id
+            elif partner_type._name == 'account.journal':
+                transfer_journal_id = partner_type.id
+            elif partner_type._name == 'res.partner':
+                partner_id = partner_type.id
         if employee_id:
             tp_rec = self.pool.get('hr.employee').browse(cr, uid, employee_id,
                 context=context)

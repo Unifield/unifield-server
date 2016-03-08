@@ -1156,29 +1156,50 @@ class account_invoice(osv.osv):
         return res
 
     def check_accounts_for_partner(self, cr, uid, ids, context=None,
-        header_obj=False, lines_field='invoice_line'):
+        header_obj=False, lines_field='invoice_line',
+        line_level_partner_type=False):
+        """
+        :param header_obj: target model for header or self
+        :param lines_field: lines o2m field
+        :param line_level_partner_type: partner to check lines account with
+            if true use partner_type for lines else use header partner
+        :return:
+        """
         header_obj = header_obj or self
         account_obj = self.pool.get('account.account')
         header_errors = []
         lines_errors = []
 
         for r in header_obj.browse(cr, uid, ids, context=context):
+            partner_id = hasattr(r, 'partner_id') and r.partner_id \
+                and r.partner_id.id or False
+
             # header check
-            if r.account_id and r.partner_id:
+            if partner_id and hasattr(r, 'account_id') and r.account_id:
                 if not account_obj.is_allowed_for_thirdparty(cr, uid,
-                    [r.account_id.id], partner_id=r.partner_id.id,
+                    [r.account_id.id], partner_id=partner_id,
                         context=context)[r.account_id.id]:
                     header_errors.append(
                         _('invoice header account and partner not compatible.'))
 
             # lines check
             if lines_field and hasattr(r, lines_field):
+                if line_level_partner_type:
+                    partner_id = False
+                else:
+                    partner_type = False
                 line_index = 1
                 for l in getattr(r, lines_field):
                     if l.account_id:
-                        if not account_obj.is_allowed_for_thirdparty(cr, uid,
-                            [l.account_id.id], partner_id=r.partner_id.id,
-                            context=context)[l.account_id.id]:
+                        if line_level_partner_type:
+                            # partner at line level
+                            partner_type = l.partner_type
+                        if (partner_id or partner_type) \
+                            and not account_obj.is_allowed_for_thirdparty(cr,
+                                uid, [l.account_id.id],
+                                partner_type=partner_type,
+                                partner_id=partner_id,
+                                context=context)[l.account_id.id]:
                             num = hasattr(l, 'line_number') and l.line_number \
                                 or line_index
                             if not lines_errors:
