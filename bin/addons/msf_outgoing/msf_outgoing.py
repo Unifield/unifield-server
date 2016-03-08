@@ -2020,11 +2020,11 @@ class stock_picking(osv.osv):
                     # currency
                     values['currency_id'] = move['currency_id'] or False
                     # dangerous good
-                    values['is_dangerous_good'] = move['is_dangerous_good']
+                    values['is_dangerous_good'] = values['is_dangerous_good'] or move['is_dangerous_good']
                     # keep cool - if heat_sensitive_item is True
-                    values['is_keep_cool'] = move['is_keep_cool']
+                    values['is_keep_cool'] = values['is_dangerous_good'] or move['is_keep_cool']
                     # narcotic
-                    values['is_narcotic'] = move['is_narcotic']
+                    values['is_narcotic'] = values['is_dangerous_good'] or move['is_narcotic']
 
             # completed field - based on the previous_step_ids field, recursive call from picking to draft packing and packing
             # - picking checks that the corresponding ppl is completed
