@@ -954,7 +954,7 @@ You cannot choose this supplier because some destination locations are not avail
         Check if invoice is needed. Cases where we do not need invoice:
         - OUT from scratch (without purchase_id and sale_id) AND stock picking type in internal, external or esc
         - OUT from FO AND stock picking type in internal, external or esc
-        So all OUT that have internel, external or esc should return FALSE from this method.
+        So all OUT that have internal, external or esc should return FALSE from this method.
         This means to only accept intermission and intersection invoicing on OUT with reason type "Deliver partner".
         """
         res = True
@@ -980,6 +980,11 @@ You cannot choose this supplier because some destination locations are not avail
         company_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id
         if sp.partner_id.id == company_partner_id.id:
             res = False
+
+        # (US-952) Move out on an external partner should not create a Stock Transfer Voucher
+        if sp.type == 'out' and sp.partner_id.partner_type == 'external':
+            res = False
+
         return res
 
     def _create_invoice(self, cr, uid, stock_picking):
