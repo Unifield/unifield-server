@@ -143,9 +143,9 @@ class picking_ticket(report_sxw.rml_parse):
             bm.product_uom = m.product_uom
             bm.product_qty = m.product_qty
             bm.prodlot_id = m.prodlot_id
-            bm.kc_check = m.kc_check
-            bm.dg_check = m.dg_check
-            bm.np_check = m.np_check
+            bm.kc_check = m.product_id and m.product_id.is_kc or False
+            bm.dg_check = m.product_id and m.product_id.is_dg or False
+            bm.np_check = m.product_id and m.product_id.is_cs or False
             if m.prodlot_id and dict_res[m.line_number]:
                 bm.no_product = True
                 dict_res[m.line_number][0].product_qty += pool.get('product.uom')._compute_qty(

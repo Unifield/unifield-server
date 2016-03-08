@@ -316,7 +316,10 @@ class patch_scripts(osv.osv):
 
         phs_ids = phs_obj.search(cr, uid, [('active', '=', False)])
         prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', 'in', phs_ids)])
-        prd_obj.write(cr, uid, prd_ids, [('heat_sensitive_item', '=', heat_id)])
+        if prd_ids:
+            prd_obj.write(cr, uid, prd_ids, {
+                'heat_sensitive_item': heat_id,
+            })
 
         return True
 

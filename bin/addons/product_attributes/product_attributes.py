@@ -128,11 +128,14 @@ class product_heat_sensitive(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        ids_p = self.pool.get('product.product').search(cr, uid,
-                [('heat_sensitive_item','in',ids)],
-                limit=1, order='NO_ORDER')
+        ids_p = self.pool.get('product.product').search(cr, uid, [
+            ('heat_sensitive_item', 'in', ids),
+        ], limit=1, order='NO_ORDER')
         if ids_p:
-            raise osv.except_osv(_('Error'), _('You cannot delete this heat sensitive because it\'s used at least in one product'))
+            raise osv.except_osv(
+                _('Error'),
+                _('You cannot delete this heat sensitive because it\'s used at least in one product'),
+            )
         return super(product_heat_sensitive, self).unlink(cr, uid, ids, context=context)
 
 product_heat_sensitive()

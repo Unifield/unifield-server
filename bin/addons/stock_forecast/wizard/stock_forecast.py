@@ -130,10 +130,9 @@ class stock_forecast(osv.osv_memory):
                 values['product_family_info_id'] = wiz.product_id.nomen_manda_2.id
                 values['procurement_method'] = wiz.product_id.procure_method
                 values['supply_method'] = wiz.product_id.supply_method
-                if wiz.product_id.heat_sensitive_item:
-                    values['keep_cool'] = True
+                values['keep_cool'] = wiz.product_id.is_kc
                 values['short_shelf_life'] = wiz.product_id.short_shelf_life
-                values['dangerous_goods'] = wiz.product_id.dangerous_goods
+                values['dangerous_goods'] = wiz.product_id.is_dg
                 values['justification_code_id'] = wiz.product_id.justification_code_id.id
         return result
 

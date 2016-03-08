@@ -95,11 +95,11 @@ class freight_manifest(report_sxw.rml_parse):
             np = ""
             for x in line.move_lines:
                 if x.kc_check:
-                    kc = 'X'
+                    kc = x.kc_check
                 if x.dg_check:
-                    dg = 'X'
+                    dg = x.dg_check
                 if x.np_check:
-                    np = 'X'
+                    np = x.np_check
 
             if line_ref not in line_obj:
                 line_obj[line_ref] = {}

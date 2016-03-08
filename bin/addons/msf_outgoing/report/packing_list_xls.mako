@@ -449,9 +449,9 @@
        % else:
        <Cell ss:StyleID="s134"><Data ss:Type="String"></Data></Cell>
        % endif
-       <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.kc_check and 'X' or '')|x}</Data></Cell>
-       <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.dg_check and 'X' or '')|x}</Data></Cell>
-       <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.np_check and 'X' or '')|x}</Data></Cell>
+       <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.kc_txt or '')|x}</Data></Cell>
+       <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.dg_txt or '')|x}</Data></Cell>
+       <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.cs_txt or '')|x}</Data></Cell>
   </Row>
   % endfor
   <Row></Row>

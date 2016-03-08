@@ -84,17 +84,14 @@ class stock_partial_move_memory_out(osv.osv_memory):
                 result[obj.id]['batch_number_check'] = obj.product_id.batch_management
                 result[obj.id]['expiry_date_check'] = obj.product_id.perishable
             # keep cool
-            if obj.product_id.heat_sensitive_item:
-                result[obj.id]['kc_check'] = True
+            result[obj.id]['kc_check'] = obj.product_id.kc_txt
             # ssl
             if obj.product_id.short_shelf_life:
                 result[obj.id]['ssl_check'] = True
             # dangerous goods
-            if obj.product_id.dangerous_goods:
-                result[obj.id]['dg_check'] = True
+            result[obj.id]['dg_check'] = obj.product_id.dg_txt
             # narcotic
-            if obj.product_id.narcotic:
-                result[obj.id]['np_check'] = True
+            result[obj.id]['np_check'] = obj.product_id.cs_txt
             # type of picking
             result[obj.id]['type_check'] = obj.move_id.type
             # lot management
@@ -188,16 +185,76 @@ class stock_partial_move_memory_out(osv.osv_memory):
         'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
         'type_check': fields.function(_get_checks_all, method=True, string='Picking Type Check', type='char', readonly=True, multi="m"),
         'expiry_date': fields.date('Expiry Date'),
-        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
-        'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
-        'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
-        'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-        'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
-        'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
-        'location_id': fields.related('move_id', 'location_id', type='many2one', relation='stock.location', string='Source Location', readonly=True),
-        'quantity_ordered': fields.float('Quantity ordered'),
-        'uom_ordered': fields.many2one('product.uom', string='UoM ordered', readonly=True),
-        'uom_category': fields.related('uom_ordered', 'category_id', type='many2one', relation='product.uom.categ'),
+        'kc_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='KC',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'ssl_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='SSL',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'dg_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='DG',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'np_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='CS',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'lot_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='B.Num',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'exp_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='Exp',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'location_id': fields.related(
+            'move_id',
+            'location_id',
+            type='many2one',
+            relation='stock.location',
+            string='Source Location',
+            readonly=True,
+        ),
+        'quantity_ordered': fields.float(
+            'Quantity ordered',
+        ),
+        'uom_ordered': fields.many2one(
+            'product.uom',
+            string='UoM ordered',
+            readonly=True,
+        ),
+        'uom_category': fields.related(
+            'uom_ordered',
+            'category_id',
+            type='many2one',
+            relation='product.uom.categ',
+        ),
     }
 
 stock_partial_move_memory_out()

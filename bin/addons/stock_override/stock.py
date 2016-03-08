@@ -2109,13 +2109,6 @@ class stock_move(osv.osv):
         result = []
         for move in self.browse(cr, uid, ids, context=context):
             # add this move into the list of result
-            dg_check_flag = ''
-            if move.dg_check:
-                dg_check_flag = 'x'
-
-            np_check_flag = ''
-            if move.np_check:
-                np_check_flag = 'x'
             sub_total = move.product_qty * move.product_id.standard_price
 
             currency = ''
@@ -2133,8 +2126,8 @@ class stock_move(osv.osv):
                 'origin': move.origin,
                 'expired_date': move.expired_date,
                 'prodlot_id': move.prodlot_id.name,
-                'dg_check': dg_check_flag,
-                'np_check': np_check_flag,
+                'dg_check': move.product_id and move.product_id.dg_txt or '',
+                'np_check': move.product_id and move.product_id.cs_txt or '',
                 'uom': move.product_uom.name,
                 'prod_qty': move.product_qty,
             })
