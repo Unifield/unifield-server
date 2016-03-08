@@ -457,10 +457,12 @@ class account_account(osv.osv):
     def is_allowed_for_thirdparty(self, cr, uid, ids,
         partner_type=False,
         employee_id=False, transfer_journal_id=False, partner_id=False,
+        raise_it=False,
         context=None):
         """
         US-672/2 is allowed regarding to thirdparty
         partner_type fields prevails employee_id/transfer_journal_id/partner_id
+        :param raise_it: True to raise not compatible accounts
         :return: {id: True/False, }
         :rtype: dict
         """
@@ -500,6 +502,17 @@ class account_account(osv.osv):
         field = 'has_partner_type_%s' % (should_have_field_suffix, )
         for r in self.browse(cr, uid, ids, context=context):
             res[r.id] = hasattr(r, field) and getattr(r, field) or False
+
+        if raise_it:
+            not_compatible_ids = [ id for id in res if not res[id] ]
+            if not_compatible_ids:
+                errors = [ _('following accounts are not compatible with' \
+                    ' partner') ]
+                for r in self.pool.get('account.account').browse(cr, uid,
+                    not_compatible_ids, context=context):
+                    errors.append(_('%s - %s') % (r.code, r.name, ))
+                raise osv.except_osv(_('Error'), "\n- ".join(errors))
+
         return res
 
 account_account()

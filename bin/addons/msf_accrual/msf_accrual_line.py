@@ -116,15 +116,23 @@ class msf_accrual_line(osv.osv):
     }
 
     def _create_write_set_vals(self, cr, uid, vals, context=None):
+        employee_id = partner_id = False
         if 'third_party_type' in vals:
             if vals['third_party_type'] == 'hr.employee' and 'employee_id' in vals:
-                employee = self.pool.get('hr.employee').browse(cr, uid, vals['employee_id'], context=context)
+                employee_id = vals['employee_id']
+                employee = self.pool.get('hr.employee').browse(cr, uid, employee_id, context=context)
                 vals['third_party_name'] = employee.name
             elif vals['third_party_type'] == 'res.partner' and 'partner_id' in vals:
-                partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
+                partner_id = vals['partner_id']
+                partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
                 vals['third_party_name'] = partner.name
             elif not vals['third_party_type']:
                 vals['partner_id'] = False
+        account_ids = []
+        if vals.get('expense_account_id', False):
+            account_ids.append(vals.get('expense_account_id'))
+        if vals.get('accrual_account_id', False):
+            account_ids.append(vals.get('accrual_account_id'))
         if 'period_id' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)
             vals['date'] = period.date_stop
@@ -134,6 +142,11 @@ class msf_accrual_line(osv.osv):
                 currency_name = self.pool.get('res.currency').browse(cr, uid, vals['currency_id'], context=context).name
                 formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
                 raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
+        # US-672/2
+        if account_ids and (employee_id or partner_id):
+            self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
+                account_ids, employee_id=employee_id, partner_id=partner_id,
+                raise_it=True,  context=context)
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
