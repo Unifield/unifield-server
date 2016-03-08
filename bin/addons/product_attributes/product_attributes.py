@@ -401,7 +401,7 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: True or False
         """
-        return product.dangerous_goods
+        return product.dangerous_goods == 'True'
 
     def _compute_dg_txt(self, cr, uid, product, context=None):
         """
@@ -412,7 +412,12 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: 'X' or '?' or ''
         """
-        return product.dangerous_goods and 'X' or ''
+        if product.dangerous_goods == 'True':
+            return 'X'
+        elif product.dangerous_goods == 'no_know':
+            return '?'
+
+        return ''
 
     def _compute_is_cs(self, cr, uid, product, context=None):
         """
@@ -423,7 +428,7 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: True or False
         """
-        return product.controlled_substance
+        return product.controlled_substance != 'False'
 
     def _compute_cs_txt(self, cr, uid, product, context=None):
         """
@@ -434,7 +439,7 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: 'X' or '?' or ''
         """
-        return product.controlled_substance and 'X' or ''
+        return product.controlled_substance != 'False' and 'X' or ''
 
     def _compute_kc_dg_cs_values(self, cr, uid, ids, field_names, args, context=None):
         """
@@ -544,8 +549,8 @@ class product_attributes(osv.osv):
         'closed_article': fields.selection([('yes', 'Yes'), ('no', 'No'),],string='Closed Article'),
         'dangerous_goods': fields.selection(
             selection=[
-                ('False', 'No'),
-                ('True', 'Yes'),
+                ('False', 'No'),  # False is put as key for migration (see US-752)
+                ('True', 'Yes'),  # True is put as key for migration (see US-752)
                 ('no_know', 'Don\'t know'),
             ],
             string='Dangerous goods',
@@ -591,7 +596,22 @@ class product_attributes(osv.osv):
         'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
-        'controlled_substance': fields.boolean(string='Controlled substance'),
+        'controlled_substance': fields.selection(
+            selection=[
+                ('False', ''),  # False is put as key for migration (see US-751)
+                ('!', '! - Requires national export license'),
+                ('N1', 'N1 - Narcotic 1'),
+                ('N2', 'N2 - Narcotic 2'),
+                ('P1', 'P1 - Psychotrop 1'),
+                ('P3', 'P3 - Psychotrop 3'),
+                ('P4', 'P4 - Psychotrop 4'),
+                ('Y', 'Y - Kit or module with controlled substance'),
+                ('NP', 'NP - Narcotic/Psychotropic'),
+                ('True', 'CS - Controlled Substance'),  # True is put as key for migration (see US-751)
+            ],
+            string='Controlled substance',
+            required=True,
+        ),
         'is_cs': fields.function(
             _compute_kc_dg_cs_values,
             method=True,
@@ -679,6 +699,7 @@ class product_attributes(osv.osv):
         'narcotic': False,
         'composed_kit': False,
         'dangerous_goods': 'False',
+        'controlled_substance': 'False',
         'restricted_country': False,
         'heat_sensitive_item': _get_default_sensitive_item,
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
