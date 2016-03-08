@@ -109,39 +109,39 @@
 
 		<record model="product.cold_chain" id="cold_1">
 			<field name="code">*</field>
-			<field name="name">* Keep Cool: used for a kit containing cold chain module or item(s)</field>
+			<field name="name">* - Keep Cool: used for a kit or article containing cold chain module or item(s)</field>
 		</record>
 		<record model="product.cold_chain" id="cold_2">
 			<field name="code">*0</field>
 			<field name="name">*0 - Problem if any window blue</field>
 		</record>
 		<record model="product.cold_chain" id="cold_3">
-			<field name="code">7*0F</field>
-			<field name="name">7*0F Cold Chain *0F - Problem if any window blue or Freeze-tag = ALARM</field>
+			<field name="code">*0F</field>
+			<field name="name">*0F - Problem if any window blue or Freeze-tag = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_4">
-			<field name="code">8*A</field>
-			<field name="name">8*A Cold Chain *A - Problem if B, C and/or D totally blue</field>
+			<field name="code">*A</field>
+			<field name="name">*A - Problem if A, B, C and/or D blue = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_5">
-			<field name="code">9*AF</field>
-			<field name="name">9*AF Cold Chain *AF - Problem if B, C and/or D totally blue or Freeze-tag = ALARM</field>
+			<field name="code">*AF</field>
+			<field name="name">*AF - Problem if A, B, C and/or D blue or Freeze-tag = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_6">
-			<field name="code">10*B</field>
-			<field name="name">10*B Cold Chain *B - Problem if C and/or D totally blue</field>
+			<field name="code">*B</field>
+			<field name="name">*B - Problem if B, C and/or D blue</field>
 		</record>
 		<record model="product.cold_chain" id="cold_7">
-			<field name="code">11*BF</field>
-			<field name="name">11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM</field>
+			<field name="code">*BF</field>
+			<field name="name">*BF - Problem if B, C and/or D blue or Freeze-tag = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_8">
-			<field name="code">12*C</field>
-			<field name="name">12*C Cold Chain *C - Problem if D totally blue</field>
+			<field name="code">*C</field>
+			<field name="name">*C - Problem if C and D blue</field>
 		</record>
 		<record model="product.cold_chain" id="cold_9">
-			<field name="code">13*CF</field>
-			<field name="name">13*CF Cold Chain *CF - Problem if D totally blue or Freeze-tag = ALARM</field>
+			<field name="code">*CF</field>
+			<field name="name">*CF - Problem if C and/or D blue or Freeze-tag = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_10">
 			<field name="code">*D</field>
@@ -149,7 +149,7 @@
 		</record>
 		<record model="product.cold_chain" id="cold_11">
 			<field name="code">*F</field>
-			<field name="name">*F - Cannot be frozen: chk FreezeWatch</field>
+			<field name="name">*F - Cannot be frozen: check FreezeWatch</field>
 		</record>
 		<record model="product.cold_chain" id="cold_12">
 			<field name="code">*25</field>
@@ -157,41 +157,8 @@
 		</record>
 		<record model="product.cold_chain" id="cold_13">
 			<field name="code">*25F</field>
-			<field name="name">*25F Must be kept below 25°C and cannot be frozen: check FreezeWatch</field>
+			<field name="name">*25F - Must be kept below 25°C and cannot be frozen: check FreezeWatch</field>
 		</record>
-		<record model="product.cold_chain" id="cold_14">
-			<field name="code">*0F</field>
-			<field name="name">*0F Problem if any window blue or F</field>
-		</record>
-		<record model="product.cold_chain" id="cold_15">
-			<field name="code">*A</field>
-			<field name="name">*A Problem if A and D totally blue</field>
-		</record>
-		<record model="product.cold_chain" id="cold_16">
-			<field name="code">*AF</field>
-			<field name="name">*AF Problem if A and D tot. blue or F</field>
-		</record>
-		<record model="product.cold_chain" id="cold_17">
-			<field name="code">*B</field>
-			<field name="name">*B Problem if B and D totally blue</field>
-		</record>
-		<record model="product.cold_chain" id="cold_18">
-			<field name="code">*BF</field>
-			<field name="name">*BF Problem if B and D tot. blue or F</field>
-		</record>
-		<record model="product.cold_chain" id="cold_19">
-			<field name="code">*C</field>
-			<field name="name">*C Problem if C and D totally blue</field>
-		</record>
-		<record model="product.cold_chain" id="cold_20">
-			<field name="code">*CF</field>
-			<field name="name">*CF Problem if C and D tot. blue or F</field>
-		</record>
-		<record model="product.cold_chain" id="cold_21">
-            <field name="code">Mix/Check</field>
-            <field name="name">Mix/Check Article with components that need different cold chain storage conditions</field>
-		</record>
-
 
 	</data>
 </openerp>
