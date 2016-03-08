@@ -223,36 +223,17 @@ class product_attributes(osv.osv):
 
     def execute_migration(self, cr, moved_column, new_column):
         super(product_attributes, self).execute_migration(cr, moved_column, new_column)
-
-        def execute_update(select_req, update_req):
-            cr.execute(select_req)
-            prd_to_update = cr.fetchall()
-            if prd_to_update:
-                cr.execute(update_req, (tuple(prd_to_update),))
-
         if new_column == 'dangerous_goods':
-            select_req = 'SELECT id FROM product_product WHERE %s = True' % moved_column
-            update_req = 'UPDATE product_product SET dangerous_goods = \'True\' WHERE id IN %%s'
-            execute_update(select_req, update_req)
+            request = 'UPDATE product_product SET dangerous_goods = \'True\' WHERE %s = True' % moved_column
+            cr.execute(request)
 
         if new_column == 'controlled_substance':
             # Update old ticked controlled substance but not narcotic
-            select_req = 'SELECT id FROM product_product WHERE %s = True AND narcotic = False' % moved_column
-            update_req = '''UPDATE product_product SET
-                              controlled_substance = 'CS',
+            request = '''UPDATE product_product SET
+                              controlled_substance = 'True',
                               is_cs = True,
                               cs_txt = 'X'
-                            WHERE id IN %%s'''
-            execute_update(select_req, update_req)
-
-            # Update old ticked controlled substance and narcotic
-            select_req = 'SELECT id FROM product_product WHERE %s = True AND narcotic = True' % moved_column
-            update_req = '''UPDATE product_product SET
-                              controlled_substance = 'CS_NP',
-                              is_cs = True,
-                              cs_txt = 'X'
-                            WHERE id IN %%s'''
-            execute_update(select_req, update_req)
+                            WHERE %s = True OR narcotic = True''' % moved_column
 
         return
 
@@ -452,7 +433,7 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: True or False
         """
-        return product.controlled_substance != 'False'
+        return product.controlled_substance
 
     def _compute_cs_txt(self, cr, uid, product, context=None):
         """
@@ -463,7 +444,7 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: 'X' or '?' or ''
         """
-        return product.controlled_substance != 'False' and 'X' or ''
+        return product.controlled_substance and 'X' or ''
 
     def _compute_kc_dg_cs_values(self, cr, uid, ids, field_names, args, context=None):
         """
@@ -622,7 +603,6 @@ class product_attributes(osv.osv):
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.selection(
             selection=[
-                ('False', ''),  # False is put as key for migration (see US-751)
                 ('!', '! - Requires national export license'),
                 ('N1', 'N1 - Narcotic 1'),
                 ('N2', 'N2 - Narcotic 2'),
@@ -630,12 +610,9 @@ class product_attributes(osv.osv):
                 ('P3', 'P3 - Psychotrop 3'),
                 ('P4', 'P4 - Psychotrop 4'),
                 ('Y', 'Y - Kit or module with controlled substance'),
-                ('NP', 'NP - Narcotic/Psychotropic'),
-                ('True', 'CS - Controlled Substance'),  # True is put as key for migration (see US-751)
-                ('CS_NP', 'CS NP - Controlled Substance and Narcotic/Psychotropic')
+                ('True', 'CS / NP - Controlled Substance / Narcotic / Psychotropic')
             ],
             string='Controlled substance',
-            required=True,
         ),
         'is_cs': fields.function(
             _compute_kc_dg_cs_values,
@@ -968,15 +945,9 @@ class product_attributes(osv.osv):
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)
 
-        if 'narcotic' in vals and 'controlled_substance' in vals:
-            if vals['narcotic'] == True and tools.ustr(vals['controlled_substance']) == 'True':
-                vals['controlled_substance'] = 'CS_NP'
-            elif vals['narcotic'] == True and tools.ustr(vals['controlled_substance']) == 'False':
-                vals['controlled_substance'] = 'NP'
-            elif tools.ustr(vals['controlled_substance']) == 'True':
+        if 'narcotic' in vals or 'controlled_substance' in vals:
+            if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
                 vals['controlled_substance'] = 'True'
-            else:
-                vals['controlled_substance'] = 'False'
 
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
@@ -1353,15 +1324,9 @@ class product_attributes(osv.osv):
         """
         sptc_obj = self.pool.get('standard.price.track.changes')
 
-        if 'narcotic' in vals and 'controlled_substance' in vals:
-            if vals['narcotic'] == True and tools.ustr(vals['controlled_substance']) == 'True':
-                vals['controlled_substance'] = 'CS_NP'
-            elif vals['narcotic'] == True and tools.ustr(vals['controlled_substance']) == 'False':
-                vals['controlled_substance'] = 'NP'
-            elif tools.ustr(vals['controlled_substance']) == 'True':
+        if 'narcotic' in vals or 'controlled_substance' in vals:
+            if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
                 vals['controlled_substance'] = 'True'
-            else:
-                vals['controlled_substance'] = 'False'
 
         res = super(product_attributes, self).create(cr, user, vals,
                                                      context=context)
