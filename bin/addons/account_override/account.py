@@ -462,6 +462,9 @@ class account_account(osv.osv):
         :return: {id: True/False, }
         :rtype: dict
         """
+        if isinstance(ids, (int, long, )):
+            ids = [ ids, ]
+
         res = {}
         for id in res:
             res[id] = True  # allowed by default

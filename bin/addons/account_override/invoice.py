@@ -671,6 +671,7 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
+        self._check_accounts_for_partner(cr, uid, ids, context=context)
 
         # Prepare workflow object
         wf_service = netsvc.LocalService("workflow")
@@ -1154,7 +1155,44 @@ class account_invoice(osv.osv):
 
         return res
 
+    def _check_accounts_for_partner(self, cr, uid, ids, context=None):
+        account_obj = self.pool.get('account.account')
+        header_errors = []
+        lines_errors = []
+
+        for r in self.browse(cr, uid, ids, context=context):
+            # header check
+            if r.account_id and r.partner_id:
+                if not account_obj.is_allowed_for_thirdparty(cr, uid,
+                    [r.account_id.id], partner_id=r.partner_id.id,
+                        context=context)[r.account_id.id]:
+                    header_errors.append(
+                        _('invoice header account and partner not compatible.'))
+
+            # lines check
+            for l in r.invoice_line:
+                if l.account_id:
+                    if not account_obj.is_allowed_for_thirdparty(cr, uid,
+                        [l.account_id.id], partner_id=r.partner_id.id,
+                        context=context)[l.account_id.id]:
+                        if not lines_errors:
+                            header_errors.append(
+                                _('following # lines with account/partner' \
+                                    ' are not compatible:'))
+                        lines_errors.append(_('#%d account %s %s') % (
+                            l.line_number,
+                            l.account_id.code, l.account_id.name, ))
+
+        if header_errors or lines_errors:
+            if header_errors:
+                header_errors.insert(0, '')
+            if lines_errors:
+                lines_errors.insert(0, '')
+            raise osv.except_osv(_('Error'),
+                "\n- ".join(header_errors) + "\n".join(lines_errors))
+
 account_invoice()
+
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
