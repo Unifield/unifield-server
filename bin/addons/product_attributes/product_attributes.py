@@ -223,12 +223,36 @@ class product_attributes(osv.osv):
 
     def execute_migration(self, cr, moved_column, new_column):
         super(product_attributes, self).execute_migration(cr, moved_column, new_column)
-        if new_column == 'dangerous_goods':
-            request = 'SELECT id FROM product_product WHERE %s = True' % moved_column
-            cr.execute(request)
+
+        def execute_update(select_req, update_req):
+            cr.execute(select_req)
             prd_to_update = cr.fetchall()
             if prd_to_update:
-                cr.execute('UPDATE product_product SET dangerous_goods = \'True\' WHERE id IN %s', (tuple(prd_to_update),))
+                cr.execute(update_req, (tuple(prd_to_update),))
+
+        if new_column == 'dangerous_goods':
+            select_req = 'SELECT id FROM product_product WHERE %s = True' % moved_column
+            update_req = 'UPDATE product_product SET dangerous_goods = \'True\' WHERE id IN %%s'
+            execute_update(select_req, update_req)
+
+        if new_column == 'controlled_substance':
+            # Update old ticked controlled substance but not narcotic
+            select_req = 'SELECT id FROM product_product WHERE %s = True AND narcotic = False' % moved_column
+            update_req = '''UPDATE product_product SET
+                              controlled_substance = 'CS',
+                              is_cs = True,
+                              cs_txt = 'X'
+                            WHERE id IN %%s'''
+            execute_update(select_req, update_req)
+
+            # Update old ticked controlled substance and narcotic
+            select_req = 'SELECT id FROM product_product WHERE %s = True AND narcotic = True' % moved_column
+            update_req = '''UPDATE product_product SET
+                              controlled_substance = 'CS_NP',
+                              is_cs = True,
+                              cs_txt = 'X'
+                            WHERE id IN %%s'''
+            execute_update(select_req, update_req)
 
         return
 
@@ -608,6 +632,7 @@ class product_attributes(osv.osv):
                 ('Y', 'Y - Kit or module with controlled substance'),
                 ('NP', 'NP - Narcotic/Psychotropic'),
                 ('True', 'CS - Controlled Substance'),  # True is put as key for migration (see US-751)
+                ('CS_NP', 'CS NP - Controlled Substance and Narcotic/Psychotropic')
             ],
             string='Controlled substance',
             required=True,
@@ -942,6 +967,16 @@ class product_attributes(osv.osv):
                 category_id = product.uom_id.category_id.id
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)
+
+        if 'narcotic' in vals and 'controlled_substance' in vals:
+            if vals['narcotic'] == True and tools.ustr(vals['controlled_substance']) == 'True':
+                vals['controlled_substance'] = 'CS_NP'
+            elif vals['narcotic'] == True and tools.ustr(vals['controlled_substance']) == 'False':
+                vals['controlled_substance'] = 'NP'
+            elif tools.ustr(vals['controlled_substance']) == 'True':
+                vals['controlled_substance'] = 'True'
+            else:
+                vals['controlled_substance'] = 'False'
 
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
@@ -1317,6 +1352,16 @@ class product_attributes(osv.osv):
         :return: The ID of the new product.template record
         """
         sptc_obj = self.pool.get('standard.price.track.changes')
+
+        if 'narcotic' in vals and 'controlled_substance' in vals:
+            if vals['narcotic'] == True and tools.ustr(vals['controlled_substance']) == 'True':
+                vals['controlled_substance'] = 'CS_NP'
+            elif vals['narcotic'] == True and tools.ustr(vals['controlled_substance']) == 'False':
+                vals['controlled_substance'] = 'NP'
+            elif tools.ustr(vals['controlled_substance']) == 'True':
+                vals['controlled_substance'] = 'True'
+            else:
+                vals['controlled_substance'] = 'False'
 
         res = super(product_attributes, self).create(cr, user, vals,
                                                      context=context)
