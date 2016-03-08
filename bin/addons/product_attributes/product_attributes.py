@@ -513,6 +513,9 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if not isinstance(field_names, list):
+            field_names = [field_names]
+
         res = {}
         for product in self.browse(cr, uid, ids, context=context):
             res[product.id] = {}

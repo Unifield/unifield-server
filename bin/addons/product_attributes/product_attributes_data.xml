@@ -79,11 +79,11 @@
         </record>
             
         <record model="product.heat_sensitive" id="heat_yes">
-            <field name="code">Yes</field>
+            <field name="code">yes</field>
             <field name="name">Yes</field>
         </record>
         <record model="product.heat_sensitive" id="heat_no">
-            <field name="code">No</field>
+            <field name="code">no</field>
             <field name="name">No</field>
         </record>
         <record model="product.heat_sensitive" id="heat_no_know">
