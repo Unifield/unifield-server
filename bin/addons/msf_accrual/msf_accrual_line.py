@@ -116,6 +116,9 @@ class msf_accrual_line(osv.osv):
     }
 
     def _create_write_set_vals(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+
         employee_id = partner_id = False
         if 'third_party_type' in vals:
             if vals['third_party_type'] == 'hr.employee' and 'employee_id' in vals:
@@ -128,22 +131,27 @@ class msf_accrual_line(osv.osv):
                 vals['third_party_name'] = partner.name
             elif not vals['third_party_type']:
                 vals['partner_id'] = False
+
         account_ids = []
         if vals.get('expense_account_id', False):
             account_ids.append(vals.get('expense_account_id'))
         if vals.get('accrual_account_id', False):
             account_ids.append(vals.get('accrual_account_id'))
+
         if 'period_id' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)
             vals['date'] = period.date_stop
+
         if 'currency_id' in vals and 'date' in vals:
             cr.execute("SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(vals['currency_id'], vals['date']))
             if not cr.rowcount:
                 currency_name = self.pool.get('res.currency').browse(cr, uid, vals['currency_id'], context=context).name
                 formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
                 raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
+
         # US-672/2
-        if account_ids and (employee_id or partner_id):
+        if not context.get('sync_update_execution', False) \
+            and account_ids and (employee_id or partner_id):
             self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
                 account_ids, employee_id=employee_id, partner_id=partner_id,
                 raise_it=True,  context=context)
