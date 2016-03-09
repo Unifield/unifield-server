@@ -2794,7 +2794,6 @@ class orm(orm_template):
                         cr.commit()
                         self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
                                             f._rel, self._table, ref)
-                        self.execute_migration(cr, newname, k)
                 else:
                     res = col_data.get(k, [])
                     res = res and [res] or []
@@ -2881,6 +2880,7 @@ class orm(orm_template):
                                     cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))
                                     self.__schema.debug("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
                                         self._table, k, f_pg_type, f._type, newname)
+                                    self.execute_migration(cr, newname, k)
 
                             # if the field is required and hasn't got a NOT NULL constraint
                             if f.required and f_pg_notnull == 0:
