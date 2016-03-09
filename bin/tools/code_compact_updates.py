@@ -11,7 +11,9 @@ start_time = time.time()
 DELETE_NO_MASTER=True
 DELETE_INACTIVE_RULES=True
 COMPACT_UPDATE=True
-DELETE_ENTITY_REL=True
+DELETE_ENTITY_REL=True  # not recommanded to change it to False because it can
+                        # remove delete only entity_rel related to currently
+                        # deleted updates
 UPDATE_TO_FETCH = 1000
 
 # we will delete all the pulled update which are not master data and use active rule
@@ -43,11 +45,11 @@ deleted_update_ids = []
 not_deleted_update = 0
 sync_server_update = oerp.get('sync.server.update')
 current_cursor = 0
+total_update_ids = set()
 
 if DELETE_NO_MASTER:
     # start by deleting the the update with active rules and no master_data
     # then there will be much less updates to parse with heaver code after
-    total_update_ids = set()
     cr2.execute("""SELECT MIN(last_sequence) FROM sync_server_entity
                 WHERE last_sequence !=0""", ())
     smallest_last_sequence = cr2.fetchone()[0]
