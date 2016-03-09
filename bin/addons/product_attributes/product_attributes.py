@@ -373,7 +373,7 @@ class product_attributes(osv.osv):
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
-        'product_catalog_path' : fields.char('Product Catalog Path', size=64),
+        'product_catalog_path' : fields.char('Product Catalog Path', size=1024),
         'short_shelf_life': fields.boolean('Short Shelf Life'),
         'criticism': fields.selection([('',''),
             ('exceptional','1-Exceptional'),
