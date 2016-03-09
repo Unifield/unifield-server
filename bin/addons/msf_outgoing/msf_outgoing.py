@@ -1985,16 +1985,17 @@ class stock_picking(osv.osv):
         result = {}
 
         for stock_picking in self.read(cr, uid, ids, ['pack_family_memory_ids', 'move_lines'], context=context):
-            values = {'total_amount': 0.0,
-                      'currency_id': False,
-                      'is_dangerous_good': False,
-                      'is_keep_cool': False,
-                      'is_narcotic': False,
-                      'num_of_packs': 0,
-                      'total_volume': 0.0,
-                      'total_weight': 0.0,
-                      # 'is_completed': False,
-                      }
+            values = {
+                'total_amount': 0.0,
+                'currency_id': False,
+                'is_dangerous_good': '',
+                'is_keep_cool': '',
+                'is_narcotic': '',
+                'num_of_packs': 0,
+                'total_volume': 0.0,
+                'total_weight': 0.0,
+                # 'is_completed': False,
+            }
             result[stock_picking['id']] = values
 
             if stock_picking['pack_family_memory_ids']:
@@ -2019,11 +2020,11 @@ class stock_picking(osv.osv):
                     # currency
                     values['currency_id'] = move['currency_id'] or False
                     # dangerous good
-                    values['is_dangerous_good'] = move['is_dangerous_good']
+                    values['is_dangerous_good'] = values['is_dangerous_good'] or move['is_dangerous_good']
                     # keep cool - if heat_sensitive_item is True
-                    values['is_keep_cool'] = move['is_keep_cool']
+                    values['is_keep_cool'] = values['is_dangerous_good'] or move['is_keep_cool']
                     # narcotic
-                    values['is_narcotic'] = move['is_narcotic']
+                    values['is_narcotic'] = values['is_dangerous_good'] or move['is_narcotic']
 
             # completed field - based on the previous_step_ids field, recursive call from picking to draft packing and packing
             # - picking checks that the corresponding ppl is completed
@@ -2206,9 +2207,9 @@ class stock_picking(osv.osv):
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals'),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
-                'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals'),
-                'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
-                'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals'),
+                'is_dangerous_good': fields.function(_vals_get, method=True, type='char', size=8, string='Dangerous Good', multi='get_vals'),
+                'is_keep_cool': fields.function(_vals_get, method=True, type='char', size=8, string='Keep Cool', multi='get_vals'),
+                'is_narcotic': fields.function(_vals_get, method=True, type='char', size=8, string='CS', multi='get_vals'),
                 'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
                                     store={'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10), }),
                 'line_state': fields.function(_get_lines_state, method=True, type='selection',
@@ -4422,34 +4423,6 @@ class wizard(osv.osv):
 wizard()
 
 
-class product_product(osv.osv):
-    '''
-    add a getter for keep cool notion
-    '''
-    _inherit = 'product.product'
-
-    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
-        '''
-        get functional values
-        '''
-        result = {}
-        for product in self.browse(cr, uid, ids, context=context):
-            values = {'is_keep_cool': False,
-                      }
-            result[product.id] = values
-            # keep cool
-            is_keep_cool = bool(product.heat_sensitive_item)  # in ('*', '**', '***',)
-            values['is_keep_cool'] = is_keep_cool
-
-        return result
-
-    _columns = {'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
-                'prodlot_ids': fields.one2many('stock.production.lot', 'product_id', string='Batch Numbers',),
-                }
-
-product_product()
-
-
 class stock_move(osv.osv):
     '''
     stock move
@@ -4484,9 +4457,9 @@ class stock_move(osv.osv):
                       'amount': 0.0,
                       'currency_id': False,
                       'num_of_packs': 0,
-                      'is_dangerous_good': False,
-                      'is_keep_cool': False,
-                      'is_narcotic': False,
+                      'is_dangerous_good': '',
+                      'is_keep_cool': '',
+                      'is_narcotic': '',
                       'sale_order_line_number': 0,
                       }
             result[move.id] = values
@@ -4515,11 +4488,11 @@ class stock_move(osv.osv):
             # currency
             values['currency_id'] = move.sale_line_id and move.sale_line_id.currency_id and move.sale_line_id.currency_id.id or False
             # dangerous good
-            values['is_dangerous_good'] = move.product_id and move.product_id.dangerous_goods or False
+            values['is_dangerous_good'] = move.product_id and move.product_id.dg_txt or ''
             # keep cool - if heat_sensitive_item is True
-            values['is_keep_cool'] = bool(move.product_id and move.product_id.heat_sensitive_item or False)
+            values['is_keep_cool'] = move.product_id and move.product_id.kc_txt or ''
             # narcotic
-            values['is_narcotic'] = move.product_id and move.product_id.narcotic or False
+            values['is_narcotic'] = move.product_id and move.product_id.cs_txt or ''
             # sale_order_line_number
             values['sale_order_line_number'] = move.sale_line_id and move.sale_line_id.line_number or 0
 
@@ -4584,9 +4557,9 @@ class stock_move(osv.osv):
                 'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',),  # old_multi get_vals
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
-                'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
-                'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
+                'is_dangerous_good': fields.function(_vals_get, method=True, type='char', size=8, string='Dangerous Good', multi='get_vals',),
+                'is_keep_cool': fields.function(_vals_get, method=True, type='char', size=8, string='Keep Cool', multi='get_vals',),
+                'is_narcotic': fields.function(_vals_get, method=True, type='char', size=8, string='CS', multi='get_vals',),
                 'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals_X',),  # old_multi get_vals
                 # Fields used for domain
                 'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),

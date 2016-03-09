@@ -134,7 +134,6 @@
                                 <field name="cold_chain" colspan="2" attrs="{'invisible': [('show_cold_chain','=',False)]}"  widget="selection"/>
                                 <field name="sterilized" colspan="2"/>
                                 <field name="single_use" colspan="2"/>
-                                <field name="narcotic" colspan="2"/>
                                 <field name="controlled_substance" colspan="2"/>
                                 <separator string="Transport" colspan="2"/>
                                 <field name="dangerous_goods" colspan="2"/>

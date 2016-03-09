@@ -399,13 +399,13 @@
                         <para style="LineValue">[[ m.prodlot_id and formatLang(m.prodlot_id.life_date, date=True) or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ m.kc_check and 'X' or ' ' ]]</para>
+                        <para style="LineValue">[[ m.product_id.kc_txt or ' ' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ m.dg_check and 'X' or ' ' ]]</para>
+                        <para style="LineValue">[[ m.product_id.dg_txt or ' ' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ m.np_check and 'X' or ' ' ]]</para>
+                        <para style="LineValue">[[ m.product_id.cs_txt or ' ' ]]</para>
                     </td>
                 </tr>
                 <tr>

@@ -912,7 +912,8 @@ class orm_template(object):
                     res = value and float(value.replace(',','.')) or 0.0
                 elif field_type == 'selection':
                     for key, val in fields_def[field[len(prefix)]]['selection']:
-                        if value in [tools.ustr(key), tools.ustr(val)]:
+                        if value in [tools.ustr(key), tools.ustr(val)] or \
+                           tools.ustr(value) in [tools.ustr(key), tools.ustr(val)]:
                             res = key
                             break
                     if not value:
@@ -2663,6 +2664,18 @@ class orm(orm_template):
                 self.__schema.debug("Table '%s': column '%s': dropped NOT NULL constraint",
                                     self._table, column['attname'])
 
+    def execute_migration(self, cr, moved_column, new_column):
+        """
+        On change type of column, make a migration of data. The old values
+        are moved to a new column suffixed by _movedX.
+        This method must be overriden on needed objects.
+        :param cr: Cursor to the database
+        :param moved_column: The renamed old column
+        :param new_column: The column with the new type
+        :return: Nothing
+        """
+        pass
+
     def _auto_init(self, cr, context=None):
         if context is None:
             context = {}
@@ -2781,6 +2794,7 @@ class orm(orm_template):
                         cr.commit()
                         self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
                                             f._rel, self._table, ref)
+                        self.execute_migration(cr, newname, k)
                 else:
                     res = col_data.get(k, [])
                     res = res and [res] or []

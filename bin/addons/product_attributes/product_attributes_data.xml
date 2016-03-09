@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
+    <data noupdate="0">
 
-	<data noupdate="1">
-	<record model="product.status" id="status_1">
+		<record model="product.status" id="status_1">
 			<field name="code">valid</field>
 			<field name="name">Valid</field>
             <field name="no_external" eval="False" />
@@ -81,77 +81,72 @@
 			<field name="code">unidata</field>
             <field name="name">UniData</field>
 		</record>
-
-		<record model="product.heat_sensitive" id="heat_1">
-			<field name="code">KR</field>
-			<field name="name">Keep refrigerated but not cold chain (+2 to +8°C) for transport')</field>
-		</record>
-		<record model="product.heat_sensitive" id="heat_2">
-			<field name="code">*</field>
-			<field name="name">Keep Cool</field>
-		</record>
-		<record model="product.heat_sensitive" id="heat_3">
-			<field name="code">**</field>
-			<field name="name">Keep Cool, airfreight</field>
-		</record>
-		<record model="product.heat_sensitive" id="heat_4">
-			<field name="code">***</field>
-			<field name="name">Cold chain, 0° to 8°C strict</field>
-		</record>
+            
+        <record model="product.heat_sensitive" id="heat_yes">
+            <field name="code">yes</field>
+            <field name="name">Yes</field>
+        </record>
+        <record model="product.heat_sensitive" id="heat_no">
+            <field name="code">no</field>
+            <field name="name">No</field>
+        </record>
+        <record model="product.heat_sensitive" id="heat_no_know">
+            <field name="code">no_know</field>
+            <field name="name">Don't know</field>
+        </record>
 
 		<record model="product.cold_chain" id="cold_1">
-			<field name="code">3*</field>
-			<field name="name">3* Cold Chain * - Keep Cool: used for a kit containing cold chain module or item(s)</field>
+			<field name="code">*</field>
+			<field name="name">* - Keep Cool: used for a kit or article containing cold chain module or item(s)</field>
 		</record>
 		<record model="product.cold_chain" id="cold_2">
-			<field name="code">6*0</field>
-			<field name="name">6*0 Cold Chain *0 - Problem if any window blue</field>
+			<field name="code">*0</field>
+			<field name="name">*0 - Problem if any window blue</field>
 		</record>
 		<record model="product.cold_chain" id="cold_3">
-			<field name="code">7*0F</field>
-			<field name="name">7*0F Cold Chain *0F - Problem if any window blue or Freeze-tag = ALARM</field>
+			<field name="code">*0F</field>
+			<field name="name">*0F - Problem if any window blue or Freeze-tag = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_4">
-			<field name="code">8*A</field>
-			<field name="name">8*A Cold Chain *A - Problem if B, C and/or D totally blue</field>
+			<field name="code">*A</field>
+			<field name="name">*A - Problem if A, B, C and/or D blue = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_5">
-			<field name="code">9*AF</field>
-			<field name="name">9*AF Cold Chain *AF - Problem if B, C and/or D totally blue or Freeze-tag = ALARM</field>
+			<field name="code">*AF</field>
+			<field name="name">*AF - Problem if A, B, C and/or D blue or Freeze-tag = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_6">
-			<field name="code">10*B</field>
-			<field name="name">10*B Cold Chain *B - Problem if C and/or D totally blue</field>
+			<field name="code">*B</field>
+			<field name="name">*B - Problem if B, C and/or D blue</field>
 		</record>
 		<record model="product.cold_chain" id="cold_7">
-			<field name="code">11*BF</field>
-			<field name="name">11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM</field>
+			<field name="code">*BF</field>
+			<field name="name">*BF - Problem if B, C and/or D blue or Freeze-tag = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_8">
-			<field name="code">12*C</field>
-			<field name="name">12*C Cold Chain *C - Problem if D totally blue</field>
+			<field name="code">*C</field>
+			<field name="name">*C - Problem if C and D blue</field>
 		</record>
 		<record model="product.cold_chain" id="cold_9">
-			<field name="code">13*CF</field>
-			<field name="name">13*CF Cold Chain *CF - Problem if D totally blue or Freeze-tag = ALARM</field>
+			<field name="code">*CF</field>
+			<field name="name">*CF - Problem if C and/or D blue or Freeze-tag = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_10">
-			<field name="code">14*D</field>
-			<field name="name">14*D Cold Chain *D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)</field>
+			<field name="code">*D</field>
+			<field name="name">*D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)</field>
 		</record>
 		<record model="product.cold_chain" id="cold_11">
-			<field name="code">15*F</field>
-			<field name="name">15*F Cold Chain *F - Cannot be frozen: check Freeze-tag</field>
+			<field name="code">*F</field>
+			<field name="name">*F - Cannot be frozen: check FreezeWatch</field>
 		</record>
 		<record model="product.cold_chain" id="cold_12">
-			<field name="code">16*25</field>
-			<field name="name">16*25 Cold Chain *25 - Must be kept below 25°C (but not necesseraly in cold chain)</field>
+			<field name="code">*25</field>
+			<field name="name">*25 - Must be kept below 25°C (but not necesseraly in cold chain)</field>
 		</record>
 		<record model="product.cold_chain" id="cold_13">
-			<field name="code">17*25F</field>
-			<field name="name">17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag</field>
+			<field name="code">*25F</field>
+			<field name="name">*25F - Must be kept below 25°C and cannot be frozen: check FreezeWatch</field>
 		</record>
-
 
 	</data>
 </openerp>

@@ -329,7 +329,8 @@ class validate_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='KC',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
@@ -341,7 +342,8 @@ class validate_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='SSL',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
@@ -353,7 +355,8 @@ class validate_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='DG',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
@@ -364,14 +367,15 @@ class validate_move_processor(osv.osv):
         'np_check': fields.function(
             _get_product_info,
             method=True,
-            string='NP',
-            type='boolean',
+            string='CS',
+            type='char',
+            size=8,
             store={
                 'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
-            help="Ticked if the product is a Narcotic",
+            help="Ticked if the product is a Controlled Substance",
         ),
     }
 
