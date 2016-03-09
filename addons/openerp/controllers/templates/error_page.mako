@@ -219,7 +219,15 @@ Choose:
                                 <td style="padding: 4px 2px;">
                                 	<img src="/openerp/static/images/warning.png"></img>
                                 </td>
-                                <td class="error_message_content">${error}</td>
+                                <td class="error_message_content">
+                                % if isinstance(eval(error), (list, tuple)):
+                                    % for err in eval(error):
+                                    <p>${err}</p>
+                                    % endfor
+                                % else:
+                                    ${error}
+                                % endif
+                                </td>
                             </tr>
                             <tr>
                                 <td colspan="2" align="right" style="padding: 1px">
