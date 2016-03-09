@@ -448,7 +448,14 @@ class product_attributes(osv.osv):
         'form_value': fields.text(string='Form', translate=True),
         'fit_value': fields.text(string='Fit', translate=True),
         'function_value': fields.text(string='Function', translate=True),
-        'standard_ok': fields.boolean(string='Standard'),
+        'standard_ok': fields.selection(
+            selection=[
+                ('True', 'Standard'),
+                ('False', 'Non-standard'),
+            ],
+            string='Standard',
+            required=True,
+        ),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
@@ -472,6 +479,7 @@ class product_attributes(osv.osv):
         'composed_kit': False,
         'dangerous_goods': False,
         'restricted_country': False,
+        'standard_ok': 'False',
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
