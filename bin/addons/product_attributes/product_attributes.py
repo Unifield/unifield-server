@@ -406,6 +406,17 @@ class product_attributes(osv.osv):
         'dangerous_goods': fields.boolean('Dangerous Goods'),
         'restricted_country': fields.boolean('Restricted in the Country'),
         'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
+        'state_ud': fields.selection(
+            selection=[
+                ('valid', 'Valid'),
+                ('phase_out', 'Phase Out'),
+                ('stopped', 'Stopped'),
+                ('archived', 'Archived'),
+            ],
+            string='UniData Status',
+            readonly=True,
+            help="Automatically filled with UniData information.",
+        ),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
