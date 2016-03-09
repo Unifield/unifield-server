@@ -219,6 +219,14 @@ class product_attributes(osv.osv):
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
 
+    def execute_migration(self, cr, moved_column, new_column):
+        super(product_attributes, self).execute_migration(cr, moved_column, new_column)
+        if new_column == 'standard_ok':
+            request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column
+            cr.execute(request)
+
+        return
+
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -356,14 +364,16 @@ class product_attributes(osv.osv):
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
-        'old_code' : fields.char('Old code', size=64),
+        'old_code' : fields.char(
+            string='Old code',
+            size=1024,
+        ),
         'new_code' : fields.char('New code', size=64),
-
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
-        'product_catalog_path' : fields.char('Product Catalog Path', size=64),
+        'product_catalog_path' : fields.char('Product Catalog Path', size=1024),
         'short_shelf_life': fields.boolean('Short Shelf Life'),
         'criticism': fields.selection([('',''),
             ('exceptional','1-Exceptional'),
@@ -395,8 +405,24 @@ class product_attributes(osv.osv):
         'show_cold_chain': fields.boolean('Show cold chain'),
         # Inverse of m2m options_ids
         'options_ids_inv': fields.many2many('product.product', 'product_options_rel', 'product_option_id', 'product_id', 'Options Inv.'),
-        'sterilized': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Sterile'),
-        'single_use': fields.selection([('yes', 'Yes'),('no', 'No')], string='Single Use'),
+        'sterilized': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+                ('no_know', 'Don\'t know'),
+            ],
+            string='Sterile',
+            required=True,
+        ),
+        'single_use': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+                ('no_know', 'Don\'t know'),
+            ],
+            string='Single Use',
+            required=True,
+        ),
         'justification_code_id': fields.many2one('product.justification.code', 'Justification Code'),
         'med_device_class': fields.selection([('',''),
             ('I','Class I (General controls)'),
@@ -474,7 +500,14 @@ class product_attributes(osv.osv):
         'form_value': fields.text(string='Form', translate=True),
         'fit_value': fields.text(string='Fit', translate=True),
         'function_value': fields.text(string='Function', translate=True),
-        'standard_ok': fields.boolean(string='Standard'),
+        'standard_ok': fields.selection(
+            selection=[
+                ('True', 'Standard'),
+                ('False', 'Non-standard'),
+            ],
+            string='Standardization Level',
+            required=True,
+        ),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
@@ -499,6 +532,9 @@ class product_attributes(osv.osv):
         'composed_kit': False,
         'dangerous_goods': False,
         'restricted_country': False,
+        'sterilized': 'no',
+        'single_use': 'no',
+        'standard_ok': 'False',
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
