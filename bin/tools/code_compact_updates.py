@@ -268,4 +268,4 @@ if DELETE_ENTITY_REL:
 
 cr2.close()
 cr3.close()
-print_time_elapsed(intermediate_time, time.time(), 'Total')
+print_time_elapsed(start_time, time.time(), 'Total')
