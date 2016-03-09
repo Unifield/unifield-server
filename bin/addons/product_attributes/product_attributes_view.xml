@@ -265,7 +265,7 @@
                             <separator string="Description"/>
                             <!-- uf-1544 invisible-->
                             <field name="product_catalog_page" invisible="1"/>
-                            <field name="product_catalog_path" widget="hyperlink"/>
+                            <field name="product_catalog_path" widget="url"/>
                             <separator string="Description"/>
                             <field colspan="4" name="description" nolabel="1"/>
                             <field colspan="4" name="description2" nolabel="1"/>

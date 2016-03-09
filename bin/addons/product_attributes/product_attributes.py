@@ -405,8 +405,24 @@ class product_attributes(osv.osv):
         'show_cold_chain': fields.boolean('Show cold chain'),
         # Inverse of m2m options_ids
         'options_ids_inv': fields.many2many('product.product', 'product_options_rel', 'product_option_id', 'product_id', 'Options Inv.'),
-        'sterilized': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Sterile'),
-        'single_use': fields.selection([('yes', 'Yes'),('no', 'No')], string='Single Use'),
+        'sterilized': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+                ('no_know', 'Don\'t know'),
+            ],
+            string='Sterile',
+            required=True,
+        ),
+        'single_use': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+                ('no_know', 'Don\'t know'),
+            ],
+            string='Single Use',
+            required=True,
+        ),
         'justification_code_id': fields.many2one('product.justification.code', 'Justification Code'),
         'med_device_class': fields.selection([('',''),
             ('I','Class I (General controls)'),
@@ -489,6 +505,8 @@ class product_attributes(osv.osv):
         'composed_kit': False,
         'dangerous_goods': False,
         'restricted_country': False,
+        'sterilized': 'no',
+        'single_use': 'no',
         'standard_ok': 'False',
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
