@@ -264,7 +264,7 @@ if DELETE_ENTITY_REL:
                         (tuple(entity_ids),))
             conn.commit()
         print '4/4 sync_server_entity_rel deleted : %s' % locale.format('%d', entity_count, 1)
-    print_time_elapsed(intermediate_time, time.time(), '4/4')
+        print_time_elapsed(intermediate_time, time.time(), '4/4')
 
 cr2.close()
 cr3.close()
