@@ -4,6 +4,7 @@ import locale
 import psycopg2.extras
 import time
 import oerplib
+import traceback
 
 start_time = time.time()
 
@@ -46,6 +47,8 @@ not_deleted_update = 0
 sync_server_update = oerp.get('sync.server.update')
 current_cursor = 0
 total_update_ids = set()
+cr2.execute("""SELECT COUNT(*) FROM sync_server_update""", ())
+number_of_update = cr2.fetchone()[0]
 
 if DELETE_NO_MASTER:
     # start by deleting the the update with active rules and no master_data
@@ -172,7 +175,8 @@ if COMPACT_UPDATE:
                 else:
                     # check no reference to other object change between the
                     # previous update and the current
-                    previous_values = eval(sync_server_update.browse(previous_update_id).values)
+                    old_update = sync_server_update.browse(previous_update_id)
+                    previous_values = old_update.is_deleted and [] or eval(old_update.values)
                     current_values = eval(sync_server_update.browse(row['id']).values)
                     diff = set(current_values).difference(previous_values)
                     ref_diff = [x.split('sd.')[1] for x in diff if
@@ -225,7 +229,8 @@ if COMPACT_UPDATE:
     del deleted_update_ids
 
 total_update_count = len(total_update_ids)
-print '\n\nTotal updates deleted = %s\n\n' % locale.format('%d', total_update_count, 1)
+print '\n\nTotal updates deleted = %s/%s\n\n' % (locale.format('%d',
+    total_update_count, 1), locale.format('%d', number_of_update, 1)
 
 if DELETE_ENTITY_REL:
     to_continue = True
