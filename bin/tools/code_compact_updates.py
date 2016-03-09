@@ -27,6 +27,8 @@ SDREF_TO_EXCLUDE = [
 
 # the objects with the folowing model will be ignored
 MODEL_TO_EXCLUDE = [
+        'financing.contract.contract', # maybe this problem need to be
+                                       # examinated with Duy
 ]
 
 DB_NAME = 'DAILY_SYNC_SERVER-COMPRESSED-9-20160303-073301'   # replace with your own DB
@@ -50,7 +52,14 @@ total_update_ids = set()
 cr2.execute("""SELECT COUNT(*) FROM sync_server_update""", ())
 number_of_update = cr2.fetchone()[0]
 
+def print_time_elapsed(start_time, stop_time, step='')
+    elapsed_time = stop_time - start_time
+    minute, second = divmod(elapsed_time, 60)
+    hour, minute = divmod(minute, 60)
+    print "%s Elapsed time : %d:%02d:%02d" % (step, hour, minute, second)
+
 if DELETE_NO_MASTER:
+    intermediate_time = time.time()
     # start by deleting the the update with active rules and no master_data
     # then there will be much less updates to parse with heaver code after
     cr2.execute("""SELECT MIN(last_sequence) FROM sync_server_entity
@@ -77,11 +86,12 @@ if DELETE_NO_MASTER:
         conn.commit()
         total_update_ids = total_update_ids.union(update_no_master_ids)
     print '1/4 %s updates deleted.' % locale.format('%d', cr2.rowcount, 1)
+    print_time_elapsed(intermediate_time, time.time(), '1/4')
     del multiple_updates
     del update_no_master_ids
 
-
 if DELETE_INACTIVE_RULES:
+    intermediate_time = time.time()
     print '2/4 Start deleting the updates related to inactive rules...'
     cr2.execute("""SELECT id FROM sync_server_update
                 WHERE rule_id IN
@@ -100,11 +110,12 @@ if DELETE_INACTIVE_RULES:
         conn.commit()
         total_update_ids = total_update_ids.union(update_inactive_rules)
     print '2/4 %s updates related to inactive rules deleted.' % locale.format('%d', update_inactive_rules_count, 1)
+    print_time_elapsed(intermediate_time, time.time(), '2/4')
     del multiple_updates
     del update_inactive_rules
 
-
 if COMPACT_UPDATE:
+    intermediate_time = time.time()
     # create a dict of the entity branch id
     # the highest parent will be considered as branch id (ie. OCBHQ id)
     sync_server_entity = oerp.get('sync.server.entity')
@@ -225,6 +236,7 @@ if COMPACT_UPDATE:
     del rows_already_seen
     print '%s not deleted updates.' % not_deleted_update
     print '3/4 Compression finished. %s update deleted.' % locale.format('%d', len(deleted_update_ids), 1)
+    print_time_elapsed(intermediate_time, time.time(), '3/4')
     total_update_ids = total_update_ids.union(deleted_update_ids)
     del deleted_update_ids
 
@@ -233,6 +245,7 @@ print '\n\nTotal updates deleted = %s/%s\n\n' % (locale.format('%d',
     total_update_count, 1), locale.format('%d', number_of_update, 1)
 
 if DELETE_ENTITY_REL:
+    intermediate_time = time.time()
     to_continue = True
     if total_update_ids:
         print '4/4 Start deleting of the related sync_server_entity_rel...'
@@ -251,10 +264,8 @@ if DELETE_ENTITY_REL:
                         (tuple(entity_ids),))
             conn.commit()
         print '4/4 sync_server_entity_rel deleted : %s' % locale.format('%d', entity_count, 1)
+    print_time_elapsed(intermediate_time, time.time(), '4/4')
 
 cr2.close()
 cr3.close()
-elapsed_time = time.time() - start_time
-minute, second = divmod(elapsed_time, 60)
-hour, minute = divmod(minute, 60)
-print "Elapsed time : %d:%02d:%02d" % (hour, minute, second)
+print_time_elapsed(intermediate_time, time.time(), 'Total')
