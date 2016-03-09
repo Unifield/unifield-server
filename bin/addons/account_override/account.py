@@ -455,13 +455,14 @@ class account_account(osv.osv):
                 limit, order, context=context, count=count)
 
     def is_allowed_for_thirdparty(self, cr, uid, ids,
-        partner_type=False,
+        partner_type=False, partner_txt=False,
         employee_id=False, transfer_journal_id=False, partner_id=False,
         from_vals=False, raise_it=False,
         context=None):
         """
         US-672/2 is allowed regarding to thirdparty
-        partner_type fields prevails employee_id/transfer_journal_id/partner_id
+        partner_type then partner_txt fields prevails on
+        employee_id/transfer_journal_id/partner_id
         :type partner_type: 'model_name,id' if from_vals
             else object with model in obj._name and id in obj.id
         :type partner_type: object/str
@@ -476,9 +477,12 @@ class account_account(osv.osv):
         res = {}
         for id in ids:
             res[id] = True  # allowed by default
-        if not partner_type \
+        if not partner_type and not partner_txt \
             and not employee_id and not transfer_journal_id and not partner_id:
             return res
+
+        emp_obj = self.pool.get('hr.employee')
+        partner_obj = self.pool.get('res.partner')
 
         should_have_field_suffix = False
         if partner_type:
@@ -493,16 +497,25 @@ class account_account(osv.osv):
                 transfer_journal_id = pt_id
             elif pt_model == 'res.partner':
                 partner_id = pt_id
+        elif partner_txt:
+            employee_ids = emp_obj.search(cr, uid,
+                [('name', '=', partner_txt), ], context=context)
+            if employee_ids:
+                employee_id = employee_ids[0]
+            else:
+                partner_ids = partner_obj.search(cr, uid,
+                    [('name', '=', partner_txt), ], context=context)
+                if partner_ids:
+                    partner_id = partner_ids[0]
+
         if employee_id:
-            tp_rec = self.pool.get('hr.employee').browse(cr, uid, employee_id,
-                context=context)
+            tp_rec = emp_obj.browse(cr, uid, employee_id, context=context)
             # note: allowed for employees with no type
             should_have_field_suffix = tp_rec.employee_type or False
         elif transfer_journal_id:
             should_have_field_suffix = 'book'
         else:
-            tp_rec = self.pool.get('res.partner').browse(cr, uid, partner_id,
-                context=context)
+            tp_rec = partner_obj.browse(cr, uid, partner_id, context=context)
             should_have_field_suffix = tp_rec.partner_type or False
         if not should_have_field_suffix:
             return res  # allowed with no specific field suffix

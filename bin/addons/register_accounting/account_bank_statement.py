@@ -1889,7 +1889,7 @@ class account_bank_statement_line(osv.osv):
                     msg = _('This cheque number has already been used')
                     raise osv.except_osv(_('Info'), (msg))
 
-        self._check_accounts_partner_compat(cr, uid, values, context=context)
+        self._check_account_partner_compat(cr, uid, values, context=context)
 
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
@@ -1924,7 +1924,7 @@ class account_bank_statement_line(osv.osv):
         # Case where _update_amount return False ! => this imply there is a problem with amount columns
         if not values:
             return False
-        self._check_accounts_partner_compat(cr, uid, values, context=context)
+        self._check_account_partner_compat(cr, uid, values, context=context)
 
         # Then update analytic distribution
         res = []
@@ -2817,7 +2817,7 @@ class account_bank_statement_line(osv.osv):
             ids = [ids]
         return self.unlink(cr, uid, ids, context=context)
 
-    def _check_accounts_partner_compat(self, cr, uid, vals, context=None):
+    def _check_account_partner_compat(self, cr, uid, vals, context=None):
         # US-672/2
         if not context.get('sync_update_execution', False) \
             and vals.get('account_id', False) \

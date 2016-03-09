@@ -61,18 +61,18 @@ class hq_entries_split_lines(osv.osv_memory):
         'state_info': fields.function(_get_distribution_state, method=True, type='char', string="Info", help="Informs about distribution state.", multi='hq_split_line_distrib_state'),
     }
 
-    def _get_original_line(self, cr, uid, context=None):
+    def _get_original_line(self, cr, uid, context=None, wizard_id=False):
 
         """
         Fetch original line from context. If not, return False.
         """
-        res = False
-        if not context:
-            return res
-        if context.get('parent_id', False):
-            wiz = self.pool.get('hq.entries.split').browse(cr, uid, context.get('parent_id'))
-            res = wiz and wiz.original_id or False
-        return res
+        wizard_id = wizard_id
+        if not wizard_id:
+            wizard_id = context and context.get('parent_id', False) or False
+        if not wizard_id:
+            return False
+        wiz = self.pool.get('hq.entries.split').browse(cr, uid, wizard_id)
+        return wiz and wiz.original_id or False
 
     def _get_field(self, cr, uid, field_name, field_type=False, context=None):
         """
@@ -152,6 +152,13 @@ class hq_entries_split_lines(osv.osv_memory):
             if not account:
                 raise osv.except_osv(_('Error'), _('Account is required!'))
             vals['account_id'] = account.id
+        # US-672/2
+        hq_entry = self._get_original_line(cr, uid, context=context,
+            wizard_id=vals.get('wizard_id', False))
+        if hq_entry and hq_entry.partner_txt:
+            self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
+                [vals['account_id']], partner_txt=hq_entry.partner_txt,
+                raise_it=True, context=context)
         res = super(hq_entries_split_lines, self).create(cr, uid, vals, context=context)
         # Check that amount is not superior to what expected
         if res:
@@ -179,7 +186,13 @@ class hq_entries_split_lines(osv.osv_memory):
         # Checks
         if context is None:
             context = {}
-        # Prepare some values
+        # US-672/2
+        for line in self.browse(cr, uid, ids, context=context):
+            hq_entry = line.wizard_id and line.wizard_id.original_id or False
+            if hq_entry and hq_entry.partner_txt:
+                self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
+                    [vals['account_id']], partner_txt=hq_entry.partner_txt,
+                    raise_it=True, context=context)
         res = super(hq_entries_split_lines, self).write(cr, uid, ids, vals, context=context)
         for line in self.browse(cr, uid, ids, context=context):
             # Check line amount
@@ -266,6 +279,7 @@ class hq_entries_split(osv.osv_memory):
                 total += line.amount
             if abs(wiz.original_amount - total) > 10**-2:
                 raise osv.except_osv(_('Error'), _('Wrong total: %.2f, instead of: %.2f') % (total or 0.00, wiz.original_amount or 0.00,))
+
             self.write(cr, uid, [wiz.id], {'running': True})
             # If all is OK, do process of lines
             # Mark original line as it is: an original one :-)
