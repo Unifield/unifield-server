@@ -298,6 +298,33 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
+    def update_volume_patch(self, cr, uid, *a, **b):
+        """
+        Update the volume from dm³ to m³ for OCB databases
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param a: Unnamed parameters
+        :param b: Named parameters
+        :return: True
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        while instance.level != 'section':
+            instance = instance.parent_id
+
+        if instance.name != 'OCBHQ':
+            cr.execute("""
+                UPDATE product_template
+                SET volume_updated = True
+                WHERE volume_updated = False
+            """)
+        else:
+            cr.execute("""
+                UPDATE product_template
+                SET volume = volume*1000,
+                    volume_updated = True
+                WHERE volume_updated = False
+            """)
+
 
     def update_us_963_negative_rule_seq(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):
