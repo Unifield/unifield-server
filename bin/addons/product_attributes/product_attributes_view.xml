@@ -144,7 +144,8 @@
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
-                                <field name="justification_code_id" colspan="2" widget="selection" />
+                                <field name="standard_ok" colspan="2" />
+                                <field name="justification_code_id" colspan="2" />
                                 <!-- uf-1544
                                 <field name="med_device_class" colspan="2" />
                                 <field name="gmdn_code" colspan="2" />
@@ -752,6 +753,18 @@
 	<menuitem id="menu_cold_chain_product"
                   action="product_cold_chain_action"
                   parent="purchase.menu_product_in_config_purchase" />
+
+        <record id="product_justification_code_form_view" model="ir.ui.view">
+            <field name="name">product.justification.code.form</field>
+            <field name="model">product.justification.code</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Justification Code">
+                    <field name="code" readonly="True"/>
+                    <field name="description" readonly="True"/>
+                </form>
+            </field>
+        </record>
 
         <record id="product_justification_code_tree_view" model="ir.ui.view">
             <field name="name">product.justification.code.tree</field>
