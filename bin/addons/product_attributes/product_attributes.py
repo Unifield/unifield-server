@@ -219,6 +219,14 @@ class product_attributes(osv.osv):
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
 
+    def execute_migration(self, cr, moved_column, new_column):
+        super(product_attributes, self).execute_migration(cr, moved_column, new_column)
+        if new_column == 'standard_ok':
+            request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column
+            cr.execute(request)
+
+        return
+
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
