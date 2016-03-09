@@ -453,7 +453,7 @@ class product_attributes(osv.osv):
                 ('True', 'Standard'),
                 ('False', 'Non-standard'),
             ],
-            string='Standard',
+            string='Standardization Level',
             required=True,
         ),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
