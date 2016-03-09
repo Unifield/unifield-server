@@ -42,6 +42,23 @@ sync_server_update = oerp.get('sync.server.update')
 
 current_cursor = 0
 
+# create a dict of the entity branch name
+sync_server_entity = oerp.get('sync.server.entity')
+cr2.execute("""SELECT id FROM sync_server_entity""", ())
+sync_server_entity_id_list = [x[0] for x in cr2.fetchall()]
+
+entity_branch_name = {}
+
+def get_recursive_parent(entity_id):
+    entity = sync_server_entity.browse(entity_id)
+    if entity.parent_id:
+        return get_recursive_parent(entity.parent_id.id)
+    else:
+        return entity.id
+
+for entity_id in sync_server_entity_id_list:
+    highest_parent = get_recursive_parent(entity_id)
+    entity_branch_name[entity_id]=highest_parent
 
 # start by deleting the the update with active rules and no master_data
 # then there will be much less updates to parse with heaver code after
@@ -112,7 +129,8 @@ while to_continue:
         if row['sdref'] in SDREF_TO_EXCLUDE or\
            row['model'] in MODEL_TO_EXCLUDE:
             continue
-        key = row['sdref'], row['rule_id'], row['source']
+        #key = row['sdref'], row['rule_id'], row['source']
+        key = row['sdref'], row['rule_id'], entity_branch_name[row['source']]
         # this row has never been seen
         if key not in rows_already_seen:
             if row['is_deleted']:
