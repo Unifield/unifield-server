@@ -42,13 +42,12 @@ sync_server_update = oerp.get('sync.server.update')
 
 current_cursor = 0
 
-# create a dict of the entity branch name
+# create a dict of the entity branch id
+# the highest parent will be considered as branch id (ie. OCBHQ id)
 sync_server_entity = oerp.get('sync.server.entity')
 cr2.execute("""SELECT id FROM sync_server_entity""", ())
 sync_server_entity_id_list = [x[0] for x in cr2.fetchall()]
-
 entity_branch_name = {}
-
 def get_recursive_parent(entity_id):
     entity = sync_server_entity.browse(entity_id)
     if entity.parent_id:
