@@ -73512,3 +73512,15 @@ msgstr "Preparé par"
 #: report:pl.account:0
 msgid "Profit And Loss"
 msgstr "Compte de Résultat"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:127
+#, python-format
+msgid "Negative value is not allowed!"
+msgstr "Une valeur négative n'est pas autorisée !"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:147
+#, python-format
+msgid "Positive value is not allowed!"
+msgstr "Une valeur positive n'est pas autorisée !"
