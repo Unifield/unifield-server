@@ -107,6 +107,7 @@
                                 <field name="categ_id" readonly="1" colspan="3"/>
                                 <field name="international_status" required="1" widget="selection" colspan="3" />
                                 <field name="state" colspan="3" widget="selection" />
+                                <field name="state_ud" colspan="3" />
                                 <field name="active" readonly="1"/>
                                 <group colspan="1" col="1">
                                    <button name="deactivate_product" icon="gtk-execute" string="De-activate product" type="object" attrs="{'invisible': [('active', '=', False)]}" />
