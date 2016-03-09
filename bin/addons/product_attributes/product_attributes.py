@@ -364,9 +364,11 @@ class product_attributes(osv.osv):
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
-        'old_code' : fields.char('Old code', size=64),
+        'old_code' : fields.char(
+            string='Old code',
+            size=1024,
+        ),
         'new_code' : fields.char('New code', size=64),
-
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
