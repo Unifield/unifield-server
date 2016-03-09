@@ -457,11 +457,15 @@ class account_account(osv.osv):
     def is_allowed_for_thirdparty(self, cr, uid, ids,
         partner_type=False,
         employee_id=False, transfer_journal_id=False, partner_id=False,
-        raise_it=False,
+        from_vals=False, raise_it=False,
         context=None):
         """
         US-672/2 is allowed regarding to thirdparty
         partner_type fields prevails employee_id/transfer_journal_id/partner_id
+        :type partner_type: 'model_name,id' if from_vals
+            else object with model in obj._name and id in obj.id
+        :type partner_type: object/str
+        :param from_vals: True if values are from 'vals'
         :param raise_it: True to raise not compatible accounts
         :return: {id: True/False, }
         :rtype: dict
@@ -478,13 +482,17 @@ class account_account(osv.osv):
 
         should_have_field_suffix = False
         if partner_type:
+            pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
+                else (partner_type._name, partner_type.id, )
+            if from_vals:
+                pt_id = int(pt_id)
             employee_id = transfer_journal_id = partner_id = False
-            if partner_type._name == 'hr.employee':
-                employee_id = partner_type.id
-            elif partner_type._name == 'account.journal':
-                transfer_journal_id = partner_type.id
-            elif partner_type._name == 'res.partner':
-                partner_id = partner_type.id
+            if pt_model == 'hr.employee':
+                employee_id = pt_id
+            elif pt_model == 'account.journal':
+                transfer_journal_id = pt_id
+            elif pt_model == 'res.partner':
+                partner_id = pt_id
         if employee_id:
             tp_rec = self.pool.get('hr.employee').browse(cr, uid, employee_id,
                 context=context)
