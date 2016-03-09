@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="0">
-        
+
+        <record id="justification_code_ja" model="product.justification.code">
+            <field name="code">A</field>
+            <field name="description">This kind of article need a more detailed description of the context in which it will be used.</field>
+        </record>
         <record id="justification_code_jc" model="product.justification.code">
             <field name="code">C</field>
             <field name="description">The article is potentially subject to important modifications (supply sources, better alternatives).</field>
