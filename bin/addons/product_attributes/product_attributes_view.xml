@@ -106,6 +106,7 @@
                                 <separator string="Status" colspan="3"/>
                                 <field name="categ_id" readonly="1" colspan="3"/>
                                 <field name="international_status" required="1" widget="selection" colspan="3" />
+                                <field name="standard_ok" colspan="3" />
                                 <field name="state" colspan="3" widget="selection" />
                                 <field name="active" readonly="1"/>
                                 <group colspan="1" col="1">
@@ -136,7 +137,6 @@
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
-                                <field name="standard_ok" colspan="2" />
                                 <field name="justification_code_id" colspan="2" widget="selection" />
                                 <!-- uf-1544
                                 <field name="med_device_class" colspan="2" />
