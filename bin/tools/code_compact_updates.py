@@ -52,7 +52,7 @@ total_update_ids = set()
 cr2.execute("""SELECT COUNT(*) FROM sync_server_update""", ())
 number_of_update = cr2.fetchone()[0]
 
-def print_time_elapsed(start_time, stop_time, step='')
+def print_time_elapsed(start_time, stop_time, step=''):
     elapsed_time = stop_time - start_time
     minute, second = divmod(elapsed_time, 60)
     hour, minute = divmod(minute, 60)
@@ -242,7 +242,7 @@ if COMPACT_UPDATE:
 
 total_update_count = len(total_update_ids)
 print '\n\nTotal updates deleted = %s/%s\n\n' % (locale.format('%d',
-    total_update_count, 1), locale.format('%d', number_of_update, 1)
+    total_update_count, 1), locale.format('%d', number_of_update, 1))
 
 if DELETE_ENTITY_REL:
     intermediate_time = time.time()
