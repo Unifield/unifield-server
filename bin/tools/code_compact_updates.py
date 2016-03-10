@@ -7,7 +7,7 @@ import oerplib
 import traceback
 
 start_time = time.time()
-
+intermediate_time = start_time
 
 DELETE_NO_MASTER=True
 DELETE_INACTIVE_RULES=True
@@ -187,7 +187,7 @@ if COMPACT_UPDATE:
                     # check no reference to other object change between the
                     # previous update and the current
                     old_update = sync_server_update.browse(previous_update_id)
-                    previous_values = old_update.is_deleted and [] or eval(old_update.values)
+                    previous_values = not old_update.is_deleted and eval(old_update.values) or []
                     current_values = eval(sync_server_update.browse(row['id']).values)
                     diff = set(current_values).difference(previous_values)
                     ref_diff = [x.split('sd.')[1] for x in diff if
@@ -245,9 +245,9 @@ print '\n\nTotal updates deleted = %s/%s\n\n' % (locale.format('%d',
     total_update_count, 1), locale.format('%d', number_of_update, 1))
 
 if DELETE_ENTITY_REL:
-    intermediate_time = time.time()
     to_continue = True
     if total_update_ids:
+        intermediate_time = time.time()
         print '4/4 Start deleting of the related sync_server_entity_rel...'
         cr2.execute('SELECT id FROM sync_server_entity_rel WHERE update_id IN %s',
                     (tuple(total_update_ids),))
