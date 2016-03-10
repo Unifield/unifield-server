@@ -232,7 +232,7 @@ class product_attributes(osv.osv):
         if hasattr(super(product_attributes, self), 'init'):
             super(product_attributes, self).init(cr)
         mod_obj = self.pool.get('ir.module.module')
-        mode = mod_obj.search(cr, 1, [('name', '=', 'product_attributes')])
+        mode = mod_obj.search(cr, 1, [('name', '=', 'product_attributes'), ('state', '=', 'to install')]) and 'init' or 'update'
         logging.getLogger('init').info('HOOK: module product_attributes: loading product_attributes_data.xml')
         pathname = path.join('product_attributes', 'product_attributes_data.xml')
         file = tools.file_open(pathname)
