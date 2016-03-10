@@ -457,13 +457,33 @@ class initial_stock_inventory_line(osv.osv):
         
         return res
         
+    def _get_usb_entity_type(self, cr, uid, context=None):
+        '''
+        Verify if the given instance is Remote Warehouse instance, if no, just return False, if yes, return the type (RW or CP) 
+        '''
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
+        if not entity.__hasattr__('usb_instance_type'):
+            return False
+        
+        return entity.usb_instance_type
+        
     def create(self, cr, uid, vals, context=None):
         '''
         Set the UoM with the default UoM of the product
         '''
+        if context is None:
+            context = {}
+        prod_obj = self.pool.get('product.product')
+        
         if vals.get('product_id', False):
-            product = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
+            product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
             vals['product_uom'] = product.uom_id.id
+        
+            #US-803: update the price from RW
+            rw_type = self._get_usb_entity_type(cr, uid)
+            if context.get('sync_update_execution') and vals.get('average_cost', False) and rw_type == 'central_platform':
+                context['rw_sync'] = True
+                prod_obj.write(cr, uid, product.id, {'standard_price': vals['average_cost']}, context=context)
         
         return super(initial_stock_inventory_line, self).create(cr, uid, vals, context=context)
     
@@ -472,7 +492,15 @@ class initial_stock_inventory_line(osv.osv):
         Set the UoM with the default UoM of the product
         '''
         if vals.get('product_id', False):
-            vals['product_uom'] = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context).uom_id.id
+            prod_obj = self.pool.get('product.product')
+            product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
+            vals['product_uom'] = product.uom_id.id
+
+            #US-803: update the price from RW            
+            rw_type = self._get_usb_entity_type(cr, uid)
+            if context.get('sync_update_execution') and vals.get('average_cost', False) and rw_type == 'central_platform':
+                context['rw_sync'] = True
+                prod_obj.write(cr, uid, product.id, {'standard_price': vals['average_cost']}, context=context)
             
         return super(initial_stock_inventory_line, self).write(cr, uid, ids, vals, context=context)
     
