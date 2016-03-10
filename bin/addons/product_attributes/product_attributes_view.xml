@@ -144,7 +144,6 @@
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
-                                <field name="standard_ok" colspan="2" />
                                 <field name="justification_code_id" colspan="2" />
                                 <!-- uf-1544
                                 <field name="med_device_class" colspan="2" />
