@@ -1179,7 +1179,12 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
 
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft'])], context=context)
+                condition = [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft'])]
+                #US-803 Add also the backorder if exist to the search condition for retrieving the correct PICK
+                if pick_dict['backorder_id'] and pick_dict['backorder_id']['name']:
+                    condition.append(('name', '=', pick_dict['backorder_id']['name']))
+                
+                pick_ids = self.search(cr, uid, condition, context=context)
                 if not pick_ids:
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft','confirmed', 'assigned'])], context=context)
                 if pick_ids:
