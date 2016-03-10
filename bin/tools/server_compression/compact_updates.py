@@ -31,7 +31,7 @@ MODEL_TO_EXCLUDE = [
                                        # examinated with Duy
 ]
 
-DB_NAME = 'DAILY_SYNC_SERVER-COMPRESSED-13-20160303-073301'   # replace with your own DB
+DB_NAME = 'DAILY_SYNC_SERVER-COMPRESSED-14-20160303-073301'   # replace with your own DB
 
 locale.setlocale(locale.LC_ALL, '')
 conn = psycopg2.connect("dbname=%s" % DB_NAME)
@@ -215,7 +215,7 @@ if COMPACT_UPDATE:
 
                     # replace the content of the previous update with the current
                     items = filter(lambda x: x[0] not in ['session_id', 'id', 'sdref',
-                                                          'rule_id', 'sequence',
+                                                          'rule_id', 'sequence', 'source',
                                                           'create_date', 'write_uid',
                                                           'create_uid'], list(row.iteritems()))
                     # if sources are different and direction of the rule is
@@ -231,8 +231,8 @@ if COMPACT_UPDATE:
                             # set the highest parent as source
                             items.append(('source', entity_branch_name[row['source']]))
 
-                    fields_to_set = map(lambda x: x[0], items)
-                    values_to_set = map(lambda x: x[1], items)
+                    fields_to_set = [x[0] for x in items]
+                    values_to_set = [x[1] for x in items]
 
                     fields = ','.join(map(lambda x: '%s = %%s' % x, fields_to_set))
                     sql_query = 'UPDATE sync_server_update SET %s WHERE id = %%s' % fields
@@ -240,7 +240,7 @@ if COMPACT_UPDATE:
                     # delete the update
                     cr2.execute('DELETE FROM sync_server_update WHERE id = %s', (row['id'],))
                     deleted_update_ids.append(row['id'])
-                    cr2.execute(sql_query, values_to_set + [rows_already_seen[key][0]])
+                    cr2.execute(sql_query, values_to_set + [previous_update_id])
 
                 conn.commit()
 
