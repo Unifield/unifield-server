@@ -33,6 +33,45 @@ class hr_payroll_validation(osv.osv_memory):
     _name = 'hr.payroll.validation'
     _description = 'Payroll entries validation wizard'
 
+    _columns = {
+        'check_report': fields.text('Check report'),
+        'check_result': fields.boolean('Check result'),
+    }
+
+    def check(self, cr, uid, context=None):
+        # US-672/2 account/partner compatible check pass
+        line_ids = self.pool.get('hr.payroll.msf').search(cr, uid,
+            [('state', '=', 'draft')])
+        if not line_ids:
+            raise osv.except_osv(_('Warning'), _('No draft line found!'))
+
+        res = ''
+        account_obj = self.pool.get('account.account')
+        account_partner_not_compat_log = []
+        for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, [
+            'name', 'ref', 'account_id',
+            'partner_id', 'employee_id', 'journal_id', ]):
+            if line['account_id'] \
+                and not account_obj.is_allowed_for_thirdparty(cr, uid,
+                line['account_id'][0],
+                employee_id=line['employee_id'] and line['employee_id'][0] or False,
+                transfer_journal_id=line['journal_id'] and line['journal_id'][0] or False,
+                partner_id=line['partner_id'] and line['partner_id'][0] or False,
+                context=context)[line['account_id'][0]]:
+                    partner = line['employee_id'] or line['journal_id'] \
+                        or line['partner_id']
+                    entry_msg = "%s - %s: %s / %s" % (
+                        line['name'] or '', line['ref'] or '',
+                        line['account_id'][1] or '',
+                        partner and partner[1] or '')
+                    account_partner_not_compat_log.append(entry_msg)
+
+        if account_partner_not_compat_log:
+            account_partner_not_compat_log.insert(0,
+                _('Following entries have account/partner not compatible:'))
+            res = "\n".join(account_partner_not_compat_log)
+        return res
+
     def fields_get(self, cr, uid, fields=None, context=None):
         """
         Fields ' description
@@ -81,6 +120,12 @@ class hr_payroll_validation(osv.osv_memory):
             if m:
                 bro = hrp.browse(cr,uid,int(m.groups()[1]))
                 res[field] = bro.amount or False
+
+        res['check_result'] = True
+        check_report = self.check(cr, uid, context=context)
+        if check_report:
+            res['check_report'] = check_report
+            res['check_result'] = False
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
