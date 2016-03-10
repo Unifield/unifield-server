@@ -31,7 +31,7 @@ MODEL_TO_EXCLUDE = [
                                        # examinated with Duy
 ]
 
-DB_NAME = 'DAILY_SYNC_SERVER-COMPRESSED-9-20160303-073301'   # replace with your own DB
+DB_NAME = 'DAILY_SYNC_SERVER-COMPRESSED-13-20160303-073301'   # replace with your own DB
 
 locale.setlocale(locale.LC_ALL, '')
 conn = psycopg2.connect("dbname=%s" % DB_NAME)
@@ -40,7 +40,7 @@ cr = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cr2 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cr3 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-oerp = oerplib.OERP('127.0.0.1', DB_NAME, protocol='netrpc', port='10131', timeout=3600)
+oerp = oerplib.OERP('127.0.0.1', DB_NAME, protocol='netrpc', port='10251', timeout=3600)
 oerp.login('admin', 'admin', DB_NAME)
 
 rows_already_seen = {}
@@ -188,8 +188,9 @@ if COMPACT_UPDATE:
                     # check no reference to other object change between the
                     # previous update and the current
                     old_update = sync_server_update.browse(previous_update_id)
+                    current_update = sync_server_update.browse(row['id'])
                     previous_values = not old_update.is_deleted and eval(old_update.values) or []
-                    current_values = eval(sync_server_update.browse(row['id']).values)
+                    current_values = eval(current_update.values)
                     diff = set(current_values).difference(previous_values)
                     ref_diff = [x.split('sd.')[1] for x in diff if
                             isinstance(x, (str,unicode)) and  x.startswith('sd.')]
@@ -219,7 +220,7 @@ if COMPACT_UPDATE:
                                                           'create_uid'], list(row.iteritems()))
                     # if sources are different and direction of the rule is
                     # down, it is required to keep this updates
-                    if previous_values['source'] != current_values['source']:
+                    if old_update.source.id != current_update.source.id:
                         rule = oerp.browse('sync_server.sync_rule', row['rule_id'])
                         if rule.direction in ('down', 'bi-private'):
                             down_direction_count += 1
