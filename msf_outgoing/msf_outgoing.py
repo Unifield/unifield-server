@@ -3395,6 +3395,11 @@ class stock_picking(osv.osv):
                 pick_name = context.get('associate_pick_name', False)
                 del context['associate_pick_name']
                 already_replicated = True
+            #US-803: Set the pick name that given from sync
+            elif 'rw_backorder_name' in context:
+                pick_name = context.get('rw_backorder_name', False)
+                del context['rw_backorder_name']
+                already_replicated = True
 
             # UF-2531: if not exist, then calculate the name as before
             if not pick_name:
