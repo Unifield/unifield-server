@@ -40,13 +40,9 @@ cr = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cr2 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cr3 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-oerp = oerplib.OERP('127.0.0.1', DB_NAME, protocol='netrpc', port='10251', timeout=3600)
-oerp.login('admin', 'admin', DB_NAME)
-
 rows_already_seen = {}
 deleted_update_ids = []
 not_deleted_update = 0
-sync_server_update = oerp.get('sync.server.update')
 current_cursor = 0
 total_update_ids = set()
 cr2.execute("""SELECT COUNT(*) FROM sync_server_update""", ())
@@ -115,6 +111,9 @@ if DELETE_INACTIVE_RULES:
     del update_inactive_rules
 
 if COMPACT_UPDATE:
+    oerp = oerplib.OERP('127.0.0.1', DB_NAME, protocol='netrpc', port='10251', timeout=3600)
+    oerp.login('admin', 'admin', DB_NAME)
+    sync_server_update = oerp.get('sync.server.update')
     intermediate_time = time.time()
     down_direction_count = 0
     # create a dict of the entity branch id
@@ -150,6 +149,9 @@ if COMPACT_UPDATE:
             break
 
         for row in multiple_updates:
+            # re-connect as it seems not stable after a while
+            oerp = oerplib.OERP('127.0.0.1', DB_NAME, protocol='netrpc', port='10251', timeout=3600)
+            oerp.login('admin', 'admin', DB_NAME)
             if row['sdref'] in SDREF_TO_EXCLUDE or\
                row['model'] in MODEL_TO_EXCLUDE:
                 continue
@@ -188,7 +190,9 @@ if COMPACT_UPDATE:
                     # check no reference to other object change between the
                     # previous update and the current
                     old_update = sync_server_update.browse(previous_update_id)
+                    old_update_source = old_update.source.id
                     current_update = sync_server_update.browse(row['id'])
+                    current_upadte_source = current_update.source.id
                     previous_values = not old_update.is_deleted and eval(old_update.values) or []
                     current_values = eval(current_update.values)
                     diff = set(current_values).difference(previous_values)
@@ -220,12 +224,10 @@ if COMPACT_UPDATE:
                                                           'create_uid'], list(row.iteritems()))
                     # if sources are different and direction of the rule is
                     # down, it is required to keep this updates
-                    if old_update.source.id != current_update.source.id:
+                    if old_update_source != current_upadte_source:
                         rule = oerp.browse('sync_server.sync_rule', row['rule_id'])
                         if rule.direction in ('down', 'bi-private'):
                             down_direction_count += 1
-                            print '%s : Down direction, keep the update (rule #%s)' \
-                                    % (down_direction_count, rule.sequence_number)
                             continue
                         else:
                             # set the highest parent as source
@@ -249,6 +251,7 @@ if COMPACT_UPDATE:
     del multiple_updates
     del rows_already_seen
     print '%s not deleted updates.' % not_deleted_update
+    print '%s down direction update kept' % down_direction_count
     print '3/4 Compression finished. %s update deleted.' % locale.format('%d', len(deleted_update_ids), 1)
     print_time_elapsed(intermediate_time, time.time(), '3/4')
     total_update_ids = total_update_ids.union(deleted_update_ids)
