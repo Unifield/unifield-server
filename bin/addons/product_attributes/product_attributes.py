@@ -232,12 +232,11 @@ class product_attributes(osv.osv):
         if hasattr(super(product_attributes, self), 'init'):
             super(product_attributes, self).init(cr)
         mod_obj = self.pool.get('ir.module.module')
-        mod = mod_obj.search(cr, 1, [('name', '=', 'product_attributes'), ('state', '=', 'to install')])
-        if mod:
-            logging.getLogger('init').info('HOOK: module product_attributes: loading product_attributes_data.xml')
-            pathname = path.join('product_attributes', 'product_attributes_data.xml')
-            file = tools.file_open(pathname)
-            tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
+        mode = mod_obj.search(cr, 1, [('name', '=', 'product_attributes'), ('state', '=', 'to install')]) and 'init' or 'update'
+        logging.getLogger('init').info('HOOK: module product_attributes: loading product_attributes_data.xml')
+        pathname = path.join('product_attributes', 'product_attributes_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
 
     def execute_migration(self, cr, moved_column, new_column):
         super(product_attributes, self).execute_migration(cr, moved_column, new_column)
