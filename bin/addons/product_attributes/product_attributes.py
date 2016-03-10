@@ -1580,6 +1580,31 @@ class product_deactivation_error(osv.osv_memory):
         'opened_object': False,
     }
 
+    def return_to_product(self, cr, uid, ids, context=None):
+        """
+        When close the wizard view, reload the product view
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of product.deactivation.wizard
+        :param context: Context of the call
+        :return: A dictionary with parameters to reload the view
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.product',
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'res_id': self.browse(cr, uid, ids[0], context=context).product_id.id,
+            'target': 'test',
+            'context': context,
+        }
+
 product_deactivation_error()
 
 class product_deactivation_error_line(osv.osv_memory):

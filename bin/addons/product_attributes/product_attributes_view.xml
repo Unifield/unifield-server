@@ -826,7 +826,7 @@
                     </group>
                     <separator string="Actions" colspan="4" />
                     <label colspan="3"> </label>
-                    <button special="cancel" string="Close window" icon="gtk-cancel" />
+                    <button type="object" name="return_to_product" string="Close window" icon="gtk-cancel" />
               </form>
            </field>
        </record>
