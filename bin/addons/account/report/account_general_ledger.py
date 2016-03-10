@@ -311,7 +311,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 if child_account.user_type \
                     and child_account.user_type.report_type:
                     do_filtering = True
-                    if self.account_report_types == 'bl':
+                    if 'asset' in self.account_report_types \
+                        or 'liability' in self.account_report_types:
                         if child_account.user_type \
                             and child_account.user_type.code == 'tax':
                             # since US-227/7.1 we display tax account when
