@@ -1211,12 +1211,7 @@ class account_invoice(osv.osv):
                     line_index += 1
 
         if header_errors or lines_errors:
-            if header_errors:
-                header_errors.insert(0, '')
-            if lines_errors:
-                lines_errors.insert(0, '')
-            raise osv.except_osv(_('Error'),
-                "\n- ".join(header_errors) + "\n".join(lines_errors))
+            raise osv.except_osv(_('Error'), header_errors + lines_errors)
 
 account_invoice()
 

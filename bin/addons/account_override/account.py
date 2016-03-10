@@ -532,7 +532,7 @@ class account_account(osv.osv):
                 for r in self.pool.get('account.account').browse(cr, uid,
                     not_compatible_ids, context=context):
                     errors.append(_('%s - %s') % (r.code, r.name, ))
-                raise osv.except_osv(_('Error'), "\n- ".join(errors))
+                raise osv.except_osv(_('Error'), errors)
 
         return res
 
