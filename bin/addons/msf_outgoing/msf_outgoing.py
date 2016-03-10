@@ -246,6 +246,33 @@ class shipment(osv.osv):
 ''' % (args[0][1], args[0][2]))
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
+    def _get_is_company(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return True if the partner_id2 of the shipment is the same partner
+        as the partner linked to res.company of the res.users
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of shipment to update
+        :param field_name: List of names of fields to update
+        :param args: Extra parametrer
+        :param context: Context of the call
+        :return: A dictionary with shipment ID as keys and True or False a values
+        """
+        user_obj = self.pool.get('res.users')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        cmp_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
+        for ship in self.browse(cr, uid, ids, context=context):
+            res[ship.id] = ship.partner_id2.id == cmp_partner_id
+
+        return res
+
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'date': fields.datetime(string='Creation Date'),
                 'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
@@ -317,7 +344,16 @@ class shipment(osv.osv):
                     string='Associated Packing List',
                 ),
                 'in_ref': fields.char(string='IN Reference', size=1024),
-                }
+                'is_company': fields.function(
+                    _get_is_company,
+                    method=True,
+                    type='boolean',
+                    string='Is Company ?',
+                    store={
+                        'shipment': (lambda self, cr, uid, ids, c={}: ids, ['partner_id2'], 10),
+                    }
+                ),
+            }
 
     def _get_sequence(self, cr, uid, context=None):
         ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
