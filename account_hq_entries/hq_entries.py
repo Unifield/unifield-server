@@ -442,6 +442,13 @@ class hq_entries(osv.osv):
         """
         if context is None:
             context={}
+            
+        #US-921: Only save the user_validated value if the update comes from sync!
+        if context.get('sync_update_execution', False):
+            if 'user_validated' in  vals:
+                return super(hq_entries, self).write(cr, uid, ids, {'user_validated': vals['user_validated']}, context)
+            return True
+            
         if 'account_id' in vals:
             account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
             for line in self.browse(cr, uid, ids):
