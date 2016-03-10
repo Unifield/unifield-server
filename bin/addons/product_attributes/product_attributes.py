@@ -830,6 +830,13 @@ class product_attributes(osv.osv):
         """
         return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
+
+        res['heat_sensitive_item'] = self._get_default_sensitive_item(cr, uid, context=context)
+
+        return res
+
     _defaults = {
         'closed_article': 'no',
         'duplicate_ok': True,
@@ -844,7 +851,6 @@ class product_attributes(osv.osv):
         'sterilized': 'no',
         'single_use': 'no',
         'standard_ok': 'False',
-        'heat_sensitive_item': _get_default_sensitive_item,
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
