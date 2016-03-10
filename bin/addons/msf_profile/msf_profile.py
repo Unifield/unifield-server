@@ -308,10 +308,13 @@ class patch_scripts(osv.osv):
         :return: True
         """
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        while instance.level != 'section':
-            instance = instance.parent_id
+        if instance:
+            while instance.level != 'section':
+                if not instance.parent_id:
+                    break
+                instance = instance.parent_id
 
-        if instance.name != 'OCBHQ':
+        if instance and instance.name != 'OCBHQ':
             cr.execute("""
                 UPDATE product_template
                 SET volume_updated = True
