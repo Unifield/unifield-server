@@ -116,6 +116,7 @@ if DELETE_INACTIVE_RULES:
 
 if COMPACT_UPDATE:
     intermediate_time = time.time()
+    down_direction_count = 0
     # create a dict of the entity branch id
     # the highest parent will be considered as branch id (ie. OCBHQ id)
     sync_server_entity = oerp.get('sync.server.entity')
@@ -213,9 +214,21 @@ if COMPACT_UPDATE:
 
                     # replace the content of the previous update with the current
                     items = filter(lambda x: x[0] not in ['session_id', 'id', 'sdref',
-                                                          'rule_id', 'source', 'sequence',
+                                                          'rule_id', 'sequence',
                                                           'create_date', 'write_uid',
                                                           'create_uid'], list(row.iteritems()))
+                    # if sources are different and direction of the rule is
+                    # down, it is required to keep this updates
+                    if previous_values['source'] != current_values['source']:
+                        rule = oerp.browse('sync_server.sync_rule', row['rule_id'])
+                        if rule.direction in ('down', 'bi-private'):
+                            down_direction_count += 1
+                            print '%s : Down direction, keep the update (rule #%s)' \
+                                    % (down_direction_count, rule.sequence_number)
+                            continue
+                        else:
+                            # set the highest parent as source
+                            items.append(('source', entity_branch_name[row['source']]))
 
                     fields_to_set = map(lambda x: x[0], items)
                     values_to_set = map(lambda x: x[1], items)
