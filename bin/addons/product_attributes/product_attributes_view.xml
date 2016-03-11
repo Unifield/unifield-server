@@ -369,7 +369,7 @@
             <field name="arch" type="xml">
                 <page string="Specific info" position="before">
                     <page string="Dates">
-                        <field name="life_time" />
+                        <field name="life_time" attrs="{'required': [('short_shelf_life', '=', 'True')]}" />
                         <field name="short_shelf_life" />
                         <field name="use_time" />
                         <field name="alert_time" />
