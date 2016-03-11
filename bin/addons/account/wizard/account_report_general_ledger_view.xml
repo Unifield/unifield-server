@@ -26,7 +26,7 @@
                 <field name="account_type" />
                 <field name="unreconciled" />
                 <newline/>
-                <field name="instance_ids">
+                <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
                         <field name="code" />
                         <field name="name" />
