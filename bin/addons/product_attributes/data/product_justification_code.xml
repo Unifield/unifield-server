@@ -80,7 +80,7 @@
         </record>
         <record id="justification_code_jsp" model="product.justification.code">
             <field name="code">SP</field>
-            <field name="description">Second Choice &amp; specific programme. The article must only be used if the first choice</field>
+            <field name="description">Second Choice &amp; specific programme. The article must only be used if the first choice. is not available or cannot be used in a specific context. The article must be used only in a properly designed programme.</field>
         </record>
         
     </data>
