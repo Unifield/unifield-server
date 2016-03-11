@@ -273,6 +273,13 @@ class patch_scripts(osv.osv):
                 with open(file_path, 'w') as file:
                         file.writelines(lines)
 
+    def uftp_144_patch(self, cr, uid, *a, **b):
+        """
+        Sorting Fix in AJI: ref and partner_txt mustn't be empty strings
+        """
+        cr.execute("UPDATE account_analytic_line SET ref=NULL WHERE ref='';")
+        cr.execute("UPDATE account_analytic_line SET partner_txt=NULL WHERE partner_txt='';")
+
     def disable_crondoall(self, cr, uid, *a, **b):
         cron_obj = self.pool.get('ir.cron')
         cron_ids = cron_obj.search(cr, uid, [('doall', '=', True), ('active', 'in', ['t', 'f'])])
