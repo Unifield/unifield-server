@@ -2300,10 +2300,11 @@ msgstr "Portugese (BR) / Português (BR)"
 msgid "Select this if you want to keep track of creation on any record of the object of this rule"
 msgstr "Sélectionner si vous voulez suivre la création de tout enregistrement au sujet de cette règle"
 
-#. modules: object_query, purchase_allocation_report, tender_flow, documents_done
+#. modules: object_query, purchase_allocation_report, tender_flow, documents_done, sale
 #: field:documents.done.wizard,requestor:0
 #: field:object.query,user_id:0
 #: report:po.line.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:tender,creator:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:501
 msgid "Creator"
@@ -2866,8 +2867,9 @@ msgstr "Vous ne pouvez ajouter aucun nouveau mouvement tout en validant le prél
 msgid "Subscription Compute"
 msgstr "Calcul de l'Abonnement"
 
-#. modules: purchase_allocation_report, service_purchasing, purchase_followup, stock
+#. modules: purchase_allocation_report, service_purchasing, purchase_followup, stock, sale
 #: report:po.line.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.followup,categ:0
 #: view:stock.picking:0
 #: field:stock.picking,order_category:0
@@ -4842,10 +4844,11 @@ msgstr "Importer des Lignes dans un catalogue"
 msgid "Analytic account"
 msgstr "Compte Analytique"
 
-#. module: purchase_allocation_report
+#. modules: purchase_allocation_report, sale
 #: model:ir.actions.report.xml,name:purchase_allocation_report.po_line_allocation_report
 #: model:ir.actions.report.xml,name:purchase_allocation_report.purchase_order_allocation_report
 #: model:ir.actions.server,name:purchase_allocation_report.action_from_purchase_order_allocation_report
+#: model:ir.actions.report.xml,name:sale.sale_order_allocation_report
 msgid "Allocation report"
 msgstr "Allocation - Rapport"
 
@@ -9310,6 +9313,7 @@ msgstr "Europe/Riga"
 #: view:purchase.order:0
 #: view:purchase.report:0
 #: report:po.line.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.followup,priority:0
 #: selection:purchase.order.followup,priority:0
 #: field:purchase.order,priority:0
@@ -9800,11 +9804,12 @@ msgstr "Sélectionner Bon de Commande"
 msgid "When doing real-time inventory valuation, counterpart Journal Items for all incoming stock moves will be posted in this account. If not set on the product, the one from the product category is used."
 msgstr "Lors de la valorisation en temps réel de l'inventaire, des lignes d'écritures du Journal de la contrepartie correspondantes à tous les mouvements d'entrée stock seront comptabilisées sous ce compte. Si la valorisation n'est pas établie sur le produit, alors celle de la catégorie du produit sera utilisée.  "
 
-#. modules: msf_doc_import, msf_partner, tender_flow
+#. modules: msf_doc_import, msf_partner, tender_flow, sale
 #: field:wizard.import.fo.line,fo_id:0
 #: field:wizard.import.ir.line,fo_id:0
 #: model:ir.actions.act_window,name:msf_partner.act_res_partner_2_sale_order
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:509
+#: report:sale.order.allocation.report:0
 msgid "Field Order"
 msgstr "Commande de Terrain"
 
@@ -19752,6 +19757,7 @@ msgstr "Close window"
 #: report:purchase.quotation:0
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,product_qty:0
 #: field:wizard.choose.supplier.line,qty:0
 #: field:purchase.order.followup.line,line_product_qty:0
@@ -26856,6 +26862,7 @@ msgstr "Seulement techniquement pour filtrer les devises d'après le type de par
 #: report:purchase.order:0
 #: field:purchase.order.line,price_unit:0
 #: report:po.line.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: report:purchase.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,unit_price:0
 #: field:wizard.choose.supplier.line,price_unit:0
@@ -27577,9 +27584,10 @@ msgstr "Approvisionnement"
 msgid "If specified, the action will replace the standard menu for this user."
 msgstr "Si spécifiée, l'action remplacera le menu standard pour cet utilisateur."
 
-#. module: purchase_allocation_report
+#. modules: purchase_allocation_report, sale
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,line_number:0
 msgid "O. l."
 msgstr "O. l."
@@ -27670,6 +27678,7 @@ msgstr "Macau"
 #: field:purchase.report,price_total:0
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,subtotal:0
 #: field:purchase.order.merged.line,price_subtotal:0
 #: field:wizard.account.invoice.line,price_subtotal:0
@@ -28466,7 +28475,7 @@ msgstr "Est-ce une zone optionnelle?"
 msgid "Error at import"
 msgstr "Erreur lors de l'import"
 
-#. modules: sales_followup, account, account_payment, documents_done, consumption_calculation, tender_flow, specific_rules, transport_mgmt, purchase_allocation_report, product_list, stock
+#. modules: sales_followup, account, account_payment, documents_done, consumption_calculation, tender_flow, specific_rules, transport_mgmt, purchase_allocation_report, product_list, stock, sale
 #: field:account.move.line,date_created:0
 #: field:account.move.reconcile,create_date:0
 #: field:payment.order,date_created:0
@@ -28476,6 +28485,7 @@ msgstr "Erreur lors de l'import"
 #: view:product.list:0
 #: field:product.list,creation_date:0
 #: report:po.line.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,creation_date:0
 #: field:sale.order.followup,creation_date:0
 #: field:stock.cost.reevaluation,date:0
@@ -29741,6 +29751,7 @@ msgstr "De confirmé à attribué."
 #: view:product.product:0
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,uom_id:0
 #: field:purchase.order.followup.line,line_uom_id:0
 #: field:claim.product.line,uom_id_claim_product_line:0
@@ -36607,9 +36618,10 @@ msgstr "Instance de Destination"
 msgid "Proc - draft"
 msgstr "Approvisionnement- brouillon"
 
-#. module: purchase_allocation_report
+#. modules: purchase_allocation_report, sale
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: report:sale.order.allocation.report:0
 msgid "Source Doc"
 msgstr "Document Source"
 
@@ -39550,7 +39562,7 @@ msgstr "Vous ne pouvez pas reproduire un catalogue car vous ne pouvez pas avoir 
 msgid "Aged Partner Balance"
 msgstr "Balance Agée Partenaire"
 
-#. modules: account_override, account_msf, account, account_mcdb, msf_homere_interface, msf_instance, account_voucher, account_hq_entries, account_corrections, purchase_allocation_report, register_accounting, msf_budget, msf_accrual, account_activable, analytic_distribution
+#. modules: account_override, account_msf, account, account_mcdb, msf_homere_interface, msf_instance, account_voucher, account_hq_entries, account_corrections, purchase_allocation_report, register_accounting, msf_budget, msf_accrual, account_activable, analytic_distribution, sale
 #: view:account.account:0
 #: report:account.account.balance:0
 #: view:account.analytic.line:0
@@ -39603,6 +39615,7 @@ msgstr "Balance Agée Partenaire"
 #: field:account.journal.fake,account_control_ids:0
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,account_id:0
 #: view:account.bank.statement.line:0
 #: field:account.invoice,virtual_account_id:0
@@ -45969,6 +45982,7 @@ msgstr "Tél. :"
 #: view:purchase.order:0
 #: view:purchase.report:0
 #: report:po.line.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.followup,order_type:0
 #: field:purchase.order,order_type:0
 #: view:sale.report:0
@@ -59780,6 +59794,7 @@ msgstr "Error at import"
 #: report:addons/financing_contract/report/project_expenses_xls.mako:461
 #: field:msf.doc.import.accounting.lines,cost_center_id:0
 #: report:po.line.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: report:purchase.order.allocation.report:0
 #: field:wizard.register.import.lines,cost_center_id:0
 #, python-format
@@ -60002,11 +60017,12 @@ msgstr "Asia/Kuwait"
 msgid "The Profit and Loss report gives you an overview of your company profit and loss in a single document"
 msgstr "Le Rapport des Pertes&Profits vous donne un aperçu des bénéfices et des pertes de votre société."
 
-#. modules: msf_budget, purchase_allocation_report, unifield_setup, msf_profile
+#. modules: msf_budget, purchase_allocation_report, unifield_setup, msf_profile, sale
 #: report:msf.pdf.budget.summary:0
 #: model:product.uom,name:msf_profile.uom_percentage
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,percentage:0
 #: view:sale.price.setup:0
 msgid "%"
@@ -60832,6 +60848,7 @@ msgstr "Créer / Ecrire / Copier"
 #: field:purchase.report,product_id:0
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: view:purchase.order.line.allocation.report:0
 #: field:purchase.order.line.allocation.report,product_id:0
 #: field:wizard.choose.supplier,product_id:0
@@ -61431,6 +61448,7 @@ msgstr "Devise d'enregistrement"
 #: field:stock.picking,state:0
 #: field:stock.forecast.line,state:0
 #: report:stock.forecast.report:0
+#: report:sale.order.allocation.report:0
 #: view:stock.move:0
 #: field:sync.client.child_entity,state:0
 #: field:sync.client.entity,state:0
@@ -66285,9 +66303,10 @@ msgstr "La génération du rapport est en cours. Vous pourrez ouvrir ce rapport 
 msgid "Process Event"
 msgstr "Traiter Evénement"
 
-#. modules: procurement, tender_flow, purchase_override, sale_override, purchase_allocation_report
+#. modules: procurement, tender_flow, purchase_override, sale_override, purchase_allocation_report, sale
 #: view:procurement.order:0
 #: report:po.line.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:purchase.order,details:0
 #: field:sale.order,details:0
 #: field:tender,details:0
@@ -68389,6 +68408,7 @@ msgstr "%s: NONE!"
 #: field:purchase.report,pricelist_id:0
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: report:sale.order.allocation.report:0
 #: field:wizard.choose.supplier.line,currency_id:0
 #: field:account.invoice,virtual_currency_id:0
 #: field:wizard.account.invoice,currency_id:0
@@ -71321,6 +71341,7 @@ msgstr "Configurer Vos Applications des Ressources Humaines"
 #: field:res.partner.address,is_customer_add:0
 #: model:stock.location,name:msf_config_locations.stock_location_internal_customers_view
 #: report:picking.ticket:0
+#: report:sale.order.allocation.report:0
 #: field:shipment,partner_id:0
 #: field:shipment,partner_id2:0
 #: field:shipment.wizard,partner_id:0
@@ -73512,6 +73533,16 @@ msgstr "Preparé par"
 #: report:pl.account:0
 msgid "Profit And Loss"
 msgstr "Compte de Résultat"
+
+#. module: sale
+#: report:sale.order.allocation.report:0
+msgid "Destination"
+msgstr "Destination"
+
+#. module: sale
+#: report:sale.order.allocation.report:0
+msgid "FIELD ORDER LINES ALLOCATION REPORT"
+msgstr "RAPPORT D'ALLOCATION DE LA CDT"
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/wizard/hq_entries_split.py:127
