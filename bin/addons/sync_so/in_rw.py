@@ -110,6 +110,31 @@ class stock_picking(osv.osv):
         message = "The IN " + pick_name + " has been now updated and sent to shipped available."
         self._logger.info(message)
         return message
+
+    def usb_cancel_int(self, cr, uid, source, int_info, context=None):
+        if context is None:
+            context = {}
+
+        pick_dict = int_info.to_dict()
+        pick_name = pick_dict['name']
+
+        self._logger.info("+++ RW: Cancel the Internal Picking: %s from %s to %s" % (pick_name, source, cr.dbname))
+
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.REMOTE_WAREHOUSE:
+            existing_pick = self.search(cr, uid, [('name', '=', pick_name), ('type', '=', 'internal'), ('state', '!=', 'done')], context=context)
+            if not existing_pick:
+                message = "Sorry, the INT: " + pick_name + " does not exist in " + cr.dbname
+                self._logger.info(message)
+                raise Exception, message
+
+            self.action_cancel(cr, uid,existing_pick, context=context)
+            message = "Cancelled successfully the Internal Picking: " + pick_name
+        else:
+            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+
+        self._logger.info(message)
+        return message
     
     def usb_cancel_in(self, cr, uid, source, in_info, context=None):
         if context is None:
