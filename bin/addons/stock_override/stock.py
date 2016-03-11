@@ -1541,12 +1541,13 @@ class stock_move(osv.osv):
             vals['date'] = vals.get('date_expected')
 
         if vals.get('location_dest_id', False):
-            loc_dest_id = location_obj.browse(cr, uid, vals['location_dest_id'], context=context)
-            if not loc_dest_id.virtual_location:
-                if loc_dest_id.scrap_location:
-                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-                elif loc_dest_id.usage == 'inventory':
-                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            if not vals.get('reason_type_id', False):
+                loc_dest_id = location_obj.browse(cr, uid, vals['location_dest_id'], context=context)
+                if not loc_dest_id.virtual_location:
+                    if loc_dest_id.scrap_location:
+                        vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+                    elif loc_dest_id.usage == 'inventory':
+                        vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
             # If the source location and teh destination location are the same, the state should be 'Closed'
             if vals.get('location_id', False) == vals.get('location_dest_id', False):
