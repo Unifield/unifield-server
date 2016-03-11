@@ -1100,6 +1100,9 @@ class product_attributes(osv.osv):
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)
 
+        if 'heat_sensitive_item' in vals:
+            vals.update(self.onchange_heat(cr, uid, ids, vals['heat_sensitive_item'], context=context).get('value', {}))
+
         if context.get('sync_update_execution') and not context.get('bypass_sync_update', False):
             stopped_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1]
             phase_out_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_2')[1]
@@ -1507,6 +1510,9 @@ class product_attributes(osv.osv):
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
                 vals['controlled_substance'] = 'True'
+
+        if 'heat_sensitive_item' in vals:
+            vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
         res = super(product_attributes, self).create(cr, user, vals,
                                                      context=context)
