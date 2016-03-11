@@ -499,7 +499,7 @@ class account_commitment_line(osv.osv):
             if distrib_id:
                 analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
-                ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or ''
+                ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or False
                 self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], cl.commit_id and cl.commit_id.name or 'Commitment voucher line', cl.commit_id.date, amount,
                     cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, cl.commit_id and cl.commit_id.date or False,
                     ref, cl.commit_id.date, account_id or cl.account_id.id, move_id=False, invoice_line_id=False, commitment_line_id=cl.id, context=context)

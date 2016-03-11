@@ -80,7 +80,7 @@
                     <field name="functional_currency_id"/>
                     <field name="output_amount"/>
                     <field name="output_currency"/>
-                    <field name="reversal_origin"/>
+                    <field name="reversal_origin_txt"/>
                     <field name="user_id" invisible="1"/>
                 </tree>
             </field>
