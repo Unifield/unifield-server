@@ -35,27 +35,38 @@ class bank_reconciliation(report_sxw.rml_parse):
         })
 
     def get_amount_pending_cheque(self, obj):
+        '''
+        Returns the amount of unreconciled cheques linked to the Bank journal selected
+        and for the same period and the previous ones
+        '''
         amount = 0
         aj_obj = self.pool.get('account.journal')
         abs_obj = self.pool.get('account.bank.statement')
 
         aj_args = [
             ('type', '=', 'cheque'),
-            ('instance_id', '=', obj.journal_id.instance_id.id)
+            ('bank_journal_id', '=', obj.journal_id.id)
         ]
         aj_ids = aj_obj.search(self.cr, self.uid, aj_args, context=self.context)
+        account_ids = []
+        for journal in aj_obj.browse(self.cr, self.uid, aj_ids, context=self.context):
+            account_ids += [journal.default_debit_account_id.id, journal.default_credit_account_id.id]
 
+        period_ids = self.pool.get('account.period').\
+            search(self.cr, self.uid, [('date_start', '<=', obj.period_id.date_start)])
         abs_args = [
-            ('period_id', '=', obj.period_id.id),
+            ('period_id', 'in', period_ids),
             ('journal_id', 'in', aj_ids),
-            ('currency', '=', obj.currency),
         ]
+
         ids = abs_obj.search(self.cr, self.uid, abs_args, context=self.context)
-        for id in ids:
-            chk = abs_obj.browse(self.cr, self.uid, id, context=self.context)
-            for line in chk.line_ids:
-                amount += line.amount_out
-                amount -= line.amount_in
+
+        amvl_obj = self.pool.get('account.move.line')
+        amvl_ids = amvl_obj.search(self.cr, self.uid, [('statement_id', 'in', ids), ('is_reconciled', '=', False),
+                                                       ('account_id', 'in', account_ids)], context=self.context)
+        for line in amvl_obj.read(self.cr, self.uid, amvl_ids, ['debit', 'credit'], context=self.context):
+            amount += line['credit']
+            amount -= line['debit']
         return amount
 
     def get_now(self, show_datetime=False):
