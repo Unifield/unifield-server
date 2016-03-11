@@ -137,7 +137,7 @@
 		</record>
 		<record model="product.cold_chain" id="cold_6">
 			<field name="code">*B</field>
-			<field name="name">*B - Problem if B, C and/or D blue</field>
+			<field name="name">*B - Problem if B, C and/or D blue = ALARM</field>
 		</record>
 		<record model="product.cold_chain" id="cold_7">
 			<field name="code">*BF</field>
