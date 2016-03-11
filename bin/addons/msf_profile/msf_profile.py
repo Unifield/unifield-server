@@ -343,13 +343,20 @@ class patch_scripts(osv.osv):
         data_obj = self.pool.get('ir.model.data')
 
         heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
+        no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
         phs_ids = phs_obj.search(cr, uid, [('active', '=', False)])
         prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', 'in', phs_ids)])
         if prd_ids:
-            prd_obj.write(cr, uid, prd_ids, {
-                'heat_sensitive_item': heat_id,
-            })
+            cr.execute("""
+                UPDATE product_product SET heat_sensitive_item = %s WHERE id IN %s
+            """, (heat_id, tuple(prd_ids),))
+
+        no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False)])
+        if no_prd_ids:
+            cr.execute("""
+                UPDATE product_product SET heat_sensitive_item = %s WHERE id IN %s
+            """, (no_heat_id, tuple(no_prd_ids),))
 
         return True
 
