@@ -300,11 +300,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         res = []
         currency_obj = self.pool.get('res.currency')
         account_obj = self.pool.get('account.account')
-
-        # force the context to financial_report=True
-        # this make possible not to consider the accounts that are marked (or
-        # their parents) as display_in_reports=False
-        context = {'financial_report': True}
+        context = {}
         ids_acc = account_obj._get_children_and_consol(self.cr,
                 self.uid, account.id, context=context)
         currency = account.currency_id and account.currency_id or account.company_id.currency_id
