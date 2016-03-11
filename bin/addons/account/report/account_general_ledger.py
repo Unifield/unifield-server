@@ -144,6 +144,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self._drill = self.pool.get("account.drill").build_tree(self.cr,
             self.uid, query, query_ib, move_states=move_states,
             include_accounts=self.account_ids,
+            account_report_types=self.account_report_types,
             context=used_context)
 
         return res

@@ -74,7 +74,9 @@ class AccountDrill(object):
         JOIN account_move am ON (am.id = l.move_id)
         JOIN res_currency c ON (c.id = l.currency_id)
         JOIN account_journal j on (l.journal_id=j.id)
-        WHERE (l.account_id = %s){query}
+        JOIN account_account a on (a.id=l.account_id)
+        JOIN account_account_type at on (at.id=a.user_type)
+        WHERE (l.account_id = %s){options}{query}
         GROUP BY l.currency_id'''
     # WHERE (l.account_id = %s) AND (am.state IN %s){query}
 
@@ -90,7 +92,7 @@ class AccountDrill(object):
         GROUP BY l.currency_id'''
 
     def __init__(self, pool, cr, uid, query, query_ib, move_states=[],
-        include_accounts=False, context=None):
+        include_accounts=False, account_report_types=False, context=None):
         super(AccountDrill, self).__init__()
         self.pool = pool
         self.cr = cr
@@ -100,8 +102,22 @@ class AccountDrill(object):
             self.context = {}
         self.model = self.pool.get('account.account')
 
+        if account_report_types:
+            report_types = [ "'%s'" % (rt, ) for rt in account_report_types ]
+            options = " AND (at.report_type in (%s)" % (
+                ','.join(report_types), )
+            if 'asset' in account_report_types \
+                or 'liability' in account_report_types:
+                # US-227 include tax account for BS accounts selection
+                options += " OR at.code = 'tax'"
+            options += ')'
+        else:
+            options = ''
+        self.sql = self._sql.replace('{options}', options)
+
         self.query = query or ''
         self.query_ib = query_ib or ''
+
         self.move_states = move_states
         if not self.move_states:
             self.move_states = [ 'draft', 'posted', ]
@@ -237,7 +253,7 @@ class AccountDrill(object):
             # breakdown func/booking per ccy
             
             # regular query
-            sql = prepare_sql(self._sql, self.query, node)
+            sql = prepare_sql(self.sql, self.query, node)
             self.cr.execute(sql, (account_id, tuple(self.move_states), ))
             register_sql_result(self.cr, node)
                 
@@ -272,16 +288,22 @@ class account_drill(osv.osv):
     _auto = False
 
     def build_tree(self, cr, uid, query, query_ib, move_states=[],
-        include_accounts=False, context=None):
+        include_accounts=False, account_report_types=False, context=None):
         """
         build account amounts consolidated tree
         using query for where clause for regular move lines
         and query_ib for initial balance
         (pass it False if no ib to compute => no 01/01/FY in date selection)
+        :param include_accounts: account explicit filter (ids list)
+        :type include_accounts: list/False
+        :param account_report_types: report type list between
+            'income', 'expense', 'asset', 'liability'
+        :type account_report_types: list/False
         """
         ac = AccountDrill(self.pool, cr, uid, query, query_ib,
             move_states=move_states,
             include_accounts=include_accounts,
+            account_report_types=account_report_types,
             context=context)
         ac.map()
         ac.reduce()
