@@ -52,7 +52,11 @@ class account_cash_statement(osv.osv):
                 for line in statement.starting_details_ids:
                     amount_total+= line.pieces * line.number
             else:
-                amount_total = statement.prev_reg_id.msf_calculated_balance
+                if context and context.get('from_open'):
+                    # US-948 carry other cashbox balance at open register
+                    amount_total = statement.prev_reg_id.balance_end_cash
+                else:
+                    amount_total = statement.prev_reg_id.msf_calculated_balance
 
             res[statement.id] = {
                 'balance_start': amount_total
@@ -96,12 +100,15 @@ class account_cash_statement(osv.osv):
 
         # @@@end
         # Observe register state
+        prev_reg = False
         prev_reg_id = vals.get('prev_reg_id', False)
         if prev_reg_id:
             prev_reg = self.browse(cr, uid, [prev_reg_id], context=context)[0]
             # if previous register closing balance is freezed, then retrieving previous closing balance
             # US_410: retrieving previous closing balance even closing balance is not freezed
             # if prev_reg.closing_balance_frozen:
+            # US-948: carry over for bank, and always carry over bank
+            # accountant manual field
             if journal.type == 'bank':
                 vals.update({'balance_start': prev_reg.balance_end_real})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
@@ -116,24 +123,42 @@ class account_cash_statement(osv.osv):
         if context is None:
             context = {}
 
-        if not context.get('sync_update_execution') and vals.get('balance_end_real', False):
-            new_vals = {'balance_start': vals['balance_end_real']}
-            to_write_id_list = []
-            for id in ids:
-                args = [('prev_reg_id', '=', id)]
-                search_ids = self.search(cr, uid, args, context=context)
-                to_write_id_list.extend(search_ids)
-            self.write(cr, uid, to_write_id_list, new_vals, context=context)
+        if not context.get('sync_update_execution'):
+            if 'balance_end_real' in vals:
+                new_vals = {'balance_start': vals['balance_end_real']}
+                # US-948/2: carry over end of month balance to next registers if
+                # the source register is not 'end of month balance' frozen
+                # note: the last carry over is processed via
+                # 'button_confirm_closing_bank_balance' button
+                to_write_id_list = []
+                for r in self.read(cr, uid, ids,
+                    [ 'closing_balance_frozen', 'journal_id', ],
+                    context=context):
+                    if not r['closing_balance_frozen']:
+                        if r['journal_id']:
+                            jtype = self.pool.get('account.journal').read(cr,
+                                uid, [r['journal_id'][0]],
+                                context=context)[0]['type']
+                            if jtype != 'cash':
+                                args = [('prev_reg_id', '=', r['id'])]
+                                search_ids = self.search(cr, uid, args,
+                                    context=context)
+                                if search_ids:
+                                    to_write_id_list.extend(search_ids)
+                self.write(cr, uid, to_write_id_list, new_vals, context=context)
 
-        return super(account_cash_statement, self).write(cr, uid, ids, vals, context=context)
+        return super(account_cash_statement, self).write(cr, uid, ids, vals,
+            context=context)
 
     def button_open_cash(self, cr, uid, ids, context=None):
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids] # Calculate the starting balance
 
-        res = self._get_starting_balance(cr, uid, ids)
+        context['from_open'] = True
+        res = self._get_starting_balance(cr, uid, ids, context=context)
+        del context['from_open']
         for rs in res:
             self.write(cr, uid, [rs], res.get(rs)) # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
             register = self.browse(cr, uid, [rs], context=context)[0]

@@ -536,6 +536,7 @@
                     <field name="line_completed" />
                     <field name="prepare_picking" />
                     <field name="sourcing_completed" />
+                    <field name="to_po_progress" />
                     <field name="sourcing_start" />
                     <field name="sourcing_stop" />
                     <field name="sourcing" />

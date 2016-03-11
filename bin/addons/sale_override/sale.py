@@ -191,7 +191,7 @@ class sale_order_sourcing_progress(osv.osv):
         order_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
         src_doc_obj = self.pool.get('procurement.request.sourcing.document')
-        to_po_obj = self.pool.get('sale.po.creation.progress.mem')
+        to_po_obj = self.pool.get('sale.order.po.creation.progress.mem')
 
         if context is None:
             context = {}
@@ -222,17 +222,19 @@ class sale_order_sourcing_progress(osv.osv):
             ('order_id', 'in', order_ids),
         ], count=True, order='NO_ORDER', context=context)
 
-        # Get number of sourced lines by type (MTS or MTO) 
-        cr.execute('''
-            SELECT count(*) AS nb_line, sol.type AS type
-            FROM sale_order_line sol
-                LEFT JOIN sale_line_sourcing_doc_rel slsdr
-                ON slsdr.sale_line_id = sol.id
-            WHERE
-                slsdr.document_id IN %s
-            GROUP BY sol.type
-        ''', (tuple(src_doc_ids),))
-        res = cr.dictfetchall()
+        # Get number of sourced lines by type (MTS or MTO)
+        res = []
+        if src_doc_ids:
+            cr.execute('''
+                SELECT count(*) AS nb_line, sol.type AS type
+                FROM sale_order_line sol
+                    LEFT JOIN sale_line_sourcing_doc_rel slsdr
+                    ON slsdr.sale_line_id = sol.id
+                WHERE
+                    slsdr.document_id IN %s
+                GROUP BY sol.type
+            ''', (tuple(src_doc_ids),))
+            res = cr.dictfetchall()
         mem_fsl_nb = 0
         mem_ool_nb = 0
         for r in res:
@@ -258,13 +260,14 @@ class sale_order_sourcing_progress(osv.osv):
             on_stock_nb_lines, on_order_nb_lines = self._get_nb_lines_by_type(cr, uid, order_id, context=context)
             fsl_nb += on_stock_nb_lines
             ool_nb += on_order_nb_lines
-            to_po_ids = to_po_obj.search(cr, uid, [('order_id', '=', order_id)], context=context)
-            for to_po in to_po_obj.read(cr, uid, to_po_ids, ['nb_lines'], context=context):
-                to_po_lines += to_po['nb_lines']
+
+        to_po_ids = to_po_obj.search(cr, uid, [('order_id', 'in', order_ids)], context=context)
+        for to_po in to_po_obj.read(cr, uid, to_po_ids, ['nb_lines'], context=context):
+            to_po_lines += to_po['nb_lines']
 
         mem_res = {
             'line_from_stock_completed': mem_fsl_nb,
-            'line_on_order_completed': mem_ool_nb,
+            'line_on_order_completed': to_po_lines,
         }
 
         sourcing_ok = fsl_nb + ool_nb >= nb_all_lines
@@ -275,7 +278,6 @@ class sale_order_sourcing_progress(osv.osv):
             'sourcing_completed': sourcing_completed,
             'sourcing_start': min_date,
             'sourcing_stop': sourcing_ok and max_date or False,
-            'to_po_progress': '%s/%s' % (to_po_lines, ool_nb),
         }
 
 
@@ -337,7 +339,6 @@ class sale_order_sourcing_progress(osv.osv):
                         'split_order': _('Error'),
                         'check_data': _('Error'),
                         'prepare_picking': _('An error occurred during the sourcing '), #UFTP-367 Use a general error message
-                        'to_po_progress': _('Not started'),
                     }
                 else:
                     res[sp.id] = {
@@ -345,7 +346,6 @@ class sale_order_sourcing_progress(osv.osv):
                         'split_order': _('Not started'),
                         'check_data': _('Not started'),
                         'prepare_picking': _('Not started'),
-                        'to_po_progress': _('Not started'),
                     }
             elif (sp.order_id.state_hidden_sale_order in 'split_so' or \
                  (sp.order_id.procurement_request and sp.order_id.state in ('manual', 'progress'))):
@@ -358,7 +358,6 @@ class sale_order_sourcing_progress(osv.osv):
                     'split_order': _('Done (%s/%s)') % (nb_lines, nb_lines),
                     'check_data': _('Done'),
                     'prepare_picking': _('Done'),
-                    'to_po_progress': _('Not started'),
                 }
                 res[sp.id].update(self._compute_sourcing_value(cr, uid, sp.order_id, context=context))
 
@@ -449,15 +448,6 @@ class sale_order_sourcing_progress(osv.osv):
             store=False,
             multi='memory',
         ),
-        'to_po_progress': fields.function(
-            _get_percent,
-            method=True,
-            type='text',
-            string='PO creation status',
-            readonly=True,
-            store=False,
-            multi='memory',
-        ),
         'start_date': fields.datetime(
             string='Start date',
             readonly=True,
@@ -477,7 +467,6 @@ class sale_order_sourcing_progress(osv.osv):
         'check_data': '/',
         'prepare_picking': '/',
         'sourcing': '/',
-        'to_po_progress': '/',
         'end_date': False,
         'sourcing_start': False,
         'sourcing_stop': False,
@@ -563,12 +552,13 @@ class sale_order_po_creation_progress_mem(osv.osv_memory):
         if sol_ids:
             order_ids = sol_obj.read(cr, uid, sol_ids, ['order_id'], context=context)
 
-        for order_id in order_ids:
+        for o in order_ids:
+            order_id = o['order_id'][0]
             mem_ids = self.search(cr, uid, [('order_id', '=', order_id)], context=context)
             if mem_ids:
                 for mem_id in mem_ids:
-                    self.write(cr, uid, {
-                        'nb_lines': self.read(cr, uid, mem_id, ['nb_lines'], context=context) + 1,
+                    self.write(cr, uid, [mem_id], {
+                        'nb_lines': self.read(cr, uid, mem_id, ['nb_lines'], context=context)['nb_lines'] + 1,
                     }, context=context)
             else:
                 mem_ids = [self.create(cr, uid, {

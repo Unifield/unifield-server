@@ -36,7 +36,7 @@ class purchase_order(osv.osv):
     _inherit = 'purchase.order'
 
     _columns = {
-        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select=1),
         'commitment_ids': fields.one2many('account.commitment', 'purchase_id', string="Commitment Vouchers", readonly=True),
     }
 

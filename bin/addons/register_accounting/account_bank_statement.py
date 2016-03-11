@@ -423,7 +423,7 @@ class account_bank_statement(osv.osv):
         """
         Confirm that the closing balance could not be editable.
         """
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
