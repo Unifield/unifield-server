@@ -32,6 +32,9 @@ from tools.translate import _
 from threading import Lock
 import logging
 
+
+
+
 class procurement_order(osv.osv):
     _inherit = 'procurement.order'
     
@@ -108,6 +111,9 @@ class procurement_order(osv.osv):
                         report_except += 1
                     elif proc.purchase_id:
                         purchase_ids.append(proc.id)
+
+                    if proc.state == 'running':
+                        self.pool.get('sale.po.creation.progress.mem').add_or_create_progress_mem(cr, uid, procurement_id, context=context)
                     report_total += 1
                 if use_new_cursor:
                     cr.commit()
