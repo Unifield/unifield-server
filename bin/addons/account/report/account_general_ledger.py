@@ -76,7 +76,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.show_move_lines = False
                 self.title = _('Trial Balance')
 
-        self.account_ids = self._get_data_form(data, 'account_ids')
+        self.account_ids = self._get_data_form(data, 'account_ids') or []
 
         # US-334/6: Only account 10100 and 10200 must never be displayed in \
         # details when you tick "Unreconciled" because they are the only \
@@ -90,6 +90,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 ], context=self.context)
         else:
             self.unreconciliable_accounts = []
+        if self.unreconciliable_accounts:
+            self.account_ids += self.unreconciliable_accounts
 
         self.context['state'] = data['form']['target_move']
 
@@ -141,9 +143,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             else [ 'draft', 'posted', ]
         self._drill = self.pool.get("account.drill").build_tree(self.cr,
             self.uid, query, query_ib, move_states=move_states,
+            include_accounts=self.account_ids,
             context=used_context)
 
-        
         return res
 
     def __init__(self, cr, uid, name, context=None):
@@ -300,9 +302,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         ids_acc = self.pool.get('account.account')._get_children_and_consol(self.cr, self.uid, account.id)
         currency = account.currency_id and account.currency_id or account.company_id.currency_id
         for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
-            if child_account.code.startswith('8') or child_account.code.startswith('9'):
-                # UF-1714: exclude accounts '8*'/'9*'
-                continue
             if self.account_report_types:
                 # filter by B/S P&L report type
                 if child_account.user_type \
@@ -310,13 +309,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     and child_account.user_type.report_type \
                         not in self.account_report_types:
                     continue
-            if self.unreconciled_filter:
-                if child_account.id in self.unreconciliable_accounts:
-                    # unreconciliable filter:
-                    # do not display unreconciliable account
-                    continue
-            if self.account_ids and child_account.id not in self.account_ids:
-                    continue  # filtered account
 
             sql = """
                 SELECT count(id)

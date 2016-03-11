@@ -90,7 +90,7 @@ class AccountDrill(object):
         GROUP BY l.currency_id'''
 
     def __init__(self, pool, cr, uid, query, query_ib, move_states=[],
-        exclude_parents_ids=[], context=None):
+        include_accounts=False, context=None):
         super(AccountDrill, self).__init__()
         self.pool = pool
         self.cr = cr
@@ -105,7 +105,7 @@ class AccountDrill(object):
         self.move_states = move_states
         if not self.move_states:
             self.move_states = [ 'draft', 'posted', ]
-        self.exclude_parents_ids = exclude_parents_ids
+        self.include_accounts = include_accounts
 
         self.root = None
         self.nodes_flat = []
@@ -168,14 +168,14 @@ class AccountDrill(object):
     def _map_dive(self, parent, level):
         if level > self._move_level:
             return
-        if not self.exclude_parents_ids \
-            or parent.account_id not in self.exclude_parents_ids:
-            child_ids = self._search([
-                ('parent_id', '=', parent.account_id),
-                ('level', '=', level),
-            ])
-            if child_ids:
-                for id in child_ids:
+
+        child_ids = self._search([
+            ('parent_id', '=', parent.account_id),
+            ('level', '=', level),
+        ])
+        if child_ids:
+            for id in child_ids:
+                if not self.include_accounts or id in self.include_accounts:
                     node = self._create_node(parent=parent, level=level,
                         account_id=id)
                     self._map_dive(node, level + 1)
@@ -272,7 +272,7 @@ class account_drill(osv.osv):
     _auto = False
 
     def build_tree(self, cr, uid, query, query_ib, move_states=[],
-        exclude_parents_ids=False, context=None):
+        include_accounts=False, context=None):
         """
         build account amounts consolidated tree
         using query for where clause for regular move lines
@@ -280,7 +280,8 @@ class account_drill(osv.osv):
         (pass it False if no ib to compute => no 01/01/FY in date selection)
         """
         ac = AccountDrill(self.pool, cr, uid, query, query_ib,
-            move_states=move_states, exclude_parents_ids=exclude_parents_ids,
+            move_states=move_states,
+            include_accounts=include_accounts,
             context=context)
         ac.map()
         ac.reduce()
