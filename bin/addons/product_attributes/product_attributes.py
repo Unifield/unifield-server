@@ -666,7 +666,7 @@ class product_attributes(osv.osv):
             selection=[
                 ('yes', 'Yes'),
                 ('no', 'No'),
-                ('recommanded', 'Recommanded'),
+                ('recommanded', 'Recommended'),
             ],
             string='Closed Article',
             required=True,
