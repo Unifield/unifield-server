@@ -299,13 +299,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
     def get_children_accounts(self, account, ccy=False):
         res = []
         currency_obj = self.pool.get('res.currency')
-         
-        ids_acc = self.pool.get('account.account')._get_children_and_consol(self.cr, self.uid, account.id)
+        account_obj = self.pool.get('account.account')
+
+        # force the context to financial_report=True
+        # this make possible not to consider the accounts that are marked (or
+        # their parents) as display_in_reports=False
+        context = {'financial_report': True}
+        ids_acc = account_obj._get_children_and_consol(self.cr,
+                self.uid, account.id, context=context)
         currency = account.currency_id and account.currency_id or account.company_id.currency_id
         for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
-            if child_account.code.startswith('8') or child_account.code.startswith('9'):
-                # UF-1714: exclude accounts '8*'/'9*'
-                continue
             if self.account_report_types:
                 # filter by B/S P&L report type
                 if child_account.user_type \
@@ -485,6 +488,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             return self.cr.fetchone()[0] or 0.
 
         if account.type == 'view':
+            account._context.update({'financial_report':True})
             amount = getattr(account, field)
             if not account.parent_id:
                 # MSF CoA root: deduce balance of not displayed accounts
