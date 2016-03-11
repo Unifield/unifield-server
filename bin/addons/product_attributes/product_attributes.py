@@ -1052,12 +1052,11 @@ class product_attributes(osv.osv):
         :param context: Context of the call
         :return: True of False in the 'show_cold_chain' field
         """
-        heat1_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_1')[1]
         heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
         heat3_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no_know')[1]
         return {
             'value': {
-                'show_cold_chain': heat and heat not in [heat1_id, heat2_id, heat3_id]
+                'show_cold_chain': heat and heat not in [heat2_id, heat3_id]
             }
         }
 
