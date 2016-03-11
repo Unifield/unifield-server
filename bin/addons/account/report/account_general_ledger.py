@@ -160,11 +160,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.localcontext.update({
             'time': time,
             'lines': self.lines,
-            'sum_debit_account': self._sum_debit_account,
-            'sum_credit_account': self._sum_credit_account,
-            'sum_balance_account': self._sum_balance_account,
-            'sum_currency_amount_account': self._sum_currency_amount_account,
-            'get_children_accounts': self.get_children_accounts,
             'get_fiscalyear': self._get_fiscalyear,
             'get_journal': self._get_journal,
             'get_journals_str': self._get_journals_str,
@@ -184,8 +179,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances,
             'get_currencies': self.get_currencies,
-            'get_currencies_account_subtotals': \
-                self.get_currencies_account_subtotals,
             'get_display_info': self._get_display_info,
             'get_show_move_lines': self.get_show_move_lines,
             'get_ccy_label': self.get_ccy_label,
@@ -218,18 +211,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             res.append(node)
             node = self._drill.next_node()
         return res
-
-    def _sum_currency_amount_account(self, account):
-        reconcile_pattern = self.unreconciled_filter and \
-            " AND reconcile_id is null" or ''
-
-        sql = 'SELECT sum(l.amount_currency) AS tot_currency \
-            FROM account_move_line l \
-            WHERE l.account_id = %s AND %s' + reconcile_pattern
-        self.cr.execute(sql % (account.id, self.query, ))
-        sum_currency = self.cr.fetchone()[0] or 0.0
-
-        return sum_currency
 
     def _get_journals_str(self, data):
         if 'all_journals' in data['form']:
@@ -271,68 +252,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             res = rc_obj.browse(self.cr, self.uid, ordered_ids)
 
         return res
-
-    def get_currencies_account_subtotals(self, account):
-        ccy_brs = self.get_currencies(account=account, include_with_ib=True)
-        res = []
-
-        if ccy_brs:
-            for ccy in ccy_brs:
-                line = {
-                    'account_code': account and account.code or '',
-                    'ccy_name': ccy.name or ccy.code or '',
-                    'debit': self._sum_debit_account(account, ccy=ccy,
-                        booking=True, is_sub_total=True),
-                    'credit': self._sum_credit_account(account, ccy=ccy,
-                        booking=True, is_sub_total=True),
-                    'bal': self._sum_balance_account(account, ccy=ccy,
-                        booking=True, is_sub_total=True),
-                }
-                # append the line if amount (and compute functional bal)
-                if line['debit'] or line['credit'] or line['bal']:
-                    line['bal_func'] = self._sum_balance_account(account,
-                        ccy=ccy, booking=False, is_sub_total=True),
-                    res.append(line)
-        return res
-
-    def get_children_accounts(self, account, ccy=False):
-        res = []
-        currency_obj = self.pool.get('res.currency')
-         
-        ids_acc = self.pool.get('account.account')._get_children_and_consol(self.cr, self.uid, account.id)
-        currency = account.currency_id and account.currency_id or account.company_id.currency_id
-        for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
-            if self.account_report_types:
-                # filter by B/S P&L report type
-                if child_account.user_type \
-                    and child_account.user_type.report_type \
-                    and child_account.user_type.report_type \
-                        not in self.account_report_types:
-                    continue
-
-            sql = """
-                SELECT count(id)
-                FROM account_move_line AS l
-                WHERE %s AND l.account_id = %%s
-            """ % (self.query)
-            if ccy:
-                sql += " and l.currency_id = %d" % (ccy.id, )
-            self.cr.execute(sql, (child_account.id,))
-            num_entry = self.cr.fetchone()[0] or 0
-            sold_account = self._sum_balance_account(child_account)
-            self.sold_accounts[child_account.id] = sold_account
-            if self.display_account == 'bal_movement':
-                if child_account.type != 'view' and num_entry <> 0:
-                    res.append(child_account)
-            elif self.display_account == 'bal_solde':
-                if child_account.type != 'view' and num_entry <> 0:
-                    if not currency_obj.is_zero(self.cr, self.uid, currency, sold_account):
-                        res.append(child_account)
-            else:
-                if not ccy or (ccy and num_entry > 0):
-                    res.append(child_account)
-
-        return res or [account]
 
     def lines(self, account, initial_balance_mode=False):
         res = []
@@ -445,175 +364,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 if l['amount_currency'] != None:
                     self.tot_currency = self.tot_currency + l['amount_currency']
         return res
-
-    def __sum_amount_account_check_view(self, account, field, ccy=False):
-        """
-        :return : (is_view, amount, )
-        """
-        def compute_initial_balance():
-            # drill child accounts entries (always fonctional ccy)
-            aa_obj = self.pool.get('account.account')
-            account_ids = aa_obj._get_children_and_consol(self.cr, self.uid,
-                [account.id])
-            if not account_ids:
-                return 0.
-
-            move_state = [ 'posted', ] if self.target_move == 'posted' \
-                else [ 'draft', 'posted', ]
-            if field == 'balance':
-                sum_expr = '(sum(l.debit) - sum(l.credit))'
-            else:
-                sum_expr = 'sum(l.{field})'.replace('{field}', field)
-            sql = 'SELECT {sum}' \
-                ' FROM account_move_line l' \
-                ' JOIN account_move am ON am.id = l.move_id' \
-                ' LEFT JOIN account_period per ON per.id = l.period_id' \
-                ' WHERE per.number = 0' \
-                ' AND am.state in %s AND l.account_id in %s'
-            sql = sql.replace('{sum}', sum_expr)
-            self.cr.execute(sql, (tuple(move_state), tuple(account_ids), ))
-
-            return self.cr.fetchone()[0] or 0.
-
-        if account.type == 'view':
-            amount = getattr(account, field)
-            if not account.parent_id:
-                # MSF CoA root: deduce balance of not displayed accounts
-                if field in self._deduce_accounts_data:
-                    amount = amount - self._deduce_accounts_data[field]
-            if not ccy and self.init_balance:
-                # all views: include the optional initial balance of IB period 0
-                # entries
-                amount += compute_initial_balance()
-            return True, self._currency_conv(amount)
-
-        return False, 0.
-
-    def __sum_amount_account(self, account, move_state, mode,
-            ccy=False, booking=False, initial_balance=False):
-        if mode == 'debit':
-            field = 'sum(debit{booking})'
-        elif mode == 'credit':
-            field = 'sum(credit{booking})'
-        elif mode == 'balance':
-            field = '(sum(debit{booking}) - sum(credit{booking}))'
-        else:
-            raise osv.except_osv(_('Error'), _('Mode not supported'))
-
-        if ccy:
-            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
-        else:
-            ccy_pattern = ""
-        reconcile_pattern = self.unreconciled_filter and \
-            " AND reconcile_id is null" or ''
-
-        sql = 'SELECT {field} \
-            FROM account_move_line l \
-            JOIN account_move am ON (am.id = l.move_id) \
-            WHERE (l.account_id = %s) \
-            AND (am.state IN %s) \
-            AND ' + self.query + ' ' + ccy_pattern + reconcile_pattern
-        sql = sql.replace('{field}', field).replace(
-            '{booking}', '_currency' if booking else '')
-
-        self.cr.execute(sql, (account.id, tuple(move_state), ))
-        res = self.cr.fetchone()[0] or 0.0
-
-        if initial_balance:
-            # US-822 include inital balance at ccy subtotal line level
-            sql = 'SELECT {field} \
-            FROM account_move_line l \
-            JOIN account_move am ON (am.id = l.move_id) \
-            LEFT JOIN account_period per ON (per.id = l.period_id) \
-            WHERE (l.account_id = %s) and per.number = 0 \
-            AND ' + self.init_query + ' ' + ccy_pattern
-            sql = sql.replace('{field}', field).replace(
-            '{booking}', '_currency' if booking else '')
-            self.cr.execute(sql, (account.id, ))
-            res += self.cr.fetchone()[0] or 0.0
-
-        return res
-
-    def _sum_debit_account(self, account, ccy=False, booking=False,
-        is_sub_total=False):
-        """
-        :param ccy: filter ccy entries
-        :param booking: not applicable for view accounts (used for account total lines
-        by ccy)
-        :param is_sub_total: is a sub total line ? (per ccy)
-        """
-        is_view, amount = self.__sum_amount_account_check_view(account,
-            'debit', ccy=ccy)
-        if is_view:
-            return amount
-
-        move_state = [ 'posted', ] if self.target_move == 'posted' \
-            else [ 'draft', 'posted', ]
-
-        initial_balance = False
-        if self.init_balance:
-            if booking:
-                initial_balance = is_sub_total and ccy or False
-            else:
-                initial_balance = not is_sub_total
-        amount = self.__sum_amount_account(account, move_state, 'debit',
-            ccy=ccy, booking=booking, initial_balance=initial_balance)
-        return self._currency_conv(amount)
-
-    def _sum_credit_account(self, account, ccy=False, booking=False,
-        is_sub_total=False):
-        """
-        :param ccy: filter ccy entries
-        :param booking: not applicable for view accounts (used for account total lines
-        by ccy)
-        :param is_sub_total: is a sub total line ? (per ccy)
-        """
-        is_view, amount = self.__sum_amount_account_check_view(account,
-            'credit', ccy=ccy)
-        if is_view:
-            return amount
-
-        move_state = [ 'posted', ] if self.target_move == 'posted' \
-            else [ 'draft', 'posted', ]
-
-        initial_balance = False
-        if self.init_balance:
-            if booking:
-                initial_balance = is_sub_total and ccy or False
-            else:
-                initial_balance = not is_sub_total
-        amount = self.__sum_amount_account(account, move_state, 'credit',
-            ccy=ccy, booking=booking, initial_balance=initial_balance)
-        return self._currency_conv(amount)
-
-    def _sum_balance_account(self, account, ccy=False, booking=False,
-        is_sub_total=False):
-        """
-        :param ccy: filter ccy entries
-        :param booking: not applicable for view accounts (used for account total lines
-        by ccy)
-        :param is_sub_total: is a sub total line ? (per ccy)
-        """
-        is_view, amount = self.__sum_amount_account_check_view(account,
-            'balance', ccy=ccy)
-        if is_view:
-            return amount
-
-        if ccy:
-            ccy_pattern = " AND l.currency_id = %d" % (ccy.id, )
-        else:
-            ccy_pattern = ""
-
-        move_state = [ 'posted', ] if self.target_move == 'posted' \
-            else [ 'draft', 'posted', ]
-
-        # add initial balance if ticked in wizard and booking subtotal
-        # amount or any functional amount
-        initial_balance = self.init_balance and (
-            (booking and is_sub_total and ccy) or True) or False
-        amount = self.__sum_amount_account(account, move_state, 'balance',
-            ccy=ccy, booking=booking, initial_balance=initial_balance)
-        return self._currency_conv(amount)
 
     def _get_account(self, data):
         if data['model'] == 'account.account':
