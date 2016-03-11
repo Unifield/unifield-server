@@ -47,5 +47,9 @@
             <field name="method">bar_action_patch</field>
         </record>
 
+        <record id="pas_patch" model="patch.scripts">
+            <field name="method">pas_patch</field>
+        </record>
+
     </data>
 </openerp>

@@ -1151,9 +1151,23 @@ You cannot choose this supplier because some destination locations are not avail
             context = {}
         move_obj = self.pool.get('stock.move')
         if not context.get('already_checked'):
-            for pick in self.browse(cr, uid, ids, context=context):
+            cr.execute('''
+                SELECT m.id AS id FROM
+                  stock_move m
+                LEFT JOIN
+                  product_product pp
+                  ON pp.id = m.product_id
+                WHERE pp.perishable = 't'
+                AND m.picking_id in %s
+            ''', (tuple(ids), ))
+            move_ids = [x[0] for x in cr.fetchall()]
+            #move_ids = self.pool.get('stock.move').search(cr, uid, [
+            #    ('product_id.perishable', '=', True),
+            #    ('picking_id', 'in', ids),
+            #], context=context)
+            #for pick in self.browse(cr, uid, ids, context=context):
                 # perishable for perishable or batch management
-                move_obj.fefo_update(cr, uid, [move.id for move in pick.move_lines if move.product_id.perishable], context)  # FEFO
+            move_obj.fefo_update(cr, uid, move_ids, context)  # FEFO
         context['already_checked'] = True
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
 
@@ -1706,14 +1720,15 @@ class stock_move(osv.osv):
 
         loc_obj = self.pool.get('stock.location')
         prodlot_obj = self.pool.get('stock.production.lot')
+        compare_date = context.get('rw_date', False)
+        if compare_date:
+            compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
+        else:
+            today = datetime.today()
+            compare_date = datetime(today.year, today.month, today.day)
+
         for move in self.browse(cr, uid, ids, context):
-            compare_date = context.get('rw_date', False)
             move_unlinked = False
-            if compare_date:
-                compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
-            else:
-                today = datetime.today()
-                compare_date = datetime(today.year, today.month, today.day)
             # FEFO logic
             if move.state == 'assigned' and not move.prodlot_id:  # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
                 needed_qty = move.product_qty
@@ -1784,7 +1799,7 @@ class stock_move(osv.osv):
                             if not self.search(cr, uid, [('move_dest_id', '=',
                                 move.id)], limit=1, order='NO_ORDER', context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
-            elif move.state == 'confirmed':
+            elif move.state == 'confirmed' and move.prodlot_id:
                 # we remove the prodlot_id in case that the move is not available
                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
         return True

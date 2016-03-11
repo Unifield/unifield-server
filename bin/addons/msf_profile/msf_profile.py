@@ -298,6 +298,40 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
+    def pas_patch(self, cr, uid, *a, **b):
+        return
+        location_obj = self.pool.get('stock.location')
+        product_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        pas_obj = self.pool.get('product.stock.availability')
+
+        location_ids = location_obj.search(cr, uid, [('usage', '!=', 'view')])
+        lot_ids = prodlot_obj.search(cr, uid, [])
+        prod_lot_ids = []
+        already_ids = set()
+        for lot in prodlot_obj.search(cr, uid, lot_ids):
+            already_ids.add(lot.product_id.id)
+            prod_lot_ids.append((lot.id, lot.product_id.id))
+        product_ids = product_obj.search(cr, uid, [('id', 'not in', list(already_ids))])
+
+        for loc_id in location_ids:
+            for lot in prod_lot_ids:
+                c = {'location': loc_id, 'prodlot_id': lot[0]}
+                pas_obj.create(cr, uid, {
+                    'location_id': loc_id,
+                    'prodlot_id': lot[0],
+                    'product_id': lot[1],
+                    'quantity': product_obj.browse(cr, uid, lot[1], context=c).qty_available,
+                })
+            for prod_id in product_ids:
+                c = {'location': loc_id}
+                pas_obj.create(cr, uid, {
+                    'location_id': loc_id,
+                    'prodlot_id': False,
+                    'product_id': prod_id,
+                    'quantity': product_obj.browse(cr, uid, prod_id, context=c).qty_available,
+                })
+
 
     def update_us_963_negative_rule_seq(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):
