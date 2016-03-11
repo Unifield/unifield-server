@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
+# -*- coding: utf-8 -*-
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 MSF, TeMPO Consulting
@@ -370,7 +370,7 @@ class supplier_catalogue(osv.osv):
                                    readonly=True, help='Indicate if the catalogue is currently active.'),
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""The file should be in XML Spreadsheet 2003 format. The columns should be in this order :
-                                        Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""),
+                                        Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment."""),
         'data': fields.binary(string='File with errors',),
         'filename': fields.char(string='Lines not imported', size=256),
         'filename_template': fields.char(string='Template', size=256),
@@ -449,7 +449,7 @@ class supplier_catalogue(osv.osv):
         Warning: len(columns_header) == len(lines_not_imported)
         """
         columns_header = [('Product code*', 'string'), ('Product description', 'string'), ('Product UoM*', 'string'),
-                          ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('Rounding', 'number'), ('Min Order Qty', 'number'),
+                          ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('SoQ Rounding', 'number'), ('Min Order Qty', 'number'),
                           ('Comment', 'string')]
         lines_not_imported = [] # list of list
         t_dt = type(now())
@@ -597,7 +597,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[5] and row.cells[5].type in ['int', 'float']:
                         p_rounding = row.cells[5].data
                     else:
-                        error_list_line.append(_('Please, format the line number %s, column "Rounding".') % (line_num,))
+                        error_list_line.append(_('Please, format the line number %s, column "SoQ rounding".') % (line_num,))
 
                 #Product Min Order Qty
                 if not len(row.cells)>=7 or not row.cells[6].data:
@@ -960,7 +960,7 @@ class supplier_catalogue_line(osv.osv):
         'line_uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
                                   help='UoM of the product used to get this unit price.'),
         'unit_price': fields.float(string='Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
-        'rounding': fields.float(digits=(16,2), string='Rounding',
+        'rounding': fields.float(digits=(16,2), string='SoQ rounding',
                                    help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty'),
         'comment': fields.char(size=64, string='Comment'),
