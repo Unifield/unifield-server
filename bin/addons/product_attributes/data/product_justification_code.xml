@@ -52,7 +52,7 @@
         </record>
         <record id="justification_code_jpcme" model="product.justification.code">
             <field name="code">PCME</field>
-            <field name="description">????</field>
+            <field name="description">Article only for a properly designed Programme, it may imply a Medical risk if misused, Expensive.</field>
         </record>
         <record id="justification_code_jpe" model="product.justification.code">
             <field name="code">PE</field>
