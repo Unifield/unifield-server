@@ -98,7 +98,8 @@ class account_account(osv.osv):
             'credit': "COALESCE(SUM(l.credit), 0) as credit"
         }
         #get all the necessary accounts
-        children_and_consolidated = self._get_children_and_consol(cr, uid, ids, context=context)
+        children_and_consolidated = self._get_children_and_consol(cr, uid, ids,
+                context=context)
         #compute for each account the balance/debit/credit from the move lines
         accounts = {}
         sums = {}
@@ -170,12 +171,17 @@ class account_account(osv.osv):
             children_and_consolidated.reverse()
             brs = list(self.browse(cr, uid, children_and_consolidated, context=context))
             currency_obj = self.pool.get('res.currency')
+            is_financial_report = context.get('financial_report', False)
             while brs:
                 current = brs[0]
                 brs.pop(0)
                 for fn in field_names:
                     sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
                     for child in current.child_id:
+                        # in context of report, if the current account is not
+                        # displayed, it should no impact the total amount
+                        if is_financial_report and not child.display_in_reports:
+                            continue
                         if child.company_id.currency_id.id == current.company_id.currency_id.id:
                             sums[current.id][fn] += sums[child.id][fn]
                         else:
@@ -329,12 +335,14 @@ class account_account(osv.osv):
         'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
         'is_intermission_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
         'is_intersection_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intersection counterpart account?'),
+        'display_in_reports': fields.boolean("Display this account in reports", help="Uncheck this attribute if you want an account not to appear in the reports."),
     }
 
     _defaults = {
         'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
+        'display_in_reports': lambda *a: True,
     }
 
     # UTP-493: Add a dash between code and account name

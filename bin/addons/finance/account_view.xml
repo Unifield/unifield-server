@@ -184,6 +184,8 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_type']" position="after">
                     <field name="shrink_entries_for_hq"/>
+                    <field name="level" invisible="1" />
+                    <field name="display_in_reports" attrs="{'invisible': [('level', '!=', '1')]}"  />
                 </xpath>
             </field>
         </record>
