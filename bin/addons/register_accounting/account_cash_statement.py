@@ -113,13 +113,8 @@ class account_cash_statement(osv.osv):
                 vals.update({'balance_start': prev_reg.balance_end_real})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists (or discard if they come from sync)
-        if journal.type == 'cash' and prev_reg_id and not sync_update:
+        if prev_reg_id and not sync_update:
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
-            if prev_reg:
-                # Since US-948: created register IB is previous cashbox balance
-                self.write(cr, uid, [res_id],
-                    {'balance_start': prev_reg.balance_end_cash},
-                    context=context)
         # update balance_end
         self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
@@ -136,13 +131,20 @@ class account_cash_statement(osv.osv):
                 # note: the last carry over is processed via
                 # 'button_confirm_closing_bank_balance' button
                 to_write_id_list = []
-                for r in self.read(cr, uid, ids, ['closing_balance_frozen'],
+                for r in self.read(cr, uid, ids,
+                    [ 'closing_balance_frozen', 'journal_id', ],
                     context=context):
                     if not r['closing_balance_frozen']:
-                        args = [('prev_reg_id', '=', r['id'])]
-                        search_ids = self.search(cr, uid, args, context=context)
-                        if search_ids:
-                            to_write_id_list.extend(search_ids)
+                        if r['journal_id']:
+                            jtype = self.pool.get('account.journal').read(cr,
+                                uid, [r['journal_id'][0]],
+                                context=context)[0]['type']
+                            if jtype != 'cash':
+                                args = [('prev_reg_id', '=', r['id'])]
+                                search_ids = self.search(cr, uid, args,
+                                    context=context)
+                                if search_ids:
+                                    to_write_id_list.extend(search_ids)
                 self.write(cr, uid, to_write_id_list, new_vals, context=context)
 
         return super(account_cash_statement, self).write(cr, uid, ids, vals,
@@ -268,8 +270,7 @@ class account_cash_statement(osv.osv):
         """
         Sum of opening balance (balance_start) and sum of cash transaction (total_entry_encoding)
         """
-        if context is None:
-            context = {}
+        # Prepare some values
         res = {}
         for st in self.browse(cr, uid, ids):
             amount = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
@@ -279,10 +280,7 @@ class account_cash_statement(osv.osv):
                 next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
                 for next_st in self.browse(cr, uid, next_st_ids):
                     if next_st.state != 'confirm':
-                        # US-948: since cash register is not eom bal
-                        # frozen, carry over Cashbox balance
-                        # (when creating next register or updating)
-                        self.write(cr, uid, [next_st.id], {'balance_start': st.balance_end_cash})
+                        self.write(cr, uid, [next_st.id], {'balance_start': amount})
         return res
 
     def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):

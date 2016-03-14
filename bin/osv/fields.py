@@ -93,6 +93,7 @@ class _column(object):
         self.manual = manual
         self.selectable = True
         self.group_operator = args.get('group_operator', False)
+        self.m2o_order = args.get('m2o_order', False)
         for a in args:
             if args[a]:
                 setattr(self, a, args[a])
@@ -951,7 +952,11 @@ class related(function):
     def __init__(self, *arg, **args):
         self.arg = arg
         self._relations = []
-        super(related, self).__init__(self._fnct_read, arg, self._fnct_write, fnct_inv_arg=arg, method=True, fnct_search=self._fnct_search, **args)
+        write_fnct = self._fnct_write
+        if not args.get('write_relate', True):
+            write_fnct = None
+
+        super(related, self).__init__(self._fnct_read, arg, write_fnct, fnct_inv_arg=arg, method=True, fnct_search=self._fnct_search, **args)
         if self.store is True:
             # TODO: improve here to change self.store = {...} according to related objects
             pass

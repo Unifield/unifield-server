@@ -46,3 +46,4 @@ USB_Create_Shipment,TRUE,TRUE,"['shipper_address','address_id/id','date_of_depar
 Usb_Shipment_Return_Packs,TRUE,TRUE,['name'],"[('state','in',['fake'])]",partner_id,USB,shipment.usb_shipment_return_packs,shipment,USB_Shipment_Return_Packs,2051,Valid
 USB_Validate_Shipment,TRUE,TRUE,['name'],"[('state', 'in', ['done']), ('already_rw_validated', '=', False),('parent_id', '!=', False)]",partner_id,USB,shipment.usb_set_validated_shipment,shipment,USB_Validate_Shipment,2055,Valid
 USB_Set_Delivered_Shipment,TRUE,TRUE,['name'],"[('state', 'in', ['delivered']), ('already_rw_delivered', '=', False), ('parent_id', '!=', False)]",partner_id,USB,shipment.usb_set_delivered_shipment,shipment,USB_Set_Delivered_Shipment,2056,Valid
+USB_Cancel_Int,TRUE,TRUE,['name'],"[('type', '=', 'internal'), ('state', '=', 'cancel')]",partner_id,USB,stock.picking.usb_cancel_int,stock.picking,USB_Cancel_Int,2057,Valid

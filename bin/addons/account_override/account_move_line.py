@@ -87,7 +87,7 @@ class account_move_line(osv.osv):
         """
         res = {}
         for line in self.browse(cr, uid, ids):
-            res[line.id] = ''
+            res[line.id] = False
             if line.reference:
                 res[line.id] = line.reference
                 continue
@@ -422,7 +422,43 @@ class account_move_line(osv.osv):
             aml = self.browse(cr, uid, [res], context)
             if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))
+
+        # US-852: Make an extra call to post-check all move lines when the "last" line got executed
+        self.validate_all_move_lines_state_sync(cr, uid, res, context)
         return res
+
+    # US-852: At the end of each sync execution of the create move line, make a quick check if any other move lines of the same move were invalid
+    # due to the missing of this move line? If yes, just set them to valid. 
+    def validate_all_move_lines_state_sync(self, cr, uid, move_line_id, context=None):
+        if context is None:
+            context = {}
+        if not (context.get('sync_update_execution', False)) or not move_line_id:
+            return
+
+        aml = self.browse(cr, uid, move_line_id, context)
+        if not aml or not aml.move_id:
+            return
+
+        move = aml.move_id
+        obj_move = self.pool.get('account.move')
+        if move.journal_id.type == 'system':
+            return
+
+        amount = 0
+        line_draft_ids = []
+        for line in move.line_id:
+            # Hook to check line
+            amount += line.debit - line.credit
+            if line.state=='draft':
+                line_draft_ids.append(line.id)
+
+        if abs(amount) < 10 ** -4:
+            if line_draft_ids:
+                self.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
+        elif move.journal_id.centralisation:
+            if line_draft_ids:
+                self.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
+        return True
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """

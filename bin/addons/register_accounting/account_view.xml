@@ -498,7 +498,7 @@
                         <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
                         <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
-                        <field name="instance_id"/>
+                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
                         <newline/>
                         <field name="period_id"/>
@@ -596,7 +596,7 @@
                         <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
                         <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
-                        <field name="instance_id"/>
+                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
                         <newline/>
                         <field name="period_id"/>
@@ -852,7 +852,7 @@
                         <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
                         <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
-                        <field name="instance_id"/>
+                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
                         <newline/>
                         <field name="period_id"/>

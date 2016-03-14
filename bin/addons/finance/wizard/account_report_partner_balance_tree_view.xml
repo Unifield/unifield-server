@@ -99,7 +99,7 @@
                 <field name="display_partner"/>
                 <field name="output_currency" invisible="1" />
                 <newline />
-                <field name="instance_ids">
+                <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
                             <field name="code" />
                             <field name="name" />

@@ -358,7 +358,10 @@ class analytic_line(osv.osv):
             if account_type == 'FUNDING':
                 aline_cmp_date = aline.document_date
             # Add line to expired_date if date is not in date_start - date_stop
-            if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date > date_stop):
+            # since US-711 date_stop is to be excluded itself as a frontier
+            # => >= date_stop vs > date_stop
+            # => http://jira.unifield.org/browse/US-711?focusedCommentId=45744&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-45744
+            if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date >= date_stop):
                 expired_date_ids.append(aline.id)
         # Process regarding account_type
         if account_type == 'OC':
