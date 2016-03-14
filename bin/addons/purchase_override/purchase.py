@@ -1373,6 +1373,7 @@ stock moves which are already processed : '''
         pol_obj = self.pool.get('purchase.order.line')
         so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
+        socl_obj = self.pool.get('sale.order.line.cancel')
         move_obj = self.pool.get('stock.move')
         proc_obj = self.pool.get('procurement.order')
         pick_obj = self.pool.get('stock.picking')
@@ -1400,6 +1401,7 @@ stock moves which are already processed : '''
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
                 if sol_ids:
                     store_to_call += sol_ids
+
 
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
                     so = sol.order_id
@@ -1435,6 +1437,13 @@ stock moves which are already processed : '''
                             '|', ('order_id.id', '=', line.order_id.id), ('order_id.state', 'in', ['sourced', 'approved']),
                         ], context=context)
                         for opl in pol_obj.browse(cr, uid, other_po_lines, context=context):
+                            # Check if the other PO line will not be canceled
+                            socl_ids = socl_obj.search(cr, uid, [
+                                ('sync_order_line_db_id', '=', opl.sync_order_line_db_id),
+                            ], limit=1, order='NO_ORDER', context=context)
+                            if socl_ids:
+                                continue
+
                             if opl.product_uom.id != line.product_uom.id:
                                 line_qty += uom_obj._compute_qty(cr, uid, opl.product_uom.id, opl.product_qty, line.product_uom.id)
                             else:

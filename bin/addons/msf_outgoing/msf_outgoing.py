@@ -4232,6 +4232,8 @@ class stock_picking(osv.osv):
 
     def _create_sync_message_for_field_order(self, cr, uid, picking, context=None):
         fo_obj = self.pool.get('sale.order')
+        rule_obj = self.pool.get('sync.client.message_rule')
+        msg_to_send_obj = self.pool.get('sync.client.message_to_send')
         if picking.sale_id:
             return_info = {}
             if picking.sale_id.original_so_id_sale_order:
