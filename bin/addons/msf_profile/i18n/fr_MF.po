@@ -55412,6 +55412,7 @@ msgstr "Brouillon Expédition"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:125
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:669
 #, python-format
 msgid "This invoice: %s %s has already been added. Please choose another invoice."
 msgstr "Cette facture: %s %s a déjà été ajoutée. Veuillez choisir une autre facture."

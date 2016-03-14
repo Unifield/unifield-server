@@ -623,7 +623,7 @@ class wizard_cash_return(osv.osv_memory):
         else:
             # default behaviour
             if not wizard.invoice_ids:
-                return
+                return False
             auto_add = False
             invoices = wizard.invoice_ids
 
@@ -665,6 +665,8 @@ class wizard_cash_return(osv.osv_memory):
                 new_lines.append((0, 0, line_vals))
                 # Add amount to total_amount
                 total += invoice.residual
+            else:
+                raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.')%(invoice.internal_number or '', invoice.residual))
 
         if new_lines:
             vals = {
