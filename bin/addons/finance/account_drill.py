@@ -225,6 +225,13 @@ class AccountDrill(object):
         def register_sql_result(cr, node, append=False):
             keys = [ 'debit', 'credit', 'debit_ccy', 'credit_ccy', ]
 
+            # defaults 0 amounts
+            ccy_name = '*'
+            if ccy_name not in node.data:
+                node.data[ccy_name] = {}
+                for k in keys:
+                    node.data[ccy_name][k] = 0.
+
             if cr.rowcount:
                 total_debit = 0.
                 total_credit = 0.
@@ -240,19 +247,12 @@ class AccountDrill(object):
                     node.data[ccy_name]['credit'] += float(credit)
                     node.data[ccy_name]['debit_ccy'] += float(debit_ccy)
                     node.data[ccy_name]['credit_ccy'] += float(credit_ccy)
-
                     total_debit += float(debit)
                     total_credit += float(credit)
 
                 # total functional all currencies
-                # (booking non sense here but fields created to exist)
-                ccy_name = '*'
-                if not append or ccy_name not in node.data:
-                    node.data[ccy_name] = {}
-                    for k in keys:
-                        node.data[ccy_name][k] = 0.
-                node.data[ccy_name]['debit'] += total_debit
-                node.data[ccy_name]['credit'] += total_credit
+                node.data['*']['debit'] += total_debit
+                node.data['*']['credit'] += total_credit
 
         node = AccountDrillNode(self, parent=parent, level=level,
             account_id=account_id)
