@@ -328,7 +328,7 @@
       </blockTable>
 
       <section>
-        <para style="terp_default_8">[[ repeatIn(lines(o.obj, initial_balance_mode=True), 'line') ]]</para>
+        <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=True), 'line') ]]</para>
         <blockTable colWidths="442.0,60.0,71.0,71.0,71.0,71.0" style="Table9">
           <tr>
             <td>
@@ -354,7 +354,7 @@
       </section>
 
       <section>
-        <para style="terp_default_8">[[ repeatIn(lines(o.obj, initial_balance_mode=False), 'line') ]]</para>
+        <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=False), 'line') ]]</para>
         <blockTable colWidths="114.0,80.0,248.0,60.0,71.0,71.0,71.0,71.0" style="Table9">
           <tr>
             <td>

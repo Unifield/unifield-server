@@ -299,7 +299,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Row>
 % endif
 
-% for line in lines(o.obj, initial_balance_mode=True):
+% for line in lines(o, initial_balance_mode=True):
 <Row>
 <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
     <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
@@ -322,7 +322,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Row>
 % endfor
 
-% for line in lines(o.obj, initial_balance_mode=False):
+% for line in lines(o, initial_balance_mode=False):
 <Row>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>

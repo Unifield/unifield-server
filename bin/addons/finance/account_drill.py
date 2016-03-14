@@ -28,9 +28,11 @@ class AccountDrillNode(object):
     """
     account amounts consolidated node
     """
-    def __init__(self, parent=None, level=0, account_id=False):
+    def __init__(self, drill, parent=None, level=0, account_id=False):
         super(AccountDrillNode, self).__init__()
         # set during maping
+        self.drill = drill
+
         self.parent = parent
         self.childs = []
         self.level = level
@@ -43,6 +45,7 @@ class AccountDrillNode(object):
         self.code = ''
         self.name = ''
         self.obj = None
+        self.zero_bal = False
 
     def get_currencies(self):
         if not self.data:
@@ -57,6 +60,9 @@ class AccountDrillNode(object):
         print "%s%d\n" % (indent, self.account_id, )
         for c in self.childs:
             c.output()
+
+    def is_move_level(self):
+        return self.level == self.drill._move_level
 
 
 class AccountDrill(object):
@@ -91,7 +97,8 @@ class AccountDrill(object):
         GROUP BY l.currency_id'''
 
     def __init__(self, pool, cr, uid, query, query_ib, move_states=[],
-        include_accounts=False, account_report_types=False, context=None):
+        include_accounts=False, account_report_types=False,
+        with_balance_only=False, context=None):
         super(AccountDrill, self).__init__()
         self.pool = pool
         self.cr = cr
@@ -106,6 +113,7 @@ class AccountDrill(object):
         self.query_ib = query_ib or ''
         self.move_states = move_states or [ 'draft', 'posted', ]
         self.include_accounts = include_accounts
+        self.with_balance_only = with_balance_only
 
         # nodes
         self.root = None
@@ -162,6 +170,14 @@ class AccountDrill(object):
         while level > 0:
             nodes = self.nodes_by_level[level]
             for n in nodes:
+                if self.with_balance_only and level == self._move_level:
+                    bal = n.data[ccy].get('debit', 0.) \
+                        - n.data[ccy].get('credit', 0.)
+                    if bal == 0.:
+                        # with only balance filter: do not agregate account
+                        # debit/credit with a zero balance
+                        n.zero_bal = True
+                        continue
                 parent = n.parent
                 if parent:
                     for ccy in n.data:
@@ -238,7 +254,7 @@ class AccountDrill(object):
                 node.data[ccy_name]['debit'] += total_debit
                 node.data[ccy_name]['credit'] += total_credit
 
-        node = AccountDrillNode(parent=parent, level=level,
+        node = AccountDrillNode(self, parent=parent, level=level,
             account_id=account_id)
         self.nodes_flat.append(node)
         self.nodes_by_id[account_id] = node
@@ -287,7 +303,9 @@ class account_drill(osv.osv):
     _auto = False
 
     def build_tree(self, cr, uid, query, query_ib, move_states=[],
-        include_accounts=False, account_report_types=False, context=None):
+        include_accounts=False, account_report_types=False,
+        with_balance_only=False,
+        context=None):
         """
         build account amounts consolidated tree
         using query for where clause for regular move lines
@@ -298,11 +316,15 @@ class account_drill(osv.osv):
         :param account_report_types: report type list between
             'income', 'expense', 'asset', 'liability'
         :type account_report_types: list/False
+        :param with_balance_only: report only accounts with a <> 0 balance
+            (amounts will not be agregated: no debit/credit sum of regular
+            accounts with a balance to zero)
         """
         ac = AccountDrill(self.pool, cr, uid, query, query_ib,
             move_states=move_states,
             include_accounts=include_accounts,
             account_report_types=account_report_types,
+            with_balance_only=with_balance_only,
             context=context)
         ac.map()
         ac.reduce()

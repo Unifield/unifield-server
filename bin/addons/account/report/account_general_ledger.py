@@ -145,6 +145,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             self.uid, query, query_ib, move_states=move_states,
             include_accounts=self.account_ids,
             account_report_types=self.account_report_types,
+            with_balance_only=self.display_account == 'bal_solde',
             context=used_context)
 
         return res
@@ -254,13 +255,21 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         return res
 
-    def lines(self, account, initial_balance_mode=False):
+    def lines(self, node, initial_balance_mode=False):
         res = []
-        if account.level < 4:
+        if not node.is_move_level:
             return res
+
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
             return res
+        if self.display_account in ('bal_solde', 'bal_movement') \
+            and node.zero_bal:
+            # - do not display JIs of a zero balance account if no zero bal
+            #   filter is active (note: debit/credit is not aggregated too)
+            # - do not display with no movement too (so bal 0)
+            return res
+        account = node.obj
 
         if not initial_balance_mode:
             move_state_in = "('posted')" if self.target_move == 'posted' \
