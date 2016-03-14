@@ -40,12 +40,13 @@ class AccountDrillNode(object):
 
         # set during maping/reduce
         self.data = {}
+        self.zero_bal = False
 
         # set during next_node() calls
         self.code = ''
         self.name = ''
         self.obj = None
-        self.zero_bal = False
+
 
     def get_currencies(self):
         if not self.data:
@@ -170,14 +171,15 @@ class AccountDrill(object):
         while level > 0:
             nodes = self.nodes_by_level[level]
             for n in nodes:
-                if self.with_balance_only and level == self._move_level:
-                    bal = n.data[ccy].get('debit', 0.) \
-                        - n.data[ccy].get('credit', 0.)
-                    if bal == 0.:
-                        # with only balance filter: do not agregate account
-                        # debit/credit with a zero balance
-                        n.zero_bal = True
-                        continue
+                if self._move_level:
+                    if self.with_balance_only:
+                        bal = n.data[ccy].get('debit', 0.) \
+                            - n.data[ccy].get('credit', 0.)
+                        if bal == 0.:
+                            # with only balance filter: do not agregate account
+                            # debit/credit with a zero balance
+                            n.zero_bal = True
+                            continue
                 parent = n.parent
                 if parent:
                     for ccy in n.data:
