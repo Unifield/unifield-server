@@ -36,6 +36,8 @@ from msf_partner import PARTNER_TYPE
 from order_types.stock import check_cp_rw
 from order_types.stock import check_rw_warning
 
+from msf_partner import PARTNER_TYPE
+
 
 #----------------------------------------------------------
 # Procurement Order
@@ -269,6 +271,32 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_is_company(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return True if the partner_id2 of the stock.picking is the same partner
+        as the partner linked to res.company of the res.users
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of stock.picking to update
+        :param field_name: List of names of fields to update
+        :param args: Extra parametrer
+        :param context: Context of the call
+        :return: A dictionary with stock.picking ID as keys and True or False a values
+        """
+        user_obj = self.pool.get('res.users')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        cmp_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = pick.partner_id2.id == cmp_partner_id
+
+        return res
 
     _columns = {
         'state': fields.selection([
@@ -291,6 +319,13 @@ class stock_picking(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
+        'partner_type': fields.related(
+            'partner_id',
+            'partner_type',
+            type='selection',
+            selection=PARTNER_TYPE,
+            readonly=True,
+        ),
         'from_wkf': fields.boolean('From wkf'),
         'from_wkf_sourcing': fields.boolean('From wkf sourcing'),
         'update_version_from_in_stock_picking': fields.integer(string='Update version following IN processing'),
@@ -319,6 +354,15 @@ class stock_picking(osv.osv):
             store=False,
         ),
         'company_id2': fields.many2one('res.partner', string='Company', required=True),
+        'is_company': fields.function(
+            _get_is_company,
+            method=True,
+            type='boolean',
+            string='Is Company ?',
+            store={
+                'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['partner_id2'], 10),
+            }
+        )
     }
 
     _defaults = {'from_yml_test': lambda *a: False,
