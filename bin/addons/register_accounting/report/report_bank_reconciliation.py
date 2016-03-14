@@ -64,9 +64,10 @@ class bank_reconciliation(report_sxw.rml_parse):
         amvl_obj = self.pool.get('account.move.line')
         amvl_ids = amvl_obj.search(self.cr, self.uid, [('statement_id', 'in', ids), ('is_reconciled', '=', False),
                                                        ('account_id', 'in', account_ids)], context=self.context)
-        for line in amvl_obj.read(self.cr, self.uid, amvl_ids, ['debit', 'credit'], context=self.context):
-            amount += line['credit']
-            amount -= line['debit']
+        # amount in booking currency
+        for line in amvl_obj.read(self.cr, self.uid, amvl_ids, ['debit_currency', 'credit_currency'], context=self.context):
+            amount += line['credit_currency']
+            amount -= line['debit_currency']
         return amount
 
     def get_now(self, show_datetime=False):
