@@ -76,9 +76,8 @@ class AccountDrill(object):
         JOIN account_journal j on (l.journal_id=j.id)
         JOIN account_account a on (a.id=l.account_id)
         JOIN account_account_type at on (at.id=a.user_type)
-        WHERE (l.account_id = %s){options}{query}
+        WHERE l.account_id = %s{options}{query}
         GROUP BY l.currency_id'''
-    # WHERE (l.account_id = %s) AND (am.state IN %s){query}
 
     # initial balance move lines base query (from IB journal period 0)
     _sql_ib = '''SELECT  sum(debit), sum(credit),
@@ -88,7 +87,7 @@ class AccountDrill(object):
         JOIN account_move am ON (am.id = l.move_id)
         JOIN res_currency c ON (c.id = l.currency_id)
         LEFT JOIN account_period per ON (per.id = l.period_id)
-        WHERE (l.account_id = %s) and per.number = 0{query}
+        WHERE l.account_id = %s and per.number = 0{query}
         GROUP BY l.currency_id'''
 
     def __init__(self, pool, cr, uid, query, query_ib, move_states=[],
@@ -102,6 +101,21 @@ class AccountDrill(object):
             self.context = {}
         self.model = self.pool.get('account.account')
 
+        # passed params
+        self.query = query or ''
+        self.query_ib = query_ib or ''
+        self.move_states = move_states or [ 'draft', 'posted', ]
+        self.include_accounts = include_accounts
+
+        # nodes
+        self.root = None
+        self.nodes_flat = []
+        self.nodes_by_id = {}  # flat nodes by account_id
+        self.nodes_by_level = {}  # flat nodes by level
+        self._next_node_index = 0  # current node index used by next_node()
+
+        # JI base query: constructed via _sql
+        self.sql = self._sql
         if account_report_types:
             report_types = [ "'%s'" % (rt, ) for rt in account_report_types ]
             options = " AND (at.report_type in (%s)" % (
@@ -113,22 +127,7 @@ class AccountDrill(object):
             options += ')'
         else:
             options = ''
-        self.sql = self._sql.replace('{options}', options)
-
-        self.query = query or ''
-        self.query_ib = query_ib or ''
-
-        self.move_states = move_states
-        if not self.move_states:
-            self.move_states = [ 'draft', 'posted', ]
-        self.include_accounts = include_accounts
-
-        self.root = None
-        self.nodes_flat = []
-        self.nodes_by_id = {}  # flat nodes by account_id
-        self.nodes_by_level = {}  # flat nodes by level
-
-        self._next_node_index = 0  # current node index used by next_node()
+        self.sql = self.sql.replace('{options}', options)
 
     def output(self):
         """
