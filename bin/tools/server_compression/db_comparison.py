@@ -97,7 +97,9 @@ data_id_list = oerp_origin.search('ir.model.data', [('model', 'in',
     tuple(synchronized_model))])
 data_count = len(data_id_list)
 counter = 0
-result_file = open("result.txt", "a")
+time_stamp = time.strftime("%Y%m%d-%H%M%S")
+file_name = 'db_comparison_%s.txt' % time_stamp) 
+result_file = open(filename, "a")
 result_file.write('\n\n---------------------------\n')
 result_file.write('%s object to checks...\n' % data_count)
 print '%s object to checks...' % data_count
