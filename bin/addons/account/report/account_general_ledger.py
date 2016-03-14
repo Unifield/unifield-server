@@ -321,13 +321,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 LEFT JOIN res_partner p on (l.partner_id=p.id)
                 LEFT JOIN account_invoice i on (m.id =i.move_id)
                 LEFT JOIN account_period per on (per.id=l.period_id)
-                LEFT JOIN account_account ac on (ac.id=l.account_id)
                 JOIN account_journal j on (l.journal_id=j.id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
             """ %(self.query, move_state_in, sql_sort)
             sql = sql.replace('{{reconcile}}',
                     self.unreconciled_filter and \
-                        " AND reconcile_id is null and ac.reconcile ='t'" or '')
+                        " AND reconcile_id is null" or '')
             self.cr.execute(sql, (account.id, ))
             res = self.cr.dictfetchall()
         else:

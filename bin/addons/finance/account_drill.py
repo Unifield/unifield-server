@@ -217,6 +217,8 @@ class AccountDrill(object):
         consolidate up later with reduce()
         """
         def prepare_sql(sql, sub_query, node):
+            # MEMO: be aware that _query_get append an account_id in sub_query
+            # clause due to 'chart_account_id' in context
             res = sql
             if sub_query:
                 sub_query = ' AND ' + sub_query
