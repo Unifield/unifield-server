@@ -290,6 +290,9 @@ class RPCSession(object):
                 return None
             raise
 
+    def unifield_version(self):
+        return self.execute_noauth('db', 'server_version')
+
     def number_update_modules(self, db):
         return self.execute_noauth('common', 'number_update_modules', db)
 
