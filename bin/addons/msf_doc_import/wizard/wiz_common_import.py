@@ -174,6 +174,41 @@ class wizard_common_import_line(osv.osv_memory):
         'search_default_not_restricted': 0,
     }
 
+    def add_products(self, cr, uid, ids, product_ids, context=None):
+        product_obj = self.pool.get('product.product')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not product_ids:
+            return {}
+
+        res = {}
+        try:
+            for wl in self.browse(cr, uid, ids, context=context):
+                if wl.parent_model in ('tender', 'sale.order', 'purchase.order'):
+                    categ = self.pool.get(wl.parent_model).read(cr, uid, wl.parent_id, ['categ'], context=context)['categ']
+                    if categ:
+                        for product_id in product_ids[0][2]:
+                            c_msg = product_obj.check_consistency(cr, uid, product_id, categ, context=context)
+                            if c_msg:
+                                res.setdefault('warning', {})
+                                res['warning'].setdefault('title', _('Warning'))
+                                res['warning'].setdefault('message', '')
+                                res['warning']['message'] = '%s \n %s' % (
+                                    res.get('warning', {}).get('message', ''),
+                                    c_msg,
+                                )
+                                return res
+        except IndexError:
+            return {}
+
+        return res
+
+
     def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill the line of attached document
@@ -416,7 +451,7 @@ class tender(osv.osv):
 
         tender = self.browse(cr, uid, ids[0], context=context)
         context.update({
-            'product_ids_domain': [('purchase_type', '=', tender.categ)],
+            'product_ids_domain': [],
             # UFTP-15: we active 'only not forbidden' filter as default
             'available_for_restriction': 'tender',
             'search_default_not_restricted': 1,
@@ -458,7 +493,7 @@ class sale_order_line(osv.osv):
                                                                p_data['id'],
                                                                '').get('value', {}))
             else:
-                values.update(self.product_id_change(cr, uid, False, order_data['pricelist_id'][0],
+                values.update(self.product_id_on_change(cr, uid, False, order_data['pricelist_id'][0],
                                                                      p_data['id'],
                                                                      p_data['import_product_qty'],
                                                                      p_data['uom_id'][0],
@@ -470,7 +505,8 @@ class sale_order_line(osv.osv):
                                                                      order_data['date_order'],
                                                                      False,
                                                                      order_data['fiscal_position'] and order_data['fiscal_position'][0] or False,
-                                                                     False).get('value', {}))
+                                                                     False).get('value', {}),
+                                                                     context=context)
 
             # Set the quantity to 0.00
             values.update({'product_uom_qty': p_data['import_product_qty'], 'product_uos_qty': p_data['import_product_qty']})
@@ -497,7 +533,7 @@ class sale_order(osv.osv):
         if order.procurement_request:
             # UFTP-15: IR context available_for_restriction = 'consumption' (3.1.3.4 case (d))
             context_update = {
-                'product_ids_domain': [('purchase_type', '=', order.categ)],
+                'product_ids_domain': [],
                 # UFTP-15: we active 'only not forbidden' filter as default
                 'available_for_restriction': 'consumption',
                 'search_default_not_restricted': 1,
@@ -506,7 +542,7 @@ class sale_order(osv.osv):
         else:
             # UFTP-15: FO context available_for_restriction = 'partner type'
             context_update = {
-                'product_ids_domain': [('purchase_type', '=', order.categ)],
+                'product_ids_domain': [],
                 # UFTP-15: we active 'only not forbidden' filter as default
                 'available_for_restriction': order.partner_type,
                 'search_default_not_restricted': 1,

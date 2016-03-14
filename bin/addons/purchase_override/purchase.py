@@ -434,31 +434,6 @@ class purchase_order(osv.osv):
         (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
     ]
 
-    def _check_service(self, cr, uid, ids, vals, context=None):
-        '''
-        Avoid the saving of a PO with non service products on Service PO
-        '''
-        # UTP-871 : Remove check of service
-        return True
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        if context.get('import_in_progress'):
-            return True
-
-        for order in self.browse(cr, uid, ids, context=context):
-            for line in order.order_line:
-                if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
-                    raise osv.except_osv(_('Error'), _('The product [%s]%s is not a \'Transport\' product. You can purchase only \'Transport\' products on a \'Transport\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-                elif vals.get('categ', order.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
-                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can purchase only \'Service\' products on a \'Service\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-
-        return True
-
     def purchase_cancel(self, cr, uid, ids, context=None):
         '''
         Call the wizard to ask if you want to re-source the line
@@ -574,8 +549,6 @@ class purchase_order(osv.osv):
         '''
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
-
-        self._check_service(cr, uid, ids, vals, context=context)
 
         for order in self.browse(cr, uid, ids, context=context):
             partner_type = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id', order.partner_id.id), context=context).partner_type
@@ -2193,7 +2166,6 @@ stock moves which are already processed : '''
         vals = self._get_location_id(cr, uid, vals, warehouse_id=vals.get('warehouse_id', False), context=context)
 
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
-        self._check_service(cr, uid, [res], vals, context=context)
 
         return res
 
@@ -3614,10 +3586,9 @@ class purchase_order_line(osv.osv):
         elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
 
-
         if context and context.get('categ') and product:
             # Check consistency of product
-            consistency_message = self.pool.get('product.product').check_consistency(cr, uid, product, context.get('categ'), context=context)
+            consistency_message = product_obj.check_consistency(cr, uid, product, context.get('categ'), context=context)
             if consistency_message:
                 res.setdefault('warning', {})
                 res['warning'].setdefault('title', 'Warning')
@@ -3831,39 +3802,62 @@ class product_product(osv.osv):
     }
 
     def check_consistency(self, cr, uid, product_id, category, context=None):
-        '''
+        """
         Check the consistency of product according to category
-        '''
-        context = context is None and {} or context
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product_id: ID of the product.product to check
+        :param category: DB value of the category to check
+        :param context: Context of the call
+        :return: A warning message or False
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+
+        if context is None:
+            context = {}
+
         display_message = False
 
         # No check for Other
         if category == 'other':
             return False
 
-        product = self.read(cr, uid, product_id, ['nomen_manda_0', 'type', 'transport_ok'], context=context)
+        product = self.read(cr, uid, product_id, [
+            'nomen_manda_0',
+            'type',
+            'transport_ok',
+        ], context=context)
         transport_product = product['transport_ok']
         product_type = product['type']
         main_type = product['nomen_manda_0'][0]
 
         if category == 'medical':
             try:
-                med_nomen = self.pool.get('product.nomenclature').search(cr,
-                        uid, [('level', '=', 0), ('name', '=', 'MED')],
-                        context=context)[0]
+                med_nomen = nomen_obj.search(cr, uid, [
+                    ('level', '=', 0),
+                    ('name', '=', 'MED'),
+                ], context=context)[0]
             except IndexError:
-                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+                raise osv.except_osv(
+                    _('Error'),
+                    _('MED nomenclature Main Type not found'),
+            )
 
             if main_type != med_nomen:
                 display_message = True
 
         if category == 'log':
             try:
-                log_nomen = self.pool.get('product.nomenclature').search(cr,
-                        uid, [('level', '=', 0), ('name', '=', 'LOG')],
-                        context=context)[0]
+                log_nomen = nomen_obj.search(cr, uid, [
+                    ('level', '=', 0),
+                    ('name', '=', 'LOG'),
+                ], context=context)[0]
+
             except IndexError:
-                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+                raise osv.except_osv(
+                    _('Error'),
+                    _('LOG nomenclature Main Type not found')
+                )
 
             if main_type != log_nomen:
                 display_message = True
@@ -3875,7 +3869,8 @@ class product_product(osv.osv):
             display_message = True
 
         if display_message:
-            return 'Warning you are about to add a product which does not conform to this PO’s order category, do you wish to proceed ?'
+            return 'Warning you are about to add a product which does not conform to this' \
+                ' PO’s order category, do you wish to proceed ?'
         else:
             return False
 

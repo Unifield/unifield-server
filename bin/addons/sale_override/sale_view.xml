@@ -36,8 +36,8 @@
                      -->
 
                     <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//field[@name='product_id']" position="attributes">
-                        <attribute name="domain">[('sale_ok', '=', True), ('purchase_type', '=', parent.categ)]</attribute>
-                        <attribute name="context">partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,warehouse=parent.warehouse_id,uom=product_uom,available_for_restriction=parent.partner_type,search_default_not_restricted=1</attribute>
+                        <attribute name="domain">[('sale_ok', '=', True)]</attribute>
+                        <attribute name="context">categ=parent.categ,partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,warehouse=parent.warehouse_id,uom=product_uom,available_for_restriction=parent.partner_type,search_default_not_restricted=1</attribute>
                     </xpath>
 
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">
