@@ -28,6 +28,8 @@ SDREF_TO_EXCLUDE = [
 
 # the objects with the folowing model will be ignored
 MODEL_TO_EXCLUDE = [
+        'ir.cron',
+        'deleted.object',
         'financing.contract.contract',
         # in formating_line.py when write is done in a context of
         # synchronization, the write is ignored. This lead to somes problems in
