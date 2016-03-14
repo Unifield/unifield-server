@@ -510,7 +510,7 @@ class supplier_catalogue(osv.osv):
                 to_correct_ok = False
                 row_len = len(row)
                 if row_len != 8:
-                    error_list_line.append(_("You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."))
+                    error_list_line.append(_("You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment."))
                 comment = []
                 p_comment = False
                 #Product code
