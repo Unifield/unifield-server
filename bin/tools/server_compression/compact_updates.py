@@ -5,17 +5,16 @@ import psycopg2.extras
 import time
 import sys
 import oerplib
-import traceback
 
 start_time = time.time()
 intermediate_time = start_time
 
-DELETE_NO_MASTER=True
-DELETE_INACTIVE_RULES=True
-COMPACT_UPDATE=True
-DELETE_ENTITY_REL=True  # not recommanded to change it to False because it can
-                        # remove delete only entity_rel related to currently
-                        # deleted updates
+DELETE_NO_MASTER = True
+DELETE_INACTIVE_RULES = True
+COMPACT_UPDATE = True
+DELETE_ENTITY_REL = True  # not recommanded to change it to False because it
+                          # can remove delete only entity_rel related to
+                          # currently deleted updates
 UPDATE_TO_FETCH = 1000
 
 # we will delete all the pulled update which are not master data and use active rule
@@ -28,13 +27,13 @@ SDREF_TO_EXCLUDE = [
 
 # the objects with the folowing model will be ignored
 MODEL_TO_EXCLUDE = [
-        'ir.cron',
-        'deleted.object',
-        'financing.contract.contract',
-        # in formating_line.py when write is done in a context of
-        # synchronization, the write is ignored. This lead to somes problems in
-        # compactation as many writes are compacted in only one create
-        'financing.contract.format.line',
+    'ir.cron',
+    'deleted.object',
+    'financing.contract.contract',
+    # in formating_line.py when write is done in a context of
+    # synchronization, the write is ignored. This lead to somes problems in
+    # compactation as many writes are compacted in only one create
+    'financing.contract.format.line',
 ]
 
 DB_NAME = 'DAILY_SYNC_SERVER-COMPRESSED-23-20160303-073301'   # replace with your own DB
@@ -59,7 +58,7 @@ number_of_update = cr2.fetchone()[0]
 def update_progress(progress, deleted):
     '''Displays or updates a console progress bar
     '''
-    bar_length = 50 # Modify this to change the length of the progress bar
+    bar_length = 50  # Modify this to change the length of the progress bar
     status = ""
     if isinstance(progress, int):
         progress = float(progress)
@@ -74,7 +73,7 @@ def update_progress(progress, deleted):
         status = "Done...\r\n"
     block = int(round(bar_length * progress))
     progress = round(progress, 3)
-    text = "\rPercent: [{0}] {1}% {2} ({3} deleted)".format( "#"*block +
+    text = "\rPercent: [{0}] {1}% {2} ({3} deleted)".format("#"*block +
             "-"*(bar_length - block), progress * 100, status, deleted)
     sys.stdout.write(text)
     sys.stdout.flush()
@@ -149,6 +148,7 @@ if COMPACT_UPDATE:
     cr2.execute("""SELECT id FROM sync_server_entity""", ())
     sync_server_entity_id_list = [x[0] for x in cr2.fetchall()]
     entity_branch_name = {}
+
     def get_recursive_parent(entity_id):
         entity = sync_server_entity.browse(entity_id)
         if entity.parent_id:
@@ -158,7 +158,7 @@ if COMPACT_UPDATE:
 
     for entity_id in sync_server_entity_id_list:
         highest_parent = get_recursive_parent(entity_id)
-        entity_branch_name[entity_id]=highest_parent
+        entity_branch_name[entity_id] = highest_parent
 
     # create a dict of rule direction, to avoid browsing on each update
     cr2.execute("""SELECT id, direction FROM sync_server_sync_rule""", ())
@@ -218,7 +218,7 @@ if COMPACT_UPDATE:
                 current_values = eval(row['values'])
                 diff = set(current_values).difference(previous_values)
                 ref_diff = [x.split('sd.')[1] for x in diff if
-                        isinstance(x, (str,unicode)) and  x.startswith('sd.')]
+                            isinstance(x, (str, unicode)) and x.startswith('sd.')]
 
                 # before to do any replacement, check that the object in this
                 # update is not pointing to other object created after the
@@ -277,7 +277,6 @@ if COMPACT_UPDATE:
             conn.commit()
         progress = current_cursor/float(total_updates)
         update_progress(progress, len(deleted_update_ids))
-        #print "%s/%s updates parsed (%s updates deleted)" % (current_cursor, total_updates, len(deleted_update_ids))
 
     # free memory
     del multiple_updates
