@@ -337,7 +337,9 @@ class account_account(osv.osv):
         'is_intersection_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intersection counterpart account?'),
         'display_in_reports': fields.boolean("Display in P&L and B/S reports",
             help="Uncheck this attribute if you want an account not to appear"
-            " in the 'Profit And Loss' and 'Balance Sheet' reports."),
+            " in the 'Profit And Loss' and 'Balance Sheet' reports. This is "
+            "feasible only on level 1 accounts. When an account is "
+            "check/unchecked the behaviour will apply for all his children."),
     }
 
     _defaults = {
