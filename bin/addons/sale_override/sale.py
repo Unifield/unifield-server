@@ -2235,6 +2235,60 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     def _manual_create_sync_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         return
 
+    def round_to_soq(self, cr, uid, ids, context=None):
+        """
+        Check for each line of the order if the quantity is compatible
+        with SoQ rounding of the product. If not compatible, update the
+        quantity to match with SoQ rounding.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order to check and update
+        :param context: Context of the call
+        :return: True
+        """
+        sol_obj = self.pool.get('sale.order.line')
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        sol_ids = sol_obj.search(cr, uid, [
+            ('order_id', 'in', ids),
+            ('product_id', '!=', False),
+        ], context=context)
+
+        to_update = {}
+        for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+            # Check only products with defined SoQ quantity
+            if not sol.product_id.soq_quantity:
+                continue
+
+            # Get line quantity in product UoM
+            line_qty = sol.product_uom_qty
+            if sol.product_uom.id != sol.product_id.uom_id.id:
+                line_qty = uom_obj._compute_qty_obj(cr, uid, sol.product_uom, sol.product_uom_qty, sol.product_id.uom_id, context=context)
+
+            good_quantity = 0
+            if line_qty % sol.product_id.soq_quantity:
+                good_quantity = (line_qty - (line_qty % sol.product_id.soq_quantity)) + sol.product_id.soq_quantity
+
+            if good_quantity and sol.product_uom.id != sol.product_id.uom_id.id:
+                good_quantity = uom_obj._compute_qty(cr, uid, sol.product_id.uom_id, good_quantity, sol.product_uom, context=context)
+
+            if good_quantity:
+                to_update.setdefault(good_quantity, [])
+                to_update[good_quantity].append(sol.id)
+
+        for qty, line_ids in to_update.iteritems():
+            sol_obj.write(cr, uid, line_ids, {
+                'product_uom_qty': qty,
+            }, context=context)
+
+        return True
+
 sale_order()
 
 
