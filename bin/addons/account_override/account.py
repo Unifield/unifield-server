@@ -171,7 +171,7 @@ class account_account(osv.osv):
             children_and_consolidated.reverse()
             brs = list(self.browse(cr, uid, children_and_consolidated, context=context))
             currency_obj = self.pool.get('res.currency')
-            is_financial_report = context.get('financial_report', False)
+            display_only_checked_account = context.get('display_only_checked_account', False)
             while brs:
                 current = brs[0]
                 brs.pop(0)
@@ -180,7 +180,7 @@ class account_account(osv.osv):
                     for child in current.child_id:
                         # in context of report, if the current account is not
                         # displayed, it should no impact the total amount
-                        if is_financial_report and not child.display_in_reports:
+                        if display_only_checked_account and not child.display_in_reports:
                             continue
                         if child.company_id.currency_id.id == current.company_id.currency_id.id:
                             sums[current.id][fn] += sums[child.id][fn]

@@ -484,7 +484,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             return self.cr.fetchone()[0] or 0.
 
         if account.type == 'view':
-            account._context.update({'financial_report':True})
             amount = getattr(account, field)
             if not account.parent_id:
                 # MSF CoA root: deduce balance of not displayed accounts
