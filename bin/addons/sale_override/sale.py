@@ -2276,7 +2276,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 good_quantity = (line_qty - (line_qty % sol.product_id.soq_quantity)) + sol.product_id.soq_quantity
 
             if good_quantity and sol.product_uom.id != sol.product_id.uom_id.id:
-                good_quantity = uom_obj._compute_qty(cr, uid, sol.product_id.uom_id, good_quantity, sol.product_uom, context=context)
+                good_quantity = uom_obj._compute_qty_obj(cr, uid, sol.product_id.uom_id, good_quantity, sol.product_uom, context=context)
 
             if good_quantity:
                 to_update.setdefault(good_quantity, [])

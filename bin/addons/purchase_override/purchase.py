@@ -2414,6 +2414,76 @@ stock moves which are already processed : '''
 
         return {'type': 'ir.actions.act_window_close'}
 
+    def round_to_soq(self, cr, uid, ids, context=None):
+        """
+        Check for each line of the order if the quantity is compatible
+        with the SoQ rounding of the supplier catalogue or product. If
+        not compatible, update the quantity to match with SoQ rounding.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order to check and update
+        :param context: Context of the call
+        :return: True
+        """
+        pol_obj = self.pool.get('purchase.order.line')
+        uom_obj = self.pool.get('product.uom')
+        sup_obj = self.pool.get('product.supplierinfo')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pol_ids = pol_obj.search(cr, uid, [
+            ('order_id', 'in', ids),
+            ('product_id', '!=', False),
+        ], context=context)
+
+        to_update = {}
+        for pol in pol_obj.browse(cr, uid, pol_ids, context=context):
+            # Check only products with defined SoQ quantity
+            sup_ids = sup_obj.search(cr, uid, [
+                ('name', '=', pol.order_id.partner_id.id),
+                ('product_id', '=', pol.product_id.id),
+            ], context=context)
+            if not sup_ids and not pol.product_id.soq_quantity:
+                continue
+
+            # Get SoQ value
+            soq = pol.product_id.soq_quantity
+            soq_uom = pol.product_id.uom_id
+            if sup_ids:
+                for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
+                    for pcl in sup.pricelist_ids:
+                        if pcl.rounding and pcl.min_quantity <= pol.product_qty:
+                            soq = pcl.rounding
+                            soq_uom = pcl.uom_id
+
+            if not soq:
+                continue
+
+            # Get line quantity in SoQ UoM
+            line_qty = pol.product_qty
+            if pol.product_uom.id != soq_uom.id:
+                line_qty = uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, soq_uom, context=context)
+
+            good_quantity = 0
+            if line_qty % soq:
+                good_quantity = (line_qty - (line_qty % soq)) + soq
+
+            if good_quantity and pol.product_uom.id != soq_uom.id:
+                good_quantity = uom_obj._compute_qty_obj(cr, uid, soq_uom, good_quantity, pol.product_uom, context=context)
+
+            if good_quantity:
+                to_update.setdefault(good_quantity, [])
+                to_update[good_quantity].append(pol.id)
+
+        for qty, line_ids in to_update.iteritems():
+            pol_obj.write(cr, uid, line_ids, {
+                'product_qty': qty,
+            }, context=context)
+
 purchase_order()
 
 
