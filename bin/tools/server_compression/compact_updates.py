@@ -75,18 +75,16 @@ def update_progress(progress, deleted):
     sys.stdout.write(text)
     sys.stdout.flush()
 
-def delete_related_entity_rel(update_id_list, step='')
+def delete_related_entity_rel(update_id_list, step=''):
     if DELETE_ENTITY_REL and update_id_list:
         intermediate_time = time.time()
-        print '%s/3 Start deleting of the related sync_server_entity_rel...' %
-        step
+        print '%s/3 Start deleting of the related sync_server_entity_rel...' % step
         cr3.execute("""DELETE FROM sync_server_entity_rel
         WHERE id IN
         (SELECT id FROM sync_server_entity_rel WHERE update_id IN %s)""",
                     (tuple(update_id_list),))
         entity_count = cr3.rowcount
-        print '%s/3 sync_server_entity_rel deleted : %s' % (step,
-                locale.format('%d', entity_count, 1))
+        print '%s/3 sync_server_entity_rel deleted : %s' % (step, locale.format('%d', entity_count, 1))
         print_time_elapsed(intermediate_time, time.time(), '%/3' % step)
         conn.commit()
 
