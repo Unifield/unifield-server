@@ -40,14 +40,17 @@ class hq_entries_validation(osv.osv_memory):
     _defaults = {
         'running': False,
     }
-    def create(self, cr, uid, vals, context=None):
-        # BKLG-77: check transation before showing wizard
+
+    def default_get(self, cr, uid, fields, context=None):
+        # check transaction before showing wizard
         line_ids = context and context.get('active_ids', []) or []
         if isinstance(line_ids, (int, long)):
             line_ids = [line_ids]
+
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
             line_ids, self._name, context=context)
-        return super(hq_entries_validation, self).create(cr, uid, vals,
+
+        return super(hq_entries_validation, self).default_get(cr, uid, fields,
             context=context)
 
     # UTP-1101: Extract the method to create AD for being called also for the REV move

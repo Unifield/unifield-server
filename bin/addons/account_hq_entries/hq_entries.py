@@ -480,11 +480,31 @@ class hq_entries(osv.osv):
             raise osv.except_osv(_("Warning"),
                 _("No HQ Entry selected for transaction"))
 
-        domain = [('id', 'in', ids), ('user_validated', '=', True)]
+        # BKLG-77
+        domain = [
+            ('id', 'in', ids),
+            ('user_validated', '=', True),
+        ]
         if self.search(cr, uid, domain, context=context, count=True):
             raise osv.except_osv(_("Warning"),
                 _("You can not perform this action on a validated HQ Entry" \
                     " (please use the 'To Validate' filter in the HQ Entries list)"))
+
+        # US-306: forbid to validate mission closed or + entries
+        # => at coordo level you can not validate entries since field closed
+        # period; but they can come from HQ mission opened via SYNC)
+        period_ids = list(set([ he.period_id.id \
+            for he in self.browse(cr, uid, ids, context=context) ]))
+        if period_ids:
+            domain = [
+                ('id', 'in', period_ids),
+                ('state', 'in', ['mission-closed', 'done', ]),
+            ]
+            if self.pool.get('account.period').search(cr, uid, domain,
+                context=context, count=True):
+                raise osv.except_osv(_("Warning"),
+                    _("You can not validate HQ Entry in a mission-closed" \
+                      " period"))
 
 hq_entries()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
