@@ -335,7 +335,9 @@ class account_account(osv.osv):
         'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
         'is_intermission_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
         'is_intersection_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intersection counterpart account?'),
-        'display_in_reports': fields.boolean("Display this account in reports", help="Uncheck this attribute if you want an account not to appear in the reports."),
+        'display_in_reports': fields.boolean("Display in P&L and B/S reports",
+            help="Uncheck this attribute if you want an account not to appear"
+            " in the 'Profit And Loss' and 'Balance Sheet' reports."),
     }
 
     _defaults = {
